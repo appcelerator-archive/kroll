@@ -26,7 +26,9 @@ target list to be added soon:
 
 - PHP
 - Java
+- Objective-J
 - LUA
+- C#
 
 Kroll is broken into a few small components which compose the 
 entire microkernel:
