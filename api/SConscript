@@ -13,9 +13,21 @@ else:
 		Env.AppendENVPath('PKG_CONFIG_PATH', os.environ['PKG_CONFIG_PATH'])
 	Env.ParseConfig('pkg-config --cflags --libs libxml-2.0')
 
+if build.is_osx():
+    OSX_SDK = '/Developer/SDKs/MacOSX10.4u.sdk'
+    OSX_UNIV_COMPILER = '-isysroot '+OSX_SDK+' -arch i386'
+    OSX_UNIV_LINKER = '-isysroot '+OSX_SDK+' -syslibroot,'+OSX_SDK
+    Env.Append(CCFLAGS=OSX_UNIV_COMPILER+' -x objective-c++')
+    Env.Append(FRAMEWORKS=['Foundation'])
+    Env.Append(LDFLAGS=OSX_UNIV_LINKER)
+
 sources=Glob('*.cpp')
 sources.extend(Glob('config/*.cpp'))
 sources.extend(Glob('binding/*.cpp'))
+
+if build.is_win32():
+   sources.extend(Glob('unzip/*.cpp'))
+
 Env.SharedLibrary(build.dir +'/kroll', source=sources)
 
 Execute(Mkdir(build.include_dir))

@@ -6,6 +6,7 @@
 #ifndef _OSX_HOST_H
 #define _OSX_HOST_H
 
+#include <api/kroll.h>
 #include <api/module.h>
 #include <api/host.h>
 #include <api/binding/bound_object.h>

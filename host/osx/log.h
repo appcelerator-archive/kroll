@@ -18,7 +18,7 @@ namespace kroll
 #ifdef DEBUG
    #define TRACE  NSLog
 #else
-   #define TRACE(s, ...)  if(s)TiLog([NSString stringWithFormat:@"[%@] <%p %@:(%d)> %@\n", [NSDate date], this, [[NSString stringWithUTF8String:__FILE__] lastPathComponent], __LINE__, [NSString stringWithFormat:(s), ##__VA_ARGS__]])
+   #define TRACE(s, ...)  if(s)kroll::Log([NSString stringWithFormat:@"[%@] <%p %@:(%d)> %@\n", [NSDate date], this, [[NSString stringWithUTF8String:__FILE__] lastPathComponent], __LINE__, [NSString stringWithFormat:(s), ##__VA_ARGS__]])
 #endif
 
 #endif

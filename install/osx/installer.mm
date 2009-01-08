@@ -4,7 +4,7 @@
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
 #import <Foundation/Foundation.h>
-#include "common.h"
+#import <api/kroll.h>
 
 using namespace kroll;
 
@@ -27,7 +27,7 @@ int main(int argc, char* argv[])
 	
 	// make sure installer exists - paranoid check
 	std::string ss = std::string([source UTF8String]);
-	if (!isDirectory(ss))
+	if (!FileUtils::IsDirectory(ss))
 	{
 		fprintf(stderr,"invalid argument passed. installer dir: %s doesn't exist\n",[source UTF8String]);
 		[pool release];
@@ -66,7 +66,9 @@ int main(int argc, char* argv[])
 				if (dir)
 				{
 					[[NSFileManager defaultManager]createDirectoryAtPath:dir attributes:nil];
-					unzip(sourceFile,dir);
+					std::string src([sourceFile UTF8String]);
+					std::string dest([dir UTF8String]);
+					FileUtils::Unzip(src,dest);
 				}
 			}
 	    }

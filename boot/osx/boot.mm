@@ -6,7 +6,7 @@
 #import <Foundation/Foundation.h>
 #import <Cocoa/Cocoa.h>
 #import <string>
-#import "common.h"
+#import <api/kroll.h>
 
 using namespace kroll;
 
@@ -113,19 +113,19 @@ int main(int argc, char* argv[])
 
 	NSString* bundlePath = [[NSBundle mainBundle] bundlePath];
 	NSString* bundleName = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleName"];
-	NSString* runtime = getRuntimeBaseDirectory();
+	NSString* runtime = [NSString stringWithCString:FileUtils::GetRuntimeBaseDirectory().c_str()];
 	
 	NSLog(@"Runtime: %@",runtime);
 	NSLog(@"bundleName: %@",bundleName);
 	NSLog(@"bundlePath: %@",bundlePath);
 
-	if (!isRuntimeInstalled())
+	if (!FileUtils::IsRuntimeInstalled())
 	{
 		// we don't have runtime, we need to launch our installer 
 		// to install it which should be inside our bundle directory
 		NSString *bundledInstaller = [NSString stringWithFormat:@"%@/installer",bundlePath];
 		std::string bdir = std::string([bundledInstaller UTF8String]);
-		if (!isDirectory(bdir))
+		if (!FileUtils::IsDirectory(bdir))
 		{
 			NSLog(@"invalid bundle. installer path doesn't exist at %@",bundledInstaller);
 			[pool release];
@@ -133,14 +133,17 @@ int main(int argc, char* argv[])
 		}
 		NSString *installer = [NSString stringWithFormat:@"%@/install", bundledInstaller];
 		std::string si = std::string([installer UTF8String]);
-		if (!isFile(si))
+		if (!FileUtils::IsFile(si))
 		{
 			NSLog(@"invalid bundle. installer file doesn't exist at %@",installer);
 			[pool release];
 			return __LINE__;
 		}
 		NSLog(@"runtime set to %@",runtime);
-		int exitCode = runTaskAndWait(installer,[NSArray arrayWithObjects:bundledInstaller,runtime,nil]);
+		std::vector<std::string> args;
+		args.push_back(std::string([bundledInstaller UTF8String]));
+		args.push_back(std::string([runtime UTF8String]));
+		int exitCode = FileUtils::RunAndWait(std::string([installer UTF8String]),args);
 		NSLog(@"exit code %d",exitCode);
 	}
 	
@@ -151,7 +154,7 @@ int main(int argc, char* argv[])
 	// 1. read the application manifest to determine what's needed
 	NSString *manifestNS = [NSString stringWithFormat:@"%@/manifest",bundlePath];
 	std::string ms = std::string([manifestNS UTF8String]);
-	if (!isFile(ms))
+	if (!FileUtils::IsFile(ms))
 	{
 		NSLog(@"invalid bundle. manifest file doesn't exist at %@",manifestNS);
 		[pool release];
@@ -162,7 +165,7 @@ int main(int argc, char* argv[])
 	std::vector<std::string> moduleDirs;
 	std::string manifest([manifestNS UTF8String]);
 	std::string runtimePath;
-	readManifest(manifest,runtimePath,modules,moduleDirs);
+	FileUtils::ReadManifest(manifest,runtimePath,modules,moduleDirs);
 
 	// 2. now we're going to make sure we have our application structure setup
 	NSString *appRootDir = [NSString stringWithFormat:@"%@/app",bundlePath];
@@ -178,7 +181,7 @@ int main(int argc, char* argv[])
 	// to trick OSX into thinking that the tikernel process is our 
 	// real application bundle - which really is just a set of symlinks
 	std::string ads = std::string([appDir UTF8String]);
-	if (!isDirectory(ads) || installOnly)
+	if (!FileUtils::IsDirectory(ads) || installOnly)
 	{
 		NSFileManager *fm = [NSFileManager defaultManager];
 		[fm createDirectoryAtPath:appRootDir attributes:nil];

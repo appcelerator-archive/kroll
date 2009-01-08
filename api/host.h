@@ -10,10 +10,10 @@
 
 #include "kroll.h"
 
-class Module;
-
 namespace kroll
 {
+	class Module;
+	
 	/**
 	 * Class that is implemented by the OS to handle OS-specific
 	 * loading and unloading of Kroll.

@@ -1,5 +1,0 @@
-#!/usr/bin/env python
-Import('build')
-
-Env = build.env.Clone()
-Env.SharedLibrary(build.dir + '/common', 'common.cpp')

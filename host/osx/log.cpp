@@ -6,7 +6,7 @@
 #import <Cocoa/Cocoa.h>
 #import "log.h"
 
-NSFileHandle *Logger;
+static NSFileHandle *KrollLogger = nil;
 
 namespace kroll
 {
@@ -16,10 +16,10 @@ namespace kroll
 	//
 	void Log(NSString *message)
 	{
-	   if (tiLogger)
+	   if (KrollLogger)
 	   {
 	      NSData *data = [message dataUsingEncoding: NSUTF8StringEncoding];
-	      [tiLogger writeData:data];
+	      [KrollLogger writeData:data];
 	   }
 	}
 
@@ -36,14 +36,14 @@ namespace kroll
 	      if (strstr(e,"--console"))
 	      {
 	         // we want to log to stdout in the case of console
-	         tiLogger = [NSFileHandle fileHandleWithStandardOutput];
+	         KrollLogger = [NSFileHandle fileHandleWithStandardOutput];
 	         return;
 	      }
 	   }
 	   // ensure that the file is available 
 	   [[NSFileManager defaultManager] createFileAtPath:path contents:@"" attributes:nil];
 	   // open it
-	   Logger = [NSFileHandle fileHandleForWritingAtPath:path];
+	   KrollLogger = [NSFileHandle fileHandleForWritingAtPath:path];
 	}
 
 	//
@@ -51,8 +51,8 @@ namespace kroll
 	// 
 	void CloseLog()
 	{
-	   [Logger synchronizeFile];
-	   [Logger closeFile];
-	   [Logger release];
+	   [KrollLogger synchronizeFile];
+	   [KrollLogger closeFile];
+	   [KrollLogger release];
 	}
 }

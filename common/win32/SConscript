@@ -1,8 +1,0 @@
-#!/usr/bin/env python
-Import('build')
-
-
-Env = build.env.Clone()
-Env.Append(CPPPATH=['#common'])
-source = Glob('*.cpp')
-Env.SharedLibrary(build.dir + '/common', source = source, LIBS=['shell32'])

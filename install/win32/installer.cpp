@@ -3,12 +3,12 @@
  * see LICENSE in the root folder for details on the license.
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
+#define WIN32_LEAN_AND_MEAN
 
 #include <windows.h>
 #include <string>
 #include <vector>
-#include "common.h"
-#include "unzip.h"
+#include <api/kroll.h>
 
 using namespace kroll;
 
@@ -45,7 +45,7 @@ int WinMain(HINSTANCE, HINSTANCE, LPSTR cmdline, int)
 	std::string source = argtok.at(1);
 	std::string dest = argtok.at(2);
 
-	if (!isDirectory(dest))
+	if (!FileUtils::IsDirectory(dest))
 	{
 		CreateDirectory(dest.c_str(),0);
 	}
@@ -53,7 +53,7 @@ int WinMain(HINSTANCE, HINSTANCE, LPSTR cmdline, int)
 	std::string delimeter("-");
 
 	std::vector<std::string> files;
-	listDir(source,files);
+	FileUtils::ListDir(source,files);
 	std::vector<std::string>::iterator iter = files.begin();
 
 	while (iter!=files.end())
@@ -63,7 +63,7 @@ int WinMain(HINSTANCE, HINSTANCE, LPSTR cmdline, int)
 		if (fn.find(".zip")!=std::string::npos)
 		{
 			std::vector<std::string> tokens;
-			tokenize(fn,tokens,delimeter);
+			FileUtils::Tokenize(fn,tokens,delimeter);
 			// paranoia check
 			if (tokens.size()!=3)
 			{
@@ -105,17 +105,7 @@ int WinMain(HINSTANCE, HINSTANCE, LPSTR cmdline, int)
 				continue;
 			}
 			std::string zip(source + "\\" + fn);
-			HZIP hz = OpenZip(zip.c_str(),0);
-			SetUnzipBaseDir(hz,dir.c_str());
-			ZIPENTRY ze;
-			GetZipItem(hz,-1,&ze);
-			int numitems=ze.index;
-			for (int zi=0; zi < numitems; zi++)
-			{
-				GetZipItem(hz,zi,&ze);
-				UnzipItem(hz,zi,ze.name);
-			}
-			CloseZip(hz);
+			FileUtils::Unzip(zip,dir);
 		}
 	}
 	return 0;

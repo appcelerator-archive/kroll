@@ -23,8 +23,8 @@ if build.is_linux():
 	Env.ParseConfig('pkg-config --cflags --libs gtk+-2.0 gdk-2.0')
 
 Env.Append(CPPPATH=['#host/'+ build.os, '#.'])
-Env.Append(LIBS=['kroll','host'])
+Env.Append(LIBS=['kroll','khost'])
 if build.is_osx() or build.is_linux():
 	Env.Append(LIBS=['dl'])
 
-p = Env.Program(build.dir + '/kernel', ['main.cpp'])
+p = Env.Program(build.dir + '/kkernel', ['main.cpp'])

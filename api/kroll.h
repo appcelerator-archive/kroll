@@ -18,5 +18,6 @@
 #include "module_provider.h"
 #include "module.h"
 #include "host.h"
+#include "file_utils.h"
 
 #endif

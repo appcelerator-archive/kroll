@@ -3,8 +3,7 @@
  * see LICENSE in the root folder for details on the license.
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
-#include <api/ti_module.h>
-#include <api/config/ti_app_config.h>
+#include <api/kroll.h>
 #include <host.h>
 
 #if defined(OS_OSX)
@@ -22,7 +21,6 @@ int main(int argc, const char* argv[])
 {
 #if defined(OS_OSX)
 	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-
 	[NSApplication sharedApplication];
 #endif
 
