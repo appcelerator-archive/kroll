@@ -26,6 +26,9 @@ namespace kroll
 		~ScopedRefCounted();
 	protected:
 		RefCounted *p;
+
+	private:
+		DISALLOW_EVIL_CONSTRUCTORS(ScopedRefCounted);
 	};
 }
 #endif

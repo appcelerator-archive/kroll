@@ -33,6 +33,8 @@ namespace kroll
 	protected:
 		Host *host;
 		ModuleProvider *provider;
+	private:
+		DISALLOW_EVIL_CONSTRUCTORS(Module);
 	};
 }
 

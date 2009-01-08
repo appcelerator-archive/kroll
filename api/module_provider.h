@@ -18,6 +18,7 @@ namespace kroll
 	class EXPORT ModuleProvider
 	{
 	public:
+		ModuleProvider() {}
 		virtual ~ModuleProvider() {};
 		virtual std::string GetDescription() = 0;
 		virtual bool IsModule(std::string& filename) = 0;

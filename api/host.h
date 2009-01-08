@@ -79,6 +79,7 @@ namespace kroll
 		std::string appDirectory;
 		std::string runtimeDirectory;
 		std::string appConfigPath;
+		DISALLOW_EVIL_CONSTRUCTORS(Host);
 	};
 }
 #endif
