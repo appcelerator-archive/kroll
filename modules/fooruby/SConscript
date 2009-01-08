@@ -1,0 +1,12 @@
+#!/usr/bin/env python
+import os
+import inspect
+
+Import('build')
+
+script_dir = build.dir
+cwd = os.path.dirname(inspect.currentframe().f_code.co_filename)
+scripts = Glob(cwd + '/*.rb')
+for script in scripts:
+	p = str(script).replace(cwd + os.path.sep, '')
+	Command('%s/%s' % ( script_dir, p), p, Copy("$TARGET", "$SOURCE"))
