@@ -36,7 +36,7 @@ Env.SharedLibrary(build.dir +'/kroll', source=sources)
 Execute(Mkdir(build.include_dir))
 
 cwd = os.path.dirname(inspect.currentframe().f_code.co_filename)
-headers = Glob('*.h') + Glob('binding/*.h')
+headers = Glob('*.h') + Glob('binding/*.h') + Glob('unzip/*.h')
 for h in headers:
 	p = str(h).replace(cwd + os.path.sep, '')
 	Command('%s/%s' % (build.include_dir, p), p, Copy("$TARGET", "$SOURCE"))

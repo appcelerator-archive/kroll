@@ -54,8 +54,7 @@ extern "C" EXPORT void DestroyModule(s* p)\
 {\
 	if (p) { \
 		p->Destroy(); \
-		RefCounted *r = (RefCounted*)p; \
-		KR_DECREF(r); \
+		KR_DECREF(p); \
 	} \
 	p = 0; \
 }\
