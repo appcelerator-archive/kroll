@@ -13,8 +13,9 @@ namespace kroll
 {
 	class KROLL_API StaticBoundMethod : public BoundMethod
 	{
-	public:
+	protected:
 		virtual ~StaticBoundMethod();
+	public:
 		StaticBoundMethod(MethodCallback*);
 
 		/**
@@ -50,7 +51,9 @@ namespace kroll
 		MethodCallback* callback;
 		StaticBoundObject* object;
 		std::map<std::string, Value*> properties;
-
+		
+	private:
+		DISALLOW_EVIL_CONSTRUCTORS(StaticBoundMethod);
 	};
 }
 

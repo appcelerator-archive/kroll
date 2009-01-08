@@ -14,11 +14,13 @@ namespace kroll
 {
 	typedef Callback3<const ValueList&, Value*, BoundObject*>::Type MethodCallback;
 
+
 	class KROLL_API BoundMethod : public BoundObject
 	{
-	public:
+	protected:
 		virtual ~BoundMethod(){}
-
+	public:
+		BoundMethod() {} 
 		/**
 		 * invoke the bound method. the returned value is automatically
 		 * reference counted and you must release the reference when finished
@@ -71,6 +73,9 @@ namespace kroll
 		//NOTE: this ideally above would be an operator() overload
 		//so you could just method() invoke this function but it doesn't
 		//compile on GCC with "cannot be used as function"
+		
+	private:
+		DISALLOW_EVIL_CONSTRUCTORS(BoundMethod);
 	};
 }
 

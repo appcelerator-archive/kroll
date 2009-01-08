@@ -23,7 +23,7 @@ namespace kroll
 	void PythonValue::Set(const char *name, Value* value, BoundObject *context)
 	{
 		int result = PyObject_SetAttrString(this->object,(char*)name,ValueToPythonValue(value));
-
+		
 		PyObject *exception = PyErr_Occurred();
 		if (result == -1 && exception != NULL)
 		{

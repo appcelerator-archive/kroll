@@ -23,7 +23,7 @@ namespace kroll
 		virtual Value* Get(const char *name, BoundObject *context);
 		virtual std::vector<std::string> GetPropertyNames();
 
-		PyObject* ToPython() { return object; }
+		PyObject* ToPython() { Py_INCREF(object); return object; }
 
 	private:
 		char* name;

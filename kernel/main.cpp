@@ -35,7 +35,7 @@ int main(int argc, const char* argv[])
 	Host *host = new Win32Host(::GetModuleHandle(NULL), __argc,(const char**)__argv);
 #endif
 
-	printf("Created Host, booting...\n");
+	printf("Created host, booting...\n");
 
 	// initialize the host and setup any pre-run stuff we need
 	// returns an error or NULL if everything is OK
@@ -59,6 +59,6 @@ int main(int argc, const char* argv[])
 	[pool release];
 #endif
 
-	printf("Exit Host, byte...\n");
+	printf("Exiting Kroll, bye...\n");
 	return rc;
 }

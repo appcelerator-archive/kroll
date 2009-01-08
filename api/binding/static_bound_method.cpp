@@ -27,18 +27,31 @@ namespace kroll
 	}
 	void StaticBoundMethod::Set(const char *name, Value* value, BoundObject *context)
 	{
-		this->object->Set(name, value, context);
+		if (context!=NULL)
+		{
+			context->Set(name,value,NULL);
+		}
+		else
+		{
+			this->object->Set(name, value, context);
+		}
 	}
 
 	Value* StaticBoundMethod::Get(const char *name, BoundObject *context)
 	{
-		return this->object->Get(name, context);
+		if (context!=NULL)
+		{
+			return context->Get(name,NULL);
+		}
+		else
+		{
+			return this->object->Get(name, context);
+		}
 	}
 
 	std::vector<std::string> StaticBoundMethod::GetPropertyNames()
 	{
 		return this->object->GetPropertyNames();
 	}
-	
 }
 

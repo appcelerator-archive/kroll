@@ -24,7 +24,7 @@ namespace kroll
 		//Py_SetProgramName(); //TODO: maybe we need to setup path to script?
 		Py_Initialize();
 
-		InitializeDefaultBindings();
+		InitializeDefaultBindings(host);
 
 		host->AddModuleProvider(this);
 	}
@@ -69,6 +69,6 @@ namespace kroll
 	void PythonModule::Test()
 	{
 		PythonUnitTestSuite suite;
-		suite.Run();
+		suite.Run(host);
 	}
 }

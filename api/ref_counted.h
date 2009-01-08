@@ -20,11 +20,13 @@ namespace kroll
 	 * (reference count = 0), the object will be automatically deleted.
 	 * the methods on this object are thread-safe.
 	 */
-	class KROLL_API RefCounted
+	class KROLL_API RefCounted 
 	{
 	public:
 		RefCounted();
+	protected:
 		virtual ~RefCounted();
+	public:
 		RefCounted* AddReference(
 	#ifdef DEBUG_REFCOUNT
 			const char* fn, int ln
@@ -39,6 +41,7 @@ namespace kroll
 	private:
 		int count;
 		Mutex mutex;
+		DISALLOW_EVIL_CONSTRUCTORS(RefCounted);	
 	};
 }
 

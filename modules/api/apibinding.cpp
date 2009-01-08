@@ -12,12 +12,13 @@ namespace kroll
 	{
 		Value *version = new Value(1.0);
 		ScopedDereferencer r(version);
-		this->Set("version",version);
-		this->SetMethod("bind",&APIBinding::Bind);
-		this->SetMethod("log",&APIBinding::Log);
-		this->SetMethod("register",&APIBinding::Register);
-		this->SetMethod("unregister",&APIBinding::Unregister);
-		this->SetMethod("fire",&APIBinding::Fire);
+		this->Set((const char*)"version",version);
+		this->SetMethod("set",&APIBinding::_Set);
+		this->SetMethod("get",&APIBinding::_Get);
+		this->SetMethod("log",&APIBinding::_Log);
+		this->SetMethod("register",&APIBinding::_Register);
+		this->SetMethod("unregister",&APIBinding::_Unregister);
+		this->SetMethod("fire",&APIBinding::_Fire);
 	}
 	APIBinding::~APIBinding()
 	{
@@ -47,48 +48,63 @@ namespace kroll
 		ScopedLock lock(&mutex);
 		return this->record++;
 	}
-	void APIBinding::Bind(const ValueList& args, Value *result, BoundObject *context_local)
+	void APIBinding::_Set(const ValueList& args, Value *result, BoundObject *context_local)
 	{
-		std::string name = args.at(0)->ToString();
+		const char* key = args.at(0)->ToString().c_str();
 		Value *value = args.at(1);
-		this->Bind(name,value);
+		Value *context = args.size() == 3 ? args.at(2) : NULL;
+		BoundObject *c = context_local;
+		if (context && context->IsObject())
+		{
+			c = context->ToObject();
+		}
+		this->Set(key,value,c);
+		KR_DECREF(value);
 	}
-	void APIBinding::Log(const ValueList& args, Value *result, BoundObject *context_local)
+	void APIBinding::_Get(const ValueList& args, Value *result, BoundObject *context_local)
+	{
+		const char *key = args.at(0)->ToString().c_str();
+		Value *context = args.size() == 2 ? args.at(1) : NULL;
+		BoundObject *c = context_local;
+		if (context && context->IsObject())
+		{
+			c = context->ToObject();
+		}
+		Value *r = this->GetNS(key,c);
+		result->Set(r);
+		KR_DECREF(r);
+	}
+	void APIBinding::_Log(const ValueList& args, Value *result, BoundObject *context_local)
 	{
 		int severity = args.at(0)->ToInt();
 		std::string message = args.at(1)->ToString();
 		this->Log(severity,message);
 	}
-	void APIBinding::Register(const ValueList& args, Value *result, BoundObject *context_local)
+	void APIBinding::_Register(const ValueList& args, Value *result, BoundObject *context_local)
 	{
 		std::string event = args.at(0)->ToString();
 		BoundMethod* method = args.at(1)->ToMethod();
-		ScopedDereferencer r(method);
 		int id = this->Register(event,method);
-		result = new Value(id);
+		result->Set(id);
 	}
-	void APIBinding::Unregister(const ValueList& args, Value *result, BoundObject *context_local)
+	void APIBinding::_Unregister(const ValueList& args, Value *result, BoundObject *context_local)
 	{
-		//TODO
+		int id = args.at(0)->ToInt();
+		this->Unregister(id);
 	}
-	void APIBinding::Fire(const ValueList& args, Value *result, BoundObject *context_local)
+	void APIBinding::_Fire(const ValueList& args, Value *result, BoundObject *context_local)
 	{
 		std::string event = args.at(0)->ToString();
 		this->Fire(event,args.at(1));
 	}
-
+	
 	//---------------- IMPLEMENTATION METHODS
-
-	void APIBinding::Bind(std::string& name, Value *value)
-	{
-		ScopedLock lock(&mutex);
-		this->Set(name.c_str(),(Value*)value);
-	}
+	
 	void APIBinding::Log(int& severity, std::string& message)
 	{
 		//FIXME: this is temporary implementation
 		const char *type;
-
+	
 		switch (severity)
 		{
 			case KR_LOG_DEBUG:
@@ -107,7 +123,7 @@ namespace kroll
 				type = "CUSTOM";
 				break;
 		}
-
+	
 		std::cout << "[" << type << "] " << message << std::endl;
 	}
 	int APIBinding::Register(std::string& event,BoundMethod* callback)
@@ -122,13 +138,13 @@ namespace kroll
 		}
 		records->push_back(callback);
 		KR_ADDREF(callback);
-
+	
 		BoundEventEntry e;
 		e.method = callback;
 		e.event = event;
 		KR_ADDREF(callback);
 		this->registrationsById[record] = e;
-
+	
 		return record;
 	}
 	void APIBinding::Unregister(int id)

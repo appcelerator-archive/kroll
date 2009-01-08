@@ -8,23 +8,6 @@
 #include "pythonvalue.h"
 #include "pythonmethod.h"
 
-static PyObject* Bind(PyObject *self, PyObject *args)
-{
-	std::cout << "Python Bind called" << std::endl;
-	char *name;
-	PyObject *object;
-	if (PyArg_ParseTuple(args,"sO",&name,&object))
-	{
-		std::cout << "binding python object: " << name << std::endl;
-		kroll::PythonModule *python_module = kroll::PythonModule::Instance();
-		Value* v = kroll::PythonValueToValue(object,name);
-		python_module->GetHost()->GetGlobalObject()->Set(name,v);
-	}
-	//FIXME - error handling
-	Py_INCREF(Py_None);
-    return Py_None;
-}
-
 namespace kroll
 {
 	std::string PythonStringToString(PyObject* value)
@@ -63,50 +46,46 @@ namespace kroll
 		return 0.0;
 	}
 
-	//PyObject* wrapper_class;
-
-	// static PyObject*
-	// BoundObjectWrapper_MethodMissing(int argc, PyObject* *argv, PyObject* self) {
-	// 	// BoundObject* value = NULL;
-	// 	// Data_Get_Struct(self, BoundObject, value);
-	// 	//
-	// 	// if (value != NULL) {
-	// 	// 	PyObject* method = rb_funcall(*argv, rb_intern("to_s"), 0);
-	// 	// 	method = rb_funcall(method, rb_intern("downcase"), 0);
-	// 	// 	const char *method_name = StringValueCStr(method);
-	// 	//
-	// 	// 	ArgList args;
-	// 	// 	for (int i = 1; i < argc; i++) {
-	// 	// 		args.push_back(PythonValueToValue(argv[i]));
-	// 	// 	}
-	// 	// 	ReturnValue *returnValue = value->Call(method_name, args);
-	// 	// }
-	// 	// return Qnil;
-	// 	return 0;
-	// }
-
-	static PyMethodDef meth[] = {
-		{"tiBind", &Bind, METH_VARARGS, "bind an object"},
-		{NULL}
-	};
-
-	void InitializeDefaultBindings ()
+	void InitializeDefaultBindings (Host *host)
 	{
 		PyObject* mod = PyImport_ImportModule("__builtin__");
 
 		if (mod)
 		{
-			for (int i = 0; i < 1; ++i)
+			// we bind the special module "api" to the global
+			// variable defined in PRODUCT_NAME to give the 
+			// Python runtime access to it
+			Value *api = host->GetGlobalObject()->Get("api");
+			if (api->IsObject())
 			{
-				std::cout << "+++ binding: " << meth[i].ml_name << std::endl;
-				PyObject_SetAttrString(mod, meth[i].ml_name, PyCFunction_New(&meth[i], NULL));
+				// we're going to clone the methods from api into our
+				// own python scoped object
+				BoundObject *bo = api->ToObject();
+				StaticBoundObject *scope = new StaticBoundObject();
+				std::vector<std::string> keys = bo->GetPropertyNames();
+				std::vector<std::string>::iterator iter = keys.begin();
+				while(iter!=keys.end())
+				{
+					std::string key = (*iter++);
+					const char *name = (const char*)key.c_str();
+					Value *value = bo->Get(name,NULL);
+					scope->Set(name,value);
+					std::cout << "binding: " << name << " = " << value->ToTypeString() << std::endl;
+					//KR_DECREF(value);
+				}
+				PyObject *pyapi = BoundObjectToPythonValue(NULL,NULL,scope);
+				PyObject_SetAttrString(mod,PRODUCT_NAME,pyapi);
+				// now bind our new scope to python module
+				Value *scopeRef = new Value(scope);
+				host->GetGlobalObject()->Set((const char*)"python",scopeRef);
+				//KR_DECREF(scopeRef);
+				// don't release the scope
 			}
-
 			Py_DECREF(mod);
 		}
 	}
-
-
+	
+	//FIXME
 	PyObject* ValueListToPythonArray(const ValueList& list)
 	{
 
@@ -130,7 +109,6 @@ namespace kroll
 	{
 		void *sp = PyCObject_AsVoidPtr(s);
 		BoundMethod *method = static_cast<BoundMethod*>(sp);
-		std::cout << "method => " << (void*)method << " with " << PyTuple_Size(args) << " args" << std::endl;
 		ValueList a;
 		try
 		{
@@ -140,13 +118,14 @@ namespace kroll
 				a.push_back(PythonValueToValue(arg,NULL));
 			}
 			Value* result = method->Call(a,NULL);
-			std::cout << "result = " << result->ToTypeString() << std::endl;
+			ScopedDereferencer r(result);
 			return ValueToPythonValue(result);
 		}
 		catch (Value *ex)
 		{
 			PyErr_SetObject(PyExc_Exception,ValueToPythonValue(ex));
 			Py_INCREF(Py_None);
+			KR_DECREF(ex);
 			return Py_None;
 		}
 	}
@@ -190,7 +169,6 @@ namespace kroll
 		}
 		if (value->IsObject()) {
 			BoundObject *obj = value->ToObject();
-			std::cout << "type id of python object => " << typeid(obj).name() << std::endl;
 			if (typeid(obj) == typeid(PythonValue*))
 			{
 				return ((PythonValue*)obj)->ToPython();
@@ -216,8 +194,8 @@ namespace kroll
 
 	static void PyBoundObject_dealloc(PyObject* self)
 	{
-		std::cout << "PyBoundObject_dealloc called" << std::endl;
 		PyBoundObject *boundSelf = (PyBoundObject*)self;
+//		std::cout << "PyBoundObject_dealloc called for " <<(void*)boundSelf << std::endl;
 		KR_DECREF(boundSelf->object);
 		PyObject_Del(self);
 	}
@@ -225,10 +203,8 @@ namespace kroll
 	PyObject* PyBoundObject_getattr(PyObject *self, char *name)
 	{
 		PyBoundObject *boundSelf = reinterpret_cast<PyBoundObject*>(self);
-		std::cout << "PyBoundObject_getattr = 0x" << (void*)self << ", name=" << name << std::endl;
-		std::cout << "PyBoundObject_getattr = 0x" << (void*)boundSelf->object << std::endl;
+//		std::cout << "PyBoundObject_getattr called with " << name << " for " << (void*)boundSelf << std::endl;
 		Value* result = boundSelf->object->Get(name,NULL);
-		std::cout << "after invoke" << std::endl;
 		return ValueToPythonValue(result);
 	}
 
@@ -249,6 +225,7 @@ namespace kroll
 			BoundMethod *method = result->ToMethod();
 			ValueList args;
 			Value* toString = method->Call(args,NULL);
+			ScopedDereferencer r(toString);
 			if (toString->IsString())
 			{
 				return PyString_FromString(toString->ToString().c_str());
@@ -295,6 +272,7 @@ namespace kroll
 		PyBoundObject* obj;
 		obj = PyObject_New(PyBoundObject, &PyBoundObjectType);
 		obj->object = bo;
+//		std::cout << "created py object: " << (void*)obj << std::endl;
 		KR_ADDREF(obj->object);
 		return (PyObject*)obj;
 	}
@@ -366,7 +344,6 @@ namespace kroll
 		}
 		if (PyObject_TypeCheck(value,&PyBoundObjectType))
 		{
-			std::cout << "python object is a PyBoundObjectType" << std::endl;
 			PyBoundObject *o = reinterpret_cast<PyBoundObject*>(value);
 			Value* tiv = new Value(o->object);
 			return tiv;

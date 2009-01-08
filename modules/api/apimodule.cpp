@@ -72,7 +72,8 @@ namespace kroll
 		std::string msg("hello");
 		int severity = KR_LOG_DEBUG;
 
-		BoundMethod *logMethod = binding->Get("log")->ToMethod();
+		Value *logMethodValue = binding->Get("log");
+		BoundMethod *logMethod = logMethodValue->ToMethod();
 		KR_ASSERT(logMethod);
 
 		ValueList args;
@@ -82,46 +83,48 @@ namespace kroll
 		Value *mv = new Value(msg);
 		ScopedRefCounted s2(mv);
 		args.push_back(mv);
-
+		
 		// invoke directly against interface
 		binding->Log(severity,msg);
-
+		
 		// invoke with ValueList
 		logMethod->Call(args,NULL);
-
+		
 		// invoke with varargs
-		logMethod->Call(new Value(KR_LOG_DEBUG),new Value(msg));
-
+		logMethod->Call(sv,mv);
+		
 		Value *v = new Value(1);
-		std::string name = std::string("foo");
-		binding->Bind(name,v);
+		binding->Set("foo",v);
 		Value *vr = binding->Get("foo");
 		KR_ASSERT(v->ToInt() == vr->ToInt());
 		KR_DECREF(v);
 		KR_DECREF(vr);
-
+		
 		// TEST retrieving the value from a namespaced string
-		Value* foo = host->GetGlobalObject()->GetNS("api.foo");
+		Value* foo = host->GetGlobalObject()->GetNS("api.foo",NULL);
 		KR_ASSERT(foo->ToInt()==1);
 		KR_DECREF(foo);
-
+		
 		// TEST registering an event handler and then receiving it
 		// once it's fired
 		std::string event("kr.api.log");
-		TestClass testObject;
-		int ref = binding->Register(event,&testObject);
-		Value data("some data here");
-		binding->Fire(event,&data);
-		KR_ASSERT_STR(testObject.Event().c_str(),"kr.api.log");
-		KR_ASSERT_STR(testObject.Message().c_str(),"some data here");
-
-		testObject.Reset();
-
+		TestClass* testObject = new TestClass;
+		int ref = binding->Register(event,testObject);
+		Value* data = new Value("some data here");
+		ScopedDereferencer dr(data);
+		ScopedDereferencer tod(testObject);
+		
+		binding->Fire(event,data);
+		KR_ASSERT_STR(testObject->Event().c_str(),"kr.api.log");
+		KR_ASSERT_STR(testObject->Message().c_str(),"some data here");
+		
+		testObject->Reset();
+		
 		// TEST unregister and then refire -- we shouldn't receive it
 		binding->Unregister(ref);
-
-		binding->Fire(event,&data);
-		KR_ASSERT_STR(testObject.Event().c_str(),"");
-		KR_ASSERT_STR(testObject.Message().c_str(),"");
+		
+		binding->Fire(event,data);
+		KR_ASSERT_STR(testObject->Event().c_str(),"");
+		KR_ASSERT_STR(testObject->Message().c_str(),"");
 	}
 }

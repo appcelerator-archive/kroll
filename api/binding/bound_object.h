@@ -23,11 +23,12 @@ namespace kroll
 			KR_ADDREF(scope); 
 		}
 		BoundObject() : scope(NULL) {}
+	protected:
 		virtual ~BoundObject() 
 		{
 			KR_DECREF(scope);
 		}
-
+	public:
 		/**
 		 * Set a property on this object to the given value. Value should be
 		 * heap-allocated as implementors are allowed to keep a reference,
@@ -49,7 +50,7 @@ namespace kroll
 		 */
 		virtual std::vector<std::string> GetPropertyNames() = 0;
 
-		Value* GetNS(const char *name)
+		Value* GetNS(const char *name, BoundObject* context = NULL)
 		{
 			std::string s(name);
 			std::string::size_type last = 0;
@@ -59,7 +60,7 @@ namespace kroll
 			while (pos != std::string::npos) 
 			{
 				std::string token = s.substr(last,pos);
-				current = scope->Get(token.c_str(),NULL);
+				current = scope->Get(token.c_str(),context);
 				last = pos + 1;
 			    pos = s.find_first_of(".", last);
 				if (!current->IsObject())
@@ -71,13 +72,16 @@ namespace kroll
 			if (pos!=s.length())
 			{
 				std::string token = s.substr(last);
-				current = scope->Get(token.c_str(),NULL);
+				current = scope->Get(token.c_str(),context);
 			}
 			return current;
 		}
 
 	protected:
 		BoundObject *scope;
+		
+	private:
+		DISALLOW_EVIL_CONSTRUCTORS(BoundObject);
 	};
 }
 

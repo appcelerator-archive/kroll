@@ -12,8 +12,10 @@ namespace kroll
 {
 	class KROLL_API BoundList : public BoundObject
 	{
-	public:
+	protected:
 		virtual ~BoundList(){}
+	public:
+		BoundList() {}
 
 		/**
 		 * Append a value to this list. Value should be heap-allocated as 
@@ -57,6 +59,8 @@ namespace kroll
 		 */
 		virtual std::vector<std::string> GetPropertyNames() = 0;
 
+	private:
+		DISALLOW_EVIL_CONSTRUCTORS(BoundList);
 	};
 }
 
