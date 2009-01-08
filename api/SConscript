@@ -1,0 +1,28 @@
+#!/usr/bin/env python
+import os, inspect
+
+Import('build')
+
+Env = build.env.Clone()
+Env.Append(CPPDEFINES={'KROLL_API_EXPORT': 1})
+
+if build.is_win32():
+	Env.Append(LIBS=['libxml2', 'pthreadVC2'])
+else:
+	if os.environ.has_key('PKG_CONFIG_PATH'):
+		Env.AppendENVPath('PKG_CONFIG_PATH', os.environ['PKG_CONFIG_PATH'])
+	Env.ParseConfig('pkg-config --cflags --libs libxml-2.0')
+
+sources=Glob('*.cpp')
+sources.extend(Glob('config/*.cpp'))
+sources.extend(Glob('binding/*.cpp'))
+Env.SharedLibrary(build.dir +'/kroll', source=sources)
+
+includes_dir = '#build/include/kroll'
+Execute(Mkdir(includes_dir))
+
+cwd = os.path.dirname(inspect.currentframe().f_code.co_filename)
+headers = Glob('*.h') + Glob('binding/*.h')
+for h in headers:
+	p = str(h).replace(cwd + os.path.sep, '')
+	Command('%s/%s' % (includes_dir, p), p, Copy("$TARGET", "$SOURCE"))
