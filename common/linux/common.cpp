@@ -17,7 +17,7 @@ namespace kroll
 	bool isWritable(std::string& path)
 	{
 		int rc = access(path.c_str(), W_OK);
-	   return rc == 0;	
+		return rc == 0;	
 	}
 	std::string getRuntimeBaseDir()
 	{
@@ -27,7 +27,7 @@ namespace kroll
 		p.append(PRODUCT_NAME);
 		if (uid.find("root")!=std::string::npos || isWritable(p))
 		{
-			return p;		
+			return p;
 		}
 		passwd *user = getpwnam(uid.c_str());
 		char *home = user->pw_dir;
@@ -55,18 +55,18 @@ namespace kroll
 	#define MAX_PATH 255
 	std::string getExecutableDirectory()
 	{
-	 	char szTmp[50];
-	   sprintf(szTmp,"/proc/%d/exe",getpid());
-	   char pbuf[MAX_PATH];
-	   int c = readlink(szTmp,pbuf,MAX_PATH);
-	   pbuf[c]='\0';
+		char szTmp[50];
+		sprintf(szTmp,"/proc/%d/exe",getpid());
+		char pbuf[MAX_PATH];
+		int c = readlink(szTmp,pbuf,MAX_PATH);
+		pbuf[c]='\0';
 		std::string str(pbuf);
 		size_t pos = str.rfind("/");
 		if (pos==std::string::npos)
 		{
 			return str;
 		}
-	  	return str.substr(0,pos);
+		return str.substr(0,pos);
 	}
 	std::string findRuntime(int op, std::string& version)
 	{
@@ -80,6 +80,6 @@ namespace kroll
 		base.append("/modules/");
 		base.append(name);
 		return findVersioned(base,op,version);
-	}	
+	}
 }
 

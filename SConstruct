@@ -29,6 +29,7 @@ class BuildConfig(object):
 build = BuildConfig()
 
 
+build.include_dir = path.abspath(path.join('build', 'include', 'kroll'))
 build.env = Environment(
     CPPDEFINES = {
                   'OS_' + build.os.upper(): 1,
@@ -59,25 +60,17 @@ if build.is_win32():
 if build.is_linux() or build.is_osx():
     build.env.Append(CPPFLAGS=['-Wall', '-Werror','-fno-common'])
 
-
 if build.is_osx():
 	OSX_SDK = '/Developer/SDKs/MacOSX10.4u.sdk'
 	OSX_UNIV_COMPILER = '-isysroot '+OSX_SDK+' -arch i386'
 	OSX_UNIV_LINKER = '-isysroot '+OSX_SDK+' -syslibroot,'+OSX_SDK
 	build.env.Append(CXXFLAGS=OSX_UNIV_COMPILER)
 	build.env.Append(LDFLAGS=OSX_UNIV_LINKER)
-	
-BUILD_DIR = build.dir
-OS = build.os
-Env = build.env
+
 
 Export ('build')
-Export ('Env')
-Export ('OS')
-Export ('BUILD_DIR')
-
 SConscript('api/SConscript', build_dir=build.dir + '/api', duplicate=0)
-#SConscript('common/SConscript')
+SConscript('common/SConscript')
 #SConscript('boot/SConscript')
 #SConscript('host/SConscript')
 #SConscript('install/SConscript')

@@ -3,8 +3,8 @@
  * see LICENSE in the root folder for details on the license. 
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
-#ifndef __COMMON_H
-#define __COMMON_H
+#ifndef _COMMON_H_
+#define _COMMON_H_
 
 #include <string>
 #include <stdio.h>

@@ -18,11 +18,10 @@ sources.extend(Glob('config/*.cpp'))
 sources.extend(Glob('binding/*.cpp'))
 Env.SharedLibrary(build.dir +'/kroll', source=sources)
 
-includes_dir = '#build/include/kroll'
-Execute(Mkdir(includes_dir))
+Execute(Mkdir(build.include_dir))
 
 cwd = os.path.dirname(inspect.currentframe().f_code.co_filename)
 headers = Glob('*.h') + Glob('binding/*.h')
 for h in headers:
 	p = str(h).replace(cwd + os.path.sep, '')
-	Command('%s/%s' % (includes_dir, p), p, Copy("$TARGET", "$SOURCE"))
+	Command('%s/%s' % (build.include_dir, p), p, Copy("$TARGET", "$SOURCE"))

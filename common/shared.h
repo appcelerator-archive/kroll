@@ -3,16 +3,19 @@
  * see LICENSE in the root folder for details on the license.
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
-//
-// NOTE: don't include shared.h directly - it is used to pull in
-//       common platform code within the common platform library
-//
+
+/* NOTE: don't include shared.h directly - it is used to pull in
+ *      common platform code within the common platform library
+ */
+
+#ifndef _SHARED_H_
+#define _SHARED_H_
+
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <vector>
 #include <algorithm>
-
 
 #ifdef OS_WIN32
 #define PATH_SEP "\\"
@@ -22,8 +25,6 @@
 #include <sys/stat.h>
 #include <pwd.h>
 #endif
-
-using namespace kroll;
 
 #define EqualTo 0
 #define GreaterThanEqualTo 1
@@ -272,7 +273,9 @@ namespace kroll
 		}
 	#endif
 	}	
-}
-
 
 #endif
+}
+
+#endif
+
