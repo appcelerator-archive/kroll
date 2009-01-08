@@ -51,15 +51,7 @@ namespace kroll
 
 	const char* Host::Init()
 	{
-		this->appConfigPath = std::string(this->appDirectory);
-	#ifdef OS_WIN32
-		this->appConfigPath.append("\\");
-	#else
-		this->appConfigPath.append("/");
-	#endif
-		this->appConfigPath.append(this->GetApplicationConfigRelativePath());
-		TiAppConfig::Init((std::string&)this->GetApplicationConfig());
-		return TiAppConfig::Instance()->GetError();
+        return "";
 	}
 
 	void Host::RegisterModule(std::string& path, Module* module) {
