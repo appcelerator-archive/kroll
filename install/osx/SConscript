@@ -1,0 +1,14 @@
+#!/usr/bin/env python
+Import('build')
+
+
+OSX_SDK = '/Developer/SDKs/MacOSX10.4u.sdk'
+OSX_UNIV_COMPILER = '-isysroot '+OSX_SDK+' -arch ppc -arch i386'
+OSX_UNIV_LINKER = '-isysroot '+OSX_SDK+' -syslibroot,'+OSX_SDK
+
+Env = build.env.Clone()
+Env.Append(FRAMEWORKS=['Foundation'])
+Env.Append(CPPPATH=['#common/osx'])
+Env.Append(CCFLAGS=OSX_UNIV_COMPILER)
+Env.Append(LDFLAGS=OSX_UNIV_LINKER)
+Env.Program(build.dir + '/install', ['installer.mm', '#common/osx/common.mm'])
