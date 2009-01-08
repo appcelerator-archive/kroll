@@ -8,9 +8,6 @@
  *      common platform code within the common platform library
  */
 
-#ifndef _SHARED_H_
-#define _SHARED_H_
-
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -48,7 +45,6 @@ namespace kroll
 	extern std::string findModule(std::string name, int op, std::string& version);
 
 	#ifndef SHARED_INTERFACES
-
 	std::string trim(std::string str)
 	{
 		std::string c(str);
@@ -276,6 +272,4 @@ namespace kroll
 
 #endif
 }
-
-#endif
 

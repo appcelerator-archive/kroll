@@ -3,15 +3,15 @@
  * see LICENSE in the root folder for details on the license. 
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
-#ifndef _COMMON_H_
-#define _COMMON_H_
-
 #import <Foundation/Foundation.h>
 #import <api/base.h>
 
 #define SHARED_INTERFACES
 #include "../shared.h"
 #undef SHARED_INTERFACES
+
+#ifndef _COMMON_H_
+#define _COMMON_H_
 
 namespace kroll
 {

@@ -3,12 +3,12 @@
  * see LICENSE in the root folder for details on the license.
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
-#ifndef _PYTHON_PLUGIN_H
-#define _PYTHON_PLUGIN_H
+#ifndef _PYTHON_MODULE_H
+#define _PYTHON_MODULE_H
 
-#include <api/ti_module.h>
-#include <api/ti_host.h>
-#include <api/ti_module_provider.h>
+#include <api/module.h>
+#include <api/host.h>
+#include <api/module_provider.h>
 #include <string>
 #include <Python.h>
 

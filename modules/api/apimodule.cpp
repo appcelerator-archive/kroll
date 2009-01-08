@@ -107,7 +107,7 @@ namespace kroll
 		// TEST registering an event handler and then receiving it
 		// once it's fired
 		std::string event("kr.api.log");
-		TiTestClass testObject;
+		TestClass testObject;
 		int ref = binding->Register(event,&testObject);
 		Value data("some data here");
 		binding->Fire(event,&data);

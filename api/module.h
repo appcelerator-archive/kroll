@@ -9,19 +9,18 @@
 #include "ref_counted.h"
 #include "module_provider.h"
 
-class Module;
-class Host;
-
 namespace kroll
 {
+	class Host;
+
 	/**
 	 * an interface that exposes a Kroll Module
 	 */
 	class KROLL_API Module : public RefCounted
 	{
 	public:
-		Module(Host *host);
-		virtual ~Module();
+		Module(Host *host) : host(host) {} 
+		virtual ~Module() {}
 
 		virtual const char * GetName() = 0;
 		virtual void Initialize() = 0;
@@ -42,7 +41,7 @@ namespace kroll
 // and implement a module
 //
 
-
+using namespace kroll;
 #define KROLL_MODULE_FACTORY_DEFINE(s) extern "C" EXPORT s* CreateModule(Host *host) \
 { \
 	s *p = new s(host);\
@@ -66,13 +65,13 @@ const char* s::GetName() \
 typedef void* ModuleMethod;
 
 #define KROLL_MODULE_CLASS(s) public: \
-s(Host *host); \
+s(kroll::Host *host); \
 virtual ~s(); \
 const char* GetName(); \
 void Initialize (); \
 void Destroy ();
 
-#define KROLL_MODULE_CONSTRUCTOR(s) s::s(Host *_host) : Module(_host)
+#define KROLL_MODULE_CONSTRUCTOR(s) s::s(Host *_host) : kroll::Module(_host)
 #define KROLL_MODULE_DESTRUCTOR(s) s::~s()
 
 
