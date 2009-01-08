@@ -10,7 +10,6 @@
 #include <windows.h>
 #include <commctrl.h>
 #include "host.h"
-#include "common.h"
 #include <api/kroll.h>
 
 namespace kroll
@@ -29,7 +28,7 @@ namespace kroll
 	{
 		std::string p(getenv("KR_PLUGINS"));
 		std::string delimiter(";");
-		tokenize(p,this->module_paths,delimiter);
+		FileUtils::Tokenize(p,this->module_paths,delimiter);
 
 	}
 

@@ -7,6 +7,9 @@
 
 #ifdef OS_OSX
 #include <Cocoa/Cocoa.h>
+#elif defined(OS_WIN32)
+#include <windows.h>
+#include <shlobj.h>
 #endif
 
 namespace kroll
@@ -25,7 +28,7 @@ namespace kroll
 		return found && !isDir;
 #elif OS_WIN32
 		WIN32_FIND_DATA findFileData;
-		HANDLE hFind = FindFirstFile(str.c_str(), &findFileData);
+		HANDLE hFind = FindFirstFile(file.c_str(), &findFileData);
 		if (hFind != INVALID_HANDLE_VALUE)
 		{
 			bool yesno = (findFileData.dwFileAttributes & 0x00000000) == 0x00000000;
@@ -370,7 +373,7 @@ namespace kroll
 		[cmnd release];
 		cmnd = nil;
 		return status;
-#elif OS_LINUX
+#elif defined(OS_LINUX)
 		std::string p(path);
 		std::vector<std::string>::iterator i = args.begin();
 		while (i!=args.end())
@@ -379,6 +382,16 @@ namespace kroll
 			p+=(*i++);
 		}
 		return system(p.c_str());
+#elif defined(OS_WIN32)
+		const char **argv = new const char*[args.size()];
+		std::vector<std::string>::iterator i = args.begin();
+		int idx = 0;
+		while (i!=args.end())
+		{
+			argv[idx++] = (*i++).c_str();
+		}
+
+		return _spawnvp(_P_WAIT, path.c_str(), argv);
 #endif
 	}
 	void FileUtils::Unzip(std::string& source, std::string& destination)

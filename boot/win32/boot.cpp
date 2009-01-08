@@ -10,11 +10,75 @@
 #include <vector>
 #include <process.h>
 #include <iostream>
-#include "common.h"
+#include <api/kroll.h>
 
 using namespace kroll;
 
 #define alert(s) MessageBox(NULL,s,"DEBUG",MB_OK)
+
+std::string getExecutableDirectory()
+{
+  char path[MAX_PATH];
+  GetModuleFileName(NULL,path,MAX_PATH);
+  std::string p(path);
+  std::string::size_type pos = p.rfind("\\");
+  if (pos!=std::string::npos)
+  {
+    return p.substr(0,pos);
+  }
+  return p;
+}
+
+std::string getRuntimeBaseDir()
+{
+  char path[MAX_PATH];
+  std::string dir;
+  if (SHGetSpecialFolderPath(NULL,path,CSIDL_COMMON_APPDATA,FALSE))
+  {
+    dir.append(path);
+    dir.append("\\");
+    dir.append(PRODUCT_NAME);
+  }
+  else if (SHGetSpecialFolderPath(NULL,path,CSIDL_APPDATA,FALSE))
+  {
+    dir.append(path);
+    dir.append("\\");
+    dir.append(PRODUCT_NAME);
+  }
+  return dir;
+}
+
+bool isFile(std::string& str)
+{
+  WIN32_FIND_DATA findFileData;
+  HANDLE hFind = FindFirstFile(str.c_str(), &findFileData);
+  if (hFind != INVALID_HANDLE_VALUE)
+  {
+    bool yesno = (findFileData.dwFileAttributes & 0x00000000) == 0x00000000;
+    FindClose(hFind);
+    return yesno;
+  }
+  return false;
+}
+
+bool isDirectory(std::string& dir)
+{
+  WIN32_FIND_DATA findFileData;
+  HANDLE hFind = FindFirstFile(dir.c_str(), &findFileData);
+  if (hFind != INVALID_HANDLE_VALUE)
+  {
+    bool yesno = (findFileData.dwFileAttributes & 0x00000010) == 0x00000010;
+    FindClose(hFind);
+    return yesno;
+  }
+  return false;
+}
+
+bool isRuntimeInstalled()
+{
+  std::string dir = getRuntimeBaseDir();
+  return isDirectory(dir);
+}
 
 #ifdef WIN32_CONSOLE
 int main (int argc, char **argv)
@@ -85,7 +149,7 @@ int WinMain(HINSTANCE, HINSTANCE, LPSTR cl, int show)
 	std::vector<std::string> modules;
 	std::vector<std::string> moduleDirs;
 	std::string runtimePath;
-	readManifest(c,runtimePath,modules,moduleDirs);
+	FileUtils::ReadManifest(c,runtimePath,modules,moduleDirs);
 
 	std::cout << "Read manifest ? " << std::endl;
 
