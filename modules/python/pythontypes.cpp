@@ -70,15 +70,14 @@ namespace kroll
 					const char *name = (const char*)key.c_str();
 					Value *value = bo->Get(name,NULL);
 					scope->Set(name,value);
-					std::cout << "binding: " << name << " = " << value->ToTypeString() << std::endl;
-					//KR_DECREF(value);
+					KR_DECREF(value);
 				}
 				PyObject *pyapi = BoundObjectToPythonValue(NULL,NULL,scope);
 				PyObject_SetAttrString(mod,PRODUCT_NAME,pyapi);
 				// now bind our new scope to python module
 				Value *scopeRef = new Value(scope);
 				host->GetGlobalObject()->Set((const char*)"python",scopeRef);
-				//KR_DECREF(scopeRef);
+				KR_DECREF(scopeRef);
 				// don't release the scope
 			}
 			Py_DECREF(mod);
