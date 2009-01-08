@@ -4,6 +4,7 @@
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
 #include "apimodule.h"
+#include <string.h>
 #include <iostream>
 #include <vector>
 

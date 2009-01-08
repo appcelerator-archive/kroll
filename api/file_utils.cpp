@@ -5,7 +5,9 @@
  */
 #include "file_utils.h"
 
+#ifdef OS_OSX
 #include <Cocoa/Cocoa.h>
+#endif
 
 namespace kroll
 {
@@ -33,7 +35,7 @@ namespace kroll
 		return false;
 #elif OS_LINUX
 		struct stat st;
-		return (stat(str.c_str(),&st)==0) && S_ISREG(st.st_mode);
+		return (stat(file.c_str(),&st)==0) && S_ISREG(st.st_mode);
 #endif
 	}
 
@@ -104,7 +106,8 @@ namespace kroll
 		std::string p(INSTALL_PREFIX);
 		p.append("/");
 		p.append(PRODUCT_NAME);
-		if (uid.find("root")!=std::string::npos || isWritable(p))
+		bool writable = (access(p.c_str(),W_OK)) == 0;
+		if (uid.find("root")!=std::string::npos || writable)
 		{
 			return p;
 		}
@@ -369,6 +372,7 @@ namespace kroll
 		return status;
 #elif OS_LINUX
 		std::string p(path);
+		std::vector<std::string>::iterator i = args.begin();
 		while (i!=args.end())
 		{
 			p+=" ";

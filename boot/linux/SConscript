@@ -2,5 +2,4 @@
 Import('build')
 
 Env = build.env.Clone()
-Env.Append(CPPPATH='#common/linux')
-Env.Program(build.dir + '/boot', ['boot.cpp'],LIBS=['kroll'])
+Env.Program(build.dir + '/kboot', ['boot.cpp'],LIBS=['kroll'])

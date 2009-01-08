@@ -13,6 +13,9 @@ else:
 		Env.AppendENVPath('PKG_CONFIG_PATH', os.environ['PKG_CONFIG_PATH'])
 	Env.ParseConfig('pkg-config --cflags --libs libxml-2.0')
 
+if build.is_linux():
+   Env.Append(LIBS=['pthread'])
+
 if build.is_osx():
     OSX_SDK = '/Developer/SDKs/MacOSX10.4u.sdk'
     OSX_UNIV_COMPILER = '-isysroot '+OSX_SDK+' -arch i386'

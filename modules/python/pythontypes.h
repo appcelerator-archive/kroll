@@ -6,6 +6,7 @@
 #ifndef PYTHON_TYPES_H_
 #define PYTHON_TYPES_H_
 
+#include <typeinfo>
 #include <Python.h>
 #include <api/binding/binding.h>
 

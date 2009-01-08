@@ -3,7 +3,6 @@
  * see LICENSE in the root folder for details on the license. 
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
-#include "common.h"
 #include <vector>
 #include <iostream>
 #include <algorithm>
@@ -11,37 +10,49 @@
 #include <dirent.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <api/kroll.h>
 
 using namespace kroll;
+
+std::string getExecutableDirectory()
+{
+	char tmp[100];
+	sprintf(tmp,"/proc/%d/exe",getpid());
+	char pbuf[255];
+	int c = readlink(tmp,pbuf,255);
+	pbuf[c]='\0';
+	std::string str(pbuf);
+	size_t pos = str.rfind("/");
+	if (pos==std::string::npos) return str;
+	return str.substr(0,pos);
+}
 
 int main(int argc, char* argv[], char* environ[])
 {
 	std::string cwd = getExecutableDirectory();
-	std::string runtimeDir = getRuntimeBaseDir();
+	std::string runtimeDir = FileUtils::GetRuntimeBaseDirectory();
 
-	if (!isRuntimeInstalled())
+	if (!FileUtils::IsRuntimeInstalled())
 	{
 		std::string installer = std::string(cwd);
 		installer.append("/installer");
-		if (!isDirectory(installer))
+		if (!FileUtils::IsDirectory(installer))
 		{
 			fprintf(stderr,"invalid installation. installer path doesn't exist at: %s\n",installer.c_str());
 			return __LINE__;
 		}	
 		std::string binary = std::string(installer);
 		binary.append("/install");
-		if (!isFile(binary))
+		if (!FileUtils::IsFile(binary))
 		{
 			fprintf(stderr,"invalid installation. installer file doesn't exist at: %s\n",binary.c_str());
 			return __LINE__;
 		}
 		std::string cmdline = std::string(binary);
-		cmdline.append(" ");
-		cmdline.append(installer);
-		cmdline.append(" ");
-		cmdline.append(runtimeDir);
-		int result = system(cmdline.c_str());
-		KR_UNUSED(result); //TODO: should we check result?
+		std::vector<std::string> args;
+		args.push_back(installer);
+		args.push_back(runtimeDir);
+		FileUtils::RunAndWait(cmdline,args);
 	}
 
 	// 1. read the application manifest to determine what's needed
@@ -50,7 +61,7 @@ int main(int argc, char* argv[], char* environ[])
 	std::vector<std::string> modules;
 	std::vector<std::string> moduleDirs;
 	std::string runtimePath;
-	readManifest(c,runtimePath,modules,moduleDirs);
+	FileUtils::ReadManifest(c,runtimePath,modules,moduleDirs);
 
 	// 2. setup the environment and get ready to launch our runtime
 	std::string runtimeExec = std::string(runtimePath);
@@ -106,7 +117,7 @@ int main(int argc, char* argv[], char* environ[])
 	std::cout << "KR_HOME=" << cwd << std::endl;
 	std::cout << "KR_RUNTIME=" << runtimeDir << std::endl;
 	
-    int rc = execve(runtimeExec.c_str(),argv,env);
+   int rc = execve(runtimeExec.c_str(),argv,env);
 	if (rc < 0)
 	{
 		// failed to launch, most likely path problem

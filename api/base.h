@@ -35,6 +35,15 @@
 
 #define PRODUCT_NAME STRING(_PRODUCT_NAME)
 
+#ifndef _INSTALL_PREFIX
+  #define _INSTALL_PREFIX "/usr/local"
+#endif
+
+#ifndef INSTALL_PREFIX
+  #define INSTALL_PREFIX STRING(_INSTALL_PREFIX)
+#endif
+
+
 #ifdef DEBUG_REFCOUNT
 	#define KR_ADDREF_RETURNING(t,o) (o!=NULL) ? (t)o->AddReference(__FILE__,__LINE__) : NULL
 	#define KR_ADDREF(o) \
