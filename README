@@ -1,1 +1,98 @@
-Kroll is the pyrometallurgical industrial process used to produce kroll. It's a microkernel.
+Kroll is the pyrometallurgical industrial process used to produce titanium. 
+It's a microkernel.
+
+ _              _ _ 
+| | ___ __ ___ | | |
+| |/ / '__/ _ \| | |
+|   <| | | (_) | | |
+|_|\_\_|  \___/|_|_|
+
+
+Kroll is a compact microkernel written in C++ for running pluggable
+modules. Kroll supports a cross-language, cross-platform "binding"
+and invocation framework which supports mixing and matching 
+code within the Kroll kernel.
+
+Currently, Kroll supports the following languages:
+
+- C/C++
+- Python
+- Ruby
+- Javascript
+
+However, any C/C++ exposed language which supports embedding most likely
+can be supported with not much effort. These languages are on the 
+target list to be added soon:
+
+- PHP
+- Java
+- LUA
+
+Kroll is broken into a few small components which compose the 
+entire microkernel:
+
+- KBoot
+
+KBoot is responsible for starting the microkernel and finding the
+runtime and modules using the application manifest.
+
+- KInstall
+
+KInstall is responsible for self-installing the runtime so that 
+applications can run with a bundled runtime/modules.
+
+- KKernel
+
+KKernel is launched by KBoot once the runtime and modules have been
+resolved and the environment is properly setup.
+
+
+Once started, KKernel will load a Host which is a platform-specific
+implementation that knows how to load modules in a OS specific way.
+Once modules are loaded, the kernel is "booted" and ready. At this
+point, modules are in charge of the system.
+
+The Module API
+--------------
+
+The Module API is rather simple but powerful.  You can write modules
+in C++ or even in the supported languages like Python.  The module
+can really do anything it wants once it's loaded.
+
+The Binding API
+---------------
+
+The Module communicates to other modules through "binding". Binding
+is the process of either adding values (primitive, objects, functions etc)
+to the Kroll runtime or retrieving them.  There are also a small number of 
+other utility functions like logging etc that are exposed by the "API module".
+
+The binding implementation for each language knows how to box and unbox
+values back and forth from the Kroll runtime and the native language
+runtime. This is the key part of the magic of Kroll.
+
+Once bound, you can invoke a function from Ruby which might take a Python 
+function as a reference and return a Javascript object.
+
+Kroll
+-----
+
+Kroll itself is the microkernel and set of base modules. As a standalone,
+it's really not that useful (yet).  The power of Kroll is when it's used
+by another application to expose higher level functionality.
+
+Currently, Kroll is the core of the Titanium product.  In this case,
+Titanium provides a set of additional modules on top of the base modules
+such as the windowing environment.  <http://titaniumapp.com>
+
+
+
+-------------
+ Legal Stuff
+-------------
+
+Copyright (C) 2008-2009 by Appcelerator, Inc. All Rights Reserved.
+For more information, please visit <http://license.appcelerator.org>.
+Appcelerator, Titanium and logos are trademark of Appcelerator, Inc.
+
+Please see the file named LICENSE for the full license.
