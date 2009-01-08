@@ -1,0 +1,8 @@
+#!/usr/bin/env python
+Import('build')
+
+Env = build.env.Clone()
+Env.Append(LIBS=['kroll'])
+Env.Append(CPPDEFINES={'KROLL_API_API_EXPORT': 1})
+
+Env.SharedLibrary(build.dir + '/apimodule', Glob('*.cpp'))

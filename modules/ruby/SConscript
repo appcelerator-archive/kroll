@@ -1,0 +1,17 @@
+#!/usr/bin/env python
+Import('build')
+
+Env = build.env.Clone()
+if build.is_osx():
+	Env.Append(CPPPATH=['/System/Library/Frameworks/Ruby.framework/Versions/Current/Headers'])
+	Env.Append(FRAMEWORKS=['Ruby'])
+elif build.is_linux():
+	Env.Append(CPPPATH=['/usr/lib/ruby/1.8/i386-linux', '/usr/lib/ruby/1.8/i486-linux'])
+	Env.Append(LIBS=['ruby'])
+elif build.is_win32():
+	Env.Append(CPPPATH=['C:\\Ruby\\lib\\ruby\\1.8\\i386-mswin32'])
+	Env.Append(LIBPATH=['C:\\Ruby\\lib'])
+	Env.Append(LIBS=['msvcrt-ruby18'])
+
+Env.Append(LIBS=['kroll'])
+Env.SharedLibrary(build.dir + '/rubymodule', Glob('*.cpp'), )
