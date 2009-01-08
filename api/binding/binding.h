@@ -18,19 +18,17 @@ namespace kroll
 	class StaticBoundMethod;
 	class BoundList;
 	class StaticBoundList;
-
-	#include "../kroll.h"
-	#include "value.h"
-
-	typedef Callback3<const ValueList&, Value*, BoundObject*>::Type MethodCallback;
-
-	#include "bound_object.h"
-	#include "bound_method.h"
-	#include "bound_list.h"
-	#include "static_bound_list.h"
-	#include "static_bound_method.h"
-	#include "static_bound_object.h"
-
 }
+
+#include "../kroll.h"
+#include "value.h"
+
+#include "bound_object.h"
+#include "bound_method.h"
+#include "bound_list.h"
+#include "static_bound_list.h"
+#include "static_bound_method.h"
+#include "static_bound_object.h"
+
 
 #endif

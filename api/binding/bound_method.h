@@ -12,6 +12,8 @@
 
 namespace kroll
 {
+	typedef Callback3<const ValueList&, Value*, BoundObject*>::Type MethodCallback;
+
 	class KROLL_API BoundMethod : public BoundObject
 	{
 	public:
