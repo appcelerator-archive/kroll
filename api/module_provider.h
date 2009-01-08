@@ -15,6 +15,11 @@ namespace kroll
 
 	typedef Module* ModuleCreator(Host *host);
 
+	/**
+	 * Module Provider implementations are resposible for determining if files 
+	 * are supportable modules and responsible for constructing them if they
+	 * determine that a file is supported.
+	 */
 	class EXPORT ModuleProvider
 	{
 	public:
