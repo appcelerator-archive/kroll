@@ -4,8 +4,8 @@
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
 
-#ifndef KR_BOUND_OBJECT_H_
-#define KR_BOUND_OBJECT_H_
+#ifndef _KR_BOUND_OBJECT_H_
+#define _KR_BOUND_OBJECT_H_
 
 #include "binding.h"
 

@@ -4,8 +4,8 @@
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
 
-#ifndef __KR_BOUND_METHOD_H__
-#define __KR_BOUND_METHOD_H__
+#ifndef _KR_BOUND_METHOD_H_
+#define _KR_BOUND_METHOD_H_
 
 #include "binding.h"
 #include <cstdarg>
