@@ -49,20 +49,20 @@ namespace kroll
 		KR_DECREF(this->global_object);
 	}
 
-	const char* Host::Init()
+	void Host::RegisterModule(std::string& path, Module* module) 
 	{
-        return "";
-	}
-
-	void Host::RegisterModule(std::string& path, Module* module) {
+		ScopedLock lock(&moduleMutex);
 		KR_ADDREF(module);
 		modules[path] = module;
 	}
 
-	void Host::UnregisterModule(Module* module) {
+	void Host::UnregisterModule(Module* module) 
+	{
+		ScopedLock lock(&moduleMutex);
 		std::map<std::string, Module*>::iterator iter = this->modules.find(
 				module->GetName());
-		if (this->modules.end() != iter) {
+		if (this->modules.end() != iter) 
+		{
 			Module *p = iter->second;
 			this->modules.erase(iter);
 			KR_DECREF(p);
@@ -71,7 +71,9 @@ namespace kroll
 		KR_ADDREF(module);
 	}
 
-	Module* Host::GetModule(std::string& name) {
+	Module* Host::GetModule(std::string& name) 
+	{
+		ScopedLock lock(&moduleMutex);
 		std::map<std::string, Module*>::iterator iter = this->modules.find(name);
 		if (this->modules.end() == iter) {
 			return 0;
@@ -81,12 +83,16 @@ namespace kroll
 		return module;
 	}
 
-	bool Host::HasModule(std::string name) {
+	bool Host::HasModule(std::string name) 
+	{
+		ScopedLock lock(&moduleMutex);
 		std::map<std::string, Module*>::iterator iter = this->modules.find(name);
 		return (this->modules.end() != iter);
 	}
 
-	void Host::LoadModules(std::vector<std::string>& files) {
+	void Host::LoadModules(std::vector<std::string>& files) 
+	{
+		ScopedLock lock(&moduleMutex);
 		std::cout << "have " << files.size() << " files" << std::endl;
 
 		std::vector<std::string>::iterator iter = files.begin();
@@ -117,8 +123,8 @@ namespace kroll
 	std::string module_suffix = "module.so";
 	#endif
 
-	bool Host::IsModule(std::string& filename) {
-
+	bool Host::IsModule(std::string& filename) 
+	{
 		bool isModule = (filename.length() > module_suffix.length() && filename.substr(
 				filename.length() - module_suffix.length()) == module_suffix);
 
@@ -126,9 +132,13 @@ namespace kroll
 		return isModule;
 	}
 
-	ModuleProvider* Host::FindModuleProvider(std::string& filename) {
+	ModuleProvider* Host::FindModuleProvider(std::string& filename) 
+	{
+		ScopedLock lock(&moduleMutex);
 		if (IsModule(filename))
+		{
 			return this;
+		}
 
 		std::vector<ModuleProvider*>::iterator iter;
 		for (iter = module_providers.begin(); iter != module_providers.end(); iter++) {
@@ -142,7 +152,9 @@ namespace kroll
 		return NULL;
 	}
 
-	int Host::FindModules(std::string &dir, std::vector<std::string> &files) {
+	int Host::FindModules(std::string &dir, std::vector<std::string> &files) 
+	{
+		ScopedLock lock(&moduleMutex);
 	#if defined(OS_WIN32)
 
 		std::string searchdir = (dir);
@@ -201,7 +213,9 @@ namespace kroll
 		return this->global_object;
 	}
 
-	void Host::ScanInvalidModuleFiles() {
+	void Host::ScanInvalidModuleFiles() 
+	{
+		ScopedLock lock(&moduleMutex);
 		std::vector<std::string>::iterator iter = invalid_module_files.begin();
 
 		while (iter != invalid_module_files.end()) {
