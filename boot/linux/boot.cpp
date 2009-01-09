@@ -64,7 +64,12 @@ std::cout << "runtime = " << runtimeDir << std::endl;
 	std::vector<std::string> modules;
 	std::vector<std::string> moduleDirs;
 	std::string runtimePath;
-	FileUtils::ReadManifest(c,runtimePath,modules,moduleDirs);
+	bool success = FileUtils::ReadManifest(c,runtimePath,modules,moduleDirs);
+	if (!success)
+	{
+		std::cerr << "Could not read manifest: " << c << std::endl;
+		return __LINE__;
+	}
 
 	// 2. setup the environment and get ready to launch our runtime
 	std::string runtimeExec = std::string(runtimePath);

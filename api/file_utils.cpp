@@ -261,9 +261,14 @@ namespace kroll
 			pos = str.find_first_of(delimeters,lastPos);
 		}
 	}
-	void FileUtils::ReadManifest(std::string& path, std::string &runtimePath, std::vector<std::string>& modules, std::vector<std::string> &moduleDirs)
+	bool FileUtils::ReadManifest(std::string& path, std::string &runtimePath, std::vector<std::string>& modules, std::vector<std::string> &moduleDirs)
 	{
 		std::ifstream file(path.c_str());
+		if (file.bad() || file.fail())
+		{
+			return false;
+		}
+
 		while (!file.eof())
 		{
 			std::string line;
@@ -296,6 +301,7 @@ namespace kroll
 			}
 		}
 		file.close();
+		return true;
 	}
 	std::string FileUtils::FindRuntime(int op, std::string& version)
 	{

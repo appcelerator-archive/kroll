@@ -166,6 +166,13 @@ int main(int argc, char* argv[])
 	std::string manifest([manifestNS UTF8String]);
 	std::string runtimePath;
 	FileUtils::ReadManifest(manifest,runtimePath,modules,moduleDirs);
+	bool success = FileUtils::ReadManifest(c,runtimePath,modules,moduleDirs);
+	if (!success)
+	{
+		NSLog(@"Could not read manifest: %@", c);
+		[pool release];
+		return __LINE__;
+	}
 
 	// 2. now we're going to make sure we have our application structure setup
 	NSString *appRootDir = [NSString stringWithFormat:@"%@/app",bundlePath];

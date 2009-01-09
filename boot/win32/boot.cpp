@@ -150,7 +150,13 @@ int WinMain(HINSTANCE, HINSTANCE, LPSTR cl, int show)
 	std::vector<std::string> modules;
 	std::vector<std::string> moduleDirs;
 	std::string runtimePath;
-	FileUtils::ReadManifest(c,runtimePath,modules,moduleDirs);
+
+	bool success = FileUtils::ReadManifest(c,runtimePath,modules,moduleDirs);
+	if (!success)
+	{
+		std::cerr << "Could not read manifest: " << c << std::endl;
+		return __LINE__;
+	}
 
 	std::cout << "Read manifest ? " << std::endl;
 

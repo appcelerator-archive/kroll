@@ -51,7 +51,7 @@ namespace kroll
 		static int MakeVersion(std::string& ver);
 		static std::string FindVersioned(std::string& path, int op, std::string& version);
 		static void Tokenize(const std::string& str, std::vector<std::string>& tokens, const std::string &delimeters);
-		static void ReadManifest(std::string& path, std::string &runtimePath, std::vector<std::string>& modules, std::vector<std::string> &moduleDirs);
+		static bool ReadManifest(std::string& path, std::string &runtimePath, std::vector<std::string>& modules, std::vector<std::string> &moduleDirs);
 		static void ListDir(std::string& path, std::vector<std::string>& files);
 		static bool IsDirectory(std::string &dir);
 		static bool IsFile(std::string &file);
