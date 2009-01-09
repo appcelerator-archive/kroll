@@ -68,8 +68,6 @@ namespace kroll
 			}
 		}
 
-		const char* Init();
-
 	protected:
 		int argc;
 		const char **argv;

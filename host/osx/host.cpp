@@ -23,6 +23,7 @@ namespace kroll
 			char *tok = strtok(p,":");
 			while (tok)
 			{
+				std::cout << "adding module: " << tok << std::endl;
 				module_paths.push_back(std::string(tok));
 				tok = strtok(NULL,":");
 			}
@@ -36,7 +37,7 @@ namespace kroll
 
 	int OSXHost::Run()
 	{
-		TRACE(@PRODUCT_NAME"Running (OSX)...");
+		TRACE(@PRODUCT_NAME" Running (OSX)...");
 
 		// load our modules through the host implementation but let
 		// the base class do the hard work for us

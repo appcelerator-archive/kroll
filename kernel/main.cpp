@@ -37,23 +37,7 @@ int main(int argc, const char* argv[])
 
 	printf("Created host, booting...\n");
 
-	// initialize the host and setup any pre-run stuff we need
-	// returns an error or NULL if everything is OK
-	const char *error = host->Init();
-	int rc = 0;
-
-	if (error!=NULL)
-	{
-		// error loading
-		rc = __LINE__;
-		fprintf(stderr,"Error loading host. Error: %s\n",error);
-	}
-	else
-	{
-		// run the host
-		rc = host->Run();
-	}
-
+	int rc = host->Run();
 
 #if defined(OS_OSX)
 	[pool release];
