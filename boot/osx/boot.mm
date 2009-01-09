@@ -131,7 +131,7 @@ int main(int argc, char* argv[])
 			[pool release];
 			return __LINE__;
 		}
-		NSString *installer = [NSString stringWithFormat:@"%@/install", bundledInstaller];
+		NSString *installer = [NSString stringWithFormat:@"%@/kinstall", bundledInstaller];
 		std::string si = std::string([installer UTF8String]);
 		if (!FileUtils::IsFile(si))
 		{
@@ -193,7 +193,7 @@ int main(int argc, char* argv[])
 		NSString *srcResources = [NSString stringWithFormat:@"%s/Resources",runtimePath.c_str()];
 		[fm copyPath:srcResources toPath:appResourcesDir handler:nil];
 	
-		NSString *tiKernel = [NSString stringWithFormat:@"%s/tikernel",runtimePath.c_str()];		
+		NSString *tiKernel = [NSString stringWithFormat:@"%s/kkernel",runtimePath.c_str()];		
 		[fm createSymbolicLinkAtPath:runtimeExec pathContent:tiKernel];
 		
 		NSString *srcInfoPlist = [NSString stringWithFormat:@"%@/Contents/Info.plist",bundlePath];		
