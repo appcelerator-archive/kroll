@@ -59,8 +59,8 @@ namespace kroll
 
 	protected:
 		static char* IntToChars(int value);
+		static bool IsInt(const char* name);
 		StaticBoundObject* object;
-		int length;
 
 	};
 }
