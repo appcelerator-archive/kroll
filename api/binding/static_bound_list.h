@@ -63,8 +63,8 @@ namespace kroll
 
 	protected:
 		static char* IntToChars(int value);
+		static bool IsInt(const char* name);
 		StaticBoundObject* object;
-		int length;
 
 	private:
 		DISALLOW_EVIL_CONSTRUCTORS(StaticBoundList);

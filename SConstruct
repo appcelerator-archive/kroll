@@ -2,13 +2,8 @@
 
 # common SConscripts
 import os, re, sys, inspect, os.path as path
-
-filename = inspect.currentframe().f_code.co_filename
-
-OS = ''
-os_define = ''
-install_prefix = '/usr/local'
-product_name = 'Kroll'
+NAME = 'Kroll'
+PREFIX = '/usr/local'
 
 class BuildConfig(object): 
 	def __init__(self):
@@ -22,6 +17,8 @@ class BuildConfig(object):
 		self.dir = '#build/%s' % self.os 
 		self.absdir = path.abspath('build/%s' % self.os) 
 		self.third_party = path.abspath('thirdparty/%s' % self.os)
+		self.product_name = NAME
+		self.install_prefix = PREFIX
 	def matches(self, n): return bool(re.match(os.uname()[0], n))
 	def is_linux(self): return self.os == 'linux'
 	def is_osx(self): return self.os == 'osx'
@@ -33,8 +30,8 @@ build.include_dir = path.abspath(path.join('build', 'include', 'kroll'))
 build.env = Environment(
     CPPDEFINES = {
                   'OS_' + build.os.upper(): 1,
-                  '_INSTALL_PREFIX': install_prefix,
-                  '_PRODUCT_NAME': product_name
+                  '_INSTALL_PREFIX': build.install_prefix,
+                  '_PRODUCT_NAME': build.product_name
                  },
     CPPPATH=['#.'],
     LIBPATH=[build.dir])
@@ -72,12 +69,5 @@ if build.is_osx():
 	build.env.Append(CXXFLAGS=OSX_UNIV_COMPILER)
 	build.env.Append(LDFLAGS=OSX_UNIV_LINKER)
 
-
 Export ('build')
-SConscript('api/SConscript', build_dir=build.dir + '/api', duplicate=0)
-SConscript('boot/SConscript')
-SConscript('host/SConscript')
-SConscript('install/SConscript')
-SConscript('kernel/SConscript', build_dir=build.dir + '/kernel', duplicate=0)
-SConscript('modules/SConscript')
-SConscript('test/SConscript')
+SConscript('SConscript')

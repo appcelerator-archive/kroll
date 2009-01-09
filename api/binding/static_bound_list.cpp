@@ -6,14 +6,15 @@
 
 #include "binding.h"
 #include <cmath>
-#include <stdio.h>
+#include <cstdio>
+#include <cstring>
 
 namespace kroll
 {
 	StaticBoundList::StaticBoundList()
-		: object(new StaticBoundObject()),
-		  length(0)
+		: object(new StaticBoundObject())
 	{
+		this->Set("length", new Value(0), NULL);
 	}
 
 	StaticBoundList::~StaticBoundList()
@@ -23,15 +24,26 @@ namespace kroll
 
 	void StaticBoundList::Append(Value* value)
 	{
-		this->length++;
-		char* name = StaticBoundList::IntToChars(this->length);
-		this->object->Set(name, value);
+		int length = this->Size();
+		length = length + 1;
+		char* name = StaticBoundList::IntToChars(length);
+		this->object->Set(name, value, NULL);
 		delete [] name;
+
+		this->object->Set("length", new Value(length), NULL);
 	}
 
 	int StaticBoundList::Size()
 	{
-		return this->length;
+		Value *size_val = this->Get("length", NULL);
+		if (size_val->IsInt())
+		{
+			return size_val->ToInt();
+		}
+		else
+		{
+			return 0;
+		}
 	}
 
 	Value* StaticBoundList::At(int index)
@@ -44,6 +56,15 @@ namespace kroll
 
 	void StaticBoundList::Set(const char *name, Value* value, BoundObject *context)
 	{
+		if (StaticBoundList::IsInt(name))
+		{
+			int val = atoi(name);
+			if (val > this->Size())
+			{
+				this->object->Set("length", new Value(val), NULL);
+			}
+		}
+
 		this->object->Set(name, value, context);
 	}
 
@@ -61,12 +82,22 @@ namespace kroll
 	{
 		int digits = (int) ceil(log((double)value));
 		char* str = new char[digits + 1];
-	#if defined(OS_WIN32)
-		_snprintf(str, digits + 1, "%d", value);
-	#else
-		snprintf(str, digits + 1, "%d", value);
-	#endif
+
+		// we've calculated the buffer length here, so we
+		// sould be safe to use the usually unsafe sprintf
+		// instead of platform-specific snprintf
+		sprintf(str, "%d", value);
 		return str;
+	}
+
+	bool StaticBoundList::IsInt(const char *name)
+	{
+		for (int i = 0; i < (int) strlen(name); i++)
+		{
+			if (!isdigit(name[i]))
+				return false;
+		}
+		return true;
 	}
 }
 
