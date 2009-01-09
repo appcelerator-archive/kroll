@@ -59,6 +59,20 @@ namespace kroll
 		 */
 		virtual std::vector<std::string> GetPropertyNames() = 0;
 
+	protected:
+		bool IsNumber (const char *name)
+		{
+			std::string s(name);
+			for (int c=0;c<(int)s.length();c++)
+			{
+				if (!std::isdigit(s[c]))
+				{
+					return false;
+				}
+			}
+			return true;
+		}
+		
 	private:
 		DISALLOW_EVIL_CONSTRUCTORS(BoundList);
 	};
