@@ -2,8 +2,9 @@
 Import('build')
 
 Env = build.env.Clone()
-Env.Append(CPPDEFINES={'WIN32_LEAN_AND_MEAN': 1})
+Env.Append(CPPDEFINES={'WIN32_LEAN_AND_MEAN': 1, 'NO_UNZIP' : 1})
 Env.Append(CPPPATH=['#common/win32','#common'])
 Env.Append(LIBS = ['shell32', 'user32'])
 
-Env.Program(build.dir + '/kboot', ['boot.cpp','../api/file_utils.obj', '../api/unzip/unzip.obj'])
+o = Env.Object(target = 'file_utils_boot.o', source = '../api/file_utils.cpp')
+Env.Program(build.dir + '/kboot', ['boot.cpp','file_utils_boot.o'])

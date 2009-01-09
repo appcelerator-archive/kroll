@@ -11,7 +11,6 @@
 #include <process.h>
 #include <iostream>
 
-#define KROLL_API 
 #include "api/file_utils.h"
 
 using namespace kroll;

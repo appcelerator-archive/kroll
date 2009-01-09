@@ -395,6 +395,7 @@ namespace kroll
 		return _spawnvp(_P_WAIT, path.c_str(), argv);
 #endif
 	}
+#ifndef NO_UNZIP
 	void FileUtils::Unzip(std::string& source, std::string& destination)
 	{
 #ifdef OS_OSX
@@ -431,4 +432,5 @@ namespace kroll
 		CloseZip(hz);
 #endif
 	}
+#endif
 }

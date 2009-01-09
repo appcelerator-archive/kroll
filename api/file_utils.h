@@ -21,7 +21,9 @@
 
 #ifdef OS_WIN32
 #define PATH_SEP "\\"
+#ifndef NO_UNZIP
 #include "unzip/unzip.h"
+#endif
 #else
 #define PATH_SEP "/"
 #include <sys/types.h>
@@ -57,7 +59,9 @@ namespace kroll
 		static std::string FindModule(std::string& name, int op, std::string& version);
 		static std::string GetRuntimeBaseDirectory();
 		static bool IsRuntimeInstalled();
+#ifndef NO_UNZIP
 		static void Unzip(std::string& source, std::string& destination);
+#endif
 		static int RunAndWait(std::string path, std::vector<std::string> args);
 		
 		
