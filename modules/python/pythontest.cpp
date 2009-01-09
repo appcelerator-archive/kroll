@@ -191,14 +191,26 @@ namespace kroll
 		script2+="\n";
 		
 		PyRun_SimpleString(script2.c_str());
-		// 
-		// // TEST pulling out the new bound values
+		
+		// TEST pulling out the new bound values
 		Value *x = host->GetGlobalObject()->GetNS("python.x",NULL);
 		KR_ASSERT(x->ToInt()==123);
-		KR_DECREF(x);
 		
 		Value *y = host->GetGlobalObject()->GetNS("python.y",NULL);
 		KR_ASSERT(y->ToInt()==124);
+		
+		ValueList vl;
+		vl.push_back(x);
+		vl.push_back(y);
+		PyObject *pvl = ValueListToPythonArray(vl);
+		Value* vlp = PythonValueToValue(pvl,NULL);
+		KR_ASSERT(vlp);
+		KR_ASSERT(pvl);
+		KR_ASSERT(vlp==x);
+		
+		Py_DECREF(pvl);
+		KR_DECREF(vlp);
+		KR_DECREF(x);
 		KR_DECREF(y);
 	}
 }

@@ -7,6 +7,7 @@
 #include "pythonmodule.h"
 #include "pythonvalue.h"
 #include "pythonmethod.h"
+#include "pythonlist.h"
 
 namespace kroll
 {
@@ -83,20 +84,23 @@ namespace kroll
 			Py_DECREF(mod);
 		}
 	}
-	
-	//FIXME
 	PyObject* ValueListToPythonArray(const ValueList& list)
 	{
-
-		// PyObject* array = rb_ary_new2(list.size());
-		// ArgList::const_iterator iter;
-		// for (iter = list.begin(); iter != list.end(); iter++)
-		// {
-		// 	ArgValue value = *iter;
-		// 	rb_ary_concat(array, ValueToPythonValue(value));
-		// }
-		// return array;
-		return 0;
+		int size = list.size();
+		
+		if (size == 0)
+		{
+			Py_INCREF(Py_None);
+			return Py_None;
+		}
+		
+		PyObject *array = PyTuple_New(size);
+		for (int c=0;c<size;c++)
+		{
+			Value *value = list.at(c);
+			PyTuple_SET_ITEM(array,c,ValueToPythonValue(value));
+		}
+		return array;
 	}
 	static void PyDeleteBoundMethod(void *p)
 	{
@@ -181,7 +185,12 @@ namespace kroll
 			return PyFloat_FromDouble(value->ToDouble());
 		}
 		if (value->IsList()) {
-	// 	return ValueListToPythonArray(value.ToArgList());
+			BoundList *list = value->ToList();
+			if (typeid(list) == typeid(PythonList*))
+			{
+				return ((PythonList*)list)->ToPython();
+			}
+			return BoundObjectToPythonValue(NULL,NULL,value->ToList());
 		}
 		return NULL;
 	}
@@ -284,7 +293,6 @@ namespace kroll
 		throw PythonValueToValue(pvalue,NULL);
 	}
 
-
 	Value* PythonValueToValue(PyObject* value, const char *name)
 	{
 		//FIXME - who is going to delete ref?
@@ -310,6 +318,12 @@ namespace kroll
 		if (PyFloat_Check(value))
 		{
 			return new Value(PythonFloatToDouble(value));
+		}
+		if (PyTuple_Check(value))
+		{
+			BoundList *l = new PythonList(value);
+			Value *til = new Value(l);
+			return til;
 		}
 		if (PyClass_Check(value))
 		{

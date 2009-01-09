@@ -4,33 +4,33 @@
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
 
-#ifndef _KR_STATIC_BOUND_LIST_H_
-#define _KR_STATIC_BOUND_LIST_H_
+#ifndef __PYTHON_LIST_H__
+#define __PYTHON_LIST_H__
+
+#include <Python.h>
+#include <api/binding/binding.h>
+#include "pythonapi.h"
 
 namespace kroll
 {
-	class KROLL_API StaticBoundList : public BoundList
+	class KROLL_PYTHON_API PythonList : public BoundList
 	{
 	public:
-		StaticBoundList();
+		PythonList(PyObject *obj);
+		PyObject* ToPython() { Py_INCREF(object); return object; }
 
-	protected:
-		virtual ~StaticBoundList();
-
-	public:
-		
 		/**
 		 * Append a value to this list. Value should be heap-allocated as 
 		 * implementors are allowed to keep a reference, if they increase the
 		 * reference count.
 		 * When an error occurs will throw an exception of type Value*.
 		 */
-		virtual void Append(Value* value);
+		void Append(Value* value);
 
 		/**
 		 * Get the length of this list.
 		 */
-		virtual int Size();
+		int Size();
 
 		/**
 		 * When an error occurs will throw an exception of type Value*.
@@ -38,7 +38,7 @@ namespace kroll
 		 * reference counted and must be released.
 		 * When an error occurs will throw an exception of type Value*.
 		 */
-		virtual Value* At(int index);
+		Value* At(int index);
 
 		/**
 		 * Set a property on this object to the given value. Value should be
@@ -46,7 +46,7 @@ namespace kroll
 		 * if they increase the reference count.
 		 * When an error occurs will throw an exception of type Value*.
 		 */
-		virtual void Set(const char *name, Value* value, BoundObject *context);
+		void Set(const char *name, Value* value, BoundObject *context);
 
 		/**
 		 * return a named property. the returned value is automatically
@@ -54,21 +54,17 @@ namespace kroll
 		 * with the return value (even for Undefined and Null types).
 		 * When an error occurs will throw an exception of type Value*.
 		 */
-		virtual Value* Get(const char *name, BoundObject *context);
+		Value* Get(const char *name, BoundObject *context);
 
 		/**
 		 * Return a list of this object's property names.
 		 */
-		virtual std::vector<std::string> GetPropertyNames();
+		std::vector<std::string> GetPropertyNames();
 
 	protected:
-		static char* IntToChars(int value);
-		static bool IsInt(const char* name);
-		StaticBoundObject* object;
-
-	private:
-		DISALLOW_EVIL_CONSTRUCTORS(StaticBoundList);
+		PyObject *object;
+		virtual ~PythonList();
 	};
 }
-
 #endif
+
