@@ -9,7 +9,7 @@
 
 namespace kroll
 {
-	void PythonUnitTestSuite::Run()
+	void PythonUnitTestSuite::Run(Host *host)
 	{
 		Value* tv1 = new Value(1);
 		PyObject* v1 = ValueToPythonValue(tv1);
@@ -182,7 +182,23 @@ namespace kroll
 		Value* pivv = PythonValueToValue(piv,NULL);
 		BoundMethod *pivbm = pivv->ToMethod();
 		Value* pivbmv = pivbm->Call(args,NULL);
-		std::cout << "returned: " << pivbmv->ToString().c_str() << std::endl;
 		KR_ASSERT_STR(pivbmv->ToString().c_str(),"hello,world");
+
+		std::string script2;
+		script2+=PRODUCT_NAME".set('x',123,"PRODUCT_NAME")\n";
+		script2+="f = "PRODUCT_NAME".get('x',"PRODUCT_NAME") + 1\n";
+		script2+=PRODUCT_NAME".set('y',f,"PRODUCT_NAME")\n";
+		script2+="\n";
+		
+		PyRun_SimpleString(script2.c_str());
+		// 
+		// // TEST pulling out the new bound values
+		Value *x = host->GetGlobalObject()->GetNS("python.x",NULL);
+		KR_ASSERT(x->ToInt()==123);
+		KR_DECREF(x);
+		
+		Value *y = host->GetGlobalObject()->GetNS("python.y",NULL);
+		KR_ASSERT(y->ToInt()==124);
+		KR_DECREF(y);
 	}
 }

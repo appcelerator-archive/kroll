@@ -19,7 +19,7 @@ namespace kroll
 	PyObject* BoundMethodToPythonValue(BoundMethod *method);
 	PyObject* BoundObjectToPythonValue(PyObject* self, PyObject* args, BoundObject *bo);
 	void ThrowPythonException();
-	void InitializeDefaultBindings();
+	void InitializeDefaultBindings(Host*);
 }
 
 #endif

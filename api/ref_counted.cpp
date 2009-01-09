@@ -10,18 +10,18 @@ namespace kroll
 	RefCounted::RefCounted() : count(1)
 	{
 	#ifdef DEBUG_REFCOUNT
-		std::cout << "Created: 0x" << (void*)this << std::endl;
+		std::cout << "Created: " << (void*)this << " (" << ")"<< std::endl;
 	#endif
 	}
 
 	RefCounted::~RefCounted()
 	{
 	#ifdef DEBUG_REFCOUNT
-		std::cout << "Destroying: 0x" << (void*)this << std::endl;
+		std::cout << "Destroying: " << (void*)this << std::endl;
 	#endif
 		if (count!=0)
 		{
-			std::cerr << "Object: 0x" << (void*)this << " freed with reference count == " << count << std::endl; 
+			std::cerr << "WARNING: Object: " << (void*)this << " freed with reference count == " << count << std::endl; 
 		}
 	}	
 
@@ -32,7 +32,7 @@ namespace kroll
 	)
 	{
 	#ifdef DEBUG_REFCOUNT
-		std::cout << "AddReference: 0x" << (void*)this << " from " << fn << ":" << ln << std::endl;
+		std::cout << "AddReference: " << (void*)this << " from " << fn << ":" << ln << std::endl;
 	#endif
 		ScopedLock lock(&mutex);
 		if (this->count==0)
@@ -50,7 +50,7 @@ namespace kroll
 	)
 	{
 	#ifdef DEBUG_REFCOUNT
-		std::cout << "ReleaseReference: 0x" << (void*)this << " from " << fn << ":" << ln << std::endl;
+		std::cout << "ReleaseReference: " << (void*)this << " from " << fn << ":" << ln << std::endl;
 	#endif
 		ScopedLock lock(&mutex);
 		if (--count == 0)

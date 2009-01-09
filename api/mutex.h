@@ -36,6 +36,7 @@ namespace kroll
 	#else
 		pthread_mutex_t mutex;
 	#endif
+		DISALLOW_EVIL_CONSTRUCTORS(Mutex);
 	};
 }
 

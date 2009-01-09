@@ -17,12 +17,13 @@ namespace kroll
 {
 	class KROLL_API StaticBoundObject : public BoundObject
 	{
-	protected:
-		std::map<std::string, Value*> properties;
-
 	public:
+		StaticBoundObject();
+
+	protected:
 		virtual ~StaticBoundObject();
 
+	public:
 		/**
 		 * Set a property on this object to the given value. Value should be
 		 * heap-allocated as implementors are allowed to keep a reference.
@@ -60,7 +61,7 @@ namespace kroll
 		/**
 		 * unset the named property
 		 */
-		void UnSet(const char *name);
+		virtual void UnSet(const char *name);
 
 
 		/* convenience methods for the conviencence methods */
@@ -79,6 +80,13 @@ namespace kroll
 		}
 
 		void SetObject(const char *name, BoundObject* object);
+
+	protected:
+		Mutex mutex;
+		std::map<std::string, Value*> properties;
+
+	private:
+		DISALLOW_EVIL_CONSTRUCTORS(StaticBoundObject);
 	};
 }
 

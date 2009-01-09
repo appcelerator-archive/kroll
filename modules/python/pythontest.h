@@ -16,7 +16,7 @@ namespace kroll
 	class KROLL_PYTHON_API PythonUnitTestSuite
 	{
 	public:
-		void Run();
+		void Run(Host*);
 	};
 }
 

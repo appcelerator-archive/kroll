@@ -13,8 +13,12 @@ namespace kroll
 	{
 	public:
 		StaticBoundList();
+
+	protected:
 		virtual ~StaticBoundList();
 
+	public:
+		
 		/**
 		 * Append a value to this list. Value should be heap-allocated as 
 		 * implementors are allowed to keep a reference, if they increase the
@@ -62,6 +66,8 @@ namespace kroll
 		static bool IsInt(const char* name);
 		StaticBoundObject* object;
 
+	private:
+		DISALLOW_EVIL_CONSTRUCTORS(StaticBoundList);
 	};
 }
 

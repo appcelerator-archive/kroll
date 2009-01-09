@@ -94,10 +94,13 @@ namespace kroll
 		 */
 		Value(const Value& value);
 
+	protected:
 		/**
 		 * destructor
 		 */
 		virtual ~Value();
+		
+	public:
 	
 		/**
 		 * return a system-defined shared UNDEFINED type. the
@@ -261,6 +264,7 @@ namespace kroll
 		BoundObject *objectValue;
 		void defaults();
 		void init();
+		
 	};
 }
 

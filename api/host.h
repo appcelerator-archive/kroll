@@ -37,19 +37,29 @@ namespace kroll
 		void UnregisterModule(Module* module);
 		Module* GetModule(std::string& name);
 		bool HasModule(std::string name);
-		ModuleMap::iterator GetModulesBegin() { return modules.begin(); }
-		ModuleMap::iterator GetModulesEnd() { return modules.end(); }
+		ModuleMap::iterator GetModulesBegin() 
+		{ 
+			ScopedLock lock(&moduleMutex);
+			return modules.begin(); 
+		}
+		ModuleMap::iterator GetModulesEnd() 
+		{ 
+			ScopedLock lock(&moduleMutex);
+			return modules.end(); 
+		}
 		StaticBoundObject* GetGlobalObject();
 		const std::string& GetApplicationHome() const { return appDirectory; }
 		const std::string& GetRuntimeHome() const { return runtimeDirectory; }
 		virtual const std::string& GetApplicationConfig() const { return appConfigPath; }
 
 		void AddModuleProvider(ModuleProvider *provider) {
+			ScopedLock lock(&moduleMutex);
 			module_providers.push_back(provider);
 			ScanInvalidModuleFiles();
 		}
 
 		void RemoveModuleProvider(ModuleProvider *provider) {
+			ScopedLock lock(&moduleMutex);
 			std::find(module_providers.begin(), module_providers.end(), provider);
 			std::vector<ModuleProvider*>::iterator iter;
 			iter = std::find(module_providers.begin(), module_providers.end(), provider);
@@ -64,6 +74,7 @@ namespace kroll
 		int argc;
 		const char **argv;
 		ModuleMap modules;
+		Mutex moduleMutex;
 		std::map<std::string,BoundObject*> bound_objects;
 		std::vector<ModuleProvider *> module_providers;
 		std::map<std::string,ModuleProvider*> module_creators;
@@ -79,6 +90,7 @@ namespace kroll
 		std::string appDirectory;
 		std::string runtimeDirectory;
 		std::string appConfigPath;
+		DISALLOW_EVIL_CONSTRUCTORS(Host);
 	};
 }
 #endif

@@ -60,6 +60,7 @@ namespace kroll
 	private:
 		FileUtils() {}
 		~FileUtils() {}
+		DISALLOW_EVIL_CONSTRUCTORS(FileUtils);
 	};
 }
 

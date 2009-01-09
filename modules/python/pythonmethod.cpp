@@ -41,8 +41,6 @@ namespace kroll
 		PyObject *response = PyObject_CallObject(this->object,arglist);
 		Py_XDECREF(arglist);
 
-		std::cout << "invoked call and returned: " << (void*)response << std::endl;
-
 		if (PyErr_Occurred() != NULL)
 		{
 			Py_XDECREF(response);
@@ -52,7 +50,6 @@ namespace kroll
 		if (response!=NULL)
 		{
 			value = PythonValueToValue(response,NULL);
-			std::cout << "invoke return type: " << value->ToTypeString() << std::endl;
 		}
 		else
 		{
@@ -65,13 +62,13 @@ namespace kroll
 	void PythonMethod::Set(const char *name, Value* value, BoundObject *context)
 	{
 		int result = PyObject_SetAttrString(this->object,(char*)name,ValueToPythonValue(value));
+		KR_DECREF(value);
 
 		PyObject *exception = PyErr_Occurred();
 		if (result == -1 && exception != NULL)
 		{
 			ThrowPythonException();
 		}
-
 	}
 
 	Value* PythonMethod::Get(const char *name, BoundObject *context)

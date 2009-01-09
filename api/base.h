@@ -77,5 +77,13 @@
 	
 #define KR_UNUSED(o) if (o) {} 
 
+// this was borrowed from Google Gears
+// A macro to disallow the evil copy constructor and operator= functions.
+// This should be used in the private: declaration for a class.
+#define DISALLOW_EVIL_CONSTRUCTORS(TypeName)    \
+  TypeName(const TypeName&);                    \
+  void operator=(const TypeName&)
+
+
 
 #endif

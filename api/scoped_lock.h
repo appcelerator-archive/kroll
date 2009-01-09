@@ -23,6 +23,7 @@ namespace kroll
 		virtual ~ScopedLock();
 	private:
 		Mutex* mutex;
+		DISALLOW_EVIL_CONSTRUCTORS(ScopedLock);
 	};
 }
 
