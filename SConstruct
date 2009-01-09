@@ -25,8 +25,6 @@ class BuildConfig(object):
 	def is_win32(self): return self.os == 'win32'
 build = BuildConfig()
 
-
-build.include_dir = path.abspath(path.join('build', 'include', 'kroll'))
 build.env = Environment(
     CPPDEFINES = {
                   'OS_' + build.os.upper(): 1,

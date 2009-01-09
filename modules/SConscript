@@ -4,4 +4,4 @@ Import('build')
 modules = ['api', 'foo', 'python', 'foopy']
 #
 for module in modules:
-	SConscript(module+'/SConscript', build_dir=build.dir + '/modules/' + module, duplicate=0)
+	SConscript(module+'/SConscript', build_dir=build.kroll_build_dir + '/modules/' + module, duplicate=0)
