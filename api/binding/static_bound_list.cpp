@@ -14,7 +14,7 @@ namespace kroll
 	StaticBoundList::StaticBoundList()
 		: object(new StaticBoundObject())
 	{
-		this->Set("length", new Value(0), NULL);
+		this->Set("length", new Value(0));
 	}
 
 	StaticBoundList::~StaticBoundList()
@@ -27,15 +27,15 @@ namespace kroll
 		int length = this->Size();
 		length = length + 1;
 		char* name = StaticBoundList::IntToChars(length);
-		this->object->Set(name, value, NULL);
+		this->object->Set(name, value);
 		delete [] name;
 
-		this->object->Set("length", new Value(length), NULL);
+		this->object->Set("length", new Value(length));
 	}
 
 	int StaticBoundList::Size()
 	{
-		Value *size_val = this->Get("length", NULL);
+		Value *size_val = this->Get("length");
 		if (size_val->IsInt())
 		{
 			return size_val->ToInt();
@@ -54,23 +54,23 @@ namespace kroll
 		return value;
 	}
 
-	void StaticBoundList::Set(const char *name, Value* value, BoundObject *context)
+	void StaticBoundList::Set(const char *name, Value* value)
 	{
 		if (StaticBoundList::IsInt(name))
 		{
 			int val = atoi(name);
 			if (val > this->Size())
 			{
-				this->object->Set("length", new Value(val), NULL);
+				this->object->Set("length", new Value(val));
 			}
 		}
 
-		this->object->Set(name, value, context);
+		this->object->Set(name, value);
 	}
 
-	Value* StaticBoundList::Get(const char *name, BoundObject *context)
+	Value* StaticBoundList::Get(const char *name)
 	{
-		return this->object->Get(name, context);
+		return this->object->Get(name);
 	}
 
 	std::vector<std::string> StaticBoundList::GetPropertyNames()

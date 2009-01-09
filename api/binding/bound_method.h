@@ -12,7 +12,7 @@
 
 namespace kroll
 {
-	typedef Callback3<const ValueList&, Value*, BoundObject*>::Type MethodCallback;
+	typedef Callback2<const ValueList&, Value *>::Type MethodCallback;
 
 
 	class KROLL_API BoundMethod : public BoundObject
@@ -27,7 +27,7 @@ namespace kroll
 		 * with the return value (even for Undefined and Null types).
 		 * When an error occurs will throw an exception of type Value*.
 		 */
-		virtual Value* Call(const ValueList& args, BoundObject* context) = 0;
+		virtual Value* Call(const ValueList& args) = 0;
 
 		/**
 		 * Set a property on this object to the given value. Value should be
@@ -35,7 +35,7 @@ namespace kroll
 		 * if they increase the reference count.
 		 * When an error occurs will throw an exception of type Value*.
 		 */
-		virtual void Set(const char *name, Value* value, BoundObject *context) = 0;
+		virtual void Set(const char *name, Value* value) = 0;
 
 		/**
 		 * return a named property. the returned value is automatically
@@ -43,7 +43,7 @@ namespace kroll
 		 * with the return value (even for Undefined and Null types).
 		 * When an error occurs will throw an exception of type Value*.
 		 */
-		virtual Value* Get(const char *name, BoundObject *context) = 0;
+		virtual Value* Get(const char *name) = 0;
 
 		/**
 		 * Return a list of this object's property names.
@@ -68,7 +68,7 @@ namespace kroll
 		      args.push_back(a);
 			}
 			va_end(vaargs); 
-			return this->Call(args,NULL);
+			return this->Call(args);
 		}
 		//NOTE: this ideally above would be an operator() overload
 		//so you could just method() invoke this function but it doesn't

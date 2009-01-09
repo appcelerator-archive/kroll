@@ -18,8 +18,8 @@ namespace kroll
 	public:
 		PythonValue(PyObject *obj);
 		virtual ~PythonValue();
-		virtual void Set(const char *name, Value* value, BoundObject *context);
-		virtual Value* Get(const char *name, BoundObject *context);
+		virtual void Set(const char *name, Value* value);
+		virtual Value* Get(const char *name);
 		virtual std::vector<std::string> GetPropertyNames();
 
 		PyObject* ToPython() { Py_INCREF(object); return object; }

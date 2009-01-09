@@ -20,7 +20,7 @@ namespace kroll
 		this->object = NULL;
 	}
 
-	void PythonValue::Set(const char *name, Value* value, BoundObject *context)
+	void PythonValue::Set(const char *name, Value* value)
 	{
 		int result = PyObject_SetAttrString(this->object,(char*)name,ValueToPythonValue(value));
 		
@@ -33,7 +33,7 @@ namespace kroll
 
 	}
 
-	Value* PythonValue::Get(const char *name, BoundObject *context)
+	Value* PythonValue::Get(const char *name)
 	{
 		// get should returned undefined if we don't have a property
 		// named "name" to mimic what happens in Javascript

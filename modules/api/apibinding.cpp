@@ -48,51 +48,39 @@ namespace kroll
 		ScopedLock lock(&mutex);
 		return this->record++;
 	}
-	void APIBinding::_Set(const ValueList& args, Value *result, BoundObject *context_local)
+	void APIBinding::_Set(const ValueList& args, Value *result)
 	{
 		const char* key = args.at(0)->ToString().c_str();
 		Value *value = args.at(1);
-		Value *context = args.size() == 3 ? args.at(2) : NULL;
-		BoundObject *c = context_local;
-		if (context && context->IsObject())
-		{
-			c = context->ToObject();
-		}
-		this->Set(key,value,c);
+		this->Set(key,value);
 		KR_DECREF(value);
 	}
-	void APIBinding::_Get(const ValueList& args, Value *result, BoundObject *context_local)
+	void APIBinding::_Get(const ValueList& args, Value *result)
 	{
 		const char *key = args.at(0)->ToString().c_str();
-		Value *context = args.size() == 2 ? args.at(1) : NULL;
-		BoundObject *c = context_local;
-		if (context && context->IsObject())
-		{
-			c = context->ToObject();
-		}
-		Value *r = this->GetNS(key,c);
+		Value *r = this->GetNS(key);
 		result->Set(r);
 		KR_DECREF(r);
 	}
-	void APIBinding::_Log(const ValueList& args, Value *result, BoundObject *context_local)
+	void APIBinding::_Log(const ValueList& args, Value *result)
 	{
 		int severity = args.at(0)->ToInt();
 		std::string message = args.at(1)->ToString();
 		this->Log(severity,message);
 	}
-	void APIBinding::_Register(const ValueList& args, Value *result, BoundObject *context_local)
+	void APIBinding::_Register(const ValueList& args, Value *result)
 	{
 		std::string event = args.at(0)->ToString();
 		BoundMethod* method = args.at(1)->ToMethod();
 		int id = this->Register(event,method);
 		result->Set(id);
 	}
-	void APIBinding::_Unregister(const ValueList& args, Value *result, BoundObject *context_local)
+	void APIBinding::_Unregister(const ValueList& args, Value *result)
 	{
 		int id = args.at(0)->ToInt();
 		this->Unregister(id);
 	}
-	void APIBinding::_Fire(const ValueList& args, Value *result, BoundObject *context_local)
+	void APIBinding::_Fire(const ValueList& args, Value *result)
 	{
 		std::string event = args.at(0)->ToString();
 		this->Fire(event,args.at(1));
@@ -187,7 +175,7 @@ namespace kroll
 				args.push_back(new Value(event));
 				args.push_back(value);
 				KR_ADDREF(value);
-				method->Call(args,NULL);
+				method->Call(args);
 			}
 		}
 	}

@@ -69,7 +69,7 @@ namespace kroll
 				{
 					std::string key = (*iter++);
 					const char *name = (const char*)key.c_str();
-					Value *value = bo->Get(name,NULL);
+					Value *value = bo->Get(name);
 					scope->Set(name,value);
 					KR_DECREF(value);
 				}
@@ -120,7 +120,7 @@ namespace kroll
 				PyObject *arg=PyTuple_GET_ITEM(args,c);
 				a.push_back(PythonValueToValue(arg,NULL));
 			}
-			Value* result = method->Call(a,NULL);
+			Value* result = method->Call(a);
 			ScopedDereferencer r(result);
 			return ValueToPythonValue(result);
 		}
@@ -212,7 +212,7 @@ namespace kroll
 	{
 		PyBoundObject *boundSelf = reinterpret_cast<PyBoundObject*>(self);
 //		std::cout << "PyBoundObject_getattr called with " << name << " for " << (void*)boundSelf << std::endl;
-		Value* result = boundSelf->object->Get(name,NULL);
+		Value* result = boundSelf->object->Get(name);
 		return ValueToPythonValue(result);
 	}
 
@@ -220,19 +220,19 @@ namespace kroll
 	{
 		PyBoundObject *boundSelf = (PyBoundObject*)self;
 		Value* tiValue = PythonValueToValue(value,name);
-		boundSelf->object->Set(name,tiValue,NULL);
+		boundSelf->object->Set(name,tiValue);
 		return 0;
 	}
 
 	PyObject* PyBoundObject_tostring(PyObject *self)
 	{
 		PyBoundObject *boundSelf = (PyBoundObject*)self;
-		Value* result = boundSelf->object->Get("toString",NULL);
+		Value* result = boundSelf->object->Get("toString");
 		if (result->IsMethod())
 		{
 			BoundMethod *method = result->ToMethod();
 			ValueList args;
-			Value* toString = method->Call(args,NULL);
+			Value* toString = method->Call(args);
 			ScopedDereferencer r(toString);
 			if (toString->IsString())
 			{

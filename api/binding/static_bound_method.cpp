@@ -19,34 +19,20 @@ namespace kroll
 		KR_DECREF(this->object);
 	}
 
-	Value* StaticBoundMethod::Call(const ValueList& args, BoundObject* context)
+	Value* StaticBoundMethod::Call(const ValueList& args)
 	{
 		Value* tv = new Value();
-		this->callback->Run(args, tv, context);
+		this->callback->Run(args, tv);
 		return tv;
 	}
-	void StaticBoundMethod::Set(const char *name, Value* value, BoundObject *context)
+	void StaticBoundMethod::Set(const char *name, Value* value)
 	{
-		if (context!=NULL)
-		{
-			context->Set(name,value,NULL);
-		}
-		else
-		{
-			this->object->Set(name, value, context);
-		}
+		this->object->Set(name, value);
 	}
 
-	Value* StaticBoundMethod::Get(const char *name, BoundObject *context)
+	Value* StaticBoundMethod::Get(const char *name)
 	{
-		if (context!=NULL)
-		{
-			return context->Get(name,NULL);
-		}
-		else
-		{
-			return this->object->Get(name, context);
-		}
+		return this->object->Get(name);
 	}
 
 	std::vector<std::string> StaticBoundMethod::GetPropertyNames()

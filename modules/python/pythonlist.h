@@ -46,7 +46,7 @@ namespace kroll
 		 * if they increase the reference count.
 		 * When an error occurs will throw an exception of type Value*.
 		 */
-		void Set(const char *name, Value* value, BoundObject *context);
+		void Set(const char *name, Value* value);
 
 		/**
 		 * return a named property. the returned value is automatically
@@ -54,7 +54,7 @@ namespace kroll
 		 * with the return value (even for Undefined and Null types).
 		 * When an error occurs will throw an exception of type Value*.
 		 */
-		Value* Get(const char *name, BoundObject *context);
+		Value* Get(const char *name);
 
 		/**
 		 * Return a list of this object's property names.

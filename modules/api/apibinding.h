@@ -43,20 +43,19 @@ namespace kroll
 		void Fire(std::string& event, Value *data);
 		// 
 		// Value* Get(const char* name);
-		// void Set(const char *name, Value* value, BoundObject *context_local);
 		// void Set(const char *name, Value* value);
 		// 
-		void _Set(const ValueList& args, Value *result, BoundObject *context_local);
-		void _Get(const ValueList& args, Value *result, BoundObject *context_local);
-		void _Log(const ValueList& args, Value *result, BoundObject *context_local);
-		void _Register(const ValueList& args, Value *result, BoundObject *context_local);
-		void _Unregister(const ValueList& args, Value *result, BoundObject *context_local);
-		void _Fire(const ValueList& args, Value *result, BoundObject *context_local);
+		void _Set(const ValueList& args, Value *result);
+		void _Get(const ValueList& args, Value *result);
+		void _Log(const ValueList& args, Value *result);
+		void _Register(const ValueList& args, Value *result);
+		void _Unregister(const ValueList& args, Value *result);
+		void _Fire(const ValueList& args, Value *result);
 
 	private:
-		// void Unload(const ValueList& args, Value *result, BoundObject *context_local);
-		// void Reload(const ValueList& args, Value *result, BoundObject *context_local);
-		// void Modules(const ValueList& args, Value *result, BoundObject *context_local);
+		// void Unload(const ValueList& args, Value *result);
+		// void Reload(const ValueList& args, Value *result);
+		// void Modules(const ValueList& args, Value *result);
 
 		std::map<std::string,EventRecords*> registrations;
 		std::map<int,BoundEventEntry> registrationsById;

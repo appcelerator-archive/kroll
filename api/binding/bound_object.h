@@ -35,7 +35,7 @@ namespace kroll
 		 * if they increase the reference count.
 		 * When an error occurs will throw an exception of type Value*.
 		 */
-		virtual void Set(const char *name, Value* value, BoundObject *context) = 0;
+		virtual void Set(const char *name, Value* value) = 0;
 
 		/**
 		 * Return an object's property. The returned value is automatically
@@ -43,14 +43,14 @@ namespace kroll
 		 * a reference (even for Undefined and Null types).
 		 * When an error occurs will throw an exception of type Value*.
 		 */
-		virtual Value* Get(const char *name, BoundObject *context) = 0;
+		virtual Value* Get(const char *name) = 0;
 
 		/**
 		 * Return a list of this object's property names.
 		 */
 		virtual std::vector<std::string> GetPropertyNames() = 0;
 
-		Value* GetNS(const char *name, BoundObject* context = NULL)
+		Value* GetNS(const char *name)
 		{
 			std::string s(name);
 			std::string::size_type last = 0;
@@ -60,7 +60,7 @@ namespace kroll
 			while (pos != std::string::npos) 
 			{
 				std::string token = s.substr(last,pos);
-				current = scope->Get(token.c_str(),context);
+				current = scope->Get(token.c_str());
 				last = pos + 1;
 			    pos = s.find_first_of(".", last);
 				if (!current->IsObject())
@@ -72,7 +72,7 @@ namespace kroll
 			if (pos!=s.length())
 			{
 				std::string token = s.substr(last);
-				current = scope->Get(token.c_str(),context);
+				current = scope->Get(token.c_str());
 			}
 			return current;
 		}

@@ -12,7 +12,7 @@ namespace kroll
 	PythonList::PythonList(PyObject *obj) : object(obj)
 	{
 		Value *length = new Value((int)PyList_Size(this->object));
-		this->Set("length",length,NULL);
+		this->Set("length",length);
 		KR_DECREF(length);
 		Py_INCREF(this->object);
 	}
@@ -68,13 +68,8 @@ namespace kroll
 	 * if they increase the reference count.
 	 * When an error occurs will throw an exception of type Value*.
 	 */
-	void PythonList::Set(const char *name, Value* value, BoundObject *context)
+	void PythonList::Set(const char *name, Value* value)
 	{
-		if (context!=NULL)
-		{
-			context->Set(name,value,NULL);
-			return;
-		}
 		// check for integer value as name
 		if (this->IsNumber(name))
 		{
@@ -112,13 +107,8 @@ namespace kroll
 	 * with the return value (even for Undefined and Null types).
 	 * When an error occurs will throw an exception of type Value*.
 	 */
-	Value* PythonList::Get(const char *name, BoundObject *context)
+	Value* PythonList::Get(const char *name)
 	{
-		if (context!=NULL)
-		{
-			return context->Get(name,NULL);
-		}
-		
 		
 		// get should returned undefined if we don't have a property
 		// named "name" to mimic what happens in Javascript

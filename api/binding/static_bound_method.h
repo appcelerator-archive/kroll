@@ -24,7 +24,7 @@ namespace kroll
 		 * with the return value (even for Undefined and Null types).
 		 * When an error occurs will throw an exception of type Value*.
 		 */
-		virtual Value* Call(const ValueList& args, BoundObject* context);
+		virtual Value* Call(const ValueList& args);
 
 		/**
 		 * Set a property on this object to the given value. Value should be
@@ -32,7 +32,7 @@ namespace kroll
 		 * if they increase the reference count.
 		 * When an error occurs will throw an exception of type Value*.
 		 */
-		virtual void Set(const char *name, Value* value, BoundObject *context);
+		virtual void Set(const char *name, Value* value);
 
 		/**
 		 * Return an object's property. The returned value is automatically
@@ -40,7 +40,7 @@ namespace kroll
 		 * a reference (even for Undefined and Null types).
 		 * When an error occurs will throw an exception of type Value*.
 		 */
-		virtual Value* Get(const char *name, BoundObject *context);
+		virtual Value* Get(const char *name);
 
 		/**
 		 * Return a list of this object's property names.

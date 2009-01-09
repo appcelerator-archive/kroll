@@ -26,7 +26,7 @@ namespace kroll
 		KR_DECREF(arr);
 	}
 
-	void FooBinding::Bar(const ValueList& args, Value *result, BoundObject *context_local)
+	void FooBinding::Bar(const ValueList& args, Value *result)
 	{
 		if (args.size() > 0 && args[0]->IsString()) {
 			std::cout << "you passed me: " << args[0]->ToString() << std::endl;

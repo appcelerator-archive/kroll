@@ -75,7 +75,7 @@ namespace kroll
 		KR_ASSERT(cl1->IsObject());
 		PythonValue* value = new PythonValue(expression);
 		ScopedDereferencer sd1(value);
-		Value* p1 = value->Get("bar",NULL);
+		Value* p1 = value->Get("bar");
 		KR_ASSERT(p1->IsMethod());
 
 		// TEST creating instance and invoking methods
@@ -88,45 +88,45 @@ namespace kroll
 		ScopedDereferencer sd2(value2);
 
 		// TEST method
-		Value* p2 = value2->Get("bar",NULL);
+		Value* p2 = value2->Get("bar");
 		KR_ASSERT(p2->IsMethod());
 		BoundMethod* m1 = p2->ToMethod();
 		ValueList args;
-		Value* mv1 = m1->Call(args,NULL);
+		Value* mv1 = m1->Call(args);
 		KR_ASSERT(!mv1->IsNull());
 		KR_ASSERT_STR(mv1->ToString().c_str(),"hello,world");
 
 		// TEST property accessor
-		Value* p3 = value2->Get("i",NULL);
+		Value* p3 = value2->Get("i");
 		KR_ASSERT(p3->IsInt());
 		KR_ASSERT(p3->ToInt()==12345);
 
 		// TEST setting properties
 		Value* set1 = new Value(6789);
-		value2->Set("i",set1,NULL);
-		Value* p4 = value2->Get("i",NULL);
+		value2->Set("i",set1);
+		Value* p4 = value2->Get("i");
 		KR_ASSERT(p4->IsInt());
 		KR_ASSERT(p4->ToInt()==6789);
 
 		// TEST setting invalid property - this should add it dynamically
 		Value* set2 = new Value(1);
-		value2->Set("i2",set2,NULL);
-		Value* p5 = value2->Get("i2",NULL);
+		value2->Set("i2",set2);
+		Value* p5 = value2->Get("i2");
 		KR_ASSERT(p5->IsInt());
 		KR_ASSERT(p5->ToInt()==1);	
 
 		// TEST undefined property
-		Value* p6 = value2->Get("x",NULL);
+		Value* p6 = value2->Get("x");
 		KR_ASSERT(p6->IsUndefined());
 
 		// TEST invoking a function with wrong parameters and checking exception
-		Value* p7 = value2->Get("blah",NULL);
+		Value* p7 = value2->Get("blah");
 		KR_ASSERT(p7->IsMethod());
 		BoundMethod* mb2 = p7->ToMethod();
 		Value *mv3 = NULL;
 		try
 		{
-			mv3 = mb2->Call(args,NULL);
+			mv3 = mb2->Call(args);
 			KR_ASSERT(false);
 		}
 		catch (Value* e)
@@ -138,17 +138,17 @@ namespace kroll
 		ValueList args2;
 		Value* argsp1 = new Value("hello,world");
 		args2.push_back(argsp1);
-		Value* mv4 = mb2->Call(args2,NULL);
+		Value* mv4 = mb2->Call(args2);
 		KR_ASSERT(mv4);
 
 		// TEST for Python callable functions
 		PyRun_SimpleString("def foopyc(): return 'hello,world'");
 		PyObject* foopyc = PyDict_GetItemString(global_dict, "foopyc");
 		KR_ASSERT(foopyc);
-		Value* cl3 = PythonValueToValue(foopyc,NULL);
+		Value* cl3 = PythonValueToValue(foopyc, NULL);
 		KR_ASSERT(cl3->IsMethod());
 		BoundMethod* m2 = cl3->ToMethod();
-		Value* mv2 = m2->Call(args,NULL);
+		Value* mv2 = m2->Call(args);
 		KR_ASSERT(!mv2->IsNull());
 		KR_ASSERT_STR(mv2->ToString().c_str(),"hello,world");
 
@@ -166,7 +166,7 @@ namespace kroll
 		Value* cl5 = PythonValueToValue(foopyc,NULL);
 		KR_ASSERT(cl5->IsMethod());
 		BoundMethod* m4 = cl5->ToMethod();
-		Value* mv6 = m4->Call(args,NULL);
+		Value* mv6 = m4->Call(args);
 		KR_ASSERT_STR(mv6->ToString().c_str(),"hello,world");
 
 		PyObject *anon2 = BoundMethodToPythonValue(m4);
@@ -174,14 +174,14 @@ namespace kroll
 		Value* tiv1 = PythonValueToValue(anon2,NULL);
 		KR_ASSERT(tiv1->IsMethod());
 		BoundMethod *tibm1 = tiv1->ToMethod();
-		Value* tivr1 = tibm1->Call(args,NULL);
+		Value* tivr1 = tibm1->Call(args);
 		KR_ASSERT_STR(tivr1->ToString().c_str(),"hello,world");
 
 
 		PyObject* piv = BoundMethodToPythonValue(tibm1);
 		Value* pivv = PythonValueToValue(piv,NULL);
 		BoundMethod *pivbm = pivv->ToMethod();
-		Value* pivbmv = pivbm->Call(args,NULL);
+		Value* pivbmv = pivbm->Call(args);
 		KR_ASSERT_STR(pivbmv->ToString().c_str(),"hello,world");
 
 		std::string script2;
@@ -193,10 +193,10 @@ namespace kroll
 		PyRun_SimpleString(script2.c_str());
 		
 		// TEST pulling out the new bound values
-		Value *x = host->GetGlobalObject()->GetNS("python.x",NULL);
+		Value *x = host->GetGlobalObject()->GetNS("python.x");
 		KR_ASSERT(x->ToInt()==123);
 		
-		Value *y = host->GetGlobalObject()->GetNS("python.y",NULL);
+		Value *y = host->GetGlobalObject()->GetNS("python.y");
 		KR_ASSERT(y->ToInt()==124);
 		
 		ValueList vl;
