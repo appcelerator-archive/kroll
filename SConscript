@@ -1,0 +1,8 @@
+Import('build')
+SConscript('api/SConscript', build_dir=build.dir + '/api', duplicate=0)
+SConscript('boot/SConscript')
+SConscript('host/SConscript')
+SConscript('install/SConscript')
+SConscript('kernel/SConscript', build_dir=build.dir + '/kernel', duplicate=0)
+SConscript('modules/SConscript')
+SConscript('test/SConscript', build_dir=build.dir + '/test', duplicate=0)
