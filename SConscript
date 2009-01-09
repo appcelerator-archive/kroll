@@ -25,6 +25,7 @@ class BuildConfig(object):
 			self.os = 'linux'
 		self.abstopdir = path.abspath('.')
 		self.dir = '#build/%s' % self.os 
+		self.kroll_build_dir = '#build/%s' % self.os 
 		self.absdir = path.abspath('build/%s' % self.os) 
 		self.third_party = path.abspath('thirdparty/%s' % self.os)
 	def matches(self, n): return bool(re.match(os.uname()[0], n))
@@ -33,7 +34,7 @@ class BuildConfig(object):
 	def is_win32(self): return self.os == 'win32'
 	
 build = BuildConfig()
-build.include_dir = path.abspath(path.join('build', 'include', 'kroll'))
+build.kroll_include_dir = path.abspath(path.join('build', 'include', 'kroll'))
 build.env = Environment(
     variables = vars,
     CPPDEFINES = {

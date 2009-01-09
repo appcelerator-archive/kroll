@@ -8,6 +8,9 @@
 #ifndef _KR_BOUND_LIST_H_
 #define _KR_BOUND_LIST_H_
 
+#include <string>
+#include <cctype>
+
 namespace kroll
 {
 	class KROLL_API BoundList : public BoundObject
