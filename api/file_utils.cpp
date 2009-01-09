@@ -10,6 +10,7 @@
 #elif defined(OS_WIN32)
 #include <windows.h>
 #include <shlobj.h>
+#include <process.h>
 #endif
 
 namespace kroll

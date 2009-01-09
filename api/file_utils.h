@@ -8,7 +8,11 @@
 #ifndef _KR_FILE_UTILS_H_
 #define _KR_FILE_UTILS_H_
 
-#include "kroll.h"
+#ifdef OS_WIN32
+# include <windows.h>
+#endif
+
+#include "base.h"
 #include <iostream>
 #include <fstream>
 #include <string>

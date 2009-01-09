@@ -10,7 +10,9 @@
 #include <vector>
 #include <process.h>
 #include <iostream>
-#include <api/kroll.h>
+
+#define KROLL_API 
+#include "api/file_utils.h"
 
 using namespace kroll;
 
