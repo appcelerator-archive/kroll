@@ -20,7 +20,7 @@ class Foo:
     def win(self,window):
 	    return window.title
 		
-tiBind("foopy",Foo()) 
+Titanium.set("foopy",Foo(),Titanium) 
 
 print "hello, world from inside Python module!"
 
