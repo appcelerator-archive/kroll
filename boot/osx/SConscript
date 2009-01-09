@@ -8,7 +8,6 @@ OSX_UNIV_LINKER = '-isysroot '+OSX_SDK+' -syslibroot,'+OSX_SDK
 
 Env = build.env.Clone()
 Env.Append(FRAMEWORKS=['Foundation','Cocoa'])
-Env.Append(CCFLAGS=OSX_UNIV_COMPILER)
-#Env.Append(FRAMEWORKPATH=['thirdparty/webkit/osx'])
+Env.Append(CCFLAGS=OSX_UNIV_COMPILER+' -x objective-c++')
 Env.Append(LDFLAGS=OSX_UNIV_LINKER)
-Env.Program(build.dir + '/kboot', ['boot.mm'],LIBS=['kroll'])
+Env.Program(build.dir + '/kboot', ['boot.mm','../api/file_utils.cpp'])

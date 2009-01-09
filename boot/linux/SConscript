@@ -2,4 +2,4 @@
 Import('build')
 
 Env = build.env.Clone()
-Env.Program(build.dir + '/kboot', ['boot.cpp'],LIBS=['kroll'])
+Env.Program(build.dir + '/kboot', ['boot.cpp','../api/file_utils.cpp'])
