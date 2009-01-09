@@ -165,11 +165,10 @@ int main(int argc, char* argv[])
 	std::vector<std::string> moduleDirs;
 	std::string manifest([manifestNS UTF8String]);
 	std::string runtimePath;
-	FileUtils::ReadManifest(manifest,runtimePath,modules,moduleDirs);
-	bool success = FileUtils::ReadManifest(c,runtimePath,modules,moduleDirs);
+	bool success = FileUtils::ReadManifest(manifest,runtimePath,modules,moduleDirs);
 	if (!success)
 	{
-		NSLog(@"Could not read manifest: %@", c);
+		NSLog(@"Could not read manifest: %@", manifestNS);
 		[pool release];
 		return __LINE__;
 	}
