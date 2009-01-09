@@ -102,16 +102,23 @@ namespace kroll
 
 			// get the module factory
 			Module* module = module_creators[path]->CreateModule(path);
-			module->SetProvider(module_creators[path]);
+			if (module==NULL)
+			{
+				std::cerr << "Couldn't load module: " << path << ", skipping..." << std::endl;
+			}
+			else
+			{
+				module->SetProvider(module_creators[path]);
+				
+				std::cout << "module loaded " << module->GetName() << " from " << path
+						<< std::endl;
+				
+				// register our module
+				this->RegisterModule(path, module);
 
-			std::cout << "module loaded " << module->GetName() << " from " << path
-					<< std::endl;
-
-			// register our module
-			this->RegisterModule(path, module);
-
-			// we can now release our reference since the host has it
-			KR_DECREF(module);
+				//we can now release our reference since the host has it
+				KR_DECREF(module);
+			}
 		}
 	}
 

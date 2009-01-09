@@ -103,7 +103,7 @@ int WinMain(HINSTANCE, HINSTANCE, LPSTR cl, int show)
 			return __LINE__;
 		}
 		std::string binary = std::string(installer);
-		binary.append("\\install.exe");
+		binary.append("\\kinstall.exe");
 		if (!isFile(binary))
 		{
 			fprintf(stderr,"invalid installation. installer file doesn't exist at: %s\n",binary.c_str());
@@ -155,7 +155,7 @@ int WinMain(HINSTANCE, HINSTANCE, LPSTR cl, int show)
 
 	// 2. setup the environment and get ready to launch our runtime
 	std::string runtimeExec = std::string(runtimePath);
-	runtimeExec.append("\\kernel.exe");
+	runtimeExec.append("\\kkernel.exe");
 
 	std::string libPath = std::string(runtimePath);
 	libPath.append(";");

@@ -42,7 +42,7 @@ int main(int argc, char* argv[], char* environ[])
 			return __LINE__;
 		}	
 		std::string binary = std::string(installer);
-		binary.append("/install");
+		binary.append("/kinstall");
 		if (!FileUtils::IsFile(binary))
 		{
 			fprintf(stderr,"invalid installation. installer file doesn't exist at: %s\n",binary.c_str());
@@ -65,7 +65,7 @@ int main(int argc, char* argv[], char* environ[])
 
 	// 2. setup the environment and get ready to launch our runtime
 	std::string runtimeExec = std::string(runtimePath);
-	runtimeExec.append("/tikernel");
+	runtimeExec.append("/kkernel");
 
 	std::string libPath = std::string(runtimePath);
 	libPath.append(":");

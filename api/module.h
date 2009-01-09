@@ -46,8 +46,11 @@ namespace kroll
 using namespace kroll;
 #define KROLL_MODULE_FACTORY_DEFINE(s) extern "C" EXPORT s* CreateModule(Host *host) \
 { \
+	std::cout << "Creating module: " << #s << std::endl; \
 	s *p = new s(host);\
+	std::cout << "Initializing module: " << #s << std::endl; \
 	p->Initialize(); \
+	std::cout << "After create module: " << #s << std::endl; \
 	return p; \
 }  \
 extern "C" EXPORT void DestroyModule(s* p)\

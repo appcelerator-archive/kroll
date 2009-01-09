@@ -235,13 +235,13 @@ int main(int argc, char* argv[])
 		{
 			[args addObject:[NSString stringWithFormat:@"%s",argv[c]]];
 		}
-		NSString *dylibPath = [NSString stringWithFormat:@"%s/WebKit.framework/Versions/Current",runtimePath.c_str()];
+		NSString *dylibPath = [NSString stringWithFormat:@"%@:%s/WebKit.framework/Versions/Current",libpath,runtimePath.c_str()];
 		dylibPath = [dylibPath stringByAppendingFormat:@":%s/WebCore.framework/Versions/Current",runtimePath.c_str()];
 		dylibPath = [dylibPath stringByAppendingFormat:@":%s/JavaScriptCore.framework/Versions/Current",runtimePath.c_str()];
 		dylibPath = [dylibPath stringByAppendingFormat:@":%s",runtimePath.c_str()];
 	
 		// create our environment
-		NSMutableDictionary *env = [NSMutableDictionary dictionaryWithObjectsAndKeys:libpath, @"DYLD_LIBRARY_PATH", nil];
+		NSMutableDictionary *env = [[NSMutableDictionary alloc] init];
 		[env setValue:appDir forKey:@"KR_HOME"];
 		[env setValue:[NSString stringWithCString:runtimePath.c_str()] forKey:@"KR_RUNTIME"];
 		[env setValue:runtime forKey:@"KR_RUNTIME_HOME"];
