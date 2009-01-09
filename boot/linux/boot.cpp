@@ -32,6 +32,9 @@ int main(int argc, char* argv[], char* environ[])
 	std::string cwd = getExecutableDirectory();
 	std::string runtimeDir = FileUtils::GetRuntimeBaseDirectory();
 
+std::cout << "cwd = " << cwd << std::endl;
+std::cout << "runtime = " << runtimeDir << std::endl;
+
 	if (!FileUtils::IsRuntimeInstalled())
 	{
 		std::string installer = std::string(cwd);

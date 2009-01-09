@@ -382,6 +382,9 @@ namespace kroll
 			p+=" ";
 			p+=(*i++);
 		}
+#ifdef DEBUG
+		std::cout << "running: " << p << std::endl;
+#endif
 		return system(p.c_str());
 #elif defined(OS_WIN32)
 		const char **argv = new const char*[args.size()];
@@ -413,7 +416,8 @@ namespace kroll
 		RunAndWait(std::string("/usr/bin/ditto"),args);
 #elif OS_LINUX
 		std::vector<std::string> args;
-		std::string p(source);
+		args.push_back("-qq");
+		args.push_back(source);
 		args.push_back("-d");
 		args.push_back(destination);
 		std::string cmdline("/usr/bin/unzip");
