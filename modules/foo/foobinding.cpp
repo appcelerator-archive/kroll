@@ -20,7 +20,7 @@ namespace kroll
 		arr->Append(new Value("one"));
 		arr->Append(new Value("42"));
 		arr->Append(new Value("false"));
-		this->Set("test1", new Value(arr));
+		this->Set("list", new Value(arr));
 
 		KR_DECREF(number);
 		KR_DECREF(arr);

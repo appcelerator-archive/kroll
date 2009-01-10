@@ -25,11 +25,11 @@ namespace kroll
 	void StaticBoundList::Append(Value* value)
 	{
 		int length = this->Size();
-		length = length + 1;
 		char* name = StaticBoundList::IntToChars(length);
 		this->object->Set(name, value);
 		delete [] name;
 
+		length = length + 1;
 		this->object->Set("length", new Value(length));
 	}
 
