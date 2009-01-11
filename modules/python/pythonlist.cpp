@@ -13,7 +13,7 @@ namespace kroll
 	{
 		if (!PyList_Check(obj))
 		{
-			char *msg = "Invalid PyObject passed. Should be a Py_List";
+			std::string msg("Invalid PyObject passed. Should be a Py_List");
 			std::cerr << msg << std::endl;
 			throw msg;
 		}
@@ -115,7 +115,7 @@ namespace kroll
 	 */
 	Value* PythonList::Get(const char *name)
 	{
-		if (name == "length")
+		if (std::string(name) == std::string("length"))
 		{
 			return new Value(this->Size());
 		}
