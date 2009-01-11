@@ -6,6 +6,7 @@
 #include "pythontest.h"
 #include "pythontypes.h"
 #include "pythonvalue.h"
+#include "pythonlist.h"
 
 namespace kroll
 {
@@ -217,9 +218,21 @@ namespace kroll
 		Value *vitem = PythonValueToValue(pitem);
 		KR_ASSERT(vitem->IsInt());
 		KR_ASSERT(vitem->ToInt()==1);
+
+		PythonList *plist = new PythonList(apylist);
+		KR_ASSERT(plist->Size()==1);
+		KR_ASSERT(plist->At(0)->ToInt()==1);
+		Value *vlist2 = new Value("hello");
+		plist->Append(vlist2);
+		KR_ASSERT(plist->Size()==2);
+		Value *vlist3 = plist->At(1);
+		KR_ASSERT(vlist3->ToString()=="hello");
+		KR_ASSERT(list->At(10)->IsUndefined());
+		
+		KR_DECREF(vlist2);
+		KR_DECREF(plist);
 		Py_DECREF(pitem);
 		KR_DECREF(vitem);
-		
 		KR_DECREF(listv);
 		KR_DECREF(list);
 		Py_DECREF(apylist);

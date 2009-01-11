@@ -312,6 +312,7 @@ namespace kroll
 	{
 		PyObject *ptype, *pvalue, *trace;
 		PyErr_Fetch(&ptype,&pvalue,&trace);
+		PyErr_Print();
 		PyErr_Clear();
 		throw PythonValueToValue(pvalue,NULL);
 	}

@@ -11,11 +11,13 @@ namespace kroll
 {
 	PythonList::PythonList(PyObject *obj) : object(obj)
 	{
-		int size=(int)PyList_Size(this->object);
-		// check for size, -1 is what an empty array is
-		Value *length = new Value(size < 0 ? 0 : size);
-		this->Set("length",length);
-		KR_DECREF(length);
+		if (!PyList_Check(obj))
+		{
+			char *msg = "Invalid PyObject passed. Should be a Py_List";
+			std::cerr << msg << std::endl;
+			throw msg;
+		}
+		
 		Py_INCREF(this->object);
 	}
 
@@ -33,7 +35,6 @@ namespace kroll
 	 */
 	void PythonList::Append(Value* value)
 	{
-		std::cout << "append" << std::endl;
 		PyList_Append(this->object,ValueToPythonValue(value));
 		KR_DECREF(value);
 	}
@@ -54,7 +55,6 @@ namespace kroll
 	 */
 	Value* PythonList::At(int index)
 	{
-		std::cout << "at" << std::endl;
 		PyObject *p = PyList_GET_ITEM(this->object,index);
 		if (Py_None == p)
 		{
@@ -74,17 +74,12 @@ namespace kroll
 	 */
 	void PythonList::Set(const char *name, Value* value)
 	{
-		std::cout << "set" << std::endl;
 		// check for integer value as name
 		if (this->IsNumber(name))
 		{
 			int val = atoi(name);
 			if (val >= this->Size())
 			{
-				Value *len = new Value(val);
-				this->Set("length", len);
-				KR_DECREF(len);
-				
 				// now we need to create entries
 				// between current size and new size
 				// and make the entries null
@@ -94,19 +89,20 @@ namespace kroll
 				}
 			}
 			
-			Value* current = this->At(atoi(name));
+			Value* current = this->At(val);
 			current->Set(value);
 		}
 		else
 		{
 			// set a named property
-			int result = PyObject_SetAttrString(this->object,(char*)name,ValueToPythonValue(value));
-
+			PyObject* py = ValueToPythonValue(value);
+			int result = PyObject_SetAttrString(this->object,(char*)name,py);
+			Py_DECREF(py);
+			
 			PyObject *exception = PyErr_Occurred();
 			if (result == -1 && exception != NULL)
 			{
-				PyErr_Clear();
-				throw PythonValueToValue(exception, NULL);
+				ThrowPythonException();
 			}
 		}
 	}
@@ -119,8 +115,10 @@ namespace kroll
 	 */
 	Value* PythonList::Get(const char *name)
 	{
-		std::cout << "get" << std::endl;
-		
+		if (name == "length")
+		{
+			return new Value(this->Size());
+		}
 		// get should returned undefined if we don't have a property
 		// named "name" to mimic what happens in Javascript
 		if (0 == (PyObject_HasAttrString(this->object,(char*)name)))
@@ -133,9 +131,8 @@ namespace kroll
 		PyObject *exception = PyErr_Occurred();
 		if (response == NULL && exception != NULL)
 		{
-			PyErr_Clear();
 			Py_XDECREF(response);
-			throw PythonValueToValue(exception, NULL);
+			ThrowPythonException();
 		}
 
 		Value* returnValue = PythonValueToValue(response,name);
@@ -149,6 +146,8 @@ namespace kroll
 	std::vector<std::string> PythonList::GetPropertyNames()
 	{
 		std::vector<std::string> names;
+		names.push_back("length");
+		
 		PyObject *props = PyObject_Dir(this->object);
 		
 		if (props == NULL)

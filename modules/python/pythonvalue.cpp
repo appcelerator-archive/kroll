@@ -27,10 +27,8 @@ namespace kroll
 		PyObject *exception = PyErr_Occurred();
 		if (result == -1 && exception != NULL)
 		{
-			PyErr_Clear();
-			throw PythonValueToValue(exception, NULL);
+			ThrowPythonException();
 		}
-
 	}
 
 	Value* PythonValue::Get(const char *name)
@@ -47,9 +45,8 @@ namespace kroll
 		PyObject *exception = PyErr_Occurred();
 		if (response == NULL && exception != NULL)
 		{
-			PyErr_Clear();
 			Py_XDECREF(response);
-			throw PythonValueToValue(exception, NULL);
+			ThrowPythonException();
 		}
 
 		Value* returnValue = PythonValueToValue(response,name);
