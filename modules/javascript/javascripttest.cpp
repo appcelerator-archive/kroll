@@ -15,7 +15,7 @@ namespace kroll
 		KR_ASSERT(context);
 		JSObjectRef globalObject = JSContextGetGlobalObject(context);
 		KR_ASSERT(globalObject);
-		
+
 		// TEST simple bound property values
 		BoundObject *bound = new StaticBoundObject();
 		Value *value = new Value("bar");
@@ -23,7 +23,7 @@ namespace kroll
 		KR_DECREF(value);
 		JSObjectRef boundRef = KrollBoundObjectToJSValue(context, bound);
 		KR_ASSERT(boundRef);
-		
+
 		// get the value of the property from the JS object
 		JSStringRef key = JSStringCreateWithUTF8CString("foo");
 		JSValueRef js_value = JSObjectGetProperty(context,
@@ -36,14 +36,14 @@ namespace kroll
 		// convert to a js string and then a char* so we can make sure its the same
 		JSStringRef valueAsString = JSValueToStringCopy(context, js_value, NULL);
 		size_t jsSize = JSStringGetMaximumUTF8CStringSize(valueAsString);
-		char jsBuffer[jsSize];
+		char *jsBuffer = new char[jsSize];
 		JSStringGetUTF8CString(valueAsString, jsBuffer, jsSize);
 		JSStringRelease(valueAsString);
 
 		KR_ASSERT_STR(jsBuffer,"bar");
-		
+
 		KR_DECREF(bound);
-		
+
 		// tear it down
 		JSGlobalContextRelease(context);
 		JSGarbageCollect(context);
