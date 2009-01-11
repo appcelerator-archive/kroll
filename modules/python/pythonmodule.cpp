@@ -8,7 +8,7 @@
 #include "pythonmodule.h"
 #include "pythontypes.h"
 #include "pythontest.h"
-	
+
 namespace kroll
 {
 	KROLL_MODULE(PythonModule)
@@ -18,7 +18,7 @@ namespace kroll
 	void PythonModule::Initialize()
 	{
 		KR_DUMP_LOCATION
-		
+
 		PythonModule::instance_ = this;
 
 		//Py_SetProgramName(); //TODO: maybe we need to setup path to script?
@@ -32,10 +32,10 @@ namespace kroll
 	void PythonModule::Destroy()
 	{
 		KR_DUMP_LOCATION
-		
+
 		// clean up
 		Py_Finalize();
-		
+
 		// FIXME - unregister / unbind?
 		PythonModule::instance_ = NULL;
 	}
@@ -58,18 +58,16 @@ namespace kroll
 
 		FILE *file = fopen(path2, "r");
 		printf("got python file: %d\n", (int) file);
-		
+
 		//FIXME - we need to create a separate version of scope stuff
 
-	#if !defined(OS_WIN32)
 		// right now python is crashing in win32, need to investigate
 		PyRun_SimpleFile(file,path2);
-	#endif
 		std::cout << "PyRan simple file" << std::endl;
 
 		std::string path3(path2);
 		free(path2);
-		
+
 		std::cout << "return new PythonModuleInstance " << path3 << std::endl;
 		return new PythonModuleInstance(host, path3);
 	}

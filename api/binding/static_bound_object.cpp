@@ -57,17 +57,15 @@ namespace kroll
 		}
 	}
 
-	std::vector<std::string> StaticBoundObject::GetPropertyNames()
+	void StaticBoundObject::GetPropertyNames(std::vector<std::string> *property_names)
 	{
 		ScopedLock lock(&mutex);
-		std::vector<std::string> names;
 		std::map<std::string, Value*>::iterator iter = properties.begin();
 		while (iter != properties.end())
 		{
-			names.push_back(iter->first);
+			property_names->push_back(iter->first);
 			iter++;
 		}
-		return names;
 	}
 
 	void StaticBoundObject::SetObject(const char *name, BoundObject* object)

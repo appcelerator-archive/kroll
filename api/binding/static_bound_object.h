@@ -35,7 +35,7 @@ namespace kroll
 		/**
 		 * Return a list of this object's property names.
 		 */
-		virtual std::vector<std::string> GetPropertyNames();
+		virtual void GetPropertyNames(std::vector<std::string> *property_names);
 
 		/**
 		 * Set a property on this object to the given value. Value should be
@@ -67,7 +67,7 @@ namespace kroll
 		}
 
 		void SetObject(const char *name, BoundObject* object);
-		
+
 		/**
 		 * create a delegate from a BoundObject to a wrapped
 		 * StaticBoundObject and delegate set/get to the new
@@ -76,7 +76,8 @@ namespace kroll
 		static StaticBoundObject* CreateDelegate(BoundObject *global, BoundObject *bo)
 		{
 			StaticBoundObject *scope = new StaticBoundObject();
-			std::vector<std::string> keys = bo->GetPropertyNames();
+			std::vector<std::string> keys;
+			bo->GetPropertyNames(&keys);
 			std::vector<std::string>::iterator iter = keys.begin();
 			while(iter!=keys.end())
 			{
@@ -104,7 +105,7 @@ namespace kroll
 					scope->Set(name,value);
 				}
 				KR_DECREF(value);
-			}		
+			}
 			return scope;
 		}
 
@@ -115,7 +116,7 @@ namespace kroll
 	private:
 		DISALLOW_EVIL_CONSTRUCTORS(StaticBoundObject);
 	};
-	
+
 }
 
 #endif

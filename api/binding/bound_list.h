@@ -21,7 +21,7 @@ namespace kroll
 		BoundList() {}
 
 		/**
-		 * Append a value to this list. Value should be heap-allocated as 
+		 * Append a value to this list. Value should be heap-allocated as
 		 * implementors are allowed to keep a reference, if they increase the
 		 * reference count.
 		 * When an error occurs will throw an exception of type Value*.
@@ -60,7 +60,7 @@ namespace kroll
 		/**
 		 * Return a list of this object's property names.
 		 */
-		virtual std::vector<std::string> GetPropertyNames() = 0;
+		virtual void GetPropertyNames(std::vector<std::string> *property_names) = 0;
 
 	protected:
 		bool IsNumber (const char *name)
@@ -75,7 +75,7 @@ namespace kroll
 			}
 			return true;
 		}
-		
+
 	private:
 		DISALLOW_EVIL_CONSTRUCTORS(BoundList);
 	};

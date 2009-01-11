@@ -1,6 +1,6 @@
 /**
  * Appcelerator Kroll - licensed under the Apache Public License 2
- * see LICENSE in the root folder for details on the license. 
+ * see LICENSE in the root folder for details on the license.
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
 #include "apimodule.h"
@@ -48,10 +48,8 @@ namespace kroll
 		{
 			return NULL;
 		}
-		virtual std::vector<std::string> GetPropertyNames()
+		virtual void GetPropertyNames(std::vector<std::string> *property_names)
 		{
-			std::vector<std::string> names;
-			return names;
 		}
 
 		std::string& Event() { return event; }
@@ -83,28 +81,28 @@ namespace kroll
 		Value *mv = new Value(msg);
 		ScopedRefCounted s2(mv);
 		args.push_back(mv);
-		
+
 		// invoke directly against interface
 		binding->Log(severity,msg);
-		
+
 		// invoke with ValueList
 		logMethod->Call(args);
-		
+
 		// invoke with varargs
 		logMethod->Call(sv,mv);
-		
+
 		Value *v = new Value(1);
 		binding->Set("foo",v);
 		Value *vr = binding->Get("foo");
 		KR_ASSERT(v->ToInt() == vr->ToInt());
 		KR_DECREF(v);
 		KR_DECREF(vr);
-		
+
 		// TEST retrieving the value from a namespaced string
 		Value* foo = host->GetGlobalObject()->GetNS("api.foo");
 		KR_ASSERT(foo->ToInt()==1);
 		KR_DECREF(foo);
-		
+
 		// TEST registering an event handler and then receiving it
 		// once it's fired
 		std::string event("kr.api.log");
@@ -113,16 +111,16 @@ namespace kroll
 		Value* data = new Value("some data here");
 		ScopedDereferencer dr(data);
 		ScopedDereferencer tod(testObject);
-		
+
 		binding->Fire(event,data);
 		KR_ASSERT_STR(testObject->Event().c_str(),"kr.api.log");
 		KR_ASSERT_STR(testObject->Message().c_str(),"some data here");
-		
+
 		testObject->Reset();
-		
+
 		// TEST unregister and then refire -- we shouldn't receive it
 		binding->Unregister(ref);
-		
+
 		binding->Fire(event,data);
 		KR_ASSERT_STR(testObject->Event().c_str(),"");
 		KR_ASSERT_STR(testObject->Message().c_str(),"");

@@ -45,13 +45,13 @@ namespace kroll
 		/**
 		 * Return a list of this object's property names.
 		 */
-		virtual std::vector<std::string> GetPropertyNames();
+		virtual void GetPropertyNames(std::vector<std::string> *property_names);
 
 	protected:
 		MethodCallback* callback;
 		StaticBoundObject* object;
 		std::map<std::string, Value*> properties;
-		
+
 	private:
 		DISALLOW_EVIL_CONSTRUCTORS(StaticBoundMethod);
 	};

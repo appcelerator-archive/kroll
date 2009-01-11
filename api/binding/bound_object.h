@@ -21,13 +21,13 @@ namespace kroll
 	class KROLL_API BoundObject : public RefCounted
 	{
 	public:
-		BoundObject(BoundObject *scope_) : scope(scope_) 
-		{ 
-			KR_ADDREF(scope); 
+		BoundObject(BoundObject *scope_) : scope(scope_)
+		{
+			KR_ADDREF(scope);
 		}
 		BoundObject() : scope(NULL) {}
 	protected:
-		virtual ~BoundObject() 
+		virtual ~BoundObject()
 		{
 			KR_DECREF(scope);
 		}
@@ -51,7 +51,7 @@ namespace kroll
 		/**
 		 * Return a list of this object's property names.
 		 */
-		virtual std::vector<std::string> GetPropertyNames() = 0;
+		virtual void GetPropertyNames(std::vector<std::string> *property_names) = 0;
 
 		void SetNS(const char *name, Value* value)
 		{
@@ -97,7 +97,7 @@ namespace kroll
 			std::string::size_type pos = s.find_first_of(".");
 			Value* current = NULL;
 			BoundObject* scope = this;
-			while (pos != std::string::npos) 
+			while (pos != std::string::npos)
 			{
 				std::string token = s.substr(last,pos);
 				current = scope->Get(token.c_str());
@@ -107,7 +107,7 @@ namespace kroll
 				{
 					scope = current->ToObject();
 				}
-				else 
+				else
 				{
 					return Value::Undefined();
 				}
@@ -122,7 +122,7 @@ namespace kroll
 
 	protected:
 		BoundObject *scope;
-		
+
 	private:
 		DISALLOW_EVIL_CONSTRUCTORS(BoundObject);
 	};

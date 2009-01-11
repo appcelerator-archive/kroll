@@ -48,9 +48,9 @@ namespace kroll
 		return this->object;
 	}
 
-	std::vector<std::string> KJSBoundMethod::GetPropertyNames()
+	void KJSBoundMethod::GetPropertyNames(std::vector<std::string> *property_names)
 	{
-		return kjs_bound_object->GetPropertyNames();
+		kjs_bound_object->GetPropertyNames(property_names);
 	}
 
 	kroll::Value* KJSBoundMethod::Call(const kroll::ValueList& args)
@@ -81,7 +81,7 @@ namespace kroll
 
 		return JSValueToKrollValue(this->context, js_value, NULL);
 	}
-	
+
 }
 
 

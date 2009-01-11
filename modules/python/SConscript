@@ -18,6 +18,7 @@ elif build.is_win32():
 	python_home = os.environ['PYTHONHOME']
 	Env.Append(CPPPATH=[os.path.join(python_home, 'include')])
 	Env.Append(LIBPATH=[os.path.join(python_home, 'libs')])
-	Env.Append(LIBS=['python26'])
+	Env.Append(LIBS=['python25'])
+	Env.Append(CCFLAGS = ['/MD'])
     
 Env.SharedLibrary(build.dir + '/pythonmodule', Glob('*.cpp'))

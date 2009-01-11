@@ -18,9 +18,9 @@ namespace kroll
 		virtual ~StaticBoundList();
 
 	public:
-		
+
 		/**
-		 * Append a value to this list. Value should be heap-allocated as 
+		 * Append a value to this list. Value should be heap-allocated as
 		 * implementors are allowed to keep a reference, if they increase the
 		 * reference count.
 		 * When an error occurs will throw an exception of type Value*.
@@ -59,7 +59,7 @@ namespace kroll
 		/**
 		 * Return a list of this object's property names.
 		 */
-		virtual std::vector<std::string> GetPropertyNames();
+		virtual void GetPropertyNames(std::vector<std::string> *property_names);
 
 	protected:
 		static char* IntToChars(int value);

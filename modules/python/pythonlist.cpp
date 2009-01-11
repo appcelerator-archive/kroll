@@ -17,7 +17,7 @@ namespace kroll
 			std::cerr << msg << std::endl;
 			throw msg;
 		}
-		
+
 		Py_INCREF(this->object);
 	}
 
@@ -28,7 +28,7 @@ namespace kroll
 	}
 
 	/**
-	 * Append a value to this list. Value should be heap-allocated as 
+	 * Append a value to this list. Value should be heap-allocated as
 	 * implementors are allowed to keep a reference, if they increase the
 	 * reference count.
 	 * When an error occurs will throw an exception of type Value*.
@@ -88,7 +88,7 @@ namespace kroll
 					this->Append(NULL);
 				}
 			}
-			
+
 			Value* current = this->At(val);
 			current->Set(value);
 		}
@@ -98,7 +98,7 @@ namespace kroll
 			PyObject* py = ValueToPythonValue(value);
 			int result = PyObject_SetAttrString(this->object,(char*)name,py);
 			Py_DECREF(py);
-			
+
 			PyObject *exception = PyErr_Occurred();
 			if (result == -1 && exception != NULL)
 			{
@@ -143,17 +143,16 @@ namespace kroll
 	/**
 	 * Return a list of this object's property names.
 	 */
-	std::vector<std::string> PythonList::GetPropertyNames()
+	void PythonList::GetPropertyNames(std::vector<std::string> *property_names)
 	{
-		std::vector<std::string> names;
-		names.push_back("length");
-		
+		property_names->push_back("length");
+
 		PyObject *props = PyObject_Dir(this->object);
-		
+
 		if (props == NULL)
 		{
 			Py_DECREF(props);
-			return names;
+			return;
 		}
 
 		PyObject *iterator = PyObject_GetIter(props);
@@ -161,18 +160,17 @@ namespace kroll
 
 		if (iterator == NULL)
 		{
-			return names;
+			return;
 		}
-		
-		while ((item = PyIter_Next(iterator))) 
+
+		while ((item = PyIter_Next(iterator)))
 		{
 			std::string name = PythonStringToString(item);
-			names.push_back(name);
+			property_names->push_back(name);
 			Py_DECREF(item);
 		}
-		
+
 		Py_DECREF(iterator);
 		Py_DECREF(props);
-		return names;
 	}
 }

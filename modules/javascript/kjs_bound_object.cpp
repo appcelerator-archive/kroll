@@ -64,9 +64,8 @@ namespace kroll
 		}
 	}
 
-	std::vector<std::string> KJSBoundObject::GetPropertyNames()
+	void KJSBoundObject::GetPropertyNames(std::vector<std::string> *property_names)
 	{
-		std::vector<std::string> string_names;
 		JSPropertyNameArrayRef names =
 		                 JSObjectCopyPropertyNames(this->context, this->object);
 
@@ -77,12 +76,11 @@ namespace kroll
 		{
 			JSStringRef js_name = JSPropertyNameArrayGetNameAtIndex(names, i);
 			char* name = JSStringToChars(js_name);
-			string_names.push_back(std::string(name));
+			property_names->push_back(std::string(name));
 			free(name);
 		}
 
 		JSPropertyNameArrayRelease(names);
-		return string_names;
 	}
 }
 

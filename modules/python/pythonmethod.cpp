@@ -94,31 +94,29 @@ namespace kroll
 		return returnValue;
 	}
 
-	std::vector<std::string> PythonMethod::GetPropertyNames()
+	void PythonMethod::GetPropertyNames(std::vector<std::string> *property_names)
 	{
-		std::vector<std::string> names;
 		PyObject *props = PyObject_Dir(this->object);
 
 		if (props == NULL)
 		{
 			Py_DECREF(props);
-			return names;
+			return;
 		}
 
 		PyObject *iterator = PyObject_GetIter(props);
 		PyObject *item;
 
 		if (iterator == NULL)
-			return names;
+			return;
 
 		while ((item = PyIter_Next(iterator))) {
-			names.push_back(PythonStringToString(item));
+			property_names->push_back(PythonStringToString(item));
 			Py_DECREF(item);
 		}
 
 		Py_DECREF(iterator);
 		Py_DECREF(props);
-		return names;
 	}
-	
+
 }

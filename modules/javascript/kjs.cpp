@@ -135,7 +135,8 @@ namespace kroll
 		if (object == NULL)
 			return;
 
-		std::vector<std::string> props = object->GetPropertyNames();
+		std::vector<std::string> props;
+		object->GetPropertyNames(&props);
 		for (size_t i = 0; i < props.size(); i++)
 		{
 			JSStringRef name = JSStringCreateWithUTF8CString(props.at(i).c_str());
@@ -156,7 +157,8 @@ namespace kroll
 		std::string str_name(name);
 		free(name);
 
-		std::vector<std::string> names = object->GetPropertyNames();
+		std::vector<std::string> names;
+		object->GetPropertyNames(&names);
 		for (size_t i = 0; i < names.size(); i++)
 		{
 			if (names.at(i) == str_name)
@@ -452,6 +454,6 @@ namespace kroll
 	    char* string = (char*) malloc(size);
 	    JSStringGetUTF8CString (js_string, string, size);
 	    return string;
-	}	
+	}
 }
 

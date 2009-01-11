@@ -20,7 +20,7 @@ namespace kroll
 	protected:
 		virtual ~BoundMethod(){}
 	public:
-		BoundMethod() {} 
+		BoundMethod() {}
 		/**
 		 * invoke the bound method. the returned value is automatically
 		 * reference counted and you must release the reference when finished
@@ -48,8 +48,8 @@ namespace kroll
 		/**
 		 * Return a list of this object's property names.
 		 */
-		virtual std::vector<std::string> GetPropertyNames() = 0;
-		
+		virtual void GetPropertyNames(std::vector<std::string> *property_names) = 0;
+
 		/**
 		 * call the method with a variable list of Value* arguments
 		 * When an error occurs will throw an exception of type Value*.
@@ -66,13 +66,13 @@ namespace kroll
 		      if (a==NULL) break;
 		      args.push_back(a);
 			}
-			va_end(vaargs); 
+			va_end(vaargs);
 			return this->Call(args);
 		}
 		//NOTE: this ideally above would be an operator() overload
 		//so you could just method() invoke this function but it doesn't
 		//compile on GCC with "cannot be used as function"
-		
+
 	private:
 		DISALLOW_EVIL_CONSTRUCTORS(BoundMethod);
 	};
@@ -85,13 +85,13 @@ namespace kroll
 	/**
 	 * class that can be used to change the delegation of a method
 	 * call's Get or Set method to first check to see if the key has
-	 * namespace dots (such as ti.foo.bar) and if so, delegate to a 
+	 * namespace dots (such as ti.foo.bar) and if so, delegate to a
 	 * differently supplied scope object for delegation.
 	 */
 	class ScopeMethodDelegate : public BoundMethod
 	{
 	public:
-		ScopeMethodDelegate(MethodDelegateType type, BoundObject *global, BoundObject *scope, BoundMethod *delegate) : 
+		ScopeMethodDelegate(MethodDelegateType type, BoundObject *global, BoundObject *scope, BoundMethod *delegate) :
 			type(type),global(global),scope(scope),delegate(delegate)
 		{
 			KR_ADDREF(global);
@@ -106,9 +106,9 @@ namespace kroll
 		{
 			return delegate->Get(name);
 		}
-		std::vector<std::string> GetPropertyNames()
+		void GetPropertyNames(std::vector<std::string> *property_names)
 		{
-			return delegate->GetPropertyNames();
+			delegate->GetPropertyNames(property_names);
 		}
 		bool IsGlobalKey(std::string& key)
 		{

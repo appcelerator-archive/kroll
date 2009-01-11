@@ -36,9 +36,9 @@ namespace kroll
 		return this->object;
 	}
 
-	std::vector<std::string> KJSBoundList::GetPropertyNames()
+	void KJSBoundList::GetPropertyNames(std::vector<std::string> *property_names)
 	{
-		return kjs_bound_object->GetPropertyNames();
+		 kjs_bound_object->GetPropertyNames(property_names);
 	}
 
 	void KJSBoundList::Append(kroll::Value* value)
@@ -90,6 +90,6 @@ namespace kroll
 	#endif
 		return str;
 	}
-	
+
 }
 
