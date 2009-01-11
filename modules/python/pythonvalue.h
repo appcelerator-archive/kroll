@@ -13,7 +13,7 @@
 
 namespace kroll
 {
-	class KROLL_PYTHON_API PythonValue : public BoundObject
+	class PythonValue : public BoundObject
 	{
 	public:
 		PythonValue(PyObject *obj);

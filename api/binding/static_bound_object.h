@@ -67,6 +67,46 @@ namespace kroll
 		}
 
 		void SetObject(const char *name, BoundObject* object);
+		
+		/**
+		 * create a delegate from a BoundObject to a wrapped
+		 * StaticBoundObject and delegate set/get to the new
+		 * static bound object
+		 */
+		static StaticBoundObject* CreateDelegate(BoundObject *bo)
+		{
+			StaticBoundObject *scope = new StaticBoundObject();
+			std::vector<std::string> keys = bo->GetPropertyNames();
+			std::vector<std::string>::iterator iter = keys.begin();
+			while(iter!=keys.end())
+			{
+				std::string key = (*iter++);
+				const char *name = (const char*)key.c_str();
+				Value *value = bo->Get(name);
+				if (key == "set")
+				{
+					ScopeMethodDelegate *d = new ScopeMethodDelegate(SET,scope,value->ToMethod());
+					Value *v = new Value(d);
+					scope->Set(name,v);
+					KR_DECREF(d);
+					KR_DECREF(v);
+				}
+				else if (key == "get")
+				{
+					ScopeMethodDelegate *d = new ScopeMethodDelegate(GET,scope,value->ToMethod());
+					Value *v = new Value(d);
+					scope->Set(name,v);
+					KR_DECREF(d);
+					KR_DECREF(v);
+				}
+				else
+				{
+					scope->Set(name,value);
+				}
+				KR_DECREF(value);
+			}		
+			return scope;
+		}
 
 	protected:
 		Mutex mutex;
@@ -75,6 +115,7 @@ namespace kroll
 	private:
 		DISALLOW_EVIL_CONSTRUCTORS(StaticBoundObject);
 	};
+	
 }
 
 #endif

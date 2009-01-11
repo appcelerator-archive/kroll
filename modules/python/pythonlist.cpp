@@ -11,7 +11,9 @@ namespace kroll
 {
 	PythonList::PythonList(PyObject *obj) : object(obj)
 	{
-		Value *length = new Value((int)PyList_Size(this->object));
+		int size=(int)PyList_Size(this->object);
+		// check for size, -1 is what an empty array is
+		Value *length = new Value(size < 0 ? 0 : size);
 		this->Set("length",length);
 		KR_DECREF(length);
 		Py_INCREF(this->object);
@@ -31,6 +33,7 @@ namespace kroll
 	 */
 	void PythonList::Append(Value* value)
 	{
+		std::cout << "append" << std::endl;
 		PyList_Append(this->object,ValueToPythonValue(value));
 		KR_DECREF(value);
 	}
@@ -51,6 +54,7 @@ namespace kroll
 	 */
 	Value* PythonList::At(int index)
 	{
+		std::cout << "at" << std::endl;
 		PyObject *p = PyList_GET_ITEM(this->object,index);
 		if (Py_None == p)
 		{
@@ -70,22 +74,28 @@ namespace kroll
 	 */
 	void PythonList::Set(const char *name, Value* value)
 	{
+		std::cout << "set" << std::endl;
 		// check for integer value as name
 		if (this->IsNumber(name))
 		{
-			// TODO: checkrange
+			int val = atoi(name);
+			if (val >= this->Size())
+			{
+				Value *len = new Value(val);
+				this->Set("length", len);
+				KR_DECREF(len);
+				
+				// now we need to create entries
+				// between current size and new size
+				// and make the entries null
+				for (int c = this->Size(); c <= val; c++)
+				{
+					this->Append(NULL);
+				}
+			}
+			
 			Value* current = this->At(atoi(name));
-			if (current->IsUndefined())
-			{
-				// release undefined
-				KR_DECREF(current);
-				// accessing via prop[0] but where we don't yet have an entry - do an append
-				this->Append(value);
-			}
-			else
-			{
-				current->Set(value);
-			}
+			current->Set(value);
 		}
 		else
 		{
@@ -109,6 +119,7 @@ namespace kroll
 	 */
 	Value* PythonList::Get(const char *name)
 	{
+		std::cout << "get" << std::endl;
 		
 		// get should returned undefined if we don't have a property
 		// named "name" to mimic what happens in Javascript

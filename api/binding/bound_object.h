@@ -50,6 +50,38 @@ namespace kroll
 		 */
 		virtual std::vector<std::string> GetPropertyNames() = 0;
 
+		void SetNS(const char *name, Value* value)
+		{
+			std::string s(name);
+			std::string::size_type pos = s.find_first_of(".");
+			if (pos==std::string::npos)
+			{
+				this->Set(name,value);
+				return;
+			}
+			std::string::size_type last = 0;
+			Value* current = NULL;
+			BoundObject* scope = this;
+			while (pos != std::string::npos) 
+			{
+				std::string token = s.substr(last,pos);
+				std::cout << "getting token = " << token << std::endl;
+				current = scope->Get(token.c_str());
+				last = pos + 1;
+			    pos = s.find_first_of(".", last);
+				if (!current->IsObject())
+				{
+					break;
+				}
+				scope = current->ToObject();
+			}
+			if (pos!=s.length())
+			{
+				std::string token = s.substr(last);
+				std::cout << "setting token = " << token << std::endl;
+				scope->Set(token.c_str(),value);
+			}
+		}
 		Value* GetNS(const char *name)
 		{
 			std::string s(name);
@@ -83,6 +115,7 @@ namespace kroll
 	private:
 		DISALLOW_EVIL_CONSTRUCTORS(BoundObject);
 	};
+
 }
 
 #endif

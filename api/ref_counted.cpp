@@ -7,33 +7,29 @@
 
 namespace kroll
 {
-	RefCounted::RefCounted() : count(1)
+	RefCounted::RefCounted(KR_CALL_STACK_INFO) : 
+#ifdef DEBUG_REFCOUNT
+		filename(filename),
+		linenumber(linenumber),
+		func(func),
+#endif
+		count(1)
 	{
-	#ifdef DEBUG_REFCOUNT
-		std::cout << "Created: " << (void*)this << " (" << ")"<< std::endl;
-	#endif
+		KR_CALL_STACK_DEBUG
 	}
 
 	RefCounted::~RefCounted()
 	{
-	#ifdef DEBUG_REFCOUNT
-		std::cout << "Destroying: " << (void*)this << std::endl;
-	#endif
 		if (count!=0)
 		{
 			std::cerr << "WARNING: Object: " << (void*)this << " freed with reference count == " << count << std::endl; 
 		}
+		KR_CALL_STACK_DEBUG
 	}	
 
-	RefCounted* RefCounted::AddReference(
-	#ifdef DEBUG_REFCOUNT
-	 	const char *fn, int ln
-	#endif
-	)
+	RefCounted* RefCounted::AddReference(KR_CALL_STACK_INFO)
 	{
-	#ifdef DEBUG_REFCOUNT
-		std::cout << "AddReference: " << (void*)this << " from " << fn << ":" << ln << std::endl;
-	#endif
+		KR_CALL_STACK_DEBUG
 		ScopedLock lock(&mutex);
 		if (this->count==0)
 		{
@@ -43,15 +39,9 @@ namespace kroll
 		return this;
 	}
 
-	void RefCounted::ReleaseReference(
-	#ifdef DEBUG_REFCOUNT
-	 	const char *fn, int ln
-	#endif
-	)
+	void RefCounted::ReleaseReference(KR_CALL_STACK_INFO)
 	{
-	#ifdef DEBUG_REFCOUNT
-		std::cout << "ReleaseReference: " << (void*)this << " from " << fn << ":" << ln << std::endl;
-	#endif
+		KR_CALL_STACK_DEBUG
 		ScopedLock lock(&mutex);
 		if (--count == 0)
 		{

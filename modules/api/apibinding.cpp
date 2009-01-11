@@ -8,8 +8,9 @@
 
 namespace kroll
 {
-	APIBinding::APIBinding() : record(0)
+	APIBinding::APIBinding(BoundObject *global) : record(0), global(global)
 	{
+		KR_ADDREF(global);
 		Value *version = new Value(1.0);
 		ScopedDereferencer r(version);
 		this->Set((const char*)"version",version);
@@ -22,6 +23,7 @@ namespace kroll
 	}
 	APIBinding::~APIBinding()
 	{
+		KR_DECREF(global);
 		ScopedLock lock(&mutex);
 		std::map<std::string,EventRecords*>::iterator i = registrations.begin();
 		while(i!=registrations.end())
@@ -50,15 +52,40 @@ namespace kroll
 	}
 	void APIBinding::_Set(const ValueList& args, Value *result)
 	{
-		const char* key = args.at(0)->ToString().c_str();
+		std::string s = args.at(0)->ToString();
+		const char *key = s.c_str();
 		Value *value = args.at(1);
-		this->Set(key,value);
+		std::string::size_type pos = s.find_first_of(".");
+		if (pos==std::string::npos)
+		{
+			this->Set(key,value);
+		}
+		else
+		{
+			// if we have a period, make it relative to the 
+			// global scope such that <module>.<key> would resolve
+			// to the 'module' with key named 'key'
+			global->SetNS(key,value);
+		}
 		KR_DECREF(value);
 	}
 	void APIBinding::_Get(const ValueList& args, Value *result)
 	{
-		const char *key = args.at(0)->ToString().c_str();
-		Value *r = this->GetNS(key);
+		std::string s = args.at(0)->ToString();
+		const char *key = s.c_str();
+		Value *r = 0;
+		std::string::size_type pos = s.find_first_of(".");
+		if (pos==std::string::npos)
+		{
+			r = this->Get(key);
+		}
+		else
+		{
+			// if we have a period, make it relative to the 
+			// global scope such that <module>.<key> would resolve
+			// to the 'module' with key named 'key'
+			r = global->GetNS(key);
+		}
 		result->Set(r);
 		KR_DECREF(r);
 	}

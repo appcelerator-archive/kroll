@@ -13,7 +13,7 @@
 
 namespace kroll
 {
-	class KROLL_PYTHON_API PythonMethod : public BoundMethod
+	class PythonMethod : public BoundMethod
 	{
 	public:
 		PythonMethod(PyObject *obj, const char *name);

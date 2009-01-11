@@ -49,8 +49,7 @@ namespace kroll
 		 * Return a list of this object's property names.
 		 */
 		virtual std::vector<std::string> GetPropertyNames() = 0;
-
-
+		
 		/**
 		 * call the method with a variable list of Value* arguments
 		 * When an error occurs will throw an exception of type Value*.
@@ -77,6 +76,65 @@ namespace kroll
 	private:
 		DISALLOW_EVIL_CONSTRUCTORS(BoundMethod);
 	};
+
+	enum MethodDelegateType
+	{
+		GET,
+		SET
+	};
+	/**
+	 * class that can be used to change the delegation of a method
+	 * call's Get or Set method to first check to see if the key has
+	 * namespace dots (such as ti.foo.bar) and if so, delegate to a 
+	 * differently supplied scope object for delegation.
+	 */
+	class ScopeMethodDelegate : public BoundMethod
+	{
+	public:
+		ScopeMethodDelegate(MethodDelegateType type, BoundObject *scope, BoundMethod *delegate) : 
+			type(type),scope(scope),delegate(delegate)
+		{
+			KR_ADDREF(scope);
+			KR_ADDREF(delegate);
+		}
+		void Set(const char *name, Value* value)
+		{
+			delegate->Set(name,value);
+		}
+		Value* Get(const char *name)
+		{
+			return delegate->Get(name);
+		}
+		std::vector<std::string> GetPropertyNames()
+		{
+			return delegate->GetPropertyNames();
+		}
+		Value* Call(const ValueList& args)
+		{
+			std::string key = args.at(0)->ToString();
+			if (type == GET)
+			{
+				// not found, look inside scope
+				return scope->Get(key.c_str());
+			}
+			else
+			{
+				scope->Set(key.c_str(),args.at(1));
+				return Value::Undefined();
+			}
+		}
+	private:
+		MethodDelegateType type;
+		BoundObject *scope;
+		BoundMethod *delegate;
+	protected:
+		virtual ~ScopeMethodDelegate()
+		{
+			KR_DECREF(scope);
+			KR_DECREF(delegate);
+		}
+	};
+
 }
 
 

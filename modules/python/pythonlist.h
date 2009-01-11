@@ -13,7 +13,7 @@
 
 namespace kroll
 {
-	class KROLL_PYTHON_API PythonList : public BoundList
+	class PythonList : public BoundList
 	{
 	public:
 		PythonList(PyObject *obj);

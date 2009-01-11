@@ -14,7 +14,9 @@ namespace kroll
 	StaticBoundList::StaticBoundList()
 		: object(new StaticBoundObject())
 	{
-		this->Set("length", new Value(0));
+		Value *len = new Value(0);
+		this->Set("length", len);
+		KR_DECREF(len);
 	}
 
 	StaticBoundList::~StaticBoundList()
@@ -30,7 +32,9 @@ namespace kroll
 		delete [] name;
 
 		length = length + 1;
-		this->object->Set("length", new Value(length));
+		Value *len = new Value(length);
+		this->object->Set("length", len);
+		KR_DECREF(len);
 	}
 
 	int StaticBoundList::Size()
@@ -56,12 +60,14 @@ namespace kroll
 
 	void StaticBoundList::Set(const char *name, Value* value)
 	{
-		if (StaticBoundList::IsInt(name))
+		if (BoundList::IsNumber(name))
 		{
 			int val = atoi(name);
 			if (val > this->Size())
 			{
-				this->object->Set("length", new Value(val));
+				Value *len = new Value(val);
+				this->object->Set("length", len);
+				KR_DECREF(len);
 			}
 		}
 
@@ -80,24 +86,12 @@ namespace kroll
 
 	char* StaticBoundList::IntToChars(int value)
 	{
-		int digits = (int) ceil(log((double)value));
-		char* str = new char[digits + 1];
-
-		// we've calculated the buffer length here, so we
-		// sould be safe to use the usually unsafe sprintf
-		// instead of platform-specific snprintf
-		sprintf(str, "%d", value);
+		char buf[10];
+		sprintf(buf,"%d",value);
+		char *str = new char[strlen(buf)];
+		strcpy(str,buf);
 		return str;
 	}
 
-	bool StaticBoundList::IsInt(const char *name)
-	{
-		for (int i = 0; i < (int) strlen(name); i++)
-		{
-			if (!isdigit(name[i]))
-				return false;
-		}
-		return true;
-	}
 }
 
