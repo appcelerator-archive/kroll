@@ -8,7 +8,7 @@
 #include "pythonmodule.h"
 #include "pythontypes.h"
 #include "pythontest.h"
-
+	
 namespace kroll
 {
 	KROLL_MODULE(PythonModule)

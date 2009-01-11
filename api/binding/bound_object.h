@@ -65,7 +65,6 @@ namespace kroll
 			while (pos != std::string::npos) 
 			{
 				std::string token = s.substr(last,pos);
-				std::cout << "getting token = " << token << std::endl;
 				current = scope->Get(token.c_str());
 				last = pos + 1;
 			    pos = s.find_first_of(".", last);
@@ -78,7 +77,6 @@ namespace kroll
 			if (pos!=s.length())
 			{
 				std::string token = s.substr(last);
-				std::cout << "setting token = " << token << std::endl;
 				scope->Set(token.c_str(),value);
 			}
 		}
