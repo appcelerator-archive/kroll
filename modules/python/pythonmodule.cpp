@@ -24,8 +24,10 @@ namespace kroll
 		//Py_SetProgramName(); //TODO: maybe we need to setup path to script?
 		Py_Initialize();
 
+		std::cout << "Initialize Default Bindings" << std::endl;
 		InitializeDefaultBindings(host);
 
+		std::cout << "Add module provider " << std::endl;	
 		host->AddModuleProvider(this);
 	}
 
