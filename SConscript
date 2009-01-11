@@ -7,6 +7,7 @@ filename = inspect.currentframe().f_code.co_filename
 
 Import('product_name')
 Import('install_prefix')
+Import('global_variable_name')
 
 OS = ''
 os_define = ''
@@ -14,6 +15,7 @@ os_define = ''
 vars = Variables()
 vars.Add('PRODUCT_NAME', 'The underlying product name that Kroll will display (default: "Kroll")', product_name)
 vars.Add('INSTALL_PREFIX', 'The install prefix of binaries in the system (default: /usr/local)', install_prefix)
+vars.Add('GLOBAL_NS_VARNAME','The name of the Kroll global variable', global_variable_name)
 
 class BuildConfig(object): 
 	def __init__(self):
@@ -40,7 +42,8 @@ build.env = Environment(
     CPPDEFINES = {
                   'OS_' + build.os.upper(): 1,
                   '_INSTALL_PREFIX': '${INSTALL_PREFIX}',
-                  '_PRODUCT_NAME': '${PRODUCT_NAME}'
+                  '_PRODUCT_NAME': '${PRODUCT_NAME}',
+				  '_GLOBAL_NS_VARNAME': '${GLOBAL_NS_VARNAME}'
                  },
     CPPPATH=[build.abstopdir],
     LIBPATH=[build.dir])

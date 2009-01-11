@@ -73,7 +73,7 @@ namespace kroll
 		 * StaticBoundObject and delegate set/get to the new
 		 * static bound object
 		 */
-		static StaticBoundObject* CreateDelegate(BoundObject *bo)
+		static StaticBoundObject* CreateDelegate(BoundObject *global, BoundObject *bo)
 		{
 			StaticBoundObject *scope = new StaticBoundObject();
 			std::vector<std::string> keys = bo->GetPropertyNames();
@@ -85,7 +85,7 @@ namespace kroll
 				Value *value = bo->Get(name);
 				if (key == "set")
 				{
-					ScopeMethodDelegate *d = new ScopeMethodDelegate(SET,scope,value->ToMethod());
+					ScopeMethodDelegate *d = new ScopeMethodDelegate(SET,global,scope,value->ToMethod());
 					Value *v = new Value(d);
 					scope->Set(name,v);
 					KR_DECREF(d);
@@ -93,7 +93,7 @@ namespace kroll
 				}
 				else if (key == "get")
 				{
-					ScopeMethodDelegate *d = new ScopeMethodDelegate(GET,scope,value->ToMethod());
+					ScopeMethodDelegate *d = new ScopeMethodDelegate(GET,global,scope,value->ToMethod());
 					Value *v = new Value(d);
 					scope->Set(name,v);
 					KR_DECREF(d);

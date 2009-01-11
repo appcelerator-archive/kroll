@@ -91,9 +91,10 @@ namespace kroll
 	class ScopeMethodDelegate : public BoundMethod
 	{
 	public:
-		ScopeMethodDelegate(MethodDelegateType type, BoundObject *scope, BoundMethod *delegate) : 
-			type(type),scope(scope),delegate(delegate)
+		ScopeMethodDelegate(MethodDelegateType type, BoundObject *global, BoundObject *scope, BoundMethod *delegate) : 
+			type(type),global(global),scope(scope),delegate(delegate)
 		{
+			KR_ADDREF(global);
 			KR_ADDREF(scope);
 			KR_ADDREF(delegate);
 		}
@@ -109,27 +110,35 @@ namespace kroll
 		{
 			return delegate->GetPropertyNames();
 		}
+		bool IsGlobalKey(std::string& key)
+		{
+			std::string::size_type pos = key.find_first_of(".");
+			return (pos!=std::string::npos);
+		}
 		Value* Call(const ValueList& args)
 		{
 			std::string key = args.at(0)->ToString();
+			BoundObject* obj = IsGlobalKey(key) ? global : scope;
 			if (type == GET)
 			{
 				// not found, look inside scope
-				return scope->Get(key.c_str());
+				return obj->Get(key.c_str());
 			}
 			else
 			{
-				scope->Set(key.c_str(),args.at(1));
+				obj->SetNS(key.c_str(),args.at(1));
 				return Value::Undefined();
 			}
 		}
 	private:
 		MethodDelegateType type;
+		BoundObject *global;
 		BoundObject *scope;
 		BoundMethod *delegate;
 	protected:
 		virtual ~ScopeMethodDelegate()
 		{
+			KR_DECREF(global);
 			KR_DECREF(scope);
 			KR_DECREF(delegate);
 		}

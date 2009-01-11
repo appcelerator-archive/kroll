@@ -12,6 +12,9 @@
 #include <vector>
 #include <string>
 #include <map>
+#include "../file_utils.h"
+
+extern kroll::RefCounted* CreateEmptyBoundObject();
 
 namespace kroll
 {
@@ -52,33 +55,40 @@ namespace kroll
 
 		void SetNS(const char *name, Value* value)
 		{
+			std::vector<std::string> tokens;
 			std::string s(name);
-			std::string::size_type pos = s.find_first_of(".");
-			if (pos==std::string::npos)
+			FileUtils::Tokenize(s,tokens,".");
+			if (tokens.size()==1)
 			{
 				this->Set(name,value);
 				return;
 			}
-			std::string::size_type last = 0;
-			Value* current = NULL;
-			BoundObject* scope = this;
-			while (pos != std::string::npos) 
+			BoundObject *scope = this;
+			for (int c=0;c<(int)tokens.size()-1;c++)
 			{
-				std::string token = s.substr(last,pos);
-				current = scope->Get(token.c_str());
-				last = pos + 1;
-			    pos = s.find_first_of(".", last);
-				if (!current->IsObject())
+				std::string token = tokens.at(c);
+				Value *newscope = scope->Get(token.c_str());
+				if (newscope->IsUndefined() || newscope->IsNull())
 				{
-					break;
+					BoundObject* bo = (BoundObject*)CreateEmptyBoundObject();
+					Value *newvalue = new Value(bo);
+					scope->Set(token.c_str(),newvalue);
+					KR_DECREF(newscope); // OK to release since scope holds
+					KR_DECREF(newvalue);
+					scope = bo;
 				}
-				scope = current->ToObject();
+				else if (newscope->IsObject())
+				{
+					scope = newscope->ToObject();
+				}
+				else
+				{
+					Value *error = new Value("Invalid namespace on setNS");
+					throw error;
+				}
 			}
-			if (pos!=s.length())
-			{
-				std::string token = s.substr(last);
-				scope->Set(token.c_str(),value);
-			}
+			std::string token = tokens.at(tokens.size()-1);
+			scope->Set(token.c_str(),value);
 		}
 		Value* GetNS(const char *name)
 		{
@@ -93,11 +103,14 @@ namespace kroll
 				current = scope->Get(token.c_str());
 				last = pos + 1;
 			    pos = s.find_first_of(".", last);
-				if (!current->IsObject())
+				if (current->IsObject())
 				{
-					break;
+					scope = current->ToObject();
 				}
-				scope = current->ToObject();
+				else 
+				{
+					return Value::Undefined();
+				}
 			}
 			if (pos!=s.length())
 			{

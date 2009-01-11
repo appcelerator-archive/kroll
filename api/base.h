@@ -43,6 +43,10 @@
   #define INSTALL_PREFIX STRING(_INSTALL_PREFIX)
 #endif
 
+#ifndef GLOBAL_NS_VARNAME
+  #define GLOBAL_NS_VARNAME STRING(_GLOBAL_NS_VARNAME)
+#endif
+
 // define a macro that points to the name of the enclosing function where
 // referenced or if not supported on target compiler, just default to filename
 #ifndef OS_WIN32

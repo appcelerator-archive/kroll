@@ -47,14 +47,6 @@ namespace kroll
 		return 0.0;
 	}
 	
-	void SetDelegate(const ValueList& args, Value* value)
-	{
-	}
-
-	void GetDelegate(const ValueList& args, Value* value)
-	{
-	}
-	
 	void InitializeDefaultBindings (Host *host)
 	{
 		PyObject* mod = PyImport_ImportModule("__builtin__");
@@ -69,7 +61,7 @@ namespace kroll
 			{
 				// we're going to clone the methods from api into our
 				// own python scoped object
-				StaticBoundObject *scope = StaticBoundObject::CreateDelegate(api->ToObject());
+				StaticBoundObject *scope = StaticBoundObject::CreateDelegate(host->GetGlobalObject(),api->ToObject());
 				PyObject *pyapi = BoundObjectToPythonValue(NULL,NULL,scope);
 				PyObject_SetAttrString(mod,PRODUCT_NAME,pyapi);
 				// now bind our new scope to python module

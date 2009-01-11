@@ -19,8 +19,12 @@ class Foo:
         return el
     def win(self,window):
 	    return window.title
-		
-Titanium.set("foopy",Foo(),Titanium) 
+
+# test setting to the ti.python.foopy key (implicit)		
+Titanium.set("foopy",Foo())
+
+# test setting to the ti.blah.foopy key (explicit)
+Titanium.set("ti.blah.foopy",Foo())
 
 print "hello, world from inside Python module!"
 

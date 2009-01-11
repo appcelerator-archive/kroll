@@ -42,6 +42,13 @@ namespace kroll
 		this->appDirectory = std::string(ti_home);
 		this->runtimeDirectory = std::string(ti_runtime);
 		this->global_object = new StaticBoundObject();
+
+		// link the name of our global variable to ourself so we can reference
+		// from global scope directly to get it
+		const char *name = GLOBAL_NS_VARNAME;
+		Value *wrapper = new Value(this->global_object);
+		this->global_object->Set(name,wrapper);
+		KR_DECREF(wrapper);
 	}
 
 	Host::~Host()

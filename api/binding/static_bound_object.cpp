@@ -77,3 +77,8 @@ namespace kroll
 		KR_DECREF(obj_val);
 	}
 }
+
+kroll::RefCounted* CreateEmptyBoundObject()
+{
+	return new kroll::StaticBoundObject();
+}
