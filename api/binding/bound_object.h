@@ -51,7 +51,7 @@ namespace kroll
 		/**
 		 * Return a list of this object's property names.
 		 */
-		virtual void GetPropertyNames(std::vector<std::string> *property_names) = 0;
+		virtual void GetPropertyNames(std::vector<const char *> *property_names) = 0;
 
 		void SetNS(const char *name, Value* value)
 		{

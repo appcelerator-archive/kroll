@@ -36,7 +36,7 @@ namespace kroll
 		return this->object;
 	}
 
-	void KJSBoundList::GetPropertyNames(std::vector<std::string> *property_names)
+	void KJSBoundList::GetPropertyNames(std::vector<const char *> *property_names)
 	{
 		 kjs_bound_object->GetPropertyNames(property_names);
 	}

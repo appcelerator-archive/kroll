@@ -48,7 +48,7 @@ namespace kroll
 		{
 			return NULL;
 		}
-		virtual void GetPropertyNames(std::vector<std::string> *property_names)
+		virtual void GetPropertyNames(std::vector<const char *> *property_names)
 		{
 		}
 

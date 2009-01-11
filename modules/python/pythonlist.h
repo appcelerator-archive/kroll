@@ -59,7 +59,7 @@ namespace kroll
 		/**
 		 * Return a list of this object's property names.
 		 */
-		void GetPropertyNames(std::vector<std::string> *property_names);
+		void GetPropertyNames(std::vector<const char *> *property_names);
 
 	protected:
 		PyObject *object;

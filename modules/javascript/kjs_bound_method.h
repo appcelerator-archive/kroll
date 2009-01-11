@@ -26,7 +26,7 @@ namespace kroll
 		void Set(const char *name, Value* value);
 		kroll::Value* Get(const char *name);
 		kroll::Value* Call(const kroll::ValueList& args);
-		void GetPropertyNames(std::vector<std::string> *property_names);
+		void GetPropertyNames(std::vector<const char *> *property_names);
 		JSObjectRef GetJSObject();
 
 	protected:

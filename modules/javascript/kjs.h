@@ -17,22 +17,23 @@
 #include "kjs_bound_object.h"
 #include "kjs_bound_method.h"
 #include "kjs_bound_list.h"
+#include "javascriptapi.h"
 
 namespace kroll
 {
-	void BindPropertyToJSObject(JSContextRef ctx,
+    KROLL_JAVASCRIPT_API void BindPropertyToJSObject(JSContextRef ctx,
 	                            JSObjectRef o,
-	                            std::string name,
+	                            const char * name,
 	                            JSValueRef property);
-	JSObjectRef KrollBoundObjectToJSValue(JSContextRef, kroll::BoundObject*);
-	JSObjectRef KrollBoundMethodToJSValue(JSContextRef, kroll::BoundMethod*);
-	JSObjectRef KrollBoundListToJSValue(JSContextRef, kroll::BoundList*);
-	JSValueRef KrollValueToJSValue(JSContextRef, kroll::Value*);
-	kroll::Value* JSValueToKrollValue(JSContextRef, JSValueRef, JSObjectRef);
-	char* JSStringToChars(JSStringRef);
+    KROLL_JAVASCRIPT_API JSObjectRef KrollBoundObjectToJSValue(JSContextRef, kroll::BoundObject*);
+	KROLL_JAVASCRIPT_API JSObjectRef KrollBoundMethodToJSValue(JSContextRef, kroll::BoundMethod*);
+	KROLL_JAVASCRIPT_API JSObjectRef KrollBoundListToJSValue(JSContextRef, kroll::BoundList*);
+	KROLL_JAVASCRIPT_API JSValueRef KrollValueToJSValue(JSContextRef, kroll::Value*);
+	KROLL_JAVASCRIPT_API kroll::Value* JSValueToKrollValue(JSContextRef, JSValueRef, JSObjectRef);
+	KROLL_JAVASCRIPT_API char* JSStringToChars(JSStringRef);
 
 	// callbacks
-	void get_property_names_cb (JSContextRef, JSObjectRef, JSPropertyNameAccumulatorRef);
+	void  get_property_names_cb (JSContextRef, JSObjectRef, JSPropertyNameAccumulatorRef);
 	bool has_property_cb (JSContextRef, JSObjectRef, JSStringRef);
 	JSValueRef get_property_cb (JSContextRef, JSObjectRef, JSStringRef, JSValueRef*);
 	bool set_property_cb (JSContextRef, JSObjectRef, JSStringRef, JSValueRef, JSValueRef*);

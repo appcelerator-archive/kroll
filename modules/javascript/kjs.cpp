@@ -12,14 +12,14 @@ namespace kroll
 	JSClassRef tibo_class = NULL;
 	JSClassRef tibm_class = NULL;
 	JSClassRef tibl_class = NULL;
-
+	const JSClassDefinition empty_class = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
 	void BindPropertyToJSObject(JSContextRef ctx,
 	                            JSObjectRef o,
-	                            std::string name,
+	                            const char *name,
 	                            JSValueRef property)
 	{
-		JSStringRef name_str = JSStringCreateWithUTF8CString(name.c_str());
+		JSStringRef name_str = JSStringCreateWithUTF8CString(name);
 		JSObjectSetProperty(ctx, o, name_str, property, kJSPropertyAttributeNone, NULL);
 		JSStringRelease(name_str);
 	}
@@ -30,7 +30,7 @@ namespace kroll
 	{
 		if (tibo_class == NULL)
 		{
-			JSClassDefinition js_class_def = kJSClassDefinitionEmpty;
+			JSClassDefinition js_class_def = empty_class;
 			js_class_def.className = strdup("TitaniumJSObject");
 			js_class_def.getPropertyNames = get_property_names_cb;
 			js_class_def.finalize = finalize_cb;
@@ -51,7 +51,7 @@ namespace kroll
 
 		if (tibm_class == NULL)
 		{
-			JSClassDefinition js_class_def = kJSClassDefinitionEmpty;
+			JSClassDefinition js_class_def = empty_class;
 			js_class_def.className = strdup("TitaniumJSMethod");
 			js_class_def.getPropertyNames = get_property_names_cb;
 			js_class_def.finalize = finalize_cb;
@@ -84,7 +84,7 @@ namespace kroll
 
 		if (tibl_class == NULL)
 		{
-			JSClassDefinition js_class_def = kJSClassDefinitionEmpty;
+			JSClassDefinition js_class_def = empty_class;
 			js_class_def.className = strdup("TitaniumJSList");
 			//js_class_def.attributes = kJSClassAttributeNoAutomaticPrototype;
 			js_class_def.getPropertyNames = get_property_names_cb;
@@ -135,11 +135,11 @@ namespace kroll
 		if (object == NULL)
 			return;
 
-		std::vector<std::string> props;
+		std::vector<const char *> props;
 		object->GetPropertyNames(&props);
 		for (size_t i = 0; i < props.size(); i++)
 		{
-			JSStringRef name = JSStringCreateWithUTF8CString(props.at(i).c_str());
+			JSStringRef name = JSStringCreateWithUTF8CString(props.at(i));
 			JSPropertyNameAccumulatorAddName(js_properties, name);
 			JSStringRelease(name);
 		}
@@ -157,12 +157,13 @@ namespace kroll
 		std::string str_name(name);
 		free(name);
 
-		std::vector<std::string> names;
-		object->GetPropertyNames(&names);
-		for (size_t i = 0; i < names.size(); i++)
+		std::vector<const char *> *names = new std::vector<const char *>();
+		object->GetPropertyNames(names);
+		for (size_t i = 0; i < names->size(); i++)
 		{
-			if (names.at(i) == str_name)
+			if (str_name == names->at(i)) {
 				return true;
+			}
 		}
 
 		return false;

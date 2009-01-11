@@ -27,7 +27,7 @@ namespace kroll
 
 		void Set(const char *name, kroll::Value* value);
 		kroll::Value* Get(const char *name);
-		void GetPropertyNames(std::vector<std::string> *property_names);
+		void GetPropertyNames(std::vector<const char *> *property_names);
 
 		void Append(kroll::Value* value);
 		int Size();

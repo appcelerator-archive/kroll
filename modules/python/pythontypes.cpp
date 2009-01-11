@@ -11,13 +11,13 @@
 
 namespace kroll
 {
-	std::string PythonStringToString(PyObject* value)
+	const char * PythonStringToString(PyObject* value)
 	{
 		if (PyString_Check(value))
 		{
-			return std::string(PyString_AsString(value));
+			return PyString_AsString(value);
 		}
-		return std::string();
+		return "";
 	}
 
 	bool PythonBoolToBool(PyObject* value)
@@ -46,7 +46,7 @@ namespace kroll
 		}
 		return 0.0;
 	}
-	
+
 	void InitializeDefaultBindings (Host *host)
 	{
 		PyObject* mod = PyImport_ImportModule("__builtin__");
@@ -54,7 +54,7 @@ namespace kroll
 		if (mod)
 		{
 			// we bind the special module "api" to the global
-			// variable defined in PRODUCT_NAME to give the 
+			// variable defined in PRODUCT_NAME to give the
 			// Python runtime access to it
 			Value *api = host->GetGlobalObject()->Get("api");
 			if (api->IsObject())
@@ -76,13 +76,13 @@ namespace kroll
 	// PyObject* ValueListToPythonArray(const ValueList& list)
 	// {
 	// 	int size = list.size();
-	// 	
+	//
 	// 	if (size == 0)
 	// 	{
 	// 		Py_INCREF(Py_None);
 	// 		return Py_None;
 	// 	}
-	// 	
+	//
 	// 	PyObject *array = PyTuple_New(size);
 	// 	for (int c=0;c<size;c++)
 	// 	{
@@ -123,7 +123,7 @@ namespace kroll
 	}
 
 
-	static PyMethodDef BoundMethodDispatcherDef = 
+	static PyMethodDef BoundMethodDispatcherDef =
 	{
 			"BoundMethodDispatcher",
 			&BoundMethodDispatcher,
@@ -141,20 +141,20 @@ namespace kroll
 
 	PyObject* ValueToPythonValue(Value* value)
 	{
-		if (value->IsBool()) 
+		if (value->IsBool())
 		{
 			return value->ToBool() ? Py_True : Py_False;
 		}
-		if (value->IsInt()) 
+		if (value->IsInt())
 		{
 			return PyInt_FromLong(value->ToInt());
 		}
-		if (value->IsNull() || value->IsUndefined()) 
+		if (value->IsNull() || value->IsUndefined())
 		{
 			Py_INCREF(Py_None);
 			return Py_None;
 		}
-		if (value->IsMethod()) 
+		if (value->IsMethod())
 		{
 			BoundMethod *obj = value->ToMethod();
 			if (typeid(obj) == typeid(PythonMethod*))
@@ -163,7 +163,7 @@ namespace kroll
 			}
 			return BoundMethodToPythonValue(value->ToMethod());
 		}
-		if (value->IsObject()) 
+		if (value->IsObject())
 		{
 			BoundObject *obj = value->ToObject();
 			if (typeid(obj) == typeid(PythonValue*))
@@ -172,15 +172,15 @@ namespace kroll
 			}
 			return BoundObjectToPythonValue(NULL,NULL,value->ToObject());
 		}
-		if (value->IsString()) 
+		if (value->IsString())
 		{
 			return PyString_FromString(value->ToString().c_str());
 		}
-		if (value->IsDouble()) 
+		if (value->IsDouble())
 		{
 			return PyFloat_FromDouble(value->ToDouble());
 		}
-		if (value->IsList()) 
+		if (value->IsList())
 		{
 			BoundList *list = value->ToList();
 			if (typeid(list) == typeid(PythonList*))
@@ -244,7 +244,7 @@ namespace kroll
 		return PyString_FromString(str);
 	}
 
-	static PyTypeObject PyBoundObjectType = 
+	static PyTypeObject PyBoundObjectType =
 	{
 	    PyObject_HEAD_INIT(NULL)
 	    0,
@@ -281,7 +281,7 @@ namespace kroll
 		BoundList *list = dynamic_cast<BoundList*>(bo);
 		if (list!=NULL)
 		{
-			// convert it into a list of wrapped Value objects 
+			// convert it into a list of wrapped Value objects
 			PyObject* newlist = PyList_New(list->Size());
 			for (int c = 0; c < list->Size(); c++)
 			{
@@ -383,7 +383,7 @@ namespace kroll
 		printf("\n");
 
 		return new Value();
-	}	
+	}
 }
 
 

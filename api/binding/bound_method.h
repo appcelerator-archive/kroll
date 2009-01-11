@@ -48,7 +48,7 @@ namespace kroll
 		/**
 		 * Return a list of this object's property names.
 		 */
-		virtual void GetPropertyNames(std::vector<std::string> *property_names) = 0;
+		virtual void GetPropertyNames(std::vector<const char *> *property_names) = 0;
 
 		/**
 		 * call the method with a variable list of Value* arguments
@@ -106,7 +106,7 @@ namespace kroll
 		{
 			return delegate->Get(name);
 		}
-		void GetPropertyNames(std::vector<std::string> *property_names)
+		void GetPropertyNames(std::vector<const char *> *property_names)
 		{
 			delegate->GetPropertyNames(property_names);
 		}

@@ -25,7 +25,7 @@ namespace kroll
 	public:
 		virtual bool IsModule(std::string& path);
 		virtual Module* CreateModule(std::string& path);
-		virtual std::string GetDescription() { return "Ruby Module Loader"; }
+		virtual const char * GetDescription() { return "Ruby Module Loader"; }
 
 		Host* GetHost() { return host; }
 		static RubyModule* Instance() {

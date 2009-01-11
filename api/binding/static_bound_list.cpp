@@ -79,7 +79,7 @@ namespace kroll
 		return this->object->Get(name);
 	}
 
-	void StaticBoundList::GetPropertyNames(std::vector<std::string> *property_names)
+	void StaticBoundList::GetPropertyNames(std::vector<const char *> *property_names)
 	{
 		this->object->GetPropertyNames(property_names);
 	}

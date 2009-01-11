@@ -20,7 +20,7 @@ namespace kroll
 		virtual ~PythonValue();
 		virtual void Set(const char *name, Value* value);
 		virtual Value* Get(const char *name);
-		virtual void GetPropertyNames(std::vector<std::string> *property_names);
+		virtual void GetPropertyNames(std::vector<const char *> *property_names);
 
 		PyObject* ToPython() { Py_INCREF(object); return object; }
 

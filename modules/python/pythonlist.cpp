@@ -143,7 +143,7 @@ namespace kroll
 	/**
 	 * Return a list of this object's property names.
 	 */
-	void PythonList::GetPropertyNames(std::vector<std::string> *property_names)
+	void PythonList::GetPropertyNames(std::vector<const char *> *property_names)
 	{
 		property_names->push_back("length");
 
@@ -165,8 +165,7 @@ namespace kroll
 
 		while ((item = PyIter_Next(iterator)))
 		{
-			std::string name = PythonStringToString(item);
-			property_names->push_back(name);
+			property_names->push_back(PythonStringToString(item));
 			Py_DECREF(item);
 		}
 

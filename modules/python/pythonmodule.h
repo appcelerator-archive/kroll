@@ -21,27 +21,27 @@ namespace kroll
 	public:
 		virtual bool IsModule(std::string& path);
 		virtual Module* CreateModule(std::string& path);
-		virtual std::string GetDescription() { return "Python Module Loader"; }
+		virtual const char * GetDescription() { return "Python Module Loader"; }
 
-		Host* GetHost() 
-		{ 
-			return host; 
+		Host* GetHost()
+		{
+			return host;
 		}
-		
-		static PythonModule* Instance() 
+
+		static PythonModule* Instance()
 		{
 			return instance_;
 		}
-		
+
 
 		// this is called by the ktest runner for unit testing the module
 		void Test();
-		
+
 	private:
 		static PythonModule *instance_;
 	};
 
-	class PythonModuleInstance : public Module 
+	class PythonModuleInstance : public Module
 	{
 	public:
 		PythonModuleInstance(Host *host, std::string path_) :

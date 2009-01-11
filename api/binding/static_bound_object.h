@@ -35,7 +35,7 @@ namespace kroll
 		/**
 		 * Return a list of this object's property names.
 		 */
-		virtual void GetPropertyNames(std::vector<std::string> *property_names);
+		virtual void GetPropertyNames(std::vector<const char *> *property_names);
 
 		/**
 		 * Set a property on this object to the given value. Value should be
@@ -76,13 +76,13 @@ namespace kroll
 		static StaticBoundObject* CreateDelegate(BoundObject *global, BoundObject *bo)
 		{
 			StaticBoundObject *scope = new StaticBoundObject();
-			std::vector<std::string> keys;
+			std::vector<const char *> keys;
 			bo->GetPropertyNames(&keys);
-			std::vector<std::string>::iterator iter = keys.begin();
+			std::vector<const char *>::iterator iter = keys.begin();
 			while(iter!=keys.end())
 			{
-				std::string key = (*iter++);
-				const char *name = (const char*)key.c_str();
+				const char *name = (*iter++);
+				std::string key(name);
 				Value *value = bo->Get(name);
 				if (key == "set")
 				{

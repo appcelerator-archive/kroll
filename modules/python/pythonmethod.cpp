@@ -94,7 +94,7 @@ namespace kroll
 		return returnValue;
 	}
 
-	void PythonMethod::GetPropertyNames(std::vector<std::string> *property_names)
+	void PythonMethod::GetPropertyNames(std::vector<const char *> *property_names)
 	{
 		PyObject *props = PyObject_Dir(this->object);
 

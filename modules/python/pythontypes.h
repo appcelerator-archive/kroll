@@ -15,7 +15,7 @@ namespace kroll
 	Value* PythonValueToValue(PyObject* value, const char *name = NULL);
 	PyObject* ValueToPythonValue(Value* value);
 	PyObject* ValueListToPythonArray(const ValueList& list);
-	std::string PythonStringToString(PyObject* value);
+	const char * PythonStringToString(PyObject* value);
 	PyObject* BoundMethodToPythonValue(BoundMethod *method);
 	PyObject* BoundObjectToPythonValue(PyObject* self, PyObject* args, BoundObject *bo);
 	void ThrowPythonException();

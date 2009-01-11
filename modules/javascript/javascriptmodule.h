@@ -20,38 +20,38 @@ namespace kroll
 	public:
 		virtual bool IsModule(std::string& path);
 		virtual Module* CreateModule(std::string& path);
-		virtual std::string GetDescription() { return "Javascript Module Loader"; }
+		virtual const char * GetDescription() { return "Javascript Module Loader"; }
 
-		Host* GetHost() 
-		{ 
-			return host; 
+		Host* GetHost()
+		{
+			return host;
 		}
-		
-		static JavascriptModule* Instance() 
+
+		static JavascriptModule* Instance()
 		{
 			return instance;
 		}
-		
+
 
 		// this is called by the ktest runner for unit testing the module
 		void Test();
-		
+
 	private:
 		static JavascriptModule *instance;
 	};
 
-	class JavascriptModuleInstance : public Module 
+	class JavascriptModuleInstance : public Module
 	{
 	public:
-		JavascriptModuleInstance(Host *host, std::string path_) :
+		JavascriptModuleInstance(Host *host, const char *path_) :
 			Module(host), path(path_)
 		{
 		}
-		const char* GetName() { return path.c_str(); }
+		const char* GetName() { return path; }
 		void Initialize () {}
 		void Destroy () {}
 	protected:
-		std::string path;
+		const char * path;
 	};
 }
 

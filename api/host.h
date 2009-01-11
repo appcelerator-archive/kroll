@@ -13,7 +13,7 @@
 namespace kroll
 {
 	class Module;
-	
+
 	/**
 	 * Class that is implemented by the OS to handle OS-specific
 	 * loading and unloading of Kroll.
@@ -25,7 +25,7 @@ namespace kroll
 
 		Host(int argc, const char **argv);
 		virtual ~Host();
-		virtual std::string GetDescription() { return "Native module"; }
+		virtual const char * GetDescription() { return "Native module"; }
 		virtual bool IsModule(std::string& path);
 
 		virtual int Run() = 0;
@@ -37,15 +37,15 @@ namespace kroll
 		void UnregisterModule(Module* module);
 		Module* GetModule(std::string& name);
 		bool HasModule(std::string name);
-		ModuleMap::iterator GetModulesBegin() 
-		{ 
+		ModuleMap::iterator GetModulesBegin()
+		{
 			ScopedLock lock(&moduleMutex);
-			return modules.begin(); 
+			return modules.begin();
 		}
-		ModuleMap::iterator GetModulesEnd() 
-		{ 
+		ModuleMap::iterator GetModulesEnd()
+		{
 			ScopedLock lock(&moduleMutex);
-			return modules.end(); 
+			return modules.end();
 		}
 		StaticBoundObject* GetGlobalObject();
 		const std::string& GetApplicationHome() const { return appDirectory; }
