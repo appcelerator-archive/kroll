@@ -43,7 +43,7 @@ build.env = Environment(
                   'OS_' + build.os.upper(): 1,
                   '_INSTALL_PREFIX': '${INSTALL_PREFIX}',
                   '_PRODUCT_NAME': '${PRODUCT_NAME}',
-				  '_GLOBAL_NS_VARNAME': '${GLOBAL_NS_VARNAME}'
+				      '_GLOBAL_NS_VARNAME': '${GLOBAL_NS_VARNAME}'
                  },
     CPPPATH=[build.abstopdir],
     LIBPATH=[build.dir])
