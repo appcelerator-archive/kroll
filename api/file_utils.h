@@ -41,9 +41,10 @@
 namespace kroll
 {
 	/**
-	 * File utilities
+	 * Class: FileUtils
+	 * An API for various file utilities (mostly centered around the kroll runtime)
 	 */
-	class KROLL_API FileUtils 
+	class KROLL_API FileUtils
 	{
 	public:
 		static std::string Trim(std::string str);
@@ -63,8 +64,8 @@ namespace kroll
 		static void Unzip(std::string& source, std::string& destination);
 #endif
 		static int RunAndWait(std::string path, std::vector<std::string> args);
-		
-		
+
+
 	private:
 		FileUtils() {}
 		~FileUtils() {}

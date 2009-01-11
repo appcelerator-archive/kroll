@@ -24,7 +24,6 @@ namespace kroll
 		//Py_SetProgramName(); //TODO: maybe we need to setup path to script?
 		Py_Initialize();
 
-		// do our binding
 		InitializeDefaultBindings(host);
 
 		host->AddModuleProvider(this);
