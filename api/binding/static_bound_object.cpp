@@ -23,13 +23,10 @@ namespace kroll
 		}
 	}
 
-	Value* StaticBoundObject::Get(const char *name, BoundObject *context)
+	Value* StaticBoundObject::Get(const char *name)
 	{
 		ScopedLock lock(&mutex);
-		if (context!=NULL)
-		{
-			return context->Get(name,NULL);
-		}
+
 		std::map<std::string, Value*>::iterator iter;
 		iter = properties.find(name);
 		if (iter != properties.end()) {
@@ -40,21 +37,13 @@ namespace kroll
 		return Value::Undefined();
 	}
 
-	void StaticBoundObject::Set(const char *name, Value* value, BoundObject *context)
+	void StaticBoundObject::Set(const char *name, Value* value)
 	{
 		ScopedLock lock(&mutex);
 
-		// if a context is passed, we must operate against it
-		if (context!=NULL)
-		{
-			context->Set(name,value,NULL);
-		}
-		else
-		{
-			KR_ADDREF(value);
-			this->UnSet(name);
-			this->properties[name] = value;
-		}
+		KR_ADDREF(value);
+		this->UnSet(name);
+		this->properties[name] = value;
 	}
 
 	void StaticBoundObject::UnSet(const char *name)
@@ -81,20 +70,15 @@ namespace kroll
 		return names;
 	}
 
-	Value* StaticBoundObject::Get(const char *name)
-	{
-		return this->Get(name, NULL);
-	}
-
-	void StaticBoundObject::Set(const char *name, Value* value)
-	{
-		this->Set(name, value, NULL);
-	}
-
 	void StaticBoundObject::SetObject(const char *name, BoundObject* object)
 	{
 		Value* obj_val = new Value(object);
 		this->Set(name, obj_val);
 		KR_DECREF(obj_val);
 	}
+}
+
+kroll::RefCounted* CreateEmptyBoundObject()
+{
+	return new kroll::StaticBoundObject();
 }

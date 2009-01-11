@@ -17,7 +17,7 @@ namespace kroll
 	public:
 		FooBinding();
 
-		void Bar(const ValueList& args, Value *result, BoundObject *context_local);
+		void Bar(const ValueList& args, Value *result);
 	};
 }
 

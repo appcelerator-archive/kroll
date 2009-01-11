@@ -11,9 +11,13 @@ namespace kroll
 {
 	PythonList::PythonList(PyObject *obj) : object(obj)
 	{
-		Value *length = new Value((int)PyList_Size(this->object));
-		this->Set("length",length,NULL);
-		KR_DECREF(length);
+		if (!PyList_Check(obj))
+		{
+			char *msg = "Invalid PyObject passed. Should be a Py_List";
+			std::cerr << msg << std::endl;
+			throw msg;
+		}
+		
 		Py_INCREF(this->object);
 	}
 
@@ -68,40 +72,37 @@ namespace kroll
 	 * if they increase the reference count.
 	 * When an error occurs will throw an exception of type Value*.
 	 */
-	void PythonList::Set(const char *name, Value* value, BoundObject *context)
+	void PythonList::Set(const char *name, Value* value)
 	{
-		if (context!=NULL)
-		{
-			context->Set(name,value,NULL);
-			return;
-		}
 		// check for integer value as name
 		if (this->IsNumber(name))
 		{
-			// TODO: checkrange
-			Value* current = this->At(atoi(name));
-			if (current->IsUndefined())
+			int val = atoi(name);
+			if (val >= this->Size())
 			{
-				// release undefined
-				KR_DECREF(current);
-				// accessing via prop[0] but where we don't yet have an entry - do an append
-				this->Append(value);
+				// now we need to create entries
+				// between current size and new size
+				// and make the entries null
+				for (int c = this->Size(); c <= val; c++)
+				{
+					this->Append(NULL);
+				}
 			}
-			else
-			{
-				current->Set(value);
-			}
+			
+			Value* current = this->At(val);
+			current->Set(value);
 		}
 		else
 		{
 			// set a named property
-			int result = PyObject_SetAttrString(this->object,(char*)name,ValueToPythonValue(value));
-
+			PyObject* py = ValueToPythonValue(value);
+			int result = PyObject_SetAttrString(this->object,(char*)name,py);
+			Py_DECREF(py);
+			
 			PyObject *exception = PyErr_Occurred();
 			if (result == -1 && exception != NULL)
 			{
-				PyErr_Clear();
-				throw PythonValueToValue(exception, NULL);
+				ThrowPythonException();
 			}
 		}
 	}
@@ -112,14 +113,12 @@ namespace kroll
 	 * with the return value (even for Undefined and Null types).
 	 * When an error occurs will throw an exception of type Value*.
 	 */
-	Value* PythonList::Get(const char *name, BoundObject *context)
+	Value* PythonList::Get(const char *name)
 	{
-		if (context!=NULL)
+		if (name == "length")
 		{
-			return context->Get(name,NULL);
+			return new Value(this->Size());
 		}
-		
-		
 		// get should returned undefined if we don't have a property
 		// named "name" to mimic what happens in Javascript
 		if (0 == (PyObject_HasAttrString(this->object,(char*)name)))
@@ -132,9 +131,8 @@ namespace kroll
 		PyObject *exception = PyErr_Occurred();
 		if (response == NULL && exception != NULL)
 		{
-			PyErr_Clear();
 			Py_XDECREF(response);
-			throw PythonValueToValue(exception, NULL);
+			ThrowPythonException();
 		}
 
 		Value* returnValue = PythonValueToValue(response,name);
@@ -148,6 +146,8 @@ namespace kroll
 	std::vector<std::string> PythonList::GetPropertyNames()
 	{
 		std::vector<std::string> names;
+		names.push_back("length");
+		
 		PyObject *props = PyObject_Dir(this->object);
 		
 		if (props == NULL)

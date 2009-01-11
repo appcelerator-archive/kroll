@@ -14,7 +14,7 @@ namespace kroll
 
 	void APIModule::Initialize()
 	{
-		binding = new APIBinding();
+		binding = new APIBinding(host->GetGlobalObject());
 		host->GetGlobalObject()->SetObject("api",binding);
 	}
 
@@ -26,7 +26,7 @@ namespace kroll
 	class TestClass : public BoundMethod
 	{
 	public:
-		Value* Call(const ValueList& args, BoundObject* context)
+		Value* Call(const ValueList& args)
 		{
 			Value *e = args.at(0);
 			if (e->IsString())
@@ -40,11 +40,11 @@ namespace kroll
 			}
 			return NULL;
 		}
-		void Set(const char *name, Value* value, BoundObject *context)
+		void Set(const char *name, Value* value)
 		{
 
 		}
-		Value* Get(const char *name, BoundObject *context)
+		Value* Get(const char *name)
 		{
 			return NULL;
 		}
@@ -88,7 +88,7 @@ namespace kroll
 		binding->Log(severity,msg);
 		
 		// invoke with ValueList
-		logMethod->Call(args,NULL);
+		logMethod->Call(args);
 		
 		// invoke with varargs
 		logMethod->Call(sv,mv);
@@ -101,7 +101,7 @@ namespace kroll
 		KR_DECREF(vr);
 		
 		// TEST retrieving the value from a namespaced string
-		Value* foo = host->GetGlobalObject()->GetNS("api.foo",NULL);
+		Value* foo = host->GetGlobalObject()->GetNS("api.foo");
 		KR_ASSERT(foo->ToInt()==1);
 		KR_DECREF(foo);
 		

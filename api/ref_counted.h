@@ -10,6 +10,22 @@
 #include "mutex.h"
 #include "scoped_lock.h"
 
+#ifdef DEBUG_REFCOUNT
+	#define KR_CALL_STACK_DEFINE const char *filename = __FILE__, int linenumber = __LINE__, const char *func = KR_FUNC
+	#define KR_CALL_STACK_INFO const char *filename, int linenumber, const char *func
+	#define KR_CALL_STACK_DEBUG \
+		static const char *__myfunc = KR_FUNC; \
+		std::cout << "REF[" << \
+		filename << "(" << func << "::" << linenumber << ") => " \
+		__FILE__ << "(" << __myfunc << "::" << __LINE__ << ") => "<< (void*)this << "]" << \
+		std::endl ;
+#else
+	#define KR_CALL_STACK_DEFINE 
+	#define KR_CALL_STACK_INFO  
+	#define KR_CALL_STACK_DEBUG 
+#endif
+
+
 namespace kroll
 {
 	/**
@@ -23,22 +39,19 @@ namespace kroll
 	class KROLL_API RefCounted 
 	{
 	public:
-		RefCounted();
+		RefCounted(KR_CALL_STACK_DEFINE);
 	protected:
 		virtual ~RefCounted();
 	public:
-		RefCounted* AddReference(
-	#ifdef DEBUG_REFCOUNT
-			const char* fn, int ln
-	#endif
-		);
-		void ReleaseReference(
-	#ifdef DEBUG_REFCOUNT
-			const char* fn, int ln
-	#endif
-		);
+		RefCounted* AddReference(KR_CALL_STACK_DEFINE);
+		void ReleaseReference(KR_CALL_STACK_DEFINE);
 		const int ReferenceCount();
 	private:
+#ifdef DEBUG_REFCOUNT
+		const char *filename;
+		int linenumber;
+		const char *func;
+#endif
 		int count;
 		Mutex mutex;
 		DISALLOW_EVIL_CONSTRUCTORS(RefCounted);	

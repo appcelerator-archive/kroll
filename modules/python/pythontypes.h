@@ -12,7 +12,7 @@
 
 namespace kroll
 {
-	Value* PythonValueToValue(PyObject* value, const char *name);
+	Value* PythonValueToValue(PyObject* value, const char *name = NULL);
 	PyObject* ValueToPythonValue(Value* value);
 	PyObject* ValueListToPythonArray(const ValueList& list);
 	std::string PythonStringToString(PyObject* value);

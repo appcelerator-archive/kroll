@@ -12,6 +12,9 @@
 #include <vector>
 #include <string>
 #include <map>
+#include "../file_utils.h"
+
+extern kroll::RefCounted* CreateEmptyBoundObject();
 
 namespace kroll
 {
@@ -35,7 +38,7 @@ namespace kroll
 		 * if they increase the reference count.
 		 * When an error occurs will throw an exception of type Value*.
 		 */
-		virtual void Set(const char *name, Value* value, BoundObject *context) = 0;
+		virtual void Set(const char *name, Value* value) = 0;
 
 		/**
 		 * Return an object's property. The returned value is automatically
@@ -43,14 +46,51 @@ namespace kroll
 		 * a reference (even for Undefined and Null types).
 		 * When an error occurs will throw an exception of type Value*.
 		 */
-		virtual Value* Get(const char *name, BoundObject *context) = 0;
+		virtual Value* Get(const char *name) = 0;
 
 		/**
 		 * Return a list of this object's property names.
 		 */
 		virtual std::vector<std::string> GetPropertyNames() = 0;
 
-		Value* GetNS(const char *name, BoundObject* context = NULL)
+		void SetNS(const char *name, Value* value)
+		{
+			std::vector<std::string> tokens;
+			std::string s(name);
+			FileUtils::Tokenize(s,tokens,".");
+			if (tokens.size()==1)
+			{
+				this->Set(name,value);
+				return;
+			}
+			BoundObject *scope = this;
+			for (int c=0;c<(int)tokens.size()-1;c++)
+			{
+				std::string token = tokens.at(c);
+				Value *newscope = scope->Get(token.c_str());
+				if (newscope->IsUndefined() || newscope->IsNull())
+				{
+					BoundObject* bo = (BoundObject*)CreateEmptyBoundObject();
+					Value *newvalue = new Value(bo);
+					scope->Set(token.c_str(),newvalue);
+					KR_DECREF(newscope); // OK to release since scope holds
+					KR_DECREF(newvalue);
+					scope = bo;
+				}
+				else if (newscope->IsObject())
+				{
+					scope = newscope->ToObject();
+				}
+				else
+				{
+					Value *error = new Value("Invalid namespace on setNS");
+					throw error;
+				}
+			}
+			std::string token = tokens.at(tokens.size()-1);
+			scope->Set(token.c_str(),value);
+		}
+		Value* GetNS(const char *name)
 		{
 			std::string s(name);
 			std::string::size_type last = 0;
@@ -60,19 +100,22 @@ namespace kroll
 			while (pos != std::string::npos) 
 			{
 				std::string token = s.substr(last,pos);
-				current = scope->Get(token.c_str(),context);
+				current = scope->Get(token.c_str());
 				last = pos + 1;
 			    pos = s.find_first_of(".", last);
-				if (!current->IsObject())
+				if (current->IsObject())
 				{
-					break;
+					scope = current->ToObject();
 				}
-				scope = current->ToObject();
+				else 
+				{
+					return Value::Undefined();
+				}
 			}
 			if (pos!=s.length())
 			{
 				std::string token = s.substr(last);
-				current = scope->Get(token.c_str(),context);
+				current = scope->Get(token.c_str());
 			}
 			return current;
 		}
@@ -83,6 +126,7 @@ namespace kroll
 	private:
 		DISALLOW_EVIL_CONSTRUCTORS(BoundObject);
 	};
+
 }
 
 #endif

@@ -46,7 +46,7 @@ namespace kroll
 		}
 		return 0.0;
 	}
-
+	
 	void InitializeDefaultBindings (Host *host)
 	{
 		PyObject* mod = PyImport_ImportModule("__builtin__");
@@ -61,18 +61,7 @@ namespace kroll
 			{
 				// we're going to clone the methods from api into our
 				// own python scoped object
-				BoundObject *bo = api->ToObject();
-				StaticBoundObject *scope = new StaticBoundObject();
-				std::vector<std::string> keys = bo->GetPropertyNames();
-				std::vector<std::string>::iterator iter = keys.begin();
-				while(iter!=keys.end())
-				{
-					std::string key = (*iter++);
-					const char *name = (const char*)key.c_str();
-					Value *value = bo->Get(name,NULL);
-					scope->Set(name,value);
-					KR_DECREF(value);
-				}
+				StaticBoundObject *scope = StaticBoundObject::CreateDelegate(host->GetGlobalObject(),api->ToObject());
 				PyObject *pyapi = BoundObjectToPythonValue(NULL,NULL,scope);
 				PyObject_SetAttrString(mod,PRODUCT_NAME,pyapi);
 				// now bind our new scope to python module
@@ -84,24 +73,24 @@ namespace kroll
 			Py_DECREF(mod);
 		}
 	}
-	PyObject* ValueListToPythonArray(const ValueList& list)
-	{
-		int size = list.size();
-		
-		if (size == 0)
-		{
-			Py_INCREF(Py_None);
-			return Py_None;
-		}
-		
-		PyObject *array = PyTuple_New(size);
-		for (int c=0;c<size;c++)
-		{
-			Value *value = list.at(c);
-			PyTuple_SET_ITEM(array,c,ValueToPythonValue(value));
-		}
-		return array;
-	}
+	// PyObject* ValueListToPythonArray(const ValueList& list)
+	// {
+	// 	int size = list.size();
+	// 	
+	// 	if (size == 0)
+	// 	{
+	// 		Py_INCREF(Py_None);
+	// 		return Py_None;
+	// 	}
+	// 	
+	// 	PyObject *array = PyTuple_New(size);
+	// 	for (int c=0;c<size;c++)
+	// 	{
+	// 		Value *value = list.at(c);
+	// 		PyTuple_SET_ITEM(array,c,ValueToPythonValue(value));
+	// 	}
+	// 	return array;
+	// }
 	static void PyDeleteBoundMethod(void *p)
 	{
 		BoundMethod* method = static_cast<BoundMethod*>(p);
@@ -120,7 +109,7 @@ namespace kroll
 				PyObject *arg=PyTuple_GET_ITEM(args,c);
 				a.push_back(PythonValueToValue(arg,NULL));
 			}
-			Value* result = method->Call(a,NULL);
+			Value* result = method->Call(a);
 			ScopedDereferencer r(result);
 			return ValueToPythonValue(result);
 		}
@@ -152,17 +141,21 @@ namespace kroll
 
 	PyObject* ValueToPythonValue(Value* value)
 	{
-		if (value->IsBool()) {
+		if (value->IsBool()) 
+		{
 			return value->ToBool() ? Py_True : Py_False;
 		}
-		if (value->IsInt()) {
+		if (value->IsInt()) 
+		{
 			return PyInt_FromLong(value->ToInt());
 		}
-		if (value->IsNull() || value->IsUndefined()) {
+		if (value->IsNull() || value->IsUndefined()) 
+		{
 			Py_INCREF(Py_None);
 			return Py_None;
 		}
-		if (value->IsMethod()) {
+		if (value->IsMethod()) 
+		{
 			BoundMethod *obj = value->ToMethod();
 			if (typeid(obj) == typeid(PythonMethod*))
 			{
@@ -170,7 +163,8 @@ namespace kroll
 			}
 			return BoundMethodToPythonValue(value->ToMethod());
 		}
-		if (value->IsObject()) {
+		if (value->IsObject()) 
+		{
 			BoundObject *obj = value->ToObject();
 			if (typeid(obj) == typeid(PythonValue*))
 			{
@@ -178,21 +172,25 @@ namespace kroll
 			}
 			return BoundObjectToPythonValue(NULL,NULL,value->ToObject());
 		}
-		if (value->IsString()) {
+		if (value->IsString()) 
+		{
 			return PyString_FromString(value->ToString().c_str());
 		}
-		if (value->IsDouble()) {
+		if (value->IsDouble()) 
+		{
 			return PyFloat_FromDouble(value->ToDouble());
 		}
-		if (value->IsList()) {
+		if (value->IsList()) 
+		{
 			BoundList *list = value->ToList();
 			if (typeid(list) == typeid(PythonList*))
 			{
 				return ((PythonList*)list)->ToPython();
 			}
-			return BoundObjectToPythonValue(NULL,NULL,value->ToList());
+			return BoundObjectToPythonValue(NULL,NULL,list);
 		}
-		return NULL;
+		Py_INCREF(Py_None);
+		return Py_None;
 	}
 
 	typedef struct {
@@ -203,36 +201,38 @@ namespace kroll
 	static void PyBoundObject_dealloc(PyObject* self)
 	{
 		PyBoundObject *boundSelf = (PyBoundObject*)self;
-//		std::cout << "PyBoundObject_dealloc called for " <<(void*)boundSelf << std::endl;
+		// std::cout << "PyBoundObject_dealloc called for " <<(void*)boundSelf << std::endl;
 		KR_DECREF(boundSelf->object);
 		PyObject_Del(self);
 	}
 
-	PyObject* PyBoundObject_getattr(PyObject *self, char *name)
+	static PyObject* PyBoundObject_getattr(PyObject *self, char *name)
 	{
 		PyBoundObject *boundSelf = reinterpret_cast<PyBoundObject*>(self);
-//		std::cout << "PyBoundObject_getattr called with " << name << " for " << (void*)boundSelf << std::endl;
-		Value* result = boundSelf->object->Get(name,NULL);
+		// std::cout << "PyBoundObject_getattr called with " << name << " for " << (void*)boundSelf << std::endl;
+		Value* result = boundSelf->object->Get(name);
 		return ValueToPythonValue(result);
 	}
 
-	int PyBoundObject_setattr(PyObject *self, char *name, PyObject *value)
+	static int PyBoundObject_setattr(PyObject *self, char *name, PyObject *value)
 	{
 		PyBoundObject *boundSelf = (PyBoundObject*)self;
+		// std::cout << KR_FUNC << " called for " <<(void*)boundSelf << std::endl;
 		Value* tiValue = PythonValueToValue(value,name);
-		boundSelf->object->Set(name,tiValue,NULL);
+		boundSelf->object->Set(name,tiValue);
 		return 0;
 	}
 
-	PyObject* PyBoundObject_tostring(PyObject *self)
+	static PyObject* PyBoundObject_tostring(PyObject *self)
 	{
 		PyBoundObject *boundSelf = (PyBoundObject*)self;
-		Value* result = boundSelf->object->Get("toString",NULL);
+		// std::cout << KR_FUNC << " called for " <<(void*)boundSelf << std::endl;
+		Value* result = boundSelf->object->Get("toString");
 		if (result->IsMethod())
 		{
 			BoundMethod *method = result->ToMethod();
 			ValueList args;
-			Value* toString = method->Call(args,NULL);
+			Value* toString = method->Call(args);
 			ScopedDereferencer r(toString);
 			if (toString->IsString())
 			{
@@ -251,18 +251,18 @@ namespace kroll
 	    "BoundObject",
 	    sizeof(PyBoundObject),
 	    0,
-	    PyBoundObject_dealloc, 	/*tp_dealloc*/
+	    PyBoundObject_dealloc, 		/*tp_dealloc*/
 	    0,          	 			/*tp_print*/
-	    PyBoundObject_getattr,    /*tp_getattr*/
-	    PyBoundObject_setattr,    /*tp_setattr*/
+	    PyBoundObject_getattr,    	/*tp_getattr*/
+	    PyBoundObject_setattr,    	/*tp_setattr*/
 	    0,          	 			/*tp_compare*/
 	    0,          	 			/*tp_repr*/
 	    0,          	 			/*tp_as_number*/
-	    0,          	 			/*tp_as_sequence*/
-	    0,          	 			/*tp_as_mapping*/
+	    0,    						/*tp_as_sequence*/
+	    0,     						/*tp_as_mapping*/
 	    0,           	 			/*tp_hash */
 		0,							/*tp_call */
-		PyBoundObject_tostring,	/*tp_str */
+		PyBoundObject_tostring,		/*tp_str */
 		0,							/*tp_getattro*/
 		0,							/*tp_setattro*/
 		0,							/*tp_as_buffer*/
@@ -278,9 +278,24 @@ namespace kroll
 			throw "BoundObject cannot be null";
 		}
 		PyBoundObject* obj;
-		obj = PyObject_New(PyBoundObject, &PyBoundObjectType);
+		BoundList *list = dynamic_cast<BoundList*>(bo);
+		if (list!=NULL)
+		{
+			// convert it into a list of wrapped Value objects 
+			PyObject* newlist = PyList_New(list->Size());
+			for (int c = 0; c < list->Size(); c++)
+			{
+				Value* value = list->At(c);
+				PyObject *item = ValueToPythonValue(value);
+				PyList_SetItem(newlist,c,item);
+			}
+			return newlist;
+		}
+		else
+		{
+			obj = PyObject_New(PyBoundObject, &PyBoundObjectType);
+		}
 		obj->object = bo;
-//		std::cout << "created py object: " << (void*)obj << std::endl;
 		KR_ADDREF(obj->object);
 		return (PyObject*)obj;
 	}
@@ -289,6 +304,7 @@ namespace kroll
 	{
 		PyObject *ptype, *pvalue, *trace;
 		PyErr_Fetch(&ptype,&pvalue,&trace);
+		PyErr_Print();
 		PyErr_Clear();
 		throw PythonValueToValue(pvalue,NULL);
 	}
@@ -319,7 +335,7 @@ namespace kroll
 		{
 			return new Value(PythonFloatToDouble(value));
 		}
-		if (PyTuple_Check(value))
+		if (PyList_Check(value))
 		{
 			BoundList *l = new PythonList(value);
 			Value *til = new Value(l);
@@ -362,7 +378,7 @@ namespace kroll
 			return tiv;
 		}
 
-		std::cout << "PythonValueToValue:nothing" << std::endl;
+		std::cerr << "PythonValueToValue:nothing" << std::endl;
 		PyObject_Print(value,stdout,0);
 		printf("\n");
 

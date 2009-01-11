@@ -25,13 +25,6 @@ namespace kroll
 
 	public:
 		/**
-		 * Set a property on this object to the given value. Value should be
-		 * heap-allocated as implementors are allowed to keep a reference.
-		 * When an error occurs will throw an exception of type Value*.
-		 */
-		virtual Value* Get(const char *name, BoundObject *context_local);
-
-		/**
 		 * Return an object's property. The returned value is automatically
 		 * reference counted and must be released if the callee does not hold
 		 * a reference (even for Undefined and Null types).
@@ -49,12 +42,6 @@ namespace kroll
 		 * heap-allocated as implementors are allowed to keep a reference.
 		 * When an error occurs will throw an exception of type Value*.
 		 */
-		virtual void Set(const char *name, Value* value, BoundObject *context_local);
-
-		/**
-		 * set the named property to a value with a null BoundObject* context
-		 * When an error occurs will throw an exception of type Value*.
-		 */
 		virtual void Set(const char *name, Value* value);
 
 
@@ -66,9 +53,9 @@ namespace kroll
 
 		/* convenience methods for the conviencence methods */
 		template <typename T>
-		void SetMethod(const char *name, void (T::*method)(const ValueList&, Value*, BoundObject *context_local))
+		void SetMethod(const char *name, void (T::*method)(const ValueList&, Value*))
 		{
-			MethodCallback* callback = NewCallback<T, const ValueList&, Value*, BoundObject*>(static_cast<T*>(this), method);
+			MethodCallback* callback = NewCallback<T, const ValueList&, Value*>(static_cast<T*>(this), method);
 
 			StaticBoundMethod* bound_method = new StaticBoundMethod(callback);
 			Value* method_value = new Value(bound_method);
@@ -80,6 +67,46 @@ namespace kroll
 		}
 
 		void SetObject(const char *name, BoundObject* object);
+		
+		/**
+		 * create a delegate from a BoundObject to a wrapped
+		 * StaticBoundObject and delegate set/get to the new
+		 * static bound object
+		 */
+		static StaticBoundObject* CreateDelegate(BoundObject *global, BoundObject *bo)
+		{
+			StaticBoundObject *scope = new StaticBoundObject();
+			std::vector<std::string> keys = bo->GetPropertyNames();
+			std::vector<std::string>::iterator iter = keys.begin();
+			while(iter!=keys.end())
+			{
+				std::string key = (*iter++);
+				const char *name = (const char*)key.c_str();
+				Value *value = bo->Get(name);
+				if (key == "set")
+				{
+					ScopeMethodDelegate *d = new ScopeMethodDelegate(SET,global,scope,value->ToMethod());
+					Value *v = new Value(d);
+					scope->Set(name,v);
+					KR_DECREF(d);
+					KR_DECREF(v);
+				}
+				else if (key == "get")
+				{
+					ScopeMethodDelegate *d = new ScopeMethodDelegate(GET,global,scope,value->ToMethod());
+					Value *v = new Value(d);
+					scope->Set(name,v);
+					KR_DECREF(d);
+					KR_DECREF(v);
+				}
+				else
+				{
+					scope->Set(name,value);
+				}
+				KR_DECREF(value);
+			}		
+			return scope;
+		}
 
 	protected:
 		Mutex mutex;
@@ -88,6 +115,7 @@ namespace kroll
 	private:
 		DISALLOW_EVIL_CONSTRUCTORS(StaticBoundObject);
 	};
+	
 }
 
 #endif

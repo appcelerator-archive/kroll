@@ -43,19 +43,32 @@
   #define INSTALL_PREFIX STRING(_INSTALL_PREFIX)
 #endif
 
+#ifndef GLOBAL_NS_VARNAME
+  #define GLOBAL_NS_VARNAME STRING(_GLOBAL_NS_VARNAME)
+#endif
+
+// define a macro that points to the name of the enclosing function where
+// referenced or if not supported on target compiler, just default to filename
+#ifndef OS_WIN32
+#define KR_FUNC __PRETTY_FUNCTION__
+#else
+#define KR_FUNC __FILE__
+#endif
 
 #ifdef DEBUG_REFCOUNT
-	#define KR_ADDREF_RETURNING(t,o) (o!=NULL) ? (t)o->AddReference(__FILE__,__LINE__) : NULL
+	#define KR_ADDREF_RETURNING(t,o) (o!=NULL) ? (t)o->AddReference(__FILE__,__LINE__,KR_FUNC) : NULL
 	#define KR_ADDREF(o) \
 	if (o!=NULL) \
 	{ \
-		if (o->ReferenceCount()<1) fprintf(stderr,"!!!! Invalid Object. Reference Count < 1: %s:%d\n",__FILE__,__LINE__); \
-		o->AddReference(__FILE__,__LINE__); \
+		const char *myfunc = KR_FUNC; \
+		if (o->ReferenceCount()<1) std::cerr << "!!!! Invalid Object. Reference Count < 1: " <<__FILE__<< ":" <<__LINE__ <<std::endl; \
+		o->AddReference(__FILE__,__LINE__,myfunc); \
 	} 
 	#define KR_DECREF(o) \
 	if (o!=NULL) \
 	{ \
-		o->ReleaseReference(__FILE__,__LINE__); \
+		const char *myfunc = KR_FUNC; \
+		o->ReleaseReference(__FILE__,__LINE__,myfunc); \
 		o = NULL; \
 	}
 #else
@@ -63,7 +76,7 @@
 	#define KR_ADDREF(o) \
 	if (o!=NULL) \
 	{ \
-		if (o->ReferenceCount()<1) fprintf(stderr,"!!!! Invalid Object. Reference Count < 1: %s:%d\n",__FILE__,__LINE__); \
+		if (o->ReferenceCount()<1) std::cerr << "!!!! Invalid Object. Reference Count < 1: " <<__FILE__<< ":" <<__LINE__ <<std::endl; \
 		o->AddReference(); \
 	} 
 	#define KR_DECREF(o) \
@@ -74,6 +87,7 @@
 	}
 #endif
 
+#define KR_DUMP_LOCATION std::cout << "[" << KR_FUNC << "::" << __LINE__ << "]" << std::endl;
 	
 #define KR_UNUSED(o) if (o) {} 
 
@@ -83,7 +97,6 @@
 #define DISALLOW_EVIL_CONSTRUCTORS(TypeName)    \
   TypeName(const TypeName&);                    \
   void operator=(const TypeName&)
-
 
 
 #endif

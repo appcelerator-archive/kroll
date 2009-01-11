@@ -25,7 +25,7 @@ namespace kroll
 		this->name = NULL;
 	}
 
-	Value* PythonMethod::Call(const ValueList& args, BoundObject* context)
+	Value* PythonMethod::Call(const ValueList& args)
 	{
 		PyObject *arglist = NULL;
 		if (args.size()>0)
@@ -59,7 +59,7 @@ namespace kroll
 		return value;
 	}
 
-	void PythonMethod::Set(const char *name, Value* value, BoundObject *context)
+	void PythonMethod::Set(const char *name, Value* value)
 	{
 		int result = PyObject_SetAttrString(this->object,(char*)name,ValueToPythonValue(value));
 		KR_DECREF(value);
@@ -71,7 +71,7 @@ namespace kroll
 		}
 	}
 
-	Value* PythonMethod::Get(const char *name, BoundObject *context)
+	Value* PythonMethod::Get(const char *name)
 	{
 		// get should returned undefined if we don't have a property
 		// named "name" to mimic what happens in Javascript

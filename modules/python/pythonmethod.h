@@ -13,14 +13,14 @@
 
 namespace kroll
 {
-	class KROLL_PYTHON_API PythonMethod : public BoundMethod
+	class PythonMethod : public BoundMethod
 	{
 	public:
 		PythonMethod(PyObject *obj, const char *name);
 		virtual ~PythonMethod();
-		Value* Call(const ValueList& args, BoundObject* context);
-		virtual void Set(const char *name, Value* value, BoundObject *context);
-		virtual Value* Get(const char *name, BoundObject *context);
+		Value* Call(const ValueList& args);
+		virtual void Set(const char *name, Value* value);
+		virtual Value* Get(const char *name);
 		virtual std::vector<std::string> GetPropertyNames();
 
 		PyObject* ToPython() { Py_INCREF(object); return object; }

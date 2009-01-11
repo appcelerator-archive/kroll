@@ -27,7 +27,7 @@ target list to be added soon:
 - PHP
 - Java
 - Objective-J
-- LUA
+- Lua
 - C#
 
 Kroll is broken into a few small components which compose the 
