@@ -103,7 +103,7 @@ int main(int argc, char* argv[])
 	{
 		for (int c=0;c<argc;c++)
 		{
-			if (strstr(argv[c],"--install")==0)
+			if (strcmp(argv[c],"--install")==0)
 			{
 				installOnly = YES;
 				break;
@@ -183,12 +183,13 @@ int main(int argc, char* argv[])
 	NSString *runtimeExec = [NSString stringWithFormat:@"%@/%@",appMacOSDir,bundleName];
 	NSLog(@"tikernel path = %@",runtimeExec);
 	
-	// we need to critic a parallel structure for the application
+	// we need to construct a parallel structure for the application
 	// to trick OSX into thinking that the tikernel process is our 
 	// real application bundle - which really is just a set of symlinks
 	std::string ads = std::string([appDir UTF8String]);
 	if (!FileUtils::IsDirectory(ads) || installOnly)
 	{
+		NSLog(@"need to install to %@",appRootDir);
 		NSFileManager *fm = [NSFileManager defaultManager];
 		[fm createDirectoryAtPath:appRootDir attributes:nil];
 		[fm createDirectoryAtPath:appDir attributes:nil];
@@ -206,10 +207,9 @@ int main(int argc, char* argv[])
 		NSString *infoPlist = [NSString stringWithFormat:@"%@/Contents/Info.plist",appDir];		
 		[fm createSymbolicLinkAtPath:infoPlist pathContent:srcInfoPlist];
 	
-//FIXME: resolve this with titanium	
-		NSString *srctiXML = [NSString stringWithFormat:@"%@/Contents/tiapp.xml",bundlePath];		
-		NSString *tiXML = [NSString stringWithFormat:@"%@/Contents/tiapp.xml",appDir];		
-		[fm createSymbolicLinkAtPath:tiXML pathContent:srctiXML];
+		NSString *srcXML = [NSString stringWithFormat:@"%@/Contents/%s",bundlePath,CONFIG_FILENAME];		
+		NSString *destXML = [NSString stringWithFormat:@"%@/Contents/%s",appDir,CONFIG_FILENAME];		
+		[fm createSymbolicLinkAtPath:destXML pathContent:srcXML];
 	
 		NSString *srcResourcesDir = [NSString stringWithFormat:@"%@/Contents/Resources",bundlePath];
 		[fm createSymbolicLinkAtPath:appResourcesDir pathContent:srcResourcesDir];
@@ -219,10 +219,11 @@ int main(int argc, char* argv[])
 	// done the install setup for the application
 	if (installOnly == NO)
 	{
+		
 		NSMutableString *libpath = [NSMutableString stringWithCapacity:255];
 		[libpath appendString:[NSString stringWithCString:runtimePath.c_str()]];
 		[libpath appendString:@":"];
-	
+
 		NSMutableString *modulePath = [NSMutableString stringWithCapacity:255];
 	
 		for (int c=0;c<(int)moduleDirs.size();c++)
@@ -265,6 +266,7 @@ int main(int argc, char* argv[])
 		signal(SIGHUP, &termination);
 		signal(SIGTERM, &termination);
 		signal(SIGINT, &termination);
+		signal(SIGKILL, &termination);
 	
 		[invoker initWithApplication:runtimeExec environment:env arguments:args currentDirectory:bundlePath];
 		[invoker launch:terminateInvocation];

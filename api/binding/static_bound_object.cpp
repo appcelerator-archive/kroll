@@ -76,7 +76,7 @@ namespace kroll
 	}
 }
 
-kroll::RefCounted* CreateEmptyBoundObject()
+KROLL_API kroll::RefCounted* CreateEmptyBoundObject()
 {
 	return new kroll::StaticBoundObject();
 }

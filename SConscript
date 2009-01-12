@@ -8,6 +8,7 @@ filename = inspect.currentframe().f_code.co_filename
 Import('product_name')
 Import('install_prefix')
 Import('global_variable_name')
+Import('config_filename')
 
 OS = ''
 os_define = ''
@@ -16,6 +17,7 @@ vars = Variables()
 vars.Add('PRODUCT_NAME', 'The underlying product name that Kroll will display (default: "Kroll")', product_name)
 vars.Add('INSTALL_PREFIX', 'The install prefix of binaries in the system (default: /usr/local)', install_prefix)
 vars.Add('GLOBAL_NS_VARNAME','The name of the Kroll global variable', global_variable_name)
+vars.Add('CONFIG_FILENAME','The name of the Kroll config file', config_filename)
 
 class BuildConfig(object): 
 	def __init__(self):
@@ -43,7 +45,8 @@ build.env = Environment(
                   'OS_' + build.os.upper(): 1,
                   '_INSTALL_PREFIX': '${INSTALL_PREFIX}',
                   '_PRODUCT_NAME': '${PRODUCT_NAME}',
-				      '_GLOBAL_NS_VARNAME': '${GLOBAL_NS_VARNAME}'
+				  '_GLOBAL_NS_VARNAME': '${GLOBAL_NS_VARNAME}',
+				  '_CONFIG_FILENAME' : '${CONFIG_FILENAME}'
                  },
     CPPPATH=[build.abstopdir],
     LIBPATH=[build.dir])
@@ -72,7 +75,7 @@ if build.is_win32():
 	execfile('build/win32.py')
 
 if build.is_linux() or build.is_osx():
-    build.env.Append(CPPFLAGS=['-Wall', '-Werror','-fno-common'])
+    build.env.Append(CPPFLAGS=['-Wall', '-Werror','-fno-common','-fvisibility=hidden'])
 
 if build.is_osx():
 	OSX_SDK = '/Developer/SDKs/MacOSX10.4u.sdk'

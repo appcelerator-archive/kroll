@@ -47,7 +47,7 @@ namespace kroll
 	#if defined(OS_WIN32)
 		HMODULE lib_handle = LoadLibrary(path.c_str());
 	#else
-		void* lib_handle = dlopen(path.c_str(), RTLD_LOCAL);
+		void* lib_handle = dlopen(path.c_str(), RTLD_LAZY | RTLD_GLOBAL);
 	#endif
 		if (!lib_handle)
 		{

@@ -58,7 +58,7 @@ namespace kroll
 		std::cout << "Creating module " << path << std::endl;
 
 
-		void* lib_handle = dlopen(path.c_str(), RTLD_LOCAL);
+		void* lib_handle = dlopen(path.c_str(), RTLD_LAZY | RTLD_GLOBAL);
 		if (!lib_handle)
 		{
 			std::cerr << "Error load module: " << path << std::endl;
