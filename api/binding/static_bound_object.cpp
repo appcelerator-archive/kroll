@@ -5,6 +5,7 @@
  */
 
 #include "binding.h"
+#include <cstring>
 
 namespace kroll
 {
