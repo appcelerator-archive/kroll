@@ -94,11 +94,11 @@ namespace kroll
 				version - The version string
 
 			Example:
-		
+
 				(start code)
 				int version = kroll::FileUtils::MakeVersion("1.2.3");
 				// version is now 123
-				(end)	
+				(end)
 		*/
 		static int MakeVersion(std::string& version);
 
@@ -114,7 +114,7 @@ namespace kroll
 
 		/*
 			Function: ReadManifest
-		*/	
+		*/
 		static bool ReadManifest(std::string& path, std::string &runtimePath, std::vector<std::string>& modules, std::vector<std::string> &moduleDirs);
 
 		/*
@@ -131,6 +131,13 @@ namespace kroll
 			Function: IsFile
 		*/
 		static bool IsFile(std::string &file);
+
+		/*
+			Function: IsHidden
+
+			Returns true if the given file or directory is hidden.  Otherwise, false is returned.
+		 */
+		static bool IsHidden(std::string &file);
 
 		/*
 			Function: FindRuntime

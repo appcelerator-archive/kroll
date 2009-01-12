@@ -64,6 +64,25 @@ namespace kroll
 		return (stat(dir.c_str(),&st)==0) && S_ISDIR(st.st_mode);
 #endif
 	}
+	bool FileUtils::IsHidden(std::string &file)
+	{
+#ifdef OS_OSX
+		// TODO finish this
+		return false;
+#elif OS_WIN32
+		WIN32_FIND_DATA findFileData;
+		HANDLE hFind = FindFirstFile(file.c_str(), &findFileData);
+		if (hFind != INVALID_HANDLE_VALUE)
+		{
+			bool yesno = (findFileData.dwFileAttributes & 0x00000002) == 0x00000002;
+			FindClose(hFind);
+			return yesno;
+		}
+		return false;
+#elif OS_LINUX
+		return (file.size() > 0 && file.at(0) == '.');
+#endif
+	}
 	bool FileUtils::IsRuntimeInstalled()
 	{
 		std::string dir = GetRuntimeBaseDirectory();
