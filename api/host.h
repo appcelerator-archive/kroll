@@ -67,6 +67,16 @@ namespace kroll
 				module_providers.erase(iter);
 			}
 		}
+		
+		const int GetCommandLineArgCount() const {
+			return argc;
+		}
+		
+		const char* GetCommandLineArg(int index) const {
+			if (index >= argc) return NULL;
+			return argv[index];
+		}
+		
 
 	protected:
 		int argc;

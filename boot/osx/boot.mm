@@ -103,7 +103,7 @@ int main(int argc, char* argv[])
 	{
 		for (int c=0;c<argc;c++)
 		{
-			if (strcmp(argv[c],"--install")==0)
+			if (strcmp(argv[c],"--kinstall")==0)
 			{
 				installOnly = YES;
 				break;

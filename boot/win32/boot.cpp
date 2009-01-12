@@ -17,7 +17,7 @@ using namespace kroll;
 
 #define alert(s) MessageBox(NULL,s,"DEBUG",MB_OK)
 
-std::string getExecutableDirectory()
+std::string GetExecutableDirectory()
 {
   char path[MAX_PATH];
   GetModuleFileName(NULL,path,MAX_PATH);
@@ -30,82 +30,31 @@ std::string getExecutableDirectory()
   return p;
 }
 
-std::string getRuntimeBaseDir()
-{
-  char path[MAX_PATH];
-  std::string dir;
-  if (SHGetSpecialFolderPath(NULL,path,CSIDL_COMMON_APPDATA,FALSE))
-  {
-    dir.append(path);
-    dir.append("\\");
-    dir.append(PRODUCT_NAME);
-  }
-  else if (SHGetSpecialFolderPath(NULL,path,CSIDL_APPDATA,FALSE))
-  {
-    dir.append(path);
-    dir.append("\\");
-    dir.append(PRODUCT_NAME);
-  }
-  return dir;
-}
-
-bool isFile(std::string& str)
-{
-  WIN32_FIND_DATA findFileData;
-  HANDLE hFind = FindFirstFile(str.c_str(), &findFileData);
-  if (hFind != INVALID_HANDLE_VALUE)
-  {
-    bool yesno = (findFileData.dwFileAttributes & 0x00000000) == 0x00000000;
-    FindClose(hFind);
-    return yesno;
-  }
-  return false;
-}
-
-bool isDirectory(std::string& dir)
-{
-  WIN32_FIND_DATA findFileData;
-  HANDLE hFind = FindFirstFile(dir.c_str(), &findFileData);
-  if (hFind != INVALID_HANDLE_VALUE)
-  {
-    bool yesno = (findFileData.dwFileAttributes & 0x00000010) == 0x00000010;
-    FindClose(hFind);
-    return yesno;
-  }
-  return false;
-}
-
-bool isRuntimeInstalled()
-{
-  std::string dir = getRuntimeBaseDir();
-  return isDirectory(dir);
-}
-
 #ifdef WIN32_CONSOLE
 int main (int argc, char **argv)
 #else
 int WinMain(HINSTANCE, HINSTANCE, LPSTR cl, int show)
 #endif
 {
-	std::string cwd = getExecutableDirectory();
-	std::string runtimeDir = getRuntimeBaseDir();
+	std::string cwd = GetExecutableDirectory();
+	std::string runtimeDir = FileUtils::GetRuntimeBaseDir();
     STARTUPINFO si;
     PROCESS_INFORMATION pi;
 
-	if (!isRuntimeInstalled())
+	if (!FileUtils::IsRuntimeInstalled())
 	{
 		std::cout << "Runtime isn't installed" << std::endl;
 
 		std::string installer = std::string(cwd);
 		installer.append("\\installer");
-		if (!isDirectory(installer))
+		if (!FileUtils::IsDirectory(installer))
 		{
 			fprintf(stderr,"invalid installation. installer path doesn't exist at: %s\n",installer.c_str());
 			return __LINE__;
 		}
 		std::string binary = std::string(installer);
 		binary.append("\\kinstall.exe");
-		if (!isFile(binary))
+		if (!FileUtils::IsFile(binary))
 		{
 			fprintf(stderr,"invalid installation. installer file doesn't exist at: %s\n",binary.c_str());
 			return __LINE__;
@@ -198,6 +147,8 @@ int WinMain(HINSTANCE, HINSTANCE, LPSTR cl, int show)
 
     std::cout << "PATH=" << libPath << std::endl;
     std::cout << "launching runtime: " << runtimeExec << std::endl;
+
+	//FIXME FIXME: make sure to pass the command line up to the next process!
 
 	// 3. launch our subprocess as a child of this process
 	//    and wait for it to exit before we exit
