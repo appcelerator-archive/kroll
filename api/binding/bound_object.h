@@ -88,6 +88,9 @@ namespace kroll
 				}
 			}
 			std::string token = tokens.at(tokens.size()-1);
+#ifdef DEBUG_BINDING
+			std::cout << "BIND: " << value->ToTypeString() << " to: " << name << std::endl;
+#endif
 			scope->Set(token.c_str(),value);
 		}
 		Value* GetNS(const char *name)
