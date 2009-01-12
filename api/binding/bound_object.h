@@ -14,7 +14,7 @@
 #include <map>
 #include "../file_utils.h"
 
-extern kroll::RefCounted* CreateEmptyBoundObject();
+extern KROLL_API kroll::RefCounted* CreateEmptyBoundObject();
 
 namespace kroll
 {

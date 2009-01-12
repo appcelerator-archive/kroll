@@ -37,7 +37,7 @@ int WinMain(HINSTANCE, HINSTANCE, LPSTR cl, int show)
 #endif
 {
 	std::string cwd = GetExecutableDirectory();
-	std::string runtimeDir = FileUtils::GetRuntimeBaseDir();
+	std::string runtimeDir = FileUtils::GetRuntimeBaseDirectory();
     STARTUPINFO si;
     PROCESS_INFORMATION pi;
 

@@ -95,7 +95,7 @@ namespace kroll
 		{
 			return std::string([localDir UTF8String]);
 		}
-		
+
 		// first check to see if we can install in system directory by checking
 		// if we can write to it
 		NSString *systemPath = @"/Library/Application Support";
