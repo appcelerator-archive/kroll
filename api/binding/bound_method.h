@@ -14,45 +14,61 @@ namespace kroll
 {
 	typedef Callback2<const ValueList&, Value *>::Type MethodCallback;
 
-
+	/*
+		Class: BoundMethod
+	*/
 	class KROLL_API BoundMethod : public BoundObject
 	{
 	protected:
 		virtual ~BoundMethod(){}
 	public:
+		/*
+			Constructor: BoundMethod
+		*/
 		BoundMethod() {}
-		/**
-		 * invoke the bound method. the returned value is automatically
-		 * reference counted and you must release the reference when finished
-		 * with the return value (even for Undefined and Null types).
-		 * When an error occurs will throw an exception of type Value*.
+
+		/*
+			Function: Call
+
+		  invoke the bound method. the returned value is automatically
+		  reference counted and you must release the reference when finished
+		  with the return value (even for Undefined and Null types).
+		  When an error occurs will throw an exception of type Value*.
 		 */
 		virtual Value* Call(const ValueList& args) = 0;
 
-		/**
-		 * Set a property on this object to the given value. Value should be
-		 * heap-allocated as implementors are allowed to keep a reference,
-		 * if they increase the reference count.
-		 * When an error occurs will throw an exception of type Value*.
+		/*
+			Function: Set
+
+		  Set a property on this object to the given value. Value should be
+		  heap-allocated as implementors are allowed to keep a reference,
+		  if they increase the reference count.
+		  When an error occurs will throw an exception of type Value*.
 		 */
 		virtual void Set(const char *name, Value* value) = 0;
 
-		/**
-		 * return a named property. the returned value is automatically
-		 * reference counted and you must release the reference when finished
-		 * with the return value (even for Undefined and Null types).
-		 * When an error occurs will throw an exception of type Value*.
+		/*
+			Function: Get
+
+		  return a named property. the returned value is automatically
+		  reference counted and you must release the reference when finished
+		  with the return value (even for Undefined and Null types).
+		  When an error occurs will throw an exception of type Value*.
 		 */
 		virtual Value* Get(const char *name) = 0;
 
-		/**
-		 * Return a list of this object's property names.
+		/*
+			Function: GetPropertyNames
+
+		  Return a list of this object's property names.
 		 */
 		virtual void GetPropertyNames(std::vector<const char *> *property_names) = 0;
 
-		/**
-		 * call the method with a variable list of Value* arguments
-		 * When an error occurs will throw an exception of type Value*.
+		/*
+			Function: Call
+
+		  call the method with a variable list of Value* arguments
+		  When an error occurs will throw an exception of type Value*.
 		 */
 		Value* Call(Value *first, ...)
 		{
@@ -77,20 +93,32 @@ namespace kroll
 		DISALLOW_EVIL_CONSTRUCTORS(BoundMethod);
 	};
 
+	/*
+		Enum: MethodDelegateType
+
+		GET - Getter method
+		SET - Setter method
+	*/
 	enum MethodDelegateType
 	{
 		GET,
 		SET
 	};
-	/**
-	 * class that can be used to change the delegation of a method
-	 * call's Get or Set method to first check to see if the key has
-	 * namespace dots (such as ti.foo.bar) and if so, delegate to a
-	 * differently supplied scope object for delegation.
+
+	/*
+		Class: ScopeMethodDelegate
+
+	  class that can be used to change the delegation of a method
+	  call's Get or Set method to first check to see if the key has
+	  namespace dots (such as ti.foo.bar) and if so, delegate to a
+	  differently supplied scope object for delegation.
 	 */
 	class ScopeMethodDelegate : public BoundMethod
 	{
 	public:
+		/*
+			Constructor: ScopeMethodDelegate
+		*/
 		ScopeMethodDelegate(MethodDelegateType type, BoundObject *global, BoundObject *scope, BoundMethod *delegate) :
 			type(type),global(global),scope(scope),delegate(delegate)
 		{
@@ -98,23 +126,53 @@ namespace kroll
 			KR_ADDREF(scope);
 			KR_ADDREF(delegate);
 		}
+
+		/*
+			Function: Set
+	
+			TODO: Document me
+		*/
 		void Set(const char *name, Value* value)
 		{
 			delegate->Set(name,value);
 		}
+
+		/*
+			Function: Get
+	
+			TODO: Document me
+		*/
 		Value* Get(const char *name)
 		{
 			return delegate->Get(name);
 		}
+
+		/*
+			Function: GetPropertyNames
+	
+			TODO: Document me
+		*/
 		void GetPropertyNames(std::vector<const char *> *property_names)
 		{
 			delegate->GetPropertyNames(property_names);
 		}
+
+		/*
+			Function: IsGlobalKey
+	
+			TODO: Document me
+		*/
 		bool IsGlobalKey(std::string& key)
 		{
 			std::string::size_type pos = key.find_first_of(".");
 			return (pos!=std::string::npos);
 		}
+
+		/*
+			Function: Call
+	
+			TODO: Document me
+		*/
 		Value* Call(const ValueList& args)
 		{
 			std::string key = args.at(0)->ToString();

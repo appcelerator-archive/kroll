@@ -15,43 +15,61 @@
 
 namespace kroll
 {
+	/*	
+		Class: StaticBoundObject
+	*/
 	class KROLL_API StaticBoundObject : public BoundObject
 	{
 	public:
+		/*
+			Constructor: StaticBoundObject
+		*/
 		StaticBoundObject();
 
 	protected:
 		virtual ~StaticBoundObject();
 
 	public:
-		/**
-		 * Return an object's property. The returned value is automatically
-		 * reference counted and must be released if the callee does not hold
-		 * a reference (even for Undefined and Null types).
-		 * When an error occurs will throw an exception of type Value*.
+		/*
+			Function: Get
+
+		  Return an object's property. The returned value is automatically
+		  reference counted and must be released if the callee does not hold
+		  a reference (even for Undefined and Null types).
+		  When an error occurs will throw an exception of type Value*.
 		 */
 		virtual Value* Get(const char *name);
 
-		/**
-		 * Return a list of this object's property names.
+		/*
+			Function: GetPropertyNames
+
+		  Return a list of this object's property names.
 		 */
 		virtual void GetPropertyNames(std::vector<const char *> *property_names);
 
-		/**
-		 * Set a property on this object to the given value. Value should be
-		 * heap-allocated as implementors are allowed to keep a reference.
-		 * When an error occurs will throw an exception of type Value*.
+		/*
+			Function: Set
+
+		  Set a property on this object to the given value. Value should be
+		  heap-allocated as implementors are allowed to keep a reference.
+		  When an error occurs will throw an exception of type Value*.
 		 */
 		virtual void Set(const char *name, Value* value);
 
 
-		/**
-		 * unset the named property
+		/*
+			Function: Unset
+
+		  unset the named property
 		 */
 		virtual void UnSet(const char *name);
 
 
-		/* convenience methods for the conviencence methods */
+		/*
+			Function: SetMethod
+			
+			TODO: Document me
+		*/
 		template <typename T>
 		void SetMethod(const char *name, void (T::*method)(const ValueList&, Value*))
 		{
@@ -66,12 +84,19 @@ namespace kroll
 			KR_DECREF(method_value);
 		}
 
+		/*
+			Function: SetObject
+			
+			TODO: Document me
+		*/
 		void SetObject(const char *name, BoundObject* object);
 
-		/**
-		 * create a delegate from a BoundObject to a wrapped
-		 * StaticBoundObject and delegate set/get to the new
-		 * static bound object
+		/*
+			Function: CreateDelegate
+
+		  create a delegate from a BoundObject to a wrapped
+		  StaticBoundObject and delegate set/get to the new
+		  static bound object
 		 */
 		static StaticBoundObject* CreateDelegate(BoundObject *global, BoundObject *bo)
 		{

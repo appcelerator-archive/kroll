@@ -28,23 +28,46 @@
 
 namespace kroll
 {
-	/**
-	 * reference counted base class. this object should be created
-	 * (reference count is initialized to 1 on construction) and never
-	 * directly deleted.  to delete the object, call ReleaseReference()
-	 * to release your reference.  once all references have been released
-	 * (reference count = 0), the object will be automatically deleted.
-	 * the methods on this object are thread-safe.
+	/*
+		Class: RefCounted
+
+	  reference counted base class. this object should be created
+	  (reference count is initialized to 1 on construction) and never
+	  directly deleted.  to delete the object, call ReleaseReference()
+	  to release your reference.  once all references have been released
+	  (reference count = 0), the object will be automatically deleted.
+	  the methods on this object are thread-safe.
 	 */
 	class KROLL_API RefCounted 
 	{
 	public:
+		/*
+			Constructor: RefCounted
+		*/
 		RefCounted(KR_CALL_STACK_DEFINE);
 	protected:
 		virtual ~RefCounted();
 	public:
+
+		/*
+			Function: AddReference
+
+			TODO: Document me
+		*/
 		RefCounted* AddReference(KR_CALL_STACK_DEFINE);
+
+		/*
+			Function: ReleaseReference
+
+			TODO: Document me
+		*/
 		void ReleaseReference(KR_CALL_STACK_DEFINE);
+
+		/*
+			Function: ReferenceCount
+
+			TODO: Document me
+		*/
 		const int ReferenceCount();
 	private:
 #ifdef DEBUG_REFCOUNT
@@ -52,7 +75,19 @@ namespace kroll
 		int linenumber;
 		const char *func;
 #endif
+
+		/*
+			Variable: count
+
+			TODO: Document me
+		*/
 		int count;
+
+		/*
+			Variable: mutex
+
+			TODO: Document me
+		*/
 		Mutex mutex;
 		DISALLOW_EVIL_CONSTRUCTORS(RefCounted);	
 	};

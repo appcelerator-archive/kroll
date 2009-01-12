@@ -15,18 +15,41 @@ namespace kroll
 
 	typedef Module* ModuleCreator(Host *host);
 
-	/**
-	 * Module Provider implementations are resposible for determining if files
-	 * are supportable modules and responsible for constructing them if they
-	 * determine that a file is supported.
+	/*
+		Class: ModuleProvider
+
+	  Module Provider implementations are resposible for determining if files
+	  are supportable modules and responsible for constructing them if they
+	  determine that a file is supported.
 	 */
 	class EXPORT ModuleProvider
 	{
 	public:
+		/*
+			Constructor: ModuleProvider
+		*/
 		ModuleProvider() {}
 		virtual ~ModuleProvider() {};
+
+		/*
+			Function: GetDescription
+
+			TODO: Document me
+		*/
 		virtual const char * GetDescription() = 0;
+
+		/*
+			Function: IsModule
+
+			TODO: Document me
+		*/
 		virtual bool IsModule(std::string& filename) = 0;
+
+		/*
+			Function: CreateModule
+
+			TODO: Document me
+		*/
 		virtual Module* CreateModule(std::string& path) = 0;
 	};
 }

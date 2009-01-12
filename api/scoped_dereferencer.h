@@ -12,15 +12,20 @@
 
 namespace kroll
 {
-	/**
-	 * utility class for handling calling ReleaseReference() on the contained
-	 * RefCounted object.  However, the constructor of this class *does not*
-	 * call AddReference(). It is commonly used to release a reference once
-	 * the object is destructed.  
+	/*
+		Class: ScopedDereferencer
+
+	  utility class for handling calling ReleaseReference() on the contained
+	  RefCounted object.  However, the constructor of this class *does not*
+	  call AddReference(). It is commonly used to release a reference once
+	  the object is destructed.  
 	 */
 	class KROLL_API ScopedDereferencer
 	{
 	public:
+		/*
+			Constructor: ScopedDereferencer
+		*/
 		ScopedDereferencer(RefCounted *p);
 		~ScopedDereferencer();
 	protected:

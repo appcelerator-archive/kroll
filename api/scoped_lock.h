@@ -11,14 +11,19 @@
 
 namespace kroll
 {
-	/**
-	 * Utility class for locking a mutex on construction and unlocking 
-	 * on destruction.  This class is typically constructed as a stack
-	 * variable so that the held mutex is locked when the stack is deleted.
+	/*
+		Class: ScopedLock
+
+	  Utility class for locking a mutex on construction and unlocking 
+	  on destruction.  This class is typically constructed as a stack
+	  variable so that the held mutex is locked when the stack is deleted.
 	 */
 	class KROLL_API ScopedLock
 	{
 	public:
+		/*
+			Constructor: ScopedLock
+		*/
 		ScopedLock(Mutex *mutex);
 		virtual ~ScopedLock();
 	private:

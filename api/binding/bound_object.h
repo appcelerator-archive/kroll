@@ -18,9 +18,15 @@ extern kroll::RefCounted* CreateEmptyBoundObject();
 
 namespace kroll
 {
+	/*
+		Class: BoundObject
+	*/
 	class KROLL_API BoundObject : public RefCounted
 	{
 	public:
+		/*
+			Constructor: BoundObject
+		*/
 		BoundObject(BoundObject *scope_) : scope(scope_)
 		{
 			KR_ADDREF(scope);
@@ -32,27 +38,38 @@ namespace kroll
 			KR_DECREF(scope);
 		}
 	public:
-		/**
-		 * Set a property on this object to the given value. Value should be
-		 * heap-allocated as implementors are allowed to keep a reference,
-		 * if they increase the reference count.
-		 * When an error occurs will throw an exception of type Value*.
+		/*
+			Function: Set
+
+		  Set a property on this object to the given value. Value should be
+		  heap-allocated as implementors are allowed to keep a reference,
+		  if they increase the reference count.
+		  When an error occurs will throw an exception of type Value*.
 		 */
 		virtual void Set(const char *name, Value* value) = 0;
 
-		/**
-		 * Return an object's property. The returned value is automatically
-		 * reference counted and must be released if the callee does not hold
-		 * a reference (even for Undefined and Null types).
-		 * When an error occurs will throw an exception of type Value*.
+		/*
+			Function: Get
+
+		  Return an object's property. The returned value is automatically
+		  reference counted and must be released if the callee does not hold
+		  a reference (even for Undefined and Null types).
+		  When an error occurs will throw an exception of type Value*.
 		 */
 		virtual Value* Get(const char *name) = 0;
 
-		/**
-		 * Return a list of this object's property names.
+		/*
+			Function: GetPropertyNames
+
+		  Return a list of this object's property names.
 		 */
 		virtual void GetPropertyNames(std::vector<const char *> *property_names) = 0;
 
+		/*
+			Function: SetNS
+
+			TODO: Document me
+		*/
 		void SetNS(const char *name, Value* value)
 		{
 			std::vector<std::string> tokens;
@@ -93,6 +110,12 @@ namespace kroll
 #endif
 			scope->Set(token.c_str(),value);
 		}
+
+		/*
+			Function: GetNS
+			
+			TODO: Document me
+		*/
 		Value* GetNS(const char *name)
 		{
 			std::string s(name);

@@ -18,17 +18,34 @@
 
 namespace kroll
 {
-	/**
-	 * OS-independent mutex lock. this mutex can be recursively locked, 
-	 * however, make sure that for every call to Lock(), a corresponding
-	 * Unlock() is called.
+	/*
+		Class: Mutex
+
+	  OS-independent mutex lock. this mutex can be recursively locked, 
+	  however, make sure that for every call to Lock(), a corresponding
+	  Unlock() is called.
 	 */
 	class KROLL_API Mutex
 	{
 	public:
+		/*
+			Constructor: Mutex
+		*/
 		Mutex();
 		virtual ~Mutex();
+
+		/*
+			Function: Lock
+			
+			TODO: Document me
+		*/
 		void Lock();
+
+		/*
+			Function: Unlock
+			
+			TODO: Document me
+		*/
 		void Unlock();
 	private:
 	#ifdef OS_WIN32

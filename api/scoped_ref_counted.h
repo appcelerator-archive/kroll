@@ -12,12 +12,14 @@
 
 namespace kroll
 {
-	/**
-	 * utility class for incrementing and decrementing the reference
-	 * count of the contained RefCounted object. this class is usually
-	 * constructed as a stack variable and ensures that the held reference
-	 * is available for the entire scope of the function call stack.  once
-	 * the stack is deleted, the reference is released.
+	/*
+		Class: ScopedRefCounted
+
+	  utility class for incrementing and decrementing the reference
+	  count of the contained RefCounted object. this class is usually
+	  constructed as a stack variable and ensures that the held reference
+	  is available for the entire scope of the function call stack.  once
+	  the stack is deleted, the reference is released.
 	 */
 	class KROLL_API ScopedRefCounted
 	{

@@ -14,50 +14,161 @@ namespace kroll
 {
 	class Module;
 
-	/**
-	 * Class that is implemented by the OS to handle OS-specific
-	 * loading and unloading of Kroll.
+	/*
+		Class: Host
+
+	  Class that is implemented by the OS to handle OS-specific
+	  loading and unloading of Kroll.
 	 */
 	class KROLL_API Host : public RefCounted, public ModuleProvider
 	{
 	public:
 		typedef std::map<std::string,Module*> ModuleMap;
 
+		/*
+			Constructor: Host
+
+			TODO: Document me
+		*/
 		Host(int argc, const char **argv);
 		virtual ~Host();
+
+		/*
+			Function: GetDescription
+
+			TODO: Document me
+		*/
 		virtual const char * GetDescription() { return "Native module"; }
+
+		/*
+			Function: IsModule
+
+			TODO: Document me
+		*/
 		virtual bool IsModule(std::string& path);
 
+		/*
+			Function: Run
+
+			TODO: Document me
+		*/
 		virtual int Run() = 0;
 
+		/*
+			Function: FindModuleProvider
+
+			TODO: Document me
+		*/
 		ModuleProvider* FindModuleProvider(std::string& filename);
+
+		/*
+			Function: FindModules
+
+			TODO: Document me
+		*/
 		int FindModules (std::string &dir, std::vector<std::string> &files);
+
+		/*
+			Function: LoadModules
+
+			TODO: Document me
+		*/
 		void LoadModules(std::vector<std::string>& paths);
+
+		/*
+			Function: RegisterModule
+
+			TODO: Document me
+		*/
 		void RegisterModule(std::string& path, Module* module);
+
+		/*
+			Function: UnegisterModule
+
+			TODO: Document me
+		*/
 		void UnregisterModule(Module* module);
+
+		/*
+			Function: GetModule
+
+			TODO: Document me
+		*/
 		Module* GetModule(std::string& name);
+
+		/*
+			Function: HasModule
+
+			TODO: Document me
+		*/
 		bool HasModule(std::string name);
+
+		/*
+			Function: GetModulesBegin
+
+			TODO: Document me
+		*/
 		ModuleMap::iterator GetModulesBegin()
 		{
 			ScopedLock lock(&moduleMutex);
 			return modules.begin();
 		}
+
+		/*
+			Function: GetModulesEnd
+
+			TODO: Document me
+		*/
 		ModuleMap::iterator GetModulesEnd()
 		{
 			ScopedLock lock(&moduleMutex);
 			return modules.end();
 		}
+
+		/*
+			Function: GetGlobalObject
+
+			TODO: Document me
+		*/
 		StaticBoundObject* GetGlobalObject();
+
+		/*
+			Function: GetApplicationHome
+
+			TODO: Document me
+		*/
 		const std::string& GetApplicationHome() const { return appDirectory; }
+
+		/*
+			Function: GetRuntimeHome
+
+			TODO: Document me
+		*/
 		const std::string& GetRuntimeHome() const { return runtimeDirectory; }
+
+		/*
+			Function: GetApplicationConfig
+
+			TODO: Document me
+		*/
 		virtual const std::string& GetApplicationConfig() const { return appConfigPath; }
 
+		/*
+			Function: AddModuleProvider
+
+			TODO: Document me
+		*/
 		void AddModuleProvider(ModuleProvider *provider) {
 			ScopedLock lock(&moduleMutex);
 			module_providers.push_back(provider);
 			ScanInvalidModuleFiles();
 		}
 
+		/*
+			Function: RemoveModuleProvider
+
+			TODO: Document me
+		*/
 		void RemoveModuleProvider(ModuleProvider *provider) {
 			ScopedLock lock(&moduleMutex);
 			std::find(module_providers.begin(), module_providers.end(), provider);
@@ -67,11 +178,21 @@ namespace kroll
 				module_providers.erase(iter);
 			}
 		}
-		
+
+		/*
+			Function: GetCommandLineArgCount
+
+			TODO: Document me
+		*/
 		const int GetCommandLineArgCount() const {
 			return argc;
 		}
-		
+
+		/*
+			Function: GetCommandLineArg
+
+			TODO: Document me
+		*/
 		const char* GetCommandLineArg(int index) const {
 			if (index >= argc) return NULL;
 			return argv[index];
