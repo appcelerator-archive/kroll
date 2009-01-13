@@ -18,6 +18,7 @@ namespace kroll
 	class StaticBoundMethod;
 	class BoundList;
 	class StaticBoundList;
+	class ScopeMethodDelegate;
 }
 
 #include "../kroll.h"
@@ -29,6 +30,7 @@ namespace kroll
 #include "static_bound_list.h"
 #include "static_bound_method.h"
 #include "static_bound_object.h"
+#include "scope_method_delegate.h"
 
 
 #endif

@@ -27,16 +27,9 @@ namespace kroll
 		/*
 			Constructor: BoundObject
 		*/
-		BoundObject(BoundObject *scope_) : scope(scope_)
-		{
-			KR_ADDREF(scope);
-		}
-		BoundObject() : scope(NULL) {}
-	protected:
-		virtual ~BoundObject()
-		{
-			KR_DECREF(scope);
-		}
+		BoundObject() {}
+		virtual ~BoundObject() { }
+
 	public:
 		/*
 			Function: Set
@@ -145,9 +138,6 @@ namespace kroll
 			}
 			return current;
 		}
-
-	protected:
-		BoundObject *scope;
 
 	private:
 		DISALLOW_EVIL_CONSTRUCTORS(BoundObject);

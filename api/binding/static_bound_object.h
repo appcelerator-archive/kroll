@@ -31,7 +31,7 @@ namespace kroll
 
 	public:
 		/*
-			Function: Get
+		  Function: Get
 
 		  Return an object's property. The returned value is automatically
 		  reference counted and must be released if the callee does not hold
@@ -41,14 +41,14 @@ namespace kroll
 		virtual Value* Get(const char *name);
 
 		/*
-			Function: GetPropertyNames
+		  Function: GetPropertyNames
 
 		  Return a list of this object's property names.
 		 */
 		virtual void GetPropertyNames(std::vector<const char *> *property_names);
 
 		/*
-			Function: Set
+		  Function: Set
 
 		  Set a property on this object to the given value. Value should be
 		  heap-allocated as implementors are allowed to keep a reference.
@@ -58,17 +58,18 @@ namespace kroll
 
 
 		/*
-			Function: Unset
+		  Function: Unset
 
-		  unset the named property
+		  Unset the named property
 		 */
 		virtual void UnSet(const char *name);
 
 
 		/*
-			Function: SetMethod
-			
-			TODO: Document me
+		  Function: SetMethod
+
+		  Set a property on this object to the given method. When an error
+		  occurs will throw an exception of type Value*.
 		*/
 		template <typename T>
 		void SetMethod(const char *name, void (T::*method)(const ValueList&, Value*))
@@ -85,54 +86,13 @@ namespace kroll
 		}
 
 		/*
-			Function: SetObject
-			
-			TODO: Document me
+		  Function: SetObject
+
+		  Set a property on this object to the given object. Value should be
+		  heap-allocated as implementors are allowed to keep a reference.
+		  When an error occurs will throw an exception of type Value*.
 		*/
 		void SetObject(const char *name, BoundObject* object);
-
-		/*
-			Function: CreateDelegate
-
-		  create a delegate from a BoundObject to a wrapped
-		  StaticBoundObject and delegate set/get to the new
-		  static bound object
-		 */
-		static StaticBoundObject* CreateDelegate(BoundObject *global, BoundObject *bo)
-		{
-			StaticBoundObject *scope = new StaticBoundObject();
-			std::vector<const char *> keys;
-			bo->GetPropertyNames(&keys);
-			std::vector<const char *>::iterator iter = keys.begin();
-			while(iter!=keys.end())
-			{
-				const char *name = (*iter++);
-				std::string key(name);
-				Value *value = bo->Get(name);
-				if (key == "set")
-				{
-					ScopeMethodDelegate *d = new ScopeMethodDelegate(SET,global,scope,value->ToMethod());
-					Value *v = new Value(d);
-					scope->Set(name,v);
-					KR_DECREF(d);
-					KR_DECREF(v);
-				}
-				else if (key == "get")
-				{
-					ScopeMethodDelegate *d = new ScopeMethodDelegate(GET,global,scope,value->ToMethod());
-					Value *v = new Value(d);
-					scope->Set(name,v);
-					KR_DECREF(d);
-					KR_DECREF(v);
-				}
-				else
-				{
-					scope->Set(name,value);
-				}
-				KR_DECREF(value);
-			}
-			return scope;
-		}
 
 	protected:
 		Mutex mutex;
