@@ -7,7 +7,7 @@
 #ifndef _KJS_BOUND_OBJECT_H_
 #define _KJS_BOUND_OBJECT_H_
 
-#include "kjs.h"
+#include "javascript_module.h"
 
 #include <vector>
 #include <string>
@@ -15,15 +15,17 @@
 
 namespace kroll
 {
-	class KJSBoundObject : public kroll::BoundObject
+	class KJSBoundObject : public BoundObject
 	{
 	public:
-		KJSBoundObject(JSContextRef context, JSObjectRef js_object);
+		KJSBoundObject(JSContextRef context,
+		               JSObjectRef js_object);
 		~KJSBoundObject();
 
-		void Set(const char *name, kroll::Value* value);
-		kroll::Value* Get(const char *name);
+		void Set(const char *name, Value* value);
+		Value* Get(const char *name);
 		void GetPropertyNames(std::vector<const char *> *property_names);
+		bool SameContextGroup(JSContextRef c);
 
 		JSObjectRef GetJSObject();
 

@@ -3,8 +3,7 @@
  * see LICENSE in the root folder for details on the license.
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
-#include "kjs.h"
-
+#include "javascript_module.h"
 
 namespace kroll
 {
@@ -33,19 +32,14 @@ namespace kroll
 		KR_DECREF(kjs_bound_object);
 	}
 
-	kroll::Value* KJSBoundMethod::Get(const char *name)
+	Value* KJSBoundMethod::Get(const char *name)
 	{
 		return kjs_bound_object->Get(name);
 	}
 
-	void KJSBoundMethod::Set(const char *name, kroll::Value* value)
+	void KJSBoundMethod::Set(const char *name, Value* value)
 	{
 		return kjs_bound_object->Set(name, value);
-	}
-
-	JSObjectRef KJSBoundMethod::GetJSObject()
-	{
-		return this->object;
 	}
 
 	void KJSBoundMethod::GetPropertyNames(std::vector<const char *> *property_names)
@@ -53,15 +47,24 @@ namespace kroll
 		kjs_bound_object->GetPropertyNames(property_names);
 	}
 
-	kroll::Value* KJSBoundMethod::Call(const kroll::ValueList& args)
+	bool KJSBoundMethod::SameContextGroup(JSContextRef c)
+	{
+		return kjs_bound_object->SameContextGroup(c);
+	}
+
+	JSObjectRef KJSBoundMethod::GetJSObject()
+	{
+		return this->object;
+	}
+
+	Value* KJSBoundMethod::Call(const ValueList& args)
 	{
 
 		JSValueRef* js_args = new JSValueRef[args.size()];
-
 		for (int i = 0; i < (int) args.size(); i++)
 		{
-			kroll::Value* arg = args.at(i);
-			js_args[i] = KrollValueToJSValue(this->context, arg);
+			Value* arg = args.at(i);
+			js_args[i] = KJSUtil::ToJSValue(arg, this->context);
 		}
 
 		JSValueRef exception = NULL;
@@ -75,13 +78,12 @@ namespace kroll
 
 		if (js_value == NULL && exception != NULL) //exception thrown
 		{
-			kroll::Value* tv_exp = JSValueToKrollValue(this->context, exception, NULL);
+			Value* tv_exp = KJSUtil::ToKrollValue(exception, this->context, NULL);
 			throw tv_exp;
 		}
 
-		return JSValueToKrollValue(this->context, js_value, NULL);
+		return KJSUtil::ToKrollValue(js_value, this->context, NULL);
 	}
 
 }
-
 

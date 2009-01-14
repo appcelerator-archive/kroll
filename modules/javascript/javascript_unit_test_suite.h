@@ -7,9 +7,6 @@
 #ifndef __JAVASCRIPT_TESTSUITE_H__
 #define __JAVASCRIPT_TESTSUITE_H__
 
-#include <api/binding/binding.h>
-#include "javascriptapi.h"
-
 namespace kroll
 {
 	class KROLL_JAVASCRIPT_API JavascriptUnitTestSuite

@@ -6,9 +6,7 @@
 #ifndef _PYTHON_MODULE_H
 #define _PYTHON_MODULE_H
 
-#include <api/module.h>
-#include <api/host.h>
-#include <api/module_provider.h>
+#include <api/kroll.h>
 #include <string>
 #include <Python.h>
 

@@ -3,8 +3,7 @@
  * see LICENSE in the root folder for details on the license.
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
-#include "javascripttest.h"
-#include "kjs.h"
+#include "javascript_module.h"
 
 namespace kroll
 {
@@ -15,37 +14,42 @@ namespace kroll
 		KR_ASSERT(context);
 		JSObjectRef globalObject = JSContextGetGlobalObject(context);
 		KR_ASSERT(globalObject);
-
+	
 		// TEST simple bound property values
 		BoundObject *bound = new StaticBoundObject();
 		Value *value = new Value("bar");
 		bound->Set("foo",value);
 		KR_DECREF(value);
-		JSObjectRef boundRef = KrollBoundObjectToJSValue(context, bound);
+
+		JSValueRef boundRef = KJSUtil::ToJSValue(bound, context);
 		KR_ASSERT(boundRef);
 
+		JSObjectRef boundRefObject = JSValueToObject(context, boundRef, NULL);
+		KR_ASSERT(boundRefObject);
+	
 		// get the value of the property from the JS object
 		JSStringRef key = JSStringCreateWithUTF8CString("foo");
 		JSValueRef js_value = JSObjectGetProperty(context,
-		                        boundRef,
+		                        boundRefObject,
 		                        key,
 		                        NULL);
 		JSStringRelease(key);
 		KR_ASSERT(js_value);
-
+	
 		// convert to a js string and then a char* so we can make sure its the same
 		JSStringRef valueAsString = JSValueToStringCopy(context, js_value, NULL);
 		size_t jsSize = JSStringGetMaximumUTF8CStringSize(valueAsString);
 		char *jsBuffer = new char[jsSize];
 		JSStringGetUTF8CString(valueAsString, jsBuffer, jsSize);
 		JSStringRelease(valueAsString);
-
+	
 		KR_ASSERT_STR(jsBuffer,"bar");
-
+	
 		KR_DECREF(bound);
-
+	
 		// tear it down
 		JSGlobalContextRelease(context);
 		JSGarbageCollect(context);
 	}
 }
+

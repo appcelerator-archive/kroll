@@ -38,15 +38,15 @@ class BuildConfig(object):
 	def is_win32(self): return self.os == 'win32'
 	
 build = BuildConfig()
-build.kroll_include_dir = path.abspath(path.join('build', 'include', 'kroll'))
+build.kroll_include_dir = path.abspath(path.join('build', 'include'))
 build.env = Environment(
     variables = vars,
     CPPDEFINES = {
                   'OS_' + build.os.upper(): 1,
                   '_INSTALL_PREFIX': '${INSTALL_PREFIX}',
                   '_PRODUCT_NAME': '${PRODUCT_NAME}',
-				  '_GLOBAL_NS_VARNAME': '${GLOBAL_NS_VARNAME}',
-				  '_CONFIG_FILENAME' : '${CONFIG_FILENAME}'
+                  '_GLOBAL_NS_VARNAME': '${GLOBAL_NS_VARNAME}',
+                  '_CONFIG_FILENAME' : '${CONFIG_FILENAME}'
                  },
     CPPPATH=[build.abstopdir],
     LIBPATH=[build.dir])

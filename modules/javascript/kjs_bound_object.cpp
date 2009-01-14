@@ -3,12 +3,14 @@
  * see LICENSE in the root folder for details on the license.
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
-#include "kjs.h"
+#include "javascript_module.h"
 
 namespace kroll
 {
-	KJSBoundObject::KJSBoundObject(JSContextRef context, JSObjectRef js_object)
-		: context(context), object(js_object)
+	KJSBoundObject::KJSBoundObject(JSContextRef context,
+	                               JSObjectRef js_object)
+		: context(context),
+		  object(js_object)
 	{
 		JSValueProtect(context, js_object);
 	}
@@ -23,7 +25,7 @@ namespace kroll
 		return this->object;
 	}
 
-	kroll::Value* KJSBoundObject::Get(const char *name)
+	Value* KJSBoundObject::Get(const char *name)
 	{
 		JSStringRef s = JSStringCreateWithUTF8CString(name);
 		JSValueRef exception = NULL;
@@ -36,16 +38,16 @@ namespace kroll
 
 		if (exception != NULL) //exception thrown
 		{
-			kroll::Value* tv_exp = JSValueToKrollValue(this->context, exception, NULL);
+			Value* tv_exp = KJSUtil::ToKrollValue(exception, this->context, NULL);
 			throw tv_exp;
 		}
 
-		return JSValueToKrollValue(this->context, js_value, this->object);
+		return KJSUtil::ToKrollValue(js_value, this->context, this->object);
 	}
 
-	void KJSBoundObject::Set(const char *name, kroll::Value* value)
+	void KJSBoundObject::Set(const char *name, Value* value)
 	{
-		JSValueRef js_value = KrollValueToJSValue(this->context, value);
+		JSValueRef js_value = KJSUtil::ToJSValue(value, this->context);
 		JSStringRef s = JSStringCreateWithUTF8CString(name);
 
 		JSValueRef exception = NULL;
@@ -59,7 +61,7 @@ namespace kroll
 
 		if (exception != NULL) //exception thrown
 		{
-			kroll::Value* tv_exp = JSValueToKrollValue(this->context, exception, NULL);
+			Value* tv_exp = KJSUtil::ToKrollValue(exception, this->context, NULL);
 			throw tv_exp;
 		}
 	}
@@ -75,11 +77,20 @@ namespace kroll
 		for (size_t i = 0; i < count; i++)
 		{
 			JSStringRef js_name = JSPropertyNameArrayGetNameAtIndex(names, i);
-			char* name = JSStringToChars(js_name);
+			char* name = KJSUtil::ToChars(js_name);
 			property_names->push_back(name);
 		}
 
 		JSPropertyNameArrayRelease(names);
 	}
+
+	bool KJSBoundObject::SameContextGroup(JSContextRef c)
+	{
+		JSContextGroupRef context_group_a = JSContextGetGroup(this->context);
+		JSContextGroupRef context_group_b = JSContextGetGroup(c);
+		return context_group_a == context_group_b;
+	}
+
 }
+
 

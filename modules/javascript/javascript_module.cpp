@@ -5,9 +5,8 @@
  */
 #include <iostream>
 #include <signal.h>
-#include "javascriptmodule.h"
-#include "javascripttest.h"
-	
+#include "javascript_module.h"
+
 namespace kroll
 {
 	KROLL_MODULE(JavascriptModule)
@@ -41,6 +40,9 @@ namespace kroll
 
 	Module* JavascriptModule::CreateModule(std::string& path)
 	{
+		char *char_path = strdup(path.c_str());
+		std::cout << "Creating module: " << char_path << std::endl;
+
 		return NULL;
 	}
 

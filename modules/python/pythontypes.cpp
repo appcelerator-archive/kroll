@@ -61,7 +61,7 @@ namespace kroll
 			{
 				// we're going to clone the methods from api into our
 				// own python scoped object
-				StaticBoundObject *scope = StaticBoundObject::CreateDelegate(host->GetGlobalObject(),api->ToObject());
+				StaticBoundObject *scope = ScopeMethodDelegate::CreateDelegate(host->GetGlobalObject(),api->ToObject());
 				PyObject *pyapi = BoundObjectToPythonValue(NULL,NULL,scope);
 				PyObject_SetAttrString(mod,PRODUCT_NAME,pyapi);
 				// now bind our new scope to python module

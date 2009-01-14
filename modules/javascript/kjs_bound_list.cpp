@@ -3,13 +3,16 @@
  * see LICENSE in the root folder for details on the license.
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
-#include "kjs.h"
+#include "javascript_module.h"
 #include <cstdio>
 
 namespace kroll
 {
-	KJSBoundList::KJSBoundList(JSContextRef context, JSObjectRef js_object)
-		: context(context), object(js_object)
+
+	KJSBoundList::KJSBoundList(JSContextRef context,
+	                           JSObjectRef js_object)
+		: context(context),
+		  object(js_object)
 	{
 		JSValueProtect(context, js_object);
 		this->kjs_bound_object = new KJSBoundObject(context, js_object);
@@ -21,19 +24,14 @@ namespace kroll
 		KR_DECREF(kjs_bound_object);
 	}
 
-	kroll::Value* KJSBoundList::Get(const char *name)
+	Value* KJSBoundList::Get(const char *name)
 	{
 		return kjs_bound_object->Get(name);
 	}
 
-	void KJSBoundList::Set(const char *name, kroll::Value* value)
+	void KJSBoundList::Set(const char *name, Value* value)
 	{
 		return kjs_bound_object->Set(name, value);
-	}
-
-	JSObjectRef KJSBoundList::GetJSObject()
-	{
-		return this->object;
 	}
 
 	void KJSBoundList::GetPropertyNames(std::vector<const char *> *property_names)
@@ -41,26 +39,36 @@ namespace kroll
 		 kjs_bound_object->GetPropertyNames(property_names);
 	}
 
-	void KJSBoundList::Append(kroll::Value* value)
+	bool KJSBoundList::SameContextGroup(JSContextRef c)
 	{
-		kroll::Value *push_method = this->kjs_bound_object->Get("push");
-		kroll::ScopedDereferencer s(push_method);
+		return kjs_bound_object->SameContextGroup(c);
+	}
 
+	JSObjectRef KJSBoundList::GetJSObject()
+	{
+		return this->object;
+	}
+
+	void KJSBoundList::Append(Value* value)
+	{
+		Value *push_method = this->kjs_bound_object->Get("push");
+		ScopedDereferencer s(push_method);
+	
 		if (push_method->IsMethod())
 		{
 			push_method->ToMethod()->Call(value);
 		}
 		else
 		{
-			throw (new kroll::Value("Could not find push method on KJS array."));
+			throw (new Value("Could not find push method on KJS array."));
 		}
 	}
 
 	int KJSBoundList::Size()
 	{
-		kroll::Value *length_val = this->kjs_bound_object->Get("length");
-		kroll::ScopedDereferencer s(length_val);
-
+		Value *length_val = this->kjs_bound_object->Get("length");
+		ScopedDereferencer s(length_val);
+	
 		if (length_val->IsInt())
 		{
 			return length_val->ToInt();
@@ -71,10 +79,10 @@ namespace kroll
 		}
 	}
 
-	kroll::Value* KJSBoundList::At(int index)
+	Value* KJSBoundList::At(int index)
 	{
 		char* name = KJSBoundList::IntToChars(index);
-		kroll::Value *value = this->kjs_bound_object->Get(name);
+		Value *value = this->kjs_bound_object->Get(name);
 		delete [] name;
 		return value;
 	}

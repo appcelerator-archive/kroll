@@ -7,7 +7,7 @@
 #ifndef _KJS_BOUND_METHOD_H_
 #define _KJS_BOUND_METHOD_H_
 
-#include "kjs.h"
+#include "javascript_module.h"
 
 #include <vector>
 #include <string>
@@ -15,18 +15,21 @@
 
 namespace kroll
 {
-	class KJSBoundMethod : public kroll::BoundMethod
+	class KJSBoundMethod : public BoundMethod
 	{
 
 	public:
 
-		KJSBoundMethod(JSContextRef context, JSObjectRef js_object, JSObjectRef this_obj);
+		KJSBoundMethod(JSContextRef context,
+		               JSObjectRef js_object,
+		               JSObjectRef this_obj);
 		~KJSBoundMethod();
 
 		void Set(const char *name, Value* value);
-		kroll::Value* Get(const char *name);
-		kroll::Value* Call(const kroll::ValueList& args);
+		Value* Get(const char *name);
+		Value* Call(const ValueList& args);
 		void GetPropertyNames(std::vector<const char *> *property_names);
+		bool SameContextGroup(JSContextRef c);
 		JSObjectRef GetJSObject();
 
 	protected:
