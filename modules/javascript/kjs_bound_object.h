@@ -36,7 +36,7 @@ namespace kroll
 		JSObjectRef object;
 
 	private:
-                DISALLOW_EVIL_CONSTRUCTORS(KJSBoundObject);
+		DISALLOW_EVIL_CONSTRUCTORS(KJSBoundObject);
 
 	};
 }

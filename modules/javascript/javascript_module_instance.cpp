@@ -10,7 +10,7 @@
 
 namespace kroll
 {
-	JavascriptModuleInstance::JavascriptModuleInstance(Host *host, std::string path)
+	JavascriptModuleInstance::JavascriptModuleInstance(Host *host, std::string& path)
 		: Module(host), path(path)
 	{
 		try
@@ -21,8 +21,8 @@ namespace kroll
 		catch (Value *e)
 		{
 			ScopedDereferencer s(e);
-			//std::cerr << "Could not execute " << path <<
-			//             " because: " << e << std::endl;
+			std::cerr << "Could not execute " << path <<
+			             " because: " << e->DisplayString() << std::endl;
 		}
 	
 	}
