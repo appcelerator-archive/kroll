@@ -4,33 +4,28 @@
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
 
-#ifndef _PYTHON_BOUND_METHOD_H_
-#define _PYTHON_BOUND_METHOD_H_
+#ifndef _RUBY_BOUND_METHOD_H_
+#define _RUBY_BOUND_METHOD_H_
 
-#include "python_module.h"
+#include "ruby_module.h"
 
 namespace kroll
 {
-	class PythonBoundObject;
-	class PythonBoundMethod : public BoundMethod
+	class RubyBoundMethod : public BoundMethod
 	{
 	public:
-		PythonBoundMethod(PyObject *obj, const char *name);
+		RubyBoundMethod(const char *name);
 	protected:
-		virtual ~PythonBoundMethod();
+		virtual ~RubyBoundMethod();
 	public:
 		Value* Call(const ValueList& args);
 		virtual void Set(const char *name, Value* value);
 		virtual Value* Get(const char *name);
 		virtual void GetPropertyNames(std::vector<const char *> *property_names);
 
-		const PyObject* ToPython() { Py_INCREF(object); return object; }
-
 	private:
 		char* name;
-		PyObject* object;
-		PythonBoundObject *delegate;
-        DISALLOW_EVIL_CONSTRUCTORS(PythonBoundMethod);
+        DISALLOW_EVIL_CONSTRUCTORS(RubyBoundMethod);
 	};
 }
 

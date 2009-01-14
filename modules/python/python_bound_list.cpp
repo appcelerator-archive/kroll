@@ -33,7 +33,7 @@ namespace kroll
 	 */
 	void PythonBoundList::Append(Value* value)
 	{
-		PyList_Append(this->object,ValueToPythonBoundObject(value));
+		PyList_Append(this->object,PythonUtils::ToObject(value));
 		KR_DECREF(value);
 	}
 
@@ -59,7 +59,7 @@ namespace kroll
 			Py_DECREF(p);
 			return Value::Undefined();
 		}
-		Value *v = PythonBoundObjectToValue(p,NULL);
+		Value *v = PythonUtils::ToValue(p,NULL);
 		Py_DECREF(p);
 		return v;
 	}
@@ -93,14 +93,14 @@ namespace kroll
 		else
 		{
 			// set a named property
-			PyObject* py = ValueToPythonBoundObject(value);
+			PyObject* py = PythonUtils::ToObject(value);
 			int result = PyObject_SetAttrString(this->object,(char*)name,py);
 			Py_DECREF(py);
 
 			PyObject *exception = PyErr_Occurred();
 			if (result == -1 && exception != NULL)
 			{
-				ThrowPythonException();
+				PythonUtils::ThrowException();
 			}
 		}
 	}
@@ -130,10 +130,10 @@ namespace kroll
 		if (response == NULL && exception != NULL)
 		{
 			Py_XDECREF(response);
-			ThrowPythonException();
+			PythonUtils::ThrowException();
 		}
 
-		Value* returnValue = PythonBoundObjectToValue(response,name);
+		Value* returnValue = PythonUtils::ToValue(response,name);
 		Py_DECREF(response);
 		return returnValue;
 	}
@@ -163,7 +163,7 @@ namespace kroll
 
 		while ((item = PyIter_Next(iterator)))
 		{
-			property_names->push_back(PythonStringToString(item));
+			property_names->push_back(PythonUtils::ToString(item));
 			Py_DECREF(item);
 		}
 

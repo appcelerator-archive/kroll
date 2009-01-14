@@ -6,11 +6,18 @@
 #ifndef _RUBY_MODULE_H
 #define _RUBY_MODULE_H
 
-#include <api/module.h>
-#include <api/host.h>
-#include <api/module_provider.h>
 #include <string>
+#include <vector>
+#include <iostream>
 #include <ruby.h>
+#include <kroll/kroll.h>
+
+#include "ruby_api.h"
+#include "ruby_types.h"
+#include "ruby_bound_method.h"
+#include "ruby_bound_object.h"
+#include "ruby_bound_list.h"
+#include "ruby_unit_test_suite.h"
 
 namespace kroll
 {
@@ -18,20 +25,31 @@ namespace kroll
 	{
 		KROLL_MODULE_CLASS(RubyModule)
 
-	protected:
-		static RubyModule *instance_;
-		int status;
-
 	public:
 		virtual bool IsModule(std::string& path);
 		virtual Module* CreateModule(std::string& path);
 		virtual const char * GetDescription() { return "Ruby Module Loader"; }
 
-		Host* GetHost() { return host; }
-		static RubyModule* Instance() {
+		Host* GetHost()
+		{
+			return host;
+		}
+
+		static RubyModule* Instance()
+		{
 			return instance_;
 		}
+
+
+		// this is called by the ktest runner for unit testing the module
+		void Test();
+
+	private:
+		static RubyModule *instance_;
+        DISALLOW_EVIL_CONSTRUCTORS(RubyModule);
 	};
 }
+
+#include "ruby_module_instance.h"
 
 #endif
