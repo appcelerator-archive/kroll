@@ -328,7 +328,7 @@ namespace kroll
 		//FIXME - implement for Win32 and Linux. Until then...we 
 		//will just forward on same thread 
 		std::cerr << "WARNING: Invoking method on non-main Thread!" << std::endl;
-		result = method->Call(args);
+		Value *result = method->Call(*args);
 #endif
 		return result;
 	}

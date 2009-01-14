@@ -23,7 +23,9 @@ namespace kroll
 		KJSBoundMethod(JSContextRef context,
 		               JSObjectRef js_object,
 		               JSObjectRef this_obj);
+	protected:
 		~KJSBoundMethod();
+	public:
 
 		void Set(const char *name, Value* value);
 		Value* Get(const char *name);
@@ -39,6 +41,9 @@ namespace kroll
 		KJSBoundObject* kjs_bound_object;
 
 
+	private:
+		DISALLOW_EVIL_CONSTRUCTORS(KJSBoundMethod);
+	
 	};
 }
 
