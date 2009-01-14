@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import os, inspect
+import shutil
 
 Import('build')
 
@@ -31,12 +32,15 @@ sources.extend(Glob('binding/*.cpp'))
 if build.is_win32():
    sources.extend(Glob('unzip/*.cpp'))
 
-Env.SharedLibrary(build.dir +'/kroll', source=sources)
-
-Execute(Mkdir(build.kroll_include_dir))
-
 cwd = os.path.dirname(inspect.currentframe().f_code.co_filename)
-headers = Glob('*.h') + Glob('binding/*.h') + Glob('unzip/*.h')
+kroll_include = build.kroll_include_dir + os.path.sep + 'kroll'
+os.makedirs(kroll_include)
+headers = Glob('*.h')
 for h in headers:
 	p = str(h).replace(cwd + os.path.sep, '')
-	Command('%s/%s' % (build.kroll_include_dir, p), p, Copy("$TARGET", "$SOURCE"))
+	shutil.copyfile(cwd + os.path.sep + p, "%s/%s" % (kroll_include, p))
+
+shutil.copytree(cwd + os.path.sep + 'binding', '%s/binding' % (kroll_include))
+shutil.copytree(cwd + os.path.sep + 'unzip', '%s/unzip' % (kroll_include))
+
+Env.SharedLibrary(build.dir +'/kroll', source=sources)
