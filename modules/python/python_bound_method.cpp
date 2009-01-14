@@ -3,12 +3,11 @@
  * see LICENSE in the root folder for details on the license.
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
-#include "pythontypes.h"
-#include "pythonmethod.h"
+#include "python_bound_method.h"
 
 namespace kroll
 {
-	PythonMethod::PythonMethod(PyObject *obj, const char *n) : name(NULL), object(obj)
+	PythonBoundMethod::PythonBoundMethod(PyObject *obj, const char *n) : name(NULL), object(obj)
 	{
 		if (n)
 		{
@@ -17,7 +16,7 @@ namespace kroll
 		Py_INCREF(this->object);
 	}
 
-	PythonMethod::~PythonMethod()
+	PythonBoundMethod::~PythonBoundMethod()
 	{
 		Py_DECREF(this->object);
 		this->object = NULL;
@@ -25,7 +24,7 @@ namespace kroll
 		this->name = NULL;
 	}
 
-	Value* PythonMethod::Call(const ValueList& args)
+	Value* PythonBoundMethod::Call(const ValueList& args)
 	{
 		PyObject *arglist = NULL;
 		if (args.size()>0)
@@ -34,7 +33,7 @@ namespace kroll
 			for (int i = 0; i < (int) args.size(); i++)
 			{
 				Value* v = args[i];
-				PyObject *pv = ValueToPythonValue(v);
+				PyObject *pv = ValueToPythonBoundObject(v);
 				PyTuple_SetItem(arglist, i, pv);
 			}
 		}
@@ -49,7 +48,7 @@ namespace kroll
 		Value* value;
 		if (response!=NULL)
 		{
-			value = PythonValueToValue(response,NULL);
+			value = PythonBoundObjectToValue(response,NULL);
 		}
 		else
 		{
@@ -59,9 +58,9 @@ namespace kroll
 		return value;
 	}
 
-	void PythonMethod::Set(const char *name, Value* value)
+	void PythonBoundMethod::Set(const char *name, Value* value)
 	{
-		int result = PyObject_SetAttrString(this->object,(char*)name,ValueToPythonValue(value));
+		int result = PyObject_SetAttrString(this->object,(char*)name,ValueToPythonBoundObject(value));
 		KR_DECREF(value);
 
 		PyObject *exception = PyErr_Occurred();
@@ -71,7 +70,7 @@ namespace kroll
 		}
 	}
 
-	Value* PythonMethod::Get(const char *name)
+	Value* PythonBoundMethod::Get(const char *name)
 	{
 		// get should returned undefined if we don't have a property
 		// named "name" to mimic what happens in Javascript
@@ -89,12 +88,12 @@ namespace kroll
 			ThrowPythonException();
 		}
 
-		Value* returnValue = PythonValueToValue(response,name);
+		Value* returnValue = PythonBoundObjectToValue(response,name);
 		Py_DECREF(response);
 		return returnValue;
 	}
 
-	void PythonMethod::GetPropertyNames(std::vector<const char *> *property_names)
+	void PythonBoundMethod::GetPropertyNames(std::vector<const char *> *property_names)
 	{
 		PyObject *props = PyObject_Dir(this->object);
 

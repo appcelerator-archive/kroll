@@ -4,20 +4,18 @@
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
 
-#ifndef __PYTHON_LIST_H__
-#define __PYTHON_LIST_H__
+#ifndef _PYTHON_BOUND_LIST_H_
+#define _PYTHON_BOUND_LIST_H_
 
-#include <Python.h>
-#include <api/binding/binding.h>
-#include "pythonapi.h"
+#include "python_module.h"
 
 namespace kroll
 {
-	class PythonList : public BoundList
+	class PythonBoundList : public BoundList
 	{
 	public:
-		PythonList(PyObject *obj);
-		PyObject* ToPython() { Py_INCREF(object); return object; }
+		PythonBoundList(PyObject *obj);
+		PyObject* ToPython() const { Py_INCREF(object); return object; }
 
 		/**
 		 * Append a value to this list. Value should be heap-allocated as
@@ -63,7 +61,8 @@ namespace kroll
 
 	protected:
 		PyObject *object;
-		virtual ~PythonList();
+		virtual ~PythonBoundList();
+        DISALLOW_EVIL_CONSTRUCTORS(PythonBoundList);
 	};
 }
 #endif

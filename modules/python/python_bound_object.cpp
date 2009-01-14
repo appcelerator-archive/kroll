@@ -3,26 +3,24 @@
  * see LICENSE in the root folder for details on the license.
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
-#include "pythonvalue.h"
-#include "pythontypes.h"
-#include <vector>
+#include "python_bound_object.h"
 
 namespace kroll
 {
-	PythonValue::PythonValue(PyObject *obj) : object(obj)
+	PythonBoundObject::PythonBoundObject(PyObject *obj) : object(obj)
 	{
 		Py_INCREF(this->object);
 	}
 
-	PythonValue::~PythonValue()
+	PythonBoundObject::~PythonBoundObject()
 	{
 		Py_DECREF(this->object);
 		this->object = NULL;
 	}
 
-	void PythonValue::Set(const char *name, Value* value)
+	void PythonBoundObject::Set(const char *name, Value* value)
 	{
-		int result = PyObject_SetAttrString(this->object,(char*)name,ValueToPythonValue(value));
+		int result = PyObject_SetAttrString(this->object,(char*)name,ValueToPythonBoundObject(value));
 
 		PyObject *exception = PyErr_Occurred();
 		if (result == -1 && exception != NULL)
@@ -31,7 +29,7 @@ namespace kroll
 		}
 	}
 
-	Value* PythonValue::Get(const char *name)
+	Value* PythonBoundObject::Get(const char *name)
 	{
 		// get should returned undefined if we don't have a property
 		// named "name" to mimic what happens in Javascript
@@ -49,12 +47,12 @@ namespace kroll
 			ThrowPythonException();
 		}
 
-		Value* returnValue = PythonValueToValue(response,name);
+		Value* returnValue = PythonBoundObjectToValue(response,name);
 		Py_DECREF(response);
 		return returnValue;
 	}
 
-	void PythonValue::GetPropertyNames(std::vector<const char *> *property_names)
+	void PythonBoundObject::GetPropertyNames(std::vector<const char *> *property_names)
 	{
 		PyObject *props = PyObject_Dir(this->object);
 

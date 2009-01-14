@@ -4,30 +4,31 @@
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
 
-#ifndef __PYTHON_METHOD_H__
-#define __PYTHON_METHOD_H__
+#ifndef _PYTHON_BOUND_METHOD_H_
+#define _PYTHON_BOUND_METHOD_H_
 
-#include <Python.h>
-#include "pythonvalue.h"
-#include "pythonapi.h"
+#include "python_module.h"
 
 namespace kroll
 {
-	class PythonMethod : public BoundMethod
+	class PythonBoundMethod : public BoundMethod
 	{
 	public:
-		PythonMethod(PyObject *obj, const char *name);
-		virtual ~PythonMethod();
+		PythonBoundMethod(PyObject *obj, const char *name);
+	protected:
+		virtual ~PythonBoundMethod();
+	public:
 		Value* Call(const ValueList& args);
 		virtual void Set(const char *name, Value* value);
 		virtual Value* Get(const char *name);
 		virtual void GetPropertyNames(std::vector<const char *> *property_names);
 
-		PyObject* ToPython() { Py_INCREF(object); return object; }
+		const PyObject* ToPython() { Py_INCREF(object); return object; }
 
 	private:
 		char* name;
 		PyObject* object;
+        DISALLOW_EVIL_CONSTRUCTORS(PythonBoundMethod);
 	};
 }
 
