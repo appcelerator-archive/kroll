@@ -93,6 +93,8 @@ namespace kroll {
 	protected:
 		virtual ~ScopeMethodDelegate();
 
+	private:
+		DISALLOW_EVIL_CONSTRUCTORS(ScopeMethodDelegate);
 	};
 
 }

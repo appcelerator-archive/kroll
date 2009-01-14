@@ -7,17 +7,16 @@
 #define PYTHON_TYPES_H_
 
 #include <typeinfo>
-#include <Python.h>
-#include <api/binding/binding.h>
+#include "python_module.h"
 
 namespace kroll
 {
-	Value* PythonValueToValue(PyObject* value, const char *name = NULL);
-	PyObject* ValueToPythonValue(Value* value);
+	Value* PythonBoundObjectToValue(PyObject* value, const char *name = NULL);
+	PyObject* ValueToPythonBoundObject(Value* value);
 	PyObject* ValueListToPythonArray(const ValueList& list);
 	const char * PythonStringToString(PyObject* value);
-	PyObject* BoundMethodToPythonValue(BoundMethod *method);
-	PyObject* BoundObjectToPythonValue(PyObject* self, PyObject* args, BoundObject *bo);
+	PyObject* BoundMethodToPythonBoundObject(BoundMethod *method);
+	PyObject* BoundObjectToPythonBoundObject(PyObject* self, PyObject* args, BoundObject *bo);
 	void ThrowPythonException();
 	void InitializeDefaultBindings(Host*);
 }
