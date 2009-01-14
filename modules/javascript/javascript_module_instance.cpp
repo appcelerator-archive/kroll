@@ -26,8 +26,8 @@ namespace kroll
 		}
 	
 	}
-	void Initialize () {}
-	void Destroy () {}
+	void JavascriptModuleInstance::Initialize () {}
+	void JavascriptModuleInstance::Destroy () {}
 	
 	void JavascriptModuleInstance::Load()
 	{

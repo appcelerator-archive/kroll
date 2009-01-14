@@ -34,13 +34,21 @@ if build.is_win32():
 
 cwd = os.path.dirname(inspect.currentframe().f_code.co_filename)
 kroll_include = build.kroll_include_dir + os.path.sep + 'kroll'
-os.makedirs(kroll_include)
+
+try:
+	os.makedirs(kroll_include)
+except OSError:
+    print ""
+
 headers = Glob('*.h')
 for h in headers:
 	p = str(h).replace(cwd + os.path.sep, '')
 	shutil.copyfile(cwd + os.path.sep + p, "%s/%s" % (kroll_include, p))
 
-shutil.copytree(cwd + os.path.sep + 'binding', '%s/binding' % (kroll_include))
-shutil.copytree(cwd + os.path.sep + 'unzip', '%s/unzip' % (kroll_include))
+try:
+  shutil.copytree(cwd + os.path.sep + 'binding', '%s/binding' % (kroll_include))
+  shutil.copytree(cwd + os.path.sep + 'unzip', '%s/unzip' % (kroll_include))
+except OSError:
+  print ""
 
 Env.SharedLibrary(build.dir +'/kroll', source=sources)

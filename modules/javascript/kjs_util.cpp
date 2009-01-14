@@ -6,24 +6,22 @@
  */
 #include "javascript_module.h"
 
-JSClassRef tibo_class = NULL;
-JSClassRef tibm_class = NULL;
-JSClassRef tibl_class = NULL;
-const JSClassDefinition empty_class = { 0, 0, 0, 0, 0, 0,
-                                        0, 0, 0, 0, 0, 0,
-                                        0, 0, 0, 0, 0 };
-
-/* callback for BoundObject proxying to KJS */
-void get_property_names_cb (JSContextRef, JSObjectRef, JSPropertyNameAccumulatorRef);
-bool has_property_cb (JSContextRef, JSObjectRef, JSStringRef);
-JSValueRef get_property_cb (JSContextRef, JSObjectRef, JSStringRef, JSValueRef*);
-bool set_property_cb (JSContextRef, JSObjectRef, JSStringRef, JSValueRef, JSValueRef*);
-JSValueRef call_as_function_cb (JSContextRef, JSObjectRef, JSObjectRef, size_t, const JSValueRef[], JSValueRef*);
-void finalize_cb(JSObjectRef);
-
-
 namespace kroll
 {
+	JSClassRef tibo_class = NULL;
+	JSClassRef tibm_class = NULL;
+	JSClassRef tibl_class = NULL;
+	const JSClassDefinition empty_class = { 0, 0, 0, 0, 0, 0,
+	                                        0, 0, 0, 0, 0, 0,
+	                                        0, 0, 0, 0, 0 };
+	/* callback for BoundObject proxying to KJS */
+	void get_property_names_cb (JSContextRef, JSObjectRef, JSPropertyNameAccumulatorRef);
+	bool has_property_cb (JSContextRef, JSObjectRef, JSStringRef);
+	JSValueRef get_property_cb (JSContextRef, JSObjectRef, JSStringRef, JSValueRef*);
+	bool set_property_cb (JSContextRef, JSObjectRef, JSStringRef, JSValueRef, JSValueRef*);
+	JSValueRef call_as_function_cb (JSContextRef, JSObjectRef, JSObjectRef, size_t, const JSValueRef[], JSValueRef*);
+	void finalize_cb(JSObjectRef);
+
 	Value* KJSUtil::ToKrollValue(JSValueRef value,
 	                             JSContextRef ctx, 
 	                             JSObjectRef this_obj)
@@ -261,7 +259,7 @@ namespace kroll
 		to_bo->Set(prop_name, prop_val);
 	}
 
-	JSValueRef ToJSValue(BoundList *list, JSContextRef c)
+	JSValueRef KJSUtil::ToJSValue(BoundList *list, JSContextRef c)
 	{
 
 		if (tibl_class == NULL)

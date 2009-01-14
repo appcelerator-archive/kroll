@@ -197,8 +197,12 @@ int main(int argc, char* argv[])
 		[fm createDirectoryAtPath:appMacOSDir attributes:nil];
 		
 		// copy our Resources into our Resources folder
-		//NSString *srcResources = [NSString stringWithFormat:@"%s/Resources",runtimePath.c_str()];
-		//[fm copyPath:srcResources toPath:appResourcesDir handler:nil];
+		NSString *srcResources = [NSString stringWithFormat:@"%s/Resources/English.lproj",runtimePath.c_str()];
+		NSString *destResources = [NSString stringWithFormat:@"%@/Contents/Resources/English.lproj",bundlePath];
+		
+		NSLog(@"LINK: %@=>%@",srcResources,destResources);
+		
+		[fm createSymbolicLinkAtPath:destResources pathContent:srcResources];
 	
 		NSString *tiKernel = [NSString stringWithFormat:@"%s/kkernel",runtimePath.c_str()];		
 		[fm createSymbolicLinkAtPath:runtimeExec pathContent:tiKernel];

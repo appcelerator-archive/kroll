@@ -31,7 +31,7 @@ namespace kroll {
 	 */
 	
 	
-	class ScopeMethodDelegate : public BoundMethod
+	class KROLL_API ScopeMethodDelegate : public BoundMethod
 	{
 	public:
 		/*

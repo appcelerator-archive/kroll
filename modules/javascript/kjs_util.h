@@ -27,7 +27,7 @@ namespace kroll
 		static JSValueRef ToJSValue(BoundMethod *method,
 		                            JSContextRef context);
 
-		static JSObjectRef ToJSValue(BoundList *list,
+		static JSValueRef ToJSValue(BoundList *list,
 		                            JSContextRef context);
 
 		static char* ToChars(JSStringRef js_string);
