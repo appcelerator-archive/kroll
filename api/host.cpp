@@ -256,3 +256,80 @@ namespace kroll
 		}
 	}
 }
+
+// this is the platform specific code for main thread processing
+
+#ifdef OS_OSX
+#include <Cocoa/Cocoa.h>
+@interface KrollMainThreadCaller : NSObject 
+{
+	kroll::BoundMethod *method;
+	kroll::Value *result;
+	kroll::ValueList* args;
+}
+- (id)initWithBoundMethod:(kroll::BoundMethod*)method args:(ValueList*)args;
+- (void)call;
+- (kroll::Value*)getResult;
+@end
+
+@implementation KrollMainThreadCaller
+- (id)initWithBoundMethod:(kroll::BoundMethod*)m args:(ValueList*)a
+{
+	self = [super init];
+	if (self)
+	{
+		method = m;
+		args = a;
+		result = nil;
+		KR_ADDREF(method);
+	}
+	return self;
+}
+- (void)dealloc
+{
+	KR_DECREF(method);
+	KR_DECREF(result);
+	[super dealloc];
+}
+- (kroll::Value*)getResult
+{
+	return result;
+}
+- (void)call
+{
+	kroll::ValueList a;
+	if (args)
+	{
+		ValueList::iterator i = args->begin();
+		while (i!=args->end())
+		{
+			a.push_back((*i++));
+		}
+	}
+	result = method->Call(a);
+	KR_ADDREF(result);
+}
+@end
+#endif
+
+namespace kroll
+{
+	Value* InvokeMethodOnMainThread(BoundMethod *method, ValueList* args)
+	{
+#ifdef OS_OSX
+	    KrollMainThreadCaller *caller = [[KrollMainThreadCaller alloc] initWithBoundMethod:method args:args];
+	    [caller performSelectorOnMainThread:@selector(call) withObject:nil waitUntilDone:YES];
+		Value *result = [caller getResult];
+		// make sure to return a new reference because we'll release it
+		// when we release the caller
+		if (result) KR_ADDREF(result);
+		[caller release];
+#else
+		//FIXME - implement for Win32 and Linux. Until then...we 
+		//will just forward on same thread 
+		std::cerr << "WARNING: Invoking method on non-main Thread!" << std::endl;
+		result = method->Call(args);
+#endif
+		return result;
+	}
+}

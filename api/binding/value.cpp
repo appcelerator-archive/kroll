@@ -19,17 +19,34 @@ namespace kroll
 	Value::Value(BoundObject* value) { init(); this->Set(value); }
 	Value::Value(const Value& value)
 	{
+		init();
 		this->type = value.type;
-		this->numberValue = value.numberValue;
-		this->boolValue = value.boolValue;
-		this->stringValue = value.stringValue;
-		this->objectValue = value.objectValue;
-		KR_ADDREF(this->objectValue);
+		if (value.IsString())
+		{
+			// make a copy
+			this->value.stringValue = new std::string(value.ToString());
+		}
+		else
+		{
+			this->value = value.value;
+			if (value.IsObject())
+			{
+				KR_ADDREF(this->value.objectValue);
+			}
+		}
 	}
 
 	Value::~Value()
 	{
-		KR_DECREF(this->objectValue);
+		if (IsObject())
+		{
+			KR_DECREF(this->value.objectValue);
+		}
+		else if (IsString())
+		{
+			delete this->value.stringValue;
+			this->value.stringValue = 0;
+		}
 	}
 
 	Value* Value::Undefined()
@@ -48,16 +65,25 @@ namespace kroll
 
 	void Value::init()
 	{
-		this->objectValue = NULL;
+		this->type = UNDEFINED;
+		this->value.objectValue = 0;
+		this->value.stringValue = 0;
 	}
 
 	void Value::defaults()
 	{
+		if (this->IsObject())
+		{
+			KR_DECREF(this->value.objectValue);
+		}
+		else if (this->IsString())
+		{
+			delete this->value.stringValue;
+			this->value.stringValue = 0;
+		}
 		this->type = UNDEFINED;
-		this->numberValue = 0;
-		this->boolValue = false;
-		this->stringValue = "";
-		KR_DECREF(this->objectValue);
+		this->value.objectValue = 0;
+		this->value.stringValue = 0;
 	}
 
 	bool Value::IsInt() const { return type == INT; }
@@ -70,13 +96,13 @@ namespace kroll
 	bool Value::IsNull() const { return type == NULLV; }
 	bool Value::IsUndefined() const { return type == UNDEFINED; }
 
-	int Value::ToInt() const { return (int) numberValue; }
-	double Value::ToDouble() const { return numberValue; }
-	bool Value::ToBool() const { return boolValue; }
-	std::string Value::ToString() const { return stringValue; }
-	BoundObject* Value::ToObject() const { return objectValue; }
-	BoundMethod* Value::ToMethod() const { return (BoundMethod*) objectValue; }
-	BoundList* Value::ToList() const { return (BoundList*) objectValue; }
+	int Value::ToInt() const { return (int) value.numberValue; }
+	double Value::ToDouble() const { return value.numberValue; }
+	bool Value::ToBool() const { return value.boolValue; }
+	std::string Value::ToString() const { return std::string(*value.stringValue); }
+	BoundObject* Value::ToObject() const { return value.objectValue; }
+	BoundMethod* Value::ToMethod() const { return (BoundMethod*) value.objectValue; }
+	BoundList* Value::ToList() const { return (BoundList*) value.objectValue; }
 
 	const char* Value::ToTypeString()
 	{
@@ -147,52 +173,52 @@ namespace kroll
 	void Value::Set(int value)
 	{
 		defaults();
-		numberValue = value;
+		this->value.numberValue = value;
 		type = INT;
 	}
 
 	void Value::Set(double value)
 	{
 		defaults();
-		numberValue = value;
+		this->value.numberValue = value;
 		type = DOUBLE;
 	}
 
 	void Value::Set(bool value)
 	{
 		defaults();
-		boolValue = value;
+		this->value.boolValue = value;
 		type = BOOL;
 	}
 
 	void Value::Set(std::string value)
 	{
 		defaults();
-		stringValue = value;
+		this->value.stringValue = new std::string(value);
 		type = STRING;
 	}
 
 	void Value::Set(BoundList* value)
 	{
 		defaults();
-		objectValue = value;
-		KR_ADDREF(objectValue);
+		this->value.objectValue = value;
+		KR_ADDREF(this->value.objectValue);
 		type = LIST;
 	}
 
 	void Value::Set(BoundObject* value)
 	{
 		defaults();
-		objectValue = value;
-		KR_ADDREF(objectValue);
+		this->value.objectValue = value;
+		KR_ADDREF(this->value.objectValue);
 		type = OBJECT;
 	}
 
 	void Value::Set(BoundMethod* value)
 	{
 		defaults();
-		objectValue = value;
-		KR_ADDREF(objectValue);
+		this->value.objectValue = value;
+		KR_ADDREF(this->value.objectValue);
 		type = METHOD;
 	}
 

@@ -40,6 +40,15 @@ namespace kroll
 		                                   const char* name,
 		                                   JSValueRef property);
 
+		static KJSBoundObject* ToBoundObject(JSContextRef context, 
+											 JSObjectRef ref);
+
+		static KJSBoundMethod* ToBoundMethod(JSContextRef context, 
+											 JSObjectRef ref);
+
+		static KJSBoundList* ToBoundList(JSContextRef context, 
+										 JSObjectRef ref);
+
 	};
 
 }

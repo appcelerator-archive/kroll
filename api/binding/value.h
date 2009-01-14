@@ -352,10 +352,13 @@ namespace kroll
 	
 	private:
 		Type type;
-		double numberValue;
-		bool boolValue;
-		std::string stringValue;
-		BoundObject *objectValue;
+		union
+		{
+			double numberValue;
+			bool boolValue;
+			std::string *stringValue;
+			BoundObject *objectValue;
+		} value;
 		void defaults();
 		void init();
 		

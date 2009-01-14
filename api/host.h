@@ -9,6 +9,7 @@
 #define _KR_HOST_H_
 
 #include "kroll.h"
+#include "binding/value.h"
 
 namespace kroll
 {
@@ -31,8 +32,11 @@ namespace kroll
 			TODO: Document me
 		*/
 		Host(int argc, const char **argv);
-		virtual ~Host();
 
+	protected:
+		virtual ~Host();
+		
+	public:	
 		/*
 			Function: GetDescription
 
@@ -221,6 +225,11 @@ namespace kroll
 		std::string appConfigPath;
 		DISALLOW_EVIL_CONSTRUCTORS(Host);
 	};
+
+	/**
+	 * method that invokes a bound method on the main host thread
+	 */
+	extern KROLL_API Value* InvokeMethodOnMainThread(BoundMethod *method, ValueList* args);
 }
 #endif
 

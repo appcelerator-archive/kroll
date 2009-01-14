@@ -461,4 +461,21 @@ namespace kroll
 
 	}
 
+	KJSBoundObject* KJSUtil::ToBoundObject(JSContextRef context, 
+										 JSObjectRef ref)
+	{
+		return new KJSBoundObject(context,ref);
+	}
+
+	KJSBoundMethod* KJSUtil::ToBoundMethod(JSContextRef context, 
+										 JSObjectRef ref)
+	{
+		return new KJSBoundMethod(context,ref,NULL);
+	}
+
+	KJSBoundList* KJSUtil::ToBoundList(JSContextRef context, 
+									 JSObjectRef ref)
+	{
+		return new KJSBoundList(context,ref);
+	}
 }
