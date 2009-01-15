@@ -7,6 +7,20 @@
 
 namespace kroll
 {
+	class TestClass : public StaticBoundObject
+	{
+	public:
+		void TestMethod(const ValueList& args, Value *result)
+		{
+			result->Set(args.at(0));
+		}
+		TestClass() 
+		{
+			this->SetMethod("test",&TestClass::TestMethod);
+		}
+		virtual ~TestClass() {}
+	};
+	
 	void RubyUnitTestSuite::Run(Host *host)
 	{
 		// ints
@@ -57,15 +71,65 @@ namespace kroll
 		
 		// bound object
 		{
-			BoundObject *value = new StaticBoundObject();
+			StaticBoundObject *value = new StaticBoundObject();
 			Value* blah = new Value("bar");
 			value->Set("foo",blah);
 			VALUE rubyValue = RubyUtils::Create(value);
 			KR_ASSERT(rubyValue);
-			VALUE result = rb_iv_get(rubyValue, "@bar");
+			
+			// simply define as global so we can use it
+			rb_define_variable("$jeff",&rubyValue);
+			
+			// access like a getter
+			VALUE result = rb_eval_string("$jeff.foo");
 			KR_ASSERT(result);
 			KR_ASSERT(TYPE(result)==T_STRING);
-//			KR_ASSERT_STR(RubyUtils::ToString(result).c_str(),"foo");
+			KR_ASSERT_STR(RubyUtils::ToString(result).c_str(),"bar");
+
+			// access like a setter
+			rb_eval_string("$jeff.foo='blah'");
+			result = rb_eval_string("$jeff.foo");
+			KR_ASSERT(result);
+			KR_ASSERT(TYPE(result)==T_STRING);
+			KR_ASSERT_STR(RubyUtils::ToString(result).c_str(),"blah");
+
+			// dynamically attach a new object with a method
+			TestClass *testClass = new TestClass;
+			Value *testValue = new Value(testClass);
+			value->Set("yoyo",testValue);
+
+			// invoke the method traditionally
+			result = rb_eval_string("$jeff.yoyo.test('a')");
+			KR_ASSERT(result);
+			KR_ASSERT(TYPE(result)==T_STRING);
+			KR_ASSERT_STR(RubyUtils::ToString(result).c_str(),"a");
+
+			// invoke the method ruby-style
+			result = rb_eval_string("$jeff.yoyo.test 'b'");
+			KR_ASSERT(result);
+			KR_ASSERT(TYPE(result)==T_STRING);
+			KR_ASSERT_STR(RubyUtils::ToString(result).c_str(),"b");
+
+			// invoke undefined method and make sure it's NULL
+			result = rb_eval_string("$jeff.yoyo.blah");
+			KR_ASSERT(result);
+			KR_ASSERT(TYPE(result)==T_NIL);
+			Value *vr = RubyUtils::ToValue(result);
+			KR_ASSERT(vr->IsNull());
+			
+			// test to see if our method is defined
+			result = rb_eval_string("$jeff.yoyo.method_defined? :test");
+			KR_ASSERT(result);
+			KR_ASSERT(RubyUtils::ToBool(result));
+
+			// test to see if a non-existant method is not defined
+			result = rb_eval_string("$jeff.yoyo.method_defined? :xbar");
+			KR_ASSERT(!result);
+			KR_ASSERT(!RubyUtils::ToBool(result));
+
+			KR_DECREF(vr);
+			KR_DECREF(testValue); 
+			KR_DECREF(testClass);
 			KR_DECREF(blah);
 			KR_DECREF(value);
 		}

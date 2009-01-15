@@ -14,9 +14,6 @@
 
 #include "ruby_api.h"
 #include "ruby_types.h"
-#include "ruby_bound_method.h"
-#include "ruby_bound_object.h"
-#include "ruby_bound_list.h"
 #include "ruby_unit_test_suite.h"
 
 namespace kroll
