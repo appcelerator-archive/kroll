@@ -7,8 +7,8 @@
 
 namespace kroll
 {
-	PythonModuleInstance::PythonModuleInstance(Host *host, std::string path_) :
-		Module(host), path(path_)
+	PythonModuleInstance::PythonModuleInstance(Host *host, std::string path) :
+		Module(host,FileUtils::GetDirectory(path)), path(path)
 	{
 	}
 	PythonModuleInstance::~PythonModuleInstance()
