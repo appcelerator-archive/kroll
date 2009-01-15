@@ -309,16 +309,6 @@ namespace kroll
 		return false;
 	}
 
-	void KJSUtil::BindPropertyToJSObject(JSContextRef ctx,
-	                            JSObjectRef o,
-	                            const char *name,
-	                            JSValueRef property)
-	{
-		JSStringRef name_str = JSStringCreateWithUTF8CString(name);
-		JSObjectSetProperty(ctx, o, name_str, property, kJSPropertyAttributeNone, NULL);
-		JSStringRelease(name_str);
-	}
-
 	void finalize_cb(JSObjectRef js_object)
 	{
 		BoundObject* object = (BoundObject*) JSObjectGetPrivate (js_object);

@@ -35,11 +35,6 @@ namespace kroll
 		static bool IsArrayLike(JSObjectRef object,
 		                        JSContextRef context);
 
-		static void BindPropertyToJSObject(JSContextRef context,
-		                                   JSObjectRef object,
-		                                   const char* name,
-		                                   JSValueRef property);
-
 		static KJSBoundObject* ToBoundObject(JSContextRef context, 
 											 JSObjectRef ref);
 
