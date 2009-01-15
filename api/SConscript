@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-import os, inspect
-import shutil
+import os, inspect, os.path as path
+import distutils.dir_util as dirutil
 
 Import('build')
 
@@ -32,23 +32,15 @@ sources.extend(Glob('binding/*.cpp'))
 if build.is_win32():
    sources.extend(Glob('unzip/*.cpp'))
 
-cwd = os.path.dirname(inspect.currentframe().f_code.co_filename)
-kroll_include = build.kroll_include_dir + os.path.sep + 'kroll'
-
-try:
-	os.makedirs(kroll_include)
-except OSError:
-    print ""
-
-headers = Glob('*.h')
-for h in headers:
-	p = str(h).replace(cwd + os.path.sep, '')
-	shutil.copyfile(cwd + os.path.sep + p, "%s/%s" % (kroll_include, p))
-
-try:
-  shutil.copytree(cwd + os.path.sep + 'binding', '%s/binding' % (kroll_include))
-  shutil.copytree(cwd + os.path.sep + 'unzip', '%s/unzip' % (kroll_include))
-except OSError:
-  print ""
+# copy the includes for building the SDK
+cwd = path.dirname(inspect.currentframe().f_code.co_filename)
+kroll_include = path.join(build.kroll_include_dir, 'kroll')
+dirutil.remove_tree(kroll_include)
+dirutil.copy_tree(cwd, kroll_include, update=1)
+to_remove = Glob(path.join(kroll_include, "*.cpp")) + \
+            Glob(path.join(kroll_include, "**", "*.cpp")) + \
+            [path.join(kroll_include, 'SConscript')]
+for f in to_remove:
+	os.remove(str(f))
 
 Env.SharedLibrary(build.dir +'/kroll', source=sources)

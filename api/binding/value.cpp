@@ -5,6 +5,8 @@
  */
 
 #include "binding.h"
+#include <sstream>
+#include <cstring>
 
 namespace kroll
 {
@@ -103,39 +105,6 @@ namespace kroll
 	BoundObject* Value::ToObject() const { return value.objectValue; }
 	BoundMethod* Value::ToMethod() const { return (BoundMethod*) value.objectValue; }
 	BoundList* Value::ToList() const { return (BoundList*) value.objectValue; }
-
-	const char* Value::ToTypeString()
-	{
-		if (IsInt())
-			return "INT";
-
-		else if (IsDouble())
-			return "DOUBLE";
-
-		else if (IsBool())
-			return "BOOL";
-
-		else if (IsString())
-			return "STRING";
-
-		else if (IsList())
-			return "LIST";
-
-		else if (IsObject())
-			return "OBJECT";
-
-		else if (IsMethod())
-			return "METHOD";
-
-		else if (IsNull())
-			return "NULL";
-
-		else if (IsUndefined())
-			return "UNDEFINED";
-
-		fprintf(stderr, "ERROR: unknown type:%d\n",type);
-		return "UNKNOWN";
-	}
 
 	void Value::Set(Value* other)
 	{
@@ -277,4 +246,119 @@ namespace kroll
 
 		return false;
 	}
+
+	/* TODO: when the shared_ptr stuff comes through
+	 * BoundObject,List,Method should have their own
+	 * DisplayString impls */
+	char* Value::DisplayString()
+	{
+		std::ostringstream oss;
+
+		if (this->IsInt() )
+		{
+			oss << this->ToInt() << "i";
+		}
+		else if (this->IsDouble())
+		{
+			oss << this->ToDouble() << "d";
+		}
+		else if (this->IsBool())
+		{
+			if (this->ToBool())
+				oss << "true";
+			else
+				oss << "false";
+		}
+		else if (this->IsString())
+		{
+			oss << "\"" << this->ToString() << "\"";
+		}
+		else if (this->IsList())
+		{
+			BoundList *list = this->ToList();
+			oss << "[";
+			if (list->Size() > 0)
+			{
+				oss << list->At(0)->DisplayString();
+				for (int i = 1; i < list->Size(); i++)
+				{
+					oss << ", " << list->At(i)->DisplayString();
+				}
+			}
+			oss << "]";
+		}
+		else if (this->IsObject())
+		{
+			BoundObject *obj = this->ToObject();
+			std::vector<const char *> props;
+			obj->GetPropertyNames(&props);
+
+			oss << "{";
+			if (props.size() > 0)
+			{
+				oss << props.at(0) << " : "
+				    << obj->Get(props.at(0))->DisplayString();
+				for (size_t i = 1; i < props.size(); i++)
+				{
+					oss << ", " << props.at(i) <<
+					       " : " <<
+					       obj->Get(props.at(i))->DisplayString();
+				}
+			}
+			oss << "}";
+		}
+		else if (this->IsMethod())
+		{
+			oss << "<method>";
+		}
+		else if (this->IsNull())
+		{
+			oss << "<null>";
+		}
+		else if (this->IsUndefined())
+		{
+			oss << "<undefined>";
+		}
+		else
+		{
+			oss << "<unknown>";
+		}
+
+		return strdup(oss.str().c_str());
+
+	}
+
+	const char* Value::ToTypeString()
+	{
+		if (IsInt())
+			return "INT";
+
+		else if (IsDouble())
+			return "DOUBLE";
+
+		else if (IsBool())
+			return "BOOL";
+
+		else if (IsString())
+			return "STRING";
+
+		else if (IsList())
+			return "LIST";
+
+		else if (IsObject())
+			return "OBJECT";
+
+		else if (IsMethod())
+			return "METHOD";
+
+		else if (IsNull())
+			return "NULL";
+
+		else if (IsUndefined())
+			return "UNDEFINED";
+
+		fprintf(stderr, "ERROR: unknown type:%d\n",type);
+		return "UNKNOWN";
+	}
+
 }

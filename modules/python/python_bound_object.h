@@ -4,28 +4,29 @@
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
 
-#ifndef __PYTHON_VALUE_H__
-#define __PYTHON_VALUE_H__
+#ifndef _PYTHON_BOUND_OBJECT_H_
+#define _PYTHON_BOUND_OBJECT_H_
 
-#include <Python.h>
-#include <api/binding/binding.h>
-#include "pythonapi.h"
+#include "python_module.h"
 
 namespace kroll
 {
-	class PythonValue : public BoundObject
+	class PythonBoundObject : public BoundObject
 	{
 	public:
-		PythonValue(PyObject *obj);
-		virtual ~PythonValue();
+		PythonBoundObject(PyObject *obj);
+	protected:
+		virtual ~PythonBoundObject();
+	public:
 		virtual void Set(const char *name, Value* value);
 		virtual Value* Get(const char *name);
 		virtual void GetPropertyNames(std::vector<const char *> *property_names);
 
-		PyObject* ToPython() { Py_INCREF(object); return object; }
+		const PyObject* ToPython() { Py_INCREF(object); return object; }
 
-	protected:
+	private:
 		PyObject *object;
+        DISALLOW_EVIL_CONSTRUCTORS(PythonBoundObject);
 	};
 }
 #endif

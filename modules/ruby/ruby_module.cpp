@@ -3,11 +3,8 @@
  * see LICENSE in the root folder for details on the license.
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
-#include "rubymodule.h"
-#include "rubybinding.h"
-#include "rubytypes.h"
-#include <iostream>
 #include <signal.h>
+#include "ruby_module.h"
 
 namespace kroll
 {
@@ -17,55 +14,58 @@ namespace kroll
 
 	void RubyModule::Initialize()
 	{
+		KR_DUMP_LOCATION
+
 		RubyModule::instance_ = this;
 
-		ruby_init();
-		ruby_init_loadpath();
-		BoundObjectWrapper_Init();
+		RubyUtils::InitializeDefaultBindings(host);
 
 		host->AddModuleProvider(this);
 	}
 
-	std::string ruby_suffix = "module.rb";
+	void RubyModule::Destroy()
+	{
+		KR_DUMP_LOCATION
+
+		// FIXME - unregister / unbind?
+		RubyModule::instance_ = NULL;
+	}
+
+
+	const static std::string ruby_suffix = "module.rb";
 
 	bool RubyModule::IsModule(std::string& path)
 	{
-		std::cout << "RubyModule::IsModule ? " << path << std::endl;
-
 		return (path.substr(path.length()-ruby_suffix.length()) == ruby_suffix);
 	}
 
-	/*VALUE ruby_exec_wrap(VALUE arg)
-	{
-		return INT2NUM(ruby_exec());
-	}
-
-	int ruby_exec_protect()
-	{
-		int error;
-		VALUE response = rb_protect(ruby_exec_wrap, 0, &error);
-		if (error) {
-			std::cerr << "Error in script: " << error << std::endl;
-		}
-		return NUM2INT(response);
-	}*/
-
 	Module* RubyModule::CreateModule(std::string& path)
 	{
-		ruby_script(path.c_str());
-		rb_load_file(path.c_str());
-		//signal(SIGSEGV, ruby_signal);
+		char* path2 = (char*)malloc(sizeof(char)*path.length()+1);
+		size_t length = path.copy(path2, path.length(), 0);
+		path2[length] = '\0';
 
-		rb_gc_disable();
-		status = ruby_exec();
+		std::cout << "Create module: " << path2 << std::endl;
 
-		RubyModuleInstance *instance = new RubyModuleInstance(host, path);
-		return instance;
+		// FILE *file = fopen(path2, "r");
+		// printf("got ruby file: %d\n", (int) file);
+		// 
+		// //FIXME - we need to create a separate version of scope stuff
+		// 
+		// // right now ruby is crashing in win32, need to investigate
+		// PyRun_SimpleFile(file,path2);
+		// std::cout << "PyRan simple file" << std::endl;
+
+		std::string path3(path2);
+		free(path2);
+
+		std::cout << "return new RubyModuleInstance " << path3 << std::endl;
+		return new RubyModuleInstance(host, path3);
 	}
 
-	void RubyModule::Destroy()
+	void RubyModule::Test()
 	{
-		ruby_cleanup(status);
-		RubyModule::instance_ = NULL;
+		RubyUnitTestSuite suite;
+		suite.Run(host);
 	}
 }

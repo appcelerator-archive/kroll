@@ -15,7 +15,7 @@
 
 namespace kroll
 {
-	class KJSBoundObject : public BoundObject
+	class KROLL_JAVASCRIPT_API KJSBoundObject : public BoundObject
 	{
 	public:
 		KJSBoundObject(JSContextRef context,
@@ -36,7 +36,7 @@ namespace kroll
 		JSObjectRef object;
 
 	private:
-                DISALLOW_EVIL_CONSTRUCTORS(KJSBoundObject);
+		DISALLOW_EVIL_CONSTRUCTORS(KJSBoundObject);
 
 	};
 }

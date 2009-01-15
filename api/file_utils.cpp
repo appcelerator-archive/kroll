@@ -64,6 +64,21 @@ namespace kroll
 		return (stat(dir.c_str(),&st)==0) && S_ISDIR(st.st_mode);
 #endif
 	}
+	
+	const char* FileUtils::GetDirectory(std::string &file)
+	{
+		size_t pos = file.find_last_of(KR_PATH_SEP);
+		if (pos == std::string::npos)
+		{
+			pos = file.find_last_of(KR_PATH_SEP_OTHER);
+			if (pos == std::string::npos)
+			{
+				return "."KR_PATH_SEP; //??
+			}
+		}
+		return file.substr(0,pos).c_str();
+	}
+
 	bool FileUtils::IsHidden(std::string &file)
 	{
 #ifdef OS_OSX
@@ -218,7 +233,7 @@ namespace kroll
 		{
 			std::string str = (*iter++);
 			std::string fullpath = std::string(path);
-			fullpath.append(PATH_SEP);
+			fullpath.append(KR_PATH_SEP);
 			fullpath.append(str);
 			if (IsDirectory(fullpath))
 			{
@@ -264,7 +279,7 @@ namespace kroll
 			std::sort(found.begin(),found.end(),CompareVersions);
 			std::string file = found.at(0);
 			std::string f = std::string(path);
-			f.append(PATH_SEP);
+			f.append(KR_PATH_SEP);
 			f.append(file);
 			return f;
 		}

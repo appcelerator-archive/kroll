@@ -86,7 +86,7 @@ namespace kroll
 
 		std::cout << "Win32Host creating module ..." << std::endl;
 
-		return create(this);
+		return create(this,FileUtils::GetDirectory(path));
 	}
 }
 

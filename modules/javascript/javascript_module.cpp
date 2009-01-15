@@ -42,8 +42,9 @@ namespace kroll
 	{
 		char *char_path = strdup(path.c_str());
 		std::cout << "Creating module: " << char_path << std::endl;
-
-		return NULL;
+		JavascriptModuleInstance* instance =
+		       new JavascriptModuleInstance(this->host, path);
+		return instance;
 	}
 
 	void JavascriptModule::Test()

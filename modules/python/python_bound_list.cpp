@@ -3,13 +3,11 @@
  * see LICENSE in the root folder for details on the license.
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
-#include "pythonlist.h"
-#include "pythontypes.h"
-#include <vector>
+#include "python_bound_list.h"
 
 namespace kroll
 {
-	PythonList::PythonList(PyObject *obj) : object(obj)
+	PythonBoundList::PythonBoundList(PyObject *obj) : object(obj)
 	{
 		if (!PyList_Check(obj))
 		{
@@ -21,7 +19,7 @@ namespace kroll
 		Py_INCREF(this->object);
 	}
 
-	PythonList::~PythonList()
+	PythonBoundList::~PythonBoundList()
 	{
 		Py_DECREF(this->object);
 		this->object = NULL;
@@ -33,16 +31,16 @@ namespace kroll
 	 * reference count.
 	 * When an error occurs will throw an exception of type Value*.
 	 */
-	void PythonList::Append(Value* value)
+	void PythonBoundList::Append(Value* value)
 	{
-		PyList_Append(this->object,ValueToPythonValue(value));
+		PyList_Append(this->object,PythonUtils::ToObject(value));
 		KR_DECREF(value);
 	}
 
 	/**
 	 * Get the length of this list.
 	 */
-	int PythonList::Size()
+	int PythonBoundList::Size()
 	{
 		return PyList_Size(this->object);
 	}
@@ -53,7 +51,7 @@ namespace kroll
 	 * reference counted and must be released.
 	 * When an error occurs will throw an exception of type Value*.
 	 */
-	Value* PythonList::At(int index)
+	Value* PythonBoundList::At(int index)
 	{
 		PyObject *p = PyList_GET_ITEM(this->object,index);
 		if (Py_None == p)
@@ -61,7 +59,7 @@ namespace kroll
 			Py_DECREF(p);
 			return Value::Undefined();
 		}
-		Value *v = PythonValueToValue(p,NULL);
+		Value *v = PythonUtils::ToValue(p,NULL);
 		Py_DECREF(p);
 		return v;
 	}
@@ -72,7 +70,7 @@ namespace kroll
 	 * if they increase the reference count.
 	 * When an error occurs will throw an exception of type Value*.
 	 */
-	void PythonList::Set(const char *name, Value* value)
+	void PythonBoundList::Set(const char *name, Value* value)
 	{
 		// check for integer value as name
 		if (this->IsNumber(name))
@@ -95,14 +93,14 @@ namespace kroll
 		else
 		{
 			// set a named property
-			PyObject* py = ValueToPythonValue(value);
+			PyObject* py = PythonUtils::ToObject(value);
 			int result = PyObject_SetAttrString(this->object,(char*)name,py);
 			Py_DECREF(py);
 
 			PyObject *exception = PyErr_Occurred();
 			if (result == -1 && exception != NULL)
 			{
-				ThrowPythonException();
+				PythonUtils::ThrowException();
 			}
 		}
 	}
@@ -113,7 +111,7 @@ namespace kroll
 	 * with the return value (even for Undefined and Null types).
 	 * When an error occurs will throw an exception of type Value*.
 	 */
-	Value* PythonList::Get(const char *name)
+	Value* PythonBoundList::Get(const char *name)
 	{
 		if (std::string(name) == std::string("length"))
 		{
@@ -132,10 +130,10 @@ namespace kroll
 		if (response == NULL && exception != NULL)
 		{
 			Py_XDECREF(response);
-			ThrowPythonException();
+			PythonUtils::ThrowException();
 		}
 
-		Value* returnValue = PythonValueToValue(response,name);
+		Value* returnValue = PythonUtils::ToValue(response,name);
 		Py_DECREF(response);
 		return returnValue;
 	}
@@ -143,7 +141,7 @@ namespace kroll
 	/**
 	 * Return a list of this object's property names.
 	 */
-	void PythonList::GetPropertyNames(std::vector<const char *> *property_names)
+	void PythonBoundList::GetPropertyNames(std::vector<const char *> *property_names)
 	{
 		property_names->push_back("length");
 
@@ -165,7 +163,7 @@ namespace kroll
 
 		while ((item = PyIter_Next(iterator)))
 		{
-			property_names->push_back(PythonStringToString(item));
+			property_names->push_back(PythonUtils::ToString(item));
 			Py_DECREF(item);
 		}
 

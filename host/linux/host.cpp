@@ -70,7 +70,7 @@ namespace kroll
 			std::cerr << "Error load create entry from module: " << path << std::endl;
 			return 0;
 		}
-		return create(this);
+		return create(this,FileUtils::GetDirectory(path));
 	}
 }
 

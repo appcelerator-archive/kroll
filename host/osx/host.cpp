@@ -73,7 +73,7 @@ namespace kroll
 			return 0;
 		}
 
-		return create(this);
+		return create(this,FileUtils::GetDirectory(path));
 	}
 }
 

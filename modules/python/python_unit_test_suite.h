@@ -7,9 +7,7 @@
 #ifndef __PYTHON_TESTSUITE_H__
 #define __PYTHON_TESTSUITE_H__
 
-#include <Python.h>
-#include <api/binding/binding.h>
-#include "pythonapi.h"
+#include "python_module.h"
 
 namespace kroll
 {

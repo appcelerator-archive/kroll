@@ -6,9 +6,18 @@
 #ifndef _PYTHON_MODULE_H
 #define _PYTHON_MODULE_H
 
-#include <api/kroll.h>
 #include <string>
+#include <vector>
+#include <iostream>
 #include <Python.h>
+#include <kroll/kroll.h>
+
+#include "python_api.h"
+#include "python_types.h"
+#include "python_bound_object.h" 
+#include "python_bound_method.h"
+#include "python_bound_list.h"
+#include "python_unit_test_suite.h"
 
 namespace kroll
 {
@@ -37,21 +46,10 @@ namespace kroll
 
 	private:
 		static PythonModule *instance_;
-	};
-
-	class PythonModuleInstance : public Module
-	{
-	public:
-		PythonModuleInstance(Host *host, std::string path_) :
-			Module(host), path(path_)
-		{
-		}
-		const char* GetName() { return path.c_str(); }
-		void Initialize () {}
-		void Destroy () {}
-	protected:
-		std::string path;
+        DISALLOW_EVIL_CONSTRUCTORS(PythonModule);
 	};
 }
+
+#include "python_module_instance.h"
 
 #endif

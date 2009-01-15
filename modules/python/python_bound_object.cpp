@@ -3,35 +3,33 @@
  * see LICENSE in the root folder for details on the license.
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
-#include "pythonvalue.h"
-#include "pythontypes.h"
-#include <vector>
+#include "python_bound_object.h"
 
 namespace kroll
 {
-	PythonValue::PythonValue(PyObject *obj) : object(obj)
+	PythonBoundObject::PythonBoundObject(PyObject *obj) : object(obj)
 	{
 		Py_INCREF(this->object);
 	}
 
-	PythonValue::~PythonValue()
+	PythonBoundObject::~PythonBoundObject()
 	{
 		Py_DECREF(this->object);
 		this->object = NULL;
 	}
 
-	void PythonValue::Set(const char *name, Value* value)
+	void PythonBoundObject::Set(const char *name, Value* value)
 	{
-		int result = PyObject_SetAttrString(this->object,(char*)name,ValueToPythonValue(value));
+		int result = PyObject_SetAttrString(this->object,(char*)name,PythonUtils::ToObject(value));
 
 		PyObject *exception = PyErr_Occurred();
 		if (result == -1 && exception != NULL)
 		{
-			ThrowPythonException();
+			PythonUtils::ThrowException();
 		}
 	}
 
-	Value* PythonValue::Get(const char *name)
+	Value* PythonBoundObject::Get(const char *name)
 	{
 		// get should returned undefined if we don't have a property
 		// named "name" to mimic what happens in Javascript
@@ -46,15 +44,15 @@ namespace kroll
 		if (response == NULL && exception != NULL)
 		{
 			Py_XDECREF(response);
-			ThrowPythonException();
+			PythonUtils::ThrowException();
 		}
 
-		Value* returnValue = PythonValueToValue(response,name);
+		Value* returnValue = PythonUtils::ToValue(response,name);
 		Py_DECREF(response);
 		return returnValue;
 	}
 
-	void PythonValue::GetPropertyNames(std::vector<const char *> *property_names)
+	void PythonBoundObject::GetPropertyNames(std::vector<const char *> *property_names)
 	{
 		PyObject *props = PyObject_Dir(this->object);
 
@@ -71,7 +69,7 @@ namespace kroll
 			return;
 
 		while ((item = PyIter_Next(iterator))) {
-			property_names->push_back(PythonStringToString(item));
+			property_names->push_back(PythonUtils::ToString(item));
 			Py_DECREF(item);
 		}
 

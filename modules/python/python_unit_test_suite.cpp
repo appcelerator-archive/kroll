@@ -3,50 +3,47 @@
  * see LICENSE in the root folder for details on the license.
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
-#include "pythontest.h"
-#include "pythontypes.h"
-#include "pythonvalue.h"
-#include "pythonlist.h"
+#include "python_module.h"
 
 namespace kroll
 {
 	void PythonUnitTestSuite::Run(Host *host)
 	{
 		Value* tv1 = new Value(1);
-		PyObject* v1 = ValueToPythonValue(tv1);
+		PyObject* v1 = PythonUtils::ToObject(tv1);
 		KR_ASSERT(PyInt_Check(v1));
 		KR_ASSERT(PyInt_AsLong(v1)==1);
 		
 		Value* tv2 = new Value(1.0);
-		PyObject* v2 = ValueToPythonValue(tv2);
+		PyObject* v2 = PythonUtils::ToObject(tv2);
 		KR_ASSERT(PyFloat_Check(v2));
 		KR_ASSERT(PyFloat_AsDouble(v2)==1.0);
 		
 		Value* tv3 = new Value("abc");
-		PyObject* v3 = ValueToPythonValue(tv3);
+		PyObject* v3 = PythonUtils::ToObject(tv3);
 		KR_ASSERT(PyString_Check(v3));
 		KR_ASSERT_STR(PyString_AsString(v3),"abc");
 		
 		std::string s1("abc");
 		Value* tv4 = new Value(s1);
-		PyObject* v4 = ValueToPythonValue(tv4);
+		PyObject* v4 = PythonUtils::ToObject(tv4);
 		KR_ASSERT(PyString_Check(v4));
 		KR_ASSERT_STR(PyString_AsString(v4),"abc");
 		
 		Value* tv5 = new Value();
-		PyObject* v5 = ValueToPythonValue(tv5);
+		PyObject* v5 = PythonUtils::ToObject(tv5);
 		KR_ASSERT(Py_None==v5);
 		
 		Value* tv6 = Value::Undefined();
-		PyObject* v6 = ValueToPythonValue(tv6);
+		PyObject* v6 = PythonUtils::ToObject(tv6);
 		KR_ASSERT(Py_None==v6);
 		
 		Value* tv7 = Value::Null();
-		PyObject* v7 = ValueToPythonValue(tv7);
+		PyObject* v7 = PythonUtils::ToObject(tv7);
 		KR_ASSERT(Py_None==v7);
 		
 		Value* tv8 = new Value(true);
-		PyObject* v8 = ValueToPythonValue(tv8);
+		PyObject* v8 = PythonUtils::ToObject(tv8);
 		KR_ASSERT(PyBool_Check(v8));
 		KR_ASSERT(v8 == Py_True);
 				
@@ -66,9 +63,9 @@ namespace kroll
 		PyObject* main_module = PyImport_AddModule("__main__");
 		PyObject* global_dict = PyModule_GetDict(main_module);
 		PyObject* expression = PyDict_GetItemString(global_dict, "Foo");
-		Value* cl1 = PythonValueToValue(expression);
+		Value* cl1 = PythonUtils::ToValue(expression);
 		KR_ASSERT(cl1->IsObject());
-		PythonValue* value = new PythonValue(expression);
+		PythonBoundObject* value = new PythonBoundObject(expression);
 		ScopedDereferencer sd1(value);
 		Value* p1 = value->Get("bar");
 		KR_ASSERT(p1->IsMethod());
@@ -76,10 +73,10 @@ namespace kroll
 		// TEST creating instance and invoking methods
 		PyRun_SimpleString("foopy = Foo()");
 		PyObject* foopy = PyDict_GetItemString(global_dict, "foopy");
-		Value* cl2 = PythonValueToValue(foopy);
+		Value* cl2 = PythonUtils::ToValue(foopy);
 		ScopedDereferencer r(cl2);
 		KR_ASSERT(cl2->IsObject());
-		PythonValue* value2 = new PythonValue(foopy);
+		PythonBoundObject* value2 = new PythonBoundObject(foopy);
 		ScopedDereferencer sd2(value2);
 		
 		// TEST method
@@ -140,7 +137,7 @@ namespace kroll
 		PyRun_SimpleString("def foopyc(): return 'hello,world'");
 		PyObject* foopyc = PyDict_GetItemString(global_dict, "foopyc");
 		KR_ASSERT(foopyc);
-		Value* cl3 = PythonValueToValue(foopyc);
+		Value* cl3 = PythonUtils::ToValue(foopyc);
 		KR_ASSERT(cl3->IsMethod());
 		BoundMethod* m2 = cl3->ToMethod();
 		Value* mv2 = m2->Call(args);
@@ -148,33 +145,33 @@ namespace kroll
 		KR_ASSERT_STR(mv2->ToString().c_str(),"hello,world");
 		
 		// TEST creating an anonymous method and calling through it
-		PyObject* anon1 = BoundMethodToPythonValue(cl3->ToMethod());
+		PyObject* anon1 = PythonUtils::ToObject(cl3->ToMethod());
 		KR_ASSERT(PyCallable_Check(anon1));
 		
 		// TEST calling through a BoundObject from Python
 		BoundObject* tbo = cl1->ToObject();
-		PyObject* co1 = BoundObjectToPythonValue(NULL,NULL,tbo);
+		PyObject* co1 = PythonUtils::ToObject(NULL,NULL,tbo);
 		KR_ASSERT(co1);
 		PyObject* cop1 = PyObject_GetAttrString(co1, "bar");
 		KR_ASSERT(cop1);
 		
-		Value* cl5 = PythonValueToValue(foopyc);
+		Value* cl5 = PythonUtils::ToValue(foopyc);
 		KR_ASSERT(cl5->IsMethod());
 		BoundMethod* m4 = cl5->ToMethod();
 		Value* mv6 = m4->Call(args);
 		KR_ASSERT_STR(mv6->ToString().c_str(),"hello,world");
 		
-		PyObject *anon2 = BoundMethodToPythonValue(m4);
+		PyObject *anon2 = PythonUtils::ToObject(m4);
 		KR_ASSERT(PyCallable_Check(anon2));
-		Value* tiv1 = PythonValueToValue(anon2);
+		Value* tiv1 = PythonUtils::ToValue(anon2);
 		KR_ASSERT(tiv1->IsMethod());
 		BoundMethod *tibm1 = tiv1->ToMethod();
 		Value* tivr1 = tibm1->Call(args);
 		KR_ASSERT_STR(tivr1->ToString().c_str(),"hello,world");
 		
 		
-		PyObject* piv = BoundMethodToPythonValue(tibm1);
-		Value* pivv = PythonValueToValue(piv);
+		PyObject* piv = PythonUtils::ToObject(tibm1);
+		Value* pivv = PythonUtils::ToValue(piv);
 		BoundMethod *pivbm = pivv->ToMethod();
 		Value* pivbmv = pivbm->Call(args);
 		KR_ASSERT_STR(pivbmv->ToString().c_str(),"hello,world");
@@ -206,7 +203,7 @@ namespace kroll
 		KR_DECREF(lista);
 		
 		Value *listv = new Value(list);
-		PyObject* apylist = ValueToPythonValue(listv);
+		PyObject* apylist = PythonUtils::ToObject(listv);
 		KR_ASSERT(apylist);
 		KR_ASSERT(listv->IsList());
 		KR_ASSERT(PyList_Check(apylist));
@@ -215,11 +212,11 @@ namespace kroll
 		PyObject *pitem = PyList_GetItem(apylist,0);
 		KR_ASSERT(pitem);
 		KR_ASSERT(pitem != Py_None);
-		Value *vitem = PythonValueToValue(pitem);
+		Value *vitem = PythonUtils::ToValue(pitem);
 		KR_ASSERT(vitem->IsInt());
 		KR_ASSERT(vitem->ToInt()==1);
 
-		PythonList *plist = new PythonList(apylist);
+		PythonBoundList *plist = new PythonBoundList(apylist);
 		KR_ASSERT(plist->Size()==1);
 		KR_ASSERT(plist->At(0)->ToInt()==1);
 		Value *vlist2 = new Value("hello");

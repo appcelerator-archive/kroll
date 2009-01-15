@@ -15,7 +15,7 @@
 
 namespace kroll
 {
-	class KJSBoundMethod : public BoundMethod
+	class KROLL_JAVASCRIPT_API KJSBoundMethod : public BoundMethod
 	{
 
 	public:
