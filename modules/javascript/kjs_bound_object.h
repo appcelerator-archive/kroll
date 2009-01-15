@@ -15,7 +15,7 @@
 
 namespace kroll
 {
-	class KJSBoundObject : public BoundObject
+	class KROLL_JAVASCRIPT_API KJSBoundObject : public BoundObject
 	{
 	public:
 		KJSBoundObject(JSContextRef context,

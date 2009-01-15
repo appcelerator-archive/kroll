@@ -6,6 +6,7 @@
 
 #include "binding.h"
 #include <sstream>
+#include <cstring>
 
 namespace kroll
 {
@@ -323,7 +324,7 @@ namespace kroll
 			oss << "<unknown>";
 		}
 
-		return strdup(oss.str());
+		return strdup(oss.str().c_str());
 
 	}
 
