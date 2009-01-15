@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 Import('build')
 
-modules = ['api', 'foo', 'python', 'foopy', 'javascript','ruby']
-#
+modules = ['api', 'foo', 'python', 'foopy', 'javascript', 'foojs','ruby']
+
 for module in modules:
 	SConscript(module+'/SConscript', build_dir=build.kroll_build_dir + '/modules/' + module, duplicate=0)

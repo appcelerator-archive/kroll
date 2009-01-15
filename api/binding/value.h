@@ -278,6 +278,13 @@ namespace kroll
 		const char* ToTypeString();
 
 		/*
+			Function: StringRepr
+
+		  return a string representation of this value.
+		*/
+		char* DisplayString();
+
+		/*
 			Function: Set
 
 		  changes the internal value of this instance.
