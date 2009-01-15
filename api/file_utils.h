@@ -20,12 +20,12 @@
 #include <algorithm>
 
 #ifdef OS_WIN32
-#define PATH_SEP "\\"
+#define KR_PATH_SEP "\\"
 #ifndef NO_UNZIP
 #include "unzip/unzip.h"
 #endif
 #else
-#define PATH_SEP "/"
+#define KR_PATH_SEP "/"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <pwd.h>

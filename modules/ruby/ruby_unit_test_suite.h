@@ -3,22 +3,22 @@
  * see LICENSE in the root folder for details on the license.
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
-#ifndef RUBY_TYPES_H_
-#define RUBY_TYPES_H_
 
-#include <typeinfo>
+#ifndef __RUBY_TESTSUITE_H__
+#define __RUBY_TESTSUITE_H__
+
 #include "ruby_module.h"
 
 namespace kroll
 {
-	class RubyUtils
+	class KROLL_RUBY_API RubyUnitTestSuite
 	{
 	public:
-		static void InitializeDefaultBindings(Host *host);
-	private:
-		RubyUtils(){}
-		~RubyUtils(){} 
+		void Run(Host*);
 	};
 }
 
 #endif
+
+
+

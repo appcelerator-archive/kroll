@@ -11,14 +11,21 @@
 
 namespace kroll
 {
-	Value* PythonBoundObjectToValue(PyObject* value, const char *name = NULL);
-	PyObject* ValueToPythonBoundObject(Value* value);
-	PyObject* ValueListToPythonArray(const ValueList& list);
-	const char * PythonStringToString(PyObject* value);
-	PyObject* BoundMethodToPythonBoundObject(BoundMethod *method);
-	PyObject* BoundObjectToPythonBoundObject(PyObject* self, PyObject* args, BoundObject *bo);
-	void ThrowPythonException();
-	void InitializeDefaultBindings(Host*);
+	class PythonUtils
+	{
+	public:
+		static Value* ToValue(PyObject* value, const char *name = NULL);
+		static PyObject* ToObject(Value* value);
+		static PyObject* ToObject(const ValueList& list);
+		static const char * ToString(PyObject* value);
+		static PyObject* ToObject(BoundMethod *method);
+		static PyObject* ToObject(PyObject* self, PyObject* args, BoundObject *bo);
+		static void ThrowException();
+		static void InitializeDefaultBindings(Host*);
+	private:
+		PythonUtils() {}
+		~PythonUtils () {}
+	};
 }
 
 #endif
