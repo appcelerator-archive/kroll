@@ -250,10 +250,10 @@ namespace kroll
 	/* TODO: when the shared_ptr stuff comes through
 	 * BoundObject,List,Method should have their own
 	 * DisplayString impls */
-	char* Value::DisplayString()
+	char* Value::DisplayString(int levels)
 	{
-		std::ostringstream oss;
 
+		std::ostringstream oss;
 		if (this->IsInt() )
 		{
 			oss << this->ToInt() << "i";
@@ -276,40 +276,54 @@ namespace kroll
 		else if (this->IsList())
 		{
 			BoundList *list = this->ToList();
-			oss << "[";
-			if (list->Size() > 0)
+			if (levels == 0)
 			{
-				oss << list->At(0)->DisplayString();
-				for (int i = 1; i < list->Size(); i++)
-				{
-					oss << ", " << list->At(i)->DisplayString();
-				}
+				oss << "<BoundList at " << list << ">";
 			}
-			oss << "]";
+			else
+			{
+				oss << "[";
+				for (int i = 0; i < list->Size(); i++)
+				{
+					Value* list_val = list->At(i);
+					ScopedDereferencer lv_dec(list_val);
+					oss << " " << list_val->DisplayString(levels-1) << ",";
+				}
+				//int before_last_comma = oss.tellp() - 1;
+				//oss.seekp(before_last_comma);
+				oss << " ]";
+			}
 		}
 		else if (this->IsObject())
 		{
 			BoundObject *obj = this->ToObject();
-			std::vector<const char *> props;
-			obj->GetPropertyNames(&props);
-
-			oss << "{";
-			if (props.size() > 0)
+			if (levels == 0)
 			{
-				oss << props.at(0) << " : "
-				    << obj->Get(props.at(0))->DisplayString();
-				for (size_t i = 1; i < props.size(); i++)
-				{
-					oss << ", " << props.at(i) <<
-					       " : " <<
-					       obj->Get(props.at(i))->DisplayString();
-				}
+				oss << "<BoundObject at " << obj << ">";
 			}
-			oss << "}";
+			else
+			{
+				std::vector<const char *> props;
+				obj->GetPropertyNames(&props);
+				oss << "{";
+				for (size_t i = 0; i < props.size(); i++)
+				{
+					Value* prop = obj->Get(props.at(i));
+					ScopedDereferencer prop_dec(prop);
+					oss << " " << props.at(i)
+					    << " : "
+					    << prop->DisplayString(levels-1)
+					    << ",";
+				}
+				//int before_last_comma = oss.tellp() - 1;
+				//oss.seekp(before_last_comma);
+				oss << "}";
+			}
 		}
 		else if (this->IsMethod())
 		{
-			oss << "<method>";
+			BoundMethod *method = this->ToMethod();
+			oss << "<BoundMethod at " << method << ">";
 		}
 		else if (this->IsNull())
 		{
@@ -325,9 +339,7 @@ namespace kroll
 		}
 
 		return strdup(oss.str().c_str());
-
 	}
-
 	const char* Value::ToTypeString()
 	{
 		if (IsInt())

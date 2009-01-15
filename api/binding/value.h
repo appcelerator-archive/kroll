@@ -7,10 +7,6 @@
 #ifndef _KR_VALUE_H_
 #define _KR_VALUE_H_
 
-#include "../ref_counted.h"
-#include "binding.h"
-
-
 namespace kroll
 {
 	/*
@@ -282,7 +278,7 @@ namespace kroll
 
 		  return a string representation of this value.
 		*/
-		char* DisplayString();
+		char* DisplayString(int levels=3);
 
 		/*
 			Function: Set

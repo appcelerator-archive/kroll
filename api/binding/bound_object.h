@@ -7,12 +7,9 @@
 #ifndef _KR_BOUND_OBJECT_H_
 #define _KR_BOUND_OBJECT_H_
 
-#include "binding.h"
-
 #include <vector>
 #include <string>
 #include <map>
-#include "../file_utils.h"
 
 extern KROLL_API kroll::RefCounted* CreateEmptyBoundObject();
 
@@ -66,42 +63,49 @@ namespace kroll
 		void SetNS(const char *name, Value* value)
 		{
 			std::vector<std::string> tokens;
-			std::string s(name);
-			FileUtils::Tokenize(s,tokens,".");
-			if (tokens.size()==1)
+			FileUtils::Tokenize(std::string(name), tokens, ".");
+
+			BoundObject* scope = this;
+			for (size_t i = 0; i < tokens.size() - 1; i++)
 			{
-				this->Set(name,value);
-				return;
-			}
-			BoundObject *scope = this;
-			for (int c=0;c<(int)tokens.size()-1;c++)
-			{
-				std::string token = tokens.at(c);
-				Value *newscope = scope->Get(token.c_str());
-				if (newscope->IsUndefined() || newscope->IsNull())
+				// Ensure dereference, except for "this" object
+				ScopedDereferencer s_dec(scope);
+				if (scope == this) KR_ADDREF(scope);
+				const char* token = tokens[i].c_str();
+				BoundObject* next;
+
+				Value *next_val = scope->Get(token);
+				ScopedDereferencer next_val_dec(next_val);
+
+				if (next_val->IsUndefined())
 				{
-					BoundObject* bo = (BoundObject*)CreateEmptyBoundObject();
-					Value *newvalue = new Value(bo);
-					scope->Set(token.c_str(),newvalue);
-					KR_DECREF(newscope); // OK to release since scope holds
-					KR_DECREF(newvalue);
-					scope = bo;
+					next = (BoundObject*) CreateEmptyBoundObject();
+					next_val = new Value(next);
+					ScopedDereferencer next_val_dec2(next_val);
+					scope->Set(token, next_val);
+
 				}
-				else if (newscope->IsObject())
+				else if (!next_val->IsObject() 
+				         && !next_val->IsMethod()
+				         && !next_val->IsList())
 				{
-					scope = newscope->ToObject();
+					throw new Value("Invalid namespace on setNS");
+
 				}
 				else
 				{
-					Value *error = new Value("Invalid namespace on setNS");
-					throw error;
+					next = next_val->ToObject();
 				}
+
+				scope = next;
 			}
-			std::string token = tokens.at(tokens.size()-1);
+
+			const char *prop_name = tokens[tokens.size()-1].c_str();
+			scope->Set(prop_name, value);
+
 #ifdef DEBUG_BINDING
-			std::cout << "BIND: " << value->ToTypeString() << " to: " << name << std::endl;
+			std::cout << "BOUND: " << value->ToTypeString() << " to: " << name << std::endl;
 #endif
-			scope->Set(token.c_str(),value);
 		}
 
 		/*
@@ -111,6 +115,9 @@ namespace kroll
 		*/
 		Value* GetNS(const char *name)
 		{
+			Value *val = this->Get("foojs");
+			KR_DECREF(val);
+
 			std::string s(name);
 			std::string::size_type last = 0;
 			std::string::size_type pos = s.find_first_of(".");
@@ -136,6 +143,7 @@ namespace kroll
 				std::string token = s.substr(last);
 				current = scope->Get(token.c_str());
 			}
+
 			return current;
 		}
 

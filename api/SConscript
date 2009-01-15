@@ -15,16 +15,16 @@ else:
 	Env.ParseConfig('pkg-config --cflags --libs libxml-2.0')
 
 if build.is_linux():
-   Env.Append(LIBS=['pthread'])
+	Env.Append(LIBS=['pthread'])
 
 if build.is_osx():
-    OSX_SDK = '/Developer/SDKs/MacOSX10.4u.sdk'
-    OSX_UNIV_COMPILER = '-isysroot '+OSX_SDK+' -arch i386'
-    OSX_UNIV_LINKER = '-isysroot '+OSX_SDK+' -syslibroot,'+OSX_SDK
-    Env.Append(CCFLAGS=OSX_UNIV_COMPILER+' -x objective-c++')
-    Env.Append(FRAMEWORKS=['Foundation'])
-    Env.Append(LDFLAGS=OSX_UNIV_LINKER)
-    Env.Append(CPPPATH=[build.third_party+'/poco/headers'])
+	OSX_SDK = '/Developer/SDKs/MacOSX10.4u.sdk'
+	OSX_UNIV_COMPILER = '-isysroot '+OSX_SDK+' -arch i386'
+	OSX_UNIV_LINKER = '-isysroot '+OSX_SDK+' -syslibroot,'+OSX_SDK
+	Env.Append(CCFLAGS=OSX_UNIV_COMPILER+' -x objective-c++')
+	Env.Append(FRAMEWORKS=['Foundation'])
+	Env.Append(LDFLAGS=OSX_UNIV_LINKER)
+	Env.Append(CPPPATH=[build.third_party+'/poco/headers'])
 
 sources=Glob('*.cpp')
 sources.extend(Glob('config/*.cpp'))

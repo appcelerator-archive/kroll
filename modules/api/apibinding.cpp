@@ -67,13 +67,12 @@ namespace kroll
 			// to the 'module' with key named 'key'
 			global->SetNS(key,value);
 		}
-		KR_DECREF(value);
 	}
 	void APIBinding::_Get(const ValueList& args, Value *result)
 	{
 		std::string s = args.at(0)->ToString();
 		const char *key = s.c_str();
-		Value *r = 0;
+		Value *r = NULL;
 		std::string::size_type pos = s.find_first_of(".");
 		if (pos==std::string::npos)
 		{
@@ -86,8 +85,8 @@ namespace kroll
 			// to the 'module' with key named 'key'
 			r = global->GetNS(key);
 		}
+		ScopedDereferencer r_dec(r);
 		result->Set(r);
-		KR_DECREF(r);
 	}
 	void APIBinding::_Log(const ValueList& args, Value *result)
 	{

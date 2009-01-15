@@ -1,1 +1,3 @@
-Titanium.set("ti.blah.foojs", 42);
+Titanium.set("foojs.num", 42);
+var num = Titanium.get("foojs.num");
+throw num

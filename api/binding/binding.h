@@ -9,18 +9,6 @@
 
 #include "callback.h"
 
-namespace kroll
-{
-	class Value;
-	class BoundObject;
-	class StaticBoundObject;
-	class BoundMethod;
-	class StaticBoundMethod;
-	class BoundList;
-	class StaticBoundList;
-	class ScopeMethodDelegate;
-}
-
 #include "../kroll.h"
 #include "value.h"
 
@@ -31,6 +19,5 @@ namespace kroll
 #include "static_bound_method.h"
 #include "static_bound_object.h"
 #include "scope_method_delegate.h"
-
 
 #endif
