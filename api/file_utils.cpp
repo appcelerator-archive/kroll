@@ -12,7 +12,6 @@
 #include <shlobj.h>
 #include <process.h>
 #endif
-#include <Poco/String.h>
 
 namespace kroll
 {
@@ -284,6 +283,20 @@ namespace kroll
 			pos = str.find_first_of(delimeters,lastPos);
 		}
 	}
+	std::string FileUtils::Trim(std::string str)
+	{
+		std::string c(str);
+		while (1)
+		{
+			size_t pos = c.rfind(" ");
+			if (pos == std::string::npos || pos!=c.length()-1)
+			{
+				break;
+			}
+			c = c.substr(0,pos);
+		}
+		return c;
+	}
 	bool FileUtils::ReadManifest(std::string& path, std::string &runtimePath, std::vector<std::string>& modules, std::vector<std::string> &moduleDirs)
 	{
 		std::ifstream file(path.c_str());
@@ -303,8 +316,8 @@ namespace kroll
 			size_t pos = line.find(":");
 			if (pos!=std::string::npos)
 			{
-				std::string key = Poco::trim(line.substr(0,pos));
-				std::string value = Poco::trim(line.substr(pos+1,line.length()));
+				std::string key = Trim(line.substr(0,pos));
+				std::string value = Trim(line.substr(pos+1,line.length()));
 				int op;
 				std::string version;
 				ExtractVersion(value,&op,version);

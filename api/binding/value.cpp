@@ -104,7 +104,7 @@ namespace kroll
 	int Value::ToInt() const { return (int) value.numberValue; }
 	double Value::ToDouble() const { return value.numberValue; }
 	bool Value::ToBool() const { return value.boolValue; }
-	char* Value::ToString() const { return value.stringValue; }
+	const char* Value::ToString() const { return value.stringValue; }
 	SharedPtr<BoundObject> Value::ToObject() const { return value.objectValue; }
 	SharedPtr<BoundMethod> Value::ToMethod() const { return value.objectValue.cast<BoundMethod>(); }
 	SharedPtr<BoundList> Value::ToList() const { return value.objectValue.cast<BoundList>(); }
@@ -253,10 +253,10 @@ namespace kroll
 	/* TODO: when the shared_ptr stuff comes through
 	 * BoundObject,List,Method should have their own
 	 * DisplayString impls */
-	char* Value::DisplayString()
+	char* Value::DisplayString(int levels)
 	{
-		std::ostringstream oss;
 
+		std::ostringstream oss;
 		if (this->IsInt() )
 		{
 			oss << this->ToInt() << "i";
@@ -279,39 +279,51 @@ namespace kroll
 		else if (this->IsList())
 		{
 			SharedPtr<BoundList> list = this->ToList();
-			oss << "[";
-			if (list->Size() > 0)
+			if (levels == 0)
 			{
-				oss << list->At(0)->DisplayString();
-				for (int i = 1; i < list->Size(); i++)
-				{
-					oss << ", " << list->At(i)->DisplayString();
-				}
+				oss << "<BoundList at " << list.get() << ">";
 			}
-			oss << "]";
+			else
+			{
+				oss << "[";
+				for (int i = 0; i < list->Size(); i++)
+				{
+					SharedPtr<Value> list_val = list->At(i);
+					oss << " " << list_val->DisplayString(levels-1) << ",";
+				}
+				//int before_last_comma = oss.tellp() - 1;
+				//oss.seekp(before_last_comma);
+				oss << " ]";
+			}
 		}
 		else if (this->IsObject())
 		{
 			SharedPtr<BoundObject> obj = this->ToObject();
-			SharedStringList props = obj->GetPropertyNames();
-
-			oss << "{";
-			if (props.size() > 0)
+			if (levels == 0)
 			{
-				oss << props.at(0) << " : "
-				    << obj->Get(props.at(0))->DisplayString();
-				for (size_t i = 1; i < props.size(); i++)
-				{
-					oss << ", " << props.at(i) <<
-					       " : " <<
-					       obj->Get(props.at(i))->DisplayString();
-				}
+				oss << "<BoundObject at " << obj.get() << ">";
 			}
-			oss << "}";
+			else
+			{
+				SharedStringList props = obj->GetPropertyNames();
+				oss << "{";
+				for (size_t i = 0; i < props->size(); i++)
+				{
+					SharedPtr<Value> prop = obj->Get(props->at(i));
+					oss << " " << props->at(i)
+					    << " : "
+					    << prop->DisplayString(levels-1)
+					    << ",";
+				}
+				//int before_last_comma = oss.tellp() - 1;
+				//oss.seekp(before_last_comma);
+				oss << "}";
+			}
 		}
 		else if (this->IsMethod())
 		{
-			oss << "<method>";
+			SharedPtr<BoundMethod> method = this->ToMethod();
+			oss << "<BoundMethod at " << method.get() << ">";
 		}
 		else if (this->IsNull())
 		{
@@ -327,9 +339,7 @@ namespace kroll
 		}
 
 		return strdup(oss.str().c_str());
-
 	}
-
 	const char* Value::ToTypeString()
 	{
 		if (IsInt())

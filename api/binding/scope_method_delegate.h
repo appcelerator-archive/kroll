@@ -6,7 +6,6 @@
 
 #ifndef _KR_SCOPE_METHOD_DELEGATE_H_
 #define _KR_BOUND_METHOD_DELEGATE_H_
-#include "binding.h"
 
 namespace kroll {
 	/*

@@ -54,10 +54,7 @@ namespace kroll
 		/* Take some steps to insert the API into the Javascript context */
 		/* Create a crazy, crunktown delegate hybrid object for Javascript */
 		Value *api = host->GetGlobalObject()->Get("api");
-		if (!api->IsObject())
-			throw new Value("Could not find API module");
-		ScopeMethodDelegate::CreateDelegate(host->GetGlobalObject(), api->ToObject());
-	
+
 		/* convert JS API to a KJS object */
 		JSValueRef js_api = KJSUtil::ToJSValue(api, context);
 	

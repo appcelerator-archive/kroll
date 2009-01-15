@@ -9,6 +9,7 @@ Import('product_name')
 Import('install_prefix')
 Import('global_variable_name')
 Import('config_filename')
+Import('build_dir')
 
 OS = ''
 os_define = ''
@@ -28,9 +29,9 @@ class BuildConfig(object):
 		elif self.matches('Linux'):
 			self.os = 'linux'
 		self.abstopdir = path.abspath('.')
-		self.dir = '#build/%s' % self.os 
-		self.kroll_build_dir = '#build/%s' % self.os 
-		self.absdir = path.abspath('build/%s' % self.os) 
+		self.dir = build_dir 
+		self.kroll_build_dir = self.dir 
+		self.absdir = path.abspath(build_dir) 
 		self.third_party = path.abspath('thirdparty/%s' % self.os)
 	def matches(self, n): return bool(re.match(os.uname()[0], n))
 	def is_linux(self): return self.os == 'linux'

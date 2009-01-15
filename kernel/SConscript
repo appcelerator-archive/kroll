@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import os
 Import('build')
-Import('tiBuild')
 
 Env = build.env.Clone()
 
@@ -31,4 +30,4 @@ if build.is_osx() or build.is_linux():
 p = Env.Program(build.dir + '/kkernel', ['main.cpp'])
 
 if build.is_win32():
-	Env.AddPostAction(p, 'mt.exe -nologo -manifest "'+tiBuild.absdir+'/kkernel.exe.manifest'+'" -outputresource:'+tiBuild.absdir+'/kkernel.exe')
+	Env.AddPostAction(p, 'mt.exe -nologo -manifest "'+build.dir+'/kkernel.exe.manifest'+'" -outputresource:'+build.absdir+'/kkernel.exe')

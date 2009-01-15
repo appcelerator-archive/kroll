@@ -7,17 +7,29 @@
 #ifndef _KROLL_H_
 #define _KROLL_H_
 
+namespace kroll
+{
+	class ScopedDereferencer;
+	class Value;
+	class BoundObject;
+	class StaticBoundObject;
+	class BoundMethod;
+	class StaticBoundMethod;
+	class BoundList;
+	class StaticBoundList;
+	class ScopeMethodDelegate;
+}
+
 #include "base.h"
-#include "binding/callback.h"
-#include "binding/binding.h"
+#include "file_utils.h"
 #include "mutex.h"
 #include "scoped_lock.h"
 #include "ref_counted.h"
 #include "scoped_ref_counted.h"
-#include "scoped_dereferencer.h"
 #include "module_provider.h"
 #include "module.h"
 #include "host.h"
-#include "file_utils.h"
+#include "scoped_dereferencer.h"
+#include "binding/binding.h"
 
 #endif

@@ -7,8 +7,6 @@
 #ifndef _KR_VALUE_H_
 #define _KR_VALUE_H_
 
-#include "../ref_counted.h"
-#include "binding.h"
 #include <Poco/SharedPtr.h>
 
 namespace kroll
@@ -250,7 +248,7 @@ namespace kroll
 
 		  return the value as a std::string
 		 */
-		char* ToString() const;
+		const char* ToString() const;
 
 		/*
 			Function: ToList
@@ -285,7 +283,7 @@ namespace kroll
 
 		  return a string representation of this value.
 		*/
-		char* DisplayString();
+		char* DisplayString(int levels=3);
 
 		/*
 			Function: Set
@@ -366,7 +364,7 @@ namespace kroll
 		{
 			double numberValue;
 			bool boolValue;
-			char *stringValue;
+			const char *stringValue;
 			SharedPtr<BoundObject> objectValue;
 		} value;
 		void defaults();

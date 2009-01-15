@@ -7,7 +7,6 @@
 #ifndef _KR_BOUND_METHOD_H_
 #define _KR_BOUND_METHOD_H_
 
-#include "binding.h"
 #include <cstdarg>
 #include <Poco/SharedPtr.h>
 

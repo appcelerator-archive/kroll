@@ -102,6 +102,15 @@ namespace kroll
 			Function: Tokenize
 		*/
 		static void Tokenize(const std::string& str, std::vector<std::string>& tokens, const std::string &delimeters);
+		
+		/*
+			Function: Trim
+				 
+			Parameters:
+			
+				str - The string to trim
+		*/
+		static 	std::string FileUtils::Trim(std::string str);
 
 		/*
 			Function: ReadManifest

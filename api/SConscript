@@ -7,16 +7,6 @@ Import('build')
 Env = build.env.Clone()
 Env.Append(CPPDEFINES={'KROLL_API_EXPORT': 1})
 
-poco = path.join(build.third_party, 'poco')
-poco_lib = path.join(poco, 'lib')
-if build.is_osx():
-	poco_inc = path.join(poco, 'headers')
-else:
-	poco_inc = path.join(poco, 'include')
-
-Env.Append(LIBPATH=[poco_lib])
-Env.Append(CPPPATH=[poco_inc])
-Env.Append(LIBS=['PocoFoundation','PocoNet','PocoNetSSL'])
 
 if build.is_win32():
 	Env.Append(LIBS=['shell32', 'user32'])
@@ -26,7 +16,7 @@ else:
 	Env.ParseConfig('pkg-config --cflags --libs libxml-2.0')
 
 if build.is_linux():
-   Env.Append(LIBS=['pthread'])
+	Env.Append(LIBS=['pthread'])
 
 if build.is_osx():
     OSX_SDK = '/Developer/SDKs/MacOSX10.4u.sdk'

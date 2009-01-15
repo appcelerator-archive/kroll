@@ -7,13 +7,9 @@
 #ifndef _KR_BOUND_OBJECT_H_
 #define _KR_BOUND_OBJECT_H_
 
-#include "binding.h"
-
 #include <vector>
 #include <string>
 #include <map>
-#include "../file_utils.h"
-#include <Poco/SharedPtr.h>
 
 namespace kroll
 {
@@ -30,7 +26,7 @@ namespace kroll
 		/*
 			Constructor: BoundObject
 		*/
-		BoundObject() {}
+		BoundObject() { }
 		virtual ~BoundObject() { }
 
 		static SharedPtr<BoundObject> CreateEmptyBoundObject();
@@ -70,42 +66,47 @@ namespace kroll
 		void SetNS(const char *name, SharedPtr<Value> value)
 		{
 			std::vector<std::string> tokens;
-			std::string s(name);
-			FileUtils::Tokenize(s,tokens,".");
-			if (tokens.size()==1)
+			FileUtils::Tokenize(std::string(name), tokens, ".");
+
+			SharedPtr<BoundObject> next;
+			BoundObject* scope = this;
+			for (size_t i = 0; i < tokens.size() - 1; i++)
 			{
-				this->Set(name,value);
-				return;
-			}
-			BoundObject *scope = this;
-			for (int c=0;c<(int)tokens.size()-1;c++)
-			{
-				std::string token = tokens.at(c);
-				SharedPtr<Value> newscope = scope->Get(token.c_str());
-				if (newscope->IsUndefined() || newscope->IsNull())
+				// Ensure dereference, except for "this" object
+				ScopedDereferencer s_dec(scope);
+				if (scope == this) scope = KR_ADDREF(scope);
+				const char* token = tokens[i].c_str();
+				SharedPtr<BoundObject> next;
+				SharedPtr<Value> next_val = scope->Get(token);
+				if (next_val->IsUndefined())
 				{
-					SharedPtr<BoundObject> bo = BoundObject::CreateEmptyBoundObject();
-					SharedPtr<Value> newvalue = new Value(bo);
-					scope->Set(token.c_str(),newvalue);
-					//KR_DECREF(newscope); // OK to release since scope holds
-					//KR_DECREF(newvalue);
-					scope = bo;
+					next = BoundObject::CreateEmptyBoundObject();
+					next_val = new Value(next);
+					//ScopedDereferencer next_val_dec2(next_val);
+					scope->Set(token, next_val);
+
 				}
-				else if (newscope->IsObject())
+				else if (!next_val->IsObject() 
+				         && !next_val->IsMethod()
+				         && !next_val->IsList())
 				{
-					scope = newscope->ToObject();
+					throw new Value("Invalid namespace on setNS");
+
 				}
 				else
 				{
-					Value *error = new Value("Invalid namespace on setNS");
-					throw error;
+					next = next_val->ToObject();
 				}
+
+				scope = *next;
 			}
-			std::string token = tokens.at(tokens.size()-1);
+
+			const char *prop_name = tokens[tokens.size()-1].c_str();
+			scope->Set(prop_name, value);
+
 #ifdef DEBUG_BINDING
-			std::cout << "BIND: " << value->ToTypeString() << " to: " << name << std::endl;
+			std::cout << "BOUND: " << value->ToTypeString() << " to: " << name << std::endl;
 #endif
-			scope->Set(token.c_str(),value);
 		}
 
 		/*
@@ -119,7 +120,7 @@ namespace kroll
 			std::string::size_type last = 0;
 			std::string::size_type pos = s.find_first_of(".");
 			SharedPtr<Value> current;
-			SharedPtr<BoundObject> scope = this;
+			BoundObject* scope = this;
 			while (pos != std::string::npos)
 			{
 				std::string token = s.substr(last,pos);
@@ -128,7 +129,7 @@ namespace kroll
 			    pos = s.find_first_of(".", last);
 				if (current->IsObject())
 				{
-					scope = current->ToObject();
+					scope = *(current->ToObject());
 				}
 				else
 				{
@@ -140,6 +141,7 @@ namespace kroll
 				std::string token = s.substr(last);
 				current = scope->Get(token.c_str());
 			}
+
 			return current;
 		}
 
