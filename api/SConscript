@@ -24,6 +24,7 @@ if build.is_osx():
     Env.Append(CCFLAGS=OSX_UNIV_COMPILER+' -x objective-c++')
     Env.Append(FRAMEWORKS=['Foundation'])
     Env.Append(LDFLAGS=OSX_UNIV_LINKER)
+    Env.Append(CPPPATH=[build.third_party+'/poco/headers'])
 
 sources=Glob('*.cpp')
 sources.extend(Glob('config/*.cpp'))
