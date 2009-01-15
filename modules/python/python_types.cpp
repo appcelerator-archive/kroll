@@ -7,7 +7,7 @@
 
 namespace kroll
 {
-	const char * PythonStringToString(PyObject* value)
+	const char * PythonUtils::ToString(PyObject* value)
 	{
 		if (PyString_Check(value))
 		{
@@ -43,7 +43,7 @@ namespace kroll
 		return 0.0;
 	}
 
-	void InitializeDefaultBindings (Host *host)
+	void PythonUtils::InitializeDefaultBindings (Host *host)
 	{
 		PyObject* mod = PyImport_ImportModule("__builtin__");
 
@@ -58,7 +58,7 @@ namespace kroll
 				// we're going to clone the methods from api into our
 				// own python scoped object
 				StaticBoundObject *scope = ScopeMethodDelegate::CreateDelegate(host->GetGlobalObject(),api->ToObject());
-				PyObject *pyapi = BoundObjectToPythonBoundObject(NULL,NULL,scope);
+				PyObject *pyapi = PythonUtils::ToObject(NULL,NULL,scope);
 				PyObject_SetAttrString(mod,PRODUCT_NAME,pyapi);
 				// now bind our new scope to python module
 				Value *scopeRef = new Value(scope);
@@ -103,15 +103,15 @@ namespace kroll
 			for (int c=0;c<PyTuple_Size(args);c++)
 			{
 				PyObject *arg=PyTuple_GET_ITEM(args,c);
-				a.push_back(PythonBoundObjectToValue(arg,NULL));
+				a.push_back(PythonUtils::ToValue(arg,NULL));
 			}
 			Value* result = method->Call(a);
 			ScopedDereferencer r(result);
-			return ValueToPythonBoundObject(result);
+			return PythonUtils::ToObject(result);
 		}
 		catch (Value *ex)
 		{
-			PyErr_SetObject(PyExc_Exception,ValueToPythonBoundObject(ex));
+			PyErr_SetObject(PyExc_Exception,PythonUtils::ToObject(ex));
 			Py_INCREF(Py_None);
 			KR_DECREF(ex);
 			return Py_None;
@@ -127,7 +127,7 @@ namespace kroll
 			"dispatcher for BoundMethod"
 	};
 
-	PyObject* BoundMethodToPythonBoundObject(BoundMethod *method)
+	PyObject* PythonUtils::ToObject(BoundMethod *method)
 	{
 		PyObject *self = PyCObject_FromVoidPtr(method,&PyDeleteBoundMethod);
 		KR_ADDREF(method);
@@ -135,7 +135,7 @@ namespace kroll
 	}
 
 
-	PyObject* ValueToPythonBoundObject(Value* value)
+	PyObject* PythonUtils::ToObject(Value* value)
 	{
 		if (value->IsBool())
 		{
@@ -157,7 +157,7 @@ namespace kroll
 			{
 				return (PyObject*)((PythonBoundMethod*)obj)->ToPython();
 			}
-			return BoundMethodToPythonBoundObject(value->ToMethod());
+			return PythonUtils::ToObject(value->ToMethod());
 		}
 		if (value->IsObject())
 		{
@@ -166,7 +166,7 @@ namespace kroll
 			{
 				return (PyObject*)((PythonBoundObject*)obj)->ToPython();
 			}
-			return BoundObjectToPythonBoundObject(NULL,NULL,value->ToObject());
+			return PythonUtils::ToObject(NULL,NULL,value->ToObject());
 		}
 		if (value->IsString())
 		{
@@ -183,7 +183,7 @@ namespace kroll
 			{
 				return ((PythonBoundList*)list)->ToPython();
 			}
-			return BoundObjectToPythonBoundObject(NULL,NULL,list);
+			return PythonUtils::ToObject(NULL,NULL,list);
 		}
 		Py_INCREF(Py_None);
 		return Py_None;
@@ -207,14 +207,14 @@ namespace kroll
 		PyBoundObject *boundSelf = reinterpret_cast<PyBoundObject*>(self);
 		// std::cout << "PyBoundObject_getattr called with " << name << " for " << (void*)boundSelf << std::endl;
 		Value* result = boundSelf->object->Get(name);
-		return ValueToPythonBoundObject(result);
+		return PythonUtils::ToObject(result);
 	}
 
 	static int PyBoundObject_setattr(PyObject *self, char *name, PyObject *value)
 	{
 		PyBoundObject *boundSelf = (PyBoundObject*)self;
 		// std::cout << KR_FUNC << " called for " <<(void*)boundSelf << std::endl;
-		Value* tiValue = PythonBoundObjectToValue(value,name);
+		Value* tiValue = PythonUtils::ToValue(value,name);
 		boundSelf->object->Set(name,tiValue);
 		return 0;
 	}
@@ -266,7 +266,7 @@ namespace kroll
 		0,							/*tp_doc*/
 	};
 
-	PyObject* BoundObjectToPythonBoundObject(PyObject* self, PyObject* args, BoundObject *bo)
+	PyObject* PythonUtils::ToObject(PyObject* self, PyObject* args, BoundObject *bo)
 	{
 		//CHECK bo
 		if (bo == NULL)
@@ -282,7 +282,7 @@ namespace kroll
 			for (int c = 0; c < list->Size(); c++)
 			{
 				Value* value = list->At(c);
-				PyObject *item = ValueToPythonBoundObject(value);
+				PyObject *item = PythonUtils::ToObject(value);
 				PyList_SetItem(newlist,c,item);
 			}
 			return newlist;
@@ -296,16 +296,16 @@ namespace kroll
 		return (PyObject*)obj;
 	}
 
-	void ThrowPythonException()
+	void PythonUtils::ThrowException()
 	{
 		PyObject *ptype, *pvalue, *trace;
 		PyErr_Fetch(&ptype,&pvalue,&trace);
 		PyErr_Print();
 		PyErr_Clear();
-		throw PythonBoundObjectToValue(pvalue,NULL);
+		throw PythonUtils::ToValue(pvalue,NULL);
 	}
 
-	Value* PythonBoundObjectToValue(PyObject* value, const char *name)
+	Value* PythonUtils::ToValue(PyObject* value, const char *name)
 	{
 		//FIXME - who is going to delete ref?
 
@@ -316,7 +316,7 @@ namespace kroll
 		}
 		if (PyString_Check(value))
 		{
-			std::string s = PythonStringToString(value);
+			std::string s = PythonUtils::ToString(value);
 			return new Value(s);
 		}
 		if (PyBool_Check(value))

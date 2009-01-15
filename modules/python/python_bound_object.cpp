@@ -20,12 +20,12 @@ namespace kroll
 
 	void PythonBoundObject::Set(const char *name, Value* value)
 	{
-		int result = PyObject_SetAttrString(this->object,(char*)name,ValueToPythonBoundObject(value));
+		int result = PyObject_SetAttrString(this->object,(char*)name,PythonUtils::ToObject(value));
 
 		PyObject *exception = PyErr_Occurred();
 		if (result == -1 && exception != NULL)
 		{
-			ThrowPythonException();
+			PythonUtils::ThrowException();
 		}
 	}
 
@@ -44,10 +44,10 @@ namespace kroll
 		if (response == NULL && exception != NULL)
 		{
 			Py_XDECREF(response);
-			ThrowPythonException();
+			PythonUtils::ThrowException();
 		}
 
-		Value* returnValue = PythonBoundObjectToValue(response,name);
+		Value* returnValue = PythonUtils::ToValue(response,name);
 		Py_DECREF(response);
 		return returnValue;
 	}
@@ -69,7 +69,7 @@ namespace kroll
 			return;
 
 		while ((item = PyIter_Next(iterator))) {
-			property_names->push_back(PythonStringToString(item));
+			property_names->push_back(PythonUtils::ToString(item));
 			Py_DECREF(item);
 		}
 
