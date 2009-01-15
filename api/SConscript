@@ -7,6 +7,17 @@ Import('build')
 Env = build.env.Clone()
 Env.Append(CPPDEFINES={'KROLL_API_EXPORT': 1})
 
+poco = path.join(build.third_party, 'poco')
+poco_lib = path.join(poco, 'lib')
+if build.is_osx():
+	poco_inc = path.join(poco, 'headers')
+else:
+	poco_inc = path.join(poco, 'include')
+
+Env.Append(LIBPATH=[poco_lib])
+Env.Append(CPPPATH=[poco_inc])
+Env.Append(LIBS=['PocoFoundation','PocoNet','PocoNetSSL'])
+
 if build.is_win32():
 	Env.Append(LIBS=['shell32', 'user32'])
 else:
@@ -24,8 +35,7 @@ if build.is_osx():
     Env.Append(CCFLAGS=OSX_UNIV_COMPILER+' -x objective-c++')
     Env.Append(FRAMEWORKS=['Foundation'])
     Env.Append(LDFLAGS=OSX_UNIV_LINKER)
-    Env.Append(CPPPATH=[build.third_party+'/poco/headers'])
-
+    
 sources=Glob('*.cpp')
 sources.extend(Glob('config/*.cpp'))
 sources.extend(Glob('binding/*.cpp'))
