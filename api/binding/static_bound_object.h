@@ -15,7 +15,7 @@
 
 namespace kroll
 {
-	/*	
+	/*
 		Class: StaticBoundObject
 	*/
 	class KROLL_API StaticBoundObject : public BoundObject
@@ -38,14 +38,14 @@ namespace kroll
 		  a reference (even for Undefined and Null types).
 		  When an error occurs will throw an exception of type Value*.
 		 */
-		virtual Value* Get(const char *name);
+		virtual SharedPtr<Value> Get(const char *name);
 
 		/*
 		  Function: GetPropertyNames
 
 		  Return a list of this object's property names.
 		 */
-		virtual void GetPropertyNames(std::vector<const char *> *property_names);
+		virtual SharedStringList GetPropertyNames();
 
 		/*
 		  Function: Set
@@ -54,7 +54,7 @@ namespace kroll
 		  heap-allocated as implementors are allowed to keep a reference.
 		  When an error occurs will throw an exception of type Value*.
 		 */
-		virtual void Set(const char *name, Value* value);
+		virtual void Set(const char *name, SharedPtr<Value> value);
 
 
 		/*
@@ -72,17 +72,17 @@ namespace kroll
 		  occurs will throw an exception of type Value*.
 		*/
 		template <typename T>
-		void SetMethod(const char *name, void (T::*method)(const ValueList&, Value*))
+		void SetMethod(const char *name, void (T::*method)(const ValueList&, SharedPtr<Value>))
 		{
-			MethodCallback* callback = NewCallback<T, const ValueList&, Value*>(static_cast<T*>(this), method);
+			MethodCallback* callback = NewCallback<T, const ValueList&, SharedPtr<Value> >(static_cast<T*>(this), method);
 
-			StaticBoundMethod* bound_method = new StaticBoundMethod(callback);
-			Value* method_value = new Value(bound_method);
+			SharedPtr<StaticBoundMethod> bound_method = new StaticBoundMethod(callback);
+			SharedPtr<Value> method_value = new Value(bound_method);
 
 			this->Set(name, method_value);
 
-			KR_DECREF(bound_method);
-			KR_DECREF(method_value);
+			//KR_DECREF(bound_method);
+			//KR_DECREF(method_value);
 		}
 
 		/*
@@ -92,11 +92,11 @@ namespace kroll
 		  heap-allocated as implementors are allowed to keep a reference.
 		  When an error occurs will throw an exception of type Value*.
 		*/
-		void SetObject(const char *name, BoundObject* object);
+		void SetObject(const char *name, SharedPtr<BoundObject> object);
 
 	protected:
 		Mutex mutex;
-		std::map<std::string, Value*> properties;
+		std::map<std::string, SharedPtr<Value> > properties;
 
 	private:
 		DISALLOW_EVIL_CONSTRUCTORS(StaticBoundObject);

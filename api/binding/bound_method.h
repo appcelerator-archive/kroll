@@ -9,10 +9,11 @@
 
 #include "binding.h"
 #include <cstdarg>
+#include <Poco/SharedPtr.h>
 
 namespace kroll
 {
-	typedef Callback2<const ValueList&, Value *>::Type MethodCallback;
+	typedef Callback2<const ValueList&, SharedPtr<Value> >::Type MethodCallback;
 
 	/*
 		Class: BoundMethod
@@ -35,7 +36,7 @@ namespace kroll
 		  with the return value (even for Undefined and Null types).
 		  When an error occurs will throw an exception of type Value*.
 		 */
-		virtual Value* Call(const ValueList& args) = 0;
+		virtual SharedPtr<Value> Call(const ValueList& args) = 0;
 
 		/*
 			Function: Set
@@ -45,7 +46,7 @@ namespace kroll
 		  if they increase the reference count.
 		  When an error occurs will throw an exception of type Value*.
 		 */
-		virtual void Set(const char *name, Value* value) = 0;
+		virtual void Set(const char *name, SharedPtr<Value> value) = 0;
 
 		/*
 			Function: Get
@@ -62,7 +63,7 @@ namespace kroll
 
 		  Return a list of this object's property names.
 		 */
-		virtual void GetPropertyNames(std::vector<const char *> *property_names) = 0;
+		virtual SharedStringList GetPropertyNames() = 0;
 
 		/*
 			Function: Call
@@ -70,7 +71,7 @@ namespace kroll
 		  call the method with a variable list of Value* arguments
 		  When an error occurs will throw an exception of type Value*.
 		 */
-		Value* Call(Value *first, ...)
+		SharedPtr<Value> Call(SharedPtr<Value> first, ...)
 		{
 			ValueList args;
 			va_list vaargs;
@@ -78,7 +79,7 @@ namespace kroll
 			args.push_back(first);
 			while(1)
 			{
-		      Value* a = va_arg(vaargs,Value*);
+		      SharedPtr<Value> a = va_arg(vaargs,SharedPtr<Value>);
 		      if (a==NULL) break;
 		      args.push_back(a);
 			}

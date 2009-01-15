@@ -9,37 +9,37 @@
 using namespace kroll;
 
 ScopeMethodDelegate::ScopeMethodDelegate(MethodDelegateType type,
-                                         BoundObject *global,
-                                         BoundObject *scope,
-                                         BoundMethod *delegate) :
+                                         SharedPtr<BoundObject> global,
+                                         SharedPtr<BoundObject> scope,
+                                         SharedPtr<BoundMethod> delegate) :
 	type(type), global(global), scope(scope), delegate(delegate)
 {
-	KR_ADDREF(global);
-	KR_ADDREF(scope);
-	KR_ADDREF(delegate);
+	//KR_ADDREF(global);
+	//KR_ADDREF(scope);
+	//KR_ADDREF(delegate);
 }
 
 ScopeMethodDelegate::~ScopeMethodDelegate()
 {
-	KR_DECREF(global);
-	KR_DECREF(scope);
-	KR_DECREF(delegate);
+	//KR_DECREF(global);
+	//KR_DECREF(scope);
+	//KR_DECREF(delegate);
 }
 
 
-void ScopeMethodDelegate::Set(const char *name, Value* value)
+void ScopeMethodDelegate::Set(const char *name, SharedPtr<Value> value)
 {
 	delegate->Set(name,value);
 }
 
-Value* ScopeMethodDelegate::Get(const char *name)
+SharedPtr<Value> ScopeMethodDelegate::Get(const char *name)
 {
 	return delegate->Get(name);
 }
 
-void ScopeMethodDelegate::GetPropertyNames(std::vector<const char *> *property_names)
+SharedStringList ScopeMethodDelegate::GetPropertyNames()
 {
-	delegate->GetPropertyNames(property_names);
+	return delegate->GetPropertyNames();
 }
 
 bool ScopeMethodDelegate::IsGlobalKey(std::string& key)
@@ -48,10 +48,10 @@ bool ScopeMethodDelegate::IsGlobalKey(std::string& key)
 	return (pos!=std::string::npos);
 }
 
-Value* ScopeMethodDelegate::Call(const ValueList& args)
+SharedPtr<Value> ScopeMethodDelegate::Call(const ValueList& args)
 {
 	std::string key = args.at(0)->ToString();
-	BoundObject* obj = IsGlobalKey(key) ? global : scope;
+	SharedPtr<BoundObject> obj = IsGlobalKey(key) ? global : scope;
 	if (type == GET)
 	{
 		// not found, look inside scope
@@ -60,37 +60,36 @@ Value* ScopeMethodDelegate::Call(const ValueList& args)
 	else
 	{
 		obj->SetNS(key.c_str(),args.at(1));
-		return Value::Undefined();
+		return Value::Undefined;
 	}
 }
 
-StaticBoundObject* ScopeMethodDelegate::CreateDelegate(BoundObject *global, BoundObject *bo)
+SharedPtr<StaticBoundObject> ScopeMethodDelegate::CreateDelegate(SharedPtr<BoundObject> global, SharedPtr<BoundObject> bo)
 {
-	StaticBoundObject *scope = new StaticBoundObject();
-	std::vector<const char *> keys;
-	bo->GetPropertyNames(&keys);
-	std::vector<const char *>::iterator iter = keys.begin();
+	SharedPtr<StaticBoundObject> *scope = new StaticBoundObject();
+	SharedStringList keys = bo->GetPropertyNames();
+	SharedStringIter iter = keys.begin();
+
 	while(iter!=keys.end())
 	{
 		const char *name = (*iter++);
 		std::string key(name);
-		Value *value = bo->Get(name);
-		ScopedDereferencer d0(value);
+		SharedPtr<Value> value = bo->Get(name);
 
 		if (key == "set")
 		{
-			ScopeMethodDelegate *d = new ScopeMethodDelegate(SET, global, scope,value->ToMethod());
-			Value *v = new Value(d);
-			ScopedDereferencer d1(d);
-			ScopedDereferencer d2(v);
+			SharedPtr<ScopeMethodDelegate> d = new ScopeMethodDelegate(SET, global, scope,value->ToMethod());
+			SharedPtr<Value> v = new Value(d);
+			//ScopedDereferencer d1(d);
+			//ScopedDereferencer d2(v);
 			scope->Set(name, v);
 		}
 		else if (key == "get")
 		{
-			ScopeMethodDelegate *d = new ScopeMethodDelegate(GET, global, scope,value->ToMethod());
-			Value *v = new Value(d);
-			ScopedDereferencer d1(d);
-			ScopedDereferencer d2(v);
+			SharedPtr<ScopeMethodDelegate> d = new ScopeMethodDelegate(GET, global, scope,value->ToMethod());
+			SharedPtr<Value> v = new Value(d);
+			//ScopedDereferencer d1(d);
+			//ScopedDereferencer d2(v);
 			scope->Set(name, v);
 		}
 		else

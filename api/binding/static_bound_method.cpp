@@ -19,25 +19,25 @@ namespace kroll
 		KR_DECREF(this->object);
 	}
 
-	Value* StaticBoundMethod::Call(const ValueList& args)
+	SharedPtr<Value> StaticBoundMethod::Call(const ValueList& args)
 	{
-		Value* tv = new Value();
+		SharedPtr<Value> tv = new Value();
 		this->callback->Run(args, tv);
 		return tv;
 	}
-	void StaticBoundMethod::Set(const char *name, Value* value)
+	void StaticBoundMethod::Set(const char *name, SharedPtr<Value> value)
 	{
 		this->object->Set(name, value);
 	}
 
-	Value* StaticBoundMethod::Get(const char *name)
+	SharedPtr<Value> StaticBoundMethod::Get(const char *name)
 	{
 		return this->object->Get(name);
 	}
 
-	void StaticBoundMethod::GetPropertyNames(std::vector<const char *> *property_names)
+	SharedStringList StaticBoundMethod::GetPropertyNames()
 	{
-		this->object->GetPropertyNames(property_names);
+		return this->object->GetPropertyNames();
 	}
 }
 

@@ -33,7 +33,7 @@ namespace kroll
 		  reference count.
 		  When an error occurs will throw an exception of type Value*.
 		 */
-		virtual void Append(Value* value);
+		virtual void Append(SharedPtr<Value> value);
 
 		/*
 			Function: Size
@@ -50,7 +50,7 @@ namespace kroll
 		  reference counted and must be released.
 		  When an error occurs will throw an exception of type Value*.
 		 */
-		virtual Value* At(int index);
+		virtual SharedPtr<Value> At(int index);
 
 		/*
 			Function: Set
@@ -60,7 +60,7 @@ namespace kroll
 		  if they increase the reference count.
 		  When an error occurs will throw an exception of type Value*.
 		 */
-		virtual void Set(const char *name, Value* value);
+		virtual void Set(const char *name, SharedPtr<Value> value);
 
 		/*
 			Function: Get
@@ -70,18 +70,18 @@ namespace kroll
 		  with the return value (even for Undefined and Null types).
 		  When an error occurs will throw an exception of type Value*.
 		 */
-		virtual Value* Get(const char *name);
+		virtual SharedPtr<Value> Get(const char *name);
 
 		/*
 			Function: GetPropertyNames
 
 		  Return a list of this object's property names.
 		 */
-		virtual void GetPropertyNames(std::vector<const char *> *property_names);
+		virtual SharedStringList GetPropertyNames();
 
 	protected:
 		static char* IntToChars(int value);
-		StaticBoundObject* object;
+		SharedPr<StaticBoundObject> object;
 
 	private:
 		DISALLOW_EVIL_CONSTRUCTORS(StaticBoundList);

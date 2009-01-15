@@ -35,8 +35,8 @@ namespace kroll
 
 	protected:
 		virtual ~Host();
-		
-	public:	
+
+	public:
 		/*
 			Function: GetDescription
 
@@ -201,7 +201,7 @@ namespace kroll
 			if (index >= argc) return NULL;
 			return argv[index];
 		}
-		
+
 
 	protected:
 		int argc;

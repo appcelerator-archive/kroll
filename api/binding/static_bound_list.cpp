@@ -14,17 +14,17 @@ namespace kroll
 	StaticBoundList::StaticBoundList()
 		: object(new StaticBoundObject())
 	{
-		Value *len = new Value(0);
+		SharedPtr<Value> len = new Value(0);
 		this->Set("length", len);
-		KR_DECREF(len);
+		//KR_DECREF(len);
 	}
 
 	StaticBoundList::~StaticBoundList()
 	{
-		KR_DECREF(this->object);
+		//KR_DECREF(this->object);
 	}
 
-	void StaticBoundList::Append(Value* value)
+	void StaticBoundList::Append(SharedPtr<Value> value)
 	{
 		int length = this->Size();
 		char* name = StaticBoundList::IntToChars(length);
@@ -32,14 +32,14 @@ namespace kroll
 		delete [] name;
 
 		length = length + 1;
-		Value *len = new Value(length);
+		SharedPtr<Value> len = new Value(length);
 		this->object->Set("length", len);
-		KR_DECREF(len);
+		//KR_DECREF(len);
 	}
 
 	int StaticBoundList::Size()
 	{
-		Value *size_val = this->Get("length");
+		SharedPtr<Value> size_val = this->Get("length");
 		if (size_val->IsInt())
 		{
 			return size_val->ToInt();
@@ -50,38 +50,38 @@ namespace kroll
 		}
 	}
 
-	Value* StaticBoundList::At(int index)
+	SharedPtr<Value> StaticBoundList::At(int index)
 	{
 		char* name = StaticBoundList::IntToChars(index);
-		Value *value = this->object->Get(name);
+		SharedPtr<Value> value = this->object->Get(name);
 		delete [] name;
 		return value;
 	}
 
-	void StaticBoundList::Set(const char *name, Value* value)
+	void StaticBoundList::Set(const char *name, SharedPtr<Value> value)
 	{
 		if (BoundList::IsNumber(name))
 		{
 			int val = atoi(name);
 			if (val > this->Size())
 			{
-				Value *len = new Value(val);
+				SharedPtr<Value> len = new Value(val);
 				this->object->Set("length", len);
-				KR_DECREF(len);
+				//KR_DECREF(len);
 			}
 		}
 
 		this->object->Set(name, value);
 	}
 
-	Value* StaticBoundList::Get(const char *name)
+	SharedPtr<Value> StaticBoundList::Get(const char *name)
 	{
 		return this->object->Get(name);
 	}
 
-	void StaticBoundList::GetPropertyNames(std::vector<const char *> *property_names)
+	SharedStringList StaticBoundList::GetPropertyNames()
 	{
-		this->object->GetPropertyNames(property_names);
+		return this->object->GetPropertyNames(property_names);
 	}
 
 	char* StaticBoundList::IntToChars(int value)

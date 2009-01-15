@@ -13,11 +13,14 @@
 #include <string>
 #include <map>
 #include "../file_utils.h"
-
-extern KROLL_API kroll::RefCounted* CreateEmptyBoundObject();
+#include <Poco/SharedPtr.h>
 
 namespace kroll
 {
+	typedef std::vector<const char *> StringList;
+	typedef SharedPtr<StringList> SharedStringList;
+	typedef SharedStringList::iterator SharedStringIter;
+
 	/*
 		Class: BoundObject
 	*/
@@ -30,6 +33,7 @@ namespace kroll
 		BoundObject() {}
 		virtual ~BoundObject() { }
 
+		static SharedPtr<BoundObject> CreateEmptyBoundObject();
 	public:
 		/*
 			Function: Set
@@ -39,7 +43,7 @@ namespace kroll
 		  if they increase the reference count.
 		  When an error occurs will throw an exception of type Value*.
 		 */
-		virtual void Set(const char *name, Value* value) = 0;
+		virtual void Set(const char *name, SharedPtr<Value> value) = 0;
 
 		/*
 			Function: Get
@@ -49,21 +53,21 @@ namespace kroll
 		  a reference (even for Undefined and Null types).
 		  When an error occurs will throw an exception of type Value*.
 		 */
-		virtual Value* Get(const char *name) = 0;
+		virtual SharedPtr<Value> Get(const char *name) = 0;
 
 		/*
 			Function: GetPropertyNames
 
 		  Return a list of this object's property names.
 		 */
-		virtual void GetPropertyNames(std::vector<const char *> *property_names) = 0;
+		virtual SharedStringList GetPropertyNames() = 0;
 
 		/*
 			Function: SetNS
 
 			TODO: Document me
 		*/
-		void SetNS(const char *name, Value* value)
+		void SetNS(const char *name, SharedPtr<Value> value)
 		{
 			std::vector<std::string> tokens;
 			std::string s(name);
@@ -77,14 +81,14 @@ namespace kroll
 			for (int c=0;c<(int)tokens.size()-1;c++)
 			{
 				std::string token = tokens.at(c);
-				Value *newscope = scope->Get(token.c_str());
+				SharedPtr<Value> newscope = scope->Get(token.c_str());
 				if (newscope->IsUndefined() || newscope->IsNull())
 				{
-					BoundObject* bo = (BoundObject*)CreateEmptyBoundObject();
-					Value *newvalue = new Value(bo);
+					SharedPtr<BoundObject> bo = BoundObject::CreateEmptyBoundObject();
+					SharedPtr<Value> newvalue = new Value(bo);
 					scope->Set(token.c_str(),newvalue);
-					KR_DECREF(newscope); // OK to release since scope holds
-					KR_DECREF(newvalue);
+					//KR_DECREF(newscope); // OK to release since scope holds
+					//KR_DECREF(newvalue);
 					scope = bo;
 				}
 				else if (newscope->IsObject())
@@ -106,16 +110,16 @@ namespace kroll
 
 		/*
 			Function: GetNS
-			
+
 			TODO: Document me
 		*/
-		Value* GetNS(const char *name)
+		SharedPtr<Value> GetNS(const char *name)
 		{
 			std::string s(name);
 			std::string::size_type last = 0;
 			std::string::size_type pos = s.find_first_of(".");
-			Value* current = NULL;
-			BoundObject* scope = this;
+			SharedPtr<Value> current;
+			SharedPtr<BoundObject> scope = this;
 			while (pos != std::string::npos)
 			{
 				std::string token = s.substr(last,pos);
@@ -128,7 +132,7 @@ namespace kroll
 				}
 				else
 				{
-					return Value::Undefined();
+					return Value::Undefined;
 				}
 			}
 			if (pos!=s.length())

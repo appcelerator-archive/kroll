@@ -16,9 +16,9 @@ namespace kroll
 	Value::Value(bool value) { init(); this->Set(value); }
 	Value::Value(const char* value) { init(); this->Set(std::string(value)); }
 	Value::Value(std::string& value) { init(); this->Set(value); }
-	Value::Value(BoundList* value) { init(); this->Set(value); }
-	Value::Value(BoundMethod* method) { init(); this->Set(method); }
-	Value::Value(BoundObject* value) { init(); this->Set(value); }
+	Value::Value(SharedPtr<BoundList> value) { init(); this->Set(value); }
+	Value::Value(SharedPtr<BoundMethod> method) { init(); this->Set(method); }
+	Value::Value(SharedPtr<BoundObject> value) { init(); this->Set(value); }
 	Value::Value(const Value& value)
 	{
 		init();
@@ -26,15 +26,15 @@ namespace kroll
 		if (value.IsString())
 		{
 			// make a copy
-			this->value.stringValue = new std::string(value.ToString());
+			this->value.stringValue = strdup(value.ToString());
 		}
 		else
 		{
 			this->value = value.value;
-			if (value.IsObject())
-			{
-				KR_ADDREF(this->value.objectValue);
-			}
+			//if (value.IsObject())
+			//{
+			//	KR_ADDREF(this->value.objectValue);
+			//}
 		}
 	}
 
@@ -42,7 +42,7 @@ namespace kroll
 	{
 		if (IsObject())
 		{
-			KR_DECREF(this->value.objectValue);
+			//KR_DECREF(this->value.objectValue);
 		}
 		else if (IsString())
 		{
@@ -51,14 +51,17 @@ namespace kroll
 		}
 	}
 
-	Value* Value::Undefined()
+	SharedPtr<Value> Value::Undefined = CreateUndefined();
+	SharedPtr<Value> Value::Null = CreateNull();
+
+	Value* Value::CreateUndefined()
 	{
 		Value* v = new Value();
 		v->SetUndefined();
 		return v;
 	}
 
-	Value* Value::Null()
+	Value* Value::CreateNull()
 	{
 		Value* v = new Value();
 		v->SetNull();
@@ -101,12 +104,12 @@ namespace kroll
 	int Value::ToInt() const { return (int) value.numberValue; }
 	double Value::ToDouble() const { return value.numberValue; }
 	bool Value::ToBool() const { return value.boolValue; }
-	std::string Value::ToString() const { return std::string(*value.stringValue); }
-	BoundObject* Value::ToObject() const { return value.objectValue; }
-	BoundMethod* Value::ToMethod() const { return (BoundMethod*) value.objectValue; }
-	BoundList* Value::ToList() const { return (BoundList*) value.objectValue; }
+	char* Value::ToString() const { return value.stringValue; }
+	SharedPtr<BoundObject> Value::ToObject() const { return value.objectValue; }
+	SharedPtr<BoundMethod> Value::ToMethod() const { return value.objectValue.cast<BoundMethod>(); }
+	SharedPtr<BoundList> Value::ToList() const { return value.objectValue.cast<BoundList>(); }
 
-	void Value::Set(Value* other)
+	void Value::Set(SharedPtr<Value> other)
 	{
 		if (other->IsInt())
 			this->Set(other->ToInt());
@@ -160,34 +163,34 @@ namespace kroll
 		type = BOOL;
 	}
 
-	void Value::Set(std::string value)
+	void Value::Set(char* value)
 	{
 		defaults();
-		this->value.stringValue = new std::string(value);
+		this->value.stringValue = strdup(value);
 		type = STRING;
 	}
 
-	void Value::Set(BoundList* value)
+	void Value::Set(SharedPtr<BoundList> value)
 	{
 		defaults();
 		this->value.objectValue = value;
-		KR_ADDREF(this->value.objectValue);
+		//KR_ADDREF(this->value.objectValue);
 		type = LIST;
 	}
 
-	void Value::Set(BoundObject* value)
+	void Value::Set(SharedPtr<BoundObject> value)
 	{
 		defaults();
 		this->value.objectValue = value;
-		KR_ADDREF(this->value.objectValue);
+		//KR_ADDREF(this->value.objectValue);
 		type = OBJECT;
 	}
 
-	void Value::Set(BoundMethod* value)
+	void Value::Set(SharedPtr<BoundMethod> value)
 	{
 		defaults();
 		this->value.objectValue = value;
-		KR_ADDREF(this->value.objectValue);
+		//KR_ADDREF(this->value.objectValue);
 		type = METHOD;
 	}
 
@@ -275,7 +278,7 @@ namespace kroll
 		}
 		else if (this->IsList())
 		{
-			BoundList *list = this->ToList();
+			SharedPtr<BoundList> list = this->ToList();
 			oss << "[";
 			if (list->Size() > 0)
 			{
@@ -289,9 +292,8 @@ namespace kroll
 		}
 		else if (this->IsObject())
 		{
-			BoundObject *obj = this->ToObject();
-			std::vector<const char *> props;
-			obj->GetPropertyNames(&props);
+			SharedPtr<BoundObject> obj = this->ToObject();
+			SharedStringList props = obj->GetPropertyNames();
 
 			oss << "{";
 			if (props.size() > 0)

@@ -9,7 +9,7 @@
 
 #include "../ref_counted.h"
 #include "binding.h"
-
+#include <Poco/SharedPtr.h>
 
 namespace kroll
 {
@@ -21,7 +21,7 @@ namespace kroll
 	  binding layer, take a look at BoundList and
 	  StaticBoundList.
 	 */
-	typedef std::vector<Value*> ValueList;
+	typedef std::vector<SharedPtr<Value> > ValueList;
 
 	/*
 		Class: Value
@@ -31,7 +31,7 @@ namespace kroll
 	class KROLL_API Value : public RefCounted
 	{
 	public:
-	
+
 		/*
 			Enum: Type
 
@@ -56,6 +56,24 @@ namespace kroll
 			NULLV = 0,
 			UNDEFINED = -1
 		};
+
+		/*
+			Function: Undefined
+
+		  return a system-defined shared UNDEFINED type. the
+		  return pointer is not borrowed and must referenced
+		  counted if used or returned from a method call.
+		 */
+		static SharedPtr<Value> Undefined;
+
+		/*
+			Function: Undefined
+
+		  return a system-defined shared UNDEFINED type. the
+		  return pointer is not borrowed and must referenced
+		  counted if used or returned from a method call.
+		 */
+		static SharedPtr<Value> Null;
 
 		/*
 			Constructor: Value
@@ -104,21 +122,21 @@ namespace kroll
 
 		  construct a <LIST> type
 		 */
-		Value(BoundList* value);
+		Value(SharedPtr<BoundList> value);
 
 		/*
 			Constructor: Value
 
 		  construct an <OBJECT> type
 		 */
-		Value(BoundObject* value);
+		Value(SharedPtr<BoundObject> value);
 
 		/*
 			Constructor: Value
 
 		  construct a <METHOD> type
 		 */
-		Value(BoundMethod* value);
+		Value(SharedPtr<BoundMethod> value);
 
 		/*
 			Constructor: Value
@@ -132,26 +150,11 @@ namespace kroll
 		 * destructor
 		 */
 		virtual ~Value();
-		
+
+		static SharedPtr<Value> CreateUndefined();
+		static SharedPtr<Value> CreateNull();
+
 	public:
-	
-		/*
-			Function: Undefined
-
-		  return a system-defined shared UNDEFINED type. the
-		  return pointer is not borrowed and must referenced
-		  counted if used or returned from a method call.
-		 */
-		static Value* Undefined();
-	
-		/*
-			Function: Null
-
-		  return a system-defined shared NULL type. the
-		  return pointer is not borrowed and must referenced
-		  counted if used or returned from a method call.
-		 */
-		static Value* Null();
 
 		/*
 			Function: operator==
@@ -164,7 +167,7 @@ namespace kroll
 		  return true if the internal value is an INT
 		 */
 		bool IsInt() const;
-	
+
 		/*
 			Function: IsDouble
 
@@ -202,7 +205,7 @@ namespace kroll
 
 		/*
 			Function: IsMethod
-	
+
 		  return true if the internal value is a METHOD
 		 */
 		bool IsMethod() const;
@@ -227,48 +230,48 @@ namespace kroll
 		  return the value as an int
 		 */
 		int ToInt() const;
-	
+
 		/*
 			Function: ToDouble
 
 		  return the value as a double
 		 */
 		double ToDouble() const;
-	
+
 		/*
 			Function: ToBool
 
 		  return the value as a bool
 		 */
 		bool ToBool() const;
-	
+
 		/*
 			Function: ToString
 
 		  return the value as a std::string
 		 */
-		std::string ToString() const;
-	
+		char* ToString() const;
+
 		/*
 			Function: ToList
 
 		  return the value as a BoundList
 		 */
-		BoundList* ToList() const;
-	
+		SharedPtr<BoundList> ToList() const;
+
 		/*
 			Function: ToObject
 
 		  return the value as a BoundObject*
 		 */
-		BoundObject* ToObject() const;
-	
+		SharedPtr<BoundObject> ToObject() const;
+
 		/*
 			Function: ToMethod
 
 		  return the value as a BoundMethod*
 		 */
-		BoundMethod* ToMethod() const;
+		SharedPtr<BoundMethod> ToMethod() const;
 
 		/*
 			Function: ToTypeString
@@ -320,28 +323,28 @@ namespace kroll
 
 		  change the internal value of this instance to value
 		 */
-		void Set(std::string value);
+		void Set(char* value);
 
 		/*
 			Function: Set
 
 		  change the internal value of this instance to value
 		 */
-		void Set(BoundList* value);
+		void Set(SharedPtr<BoundList> value);
 
 		/*
 			Function: Set
 
 		  change the internal value of this instance to value
 		 */
-		void Set(BoundObject* value);
+		void Set(SharedPtr<BoundObject> value);
 
 		/**
 			Function: Set
 
 		  change the internal value of this instance to value
 		 */
-		void Set(BoundMethod* value);
+		void Set(SharedPtr<BoundMethod> value);
 
 		/*
 			Function: SetNull
@@ -356,19 +359,19 @@ namespace kroll
 		  change the internal value of this instance to UNDEFINED
 		 */
 		void SetUndefined();
-	
+
 	private:
 		Type type;
 		union
 		{
 			double numberValue;
 			bool boolValue;
-			std::string *stringValue;
-			BoundObject *objectValue;
+			char *stringValue;
+			SharedPtr<BoundObject> objectValue;
 		} value;
 		void defaults();
 		void init();
-		
+
 	};
 }
 

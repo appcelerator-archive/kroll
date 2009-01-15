@@ -11,7 +11,7 @@
 namespace kroll {
 	/*
 		Enum: MethodDelegateType
-	
+
 		GET - Getter method
 		SET - Setter method
 	*/
@@ -20,60 +20,60 @@ namespace kroll {
 		GET,
 		SET
 	};
-	
+
 	/*
 		Class: ScopeMethodDelegate
-	
+
 	  class that can be used to change the delegation of a method
 	  call's Get or Set method to first check to see if the key has
 	  namespace dots (such as ti.foo.bar) and if so, delegate to a
 	  differently supplied scope object for delegation.
 	 */
-	
-	
+
+
 	class KROLL_API ScopeMethodDelegate : public BoundMethod
 	{
 	public:
 		/*
 			Constructor: ScopeMethodDelegate
 		*/
-		ScopeMethodDelegate(MethodDelegateType type, BoundObject *global,
-		                    BoundObject *scope, BoundMethod *delegate);
+		ScopeMethodDelegate(MethodDelegateType type, SharedPtr<BoundObject> global,
+		                    SharedPtr<BoundObject> scope, SharedPtr<BoundMethod> delegate);
 
 		/*
 			Function: Set
-	
+
 			TODO: Document me
 		*/
-		void Set(const char *name, Value* value);
+		void Set(const char *name, SharedPtr<Value> value);
 
 		/*
 			Function: Get
 
 			TODO: Document me
 		*/
-		Value* Get(const char *name);
-	
+		SharedPtr<Value> Get(const char *name);
+
 		/*
 			Function: GetPropertyNames
 
 			TODO: Document me
 		*/
-		void GetPropertyNames(std::vector<const char *> *property_names);
-	
+		SharedStringList GetPropertyNames();
+
 		/*
 			Function: IsGlobalKey
-	
+
 			TODO: Document me
 		*/
 		bool IsGlobalKey(std::string& key);
-	
+
 		/*
 			Function: Call
-	
+
 			TODO: Document me
 		*/
-		Value* Call(const ValueList& args);
+		SharedPtr<Value> Call(const ValueList& args);
 
 		/*
 		  Function: CreateDelegate
@@ -82,13 +82,13 @@ namespace kroll {
 		  StaticBoundObject and delegate set/get to the new
 		  static bound object
 		 */
-		static StaticBoundObject* CreateDelegate(BoundObject *global, BoundObject *bo);
+		static SharedPtr<StaticBoundObject> CreateDelegate(SharedPtr<BoundObject> global, SharedPtr<BoundObject> bo);
 
 	private:
 		MethodDelegateType type;
-		BoundObject *global;
-		BoundObject *scope;
-		BoundMethod *delegate;
+		SharedPtr<BoundObject> global;
+		SharedPtr<BoundObject> scope;
+		SharedPtr<BoundMethod> delegate;
 
 	protected:
 		virtual ~ScopeMethodDelegate();
