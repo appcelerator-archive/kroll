@@ -18,6 +18,10 @@ namespace kroll
 
 		RubyModule::instance_ = this;
 
+		ruby_init();
+		ruby_init_loadpath();
+		ruby_incpush(this->GetPath());
+
 		RubyUtils::InitializeDefaultBindings(host);
 
 		host->AddModuleProvider(this);
@@ -26,6 +30,8 @@ namespace kroll
 	void RubyModule::Destroy()
 	{
 		KR_DUMP_LOCATION
+
+		ruby_cleanup(0);
 
 		// FIXME - unregister / unbind?
 		RubyModule::instance_ = NULL;
@@ -41,26 +47,15 @@ namespace kroll
 
 	Module* RubyModule::CreateModule(std::string& path)
 	{
-		char* path2 = (char*)malloc(sizeof(char)*path.length()+1);
-		size_t length = path.copy(path2, path.length(), 0);
-		path2[length] = '\0';
+		std::cout << "Create ruby module: " << path << std::endl;
+		
+		rb_load_file(path.c_str());
+		ruby_exec();
 
-		std::cout << "Create module: " << path2 << std::endl;
+//		ruby_cleanup();  <-- at some point we need to call?
 
-		// FILE *file = fopen(path2, "r");
-		// printf("got ruby file: %d\n", (int) file);
-		// 
-		// //FIXME - we need to create a separate version of scope stuff
-		// 
-		// // right now ruby is crashing in win32, need to investigate
-		// PyRun_SimpleFile(file,path2);
-		// std::cout << "PyRan simple file" << std::endl;
-
-		std::string path3(path2);
-		free(path2);
-
-		std::cout << "return new RubyModuleInstance " << path3 << std::endl;
-		return new RubyModuleInstance(host, path3);
+		std::cout << "return new RubyModuleInstance " << path << std::endl;
+		return new RubyModuleInstance(host, path);
 	}
 
 	void RubyModule::Test()

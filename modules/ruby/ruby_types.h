@@ -15,6 +15,18 @@ namespace kroll
 	{
 	public:
 		static void InitializeDefaultBindings(Host *host);
+		
+		static const char* TypeToString (int type);
+		static VALUE Create(BoundObject* value);
+		static std::string ToString(VALUE value);
+		static bool ToBool(VALUE value);
+		static int ToInt(VALUE value);
+		static double ToDouble(VALUE value);
+		static Value* ToValue(VALUE value);
+		static const VALUE* FromArray(BoundList* list);
+		static VALUE ToValue(Value* value);
+		static std::string ToUpper (std::string s);
+
 	private:
 		RubyUtils(){}
 		~RubyUtils(){} 
