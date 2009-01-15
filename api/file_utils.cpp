@@ -12,6 +12,7 @@
 #include <shlobj.h>
 #include <process.h>
 #endif
+#include <Poco/String.h>
 
 namespace kroll
 {
@@ -64,7 +65,7 @@ namespace kroll
 		return (stat(dir.c_str(),&st)==0) && S_ISDIR(st.st_mode);
 #endif
 	}
-	
+
 	const char* FileUtils::GetDirectory(std::string &file)
 	{
 		size_t pos = file.find_last_of(KR_PATH_SEP);
@@ -103,6 +104,7 @@ namespace kroll
 		std::string dir = GetRuntimeBaseDirectory();
 		return IsDirectory(dir);
 	}
+
 	std::string FileUtils::GetRuntimeBaseDirectory()
 	{
 #ifdef OS_WIN32
@@ -157,20 +159,7 @@ namespace kroll
 		return str;
 #endif
 	}
-	std::string FileUtils::Trim(std::string str)
-	{
-		std::string c(str);
-		while (1)
-		{
-			size_t pos = c.rfind(" ");
-			if (pos == std::string::npos || pos!=c.length()-1)
-			{
-				break;
-			}
-			c = c.substr(0,pos);
-		}
-		return c;
-	}
+
 	void FileUtils::ExtractVersion(std::string& spec, int *op, std::string &version)
 	{
 		if (spec.find(">=")!=std::string::npos)
@@ -314,8 +303,8 @@ namespace kroll
 			size_t pos = line.find(":");
 			if (pos!=std::string::npos)
 			{
-				std::string key = Trim(line.substr(0,pos));
-				std::string value = Trim(line.substr(pos+1,line.length()));
+				std::string key = Poco::trim(line.substr(0,pos));
+				std::string value = Poco::trim(line.substr(pos+1,line.length()));
 				int op;
 				std::string version;
 				ExtractVersion(value,&op,version);
@@ -478,3 +467,4 @@ namespace kroll
 	}
 #endif
 }
+

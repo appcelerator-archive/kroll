@@ -60,17 +60,6 @@ namespace kroll
 	{
 	public:
 		/*
-		  Function: Trim
-
-		  Trims a string of whitespace
-
-		  Parameters:
-
-		  	str - The string to trim
-		 */
-		static std::string Trim(std::string str);
-
-		/*
 		  Function: ExtractVersion
 
 		  Extracts a matching operation and version from the
@@ -133,10 +122,10 @@ namespace kroll
 			Function: IsFile
 		*/
 		static bool IsFile(std::string &file);
-		
+
 		/*
 		    Function: GetDirectory
-		 
+
 		    Returns the directory for a given file path
 		 */
 		static const char* GetDirectory(std::string &file);
