@@ -6,6 +6,7 @@
 
 #include "binding.h"
 #include <sstream>
+#include <cstring>
 
 namespace kroll
 {

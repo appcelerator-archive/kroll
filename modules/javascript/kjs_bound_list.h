@@ -16,7 +16,7 @@
 
 namespace kroll
 {
-	class KJSBoundList : public BoundList
+	class KROLL_JAVASCRIPT_API KJSBoundList : public BoundList
 	{
 
 	public:
