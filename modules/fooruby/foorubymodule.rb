@@ -9,6 +9,6 @@ foo = Foo.new
 
 puts "foo=#{foo}"
 
-tiBind("fooruby", foo)
+Titanium.set("fooruby", foo)
 
 puts "ok bound, exiting script"
