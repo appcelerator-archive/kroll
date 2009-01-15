@@ -67,7 +67,7 @@ namespace kroll
 			return 0;
 		}
 
-		return create(this);
+		return create(this,path.c_str());
 	}
 }
 

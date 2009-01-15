@@ -21,11 +21,13 @@
 
 #ifdef OS_WIN32
 #define KR_PATH_SEP "\\"
+#define KR_PATH_SEP_OTHER "/"
 #ifndef NO_UNZIP
 #include "unzip/unzip.h"
 #endif
 #else
 #define KR_PATH_SEP "/"
+#define KR_PATH_SEP_OTHER "\\"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <pwd.h>
@@ -131,6 +133,13 @@ namespace kroll
 			Function: IsFile
 		*/
 		static bool IsFile(std::string &file);
+		
+		/*
+		    Function: GetDirectory
+		 
+		    Returns the directory for a given file path
+		 */
+		static const char* GetDirectory(std::string &file);
 
 		/*
 			Function: IsHidden

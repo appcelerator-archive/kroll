@@ -13,7 +13,7 @@ namespace kroll
 	class Module;
 	class Host;
 
-	typedef Module* ModuleCreator(Host *host);
+	typedef Module* ModuleCreator(const Host *host, const char *path);
 
 	/*
 		Class: ModuleProvider

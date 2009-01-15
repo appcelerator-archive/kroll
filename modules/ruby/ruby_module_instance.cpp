@@ -7,8 +7,8 @@
 
 namespace kroll
 {
-	RubyModuleInstance::RubyModuleInstance(Host *host, std::string path_) :
-		Module(host), path(path_)
+	RubyModuleInstance::RubyModuleInstance(Host *host, std::string path) :
+		Module(host,FileUtils::GetDirectory(path)), path(path)
 	{
 	}
 	RubyModuleInstance::~RubyModuleInstance()

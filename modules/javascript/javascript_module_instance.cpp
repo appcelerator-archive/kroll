@@ -11,7 +11,7 @@
 namespace kroll
 {
 	JavascriptModuleInstance::JavascriptModuleInstance(Host *host, std::string& path)
-		: Module(host), path(path)
+		: Module(host,FileUtils::GetDirectory(path)), path(path)
 	{
 		try
 		{
