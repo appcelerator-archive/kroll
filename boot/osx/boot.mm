@@ -178,6 +178,7 @@ int main(int argc, char* argv[])
 	NSString *appDir = [NSString stringWithFormat:@"%@/%@.app",appRootDir,bundleName];
 	NSString *appContentsDir = [NSString stringWithFormat:@"%@/Contents",appDir];
 	NSString *appResourcesDir = [NSString stringWithFormat:@"%@/Contents/Resources",appDir];
+	NSString *appFrameworksDir = [NSString stringWithFormat:@"%@/Contents/Frameworks", appDir];
 	NSString *appMacOSDir = [NSString stringWithFormat:@"%@/Contents/MacOS",appDir];
 	
 	NSString *runtimeExec = [NSString stringWithFormat:@"%@/%@",appMacOSDir,bundleName];
@@ -215,6 +216,12 @@ int main(int argc, char* argv[])
 	
 		NSString *srcResourcesDir = [NSString stringWithFormat:@"%@/Contents/Resources",bundlePath];
 		[fm createSymbolicLinkAtPath:appResourcesDir pathContent:srcResourcesDir];
+		
+		NSString *srcFrameworksDir = [NSString stringWithFormat:@"%@/Contents/Frameworks", bundlePath];
+		std::string fdir([srcFrameworksDir UTF8String]);
+		if (FileUtils::IsDirectory(fdir)) {
+			[fm createSymbolicLinkAtPath:appFrameworksDir pathContent:srcFrameworksDir];
+		}
 	}
 	
 	// if we passed in --install, we're going to just exit after we've

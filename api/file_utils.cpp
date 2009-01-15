@@ -88,6 +88,7 @@ namespace kroll
 		std::string dir = GetRuntimeBaseDirectory();
 		return IsDirectory(dir);
 	}
+
 	std::string FileUtils::GetRuntimeBaseDirectory()
 	{
 #ifdef OS_WIN32
@@ -463,3 +464,4 @@ namespace kroll
 	}
 #endif
 }
+
