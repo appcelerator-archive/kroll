@@ -32,6 +32,37 @@ namespace kroll
 	public:
 
 		/*
+			Function: Load
+
+			Called as soon as a module is discovered and instantiated.
+		*/
+		virtual void Load() = {};
+
+		/*
+			Function: Initialize
+
+			Called after all modules has been discovered.
+		*/
+		virtual void Initialize() = {};
+
+		/*
+			Function: Destroy
+
+			Called during destruction of a module.
+		*/
+		virtual void Destroy() = {};
+
+		/*
+			Function: Destroy
+
+			Called before the destruction of another module.
+
+			Parameters:
+				module - The module that is about to be unloaded.
+		*/
+		virtual void BeforeUnload(Module *module) = {};
+
+		/*
 			Function: GetName
 
 			Return the name of the module
@@ -39,18 +70,11 @@ namespace kroll
 		virtual const char * GetName() = 0;
 
 		/*
-			Function: Initialize
+			Function: GetVersion
 
-			Called once the module has been created to load the module and start it
+			Return the version of the module
 		*/
-		virtual void Initialize() = 0;
-
-		/*
-			Function: Destroy
-
-			Called to unload and cleanup the module
-		*/
-		virtual void Destroy() = 0;
+		virtual const char * GetVersion() = { return ""; }
 
 		/*
 			Function: SetProvider
@@ -98,11 +122,7 @@ using namespace kroll;
 #define KROLL_MODULE_FACTORY_DEFINE(s) extern "C" EXPORT s* CreateModule(Host *host, const char *path) \
 { \
 	std::cout << "Creating module: " << #s << std::endl; \
-	s *p = new s(host,path);\
-	std::cout << "Initializing module: " << #s << std::endl; \
-	p->Initialize(); \
-	std::cout << "After create module: " << #s << std::endl; \
-	return p; \
+	return new s(host,path);\
 }  \
 extern "C" EXPORT void DestroyModule(s* p)\
 {\

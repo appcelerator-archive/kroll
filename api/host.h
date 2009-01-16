@@ -165,7 +165,6 @@ namespace kroll
 		void AddModuleProvider(ModuleProvider *provider) {
 			ScopedLock lock(&moduleMutex);
 			module_providers.push_back(provider);
-			ScanInvalidModuleFiles();
 		}
 
 		/*

@@ -6,11 +6,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
+
 #if defined(OS_WIN32)
 # include <windows.h>
 #else
 # include <dirent.h>
 #endif
+
+#include <Poco/DirectoryIterator.h>
 #include <errno.h>
 #include <vector>
 #include <string>
@@ -97,6 +100,33 @@ namespace kroll
 		return (this->modules.end() != iter);
 	}
 
+	void Host::LoadModule(const std::string path, ModuleProvider* provider)
+	{
+		ScopedLock lock(&moduleMutex);
+
+		Module* module = p->CreateModule(path);
+		if (module == NULL)
+		{
+			std::cerr << "Couldn't load module: "
+			          << path << ", skipping..."
+			          << std::endl;
+			return;
+		}
+
+		printf("Module->SetProvider\n");
+		module->SetProvider(provider);
+		printf("Module->Load\n");
+		module->Load();
+		std::cout << "module loaded " << module->GetName()
+		          << " from " << path << std::endl;
+		
+
+		this->RegisterModule(path, module);
+
+		//we can now release our reference since the host has it
+		KR_DECREF(module);
+	}
+
 	void Host::LoadModules(std::vector<std::string>& files) 
 	{
 		ScopedLock lock(&moduleMutex);
@@ -115,8 +145,12 @@ namespace kroll
 			}
 			else
 			{
+				printf("Module->SetProvider\n");
 				module->SetProvider(module_creators[path]);
-				
+
+				printf("Module->Load\n");
+				module->Load();
+
 				std::cout << "module loaded " << module->GetName() << " from " << path
 						<< std::endl;
 				
@@ -166,95 +200,66 @@ namespace kroll
 		return NULL;
 	}
 
-	int Host::FindModules(std::string &dir, std::vector<std::string> &files) 
+	int Host::FindModules() 
+	{
+
+		// Search the module directories for modules
+		// that can be loaded by the basic module loader.
+		std::vector<std::string>::iterator iter;
+		for (iter = this->module_paths_begin;
+		     iter != this->module_paths.end();
+		     iter++)
+		{
+			this->FindBasicModules(*iter);
+		}
+
+		// Now scan invalid files and attempt to load
+		// them with our new module loaders
+		FindProvidedModules();
+
+	}
+
+	void Host::FindBasicModules(std::string &dir) 
 	{
 		ScopedLock lock(&moduleMutex);
-	#if defined(OS_WIN32)
+		std::string search_dir = (dir);
 
-		std::string searchdir = (dir);
-		searchdir.append("\\*");
+		Poco::DirectoryIterator files(search_dir);
+		Poco::DirectoryIterator end;
+		while (files != end)
+		{
+			Poco::File file(files.name());
 
-		WIN32_FIND_DATA findFileData;
-
-		HANDLE hFind = FindFirstFile(searchdir.c_str(), &findFileData);
-
-		if (hFind != INVALID_HANDLE_VALUE) {
-			do {
-				if (!(findFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
-					std::string filename = findFileData.cFileName;
-					ModuleProvider *p = FindModuleProvider(filename);
-					std::string fullpath = dir + "\\" + filename;
-					if (p != NULL) {
-						module_creators[fullpath] = p;
-						files.push_back(fullpath);
-					} else {
-						invalid_module_files.push_back(fullpath);
-					}
-				}
-			} while (FindNextFile(hFind, &findFileData));
-			FindClose(hFind);
-			return 0;
-		} else {
-			return (int)GetLastError();
-		}
-
-	#else
-		DIR *dp;
-		struct dirent *dirp;
-		if ((dp = opendir(dir.c_str())) == NULL) {
-			return errno;
-		}
-
-		while ((dirp = readdir(dp)) != NULL) {
-			std::string fn = std::string(dirp->d_name);
-			std::string fullpath = dir + "/" + fn;
-			if (fn.substr(0, 1) == "." || fn.substr(0, 2) == "..")
+			// Skip hidden and non-file paths
+			if (file.isDirectory() || file.isHidden())
 				continue;
-			ModuleProvider *p = FindModuleProvider(fn);
-			if (p != NULL) {
-				module_creators[fullpath] = p;
-				files.push_back(fullpath);
-			} else {
-				invalid_module_files.push_back(fullpath);
-			}
+
+			const std::string path = file.path();
+
+			if (IsModule(path))
+				this->LoadModule(path, this);
 		}
-		closedir(dp);
-		return 0;
-	#endif
+	}
+
+	void FindProvidedModules()
+	{
+		std::vector<std::string>::iterator iter = invalid_module_files.begin();
+
+		while (iter != invalid_module_files.end()) {
+			ModuleProvider *provider = FindModuleProvider(*iter);
+			if (provider != NULL) {
+				const std::string path = *iter;
+				this->LoadModule(path, p);
+			}
+
+			iter++;
+		}
 	}
 
 	StaticBoundObject* Host::GetGlobalObject() {
 		return this->global_object;
 	}
 
-	void Host::ScanInvalidModuleFiles() 
-	{
-		ScopedLock lock(&moduleMutex);
-		std::vector<std::string>::iterator iter = invalid_module_files.begin();
-
-		while (iter != invalid_module_files.end()) {
-			//printf("Find Module Provider for: %s\n", (*iter).c_str());
-			ModuleProvider *provider = FindModuleProvider(*iter);
-
-			if (provider != NULL) {
-				//printf("Creating module from external provider: %s\n", (*iter).c_str());
-
-				Module *module = provider->CreateModule(*iter);
-				printf("Module->SetProvider\n");
-				module->SetProvider(provider);
-
-				//printf("Registering module from external provider: %s\n", (*iter).c_str());
-				printf("Register Module\n");
-				RegisterModule(*iter, module);
-
-				iter = invalid_module_files.erase(iter);
-				KR_DECREF(module);
-			}
-			else {
-				iter++;
-			}
-		}
-	}
 }
 
 // this is the platform specific code for main thread processing

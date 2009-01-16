@@ -110,7 +110,7 @@ namespace kroll
 			
 				str - The string to trim
 		*/
-		static 	std::string FileUtils::Trim(std::string str);
+		static std::string Trim(std::string str);
 
 		/*
 			Function: ReadManifest
