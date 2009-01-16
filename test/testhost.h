@@ -6,9 +6,7 @@
 #ifndef _TEST_HOST_H
 #define _TEST_HOST_H
 
-#include <api/module.h>
-#include <api/host.h>
-#include <api/binding/bound_object.h>
+#include <api/kroll.h>
 
 namespace kroll
 {
