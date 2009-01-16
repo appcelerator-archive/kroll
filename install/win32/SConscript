@@ -10,7 +10,7 @@ Env.Append(LIBS = ['user32', 'shell32'])
 
 p = Env.Program(build.dir + '/kinstall', ['installer.cpp', '../api/file_utils.obj', '../api/unzip/unzip.obj'])
 
-Env.AddPostAction(p, 'mt.exe -nologo -manifest ' + \
-                     '"%s/kinstall.exe.manifest" ' + \
-                     ' -outputresource:%s/kinstall.exe' % \
-                     (build.dir, build.dir)
+command = 'mt.exe -nologo -manifest "%s/kinstall.exe.manifest" -outputresource:%s/kinstall.exe'
+command = command % (build.dir, build.dir)
+
+Env.AddPostAction(p, command)

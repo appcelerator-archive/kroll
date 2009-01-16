@@ -3,14 +3,11 @@
  * see LICENSE in the root folder for details on the license.
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
+#include "host.h"
 #include <iostream>
-#include <vector>
 #include <cstring>
-#include <string>
 #include <windows.h>
 #include <commctrl.h>
-#include "host.h"
-#include <api/kroll.h>
 
 namespace kroll
 {
@@ -68,7 +65,7 @@ namespace kroll
 	{
 		std::cout << "Win32Host::CreateModule " << path.c_str() << std::endl;
 
-		HMODULE module = LoadLibrary(path.c_str());
+		HMODULE module = LoadLibraryA(path.c_str());
 
 		if (!module)
 		{

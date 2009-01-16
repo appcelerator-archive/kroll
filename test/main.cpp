@@ -3,6 +3,7 @@
  * see LICENSE in the root folder for details on the license.
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
+#include <api/base.h>
 #if defined(OS_OSX)
 #include <Foundation/Foundation.h>
 #include <Cocoa/Cocoa.h>

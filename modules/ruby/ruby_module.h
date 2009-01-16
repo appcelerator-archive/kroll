@@ -6,6 +6,7 @@
 #ifndef _RUBY_MODULE_H
 #define _RUBY_MODULE_H
 
+#include <kroll/base.h>
 #include <string>
 #include <vector>
 #include <iostream>

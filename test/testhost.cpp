@@ -8,6 +8,7 @@
 #include <cstring>
 #include <string>
 #if defined(OS_WIN32)
+#include <api/base.h>
 #include <windows.h>
 #else
 #include <dlfcn.h>
@@ -45,7 +46,7 @@ namespace kroll
 
 	//FIXME - port to Win32
 	#if defined(OS_WIN32)
-		HMODULE lib_handle = LoadLibrary(path.c_str());
+		HMODULE lib_handle = LoadLibraryA(path.c_str());
 	#else
 		void* lib_handle = dlopen(path.c_str(), RTLD_LAZY | RTLD_GLOBAL);
 	#endif
