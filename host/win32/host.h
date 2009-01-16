@@ -7,8 +7,7 @@
 #define _WIN32_HOST_H
 
 #include <api/base.h>
-#include <api/host.h>
-#include <api/module.h>
+#include <api/kroll.h>
 #include <string>
 #include <vector>
 #include <windows.h>

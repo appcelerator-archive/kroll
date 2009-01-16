@@ -8,6 +8,7 @@
 #include <cstring>
 #include <windows.h>
 #include <commctrl.h>
+#include <ole2.h>
 
 namespace kroll
 {

@@ -9,7 +9,6 @@
 #include <kroll/base.h>
 #include <string>
 #include <vector>
-#include <iostream>
 #include <ruby.h>
 #include <kroll/kroll.h>
 
