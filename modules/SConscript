@@ -1,7 +1,14 @@
 #!/usr/bin/env python
 Import('build')
+import os
 
 modules = ['api', 'foo', 'python', 'foopy', 'javascript', 'foojs','ruby']
 
 for module in modules:
-	SConscript(module+'/SConscript', build_dir=build.kroll_build_dir + '/modules/' + module, duplicate=0)
+	module_dir = build.dir + '/modules/' + module
+	SConscript(module+'/SConscript', build_dir=module_dir, duplicate=0)
+	out_dir = os.path.join(build.abstopdir,'modules',module)
+	script = os.path.join(build.abstopdir,'build','module.py')
+	os.system(script+' '+build.dir+' '+out_dir+' '+build.os)
+	
+	
