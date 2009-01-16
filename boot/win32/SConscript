@@ -11,4 +11,7 @@ Env.Append(LIBS = ['shell32', 'user32'])
 o = Env.Object(target = 'file_utils_boot.o', source = '../api/file_utils.cpp')
 p = Env.Program(build.dir + '/kboot', ['boot.cpp','file_utils_boot.o'])
 
-Env.AddPostAction(p, 'mt.exe -nologo -manifest "'+build.dir+'/kboot.exe.manifest'+'" -outputresource:'+build.absdir+'/kboot.exe')
+Env.AddPostAction(p, 'mt.exe -nologo -manifest ' + \
+                     '"%s/kboot.exe.manifest" ' + \
+                     ' -outputresource:%s/kboot.exe' % \
+                     (build.dir, build.dir)
