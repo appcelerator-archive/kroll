@@ -29,22 +29,22 @@ namespace kroll
 		if (this->this_obj != NULL)
 			JSValueUnprotect(this->context, this->this_obj);
 
-		KR_DECREF(kjs_bound_object);
+		//KR_DECREF(kjs_bound_object);
 	}
 
-	Value* KJSBoundMethod::Get(const char *name)
+	SharedPtr<Value> KJSBoundMethod::Get(const char *name)
 	{
 		return kjs_bound_object->Get(name);
 	}
 
-	void KJSBoundMethod::Set(const char *name, Value* value)
+	void KJSBoundMethod::Set(const char *name, SharedPtr<Value> value)
 	{
 		return kjs_bound_object->Set(name, value);
 	}
 
-	void KJSBoundMethod::GetPropertyNames(std::vector<const char *> *property_names)
+	SharedStringList KJSBoundMethod::GetPropertyNames()
 	{
-		kjs_bound_object->GetPropertyNames(property_names);
+		return kjs_bound_object->GetPropertyNames();
 	}
 
 	bool KJSBoundMethod::SameContextGroup(JSContextRef c)
@@ -57,13 +57,13 @@ namespace kroll
 		return this->object;
 	}
 
-	Value* KJSBoundMethod::Call(const ValueList& args)
+	SharedPtr<Value> KJSBoundMethod::Call(const ValueList& args)
 	{
 
 		JSValueRef* js_args = new JSValueRef[args.size()];
 		for (int i = 0; i < (int) args.size(); i++)
 		{
-			Value* arg = args.at(i);
+			SharedPtr<Value> arg = args.at(i);
 			js_args[i] = KJSUtil::ToJSValue(arg, this->context);
 		}
 
@@ -78,8 +78,8 @@ namespace kroll
 
 		if (js_value == NULL && exception != NULL) //exception thrown
 		{
-			Value* tv_exp = KJSUtil::ToKrollValue(exception, this->context, NULL);
-			throw tv_exp;
+			SharedPtr<Value> tv_exp = KJSUtil::ToKrollValue(exception, this->context, NULL);
+			throw tv_exp.get();
 		}
 
 		return KJSUtil::ToKrollValue(js_value, this->context, NULL);

@@ -20,13 +20,11 @@ namespace kroll
 	public:
 		KJSBoundObject(JSContextRef context,
 		               JSObjectRef js_object);
-	protected:
 		~KJSBoundObject();
-	public:
 
-		void Set(const char *name, Value* value);
-		Value* Get(const char *name);
-		void GetPropertyNames(std::vector<const char *> *property_names);
+		void Set(const char *name, SharedPtr<Value> value);
+		SharedPtr<Value> Get(const char *name);
+		SharedStringList GetPropertyNames();
 		bool SameContextGroup(JSContextRef c);
 
 		JSObjectRef GetJSObject();

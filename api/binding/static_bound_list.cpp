@@ -81,7 +81,7 @@ namespace kroll
 
 	SharedStringList StaticBoundList::GetPropertyNames()
 	{
-		return this->object->GetPropertyNames(property_names);
+		return this->object->GetPropertyNames();
 	}
 
 	char* StaticBoundList::IntToChars(int value)

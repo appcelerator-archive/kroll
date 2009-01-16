@@ -9,6 +9,8 @@
 
 #include <Poco/SharedPtr.h>
 
+using namespace Poco;
+
 namespace kroll
 {
 	/*
@@ -129,6 +131,8 @@ namespace kroll
 		 */
 		Value(SharedPtr<BoundObject> value);
 
+		Value(SharedPtr<StaticBoundObject> value);
+
 		/*
 			Constructor: Value
 
@@ -138,16 +142,20 @@ namespace kroll
 
 		/*
 			Constructor: Value
+		 */
+		Value::Value(SharedPtr<Value> value);
+		/*
+			Constructor: Value
 
 		  construct a copy constructor for an existing Value
 		 */
 		Value(const Value& value);
 
-	protected:
 		/**
 		 * destructor
 		 */
 		virtual ~Value();
+	protected:
 
 		static SharedPtr<Value> CreateUndefined();
 		static SharedPtr<Value> CreateNull();
@@ -293,7 +301,17 @@ namespace kroll
 		  this instance will make a reference of the internal
 		  value of other but not other itself
 		 */
-		void Set(Value* other);
+		void Set(Value *other);
+
+		/*
+			Function: Set
+
+		  changes the internal value of this instance.
+		  copy the internal value of other into this object.
+		  this instance will make a reference of the internal
+		  value of other but not other itself
+		 */
+		void Set(SharedPtr<Value> other);
 
 		/*
 			Function: Set
@@ -333,6 +351,13 @@ namespace kroll
 		/*
 			Function: Set
 
+			change the internal value of this instance to value
+		 */
+		void Set(SharedPtr<StaticBoundObject> value);
+
+		/*
+			Function: Set
+
 		  change the internal value of this instance to value
 		 */
 		void Set(SharedPtr<BoundObject> value);
@@ -360,13 +385,12 @@ namespace kroll
 
 	private:
 		Type type;
-		union
-		{
-			double numberValue;
-			bool boolValue;
-			const char *stringValue;
-			SharedPtr<BoundObject> objectValue;
-		} value;
+		// had to get rid of union: SharedPtr can't be stored in a union
+		double numberValue;
+		bool boolValue;
+		const char *stringValue;
+		SharedPtr<BoundObject> objectValue;
+
 		void defaults();
 		void init();
 

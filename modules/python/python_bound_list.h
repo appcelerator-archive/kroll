@@ -15,6 +15,7 @@ namespace kroll
 	{
 	public:
 		PythonBoundList(PyObject *obj);
+		virtual ~PythonBoundList();
 		PyObject* ToPython() const { Py_INCREF(object); return object; }
 
 		/**
@@ -23,7 +24,7 @@ namespace kroll
 		 * reference count.
 		 * When an error occurs will throw an exception of type Value*.
 		 */
-		void Append(Value* value);
+		void Append(SharedPtr<Value> value);
 
 		/**
 		 * Get the length of this list.
@@ -36,7 +37,7 @@ namespace kroll
 		 * reference counted and must be released.
 		 * When an error occurs will throw an exception of type Value*.
 		 */
-		Value* At(int index);
+		SharedPtr<Value> At(int index);
 
 		/**
 		 * Set a property on this object to the given value. Value should be
@@ -44,7 +45,7 @@ namespace kroll
 		 * if they increase the reference count.
 		 * When an error occurs will throw an exception of type Value*.
 		 */
-		void Set(const char *name, Value* value);
+		void Set(const char *name, SharedPtr<Value> value);
 
 		/**
 		 * return a named property. the returned value is automatically
@@ -52,16 +53,15 @@ namespace kroll
 		 * with the return value (even for Undefined and Null types).
 		 * When an error occurs will throw an exception of type Value*.
 		 */
-		Value* Get(const char *name);
+		SharedPtr<Value> Get(const char *name);
 
 		/**
 		 * Return a list of this object's property names.
 		 */
-		void GetPropertyNames(std::vector<const char *> *property_names);
+		SharedStringList GetPropertyNames();
 
 	protected:
 		PyObject *object;
-		virtual ~PythonBoundList();
         DISALLOW_EVIL_CONSTRUCTORS(PythonBoundList);
 	};
 }

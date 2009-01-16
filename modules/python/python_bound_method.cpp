@@ -7,7 +7,7 @@
 
 namespace kroll
 {
-	PythonBoundMethod::PythonBoundMethod(PyObject *obj, const char *n) : 
+	PythonBoundMethod::PythonBoundMethod(PyObject *obj, const char *n) :
 		name(NULL), object(obj), delegate(new PythonBoundObject(obj))
 	{
 		if (n)
@@ -23,10 +23,10 @@ namespace kroll
 		this->object = NULL;
 		if (this->name) free(this->name);
 		this->name = NULL;
-		KR_DECREF(this->delegate);
+		//KR_DECREF(this->delegate);
 	}
 
-	Value* PythonBoundMethod::Call(const ValueList& args)
+	SharedPtr<Value> PythonBoundMethod::Call(const ValueList& args)
 	{
 		PyObject *arglist = NULL;
 		if (args.size()>0)
@@ -34,7 +34,7 @@ namespace kroll
 			arglist = PyTuple_New(args.size());
 			for (int i = 0; i < (int) args.size(); i++)
 			{
-				Value* v = args[i];
+				SharedPtr<Value> v = args[i];
 				PyObject *pv = PythonUtils::ToObject(v);
 				PyTuple_SetItem(arglist, i, pv);
 			}
@@ -47,32 +47,32 @@ namespace kroll
 			Py_XDECREF(response);
 			PythonUtils::ThrowException();
 		}
-		Value* value;
+		SharedPtr<Value> value;
 		if (response!=NULL)
 		{
 			value = PythonUtils::ToValue(response,NULL);
 		}
 		else
 		{
-			value = Value::Undefined();
+			value = Value::Undefined;
 		}
 		Py_XDECREF(response);
 		return value;
 	}
 
-	void PythonBoundMethod::Set(const char *name, Value* value)
+	void PythonBoundMethod::Set(const char *name, SharedPtr<Value> value)
 	{
 		this->delegate->Set(name,value);
 	}
 
-	Value* PythonBoundMethod::Get(const char *name)
+	SharedPtr<Value> PythonBoundMethod::Get(const char *name)
 	{
 		return this->delegate->Get(name);
 	}
 
-	void PythonBoundMethod::GetPropertyNames(std::vector<const char *> *property_names)
+	SharedStringList PythonBoundMethod::GetPropertyNames()
 	{
-		this->delegate->GetPropertyNames(property_names);
+		return this->delegate->GetPropertyNames();
 	}
 
 }

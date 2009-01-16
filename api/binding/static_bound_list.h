@@ -19,11 +19,7 @@ namespace kroll
 			Constructor: StaticBoundList
 		*/
 		StaticBoundList();
-
-	protected:
 		virtual ~StaticBoundList();
-
-	public:
 
 		/*
 			Function: Append
@@ -81,7 +77,7 @@ namespace kroll
 
 	protected:
 		static char* IntToChars(int value);
-		SharedPr<StaticBoundObject> object;
+		SharedPtr<StaticBoundObject> object;
 
 	private:
 		DISALLOW_EVIL_CONSTRUCTORS(StaticBoundList);

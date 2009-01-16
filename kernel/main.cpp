@@ -3,12 +3,13 @@
  * see LICENSE in the root folder for details on the license.
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
-#include <api/kroll.h>
-#include <host.h>
 
 #if defined(OS_OSX)
 #import <Cocoa/Cocoa.h>
 #endif
+
+#include <api/kroll.h>
+#include <host.h>
 
 using namespace kroll;
 

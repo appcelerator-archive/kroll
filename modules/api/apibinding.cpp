@@ -1,18 +1,17 @@
 /**
  * Appcelerator Kroll - licensed under the Apache Public License 2
- * see LICENSE in the root folder for details on the license. 
+ * see LICENSE in the root folder for details on the license.
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
- */	
+ */
 #include "apibinding.h"
 #include <algorithm>
 
 namespace kroll
 {
-	APIBinding::APIBinding(BoundObject *global) : record(0), global(global)
+	APIBinding::APIBinding(SharedPtr<BoundObject> global) : record(0), global(global)
 	{
-		KR_ADDREF(global);
-		Value *version = new Value(1.0);
-		ScopedDereferencer r(version);
+		//KR_ADDREF(global);
+		SharedPtr<Value> version = new Value(1.0);
 		this->Set((const char*)"version",version);
 		this->SetMethod("set",&APIBinding::_Set);
 		this->SetMethod("get",&APIBinding::_Get);
@@ -23,7 +22,7 @@ namespace kroll
 	}
 	APIBinding::~APIBinding()
 	{
-		KR_DECREF(global);
+		//KR_DECREF(global);
 		ScopedLock lock(&mutex);
 		std::map<std::string,EventRecords*>::iterator i = registrations.begin();
 		while(i!=registrations.end())
@@ -50,11 +49,11 @@ namespace kroll
 		ScopedLock lock(&mutex);
 		return this->record++;
 	}
-	void APIBinding::_Set(const ValueList& args, Value *result)
+	void APIBinding::_Set(const ValueList& args, SharedPtr<Value> result)
 	{
-		std::string s = args.at(0)->ToString();
-		const char *key = s.c_str();
-		Value *value = args.at(1);
+		const char *key = args.at(0)->ToString();
+		std::string s = key;
+		SharedPtr<Value> value = args.at(1);
 		std::string::size_type pos = s.find_first_of(".");
 		if (pos==std::string::npos)
 		{
@@ -62,17 +61,17 @@ namespace kroll
 		}
 		else
 		{
-			// if we have a period, make it relative to the 
+			// if we have a period, make it relative to the
 			// global scope such that <module>.<key> would resolve
 			// to the 'module' with key named 'key'
 			global->SetNS(key,value);
 		}
 	}
-	void APIBinding::_Get(const ValueList& args, Value *result)
+	void APIBinding::_Get(const ValueList& args, SharedPtr<Value> result)
 	{
 		std::string s = args.at(0)->ToString();
 		const char *key = s.c_str();
-		Value *r = NULL;
+		SharedPtr<Value> r = NULL;
 		std::string::size_type pos = s.find_first_of(".");
 		if (pos==std::string::npos)
 		{
@@ -80,7 +79,7 @@ namespace kroll
 		}
 		else
 		{
-			// if we have a period, make it relative to the 
+			// if we have a period, make it relative to the
 			// global scope such that <module>.<key> would resolve
 			// to the 'module' with key named 'key'
 			r = global->GetNS(key);
@@ -88,37 +87,37 @@ namespace kroll
 		ScopedDereferencer r_dec(r);
 		result->Set(r);
 	}
-	void APIBinding::_Log(const ValueList& args, Value *result)
+	void APIBinding::_Log(const ValueList& args, SharedPtr<Value> result)
 	{
 		int severity = args.at(0)->ToInt();
 		std::string message = args.at(1)->ToString();
 		this->Log(severity,message);
 	}
-	void APIBinding::_Register(const ValueList& args, Value *result)
+	void APIBinding::_Register(const ValueList& args, SharedPtr<Value> result)
 	{
 		std::string event = args.at(0)->ToString();
 		BoundMethod* method = args.at(1)->ToMethod();
 		int id = this->Register(event,method);
 		result->Set(id);
 	}
-	void APIBinding::_Unregister(const ValueList& args, Value *result)
+	void APIBinding::_Unregister(const ValueList& args, SharedPtr<Value> result)
 	{
 		int id = args.at(0)->ToInt();
 		this->Unregister(id);
 	}
-	void APIBinding::_Fire(const ValueList& args, Value *result)
+	void APIBinding::_Fire(const ValueList& args, SharedPtr<Value> result)
 	{
 		std::string event = args.at(0)->ToString();
 		this->Fire(event,args.at(1));
 	}
-	
+
 	//---------------- IMPLEMENTATION METHODS
-	
+
 	void APIBinding::Log(int& severity, std::string& message)
 	{
 		//FIXME: this is temporary implementation
 		const char *type;
-	
+
 		switch (severity)
 		{
 			case KR_LOG_DEBUG:
@@ -137,7 +136,7 @@ namespace kroll
 				type = "CUSTOM";
 				break;
 		}
-	
+
 		std::cout << "[" << type << "] " << message << std::endl;
 	}
 	int APIBinding::Register(std::string& event,BoundMethod* callback)
@@ -152,13 +151,13 @@ namespace kroll
 		}
 		records->push_back(callback);
 		KR_ADDREF(callback);
-	
+
 		BoundEventEntry e;
 		e.method = callback;
 		e.event = event;
 		KR_ADDREF(callback);
 		this->registrationsById[record] = e;
-	
+
 		return record;
 	}
 	void APIBinding::Unregister(int id)
@@ -186,7 +185,7 @@ namespace kroll
 			registrationsById.erase(id);
 		}
 	}
-	void APIBinding::Fire(std::string& event, Value *value)
+	void APIBinding::Fire(std::string& event, SharedPtr<Value> value)
 	{
 		//TODO: might want to be a little more lenient on how we lock here
 		ScopedLock lock(&mutex);
@@ -200,7 +199,7 @@ namespace kroll
 				ValueList args;
 				args.push_back(new Value(event));
 				args.push_back(value);
-				KR_ADDREF(value);
+				//KR_ADDREF(value);
 				method->Call(args);
 			}
 		}

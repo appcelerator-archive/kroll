@@ -17,7 +17,7 @@ namespace kroll
 		KROLL_MODULE_CLASS(FooModule)
 
 	protected:
-		FooBinding *binding;
+		SharedPtr<FooBinding> binding;
 	};
 }
 

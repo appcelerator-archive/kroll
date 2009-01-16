@@ -20,15 +20,15 @@ namespace kroll
 
 	void APIModule::Destroy()
 	{
-		KR_DECREF(binding);
+		//KR_DECREF(binding);
 	}
 
 	class TestClass : public BoundMethod
 	{
 	public:
-		Value* Call(const ValueList& args)
+		SharedPtr<Value> Call(const ValueList& args)
 		{
-			Value *e = args.at(0);
+			SharedPtr<Value> e = args.at(0);
 			if (e->IsString())
 			{
 				this->event = e->ToString();
@@ -40,16 +40,17 @@ namespace kroll
 			}
 			return NULL;
 		}
-		void Set(const char *name, Value* value)
+		void Set(const char *name, SharedPtr<Value> value)
 		{
 
 		}
-		Value* Get(const char *name)
+		SharedPtr<Value> Get(const char *name)
 		{
 			return NULL;
 		}
-		virtual void GetPropertyNames(std::vector<const char *> *property_names)
+		virtual SharedStringList GetPropertyNames()
 		{
+			return NULL;
 		}
 
 		std::string& Event() { return event; }
@@ -70,16 +71,14 @@ namespace kroll
 		std::string msg("hello");
 		int severity = KR_LOG_DEBUG;
 
-		Value *logMethodValue = binding->Get("log");
-		BoundMethod *logMethod = logMethodValue->ToMethod();
-		KR_ASSERT(logMethod);
+		SharedPtr<Value> logMethodValue = binding->Get("log");
+		SharedPtr<BoundMethod> logMethod = logMethodValue->ToMethod();
+		KR_ASSERT(!logMethod.isNull());
 
 		ValueList args;
-		Value *sv = new Value(severity);
-		ScopedRefCounted s1(sv);
+		SharedPtr<Value> sv = new Value(severity);
 		args.push_back(sv);
-		Value *mv = new Value(msg);
-		ScopedRefCounted s2(mv);
+		SharedPtr<Value> mv = new Value(msg);
 		args.push_back(mv);
 
 		// invoke directly against interface
@@ -89,27 +88,27 @@ namespace kroll
 		logMethod->Call(args);
 
 		// invoke with varargs
-		logMethod->Call(sv,mv);
+		//logMethod->Call(sv,mv);
 
-		Value *v = new Value(1);
+		SharedPtr<Value> v = new Value(1);
 		binding->Set("foo",v);
-		Value *vr = binding->Get("foo");
+		SharedPtr<Value> vr = binding->Get("foo");
 		KR_ASSERT(v->ToInt() == vr->ToInt());
-		KR_DECREF(v);
-		KR_DECREF(vr);
+		//KR_DECREF(v);
+		//KR_DECREF(vr);
 
 		// TEST retrieving the value from a namespaced string
-		Value* foo = host->GetGlobalObject()->GetNS("api.foo");
+		SharedPtr<Value> foo = host->GetGlobalObject()->GetNS("api.foo");
 		KR_ASSERT(foo->ToInt()==1);
-		KR_DECREF(foo);
+		//KR_DECREF(foo);
 
 		// TEST registering an event handler and then receiving it
 		// once it's fired
 		std::string event("kr.api.log");
 		TestClass* testObject = new TestClass;
 		int ref = binding->Register(event,testObject);
-		Value* data = new Value("some data here");
-		ScopedDereferencer dr(data);
+		SharedPtr<Value> data = new Value("some data here");
+		//ScopedDereferencer dr(data);
 		ScopedDereferencer tod(testObject);
 
 		binding->Fire(event,data);

@@ -4,7 +4,7 @@
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
 #import <Foundation/Foundation.h>
-#import <api/kroll.h>
+#import <api/file_utils.h>
 
 using namespace kroll;
 

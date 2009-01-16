@@ -66,11 +66,11 @@ SharedPtr<Value> ScopeMethodDelegate::Call(const ValueList& args)
 
 SharedPtr<StaticBoundObject> ScopeMethodDelegate::CreateDelegate(SharedPtr<BoundObject> global, SharedPtr<BoundObject> bo)
 {
-	SharedPtr<StaticBoundObject> *scope = new StaticBoundObject();
+	SharedPtr<StaticBoundObject> scope = new StaticBoundObject();
 	SharedStringList keys = bo->GetPropertyNames();
-	SharedStringIter iter = keys.begin();
+	StringList::iterator iter = keys->begin();
 
-	while(iter!=keys.end())
+	while(iter!=keys->end())
 	{
 		const char *name = (*iter++);
 		std::string key(name);
@@ -78,7 +78,7 @@ SharedPtr<StaticBoundObject> ScopeMethodDelegate::CreateDelegate(SharedPtr<Bound
 
 		if (key == "set")
 		{
-			SharedPtr<ScopeMethodDelegate> d = new ScopeMethodDelegate(SET, global, scope,value->ToMethod());
+			SharedPtr<BoundMethod> d = new ScopeMethodDelegate(SET, global, scope,value->ToMethod());
 			SharedPtr<Value> v = new Value(d);
 			//ScopedDereferencer d1(d);
 			//ScopedDereferencer d2(v);
@@ -86,7 +86,7 @@ SharedPtr<StaticBoundObject> ScopeMethodDelegate::CreateDelegate(SharedPtr<Bound
 		}
 		else if (key == "get")
 		{
-			SharedPtr<ScopeMethodDelegate> d = new ScopeMethodDelegate(GET, global, scope,value->ToMethod());
+			SharedPtr<BoundMethod> d = new ScopeMethodDelegate(GET, global, scope,value->ToMethod());
 			SharedPtr<Value> v = new Value(d);
 			//ScopedDereferencer d1(d);
 			//ScopedDereferencer d2(v);

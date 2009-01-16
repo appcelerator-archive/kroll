@@ -38,6 +38,7 @@ namespace kroll {
 		*/
 		ScopeMethodDelegate(MethodDelegateType type, SharedPtr<BoundObject> global,
 		                    SharedPtr<BoundObject> scope, SharedPtr<BoundMethod> delegate);
+		virtual ~ScopeMethodDelegate();
 
 		/*
 			Function: Set
@@ -89,8 +90,6 @@ namespace kroll {
 		SharedPtr<BoundObject> scope;
 		SharedPtr<BoundMethod> delegate;
 
-	protected:
-		virtual ~ScopeMethodDelegate();
 
 	private:
 		DISALLOW_EVIL_CONSTRUCTORS(ScopeMethodDelegate);

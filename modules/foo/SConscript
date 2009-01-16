@@ -1,4 +1,8 @@
 #!/usr/bin/env python
 Import('build')
 
-build.env.SharedLibrary(build.dir + '/foomodule', Glob('*.cpp'), LIBS=['kroll'])
+env = build.env.Clone()
+build.AddPoco(env)
+env.Append(LIBS = ['kroll'])
+
+env.SharedLibrary(build.dir + '/foomodule', Glob('*.cpp'))

@@ -21,22 +21,22 @@ namespace kroll
 	KJSBoundList::~KJSBoundList()
 	{
 		JSValueUnprotect(this->context, this->object);
-		KR_DECREF(kjs_bound_object);
+		//KR_DECREF(kjs_bound_object);
 	}
 
-	Value* KJSBoundList::Get(const char *name)
+	SharedPtr<Value> KJSBoundList::Get(const char *name)
 	{
 		return kjs_bound_object->Get(name);
 	}
 
-	void KJSBoundList::Set(const char *name, Value* value)
+	void KJSBoundList::Set(const char *name, SharedPtr<Value> value)
 	{
 		return kjs_bound_object->Set(name, value);
 	}
 
-	void KJSBoundList::GetPropertyNames(std::vector<const char *> *property_names)
+	SharedStringList KJSBoundList::GetPropertyNames()
 	{
-		 kjs_bound_object->GetPropertyNames(property_names);
+		 return kjs_bound_object->GetPropertyNames();
 	}
 
 	bool KJSBoundList::SameContextGroup(JSContextRef c)
@@ -49,14 +49,15 @@ namespace kroll
 		return this->object;
 	}
 
-	void KJSBoundList::Append(Value* value)
+	void KJSBoundList::Append(SharedPtr<Value> value)
 	{
-		Value *push_method = this->kjs_bound_object->Get("push");
-		ScopedDereferencer s(push_method);
-	
+		SharedPtr<Value> push_method = this->kjs_bound_object->Get("push");
+
 		if (push_method->IsMethod())
 		{
-			push_method->ToMethod()->Call(value);
+			ValueList list;
+			list.push_back(value);
+			push_method->ToMethod()->Call(list);
 		}
 		else
 		{
@@ -66,9 +67,8 @@ namespace kroll
 
 	int KJSBoundList::Size()
 	{
-		Value *length_val = this->kjs_bound_object->Get("length");
-		ScopedDereferencer s(length_val);
-	
+		SharedPtr<Value> length_val = this->kjs_bound_object->Get("length");
+
 		if (length_val->IsInt())
 		{
 			return length_val->ToInt();
@@ -79,10 +79,10 @@ namespace kroll
 		}
 	}
 
-	Value* KJSBoundList::At(int index)
+	SharedPtr<Value> KJSBoundList::At(int index)
 	{
 		char* name = KJSBoundList::IntToChars(index);
-		Value *value = this->kjs_bound_object->Get(name);
+		SharedPtr<Value> value = this->kjs_bound_object->Get(name);
 		delete [] name;
 		return value;
 	}

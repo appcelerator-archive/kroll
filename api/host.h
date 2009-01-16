@@ -134,7 +134,7 @@ namespace kroll
 
 			TODO: Document me
 		*/
-		StaticBoundObject* GetGlobalObject();
+		SharedPtr<StaticBoundObject> GetGlobalObject();
 
 		/*
 			Function: GetApplicationHome
@@ -211,7 +211,7 @@ namespace kroll
 		std::map<std::string,BoundObject*> bound_objects;
 		std::vector<ModuleProvider *> module_providers;
 		std::map<std::string,ModuleProvider*> module_creators;
-		StaticBoundObject* global_object;
+		SharedPtr<StaticBoundObject> global_object;
 
 		// we store a cache of invalid module files so external providers
 		// can re-query them without initiating a filesystem search

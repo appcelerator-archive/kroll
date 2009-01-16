@@ -16,7 +16,7 @@ namespace kroll
 
 	StaticBoundMethod::~StaticBoundMethod()
 	{
-		KR_DECREF(this->object);
+		//KR_DECREF(this->object);
 	}
 
 	SharedPtr<Value> StaticBoundMethod::Call(const ValueList& args)

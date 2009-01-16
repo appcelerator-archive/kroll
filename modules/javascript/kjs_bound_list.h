@@ -23,25 +23,23 @@ namespace kroll
 
 		KJSBoundList(JSContextRef context,
 		             JSObjectRef js_object);
-	protected:
 		~KJSBoundList();
-	public:
 
-		void Set(const char *name, Value* value);
-		Value* Get(const char *name);
-		void GetPropertyNames(std::vector<const char *> *property_names);
+		void Set(const char *name, SharedPtr<Value> value);
+		SharedPtr<Value> Get(const char *name);
+		SharedStringList GetPropertyNames();
 		bool SameContextGroup(JSContextRef c);
 
-		void Append(Value* value);
+		void Append(SharedPtr<Value> value);
 		int Size();
-		Value* At(int index);
+		SharedPtr<Value> At(int index);
 
 		JSObjectRef GetJSObject();
 
 	protected:
 		JSContextRef context;
 		JSObjectRef object;
-		KJSBoundObject* kjs_bound_object;
+		SharedPtr<KJSBoundObject> kjs_bound_object;
 
 		static char* IntToChars(int value);
 	private:

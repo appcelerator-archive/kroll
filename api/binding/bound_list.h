@@ -18,10 +18,9 @@ namespace kroll
 	*/
 	class KROLL_API BoundList : public BoundObject
 	{
-	protected:
-		virtual ~BoundList(){}
 	public:
 		BoundList() {}
+		virtual ~BoundList(){}
 
 		/*
 			Function: Append

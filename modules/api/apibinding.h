@@ -23,7 +23,7 @@ namespace kroll
 		std::string event;
 	};
 
-	enum LogSeverity 
+	enum LogSeverity
 	{
 		KR_LOG_DEBUG = 1,
 		KR_LOG_INFO = 2,
@@ -34,22 +34,21 @@ namespace kroll
 	class APIBinding : public StaticBoundObject
 	{
 	public:
-		APIBinding(BoundObject*);
-	protected:
+		APIBinding(SharedPtr<BoundObject> global);
 		virtual ~APIBinding();
-	public:
+
 		void Log(int& severity, std::string& message);
 		int Register(std::string& event, BoundMethod* callback);
 		void Unregister(int ref);
-		void Fire(std::string& event, Value *data);
+		void Fire(std::string& event, SharedPtr<Value> data);
 
 	private:
-		void _Set(const ValueList& args, Value *result);
-		void _Get(const ValueList& args, Value *result);
-		void _Log(const ValueList& args, Value *result);
-		void _Register(const ValueList& args, Value *result);
-		void _Unregister(const ValueList& args, Value *result);
-		void _Fire(const ValueList& args, Value *result);
+		void _Set(const ValueList& args, SharedPtr<Value> result);
+		void _Get(const ValueList& args, SharedPtr<Value> result);
+		void _Log(const ValueList& args, SharedPtr<Value> result);
+		void _Register(const ValueList& args, SharedPtr<Value> result);
+		void _Unregister(const ValueList& args, SharedPtr<Value> result);
+		void _Fire(const ValueList& args, SharedPtr<Value> result);
 
 		// void Unload(const ValueList& args, Value *result);
 		// void Reload(const ValueList& args, Value *result);
@@ -58,8 +57,8 @@ namespace kroll
 		std::map<std::string,EventRecords*> registrations;
 		std::map<int,BoundEventEntry> registrationsById;
 		int record;
-		BoundObject *global;
-		
+		SharedPtr<BoundObject> global;
+
 		int GetNextRecord();
 	};
 }

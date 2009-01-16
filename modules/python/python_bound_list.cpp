@@ -31,10 +31,10 @@ namespace kroll
 	 * reference count.
 	 * When an error occurs will throw an exception of type Value*.
 	 */
-	void PythonBoundList::Append(Value* value)
+	void PythonBoundList::Append(SharedPtr<Value> value)
 	{
 		PyList_Append(this->object,PythonUtils::ToObject(value));
-		KR_DECREF(value);
+		//KR_DECREF(value);
 	}
 
 	/**
@@ -51,15 +51,15 @@ namespace kroll
 	 * reference counted and must be released.
 	 * When an error occurs will throw an exception of type Value*.
 	 */
-	Value* PythonBoundList::At(int index)
+	SharedPtr<Value> PythonBoundList::At(int index)
 	{
 		PyObject *p = PyList_GET_ITEM(this->object,index);
 		if (Py_None == p)
 		{
 			Py_DECREF(p);
-			return Value::Undefined();
+			return Value::Undefined;
 		}
-		Value *v = PythonUtils::ToValue(p,NULL);
+		SharedPtr<Value> v = PythonUtils::ToValue(p,NULL);
 		Py_DECREF(p);
 		return v;
 	}
@@ -70,7 +70,7 @@ namespace kroll
 	 * if they increase the reference count.
 	 * When an error occurs will throw an exception of type Value*.
 	 */
-	void PythonBoundList::Set(const char *name, Value* value)
+	void PythonBoundList::Set(const char *name, SharedPtr<Value> value)
 	{
 		// check for integer value as name
 		if (this->IsNumber(name))
@@ -87,7 +87,7 @@ namespace kroll
 				}
 			}
 
-			Value* current = this->At(val);
+			SharedPtr<Value> current = this->At(val);
 			current->Set(value);
 		}
 		else
@@ -111,7 +111,7 @@ namespace kroll
 	 * with the return value (even for Undefined and Null types).
 	 * When an error occurs will throw an exception of type Value*.
 	 */
-	Value* PythonBoundList::Get(const char *name)
+	SharedPtr<Value> PythonBoundList::Get(const char *name)
 	{
 		if (std::string(name) == std::string("length"))
 		{
@@ -121,7 +121,7 @@ namespace kroll
 		// named "name" to mimic what happens in Javascript
 		if (0 == (PyObject_HasAttrString(this->object,(char*)name)))
 		{
-			return Value::Undefined();
+			return Value::Undefined;
 		}
 
 		PyObject *response = PyObject_GetAttrString(this->object,(char*)name);
@@ -133,7 +133,7 @@ namespace kroll
 			PythonUtils::ThrowException();
 		}
 
-		Value* returnValue = PythonUtils::ToValue(response,name);
+		SharedPtr<Value> returnValue = PythonUtils::ToValue(response,name);
 		Py_DECREF(response);
 		return returnValue;
 	}
@@ -141,8 +141,9 @@ namespace kroll
 	/**
 	 * Return a list of this object's property names.
 	 */
-	void PythonBoundList::GetPropertyNames(std::vector<const char *> *property_names)
+	SharedStringList PythonBoundList::GetPropertyNames()
 	{
+		SharedStringList property_names(new StringList());
 		property_names->push_back("length");
 
 		PyObject *props = PyObject_Dir(this->object);
@@ -150,7 +151,7 @@ namespace kroll
 		if (props == NULL)
 		{
 			Py_DECREF(props);
-			return;
+			return property_names;
 		}
 
 		PyObject *iterator = PyObject_GetIter(props);
@@ -158,7 +159,7 @@ namespace kroll
 
 		if (iterator == NULL)
 		{
-			return;
+			return property_names;
 		}
 
 		while ((item = PyIter_Next(iterator)))
@@ -169,5 +170,6 @@ namespace kroll
 
 		Py_DECREF(iterator);
 		Py_DECREF(props);
+		return property_names;
 	}
 }

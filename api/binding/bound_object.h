@@ -10,12 +10,15 @@
 #include <vector>
 #include <string>
 #include <map>
+#include "../scoped_dereferencer.h"
+#include <Poco/SharedPtr.h>
+
+using namespace Poco;
 
 namespace kroll
 {
 	typedef std::vector<const char *> StringList;
 	typedef SharedPtr<StringList> SharedStringList;
-	typedef SharedStringList::iterator SharedStringIter;
 
 	/*
 		Class: BoundObject
@@ -74,7 +77,7 @@ namespace kroll
 			{
 				// Ensure dereference, except for "this" object
 				ScopedDereferencer s_dec(scope);
-				if (scope == this) scope = KR_ADDREF(scope);
+				if (scope == this) KR_ADDREF(scope);
 				const char* token = tokens[i].c_str();
 				SharedPtr<BoundObject> next;
 				SharedPtr<Value> next_val = scope->Get(token);
@@ -86,7 +89,7 @@ namespace kroll
 					scope->Set(token, next_val);
 
 				}
-				else if (!next_val->IsObject() 
+				else if (!next_val->IsObject()
 				         && !next_val->IsMethod()
 				         && !next_val->IsList())
 				{
@@ -98,7 +101,7 @@ namespace kroll
 					next = next_val->ToObject();
 				}
 
-				scope = *next;
+				scope = next.get();
 			}
 
 			const char *prop_name = tokens[tokens.size()-1].c_str();
@@ -129,7 +132,7 @@ namespace kroll
 			    pos = s.find_first_of(".", last);
 				if (current->IsObject())
 				{
-					scope = *(current->ToObject());
+					scope = current->ToObject().get();
 				}
 				else
 				{

@@ -14,20 +14,20 @@ namespace kroll
 	{
 
 	public:
-		static Value* ToKrollValue(JSValueRef value,
+		static SharedPtr<Value> ToKrollValue(JSValueRef value,
 		                           JSContextRef context,
 		                           JSObjectRef thisObject);
 
-		static JSValueRef ToJSValue(Value* value,
+		static JSValueRef ToJSValue(SharedPtr<Value> value,
 		                            JSContextRef context);
 
-		static JSValueRef ToJSValue(BoundObject *object,
+		static JSValueRef ToJSValue(SharedPtr<BoundObject> object,
 		                            JSContextRef context);
 
-		static JSValueRef ToJSValue(BoundMethod *method,
+		static JSValueRef ToJSValue(SharedPtr<BoundMethod> method,
 		                            JSContextRef context);
 
-		static JSValueRef ToJSValue(BoundList *list,
+		static JSValueRef ToJSValue(SharedPtr<BoundList> list,
 		                            JSContextRef context);
 
 		static char* ToChars(JSStringRef js_string);
@@ -35,13 +35,13 @@ namespace kroll
 		static bool IsArrayLike(JSObjectRef object,
 		                        JSContextRef context);
 
-		static KJSBoundObject* ToBoundObject(JSContextRef context, 
+		static SharedPtr<KJSBoundObject> ToBoundObject(JSContextRef context,
 											 JSObjectRef ref);
 
-		static KJSBoundMethod* ToBoundMethod(JSContextRef context, 
+		static SharedPtr<KJSBoundMethod> ToBoundMethod(JSContextRef context,
 											 JSObjectRef ref);
 
-		static KJSBoundList* ToBoundList(JSContextRef context, 
+		static SharedPtr<KJSBoundList> ToBoundList(JSContextRef context,
 										 JSObjectRef ref);
 
 	};

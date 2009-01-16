@@ -19,13 +19,13 @@ namespace kroll
 	*/
 	class KROLL_API BoundMethod : public BoundObject
 	{
-	protected:
-		virtual ~BoundMethod(){}
+
 	public:
 		/*
 			Constructor: BoundMethod
 		*/
 		BoundMethod() {}
+		virtual ~BoundMethod(){}
 
 		/*
 			Function: Call
@@ -55,7 +55,7 @@ namespace kroll
 		  with the return value (even for Undefined and Null types).
 		  When an error occurs will throw an exception of type Value*.
 		 */
-		virtual Value* Get(const char *name) = 0;
+		virtual SharedPtr<Value> Get(const char *name) = 0;
 
 		/*
 			Function: GetPropertyNames
@@ -70,7 +70,7 @@ namespace kroll
 		  call the method with a variable list of Value* arguments
 		  When an error occurs will throw an exception of type Value*.
 		 */
-		SharedPtr<Value> Call(SharedPtr<Value> first, ...)
+		/*SharedPtr<Value> Call(SharedPtr<Value> first, ...)
 		{
 			ValueList args;
 			va_list vaargs;
@@ -79,12 +79,12 @@ namespace kroll
 			while(1)
 			{
 		      SharedPtr<Value> a = va_arg(vaargs,SharedPtr<Value>);
-		      if (a==NULL) break;
+		      if (a.isNull()) break;
 		      args.push_back(a);
 			}
 			va_end(vaargs);
 			return this->Call(args);
-		}
+		}*/
 		//NOTE: this ideally above would be an operator() overload
 		//so you could just method() invoke this function but it doesn't
 		//compile on GCC with "cannot be used as function"

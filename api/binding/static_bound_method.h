@@ -14,13 +14,12 @@ namespace kroll
 	*/
 	class KROLL_API StaticBoundMethod : public BoundMethod
 	{
-	protected:
-		virtual ~StaticBoundMethod();
 	public:
 		/*
 			Constructor: StaticBoundMethod
 		*/
 		StaticBoundMethod(MethodCallback*);
+		virtual ~StaticBoundMethod();
 
 		/*
 			Function: Call

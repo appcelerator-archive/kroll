@@ -8,17 +8,6 @@ Env.Append(CPPDEFINES={'WIN32_LEAN_AND_MEAN': 1})
 Env.Append(CPPPATH=['#common/win32'])
 Env.Append(LIBS = ['user32', 'shell32'])
 
-poco = path.join(build.third_party, 'poco')
-poco_lib = path.join(poco, 'lib')
-if build.is_osx():
-    poco_inc = path.join(poco, 'headers')
-else:
-    poco_inc = path.join(poco, 'include')
-
-Env.Append(LIBPATH=[poco_lib])
-Env.Append(CPPPATH=[poco_inc])
-Env.Append(LIBS=['PocoFoundation','PocoNet','PocoNetSSL'])
-
 p = Env.Program(build.dir + '/kinstall', ['installer.cpp', '../api/file_utils.obj', '../api/unzip/unzip.obj'])
 
 Env.AddPostAction(p, 'mt.exe -nologo -manifest "'+build.absdir+'/kinstall.exe.manifest'+'" -outputresource:'+build.absdir+'/kinstall.exe')

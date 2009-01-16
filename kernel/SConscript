@@ -4,6 +4,7 @@ Import('build')
 
 Env = build.env.Clone()
 
+build.AddPoco(Env)
 if build.is_osx():
    OSX_SDK = '/Developer/SDKs/MacOSX10.4u.sdk'
    OSX_UNIV_COMPILER = '-isysroot '+OSX_SDK+' -arch ppc -arch i386'

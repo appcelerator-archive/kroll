@@ -6,7 +6,7 @@
 #import <Foundation/Foundation.h>
 #import <Cocoa/Cocoa.h>
 #import <string>
-#import <api/kroll.h>
+#import <api/file_utils.h>
 
 using namespace kroll;
 

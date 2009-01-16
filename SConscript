@@ -33,10 +33,20 @@ class BuildConfig(object):
 		self.kroll_build_dir = self.dir 
 		self.absdir = path.abspath(build_dir) 
 		self.third_party = path.abspath('thirdparty/%s' % self.os)
+		self.poco = path.join(self.third_party, 'poco')
+		self.poco_lib = path.join(self.poco, 'lib')
+		self.poco_inc = path.join(self.poco, 'include')
+		if self.is_osx():
+			self.poco_inc = path.join(self.poco, 'headers')
 	def matches(self, n): return bool(re.match(os.uname()[0], n))
 	def is_linux(self): return self.os == 'linux'
 	def is_osx(self): return self.os == 'osx'
 	def is_win32(self): return self.os == 'win32'
+	def AddPoco(self, env):
+		env.Append(LIBPATH=[self.poco_lib])
+		env.Append(CPPPATH=[self.poco_inc])
+		env.Append(LIBS=['PocoFoundation','PocoNet','PocoNetSSL'])
+		
 	
 build = BuildConfig()
 build.kroll_include_dir = path.abspath(path.join('build', 'include'))

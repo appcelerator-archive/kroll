@@ -14,11 +14,13 @@ namespace kroll
 	Value::Value(int value) { init(); this->Set(value); }
 	Value::Value(double value) { init(); this->Set(value); }
 	Value::Value(bool value) { init(); this->Set(value); }
-	Value::Value(const char* value) { init(); this->Set(std::string(value)); }
-	Value::Value(std::string& value) { init(); this->Set(value); }
+	Value::Value(const char* value) { init(); this->Set(value); }
+	Value::Value(std::string& value) { init(); this->Set(value.c_str()); }
 	Value::Value(SharedPtr<BoundList> value) { init(); this->Set(value); }
 	Value::Value(SharedPtr<BoundMethod> method) { init(); this->Set(method); }
 	Value::Value(SharedPtr<BoundObject> value) { init(); this->Set(value); }
+	Value::Value(SharedPtr<StaticBoundObject> value) { init(); this->Set(value); }
+	Value::Value(SharedPtr<Value> value) { init(); this->Set(value); }
 	Value::Value(const Value& value)
 	{
 		init();
@@ -26,11 +28,11 @@ namespace kroll
 		if (value.IsString())
 		{
 			// make a copy
-			this->value.stringValue = strdup(value.ToString());
+			this->stringValue = strdup(value.ToString());
 		}
 		else
 		{
-			this->value = value.value;
+			this->Set((Value*)&value);
 			//if (value.IsObject())
 			//{
 			//	KR_ADDREF(this->value.objectValue);
@@ -46,24 +48,24 @@ namespace kroll
 		}
 		else if (IsString())
 		{
-			delete this->value.stringValue;
-			this->value.stringValue = 0;
+			delete this->stringValue;
+			this->stringValue = 0;
 		}
 	}
 
 	SharedPtr<Value> Value::Undefined = CreateUndefined();
 	SharedPtr<Value> Value::Null = CreateNull();
 
-	Value* Value::CreateUndefined()
+	SharedPtr<Value> Value::CreateUndefined()
 	{
-		Value* v = new Value();
+		SharedPtr<Value> v = new Value();
 		v->SetUndefined();
 		return v;
 	}
 
-	Value* Value::CreateNull()
+	SharedPtr<Value> Value::CreateNull()
 	{
-		Value* v = new Value();
+		SharedPtr<Value> v = new Value();
 		v->SetNull();
 		return v;
 	}
@@ -71,24 +73,24 @@ namespace kroll
 	void Value::init()
 	{
 		this->type = UNDEFINED;
-		this->value.objectValue = 0;
-		this->value.stringValue = 0;
+		this->objectValue = 0;
+		this->stringValue = 0;
 	}
 
 	void Value::defaults()
 	{
 		if (this->IsObject())
 		{
-			KR_DECREF(this->value.objectValue);
+			//KR_DECREF(this->value.objectValue);
 		}
 		else if (this->IsString())
 		{
-			delete this->value.stringValue;
-			this->value.stringValue = 0;
+			delete this->stringValue;
+			this->stringValue = 0;
 		}
 		this->type = UNDEFINED;
-		this->value.objectValue = 0;
-		this->value.stringValue = 0;
+		this->objectValue = 0;
+		this->stringValue = 0;
 	}
 
 	bool Value::IsInt() const { return type == INT; }
@@ -101,15 +103,20 @@ namespace kroll
 	bool Value::IsNull() const { return type == NULLV; }
 	bool Value::IsUndefined() const { return type == UNDEFINED; }
 
-	int Value::ToInt() const { return (int) value.numberValue; }
-	double Value::ToDouble() const { return value.numberValue; }
-	bool Value::ToBool() const { return value.boolValue; }
-	const char* Value::ToString() const { return value.stringValue; }
-	SharedPtr<BoundObject> Value::ToObject() const { return value.objectValue; }
-	SharedPtr<BoundMethod> Value::ToMethod() const { return value.objectValue.cast<BoundMethod>(); }
-	SharedPtr<BoundList> Value::ToList() const { return value.objectValue.cast<BoundList>(); }
+	int Value::ToInt() const { return (int) numberValue; }
+	double Value::ToDouble() const { return numberValue; }
+	bool Value::ToBool() const { return boolValue; }
+	const char* Value::ToString() const { return stringValue; }
+	SharedPtr<BoundObject> Value::ToObject() const { return objectValue; }
+	SharedPtr<BoundMethod> Value::ToMethod() const { return objectValue.cast<BoundMethod>(); }
+	SharedPtr<BoundList> Value::ToList() const { return objectValue.cast<BoundList>(); }
 
 	void Value::Set(SharedPtr<Value> other)
+	{
+		Set(other.get());
+	}
+
+	void Value::Set(Value *other)
 	{
 		if (other->IsInt())
 			this->Set(other->ToInt());
@@ -145,35 +152,35 @@ namespace kroll
 	void Value::Set(int value)
 	{
 		defaults();
-		this->value.numberValue = value;
+		this->numberValue = value;
 		type = INT;
 	}
 
 	void Value::Set(double value)
 	{
 		defaults();
-		this->value.numberValue = value;
+		this->numberValue = value;
 		type = DOUBLE;
 	}
 
 	void Value::Set(bool value)
 	{
 		defaults();
-		this->value.boolValue = value;
+		this->boolValue = value;
 		type = BOOL;
 	}
 
 	void Value::Set(char* value)
 	{
 		defaults();
-		this->value.stringValue = strdup(value);
+		this->stringValue = strdup(value);
 		type = STRING;
 	}
 
 	void Value::Set(SharedPtr<BoundList> value)
 	{
 		defaults();
-		this->value.objectValue = value;
+		this->objectValue = value;
 		//KR_ADDREF(this->value.objectValue);
 		type = LIST;
 	}
@@ -181,15 +188,22 @@ namespace kroll
 	void Value::Set(SharedPtr<BoundObject> value)
 	{
 		defaults();
-		this->value.objectValue = value;
+		this->objectValue = value;
 		//KR_ADDREF(this->value.objectValue);
+		type = OBJECT;
+	}
+
+	void Value::Set(SharedPtr<StaticBoundObject> value)
+	{
+		defaults();
+		this->objectValue = value;
 		type = OBJECT;
 	}
 
 	void Value::Set(SharedPtr<BoundMethod> value)
 	{
 		defaults();
-		this->value.objectValue = value;
+		this->objectValue = value;
 		//KR_ADDREF(this->value.objectValue);
 		type = METHOD;
 	}
@@ -227,18 +241,16 @@ namespace kroll
 
 		if (this->IsList() && i.IsList())
 		{
-			BoundList* tlist = this->ToList();
-			BoundList* olist = i.ToList();
+			SharedPtr<BoundList> tlist = this->ToList();
+			SharedPtr<BoundList> olist = i.ToList();
 
 			if (tlist->Size() != olist->Size())
 				return false;
 
 			for (int i = 0; i < (int) tlist->Size(); i++)
 			{
-				Value *a = tlist->At(i);
-				ScopedDereferencer sa(a);
-				Value *b = olist->At(i);
-				ScopedDereferencer sb(b);
+				SharedPtr<Value> a = tlist->At(i);
+				SharedPtr<Value> b = olist->At(i);
 
 				if (a != b)
 					return false;

@@ -75,6 +75,8 @@ namespace kroll
 			list->push_back(iter->first.c_str());
 			iter++;
 		}
+
+		return list;
 	}
 
 	void StaticBoundObject::SetObject(const char *name, SharedPtr<BoundObject> object)

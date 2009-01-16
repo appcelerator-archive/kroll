@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+import os, os.path as path
+
 Import('build')
 
 Env = build.env.Clone()
@@ -6,4 +8,17 @@ Env.Append(LIBS=['kroll'])
 Env.Append(CPPPATH = ['#.'])
 Env.Append(CPPDEFINES={'KROLL_API_API_EXPORT': 1})
 
+poco = path.join(build.third_party, 'poco')
+poco_lib = path.join(poco, 'lib')
+poco_inc = path.join(poco, 'include')
+
+Env.Append(LIBPATH=[poco_lib])
+Env.Append(CPPPATH=[poco_inc])
+
+Env.Append(LIBS=['PocoFoundation','PocoNet','PocoNetSSL'])
+
+if build.is_osx():
+    poco_inc = path.join(poco, 'headers')
+    Env.Append(CPPPATH=[poco_inc])
+    
 Env.SharedLibrary(build.dir + '/apimodule', Glob('*.cpp'))

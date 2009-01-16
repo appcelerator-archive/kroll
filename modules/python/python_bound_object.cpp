@@ -18,7 +18,7 @@ namespace kroll
 		this->object = NULL;
 	}
 
-	void PythonBoundObject::Set(const char *name, Value* value)
+	void PythonBoundObject::Set(const char *name, SharedPtr<Value> value)
 	{
 		int result = PyObject_SetAttrString(this->object,(char*)name,PythonUtils::ToObject(value));
 
@@ -29,13 +29,13 @@ namespace kroll
 		}
 	}
 
-	Value* PythonBoundObject::Get(const char *name)
+	SharedPtr<Value> PythonBoundObject::Get(const char *name)
 	{
 		// get should returned undefined if we don't have a property
 		// named "name" to mimic what happens in Javascript
 		if (0 == (PyObject_HasAttrString(this->object,(char*)name)))
 		{
-			return Value::Undefined();
+			return Value::Undefined;
 		}
 
 		PyObject *response = PyObject_GetAttrString(this->object,(char*)name);
@@ -47,26 +47,27 @@ namespace kroll
 			PythonUtils::ThrowException();
 		}
 
-		Value* returnValue = PythonUtils::ToValue(response,name);
+		SharedPtr<Value> returnValue = PythonUtils::ToValue(response,name);
 		Py_DECREF(response);
 		return returnValue;
 	}
 
-	void PythonBoundObject::GetPropertyNames(std::vector<const char *> *property_names)
+	SharedStringList PythonBoundObject::GetPropertyNames()
 	{
 		PyObject *props = PyObject_Dir(this->object);
+		SharedStringList property_names(new StringList());
 
 		if (props == NULL)
 		{
 			Py_DECREF(props);
-			return;
+			return property_names;
 		}
 
 		PyObject *iterator = PyObject_GetIter(props);
 		PyObject *item;
 
 		if (iterator == NULL)
-			return;
+			return property_names;
 
 		while ((item = PyIter_Next(iterator))) {
 			property_names->push_back(PythonUtils::ToString(item));
@@ -75,6 +76,7 @@ namespace kroll
 
 		Py_DECREF(iterator);
 		Py_DECREF(props);
+		return property_names;
 	}
 }
 

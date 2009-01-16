@@ -16,20 +16,19 @@ namespace kroll
 	{
 	public:
 		PythonBoundMethod(PyObject *obj, const char *name);
-	protected:
 		virtual ~PythonBoundMethod();
-	public:
-		Value* Call(const ValueList& args);
-		virtual void Set(const char *name, Value* value);
-		virtual Value* Get(const char *name);
-		virtual void GetPropertyNames(std::vector<const char *> *property_names);
+
+		SharedPtr<Value> Call(const ValueList& args);
+		virtual void Set(const char *name, SharedPtr<Value> value);
+		virtual SharedPtr<Value> Get(const char *name);
+		virtual SharedStringList GetPropertyNames();
 
 		const PyObject* ToPython() { Py_INCREF(object); return object; }
 
 	private:
 		char* name;
 		PyObject* object;
-		PythonBoundObject *delegate;
+		SharedPtr<BoundObject> delegate;
         DISALLOW_EVIL_CONSTRUCTORS(PythonBoundMethod);
 	};
 }

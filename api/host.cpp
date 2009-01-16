@@ -3,6 +3,9 @@
  * see LICENSE in the root folder for details on the license.
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
+#ifdef OS_OSX
+#include <Cocoa/Cocoa.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -46,29 +49,30 @@ namespace kroll
 		// link the name of our global variable to ourself so we can reference
 		// from global scope directly to get it
 		const char *name = GLOBAL_NS_VARNAME;
-		Value *wrapper = new Value(this->global_object);
+		SharedPtr<BoundObject> b = global_object;
+		SharedPtr<Value> wrapper = new Value(b);
 		this->global_object->Set(name,wrapper);
-		KR_DECREF(wrapper);
+		//KR_DECREF(wrapper);
 	}
 
 	Host::~Host()
 	{
-		KR_DECREF(this->global_object);
+		//KR_DECREF(this->global_object);
 	}
 
-	void Host::RegisterModule(std::string& path, Module* module) 
+	void Host::RegisterModule(std::string& path, Module* module)
 	{
 		ScopedLock lock(&moduleMutex);
 		KR_ADDREF(module);
 		modules[path] = module;
 	}
 
-	void Host::UnregisterModule(Module* module) 
+	void Host::UnregisterModule(Module* module)
 	{
 		ScopedLock lock(&moduleMutex);
 		std::map<std::string, Module*>::iterator iter = this->modules.find(
 				module->GetName());
-		if (this->modules.end() != iter) 
+		if (this->modules.end() != iter)
 		{
 			Module *p = iter->second;
 			this->modules.erase(iter);
@@ -78,7 +82,7 @@ namespace kroll
 		KR_ADDREF(module);
 	}
 
-	Module* Host::GetModule(std::string& name) 
+	Module* Host::GetModule(std::string& name)
 	{
 		ScopedLock lock(&moduleMutex);
 		std::map<std::string, Module*>::iterator iter = this->modules.find(name);
@@ -90,14 +94,14 @@ namespace kroll
 		return module;
 	}
 
-	bool Host::HasModule(std::string name) 
+	bool Host::HasModule(std::string name)
 	{
 		ScopedLock lock(&moduleMutex);
 		std::map<std::string, Module*>::iterator iter = this->modules.find(name);
 		return (this->modules.end() != iter);
 	}
 
-	void Host::LoadModules(std::vector<std::string>& files) 
+	void Host::LoadModules(std::vector<std::string>& files)
 	{
 		ScopedLock lock(&moduleMutex);
 		std::cout << "have " << files.size() << " files" << std::endl;
@@ -116,10 +120,10 @@ namespace kroll
 			else
 			{
 				module->SetProvider(module_creators[path]);
-				
+
 				std::cout << "module loaded " << module->GetName() << " from " << path
 						<< std::endl;
-				
+
 				// register our module
 				this->RegisterModule(path, module);
 
@@ -137,7 +141,7 @@ namespace kroll
 	std::string module_suffix = "module.so";
 	#endif
 
-	bool Host::IsModule(std::string& filename) 
+	bool Host::IsModule(std::string& filename)
 	{
 		bool isModule = (filename.length() > module_suffix.length() && filename.substr(
 				filename.length() - module_suffix.length()) == module_suffix);
@@ -146,7 +150,7 @@ namespace kroll
 		return isModule;
 	}
 
-	ModuleProvider* Host::FindModuleProvider(std::string& filename) 
+	ModuleProvider* Host::FindModuleProvider(std::string& filename)
 	{
 		ScopedLock lock(&moduleMutex);
 		if (IsModule(filename))
@@ -166,7 +170,7 @@ namespace kroll
 		return NULL;
 	}
 
-	int Host::FindModules(std::string &dir, std::vector<std::string> &files) 
+	int Host::FindModules(std::string &dir, std::vector<std::string> &files)
 	{
 		ScopedLock lock(&moduleMutex);
 	#if defined(OS_WIN32)
@@ -223,11 +227,11 @@ namespace kroll
 	#endif
 	}
 
-	StaticBoundObject* Host::GetGlobalObject() {
+	SharedPtr<StaticBoundObject> Host::GetGlobalObject() {
 		return this->global_object;
 	}
 
-	void Host::ScanInvalidModuleFiles() 
+	void Host::ScanInvalidModuleFiles()
 	{
 		ScopedLock lock(&moduleMutex);
 		std::vector<std::string>::iterator iter = invalid_module_files.begin();
@@ -260,75 +264,77 @@ namespace kroll
 // this is the platform specific code for main thread processing
 
 #ifdef OS_OSX
-#include <Cocoa/Cocoa.h>
-@interface KrollMainThreadCaller : NSObject 
+@interface KrollMainThreadCaller : NSObject
 {
-	kroll::BoundMethod *method;
-	kroll::Value *result;
-	kroll::ValueList* args;
+	SharedPtr<kroll::BoundMethod> *method;
+	SharedPtr<kroll::Value> *result;
+	SharedPtr<kroll::ValueList> *args;
 }
-- (id)initWithBoundMethod:(kroll::BoundMethod*)method args:(ValueList*)args;
+- (id)initWithBoundMethod:(SharedPtr<kroll::BoundMethod>)method args:(ValueList*)args;
 - (void)call;
-- (kroll::Value*)getResult;
+- (SharedPtr<kroll::Value>)getResult;
 @end
 
 @implementation KrollMainThreadCaller
-- (id)initWithBoundMethod:(kroll::BoundMethod*)m args:(ValueList*)a
+- (id)initWithBoundMethod:(SharedPtr<kroll::BoundMethod>)m args:(ValueList*)a
 {
 	self = [super init];
 	if (self)
 	{
-		method = m;
-		args = a;
-		result = nil;
-		KR_ADDREF(method);
+		method = new SharedPtr<kroll::BoundMethod>(m);
+		args = new SharedPtr<kroll::ValueList>(a);
+		result = new SharedPtr<kroll::Value>();
+		//KR_ADDREF(method);
 	}
 	return self;
 }
 - (void)dealloc
 {
-	KR_DECREF(method);
-	KR_DECREF(result);
+	//KR_DECREF(method);
+	//KR_DECREF(result);
+	delete method;
+	delete result;
+	delete args;
 	[super dealloc];
 }
-- (kroll::Value*)getResult
+- (SharedPtr<kroll::Value>)getResult
 {
-	return result;
+	return *result;
 }
 - (void)call
 {
 	kroll::ValueList a;
-	if (args)
+	if (!args->isNull())
 	{
-		ValueList::iterator i = args->begin();
-		while (i!=args->end())
+		ValueList::iterator i = (*args)->begin();
+		while (i!=(*args)->end())
 		{
 			a.push_back((*i++));
 		}
 	}
-	result = method->Call(a);
-	KR_ADDREF(result);
+	result->assign((*method)->Call(a));
+	//KR_ADDREF(result);
 }
 @end
 #endif
 
 namespace kroll
 {
-	Value* InvokeMethodOnMainThread(BoundMethod *method, ValueList* args)
+	SharedPtr<Value> InvokeMethodOnMainThread(SharedPtr<BoundMethod> method, ValueList* args)
 	{
 #ifdef OS_OSX
 	    KrollMainThreadCaller *caller = [[KrollMainThreadCaller alloc] initWithBoundMethod:method args:args];
 	    [caller performSelectorOnMainThread:@selector(call) withObject:nil waitUntilDone:YES];
-		Value *result = [caller getResult];
+		SharedPtr<Value> result = [caller getResult];
 		// make sure to return a new reference because we'll release it
 		// when we release the caller
-		if (result) KR_ADDREF(result);
+		//if (result) KR_ADDREF(result);
 		[caller release];
 #else
-		//FIXME - implement for Win32 and Linux. Until then...we 
-		//will just forward on same thread 
+		//FIXME - implement for Win32 and Linux. Until then...we
+		//will just forward on same thread
 		std::cerr << "WARNING: Invoking method on non-main Thread!" << std::endl;
-		Value *result = method->Call(*args);
+		SharedPtr<Value> result = method->Call(*args);
 #endif
 		return result;
 	}

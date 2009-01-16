@@ -23,11 +23,8 @@ namespace kroll
 			Constructor: StaticBoundObject
 		*/
 		StaticBoundObject();
-
-	protected:
 		virtual ~StaticBoundObject();
 
-	public:
 		/*
 		  Function: Get
 
@@ -74,7 +71,7 @@ namespace kroll
 		{
 			MethodCallback* callback = NewCallback<T, const ValueList&, SharedPtr<Value> >(static_cast<T*>(this), method);
 
-			SharedPtr<StaticBoundMethod> bound_method = new StaticBoundMethod(callback);
+			SharedPtr<BoundMethod> bound_method = new StaticBoundMethod(callback);
 			SharedPtr<Value> method_value = new Value(bound_method);
 
 			this->Set(name, method_value);

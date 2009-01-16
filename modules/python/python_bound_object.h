@@ -15,12 +15,11 @@ namespace kroll
 	{
 	public:
 		PythonBoundObject(PyObject *obj);
-	protected:
 		virtual ~PythonBoundObject();
-	public:
-		virtual void Set(const char *name, Value* value);
-		virtual Value* Get(const char *name);
-		virtual void GetPropertyNames(std::vector<const char *> *property_names);
+
+		virtual void Set(const char *name, SharedPtr<Value> value);
+		virtual SharedPtr<Value> Get(const char *name);
+		virtual SharedStringList GetPropertyNames();
 
 		const PyObject* ToPython() { Py_INCREF(object); return object; }
 

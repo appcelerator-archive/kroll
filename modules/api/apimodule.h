@@ -20,8 +20,7 @@ namespace kroll
 		void Test();
 
 	protected:
-		StaticBoundObject *parent;
-		APIBinding *binding;
+		SharedPtr<APIBinding> binding;
 	};
 }
 
