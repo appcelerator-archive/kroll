@@ -25,7 +25,7 @@ namespace kroll
 		return this->object;
 	}
 
-	SharedPtr<Value> KJSBoundObject::Get(const char *name)
+	SharedValue KJSBoundObject::Get(const char *name)
 	{
 		JSStringRef s = JSStringCreateWithUTF8CString(name);
 		JSValueRef exception = NULL;
@@ -38,14 +38,14 @@ namespace kroll
 
 		if (exception != NULL) //exception thrown
 		{
-			SharedPtr<Value> tv_exp = KJSUtil::ToKrollValue(exception, this->context, NULL);
+			SharedValue tv_exp = KJSUtil::ToKrollValue(exception, this->context, NULL);
 			throw tv_exp;
 		}
 
 		return KJSUtil::ToKrollValue(js_value, this->context, this->object);
 	}
 
-	void KJSBoundObject::Set(const char *name, SharedPtr<Value> value)
+	void KJSBoundObject::Set(const char *name, SharedValue value)
 	{
 		JSValueRef js_value = KJSUtil::ToJSValue(value, this->context);
 		JSStringRef s = JSStringCreateWithUTF8CString(name);

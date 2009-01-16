@@ -29,7 +29,7 @@ namespace kroll
 		  reference count.
 		  When an error occurs will throw an exception of type Value*.
 		 */
-		virtual void Append(SharedPtr<Value> value);
+		virtual void Append(SharedValue value);
 
 		/*
 			Function: Size
@@ -46,7 +46,7 @@ namespace kroll
 		  reference counted and must be released.
 		  When an error occurs will throw an exception of type Value*.
 		 */
-		virtual SharedPtr<Value> At(int index);
+		virtual SharedValue At(int index);
 
 		/*
 			Function: Set
@@ -56,7 +56,7 @@ namespace kroll
 		  if they increase the reference count.
 		  When an error occurs will throw an exception of type Value*.
 		 */
-		virtual void Set(const char *name, SharedPtr<Value> value);
+		virtual void Set(const char *name, SharedValue value);
 
 		/*
 			Function: Get
@@ -66,7 +66,7 @@ namespace kroll
 		  with the return value (even for Undefined and Null types).
 		  When an error occurs will throw an exception of type Value*.
 		 */
-		virtual SharedPtr<Value> Get(const char *name);
+		virtual SharedValue Get(const char *name);
 
 		/*
 			Function: GetPropertyNames

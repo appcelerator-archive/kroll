@@ -22,8 +22,8 @@ namespace kroll
 		               JSObjectRef js_object);
 		~KJSBoundObject();
 
-		void Set(const char *name, SharedPtr<Value> value);
-		SharedPtr<Value> Get(const char *name);
+		void Set(const char *name, SharedValue value);
+		SharedValue Get(const char *name);
 		SharedStringList GetPropertyNames();
 		bool SameContextGroup(JSContextRef c);
 

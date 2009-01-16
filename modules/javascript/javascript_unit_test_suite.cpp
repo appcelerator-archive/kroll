@@ -16,8 +16,8 @@ namespace kroll
 		KR_ASSERT(globalObject);
 
 		// TEST simple bound property values
-		SharedPtr<BoundObject> bound = new StaticBoundObject();
-		SharedPtr<Value> value = new Value("bar");
+		SharedBoundObject bound = new StaticBoundObject();
+		SharedValue value = new Value("bar");
 		bound->Set("foo",value);
 		//KR_DECREF(value);
 

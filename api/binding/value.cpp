@@ -16,11 +16,11 @@ namespace kroll
 	Value::Value(bool value) { init(); this->Set(value); }
 	Value::Value(const char* value) { init(); this->Set(value); }
 	Value::Value(std::string& value) { init(); this->Set(value.c_str()); }
-	Value::Value(SharedPtr<BoundList> value) { init(); this->Set(value); }
-	Value::Value(SharedPtr<BoundMethod> method) { init(); this->Set(method); }
-	Value::Value(SharedPtr<BoundObject> value) { init(); this->Set(value); }
+	Value::Value(SharedBoundList value) { init(); this->Set(value); }
+	Value::Value(SharedBoundMethod method) { init(); this->Set(method); }
+	Value::Value(SharedBoundObject value) { init(); this->Set(value); }
 	Value::Value(SharedPtr<StaticBoundObject> value) { init(); this->Set(value); }
-	Value::Value(SharedPtr<Value> value) { init(); this->Set(value); }
+	Value::Value(SharedValue value) { init(); this->Set(value); }
 	Value::Value(const Value& value)
 	{
 		init();
@@ -53,19 +53,19 @@ namespace kroll
 		}
 	}
 
-	SharedPtr<Value> Value::Undefined = CreateUndefined();
-	SharedPtr<Value> Value::Null = CreateNull();
+	SharedValue Value::Undefined = CreateUndefined();
+	SharedValue Value::Null = CreateNull();
 
-	SharedPtr<Value> Value::CreateUndefined()
+	SharedValue Value::CreateUndefined()
 	{
-		SharedPtr<Value> v = new Value();
+		SharedValue v = new Value();
 		v->SetUndefined();
 		return v;
 	}
 
-	SharedPtr<Value> Value::CreateNull()
+	SharedValue Value::CreateNull()
 	{
-		SharedPtr<Value> v = new Value();
+		SharedValue v = new Value();
 		v->SetNull();
 		return v;
 	}
@@ -107,11 +107,11 @@ namespace kroll
 	double Value::ToDouble() const { return numberValue; }
 	bool Value::ToBool() const { return boolValue; }
 	const char* Value::ToString() const { return stringValue; }
-	SharedPtr<BoundObject> Value::ToObject() const { return objectValue; }
-	SharedPtr<BoundMethod> Value::ToMethod() const { return objectValue.cast<BoundMethod>(); }
-	SharedPtr<BoundList> Value::ToList() const { return objectValue.cast<BoundList>(); }
+	SharedBoundObject Value::ToObject() const { return objectValue; }
+	SharedBoundMethod Value::ToMethod() const { return objectValue.cast<BoundMethod>(); }
+	SharedBoundList Value::ToList() const { return objectValue.cast<BoundList>(); }
 
-	void Value::Set(SharedPtr<Value> other)
+	void Value::Set(SharedValue other)
 	{
 		Set(other.get());
 	}
@@ -177,7 +177,7 @@ namespace kroll
 		type = STRING;
 	}
 
-	void Value::Set(SharedPtr<BoundList> value)
+	void Value::Set(SharedBoundList value)
 	{
 		defaults();
 		this->objectValue = value;
@@ -185,7 +185,7 @@ namespace kroll
 		type = LIST;
 	}
 
-	void Value::Set(SharedPtr<BoundObject> value)
+	void Value::Set(SharedBoundObject value)
 	{
 		defaults();
 		this->objectValue = value;
@@ -200,7 +200,7 @@ namespace kroll
 		type = OBJECT;
 	}
 
-	void Value::Set(SharedPtr<BoundMethod> value)
+	void Value::Set(SharedBoundMethod value)
 	{
 		defaults();
 		this->objectValue = value;
@@ -241,16 +241,16 @@ namespace kroll
 
 		if (this->IsList() && i.IsList())
 		{
-			SharedPtr<BoundList> tlist = this->ToList();
-			SharedPtr<BoundList> olist = i.ToList();
+			SharedBoundList tlist = this->ToList();
+			SharedBoundList olist = i.ToList();
 
 			if (tlist->Size() != olist->Size())
 				return false;
 
 			for (int i = 0; i < (int) tlist->Size(); i++)
 			{
-				SharedPtr<Value> a = tlist->At(i);
-				SharedPtr<Value> b = olist->At(i);
+				SharedValue a = tlist->At(i);
+				SharedValue b = olist->At(i);
 
 				if (a != b)
 					return false;
@@ -290,7 +290,7 @@ namespace kroll
 		}
 		else if (this->IsList())
 		{
-			SharedPtr<BoundList> list = this->ToList();
+			SharedBoundList list = this->ToList();
 			if (levels == 0)
 			{
 				oss << "<BoundList at " << list.get() << ">";
@@ -300,7 +300,7 @@ namespace kroll
 				oss << "[";
 				for (int i = 0; i < list->Size(); i++)
 				{
-					SharedPtr<Value> list_val = list->At(i);
+					SharedValue list_val = list->At(i);
 					oss << " " << list_val->DisplayString(levels-1) << ",";
 				}
 				//int before_last_comma = oss.tellp() - 1;
@@ -310,7 +310,7 @@ namespace kroll
 		}
 		else if (this->IsObject())
 		{
-			SharedPtr<BoundObject> obj = this->ToObject();
+			SharedBoundObject obj = this->ToObject();
 			if (levels == 0)
 			{
 				oss << "<BoundObject at " << obj.get() << ">";
@@ -321,7 +321,7 @@ namespace kroll
 				oss << "{";
 				for (size_t i = 0; i < props->size(); i++)
 				{
-					SharedPtr<Value> prop = obj->Get(props->at(i));
+					SharedValue prop = obj->Get(props->at(i));
 					oss << " " << props->at(i)
 					    << " : "
 					    << prop->DisplayString(levels-1)
@@ -334,7 +334,7 @@ namespace kroll
 		}
 		else if (this->IsMethod())
 		{
-			SharedPtr<BoundMethod> method = this->ToMethod();
+			SharedBoundMethod method = this->ToMethod();
 			oss << "<BoundMethod at " << method.get() << ">";
 		}
 		else if (this->IsNull())

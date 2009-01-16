@@ -51,7 +51,7 @@ namespace kroll
 		  return pointer is not borrowed and must referenced
 		  counted if used or returned from a method call.
 		 */
-		static SharedPtr<Value> Undefined;
+		static SharedValue Undefined;
 
 		/*
 			Function: Undefined
@@ -60,7 +60,7 @@ namespace kroll
 		  return pointer is not borrowed and must referenced
 		  counted if used or returned from a method call.
 		 */
-		static SharedPtr<Value> Null;
+		static SharedValue Null;
 
 		/*
 			Constructor: Value
@@ -109,14 +109,14 @@ namespace kroll
 
 		  construct a <LIST> type
 		 */
-		Value(SharedPtr<BoundList> value);
+		Value(SharedBoundList value);
 
 		/*
 			Constructor: Value
 
 		  construct an <OBJECT> type
 		 */
-		Value(SharedPtr<BoundObject> value);
+		Value(SharedBoundObject value);
 
 		Value(SharedPtr<StaticBoundObject> value);
 
@@ -125,12 +125,12 @@ namespace kroll
 
 		  construct a <METHOD> type
 		 */
-		Value(SharedPtr<BoundMethod> value);
+		Value(SharedBoundMethod value);
 
 		/*
 			Constructor: Value
 		 */
-		Value(SharedPtr<Value> value);
+		Value(SharedValue value);
 		/*
 			Constructor: Value
 
@@ -144,8 +144,8 @@ namespace kroll
 		virtual ~Value();
 
 	protected:
-		static SharedPtr<Value> CreateUndefined();
-		static SharedPtr<Value> CreateNull();
+		static SharedValue CreateUndefined();
+		static SharedValue CreateNull();
 
 	public:
 
@@ -250,21 +250,21 @@ namespace kroll
 
 		  return the value as a BoundList
 		 */
-		SharedPtr<BoundList> ToList() const;
+		SharedBoundList ToList() const;
 
 		/*
 			Function: ToObject
 
 		  return the value as a BoundObject*
 		 */
-		SharedPtr<BoundObject> ToObject() const;
+		SharedBoundObject ToObject() const;
 
 		/*
 			Function: ToMethod
 
 		  return the value as a BoundMethod*
 		 */
-		SharedPtr<BoundMethod> ToMethod() const;
+		SharedBoundMethod ToMethod() const;
 
 		/*
 			Function: ToTypeString
@@ -298,7 +298,7 @@ namespace kroll
 		  this instance will make a reference of the internal
 		  value of other but not other itself
 		 */
-		void Set(SharedPtr<Value> other);
+		void Set(SharedValue other);
 
 		/*
 			Function: Set
@@ -333,7 +333,7 @@ namespace kroll
 
 		  change the internal value of this instance to value
 		 */
-		void Set(SharedPtr<BoundList> value);
+		void Set(SharedBoundList value);
 
 		/*
 			Function: Set
@@ -347,14 +347,14 @@ namespace kroll
 
 		  change the internal value of this instance to value
 		 */
-		void Set(SharedPtr<BoundObject> value);
+		void Set(SharedBoundObject value);
 
 		/**
 			Function: Set
 
 		  change the internal value of this instance to value
 		 */
-		void Set(SharedPtr<BoundMethod> value);
+		void Set(SharedBoundMethod value);
 
 		/*
 			Function: SetNull
@@ -376,7 +376,7 @@ namespace kroll
 		double numberValue;
 		bool boolValue;
 		const char *stringValue;
-		SharedPtr<BoundObject> objectValue;
+		SharedBoundObject objectValue;
 
 		void defaults();
 		void init();

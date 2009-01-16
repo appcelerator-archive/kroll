@@ -29,7 +29,7 @@ namespace kroll
 		  with the return value (even for Undefined and Null types).
 		  When an error occurs will throw an exception of type Value*.
 		 */
-		virtual SharedPtr<Value> Call(const ValueList& args);
+		virtual SharedValue Call(const ValueList& args);
 
 		/*
 			Function: Set
@@ -39,7 +39,7 @@ namespace kroll
 		  if they increase the reference count.
 		  When an error occurs will throw an exception of type Value*.
 		 */
-		virtual void Set(const char *name, SharedPtr<Value> value);
+		virtual void Set(const char *name, SharedValue value);
 
 		/*
 			Function: Get
@@ -49,7 +49,7 @@ namespace kroll
 		  a reference (even for Undefined and Null types).
 		  When an error occurs will throw an exception of type Value*.
 		 */
-		virtual SharedPtr<Value> Get(const char *name);
+		virtual SharedValue Get(const char *name);
 
 		/*
 			Function: GetPropertyNames
@@ -61,7 +61,7 @@ namespace kroll
 	protected:
 		SharedPtr<MethodCallback> callback;
 		SharedPtr<StaticBoundObject> object;
-		std::map<std::string, SharedPtr<Value> > properties;
+		std::map<std::string, SharedValue > properties;
 
 	private:
 		DISALLOW_EVIL_CONSTRUCTORS(StaticBoundMethod);

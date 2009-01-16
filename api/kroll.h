@@ -24,6 +24,11 @@ namespace kroll
 	class StaticBoundList;
 	class ScopeMethodDelegate;
 
+	typedef SharedPtr<Value> SharedValue;
+	typedef SharedPtr<BoundObject> SharedBoundObject;
+	typedef SharedPtr<BoundMethod> SharedBoundMethod;
+	typedef SharedPtr<BoundList> SharedBoundList;
+
 	/*
 		Type: ValueList
 	
@@ -32,7 +37,8 @@ namespace kroll
 	  binding layer, take a look at BoundList and
 	  StaticBoundList.
 	 */
-	typedef std::vector<SharedPtr<Value> > ValueList;
+	typedef std::vector<SharedValue> ValueList;
+
 
 }
 

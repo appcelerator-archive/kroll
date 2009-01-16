@@ -53,7 +53,7 @@ namespace kroll
 
 		/* Take some steps to insert the API into the Javascript context */
 		/* Create a crazy, crunktown delegate hybrid object for Javascript */
-		SharedPtr<Value> api = host->GetGlobalObject()->Get("api");
+		SharedValue api = host->GetGlobalObject()->Get("api");
 
 		/* convert JS API to a KJS object */
 		JSValueRef js_api = KJSUtil::ToJSValue(api, context);
