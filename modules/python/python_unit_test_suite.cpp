@@ -223,7 +223,7 @@ namespace kroll
 		plist->Append(vlist2);
 		KR_ASSERT(plist->Size()==2);
 		SharedPtr<Value> vlist3 = plist->At(1);
-		KR_ASSERT(vlist3->ToString()=="hello");
+		KR_ASSERT(std::string(vlist3->ToString())=="hello");
 		KR_ASSERT(list->At(10)->IsUndefined());
 
 		//KR_DECREF(vlist2);

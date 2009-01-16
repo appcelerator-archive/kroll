@@ -10,10 +10,6 @@
 #include <vector>
 #include <string>
 #include <map>
-#include "../scoped_dereferencer.h"
-#include <Poco/SharedPtr.h>
-
-using namespace Poco;
 
 namespace kroll
 {

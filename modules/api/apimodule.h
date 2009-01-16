@@ -6,8 +6,7 @@
 #ifndef _API_PLUGIN_H
 #define _API_PLUGIN_H
 
-#include <api/module.h>
-#include <api/host.h>
+#include <kroll/kroll.h>
 #include "api.h"
 #include "apibinding.h"
 

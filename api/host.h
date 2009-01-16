@@ -8,9 +8,6 @@
 #ifndef _KR_HOST_H_
 #define _KR_HOST_H_
 
-#include "kroll.h"
-#include "binding/value.h"
-
 namespace kroll
 {
 	class Module;

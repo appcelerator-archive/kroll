@@ -19,9 +19,7 @@
 #include <vector>
 #include <string>
 
-#include "base.h"
-#include "host.h"
-#include "module.h"
+#include "kroll.h"
 
 namespace kroll
 {

@@ -6,8 +6,7 @@
 #ifndef _FOO_PLUGIN_H
 #define _FOO_PLUGIN_H
 
-#include <api/module.h>
-#include <api/host.h>
+#include <kroll/kroll.h>
 #include "foobinding.h"
 
 namespace kroll

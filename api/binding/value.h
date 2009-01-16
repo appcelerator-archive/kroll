@@ -7,28 +7,15 @@
 #ifndef _KR_VALUE_H_
 #define _KR_VALUE_H_
 
-#include <Poco/SharedPtr.h>
-
-using namespace Poco;
-
-namespace kroll
+namespace kroll 
 {
-	/*
-		Type: ValueList
-
-	  This typdef is only used for argument lists. For
-	  a list implementation to be used as a value in the
-	  binding layer, take a look at BoundList and
-	  StaticBoundList.
-	 */
-	typedef std::vector<SharedPtr<Value> > ValueList;
 
 	/*
 		Class: Value
 	  Value is a container object which internally contains
 	  a value which can be boxed/unboxed based on the type.
 	 */
-	class KROLL_API Value : public RefCounted
+	class KROLL_API Value : public RefCounted 
 	{
 	public:
 
@@ -143,7 +130,7 @@ namespace kroll
 		/*
 			Constructor: Value
 		 */
-		Value::Value(SharedPtr<Value> value);
+		Value(SharedPtr<Value> value);
 		/*
 			Constructor: Value
 
@@ -155,8 +142,8 @@ namespace kroll
 		 * destructor
 		 */
 		virtual ~Value();
-	protected:
 
+	protected:
 		static SharedPtr<Value> CreateUndefined();
 		static SharedPtr<Value> CreateNull();
 
