@@ -35,11 +35,11 @@ build.kroll_source_dir = path.abspath('.')
 build.dir = path.abspath('build/' + build.os)
 build.third_party = path.abspath('thirdparty/%s' % build.os)
 build.kroll_include_dir = path.join(build.dir, 'include')
-build.poco = path.join(self.third_party, 'poco')
-build.poco_lib = path.join(self.poco, 'lib')
-build.poco_inc = path.join(self.poco, 'include')
+build.poco = path.join(build.third_party, 'poco')
+build.poco_lib = path.join(build.poco, 'lib')
+build.poco_inc = path.join(build.poco, 'include')
 if build.is_osx():
-	build.poco_inc = path.join(self.poco, 'headers')
+	build.poco_inc = path.join(build.poco, 'headers')
 
 # This should only be used for accessing various
 # scripts in the kroll build directory. All resources
