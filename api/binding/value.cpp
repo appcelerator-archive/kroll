@@ -11,16 +11,16 @@
 namespace kroll
 {
 	Value::Value() { init(); SetUndefined(); }
-	Value::Value(int value) { init(); this->Set(value); }
-	Value::Value(double value) { init(); this->Set(value); }
-	Value::Value(bool value) { init(); this->Set(value); }
-	Value::Value(const char* value) { init(); this->Set(value); }
-	Value::Value(std::string& value) { init(); this->Set(value.c_str()); }
-	Value::Value(SharedBoundList value) { init(); this->Set(value); }
-	Value::Value(SharedBoundMethod method) { init(); this->Set(method); }
-	Value::Value(SharedBoundObject value) { init(); this->Set(value); }
-	Value::Value(SharedPtr<StaticBoundObject> value) { init(); this->Set(value); }
-	Value::Value(SharedValue value) { init(); this->Set(value); }
+	Value::Value(int value) { init(); this->SetInt(value); }
+	Value::Value(double value) { init(); this->SetDouble(value); }
+	Value::Value(bool value) { init(); this->SetBool(value); }
+	Value::Value(const char* value) { init(); this->SetString(value); }
+	Value::Value(std::string& value) { init(); this->SetString(value.c_str()); }
+	Value::Value(SharedBoundList value) { init(); this->SetList(value); }
+	Value::Value(SharedBoundMethod method) { init(); this->SetMethod(method); }
+	Value::Value(SharedBoundObject value) { init(); this->SetObject(value); }
+	Value::Value(SharedPtr<StaticBoundObject> value) { init(); this->SetStaticBoundObject(value); }
+	Value::Value(SharedValue value) { init(); this->SetValue(value); }
 	Value::Value(const Value& value)
 	{
 		init();
@@ -32,7 +32,7 @@ namespace kroll
 		}
 		else
 		{
-			this->Set((Value*)&value);
+			this->SetValue((Value*)&value);
 			//if (value.IsObject())
 			//{
 			//	KR_ADDREF(this->value.objectValue);
@@ -96,7 +96,7 @@ namespace kroll
 	bool Value::IsInt() const { return type == INT; }
 	bool Value::IsDouble() const { return type == DOUBLE; }
 	bool Value::IsBool() const { return type == BOOL; }
-	bool Value::IsString() const { return type == STRING; }
+	bool Value::IsString() const {  return type == STRING; }
 	bool Value::IsList() const { return type == LIST; }
 	bool Value::IsObject() const { return type == OBJECT; }
 	bool Value::IsMethod() const { return type == METHOD; }
@@ -111,33 +111,33 @@ namespace kroll
 	SharedBoundMethod Value::ToMethod() const { return objectValue.cast<BoundMethod>(); }
 	SharedBoundList Value::ToList() const { return objectValue.cast<BoundList>(); }
 
-	void Value::Set(SharedValue other)
+	void Value::SetValue(SharedValue other)
 	{
-		Set(other.get());
+		SetValue(other.get());
 	}
 
-	void Value::Set(Value *other)
+	void Value::SetValue(Value *other)
 	{
 		if (other->IsInt())
-			this->Set(other->ToInt());
+			this->SetInt(other->ToInt());
 
 		else if (other->IsDouble())
-			this->Set(other->ToDouble());
+			this->SetDouble(other->ToDouble());
 
 		else if (other->IsBool())
-			this->Set(other->ToBool());
+			this->SetBool(other->ToBool());
 
 		else if (other->IsString())
-			this->Set(other->ToString());
+			this->SetString(other->ToString());
 
 		else if (other->IsList())
-			this->Set(other->ToList());
+			this->SetList(other->ToList());
 
 		else if (other->IsMethod())
-			this->Set(other->ToMethod());
+			this->SetMethod(other->ToMethod());
 
 		else if (other->IsObject())
-			this->Set(other->ToObject());
+			this->SetObject(other->ToObject());
 
 		else if (other->IsNull())
 			this->SetNull();
@@ -149,35 +149,35 @@ namespace kroll
 			throw "Error on set. Unknown type for other";
 	}
 
-	void Value::Set(int value)
+	void Value::SetInt(int value)
 	{
 		defaults();
 		this->numberValue = value;
 		type = INT;
 	}
 
-	void Value::Set(double value)
+	void Value::SetDouble(double value)
 	{
 		defaults();
 		this->numberValue = value;
 		type = DOUBLE;
 	}
 
-	void Value::Set(bool value)
+	void Value::SetBool(bool value)
 	{
 		defaults();
 		this->boolValue = value;
 		type = BOOL;
 	}
 
-	void Value::Set(char* value)
+	void Value::SetString(const char* value)
 	{
 		defaults();
 		this->stringValue = strdup(value);
 		type = STRING;
 	}
 
-	void Value::Set(SharedBoundList value)
+	void Value::SetList(SharedBoundList value)
 	{
 		defaults();
 		this->objectValue = value;
@@ -185,7 +185,7 @@ namespace kroll
 		type = LIST;
 	}
 
-	void Value::Set(SharedBoundObject value)
+	void Value::SetObject(SharedBoundObject value)
 	{
 		defaults();
 		this->objectValue = value;
@@ -193,14 +193,14 @@ namespace kroll
 		type = OBJECT;
 	}
 
-	void Value::Set(SharedPtr<StaticBoundObject> value)
+	void Value::SetStaticBoundObject(SharedPtr<StaticBoundObject> value)
 	{
 		defaults();
 		this->objectValue = value;
 		type = OBJECT;
 	}
 
-	void Value::Set(SharedBoundMethod value)
+	void Value::SetMethod(SharedBoundMethod value)
 	{
 		defaults();
 		this->objectValue = value;

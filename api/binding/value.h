@@ -288,7 +288,7 @@ namespace kroll
 		  this instance will make a reference of the internal
 		  value of other but not other itself
 		 */
-		void Set(Value *other);
+		void SetValue(Value *other);
 
 		/*
 			Function: Set
@@ -298,63 +298,63 @@ namespace kroll
 		  this instance will make a reference of the internal
 		  value of other but not other itself
 		 */
-		void Set(SharedValue other);
+		void SetValue(SharedValue other);
 
 		/*
 			Function: Set
 
 		  change the internal value of this instance to value
 		 */
-		void Set(int value);
+		void SetInt(int value);
 
 		/*
 			Function: Set
 
 		  change the internal value of this instance to value
 		 */
-		void Set(double value);
+		void SetDouble(double value);
 
 		/*
 			Function: Set
 
 		  change the internal value of this instance to value
 		 */
-		void Set(bool value);
+		void SetBool(bool value);
 
 		/*
 			Function: Set
 
 		  change the internal value of this instance to value
 		 */
-		void Set(char* value);
+		void SetString(const char* value);
 
 		/*
 			Function: Set
 
 		  change the internal value of this instance to value
 		 */
-		void Set(SharedBoundList value);
+		void SetList(SharedBoundList value);
 
 		/*
 			Function: Set
 
 			change the internal value of this instance to value
 		 */
-		void Set(SharedPtr<StaticBoundObject> value);
+		void SetStaticBoundObject(SharedPtr<StaticBoundObject> value);
 
 		/*
 			Function: Set
 
 		  change the internal value of this instance to value
 		 */
-		void Set(SharedBoundObject value);
+		void SetObject(SharedBoundObject value);
 
 		/**
 			Function: Set
 
 		  change the internal value of this instance to value
 		 */
-		void Set(SharedBoundMethod value);
+		void SetMethod(SharedBoundMethod value);
 
 		/*
 			Function: SetNull

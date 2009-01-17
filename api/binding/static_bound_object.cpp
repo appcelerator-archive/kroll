@@ -30,16 +30,12 @@ namespace kroll
 	{
 		ScopedLock lock(&mutex);
 
-		printf("Getting %s\n", name);
-
 		std::map<std::string, SharedValue>::iterator iter;
 		iter = properties.find(std::string(name));
 		if (iter != properties.end()) {
-			printf("Gotit\n");
 			return iter->second;
 		}
 
-		printf("couldn't find it\n");
 		return Value::Undefined;
 	}
 
@@ -49,13 +45,6 @@ namespace kroll
 
 		this->UnSet(name);
 		this->properties[std::string(name)] = value;
-
-		if (value->IsMethod())
-		{
-			SharedBoundMethod v = value->ToMethod();
-			printf("Setting %s: %i\n", name, (int) v.get());
-		}
-
 	}
 
 	void StaticBoundObject::UnSet(const char *name)
