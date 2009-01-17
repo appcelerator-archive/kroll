@@ -26,9 +26,9 @@ namespace kroll
 	class TestClass : public BoundMethod
 	{
 	public:
-		SharedPtr<Value> Call(const ValueList& args)
+		SharedValue Call(const ValueList& args)
 		{
-			SharedPtr<Value> e = args.at(0);
+			SharedValue e = args.at(0);
 			if (e->IsString())
 			{
 				this->event = e->ToString();
@@ -40,11 +40,11 @@ namespace kroll
 			}
 			return NULL;
 		}
-		void Set(const char *name, SharedPtr<Value> value)
+		void Set(const char *name, SharedValue value)
 		{
 
 		}
-		SharedPtr<Value> Get(const char *name)
+		SharedValue Get(const char *name)
 		{
 			return NULL;
 		}
@@ -71,14 +71,14 @@ namespace kroll
 		std::string msg("hello");
 		int severity = KR_LOG_DEBUG;
 
-		SharedPtr<Value> logMethodValue = binding->Get("log");
+		SharedValue logMethodValue = binding->Get("log");
 		SharedPtr<BoundMethod> logMethod = logMethodValue->ToMethod();
 		KR_ASSERT(!logMethod.isNull());
 
 		ValueList args;
-		SharedPtr<Value> sv = new Value(severity);
+		SharedValue sv = new Value(severity);
 		args.push_back(sv);
-		SharedPtr<Value> mv = new Value(msg);
+		SharedValue mv = new Value(msg);
 		args.push_back(mv);
 
 		// invoke directly against interface
@@ -90,15 +90,15 @@ namespace kroll
 		// invoke with varargs
 		//logMethod->Call(sv,mv);
 
-		SharedPtr<Value> v = new Value(1);
+		SharedValue v = new Value(1);
 		binding->Set("foo",v);
-		SharedPtr<Value> vr = binding->Get("foo");
+		SharedValue vr = binding->Get("foo");
 		KR_ASSERT(v->ToInt() == vr->ToInt());
 		//KR_DECREF(v);
 		//KR_DECREF(vr);
 
 		// TEST retrieving the value from a namespaced string
-		SharedPtr<Value> foo = host->GetGlobalObject()->GetNS("api.foo");
+		SharedValue foo = host->GetGlobalObject()->GetNS("api.foo");
 		KR_ASSERT(foo->ToInt()==1);
 		//KR_DECREF(foo);
 
@@ -107,7 +107,7 @@ namespace kroll
 		std::string event("kr.api.log");
 		TestClass* testObject = new TestClass;
 		int ref = binding->Register(event,testObject);
-		SharedPtr<Value> data = new Value("some data here");
+		SharedValue data = new Value("some data here");
 		//ScopedDereferencer dr(data);
 		ScopedDereferencer tod(testObject);
 

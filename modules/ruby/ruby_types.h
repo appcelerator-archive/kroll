@@ -23,8 +23,8 @@ namespace kroll
 		static bool ToBool(VALUE value);
 		static int ToInt(VALUE value);
 		static double ToDouble(VALUE value);
-		static SharedPtr<Value> ToValue(VALUE value);
-		static VALUE ToValue(SharedPtr<Value> value);
+		static SharedValue ToValue(VALUE value);
+		static VALUE ToValue(SharedValue value);
 		static const char * ToUpper (const char *s);
 
 	private:

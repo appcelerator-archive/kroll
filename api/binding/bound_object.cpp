@@ -39,9 +39,7 @@ namespace kroll
 			{
 				next = BoundObject::CreateEmptyBoundObject();
 				next_val = new Value(next);
-				//ScopedDereferencer next_val_dec2(next_val);
 				scope->Set(token, next_val);
-
 			}
 			else if (!next_val->IsObject()
 			         && !next_val->IsMethod()

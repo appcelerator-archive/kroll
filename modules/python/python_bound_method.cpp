@@ -26,7 +26,7 @@ namespace kroll
 		//KR_DECREF(this->delegate);
 	}
 
-	SharedPtr<Value> PythonBoundMethod::Call(const ValueList& args)
+	SharedValue PythonBoundMethod::Call(const ValueList& args)
 	{
 		PyObject *arglist = NULL;
 		if (args.size()>0)
@@ -34,7 +34,7 @@ namespace kroll
 			arglist = PyTuple_New(args.size());
 			for (int i = 0; i < (int) args.size(); i++)
 			{
-				SharedPtr<Value> v = args[i];
+				SharedValue v = args[i];
 				PyObject *pv = PythonUtils::ToObject(v);
 				PyTuple_SetItem(arglist, i, pv);
 			}
@@ -47,7 +47,7 @@ namespace kroll
 			Py_XDECREF(response);
 			PythonUtils::ThrowException();
 		}
-		SharedPtr<Value> value;
+		SharedValue value;
 		if (response!=NULL)
 		{
 			value = PythonUtils::ToValue(response,NULL);
@@ -60,12 +60,12 @@ namespace kroll
 		return value;
 	}
 
-	void PythonBoundMethod::Set(const char *name, SharedPtr<Value> value)
+	void PythonBoundMethod::Set(const char *name, SharedValue value)
 	{
 		this->delegate->Set(name,value);
 	}
 
-	SharedPtr<Value> PythonBoundMethod::Get(const char *name)
+	SharedValue PythonBoundMethod::Get(const char *name)
 	{
 		return this->delegate->Get(name);
 	}

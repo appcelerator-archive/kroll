@@ -49,7 +49,7 @@ namespace kroll
 		// from global scope directly to get it
 		const char *name = GLOBAL_NS_VARNAME;
 		SharedPtr<BoundObject> b = global_object;
-		SharedPtr<Value> wrapper = new Value(b);
+		SharedValue wrapper = new Value(b);
 		this->global_object->Set(name,wrapper);
 		//KR_DECREF(wrapper);
 	}
@@ -319,12 +319,12 @@ namespace kroll
 
 namespace kroll
 {
-	SharedPtr<Value> InvokeMethodOnMainThread(SharedPtr<BoundMethod> method, ValueList* args)
+	SharedValue InvokeMethodOnMainThread(SharedPtr<BoundMethod> method, ValueList* args)
 	{
 #ifdef OS_OSX
 	    KrollMainThreadCaller *caller = [[KrollMainThreadCaller alloc] initWithBoundMethod:method args:args];
 	    [caller performSelectorOnMainThread:@selector(call) withObject:nil waitUntilDone:YES];
-		SharedPtr<Value> result = [caller getResult];
+		SharedValue result = [caller getResult];
 		// make sure to return a new reference because we'll release it
 		// when we release the caller
 		//if (result) KR_ADDREF(result);
@@ -333,7 +333,7 @@ namespace kroll
 		//FIXME - implement for Win32 and Linux. Until then...we
 		//will just forward on same thread
 		std::cerr << "WARNING: Invoking method on non-main Thread!" << std::endl;
-		SharedPtr<Value> result = method->Call(*args);
+		SharedValue result = method->Call(*args);
 #endif
 		return result;
 	}

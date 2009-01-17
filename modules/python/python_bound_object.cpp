@@ -18,7 +18,7 @@ namespace kroll
 		this->object = NULL;
 	}
 
-	void PythonBoundObject::Set(const char *name, SharedPtr<Value> value)
+	void PythonBoundObject::Set(const char *name, SharedValue value)
 	{
 		int result = PyObject_SetAttrString(this->object,(char*)name,PythonUtils::ToObject(value));
 
@@ -29,7 +29,7 @@ namespace kroll
 		}
 	}
 
-	SharedPtr<Value> PythonBoundObject::Get(const char *name)
+	SharedValue PythonBoundObject::Get(const char *name)
 	{
 		// get should returned undefined if we don't have a property
 		// named "name" to mimic what happens in Javascript
@@ -47,7 +47,7 @@ namespace kroll
 			PythonUtils::ThrowException();
 		}
 
-		SharedPtr<Value> returnValue = PythonUtils::ToValue(response,name);
+		SharedValue returnValue = PythonUtils::ToValue(response,name);
 		Py_DECREF(response);
 		return returnValue;
 	}

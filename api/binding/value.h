@@ -15,7 +15,7 @@ namespace kroll
 	  Value is a container object which internally contains
 	  a value which can be boxed/unboxed based on the type.
 	 */
-	class KROLL_API Value : public RefCounted 
+	class KROLL_API Value
 	{
 	public:
 

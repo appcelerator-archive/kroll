@@ -10,8 +10,7 @@ namespace kroll
 {
 	APIBinding::APIBinding(SharedPtr<BoundObject> global) : record(0), global(global)
 	{
-		//KR_ADDREF(global);
-		SharedPtr<Value> version = new Value(1.0);
+		SharedValue version = new Value(1.0);
 		this->Set((const char*)"version",version);
 		this->SetMethod("set",&APIBinding::_Set);
 		this->SetMethod("get",&APIBinding::_Get);
@@ -22,7 +21,6 @@ namespace kroll
 	}
 	APIBinding::~APIBinding()
 	{
-		//KR_DECREF(global);
 		ScopedLock lock(&mutex);
 		std::map<std::string,EventRecords*>::iterator i = registrations.begin();
 		while(i!=registrations.end())
@@ -49,11 +47,11 @@ namespace kroll
 		ScopedLock lock(&mutex);
 		return this->record++;
 	}
-	void APIBinding::_Set(const ValueList& args, SharedPtr<Value> result)
+	void APIBinding::_Set(const ValueList& args, SharedValue result)
 	{
 		const char *key = args.at(0)->ToString();
 		std::string s = key;
-		SharedPtr<Value> value = args.at(1);
+		SharedValue value = args.at(1);
 		std::string::size_type pos = s.find_first_of(".");
 		if (pos==std::string::npos)
 		{
@@ -84,28 +82,27 @@ namespace kroll
 			// to the 'module' with key named 'key'
 			r = global->GetNS(key);
 		}
-		ScopedDereferencer r_dec(r);
 		result->SetValue(r);
 	}
-	void APIBinding::_Log(const ValueList& args, SharedPtr<Value> result)
+	void APIBinding::_Log(const ValueList& args, SharedValue result)
 	{
 		int severity = args.at(0)->ToInt();
 		std::string message = args.at(1)->ToString();
 		this->Log(severity,message);
 	}
-	void APIBinding::_Register(const ValueList& args, SharedPtr<Value> result)
+	void APIBinding::_Register(const ValueList& args, SharedValue result)
 	{
 		std::string event = args.at(0)->ToString();
 		BoundMethod* method = args.at(1)->ToMethod();
 		int id = this->Register(event,method);
 		result->SetInt(id);
 	}
-	void APIBinding::_Unregister(const ValueList& args, SharedPtr<Value> result)
+	void APIBinding::_Unregister(const ValueList& args, SharedValue result)
 	{
 		int id = args.at(0)->ToInt();
 		this->Unregister(id);
 	}
-	void APIBinding::_Fire(const ValueList& args, SharedPtr<Value> result)
+	void APIBinding::_Fire(const ValueList& args, SharedValue result)
 	{
 		std::string event = args.at(0)->ToString();
 		this->Fire(event,args.at(1));
@@ -185,7 +182,7 @@ namespace kroll
 			registrationsById.erase(id);
 		}
 	}
-	void APIBinding::Fire(std::string& event, SharedPtr<Value> value)
+	void APIBinding::Fire(std::string& event, SharedValue value)
 	{
 		//TODO: might want to be a little more lenient on how we lock here
 		ScopedLock lock(&mutex);

@@ -14,8 +14,8 @@ namespace kroll
 	class PythonUtils
 	{
 	public:
-		static SharedPtr<Value> ToValue(PyObject* value, const char *name = NULL);
-		static PyObject* ToObject(SharedPtr<Value> value);
+		static SharedValue ToValue(PyObject* value, const char *name = NULL);
+		static PyObject* ToObject(SharedValue value);
 		static PyObject* ToObject(const ValueList& list);
 		static const char * ToString(PyObject* value);
 		static PyObject* ToObject(SharedPtr<BoundMethod> method);
