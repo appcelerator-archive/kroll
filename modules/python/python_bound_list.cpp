@@ -144,7 +144,7 @@ namespace kroll
 	SharedStringList PythonBoundList::GetPropertyNames()
 	{
 		SharedStringList property_names(new StringList());
-		property_names->push_back("length");
+		property_names->push_back(new std::string("length"));
 
 		PyObject *props = PyObject_Dir(this->object);
 
@@ -164,7 +164,7 @@ namespace kroll
 
 		while ((item = PyIter_Next(iterator)))
 		{
-			property_names->push_back(PythonUtils::ToString(item));
+			property_names->push_back(new std::string(PythonUtils::ToString(item)));
 			Py_DECREF(item);
 		}
 

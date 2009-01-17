@@ -78,6 +78,13 @@ namespace kroll
 		 */
 		virtual SharedStringList GetPropertyNames() = 0;
 
+		/**
+		 * Function: DisplayString
+		 *
+		 * Return a string representation of this object
+		 */
+		SharedString DisplayString(int levels=3);
+
 	protected:
 		bool IsNumber (const char *name)
 		{

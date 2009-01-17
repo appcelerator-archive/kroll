@@ -29,6 +29,10 @@ namespace kroll
 	typedef SharedPtr<BoundMethod> SharedBoundMethod;
 	typedef SharedPtr<BoundList> SharedBoundList;
 
+	typedef SharedPtr<std::string> SharedString;
+	typedef std::vector<SharedString> StringList;
+	typedef SharedPtr<StringList> SharedStringList;
+
 	/*
 		Type: ValueList
 	

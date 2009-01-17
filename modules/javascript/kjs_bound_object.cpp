@@ -68,18 +68,19 @@ namespace kroll
 
 	SharedStringList KJSBoundObject::GetPropertyNames()
 	{
+		SharedStringList list(new StringList());
+
 		JSPropertyNameArrayRef names =
 		                 JSObjectCopyPropertyNames(this->context, this->object);
-
 		JSPropertyNameArrayRetain(names);
 
-		SharedStringList list(new StringList());
 		size_t count = JSPropertyNameArrayGetCount(names);
 		for (size_t i = 0; i < count; i++)
 		{
 			JSStringRef js_name = JSPropertyNameArrayGetNameAtIndex(names, i);
 			char* name = KJSUtil::ToChars(js_name);
-			list->push_back(name);
+			SharedString name_str(new std::string(name));
+			list->push_back(name_str);
 		}
 
 		JSPropertyNameArrayRelease(names);

@@ -278,7 +278,7 @@ namespace kroll
 
 		  return a string representation of this value.
 		*/
-		char* DisplayString(int levels=3);
+		SharedString DisplayString(int levels=3);
 
 		/*
 			Function: Set

@@ -327,7 +327,7 @@ namespace kroll
 		SharedStringList props = (*object)->GetPropertyNames();
 		for (size_t i = 0; i < props->size(); i++)
 		{
-			JSStringRef name = JSStringCreateWithUTF8CString(props->at(i));
+			JSStringRef name = JSStringCreateWithUTF8CString(props->at(i)->c_str());
 			JSPropertyNameAccumulatorAddName(js_properties, name);
 			JSStringRelease(name);
 		}
@@ -348,7 +348,7 @@ namespace kroll
 		SharedStringList names = (*object)->GetPropertyNames();
 		for (size_t i = 0; i < names->size(); i++)
 		{
-			if (str_name == names->at(i)) {
+			if (str_name == *names->at(i)) {
 				return true;
 			}
 		}

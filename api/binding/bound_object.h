@@ -13,9 +13,6 @@
 
 namespace kroll
 {
-	typedef std::vector<const char *> StringList;
-	typedef SharedPtr<StringList> SharedStringList;
-
 	/*
 		Class: BoundObject
 	*/
@@ -28,7 +25,7 @@ namespace kroll
 		BoundObject() { }
 		virtual ~BoundObject() { }
 
-		static SharedPtr<BoundObject> CreateEmptyBoundObject();
+		static SharedBoundObject CreateEmptyBoundObject();
 	public:
 		/*
 			Function: Set
@@ -38,7 +35,7 @@ namespace kroll
 		  if they increase the reference count.
 		  When an error occurs will throw an exception of type Value*.
 		 */
-		virtual void Set(const char *name, SharedPtr<Value> value) = 0;
+		virtual void Set(const char *name, SharedValue value) = 0;
 
 		/*
 			Function: Get
@@ -48,7 +45,7 @@ namespace kroll
 		  a reference (even for Undefined and Null types).
 		  When an error occurs will throw an exception of type Value*.
 		 */
-		virtual SharedPtr<Value> Get(const char *name) = 0;
+		virtual SharedValue Get(const char *name) = 0;
 
 		/*
 			Function: GetPropertyNames
@@ -57,92 +54,39 @@ namespace kroll
 		 */
 		virtual SharedStringList GetPropertyNames() = 0;
 
+
+		/* Function: Set
+
+			Helpful overload to Set which takes a SharedString
+		 */
+		void Set(SharedString, SharedValue value);
+
+		/* Function: Get
+
+			Helpful overload to Get which takes a SharedString
+		 */
+		SharedValue Get(SharedString);
+
 		/*
 			Function: SetNS
 
 			TODO: Document me
 		*/
-		void SetNS(const char *name, SharedPtr<Value> value)
-		{
-			std::vector<std::string> tokens;
-			FileUtils::Tokenize(std::string(name), tokens, ".");
-
-			SharedPtr<BoundObject> next;
-			BoundObject* scope = this;
-			for (size_t i = 0; i < tokens.size() - 1; i++)
-			{
-				// Ensure dereference, except for "this" object
-				ScopedDereferencer s_dec(scope);
-				if (scope == this) KR_ADDREF(scope);
-				const char* token = tokens[i].c_str();
-				SharedPtr<BoundObject> next;
-				SharedPtr<Value> next_val = scope->Get(token);
-				if (next_val->IsUndefined())
-				{
-					next = BoundObject::CreateEmptyBoundObject();
-					next_val = new Value(next);
-					//ScopedDereferencer next_val_dec2(next_val);
-					scope->Set(token, next_val);
-
-				}
-				else if (!next_val->IsObject()
-				         && !next_val->IsMethod()
-				         && !next_val->IsList())
-				{
-					throw new Value("Invalid namespace on setNS");
-
-				}
-				else
-				{
-					next = next_val->ToObject();
-				}
-
-				scope = next.get();
-			}
-
-			const char *prop_name = tokens[tokens.size()-1].c_str();
-			scope->Set(prop_name, value);
-
-#ifdef DEBUG_BINDING
-			std::cout << "BOUND: " << value->ToTypeString() << " to: " << name << std::endl;
-#endif
-		}
+		void SetNS(const char *name, SharedValue value);
 
 		/*
 			Function: GetNS
 
 			TODO: Document me
 		*/
-		SharedPtr<Value> GetNS(const char *name)
-		{
-			std::string s(name);
-			std::string::size_type last = 0;
-			std::string::size_type pos = s.find_first_of(".");
-			SharedPtr<Value> current;
-			BoundObject* scope = this;
-			while (pos != std::string::npos)
-			{
-				std::string token = s.substr(last,pos);
-				current = scope->Get(token.c_str());
-				last = pos + 1;
-			    pos = s.find_first_of(".", last);
-				if (current->IsObject())
-				{
-					scope = current->ToObject().get();
-				}
-				else
-				{
-					return Value::Undefined;
-				}
-			}
-			if (pos!=s.length())
-			{
-				std::string token = s.substr(last);
-				current = scope->Get(token.c_str());
-			}
+		SharedValue GetNS(const char *name);
 
-			return current;
-		}
+		/**
+		 * Function: DisplayString
+		 *
+		 * Return a string representation of this object
+		 */
+		SharedString DisplayString(int levels=3);
 
 	private:
 		DISALLOW_EVIL_CONSTRUCTORS(BoundObject);

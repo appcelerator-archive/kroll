@@ -22,21 +22,24 @@ namespace kroll
 	StaticBoundObject::~StaticBoundObject()
 	{
 		// The SharedPtr implementation should decrement
-		// all members of properties, when the destrutor
-		// is called on it
+		// all members of properties, when the properties
+		// map destructs
 	}
 
 	SharedValue StaticBoundObject::Get(const char *name)
 	{
 		ScopedLock lock(&mutex);
 
+		printf("Getting %s\n", name);
+
 		std::map<std::string, SharedValue>::iterator iter;
-		iter = properties.find(name);
+		iter = properties.find(std::string(name));
 		if (iter != properties.end()) {
-			//KR_ADDREF(iter->second);
+			printf("Gotit\n");
 			return iter->second;
 		}
 
+		printf("couldn't find it\n");
 		return Value::Undefined;
 	}
 
@@ -44,18 +47,25 @@ namespace kroll
 	{
 		ScopedLock lock(&mutex);
 
-		//KR_ADDREF(value);
 		this->UnSet(name);
-		this->properties[name] = value;
+		this->properties[std::string(name)] = value;
+
+		if (value->IsMethod())
+		{
+			SharedBoundMethod v = value->ToMethod();
+			printf("Setting %s: %i\n", name, (int) v.get());
+		}
+
 	}
 
 	void StaticBoundObject::UnSet(const char *name)
 	{
 		ScopedLock lock(&mutex);
-		std::map<std::string, SharedValue>::iterator iter = this->properties.find(name);
+
+		std::map<std::string, SharedValue>::iterator iter;
+		iter = this->properties.find(std::string(name));
 		if (this->properties.end() != iter)
 		{
-			//KR_DECREF(iter->second);
 			this->properties.erase(iter);
 		}
 	}
@@ -63,11 +73,14 @@ namespace kroll
 	SharedStringList StaticBoundObject::GetPropertyNames()
 	{
 		ScopedLock lock(&mutex);
-		std::map<std::string, SharedValue>::iterator iter = properties.begin();
 		SharedStringList list(new StringList());
+
+		std::map<std::string, SharedValue>::iterator iter;
+		iter = properties.begin();
 		while (iter != properties.end())
 		{
-			list->push_back(iter->first.c_str());
+			SharedString name_string(new std::string(iter->first));
+			list->push_back(name_string);
 			iter++;
 		}
 
@@ -78,7 +91,6 @@ namespace kroll
 	{
 		SharedValue obj_val = new Value(object);
 		this->Set(name, obj_val);
-		//KR_DECREF(obj_val);
 	}
 }
 

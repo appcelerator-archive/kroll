@@ -265,7 +265,7 @@ namespace kroll
 	/* TODO: when the shared_ptr stuff comes through
 	 * BoundObject,List,Method should have their own
 	 * DisplayString impls */
-	char* Value::DisplayString(int levels)
+	SharedString Value::DisplayString(int levels)
 	{
 
 		std::ostringstream oss;
@@ -291,46 +291,14 @@ namespace kroll
 		else if (this->IsList())
 		{
 			SharedBoundList list = this->ToList();
-			if (levels == 0)
-			{
-				oss << "<BoundList at " << list.get() << ">";
-			}
-			else
-			{
-				oss << "[";
-				for (int i = 0; i < list->Size(); i++)
-				{
-					SharedValue list_val = list->At(i);
-					oss << " " << list_val->DisplayString(levels-1) << ",";
-				}
-				//int before_last_comma = oss.tellp() - 1;
-				//oss.seekp(before_last_comma);
-				oss << " ]";
-			}
+			SharedString disp_string = list->DisplayString(levels-1);
+			oss << *disp_string;
 		}
 		else if (this->IsObject())
 		{
 			SharedBoundObject obj = this->ToObject();
-			if (levels == 0)
-			{
-				oss << "<BoundObject at " << obj.get() << ">";
-			}
-			else
-			{
-				SharedStringList props = obj->GetPropertyNames();
-				oss << "{";
-				for (size_t i = 0; i < props->size(); i++)
-				{
-					SharedValue prop = obj->Get(props->at(i));
-					oss << " " << props->at(i)
-					    << " : "
-					    << prop->DisplayString(levels-1)
-					    << ",";
-				}
-				//int before_last_comma = oss.tellp() - 1;
-				//oss.seekp(before_last_comma);
-				oss << "}";
-			}
+			SharedString disp_string = obj->DisplayString(levels-1);
+			oss << *disp_string;
 		}
 		else if (this->IsMethod())
 		{
@@ -350,8 +318,9 @@ namespace kroll
 			oss << "<unknown>";
 		}
 
-		return strdup(oss.str().c_str());
+		return new std::string(oss.str());
 	}
+
 	const char* Value::ToTypeString()
 	{
 		if (IsInt())

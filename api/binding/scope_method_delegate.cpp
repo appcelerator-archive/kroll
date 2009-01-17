@@ -72,9 +72,9 @@ SharedPtr<StaticBoundObject> ScopeMethodDelegate::CreateDelegate(SharedBoundObje
 
 	while(iter!=keys->end())
 	{
-		const char *name = (*iter++);
-		std::string key(name);
-		SharedValue value = bo->Get(name);
+		SharedString key_ptr = (*iter++);
+		std::string key = *key_ptr;
+		SharedValue value = bo->Get(key.c_str());
 
 		if (key == "set")
 		{
@@ -82,7 +82,7 @@ SharedPtr<StaticBoundObject> ScopeMethodDelegate::CreateDelegate(SharedBoundObje
 			SharedValue v = new Value(d);
 			//ScopedDereferencer d1(d);
 			//ScopedDereferencer d2(v);
-			scope->Set(name, v);
+			scope->Set(key.c_str(), v);
 		}
 		else if (key == "get")
 		{
@@ -90,11 +90,11 @@ SharedPtr<StaticBoundObject> ScopeMethodDelegate::CreateDelegate(SharedBoundObje
 			SharedValue v = new Value(d);
 			//ScopedDereferencer d1(d);
 			//ScopedDereferencer d2(v);
-			scope->Set(name, v);
+			scope->Set(key.c_str(), v);
 		}
 		else
 		{
-			scope->Set(name, value);
+			scope->Set(key.c_str(), value);
 		}
 
 	}
