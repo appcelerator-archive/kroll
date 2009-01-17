@@ -6,7 +6,7 @@ Import('build')
 
 Env = build.env.Clone()
 Env.Append(CPPDEFINES={'KROLL_API_EXPORT': 1})
-build.AddPoco(Env)
+build.add_thirdparty(Env, 'poco')
 
 if build.is_win32():
 	Env.Append(LIBS=['shell32', 'user32'])
