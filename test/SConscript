@@ -6,7 +6,6 @@ Env = build.env.Clone()
 build.AddPoco(Env)
 
 if build.is_osx():
-	Env.Append(CCFLAGS=['-x', 'objective-c++'])
 	Env.Append(FRAMEWORKS=['Cocoa'])
 
 if build.is_win32():

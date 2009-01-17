@@ -5,8 +5,7 @@ Import('build')
 
 Env = build.env.Clone()
 Env.Append(CPPDEFINES={'KROLL_HOST_EXPORT':1})
-Env.Append(CCFLAGS=['-x', 'objective-c++'])
-Env.Append(FRAMEWORKS=['Foundation', 'Cocoa'])
+Env.Append(FRAMEWORKS=['Cocoa'])
 build.AddPoco(Env)
 
 Env.SharedLibrary(build.dir + '/khost', ['host.cpp', 'log.cpp'], LIBS=['kroll'])

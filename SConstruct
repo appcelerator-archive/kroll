@@ -84,10 +84,11 @@ if build.is_linux() or build.is_osx():
 
 if build.is_osx():
 	OSX_SDK = '/Developer/SDKs/MacOSX10.4u.sdk'
-	OSX_UNIV_COMPILER = '-isysroot '+OSX_SDK+' -arch i386'
-	OSX_UNIV_LINKER = '-isysroot '+OSX_SDK+' -syslibroot,'+OSX_SDK
+	OSX_UNIV_COMPILER = '-isysroot '+OSX_SDK+' -arch i386 -arch ppc -mmacosx-version-min=10.4 -x objective-c++'
+	OSX_UNIV_LINKER = '-isysroot '+OSX_SDK+' -syslibroot,'+OSX_SDK+' -arch i386 -arch ppc -mmacosx-version-min=10.4'
 	build.env.Append(CXXFLAGS=OSX_UNIV_COMPILER)
-	build.env.Append(LDFLAGS=OSX_UNIV_LINKER)
+	build.env.Append(LINKFLAGS=OSX_UNIV_LINKER)
+	build.env.Append(FRAMEWORKS=['Foundation'])
 
 Export('build')
 if 'docs' in COMMAND_LINE_TARGETS:
