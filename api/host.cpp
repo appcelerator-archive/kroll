@@ -319,7 +319,7 @@ namespace kroll
 
 namespace kroll
 {
-	SharedValue InvokeMethodOnMainThread(SharedPtr<BoundMethod> method, ValueList* args)
+	SharedValue InvokeMethodOnMainThread(SharedBoundMethod method, ValueList* args)
 	{
 #ifdef OS_OSX
 	    KrollMainThreadCaller *caller = [[KrollMainThreadCaller alloc] initWithBoundMethod:method args:args];
