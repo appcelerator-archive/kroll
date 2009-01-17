@@ -25,7 +25,7 @@ namespace kroll
 
 	private:
 		PyObject *object;
-        DISALLOW_EVIL_CONSTRUCTORS(PythonBoundObject);
+		DISALLOW_EVIL_CONSTRUCTORS(PythonBoundObject);
 	};
 }
 #endif

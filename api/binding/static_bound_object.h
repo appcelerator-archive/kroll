@@ -74,12 +74,7 @@ namespace kroll
 			SharedBoundMethod bound_method = new StaticBoundMethod(callback);
 			SharedValue method_value = new Value(bound_method);
 
-			printf("Binding method %i\n", (int) bound_method.get());
-
 			this->Set(name, method_value);
-
-			//KR_DECREF(bound_method);
-			//KR_DECREF(method_value);
 		}
 
 		/*

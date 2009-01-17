@@ -12,7 +12,7 @@ namespace kroll
 	public:
 		void TestMethod(const ValueList& args, SharedPtr<Value> result)
 		{
-			result->Set(args.at(0));
+			result->SetValue(args.at(0));
 		}
 		TestClass()
 		{

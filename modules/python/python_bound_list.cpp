@@ -88,7 +88,7 @@ namespace kroll
 			}
 
 			SharedPtr<Value> current = this->At(val);
-			current->Set(value);
+			current->SetValue(value);
 		}
 		else
 		{

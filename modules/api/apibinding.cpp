@@ -67,11 +67,11 @@ namespace kroll
 			global->SetNS(key,value);
 		}
 	}
-	void APIBinding::_Get(const ValueList& args, SharedPtr<Value> result)
+	void APIBinding::_Get(const ValueList& args, SharedValue result)
 	{
 		std::string s = args.at(0)->ToString();
 		const char *key = s.c_str();
-		SharedPtr<Value> r = NULL;
+		SharedValue r = NULL;
 		std::string::size_type pos = s.find_first_of(".");
 		if (pos==std::string::npos)
 		{
@@ -85,7 +85,7 @@ namespace kroll
 			r = global->GetNS(key);
 		}
 		ScopedDereferencer r_dec(r);
-		result->Set(r);
+		result->SetValue(r);
 	}
 	void APIBinding::_Log(const ValueList& args, SharedPtr<Value> result)
 	{
@@ -98,7 +98,7 @@ namespace kroll
 		std::string event = args.at(0)->ToString();
 		BoundMethod* method = args.at(1)->ToMethod();
 		int id = this->Register(event,method);
-		result->Set(id);
+		result->SetInt(id);
 	}
 	void APIBinding::_Unregister(const ValueList& args, SharedPtr<Value> result)
 	{
