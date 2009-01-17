@@ -25,7 +25,7 @@ namespace kroll
 		return this->object;
 	}
 
-	SharedPtr<Value> KJSBoundObject::Get(const char *name)
+	SharedValue KJSBoundObject::Get(const char *name)
 	{
 		JSStringRef s = JSStringCreateWithUTF8CString(name);
 		JSValueRef exception = NULL;
@@ -38,14 +38,14 @@ namespace kroll
 
 		if (exception != NULL) //exception thrown
 		{
-			SharedPtr<Value> tv_exp = KJSUtil::ToKrollValue(exception, this->context, NULL);
+			SharedValue tv_exp = KJSUtil::ToKrollValue(exception, this->context, NULL);
 			throw tv_exp;
 		}
 
 		return KJSUtil::ToKrollValue(js_value, this->context, this->object);
 	}
 
-	void KJSBoundObject::Set(const char *name, SharedPtr<Value> value)
+	void KJSBoundObject::Set(const char *name, SharedValue value)
 	{
 		JSValueRef js_value = KJSUtil::ToJSValue(value, this->context);
 		JSStringRef s = JSStringCreateWithUTF8CString(name);
@@ -68,18 +68,19 @@ namespace kroll
 
 	SharedStringList KJSBoundObject::GetPropertyNames()
 	{
+		SharedStringList list(new StringList());
+
 		JSPropertyNameArrayRef names =
 		                 JSObjectCopyPropertyNames(this->context, this->object);
-
 		JSPropertyNameArrayRetain(names);
 
-		SharedStringList list(new StringList());
 		size_t count = JSPropertyNameArrayGetCount(names);
 		for (size_t i = 0; i < count; i++)
 		{
 			JSStringRef js_name = JSPropertyNameArrayGetNameAtIndex(names, i);
 			char* name = KJSUtil::ToChars(js_name);
-			list->push_back(name);
+			SharedString name_str(new std::string(name));
+			list->push_back(name_str);
 		}
 
 		JSPropertyNameArrayRelease(names);

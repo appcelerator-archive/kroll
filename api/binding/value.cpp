@@ -11,16 +11,16 @@
 namespace kroll
 {
 	Value::Value() { init(); SetUndefined(); }
-	Value::Value(int value) { init(); this->Set(value); }
-	Value::Value(double value) { init(); this->Set(value); }
-	Value::Value(bool value) { init(); this->Set(value); }
-	Value::Value(const char* value) { init(); this->Set(value); }
-	Value::Value(std::string& value) { init(); this->Set(value.c_str()); }
-	Value::Value(SharedPtr<BoundList> value) { init(); this->Set(value); }
-	Value::Value(SharedPtr<BoundMethod> method) { init(); this->Set(method); }
-	Value::Value(SharedPtr<BoundObject> value) { init(); this->Set(value); }
-	Value::Value(SharedPtr<StaticBoundObject> value) { init(); this->Set(value); }
-	Value::Value(SharedPtr<Value> value) { init(); this->Set(value); }
+	Value::Value(int value) { init(); this->SetInt(value); }
+	Value::Value(double value) { init(); this->SetDouble(value); }
+	Value::Value(bool value) { init(); this->SetBool(value); }
+	Value::Value(const char* value) { init(); this->SetString(value); }
+	Value::Value(std::string& value) { init(); this->SetString(value.c_str()); }
+	Value::Value(SharedBoundList value) { init(); this->SetList(value); }
+	Value::Value(SharedBoundMethod method) { init(); this->SetMethod(method); }
+	Value::Value(SharedBoundObject value) { init(); this->SetObject(value); }
+	Value::Value(SharedPtr<StaticBoundObject> value) { init(); this->SetStaticBoundObject(value); }
+	Value::Value(SharedValue value) { init(); this->SetValue(value); }
 	Value::Value(const Value& value)
 	{
 		init();
@@ -32,7 +32,7 @@ namespace kroll
 		}
 		else
 		{
-			this->Set((Value*)&value);
+			this->SetValue((Value*)&value);
 			//if (value.IsObject())
 			//{
 			//	KR_ADDREF(this->value.objectValue);
@@ -53,19 +53,19 @@ namespace kroll
 		}
 	}
 
-	SharedPtr<Value> Value::Undefined = CreateUndefined();
-	SharedPtr<Value> Value::Null = CreateNull();
+	SharedValue Value::Undefined = CreateUndefined();
+	SharedValue Value::Null = CreateNull();
 
-	SharedPtr<Value> Value::CreateUndefined()
+	SharedValue Value::CreateUndefined()
 	{
-		SharedPtr<Value> v = new Value();
+		SharedValue v = new Value();
 		v->SetUndefined();
 		return v;
 	}
 
-	SharedPtr<Value> Value::CreateNull()
+	SharedValue Value::CreateNull()
 	{
-		SharedPtr<Value> v = new Value();
+		SharedValue v = new Value();
 		v->SetNull();
 		return v;
 	}
@@ -96,7 +96,7 @@ namespace kroll
 	bool Value::IsInt() const { return type == INT; }
 	bool Value::IsDouble() const { return type == DOUBLE; }
 	bool Value::IsBool() const { return type == BOOL; }
-	bool Value::IsString() const { return type == STRING; }
+	bool Value::IsString() const {  return type == STRING; }
 	bool Value::IsList() const { return type == LIST; }
 	bool Value::IsObject() const { return type == OBJECT; }
 	bool Value::IsMethod() const { return type == METHOD; }
@@ -107,37 +107,37 @@ namespace kroll
 	double Value::ToDouble() const { return numberValue; }
 	bool Value::ToBool() const { return boolValue; }
 	const char* Value::ToString() const { return stringValue; }
-	SharedPtr<BoundObject> Value::ToObject() const { return objectValue; }
-	SharedPtr<BoundMethod> Value::ToMethod() const { return objectValue.cast<BoundMethod>(); }
-	SharedPtr<BoundList> Value::ToList() const { return objectValue.cast<BoundList>(); }
+	SharedBoundObject Value::ToObject() const { return objectValue; }
+	SharedBoundMethod Value::ToMethod() const { return objectValue.cast<BoundMethod>(); }
+	SharedBoundList Value::ToList() const { return objectValue.cast<BoundList>(); }
 
-	void Value::Set(SharedPtr<Value> other)
+	void Value::SetValue(SharedValue other)
 	{
-		Set(other.get());
+		SetValue(other.get());
 	}
 
-	void Value::Set(Value *other)
+	void Value::SetValue(Value *other)
 	{
 		if (other->IsInt())
-			this->Set(other->ToInt());
+			this->SetInt(other->ToInt());
 
 		else if (other->IsDouble())
-			this->Set(other->ToDouble());
+			this->SetDouble(other->ToDouble());
 
 		else if (other->IsBool())
-			this->Set(other->ToBool());
+			this->SetBool(other->ToBool());
 
 		else if (other->IsString())
-			this->Set(other->ToString());
+			this->SetString(other->ToString());
 
 		else if (other->IsList())
-			this->Set(other->ToList());
+			this->SetList(other->ToList());
 
 		else if (other->IsMethod())
-			this->Set(other->ToMethod());
+			this->SetMethod(other->ToMethod());
 
 		else if (other->IsObject())
-			this->Set(other->ToObject());
+			this->SetObject(other->ToObject());
 
 		else if (other->IsNull())
 			this->SetNull();
@@ -149,35 +149,35 @@ namespace kroll
 			throw "Error on set. Unknown type for other";
 	}
 
-	void Value::Set(int value)
+	void Value::SetInt(int value)
 	{
 		defaults();
 		this->numberValue = value;
 		type = INT;
 	}
 
-	void Value::Set(double value)
+	void Value::SetDouble(double value)
 	{
 		defaults();
 		this->numberValue = value;
 		type = DOUBLE;
 	}
 
-	void Value::Set(bool value)
+	void Value::SetBool(bool value)
 	{
 		defaults();
 		this->boolValue = value;
 		type = BOOL;
 	}
 
-	void Value::Set(char* value)
+	void Value::SetString(const char* value)
 	{
 		defaults();
 		this->stringValue = strdup(value);
 		type = STRING;
 	}
 
-	void Value::Set(SharedPtr<BoundList> value)
+	void Value::SetList(SharedBoundList value)
 	{
 		defaults();
 		this->objectValue = value;
@@ -185,7 +185,7 @@ namespace kroll
 		type = LIST;
 	}
 
-	void Value::Set(SharedPtr<BoundObject> value)
+	void Value::SetObject(SharedBoundObject value)
 	{
 		defaults();
 		this->objectValue = value;
@@ -193,14 +193,14 @@ namespace kroll
 		type = OBJECT;
 	}
 
-	void Value::Set(SharedPtr<StaticBoundObject> value)
+	void Value::SetStaticBoundObject(SharedPtr<StaticBoundObject> value)
 	{
 		defaults();
 		this->objectValue = value;
 		type = OBJECT;
 	}
 
-	void Value::Set(SharedPtr<BoundMethod> value)
+	void Value::SetMethod(SharedBoundMethod value)
 	{
 		defaults();
 		this->objectValue = value;
@@ -241,16 +241,16 @@ namespace kroll
 
 		if (this->IsList() && i.IsList())
 		{
-			SharedPtr<BoundList> tlist = this->ToList();
-			SharedPtr<BoundList> olist = i.ToList();
+			SharedBoundList tlist = this->ToList();
+			SharedBoundList olist = i.ToList();
 
 			if (tlist->Size() != olist->Size())
 				return false;
 
 			for (int i = 0; i < (int) tlist->Size(); i++)
 			{
-				SharedPtr<Value> a = tlist->At(i);
-				SharedPtr<Value> b = olist->At(i);
+				SharedValue a = tlist->At(i);
+				SharedValue b = olist->At(i);
 
 				if (a != b)
 					return false;
@@ -265,7 +265,7 @@ namespace kroll
 	/* TODO: when the shared_ptr stuff comes through
 	 * BoundObject,List,Method should have their own
 	 * DisplayString impls */
-	char* Value::DisplayString(int levels)
+	SharedString Value::DisplayString(int levels)
 	{
 
 		std::ostringstream oss;
@@ -290,51 +290,19 @@ namespace kroll
 		}
 		else if (this->IsList())
 		{
-			SharedPtr<BoundList> list = this->ToList();
-			if (levels == 0)
-			{
-				oss << "<BoundList at " << list.get() << ">";
-			}
-			else
-			{
-				oss << "[";
-				for (int i = 0; i < list->Size(); i++)
-				{
-					SharedPtr<Value> list_val = list->At(i);
-					oss << " " << list_val->DisplayString(levels-1) << ",";
-				}
-				//int before_last_comma = oss.tellp() - 1;
-				//oss.seekp(before_last_comma);
-				oss << " ]";
-			}
+			SharedBoundList list = this->ToList();
+			SharedString disp_string = list->DisplayString(levels-1);
+			oss << *disp_string;
 		}
 		else if (this->IsObject())
 		{
-			SharedPtr<BoundObject> obj = this->ToObject();
-			if (levels == 0)
-			{
-				oss << "<BoundObject at " << obj.get() << ">";
-			}
-			else
-			{
-				SharedStringList props = obj->GetPropertyNames();
-				oss << "{";
-				for (size_t i = 0; i < props->size(); i++)
-				{
-					SharedPtr<Value> prop = obj->Get(props->at(i));
-					oss << " " << props->at(i)
-					    << " : "
-					    << prop->DisplayString(levels-1)
-					    << ",";
-				}
-				//int before_last_comma = oss.tellp() - 1;
-				//oss.seekp(before_last_comma);
-				oss << "}";
-			}
+			SharedBoundObject obj = this->ToObject();
+			SharedString disp_string = obj->DisplayString(levels-1);
+			oss << *disp_string;
 		}
 		else if (this->IsMethod())
 		{
-			SharedPtr<BoundMethod> method = this->ToMethod();
+			SharedBoundMethod method = this->ToMethod();
 			oss << "<BoundMethod at " << method.get() << ">";
 		}
 		else if (this->IsNull())
@@ -350,8 +318,9 @@ namespace kroll
 			oss << "<unknown>";
 		}
 
-		return strdup(oss.str().c_str());
+		return new std::string(oss.str());
 	}
+
 	const char* Value::ToTypeString()
 	{
 		if (IsInt())

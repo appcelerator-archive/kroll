@@ -25,7 +25,7 @@ if build.is_osx() or build.is_linux():
 p = Env.Program(build.dir + '/kkernel', ['main.cpp'])
 
 if build.is_win32():
-	Env.AddPostAction(p, 'mt.exe -nologo -manifest ' + \
+	Env.AddPostAction(p, ('mt.exe -nologo -manifest ' + \
 	                     '"%s/kkernel.exe.manifest" ' + \
-	                     ' -outputresource:%s/kkernel.exe' % \
+	                     ' -outputresource:%s/kkernel.exe') % \
 	                     (build.dir, build.dir))

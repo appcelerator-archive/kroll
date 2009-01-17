@@ -3,6 +3,7 @@
  * see LICENSE in the root folder for details on the license.
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
+#include "base.h"
 #ifdef OS_OSX
 #include <Cocoa/Cocoa.h>
 #endif
@@ -18,9 +19,7 @@
 #include <vector>
 #include <string>
 
-#include "base.h"
-#include "host.h"
-#include "module.h"
+#include "kroll.h"
 
 namespace kroll
 {

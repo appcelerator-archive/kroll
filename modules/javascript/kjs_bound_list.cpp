@@ -24,12 +24,12 @@ namespace kroll
 		//KR_DECREF(kjs_bound_object);
 	}
 
-	SharedPtr<Value> KJSBoundList::Get(const char *name)
+	SharedValue KJSBoundList::Get(const char *name)
 	{
 		return kjs_bound_object->Get(name);
 	}
 
-	void KJSBoundList::Set(const char *name, SharedPtr<Value> value)
+	void KJSBoundList::Set(const char *name, SharedValue value)
 	{
 		return kjs_bound_object->Set(name, value);
 	}
@@ -49,9 +49,9 @@ namespace kroll
 		return this->object;
 	}
 
-	void KJSBoundList::Append(SharedPtr<Value> value)
+	void KJSBoundList::Append(SharedValue value)
 	{
-		SharedPtr<Value> push_method = this->kjs_bound_object->Get("push");
+		SharedValue push_method = this->kjs_bound_object->Get("push");
 
 		if (push_method->IsMethod())
 		{
@@ -67,7 +67,7 @@ namespace kroll
 
 	int KJSBoundList::Size()
 	{
-		SharedPtr<Value> length_val = this->kjs_bound_object->Get("length");
+		SharedValue length_val = this->kjs_bound_object->Get("length");
 
 		if (length_val->IsInt())
 		{
@@ -79,10 +79,10 @@ namespace kroll
 		}
 	}
 
-	SharedPtr<Value> KJSBoundList::At(int index)
+	SharedValue KJSBoundList::At(int index)
 	{
 		char* name = KJSBoundList::IntToChars(index);
-		SharedPtr<Value> value = this->kjs_bound_object->Get(name);
+		SharedValue value = this->kjs_bound_object->Get(name);
 		delete [] name;
 		return value;
 	}

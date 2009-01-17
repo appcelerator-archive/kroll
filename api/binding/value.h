@@ -7,28 +7,15 @@
 #ifndef _KR_VALUE_H_
 #define _KR_VALUE_H_
 
-#include <Poco/SharedPtr.h>
-
-using namespace Poco;
-
-namespace kroll
+namespace kroll 
 {
-	/*
-		Type: ValueList
-
-	  This typdef is only used for argument lists. For
-	  a list implementation to be used as a value in the
-	  binding layer, take a look at BoundList and
-	  StaticBoundList.
-	 */
-	typedef std::vector<SharedPtr<Value> > ValueList;
 
 	/*
 		Class: Value
 	  Value is a container object which internally contains
 	  a value which can be boxed/unboxed based on the type.
 	 */
-	class KROLL_API Value : public RefCounted
+	class KROLL_API Value : public RefCounted 
 	{
 	public:
 
@@ -64,7 +51,7 @@ namespace kroll
 		  return pointer is not borrowed and must referenced
 		  counted if used or returned from a method call.
 		 */
-		static SharedPtr<Value> Undefined;
+		static SharedValue Undefined;
 
 		/*
 			Function: Undefined
@@ -73,7 +60,7 @@ namespace kroll
 		  return pointer is not borrowed and must referenced
 		  counted if used or returned from a method call.
 		 */
-		static SharedPtr<Value> Null;
+		static SharedValue Null;
 
 		/*
 			Constructor: Value
@@ -122,14 +109,14 @@ namespace kroll
 
 		  construct a <LIST> type
 		 */
-		Value(SharedPtr<BoundList> value);
+		Value(SharedBoundList value);
 
 		/*
 			Constructor: Value
 
 		  construct an <OBJECT> type
 		 */
-		Value(SharedPtr<BoundObject> value);
+		Value(SharedBoundObject value);
 
 		Value(SharedPtr<StaticBoundObject> value);
 
@@ -138,12 +125,12 @@ namespace kroll
 
 		  construct a <METHOD> type
 		 */
-		Value(SharedPtr<BoundMethod> value);
+		Value(SharedBoundMethod value);
 
 		/*
 			Constructor: Value
 		 */
-		Value::Value(SharedPtr<Value> value);
+		Value(SharedValue value);
 		/*
 			Constructor: Value
 
@@ -155,10 +142,10 @@ namespace kroll
 		 * destructor
 		 */
 		virtual ~Value();
-	protected:
 
-		static SharedPtr<Value> CreateUndefined();
-		static SharedPtr<Value> CreateNull();
+	protected:
+		static SharedValue CreateUndefined();
+		static SharedValue CreateNull();
 
 	public:
 
@@ -263,21 +250,21 @@ namespace kroll
 
 		  return the value as a BoundList
 		 */
-		SharedPtr<BoundList> ToList() const;
+		SharedBoundList ToList() const;
 
 		/*
 			Function: ToObject
 
 		  return the value as a BoundObject*
 		 */
-		SharedPtr<BoundObject> ToObject() const;
+		SharedBoundObject ToObject() const;
 
 		/*
 			Function: ToMethod
 
 		  return the value as a BoundMethod*
 		 */
-		SharedPtr<BoundMethod> ToMethod() const;
+		SharedBoundMethod ToMethod() const;
 
 		/*
 			Function: ToTypeString
@@ -291,7 +278,7 @@ namespace kroll
 
 		  return a string representation of this value.
 		*/
-		char* DisplayString(int levels=3);
+		SharedString DisplayString(int levels=3);
 
 		/*
 			Function: Set
@@ -301,7 +288,7 @@ namespace kroll
 		  this instance will make a reference of the internal
 		  value of other but not other itself
 		 */
-		void Set(Value *other);
+		void SetValue(Value *other);
 
 		/*
 			Function: Set
@@ -311,63 +298,63 @@ namespace kroll
 		  this instance will make a reference of the internal
 		  value of other but not other itself
 		 */
-		void Set(SharedPtr<Value> other);
+		void SetValue(SharedValue other);
 
 		/*
 			Function: Set
 
 		  change the internal value of this instance to value
 		 */
-		void Set(int value);
+		void SetInt(int value);
 
 		/*
 			Function: Set
 
 		  change the internal value of this instance to value
 		 */
-		void Set(double value);
+		void SetDouble(double value);
 
 		/*
 			Function: Set
 
 		  change the internal value of this instance to value
 		 */
-		void Set(bool value);
+		void SetBool(bool value);
 
 		/*
 			Function: Set
 
 		  change the internal value of this instance to value
 		 */
-		void Set(char* value);
+		void SetString(const char* value);
 
 		/*
 			Function: Set
 
 		  change the internal value of this instance to value
 		 */
-		void Set(SharedPtr<BoundList> value);
+		void SetList(SharedBoundList value);
 
 		/*
 			Function: Set
 
 			change the internal value of this instance to value
 		 */
-		void Set(SharedPtr<StaticBoundObject> value);
+		void SetStaticBoundObject(SharedPtr<StaticBoundObject> value);
 
 		/*
 			Function: Set
 
 		  change the internal value of this instance to value
 		 */
-		void Set(SharedPtr<BoundObject> value);
+		void SetObject(SharedBoundObject value);
 
 		/**
 			Function: Set
 
 		  change the internal value of this instance to value
 		 */
-		void Set(SharedPtr<BoundMethod> value);
+		void SetMethod(SharedBoundMethod value);
 
 		/*
 			Function: SetNull
@@ -389,7 +376,7 @@ namespace kroll
 		double numberValue;
 		bool boolValue;
 		const char *stringValue;
-		SharedPtr<BoundObject> objectValue;
+		SharedBoundObject objectValue;
 
 		void defaults();
 		void init();

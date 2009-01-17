@@ -14,17 +14,15 @@ namespace kroll
 	StaticBoundList::StaticBoundList()
 		: object(new StaticBoundObject())
 	{
-		SharedPtr<Value> len = new Value(0);
+		SharedValue len = new Value(0);
 		this->Set("length", len);
-		//KR_DECREF(len);
 	}
 
 	StaticBoundList::~StaticBoundList()
 	{
-		//KR_DECREF(this->object);
 	}
 
-	void StaticBoundList::Append(SharedPtr<Value> value)
+	void StaticBoundList::Append(SharedValue value)
 	{
 		int length = this->Size();
 		char* name = StaticBoundList::IntToChars(length);
@@ -32,14 +30,14 @@ namespace kroll
 		delete [] name;
 
 		length = length + 1;
-		SharedPtr<Value> len = new Value(length);
+		SharedValue len = new Value(length);
 		this->object->Set("length", len);
 		//KR_DECREF(len);
 	}
 
 	int StaticBoundList::Size()
 	{
-		SharedPtr<Value> size_val = this->Get("length");
+		SharedValue size_val = this->Get("length");
 		if (size_val->IsInt())
 		{
 			return size_val->ToInt();
@@ -50,22 +48,22 @@ namespace kroll
 		}
 	}
 
-	SharedPtr<Value> StaticBoundList::At(int index)
+	SharedValue StaticBoundList::At(int index)
 	{
 		char* name = StaticBoundList::IntToChars(index);
-		SharedPtr<Value> value = this->object->Get(name);
+		SharedValue value = this->object->Get(name);
 		delete [] name;
 		return value;
 	}
 
-	void StaticBoundList::Set(const char *name, SharedPtr<Value> value)
+	void StaticBoundList::Set(const char *name, SharedValue value)
 	{
 		if (BoundList::IsNumber(name))
 		{
 			int val = atoi(name);
 			if (val > this->Size())
 			{
-				SharedPtr<Value> len = new Value(val);
+				SharedValue len = new Value(val);
 				this->object->Set("length", len);
 				//KR_DECREF(len);
 			}
@@ -74,7 +72,7 @@ namespace kroll
 		this->object->Set(name, value);
 	}
 
-	SharedPtr<Value> StaticBoundList::Get(const char *name)
+	SharedValue StaticBoundList::Get(const char *name)
 	{
 		return this->object->Get(name);
 	}

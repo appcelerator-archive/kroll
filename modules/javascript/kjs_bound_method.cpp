@@ -32,12 +32,12 @@ namespace kroll
 		//KR_DECREF(kjs_bound_object);
 	}
 
-	SharedPtr<Value> KJSBoundMethod::Get(const char *name)
+	SharedValue KJSBoundMethod::Get(const char *name)
 	{
 		return kjs_bound_object->Get(name);
 	}
 
-	void KJSBoundMethod::Set(const char *name, SharedPtr<Value> value)
+	void KJSBoundMethod::Set(const char *name, SharedValue value)
 	{
 		return kjs_bound_object->Set(name, value);
 	}
@@ -57,13 +57,13 @@ namespace kroll
 		return this->object;
 	}
 
-	SharedPtr<Value> KJSBoundMethod::Call(const ValueList& args)
+	SharedValue KJSBoundMethod::Call(const ValueList& args)
 	{
 
 		JSValueRef* js_args = new JSValueRef[args.size()];
 		for (int i = 0; i < (int) args.size(); i++)
 		{
-			SharedPtr<Value> arg = args.at(i);
+			SharedValue arg = args.at(i);
 			js_args[i] = KJSUtil::ToJSValue(arg, this->context);
 		}
 
@@ -78,7 +78,7 @@ namespace kroll
 
 		if (js_value == NULL && exception != NULL) //exception thrown
 		{
-			SharedPtr<Value> tv_exp = KJSUtil::ToKrollValue(exception, this->context, NULL);
+			SharedValue tv_exp = KJSUtil::ToKrollValue(exception, this->context, NULL);
 			throw tv_exp.get();
 		}
 

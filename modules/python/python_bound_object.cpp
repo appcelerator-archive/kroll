@@ -70,7 +70,7 @@ namespace kroll
 			return property_names;
 
 		while ((item = PyIter_Next(iterator))) {
-			property_names->push_back(PythonUtils::ToString(item));
+			property_names->push_back(new std::string(PythonUtils::ToString(item)));
 			Py_DECREF(item);
 		}
 

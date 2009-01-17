@@ -8,6 +8,7 @@
 #import <Cocoa/Cocoa.h>
 #endif
 
+#include <api/base.h>
 #include <api/kroll.h>
 #include <host.h>
 

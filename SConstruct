@@ -29,6 +29,7 @@ class BuildConfig(object):
 		env.Append(LIBPATH=[self.poco_lib])
 		env.Append(CPPPATH=[self.poco_inc])
 		env.Append(LIBS=['PocoFoundation','PocoNet','PocoNetSSL'])
+		if build.is_linux(): env.Append(LIBS=['PocoUtil', 'PocoXML'])
 
 build = BuildConfig()
 build.kroll_source_dir = path.abspath('.')
@@ -54,7 +55,7 @@ build.env.Append(CPPDEFINES = {
 	'_GLOBAL_NS_VARNAME': '${GLOBAL_NS_VARNAME}',
 	'_CONFIG_FILENAME' : '${CONFIG_FILENAME}'
 	})
-build.env.Append(CPPPATH=[build.kroll_source_dir])
+build.env.Append(CPPPATH=[build.kroll_source_dir, build.kroll_include_dir])
 build.env.Append(LIBPATH=[build.dir])
 
 # debug build flags

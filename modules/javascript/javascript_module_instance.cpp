@@ -18,11 +18,11 @@ namespace kroll
 			this->Load();
 			this->Run();
 		}
-		catch (Value *e)
+		catch (SharedValue e)
 		{
-			ScopedDereferencer s(e);
+			SharedString exception_string = e->DisplayString();
 			std::cerr << "Could not execute " << path <<
-			             " because: " << e->DisplayString() << std::endl;
+			             " because: " << exception_string.get() << std::endl;
 		}
 
 	}
@@ -34,7 +34,10 @@ namespace kroll
 		this->code = "";
 		std::ifstream js_file(this->path.c_str());
 		if (!js_file.is_open())
-			throw "Could not read Javascript file";
+		{
+			SharedValue e = new Value("Could not read Javascript file");
+			throw e;
+		}
 
 		std::string line;
 		while (!js_file.eof() )
@@ -53,7 +56,7 @@ namespace kroll
 
 		/* Take some steps to insert the API into the Javascript context */
 		/* Create a crazy, crunktown delegate hybrid object for Javascript */
-		SharedPtr<Value> api = host->GetGlobalObject()->Get("api");
+		SharedValue api = host->GetGlobalObject()->Get("api");
 
 		/* convert JS API to a KJS object */
 		JSValueRef js_api = KJSUtil::ToJSValue(api, context);
@@ -70,14 +73,20 @@ namespace kroll
 		/* check script syntax */
 		bool syntax = JSCheckScriptSyntax(context, js_code, NULL, 0, &exception);
 		if (!syntax)
-			throw KJSUtil::ToKrollValue(exception, context, NULL);
+		{
+			SharedValue e = KJSUtil::ToKrollValue(exception, context, NULL);
+			throw e;
+		}
 
 		/* evaluate the script */
 		JSValueRef ret = JSEvaluateScript(context, js_code,
 		                                  NULL, NULL,
 		                                  1, &exception);
 		if (ret == NULL)
-			throw KJSUtil::ToKrollValue(exception, context, NULL);
+		{
+			SharedValue e = KJSUtil::ToKrollValue(exception, context, NULL);
+			throw e;
+		}
 	}
 
 	const char* JavascriptModuleInstance::GetName()

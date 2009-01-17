@@ -6,8 +6,8 @@
 #ifndef _WIN32_HOST_H
 #define _WIN32_HOST_H
 
-#include <api/host.h>
-#include <api/module.h>
+#include <api/base.h>
+#include <api/kroll.h>
 #include <string>
 #include <vector>
 #include <windows.h>

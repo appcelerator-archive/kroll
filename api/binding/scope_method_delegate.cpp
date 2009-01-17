@@ -9,9 +9,9 @@
 using namespace kroll;
 
 ScopeMethodDelegate::ScopeMethodDelegate(MethodDelegateType type,
-                                         SharedPtr<BoundObject> global,
-                                         SharedPtr<BoundObject> scope,
-                                         SharedPtr<BoundMethod> delegate) :
+                                         SharedBoundObject global,
+                                         SharedBoundObject scope,
+                                         SharedBoundMethod delegate) :
 	type(type), global(global), scope(scope), delegate(delegate)
 {
 	//KR_ADDREF(global);
@@ -27,12 +27,12 @@ ScopeMethodDelegate::~ScopeMethodDelegate()
 }
 
 
-void ScopeMethodDelegate::Set(const char *name, SharedPtr<Value> value)
+void ScopeMethodDelegate::Set(const char *name, SharedValue value)
 {
 	delegate->Set(name,value);
 }
 
-SharedPtr<Value> ScopeMethodDelegate::Get(const char *name)
+SharedValue ScopeMethodDelegate::Get(const char *name)
 {
 	return delegate->Get(name);
 }
@@ -48,10 +48,10 @@ bool ScopeMethodDelegate::IsGlobalKey(std::string& key)
 	return (pos!=std::string::npos);
 }
 
-SharedPtr<Value> ScopeMethodDelegate::Call(const ValueList& args)
+SharedValue ScopeMethodDelegate::Call(const ValueList& args)
 {
 	std::string key = args.at(0)->ToString();
-	SharedPtr<BoundObject> obj = IsGlobalKey(key) ? global : scope;
+	SharedBoundObject obj = IsGlobalKey(key) ? global : scope;
 	if (type == GET)
 	{
 		// not found, look inside scope
@@ -64,7 +64,7 @@ SharedPtr<Value> ScopeMethodDelegate::Call(const ValueList& args)
 	}
 }
 
-SharedPtr<StaticBoundObject> ScopeMethodDelegate::CreateDelegate(SharedPtr<BoundObject> global, SharedPtr<BoundObject> bo)
+SharedPtr<StaticBoundObject> ScopeMethodDelegate::CreateDelegate(SharedBoundObject global, SharedBoundObject bo)
 {
 	SharedPtr<StaticBoundObject> scope = new StaticBoundObject();
 	SharedStringList keys = bo->GetPropertyNames();
@@ -72,29 +72,29 @@ SharedPtr<StaticBoundObject> ScopeMethodDelegate::CreateDelegate(SharedPtr<Bound
 
 	while(iter!=keys->end())
 	{
-		const char *name = (*iter++);
-		std::string key(name);
-		SharedPtr<Value> value = bo->Get(name);
+		SharedString key_ptr = (*iter++);
+		std::string key = *key_ptr;
+		SharedValue value = bo->Get(key.c_str());
 
 		if (key == "set")
 		{
-			SharedPtr<BoundMethod> d = new ScopeMethodDelegate(SET, global, scope,value->ToMethod());
-			SharedPtr<Value> v = new Value(d);
+			SharedBoundMethod d = new ScopeMethodDelegate(SET, global, scope,value->ToMethod());
+			SharedValue v = new Value(d);
 			//ScopedDereferencer d1(d);
 			//ScopedDereferencer d2(v);
-			scope->Set(name, v);
+			scope->Set(key.c_str(), v);
 		}
 		else if (key == "get")
 		{
-			SharedPtr<BoundMethod> d = new ScopeMethodDelegate(GET, global, scope,value->ToMethod());
-			SharedPtr<Value> v = new Value(d);
+			SharedBoundMethod d = new ScopeMethodDelegate(GET, global, scope,value->ToMethod());
+			SharedValue v = new Value(d);
 			//ScopedDereferencer d1(d);
 			//ScopedDereferencer d2(v);
-			scope->Set(name, v);
+			scope->Set(key.c_str(), v);
 		}
 		else
 		{
-			scope->Set(name, value);
+			scope->Set(key.c_str(), value);
 		}
 
 	}

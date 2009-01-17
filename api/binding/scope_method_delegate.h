@@ -36,8 +36,8 @@ namespace kroll {
 		/*
 			Constructor: ScopeMethodDelegate
 		*/
-		ScopeMethodDelegate(MethodDelegateType type, SharedPtr<BoundObject> global,
-		                    SharedPtr<BoundObject> scope, SharedPtr<BoundMethod> delegate);
+		ScopeMethodDelegate(MethodDelegateType type, SharedBoundObject global,
+		                    SharedBoundObject scope, SharedBoundMethod delegate);
 		virtual ~ScopeMethodDelegate();
 
 		/*
@@ -45,14 +45,14 @@ namespace kroll {
 
 			TODO: Document me
 		*/
-		void Set(const char *name, SharedPtr<Value> value);
+		void Set(const char *name, SharedValue value);
 
 		/*
 			Function: Get
 
 			TODO: Document me
 		*/
-		SharedPtr<Value> Get(const char *name);
+		SharedValue Get(const char *name);
 
 		/*
 			Function: GetPropertyNames
@@ -73,7 +73,7 @@ namespace kroll {
 
 			TODO: Document me
 		*/
-		SharedPtr<Value> Call(const ValueList& args);
+		SharedValue Call(const ValueList& args);
 
 		/*
 		  Function: CreateDelegate
@@ -82,13 +82,13 @@ namespace kroll {
 		  StaticBoundObject and delegate set/get to the new
 		  static bound object
 		 */
-		static SharedPtr<StaticBoundObject> CreateDelegate(SharedPtr<BoundObject> global, SharedPtr<BoundObject> bo);
+		static SharedPtr<StaticBoundObject> CreateDelegate(SharedBoundObject global, SharedBoundObject bo);
 
 	private:
 		MethodDelegateType type;
-		SharedPtr<BoundObject> global;
-		SharedPtr<BoundObject> scope;
-		SharedPtr<BoundMethod> delegate;
+		SharedBoundObject global;
+		SharedBoundObject scope;
+		SharedBoundMethod delegate;
 
 
 	private:
