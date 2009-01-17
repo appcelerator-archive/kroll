@@ -6,7 +6,7 @@ Import('build')
 Env = build.env.Clone()
 Env.Append(LIBS=['kroll'])
 Env.Append(CPPDEFINES={'KROLL_PYTHON_API_EXPORT': 1})
-build.AddPoco(Env)
+build.add_thirdparty(Env, 'poco')
 
 if build.is_osx():
 	Env.Append(CPPPATH=['/System/Library/Frameworks/Python.framework/Versions/Current/Headers',build.kroll_include_dir])

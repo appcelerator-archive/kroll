@@ -3,7 +3,7 @@ import os
 Import('build')
 
 Env = build.env.Clone()
-build.AddPoco(Env)
+build.add_thirdparty(Env, 'poco')
 
 if build.is_osx():
 	Env.Append(FRAMEWORKS=['Cocoa'])
