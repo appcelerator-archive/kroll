@@ -131,7 +131,7 @@ namespace kroll
 
 			TODO: Document me
 		*/
-		SharedBoundObject GetGlobalObject();
+		SharedPtr<StaticBoundObject> GetGlobalObject();
 
 		/*
 			Function: GetApplicationHome

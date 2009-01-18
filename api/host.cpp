@@ -226,7 +226,7 @@ namespace kroll
 	#endif
 	}
 
-	SharedBoundObject Host::GetGlobalObject() {
+	SharedPtr<StaticBoundObject> Host::GetGlobalObject() {
 		return this->global_object;
 	}
 
