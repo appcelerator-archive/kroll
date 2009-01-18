@@ -18,9 +18,9 @@ namespace kroll
 		PythonBoundMethod(PyObject *obj, const char *name);
 		virtual ~PythonBoundMethod();
 
-		SharedPtr<Value> Call(const ValueList& args);
-		virtual void Set(const char *name, SharedPtr<Value> value);
-		virtual SharedPtr<Value> Get(const char *name);
+		SharedValue Call(const ValueList& args);
+		virtual void Set(const char *name, SharedValue value);
+		virtual SharedValue Get(const char *name);
 		virtual SharedStringList GetPropertyNames();
 
 		const PyObject* ToPython() { Py_INCREF(object); return object; }

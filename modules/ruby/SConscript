@@ -4,10 +4,11 @@ Import('build')
 Env = build.env.Clone()
 Env.Append(LIBS=['kroll'])
 Env.Append(CPPDEFINES={'KROLL_RUBY_API_EXPORT': 1})
-build.AddPoco(Env)
+build.add_thirdparty(Env, 'poco')
 
 if build.is_osx():
 	Env.Append(CPPPATH=['/System/Library/Frameworks/Ruby.framework/Versions/Current/Headers',build.kroll_include_dir])
+	Env.Append(LINKFLAGS='-F /System/Library/Frameworks/Ruby.framework')
 	Env.Append(FRAMEWORKS=['Ruby'])
 elif build.is_linux():
 	Env.Append(CPPPATH=['/usr/lib/ruby/1.8/i386-linux', '/usr/lib/ruby/1.8/i486-linux',build.kroll_include_dir])
@@ -17,4 +18,6 @@ elif build.is_win32():
 	Env.Append(LIBPATH=['C:\\Ruby\\lib'])
 	Env.Append(LIBS=['msvcrt-ruby18'])
 
-Env.SharedLibrary(build.dir + '/rubymodule', Glob('*.cpp'), )
+#FIXME: temp hack for 10.4 support!
+if not build.is_osx():
+  Env.SharedLibrary(build.dir + '/rubymodule', Glob('*.cpp'), )

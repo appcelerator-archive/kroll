@@ -15,7 +15,7 @@ namespace kroll
 	  Value is a container object which internally contains
 	  a value which can be boxed/unboxed based on the type.
 	 */
-	class KROLL_API Value : public RefCounted 
+	class KROLL_API Value
 	{
 	public:
 
@@ -47,18 +47,14 @@ namespace kroll
 		/*
 			Function: Undefined
 
-		  return a system-defined shared UNDEFINED type. the
-		  return pointer is not borrowed and must referenced
-		  counted if used or returned from a method call.
+		  return a system-defined shared UNDEFINED type. 
 		 */
 		static SharedValue Undefined;
 
 		/*
-			Function: Undefined
+			Function: Null
 
-		  return a system-defined shared UNDEFINED type. the
-		  return pointer is not borrowed and must referenced
-		  counted if used or returned from a method call.
+		  return a system-defined shared NULL type. 
 		 */
 		static SharedValue Null;
 
@@ -241,7 +237,7 @@ namespace kroll
 		/*
 			Function: ToString
 
-		  return the value as a std::string
+		  return the value as a const char*
 		 */
 		const char* ToString() const;
 

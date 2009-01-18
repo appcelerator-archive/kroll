@@ -58,19 +58,20 @@ class ModuleBuilder(object):
 		resource_dir = "%s/resources" % basedir
 		lib_dir = "%s/libs" % basedir
 		self.validate(list(('name','version','description','os')))
-		for osname in re.split(',',self.manifest['os']):
-			osname = string.replace(osname,' ','')
-			if osname == ostarget:
-				modulename = self.get_module_name(string.replace(self.manifest['name'],' ',''))
-				zipfn = os.path.join(dir,"module_%s_%s.zip" % (modulename,osname))
-				self.zip = zipfile.ZipFile(zipfn,'w',zipfile.ZIP_DEFLATED)
-				self.zip.comment = 'Kroll Module distribution archive for %s' % self.manifest['name']
-				self.add_dir_to_zip(resource_dir,'resources',osname)
-				self.add_dir_to_zip(lib_dir,'libs',osname)
-				self.add(fn,'manifest')
-				libname = self.get_lib_name(modulename,osname)
-				lib = os.path.join(outdir,libname)
-				self.add(lib,libname)
+		modulename = self.get_module_name(string.replace(self.manifest['name'],' ',''))
+		libname = self.get_lib_name(modulename,ostarget)
+		lib = os.path.join(outdir,libname)
+		if os.path.exists(lib):
+			for osname in re.split(',',self.manifest['os']):
+				osname = string.replace(osname,' ','')
+				if osname == ostarget:
+					zipfn = os.path.join(dir,"module_%s_%s.zip" % (modulename,osname))
+					self.zip = zipfile.ZipFile(zipfn,'w',zipfile.ZIP_DEFLATED)
+					self.zip.comment = 'Kroll Module distribution archive for %s' % self.manifest['name']
+					self.add_dir_to_zip(resource_dir,'resources',osname)
+					self.add_dir_to_zip(lib_dir,'libs',osname)
+					self.add(fn,'manifest')
+					self.add(lib,libname)
 	
 	def add(self,fn,name=''):
 		if name == '':

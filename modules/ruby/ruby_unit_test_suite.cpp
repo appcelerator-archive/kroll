@@ -10,7 +10,7 @@ namespace kroll
 	class TestClass : public StaticBoundObject
 	{
 	public:
-		void TestMethod(const ValueList& args, SharedPtr<Value> result)
+		void TestMethod(const ValueList& args, SharedValue result)
 		{
 			result->SetValue(args.at(0));
 		}
@@ -25,7 +25,7 @@ namespace kroll
 	{
 		// ints
 		{
-			SharedPtr<Value> value = new Value(1);
+			SharedValue value = new Value(1);
 			VALUE rubyValue = RubyUtils::ToValue(value);
 			KR_ASSERT(rubyValue);
 			KR_ASSERT(1 == RubyUtils::ToInt(rubyValue));
@@ -34,7 +34,7 @@ namespace kroll
 
 		// doubles
 		{
-			SharedPtr<Value> value = new Value(1.0);
+			SharedValue value = new Value(1.0);
 			VALUE rubyValue = RubyUtils::ToValue(value);
 			KR_ASSERT(rubyValue);
 			KR_ASSERT(1.0 == RubyUtils::ToDouble(rubyValue));
@@ -43,7 +43,7 @@ namespace kroll
 
 		// boolean TRUE
 		{
-			SharedPtr<Value> value = new Value(true);
+			SharedValue value = new Value(true);
 			VALUE rubyValue = RubyUtils::ToValue(value);
 			KR_ASSERT(rubyValue);
 			KR_ASSERT(true == RubyUtils::ToBool(rubyValue));
@@ -52,7 +52,7 @@ namespace kroll
 
 		// boolean FALSE
 		{
-			SharedPtr<Value> value = new Value(false);
+			SharedValue value = new Value(false);
 			VALUE rubyValue = RubyUtils::ToValue(value);
 			KR_ASSERT(!rubyValue);
 			KR_ASSERT(false == RubyUtils::ToBool(rubyValue));
@@ -62,7 +62,7 @@ namespace kroll
 		// strings
 		{
 			std::string s("hello");
-			SharedPtr<Value> value = new Value(s);
+			SharedValue value = new Value(s);
 			VALUE rubyValue = RubyUtils::ToValue(value);
 			KR_ASSERT(rubyValue);
 			KR_ASSERT_STR(RubyUtils::ToString(rubyValue),"hello");
@@ -72,7 +72,7 @@ namespace kroll
 		// bound object
 		{
 			SharedPtr<StaticBoundObject> value = new StaticBoundObject();
-			SharedPtr<Value> blah = new Value("bar");
+			SharedValue blah = new Value("bar");
 			value->Set("foo",blah);
 			SharedPtr<BoundObject> o = value;
 			VALUE rubyValue = RubyUtils::Create(o);
@@ -96,7 +96,7 @@ namespace kroll
 
 			// dynamically attach a new object with a method
 			SharedPtr<BoundObject> testClass = new TestClass;
-			SharedPtr<Value> testValue = new Value(testClass);
+			SharedValue testValue = new Value(testClass);
 			value->Set("yoyo",testValue);
 
 			// invoke the method traditionally
@@ -115,7 +115,7 @@ namespace kroll
 			result = rb_eval_string("$jeff.yoyo.blah");
 			KR_ASSERT(result);
 			KR_ASSERT(TYPE(result)==T_NIL);
-			SharedPtr<Value> vr = RubyUtils::ToValue(result);
+			SharedValue vr = RubyUtils::ToValue(result);
 			KR_ASSERT(vr->IsNull());
 
 			// test to see if our method is defined

@@ -12,7 +12,7 @@ namespace kroll
 	{
 		printf("foobinding: %i\n", (int) this);
 
-		SharedPtr<Value> number = new Value(42);
+		SharedValue number = new Value(42);
 		this->Set("number", number);
 		this->SetMethod("bar", &FooBinding::Bar);
 
@@ -26,7 +26,7 @@ namespace kroll
 		//KR_DECREF(arr);
 	}
 
-	void FooBinding::Bar(const ValueList& args, SharedPtr<Value> result)
+	void FooBinding::Bar(const ValueList& args, SharedValue result)
 	{
 		if (args.size() > 0 && args[0]->IsString()) {
 			std::cout << "you passed me: " << args[0]->ToString() << std::endl;

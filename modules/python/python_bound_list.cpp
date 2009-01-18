@@ -31,7 +31,7 @@ namespace kroll
 	 * reference count.
 	 * When an error occurs will throw an exception of type Value*.
 	 */
-	void PythonBoundList::Append(SharedPtr<Value> value)
+	void PythonBoundList::Append(SharedValue value)
 	{
 		PyList_Append(this->object,PythonUtils::ToObject(value));
 		//KR_DECREF(value);
@@ -51,7 +51,7 @@ namespace kroll
 	 * reference counted and must be released.
 	 * When an error occurs will throw an exception of type Value*.
 	 */
-	SharedPtr<Value> PythonBoundList::At(int index)
+	SharedValue PythonBoundList::At(int index)
 	{
 		PyObject *p = PyList_GET_ITEM(this->object,index);
 		if (Py_None == p)
@@ -59,7 +59,7 @@ namespace kroll
 			Py_DECREF(p);
 			return Value::Undefined;
 		}
-		SharedPtr<Value> v = PythonUtils::ToValue(p,NULL);
+		SharedValue v = PythonUtils::ToValue(p,NULL);
 		Py_DECREF(p);
 		return v;
 	}
@@ -70,7 +70,7 @@ namespace kroll
 	 * if they increase the reference count.
 	 * When an error occurs will throw an exception of type Value*.
 	 */
-	void PythonBoundList::Set(const char *name, SharedPtr<Value> value)
+	void PythonBoundList::Set(const char *name, SharedValue value)
 	{
 		// check for integer value as name
 		if (this->IsNumber(name))
@@ -87,7 +87,7 @@ namespace kroll
 				}
 			}
 
-			SharedPtr<Value> current = this->At(val);
+			SharedValue current = this->At(val);
 			current->SetValue(value);
 		}
 		else
@@ -111,7 +111,7 @@ namespace kroll
 	 * with the return value (even for Undefined and Null types).
 	 * When an error occurs will throw an exception of type Value*.
 	 */
-	SharedPtr<Value> PythonBoundList::Get(const char *name)
+	SharedValue PythonBoundList::Get(const char *name)
 	{
 		if (std::string(name) == std::string("length"))
 		{
@@ -133,7 +133,7 @@ namespace kroll
 			PythonUtils::ThrowException();
 		}
 
-		SharedPtr<Value> returnValue = PythonUtils::ToValue(response,name);
+		SharedValue returnValue = PythonUtils::ToValue(response,name);
 		Py_DECREF(response);
 		return returnValue;
 	}

@@ -64,7 +64,7 @@ namespace kroll
 		return NUM2DBL(value);
 	}
 
-	SharedPtr<Value> RubyUtils::ToValue(VALUE value)
+	SharedValue RubyUtils::ToValue(VALUE value)
 	{
 		switch (TYPE(value)) {
 			case T_NIL: return Value::Null;
@@ -98,7 +98,7 @@ namespace kroll
 				//ScopedDereferencer r(list);
 				for (int i = 0; i < RARRAY_LEN(value); i++)
 				{
-					SharedPtr<Value> arg = ToValue(rb_ary_entry(value, i));
+					SharedValue arg = ToValue(rb_ary_entry(value, i));
 					list->Append(arg);
 					//KR_DECREF(arg);
 				}
@@ -113,7 +113,7 @@ namespace kroll
 		VALUE array = rb_ary_new2(list->Size());
 		for (int c=0;c<list->Size();c++)
 		{
-			SharedPtr<Value> value = list->At(c);
+			SharedValue value = list->At(c);
 			VALUE arg = ToValue(value);
 			rb_ary_concat(array, arg);
 			//KR_DECREF(value);
@@ -121,7 +121,7 @@ namespace kroll
 		return array;
 	}
 
-	VALUE RubyUtils::ToValue(SharedPtr<Value> value)
+	VALUE RubyUtils::ToValue(SharedValue value)
 	{
 		if (value->IsBool()) {
 			return value->ToBool() ? Qtrue : Qfalse;
@@ -230,7 +230,7 @@ namespace kroll
 		if (object != NULL)
 		{
 			const char *name = ToMethodName(*argv);
-			SharedPtr<Value> value = (*object)->Get(name);
+			SharedValue value = (*object)->Get(name);
 			return value->IsMethod() ? Qtrue : Qfalse;
 		}
 		return Qfalse;
@@ -249,13 +249,13 @@ namespace kroll
 			// is this a setter (property=)
 			bool setter = (method_name[strlen(method_name)-1]) == '=';
 
-			SharedPtr<Value> value = NULL;
+			SharedValue value = NULL;
 
 			if (setter)
 			{
 				char *s = strdup(method_name);
 				s[strlen(method_name)-1]='\0'; // trim the =
-				SharedPtr<Value> arg = RubyUtils::ToValue(argv[1]);
+				SharedValue arg = RubyUtils::ToValue(argv[1]);
 				(*object)->Set(s,arg);
 				free(s);
 				//KR_DECREF(arg);
@@ -274,11 +274,11 @@ namespace kroll
 				// Value* objects suitable for passing to Call
 				for (int i = 1; i < argc; i++)
 				{
-					SharedPtr<Value> arg = RubyUtils::ToValue(argv[i]);
+					SharedValue arg = RubyUtils::ToValue(argv[i]);
 					args.push_back(arg);
 				}
 				// convert and invoke
-				SharedPtr<Value> result = value->ToMethod()->Call(args);
+				SharedValue result = value->ToMethod()->Call(args);
 				//ScopedDereferencer r(result);
 				// free the args before we return
 				// -- these will be freed by convention when the vector is freed
@@ -316,7 +316,7 @@ namespace kroll
 		// we bind the special module "api" to the global
 		// variable defined in PRODUCT_NAME to give the
 		// Python runtime access to it
-		SharedPtr<Value> api = host->GetGlobalObject()->Get("api");
+		SharedValue api = host->GetGlobalObject()->Get("api");
 		if (api->IsObject())
 		{
 			// we're going to clone the methods from api into our
@@ -331,7 +331,7 @@ namespace kroll
 			rb_define_global_const(ToUpper(PRODUCT_NAME),scope_value);
 
 			// now bind our new scope to python module
-			SharedPtr<Value> scopeRef = new Value(scope);
+			SharedValue scopeRef = new Value(scope);
 			host->GetGlobalObject()->Set((const char*)"ruby",scopeRef);
 			//KR_DECREF(scopeRef);
 			// don't release the scope

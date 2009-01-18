@@ -3,10 +3,9 @@ import os
 Import('build')
 
 Env = build.env.Clone()
-build.AddPoco(Env)
+build.add_thirdparty(Env, 'poco')
 
 if build.is_osx():
-	Env.Append(CCFLAGS=['-x', 'objective-c++'])
 	Env.Append(FRAMEWORKS=['Cocoa'])
 
 if build.is_win32():

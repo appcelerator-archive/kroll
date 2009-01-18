@@ -374,7 +374,6 @@ namespace kroll
 		}
 		catch (Value* exception)
 		{
-			ScopedDereferencer s(exception);
 			*js_exception = KJSUtil::ToJSValue(exception, js_context);
 		}
 
@@ -400,7 +399,6 @@ namespace kroll
 		}
 		catch (Value* exception)
 		{
-			ScopedDereferencer s(exception);
 			*js_exception = KJSUtil::ToJSValue(exception, js_context);
 		}
 
@@ -433,14 +431,9 @@ namespace kroll
 		}
 		catch (Value* exception)
 		{
-			ScopedDereferencer s(exception);
 			*js_exception = KJSUtil::ToJSValue(exception, js_context);
 			js_val = NULL;
 		}
-
-		//for (size_t i = 0; i < num_args; i++) {
-		//	KR_DECREF(args[i]);
-		//}
 
 		return js_val;
 

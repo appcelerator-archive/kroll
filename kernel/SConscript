@@ -4,15 +4,10 @@ Import('build')
 
 Env = build.env.Clone()
 
-build.AddPoco(Env)
+build.add_thirdparty(Env, 'poco')
+
 if build.is_osx():
-   OSX_SDK = '/Developer/SDKs/MacOSX10.4u.sdk'
-   OSX_UNIV_COMPILER = '-isysroot '+OSX_SDK+' -arch ppc -arch i386'
-   OSX_UNIV_LINKER = '-isysroot '+OSX_SDK+' -syslibroot,'+OSX_SDK
-   Env.Append(CCFLAGS=['-x', 'objective-c++'])
    Env.Append(FRAMEWORKS=['Cocoa'])
-   Env.Append(CCFLAGS=OSX_UNIV_COMPILER)
-   Env.Append(LDFLAGS=OSX_UNIV_LINKER)
 
 
 if build.is_win32():
