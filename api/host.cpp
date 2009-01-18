@@ -50,7 +50,7 @@ namespace kroll
 		const char *name = GLOBAL_NS_VARNAME;
 		SharedPtr<BoundObject> b = global_object;
 		SharedPtr<Value> wrapper = new Value(b);
-		this->global_object->Set(name,wrapper);
+		this->global_object->Set(name, wrapper);
 		//KR_DECREF(wrapper);
 	}
 
@@ -226,7 +226,7 @@ namespace kroll
 	#endif
 	}
 
-	SharedPtr<StaticBoundObject> Host::GetGlobalObject() {
+	SharedBoundObject Host::GetGlobalObject() {
 		return this->global_object;
 	}
 
