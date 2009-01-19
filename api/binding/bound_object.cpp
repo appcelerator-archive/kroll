@@ -26,7 +26,7 @@ namespace kroll
 		FileUtils::Tokenize(std::string(name), tokens, ".");
 
 		SharedBoundObject next;
-		SharedBoundObject scope = this;
+		BoundObject *scope = this;
 		for (size_t i = 0; i < tokens.size() - 1; i++)
 		{
 			const char* token = tokens[i].c_str();
