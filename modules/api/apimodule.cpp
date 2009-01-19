@@ -109,7 +109,7 @@ namespace kroll
 		int ref = binding->Register(event,testObject);
 		SharedValue data = new Value("some data here");
 		//ScopedDereferencer dr(data);
-		ScopedDereferencer tod(testObject);
+		//ScopedDereferencer tod(testObject);
 
 		binding->Fire(event,data);
 		KR_ASSERT_STR(testObject->Event().c_str(),"kr.api.log");

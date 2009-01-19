@@ -29,8 +29,8 @@ namespace kroll
 			EventRecords::iterator ri = p.second->begin();
 			while (ri!=p.second->end())
 			{
-				BoundMethod* method = (*ri++);
-				KR_DECREF(method);
+				//BoundMethod* method = (*ri++);
+				//KR_DECREF(method);
 			}
 		}
 		registrations.clear();
@@ -38,7 +38,7 @@ namespace kroll
 		while(i2!=registrationsById.end())
 		{
 			std::pair<int,BoundEventEntry> p = (*i2++);
-			KR_DECREF(p.second.method);
+			//KR_DECREF(p.second.method);
 		}
 		registrationsById.clear();
 	}
@@ -147,12 +147,12 @@ namespace kroll
 			this->registrations[event] = records;
 		}
 		records->push_back(callback);
-		KR_ADDREF(callback);
+		//KR_ADDREF(callback);
 
 		BoundEventEntry e;
 		e.method = callback;
 		e.event = event;
-		KR_ADDREF(callback);
+		//KR_ADDREF(callback);
 		this->registrationsById[record] = e;
 
 		return record;

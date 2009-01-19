@@ -16,7 +16,7 @@ namespace kroll
 	/*
 		Class: BoundObject
 	*/
-	class KROLL_API BoundObject : public RefCounted
+	class KROLL_API BoundObject
 	{
 	public:
 		/*

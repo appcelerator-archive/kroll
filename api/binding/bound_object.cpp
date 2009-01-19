@@ -26,28 +26,27 @@ namespace kroll
 		FileUtils::Tokenize(std::string(name), tokens, ".");
 
 		SharedBoundObject next;
-		BoundObject* scope = this;
+		SharedBoundObject scope = this;
 		for (size_t i = 0; i < tokens.size() - 1; i++)
 		{
-			// Ensure dereference, except for "this" object
-			ScopedDereferencer s_dec(scope);
-			if (scope == this) KR_ADDREF(scope);
 			const char* token = tokens[i].c_str();
 			SharedBoundObject next;
 			SharedValue next_val = scope->Get(token);
+
 			if (next_val->IsUndefined())
 			{
-				next = BoundObject::CreateEmptyBoundObject();
+				next = new StaticBoundObject();
 				next_val = new Value(next);
 				scope->Set(token, next_val);
+
 			}
 			else if (!next_val->IsObject()
 			         && !next_val->IsMethod()
 			         && !next_val->IsList())
 			{
 				throw new Value("Invalid namespace on setNS");
-
 			}
+
 			else
 			{
 				next = next_val->ToObject();
