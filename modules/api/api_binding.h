@@ -42,8 +42,6 @@ namespace kroll
 		void Fire(std::string& event, SharedValue data);
 
 	private:
-		Mutex mutex;
-
 		void _Set(const ValueList& args, SharedValue result);
 		void _Get(const ValueList& args, SharedValue result);
 		void _Log(const ValueList& args, SharedValue result);
