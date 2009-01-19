@@ -22,6 +22,7 @@ namespace kroll
 	class StaticBoundMethod;
 	class BoundList;
 	class StaticBoundList;
+	class DelegateStaticBoundObject;
 	class ScopeMethodDelegate;
 
 	typedef SharedPtr<Value> SharedValue;

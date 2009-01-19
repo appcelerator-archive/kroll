@@ -87,10 +87,10 @@ namespace kroll
 		void SetObject(const char *name, SharedBoundObject object);
 
 	protected:
-		Mutex mutex;
 		std::map<std::string, SharedValue> properties;
 
 	private:
+		Mutex mutex; // allow multiple levels of mutexes
 		DISALLOW_EVIL_CONSTRUCTORS(StaticBoundObject);
 	};
 

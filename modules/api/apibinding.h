@@ -15,11 +15,11 @@
 
 namespace kroll
 {
-	typedef std::vector<BoundMethod*> EventRecords;
+	typedef std::vector<SharedBoundMethod> EventRecords;
 
 	struct BoundEventEntry
 	{
-		BoundMethod *method;
+		SharedBoundMethod method;
 		std::string event;
 	};
 
@@ -34,15 +34,17 @@ namespace kroll
 	class APIBinding : public StaticBoundObject
 	{
 	public:
-		APIBinding(SharedPtr<BoundObject> global);
+		APIBinding(SharedBoundObject global);
 		virtual ~APIBinding();
 
 		void Log(int& severity, std::string& message);
-		int Register(std::string& event, BoundMethod* callback);
+		int Register(std::string& event, SharedBoundMethod callback);
 		void Unregister(int ref);
 		void Fire(std::string& event, SharedValue data);
 
 	private:
+		Mutex mutex;
+
 		void _Set(const ValueList& args, SharedValue result);
 		void _Get(const ValueList& args, SharedValue result);
 		void _Log(const ValueList& args, SharedValue result);
@@ -54,8 +56,8 @@ namespace kroll
 		// void Reload(const ValueList& args, Value *result);
 		// void Modules(const ValueList& args, Value *result);
 
-		std::map<std::string,EventRecords*> registrations;
-		std::map<int,BoundEventEntry> registrationsById;
+		std::map<std::string, EventRecords> registrations;
+		std::map<int, BoundEventEntry> registrationsById;
 		int record;
 		SharedPtr<BoundObject> global;
 

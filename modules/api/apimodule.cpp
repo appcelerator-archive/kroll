@@ -15,7 +15,7 @@ namespace kroll
 	void APIModule::Initialize()
 	{
 		binding = new APIBinding(host->GetGlobalObject());
-		host->GetGlobalObject()->SetObject("api",binding);
+		host->GetGlobalObject()->SetObject("api", binding);
 	}
 
 	void APIModule::Destroy()
