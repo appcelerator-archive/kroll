@@ -3,7 +3,7 @@
  * see LICENSE in the root folder for details on the license.
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
-#include "apibinding.h"
+#include "api_binding.h"
 #include <algorithm>
 
 namespace kroll
@@ -140,7 +140,7 @@ namespace kroll
 
 		/* Fetch the records for this event. If the EventRecords
 		 * doesn't exist in registrations, the STL map
-		 * implementation will be inserted into the map */
+		 * implementation will insert it into the map */
 		EventRecords records = this->registrations[event];
 		records.push_back(callback);
 
@@ -159,15 +159,15 @@ namespace kroll
 		if (i == registrationsById.end())
 			return;
 
-		std::pair<int, BoundEventEntry> e = *i;
-		EventRecords records = this->registrations[e.second.event];
+		BoundEventEntry entry = i->second;
+		EventRecords records = this->registrations[entry.event];
 		EventRecords::iterator fi = records.begin();
-		while(fi != records.end())
+		while (fi != records.end())
 		{
-			SharedBoundMethod m = *fi;
-			if (m.get() == e.second.method.get())
+			SharedBoundMethod callback = *fi;
+			if (callback.get() == entry.method.get())
 			{
-				records.erase(fi, fi+1);
+				records.erase(fi);
 				break;
 			}
 			fi++;

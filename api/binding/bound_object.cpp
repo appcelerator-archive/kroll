@@ -25,7 +25,6 @@ namespace kroll
 		std::vector<std::string> tokens;
 		FileUtils::Tokenize(std::string(name), tokens, ".");
 
-		SharedBoundObject next;
 		BoundObject *scope = this;
 		for (size_t i = 0; i < tokens.size() - 1; i++)
 		{
