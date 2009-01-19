@@ -13,6 +13,9 @@
 #include <host.h>
 
 using namespace kroll;
+#if defined(DEBUG)
+void WaitForDebugger();
+#endif
 
 #if defined(OS_WIN32) && !defined(WIN32_CONSOLE)
 #include <windows.h>
@@ -38,7 +41,11 @@ int main(int argc, const char* argv[])
 #endif
 
 	printf("Created host, booting...\n");
-
+#if defined(DEBUG)
+	if (host->GetCommandLineArgCount() > 1 && strcmp(host->GetCommandLineArg(1), "--wait-for-debugger") == 0) {
+		WaitForDebugger();
+	}
+#endif
 	int rc = host->Run();
 
 #if defined(OS_OSX)
@@ -48,3 +55,13 @@ int main(int argc, const char* argv[])
 	printf("Exiting Kroll, bye...\n");
 	return rc;
 }
+
+#if defined(DEBUG)
+void WaitForDebugger() {
+	printf("Waiting for debugger (Press Enter to Continue)...\n");
+	do {
+		int c = getc(stdin);
+		if (c == '\n') break;
+	} while (true);
+}
+#endif

@@ -112,6 +112,12 @@ int WinMain(HINSTANCE, HINSTANCE, LPSTR cl, int show)
 	// 2. setup the environment and get ready to launch our runtime
 	std::string runtimeExec = std::string(runtimePath);
 	runtimeExec.append("\\kkernel.exe");
+	runtimeExec.append(" ");
+	for (int i = 1; i < __argc; i++) {
+		runtimeExec.append("\"");
+		runtimeExec.append(__argv[i]);
+		runtimeExec.append("\"");
+	}
 
 	std::string libPath = std::string(runtimePath);
 	libPath.append(";");
@@ -147,8 +153,6 @@ int WinMain(HINSTANCE, HINSTANCE, LPSTR cl, int show)
 
     std::cout << "PATH=" << libPath << std::endl;
     std::cout << "launching runtime: " << runtimeExec << std::endl;
-
-	//FIXME FIXME: make sure to pass the command line up to the next process!
 
 	// 3. launch our subprocess as a child of this process
 	//    and wait for it to exit before we exit
