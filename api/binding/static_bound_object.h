@@ -88,9 +88,9 @@ namespace kroll
 
 	protected:
 		std::map<std::string, SharedValue> properties;
+		Mutex mutex;
 
 	private:
-		Mutex mutex; // allow multiple levels of mutexes
 		DISALLOW_EVIL_CONSTRUCTORS(StaticBoundObject);
 	};
 

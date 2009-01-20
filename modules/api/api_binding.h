@@ -7,8 +7,7 @@
 #ifndef _API_BINDING_H_
 #define _API_BINDING_H_
 
-#include <api/module.h>
-#include <api/binding/binding.h>
+#include <kroll/kroll.h>
 #include <map>
 #include <vector>
 #include <string>
@@ -43,8 +42,6 @@ namespace kroll
 		void Fire(std::string& event, SharedValue data);
 
 	private:
-		Mutex mutex;
-
 		void _Set(const ValueList& args, SharedValue result);
 		void _Get(const ValueList& args, SharedValue result);
 		void _Log(const ValueList& args, SharedValue result);

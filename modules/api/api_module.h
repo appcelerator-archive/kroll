@@ -8,7 +8,7 @@
 
 #include <kroll/kroll.h>
 #include "api.h"
-#include "apibinding.h"
+#include "api_binding.h"
 
 namespace kroll
 {

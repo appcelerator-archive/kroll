@@ -27,7 +27,7 @@ namespace kroll
 	{
 		ScopedLock lock(&mutex);
 
-		SharedValue val = ((StaticBoundObject*) this)->Get(name);
+		SharedValue val = StaticBoundObject::Get(name);
 		if (!val->IsUndefined())
 		{
 			return val;
@@ -39,7 +39,7 @@ namespace kroll
 	void DelegateStaticBoundObject::Set(const char *name, SharedValue value)
 	{
 		ScopedLock lock(&mutex);
-		((StaticBoundObject*) this)->Set(name, value);
+		StaticBoundObject::Set(name, value);
 	}
 
 	SharedStringList DelegateStaticBoundObject::GetPropertyNames()
@@ -47,7 +47,7 @@ namespace kroll
 		ScopedLock lock(&mutex);
 
 		SharedStringList delegate_list = delegate->GetPropertyNames();
-		SharedStringList list = ((StaticBoundObject*) this)->GetPropertyNames();
+		SharedStringList list = StaticBoundObject::GetPropertyNames();
 
 		for (size_t i = 0; i < delegate_list->size(); i++)
 		{

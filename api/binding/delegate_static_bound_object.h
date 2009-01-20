@@ -53,7 +53,6 @@ namespace kroll
 
 	private:
 		SharedBoundObject delegate;
-		Mutex mutex;
 		DISALLOW_EVIL_CONSTRUCTORS(DelegateStaticBoundObject);
 	};
 

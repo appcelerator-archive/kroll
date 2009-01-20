@@ -3,7 +3,7 @@
  * see LICENSE in the root folder for details on the license.
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
-#include "apimodule.h"
+#include "api_module.h"
 #include <string.h>
 #include <iostream>
 #include <vector>

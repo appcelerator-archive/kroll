@@ -11,6 +11,7 @@
 #include <api/base.h>
 #include <api/kroll.h>
 #include <host.h>
+#include <cstring>
 
 using namespace kroll;
 #if defined(DEBUG)
@@ -42,7 +43,8 @@ int main(int argc, const char* argv[])
 
 	printf("Created host, booting...\n");
 #if defined(DEBUG)
-	if (host->GetCommandLineArgCount() > 1 && strcmp(host->GetCommandLineArg(1), "--wait-for-debugger") == 0) {
+	if (host->GetCommandLineArgCount() > 1
+	       && strcmp(host->GetCommandLineArg(1), "--wait-for-debugger") == 0) {
 		WaitForDebugger();
 	}
 #endif
