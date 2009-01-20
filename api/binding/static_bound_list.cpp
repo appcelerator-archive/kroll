@@ -29,8 +29,7 @@ namespace kroll
 		this->object->Set(name, value);
 		delete [] name;
 
-		length = length + 1;
-		SharedValue len = Value::NewInt(length);
+		SharedValue len = Value::NewInt(length+1);
 		this->object->Set("length", len);
 	}
 

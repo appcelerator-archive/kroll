@@ -22,7 +22,6 @@ namespace kroll
 
 	APIBinding::~APIBinding()
 	{
-		std::cout << "before ~APiBinding: " << (void*)this <<std::endl;
 		ScopedLock lock(&mutex);
 
 		/* clear old registrations -- memory mangement will be
@@ -34,7 +33,7 @@ namespace kroll
 	int APIBinding::GetNextRecord()
 	{
 		ScopedLock lock(&mutex);
-		return this->record++;
+		return ++this->record;
 	}
 
 	void APIBinding::_Set(const ValueList& args, SharedValue result)
@@ -136,19 +135,21 @@ namespace kroll
 
 	int APIBinding::Register(std::string& event, SharedBoundMethod callback)
 	{
-		int record = GetNextRecord();
 		ScopedLock lock(&mutex);
-
+		int record = GetNextRecord();
+		
 		/* Fetch the records for this event. If the EventRecords
 		 * doesn't exist in registrations, the STL map
 		 * implementation will insert it into the map */
-		EventRecords records = this->registrations[event];
-		records.push_back(callback);
+		std::string en(event);
+		EventRecords records = this->registrations[en];
+		records.push_back(new SharedBoundMethod(callback));
 
 		BoundEventEntry e;
 		e.method = callback;
-		e.event = event;
+		e.event = en;
 		this->registrationsById[record] = e;
+		this->registrations[event] = records;
 
 		return record;
 	}
@@ -158,20 +159,26 @@ namespace kroll
 		ScopedLock lock(&mutex);
 		std::map<int, BoundEventEntry>::iterator i = registrationsById.find(id);
 		if (i == registrationsById.end())
+		{
 			return;
+		}
 
 		BoundEventEntry entry = i->second;
 		EventRecords records = this->registrations[entry.event];
 		EventRecords::iterator fi = records.begin();
 		while (fi != records.end())
 		{
-			SharedBoundMethod callback = *fi;
-			if (callback.get() == entry.method.get())
+			SharedBoundMethod* callback = (*fi);
+			if (callback->get() == entry.method.get())
 			{
 				records.erase(fi);
 				break;
 			}
 			fi++;
+		}
+		if (records.size()==0)
+		{
+			this->registrations.erase(entry.event);	
 		}
 		registrationsById.erase(id);
 	}
@@ -181,16 +188,17 @@ namespace kroll
 		//TODO: might want to be a little more lenient on how we lock here
 		ScopedLock lock(&mutex);
 		EventRecords records = this->registrations[event];
-
-		EventRecords::iterator i = records.begin();
-		while (i != records.end())
+		if (records.size() > 0)
 		{
-			SharedBoundMethod method = *i;
-			ValueList args;
-			args.push_back(Value::NewString(event));
-			args.push_back(value);
-			method->Call(args);
+			EventRecords::iterator i = records.begin();
+			while (i != records.end())
+			{
+				SharedBoundMethod* method = (*i++);
+				ValueList args;
+				args.push_back(Value::NewString(event));
+				args.push_back(value);
+				(*method)->Call(args);
+			}
 		}
-
 	}
 }

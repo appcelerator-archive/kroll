@@ -14,7 +14,7 @@
 
 namespace kroll
 {
-	typedef std::vector<SharedBoundMethod> EventRecords;
+	typedef std::vector<SharedBoundMethod*> EventRecords;
 
 	struct BoundEventEntry
 	{

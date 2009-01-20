@@ -35,7 +35,6 @@ namespace kroll
 		if (iter != properties.end()) {
 			return iter->second;
 		}
-
 		return Value::Undefined;
 	}
 
