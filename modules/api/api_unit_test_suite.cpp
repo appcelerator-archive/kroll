@@ -4,6 +4,7 @@
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
 #include "api_unit_test_suite.h"
+#include <cstring>
 
 namespace kroll
 {

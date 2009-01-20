@@ -108,7 +108,7 @@ namespace kroll
 				SharedValue prop = this->Get(props->at(i));
 				SharedString disp_string = prop->DisplayString(levels);
 
-				oss << " " << props->at(i)
+				oss << " " << *(props->at(i))
 				    << " : " << *disp_string << ",";
 			}
 			//int before_last_comma = oss.tellp() - 1;
