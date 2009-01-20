@@ -9,23 +9,23 @@ namespace kroll
 {
 	void PythonUnitTestSuite::Run(Host *host)
 	{
-		SharedValue tv1 = new Value(1);
+		SharedValue tv1 = Value::NewInt(1);
 		SharedPtr<PyObject> v1 = PythonUtils::ToObject(tv1);
 		KR_ASSERT(PyInt_Check(v1));
 		KR_ASSERT(PyInt_AsLong(v1)==1);
 
-		SharedValue tv2 = new Value(1.0);
+		SharedValue tv2 = Value::NewDouble(1.0);
 		PyObject* v2 = PythonUtils::ToObject(tv2);
 		KR_ASSERT(PyFloat_Check(v2));
 		KR_ASSERT(PyFloat_AsDouble(v2)==1.0);
 
-		SharedValue tv3 = new Value("abc");
+		SharedValue tv3 = Value::NewString("abc");
 		PyObject* v3 = PythonUtils::ToObject(tv3);
 		KR_ASSERT(PyString_Check(v3));
 		KR_ASSERT_STR(PyString_AsString(v3),"abc");
 
 		std::string s1("abc");
-		SharedValue tv4 = new Value(s1);
+		SharedValue tv4 = Value::NewString(s1);
 		PyObject* v4 = PythonUtils::ToObject(tv4);
 		KR_ASSERT(PyString_Check(v4));
 		KR_ASSERT_STR(PyString_AsString(v4),"abc");
@@ -42,7 +42,7 @@ namespace kroll
 		PyObject* v7 = PythonUtils::ToObject(tv7);
 		KR_ASSERT(Py_None==v7);
 
-		SharedValue tv8 = new Value(true);
+		SharedValue tv8 = Value::NewBool(true);
 		PyObject* v8 = PythonUtils::ToObject(tv8);
 		KR_ASSERT(PyBool_Check(v8));
 		KR_ASSERT(v8 == Py_True);
@@ -94,14 +94,14 @@ namespace kroll
 		KR_ASSERT(p3->ToInt()==12345);
 
 		// TEST setting properties
-		SharedValue set1 = new Value(6789);
+		SharedValue set1 = Value::NewInt(6789);
 		value2->Set("i",set1);
 		SharedValue p4 = value2->Get("i");
 		KR_ASSERT(p4->IsInt());
 		KR_ASSERT(p4->ToInt()==6789);
 
 		// TEST setting invalid property - this should add it dynamically
-		SharedValue set2 = new Value(1);
+		SharedValue set2 = Value::NewInt(1);
 		value2->Set("i2",set2);
 		SharedValue p5 = value2->Get("i2");
 		KR_ASSERT(p5->IsInt());
@@ -128,7 +128,7 @@ namespace kroll
 
 		// TEST invoking a function with correct parameters
 		ValueList args2;
-		SharedValue argsp1 = new Value("hello,world");
+		SharedValue argsp1 = Value::NewString("hello,world");
 		args2.push_back(argsp1);
 		SharedValue mv4 = mb2->Call(args2);
 		KR_ASSERT(mv4);
@@ -197,12 +197,12 @@ namespace kroll
 		SharedPtr<BoundList> list = new StaticBoundList();
 		KR_ASSERT(list->Size()==0);
 		KR_ASSERT(list->At(0)->IsUndefined());
-		SharedValue lista = new Value(1);
+		SharedValue lista = Value::NewInt(1);
 		list->Append(lista);
 		KR_ASSERT(list->Size()==1);
 		//KR_DECREF(lista);
 
-		SharedValue listv = new Value(list);
+		SharedValue listv = Value::NewList(list);
 		PyObject* apylist = PythonUtils::ToObject(listv);
 		KR_ASSERT(apylist);
 		KR_ASSERT(listv->IsList());
@@ -219,7 +219,7 @@ namespace kroll
 		SharedPtr<BoundList> plist = new PythonBoundList(apylist);
 		KR_ASSERT(plist->Size()==1);
 		KR_ASSERT(plist->At(0)->ToInt()==1);
-		SharedValue vlist2 = new Value("hello");
+		SharedValue vlist2 = Value::NewString("hello");
 		plist->Append(vlist2);
 		KR_ASSERT(plist->Size()==2);
 		SharedValue vlist3 = plist->At(1);

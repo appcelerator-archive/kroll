@@ -17,7 +17,7 @@ namespace kroll
 
 		// TEST simple bound property values
 		SharedBoundObject bound = new StaticBoundObject();
-		SharedValue value = new Value("bar");
+		SharedValue value = Value::NewString("bar");
 		bound->Set("foo",value);
 		//KR_DECREF(value);
 

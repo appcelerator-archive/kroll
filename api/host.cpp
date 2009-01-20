@@ -49,7 +49,7 @@ namespace kroll
 		// from global scope directly to get it
 		const char *name = GLOBAL_NS_VARNAME;
 		SharedPtr<BoundObject> b = global_object;
-		SharedValue wrapper = new Value(b);
+		SharedValue wrapper = Value::NewObject(b);
 		this->global_object->Set(name,wrapper);
 		//KR_DECREF(wrapper);
 	}

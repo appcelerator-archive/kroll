@@ -14,7 +14,7 @@ namespace kroll
 	StaticBoundList::StaticBoundList()
 		: object(new StaticBoundObject())
 	{
-		SharedValue len = new Value(0);
+		SharedValue len = Value::NewInt(0);
 		this->Set("length", len);
 	}
 
@@ -30,7 +30,7 @@ namespace kroll
 		delete [] name;
 
 		length = length + 1;
-		SharedValue len = new Value(length);
+		SharedValue len = Value::NewInt(length);
 		this->object->Set("length", len);
 		//KR_DECREF(len);
 	}
@@ -63,7 +63,7 @@ namespace kroll
 			int val = atoi(name);
 			if (val > this->Size())
 			{
-				SharedValue len = new Value(val);
+				SharedValue len = Value::NewInt(val);
 				this->object->Set("length", len);
 				//KR_DECREF(len);
 			}

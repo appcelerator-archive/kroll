@@ -25,7 +25,7 @@ namespace kroll
 	{
 		// ints
 		{
-			SharedValue value = new Value(1);
+			SharedValue value = Value::NewInt(1);
 			VALUE rubyValue = RubyUtils::ToValue(value);
 			KR_ASSERT(rubyValue);
 			KR_ASSERT(1 == RubyUtils::ToInt(rubyValue));
@@ -34,7 +34,7 @@ namespace kroll
 
 		// doubles
 		{
-			SharedValue value = new Value(1.0);
+			SharedValue value = Value::NewDouble(1.0);
 			VALUE rubyValue = RubyUtils::ToValue(value);
 			KR_ASSERT(rubyValue);
 			KR_ASSERT(1.0 == RubyUtils::ToDouble(rubyValue));
@@ -43,7 +43,7 @@ namespace kroll
 
 		// boolean TRUE
 		{
-			SharedValue value = new Value(true);
+			SharedValue value = Value::NewBool(true);
 			VALUE rubyValue = RubyUtils::ToValue(value);
 			KR_ASSERT(rubyValue);
 			KR_ASSERT(true == RubyUtils::ToBool(rubyValue));
@@ -52,7 +52,7 @@ namespace kroll
 
 		// boolean FALSE
 		{
-			SharedValue value = new Value(false);
+			SharedValue value = Value::NewBool(false);
 			VALUE rubyValue = RubyUtils::ToValue(value);
 			KR_ASSERT(!rubyValue);
 			KR_ASSERT(false == RubyUtils::ToBool(rubyValue));
@@ -62,7 +62,7 @@ namespace kroll
 		// strings
 		{
 			std::string s("hello");
-			SharedValue value = new Value(s);
+			SharedValue value = Value::NewString(s);
 			VALUE rubyValue = RubyUtils::ToValue(value);
 			KR_ASSERT(rubyValue);
 			KR_ASSERT_STR(RubyUtils::ToString(rubyValue),"hello");
@@ -72,7 +72,7 @@ namespace kroll
 		// bound object
 		{
 			SharedPtr<StaticBoundObject> value = new StaticBoundObject();
-			SharedValue blah = new Value("bar");
+			SharedValue blah = Value::NewString("bar");
 			value->Set("foo",blah);
 			SharedPtr<BoundObject> o = value;
 			VALUE rubyValue = RubyUtils::Create(o);
@@ -96,7 +96,7 @@ namespace kroll
 
 			// dynamically attach a new object with a method
 			SharedPtr<BoundObject> testClass = new TestClass;
-			SharedValue testValue = new Value(testClass);
+			SharedValue testValue = Value::NewObject(testClass);
 			value->Set("yoyo",testValue);
 
 			// invoke the method traditionally

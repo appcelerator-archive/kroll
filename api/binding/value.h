@@ -7,7 +7,7 @@
 #ifndef _KR_VALUE_H_
 #define _KR_VALUE_H_
 
-namespace kroll 
+namespace kroll
 {
 
 	/*
@@ -47,14 +47,14 @@ namespace kroll
 		/*
 			Function: Undefined
 
-		  return a system-defined shared UNDEFINED type. 
+		  return a system-defined shared UNDEFINED type.
 		 */
 		static SharedValue Undefined;
 
 		/*
 			Function: Null
 
-		  return a system-defined shared NULL type. 
+		  return a system-defined shared NULL type.
 		 */
 		static SharedValue Null;
 
@@ -70,58 +70,58 @@ namespace kroll
 
 		  construct an <INT> type
 		 */
-		Value(int value);
+		static SharedValue NewInt(int value);
 
 		/**
 			Constructor: Value
 
 		  construct a <DOUBLE> type
 		 */
-		Value(double value);
+		static SharedValue NewDouble(double value);
 
 		/*
 			Constructor: Value
 
 		  construct a <BOOL> type
 		 */
-		Value(bool value);
+		static SharedValue NewBool(bool value);
 
 		/*
 			Constructor: Value
 
 		  construct a <STRING> type
 		 */
-		Value(const char* value);
+		static SharedValue NewString(const char* value);
 
 		/*
 			Constructor: Value
 
 		  construct an <STRING> type
 		 */
-		Value(std::string& value);
+		static SharedValue NewString(std::string& value);
 
 		/*
 			Constructor: Value
 
 		  construct a <LIST> type
 		 */
-		Value(SharedBoundList value);
+		static SharedValue NewList(SharedBoundList value);
 
 		/*
 			Constructor: Value
 
 		  construct an <OBJECT> type
 		 */
-		Value(SharedBoundObject value);
+		static SharedValue NewObject(SharedBoundObject value);
 
-		Value(SharedPtr<StaticBoundObject> value);
+		static SharedValue NewObject(SharedPtr<StaticBoundObject> value);
 
 		/*
 			Constructor: Value
 
 		  construct a <METHOD> type
 		 */
-		Value(SharedBoundMethod value);
+		static SharedValue NewMethod(SharedBoundMethod value);
 
 		/*
 			Constructor: Value

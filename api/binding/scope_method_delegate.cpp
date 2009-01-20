@@ -79,7 +79,7 @@ SharedPtr<StaticBoundObject> ScopeMethodDelegate::CreateDelegate(SharedBoundObje
 		if (key == "set")
 		{
 			SharedBoundMethod d = new ScopeMethodDelegate(SET, global, scope,value->ToMethod());
-			SharedValue v = new Value(d);
+			SharedValue v = Value::NewMethod(d);
 			//ScopedDereferencer d1(d);
 			//ScopedDereferencer d2(v);
 			scope->Set(key.c_str(), v);
@@ -87,7 +87,7 @@ SharedPtr<StaticBoundObject> ScopeMethodDelegate::CreateDelegate(SharedBoundObje
 		else if (key == "get")
 		{
 			SharedBoundMethod d = new ScopeMethodDelegate(GET, global, scope,value->ToMethod());
-			SharedValue v = new Value(d);
+			SharedValue v = Value::NewMethod(d);
 			//ScopedDereferencer d1(d);
 			//ScopedDereferencer d2(v);
 			scope->Set(key.c_str(), v);

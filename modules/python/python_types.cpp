@@ -63,7 +63,7 @@ namespace kroll
 				PyObject *pyapi = PythonUtils::ToObject(NULL,NULL,scope);
 				PyObject_SetAttrString(mod,PRODUCT_NAME,pyapi);
 				// now bind our new scope to python module
-				SharedValue scopeRef = new Value(scope);
+				SharedValue scopeRef = Value::NewObject(scope);
 				host->GetGlobalObject()->Set((const char*)"python",scopeRef);
 				//KR_DECREF(scopeRef);
 				// don't release the scope
@@ -314,60 +314,60 @@ namespace kroll
 		if (PyString_Check(value))
 		{
 			std::string s = PythonUtils::ToString(value);
-			return new Value(s);
+			return Value::NewString(s);
 		}
 		if (PyBool_Check(value))
 		{
-			return new Value(PythonBoolToBool(value));
+			return Value::NewBool(PythonBoolToBool(value));
 		}
 		if (PyInt_Check(value))
 		{
-			return new Value(PythonFixnumToInt(value));
+			return Value::NewInt(PythonFixnumToInt(value));
 		}
 		if (PyFloat_Check(value))
 		{
-			return new Value(PythonFloatToDouble(value));
+			return Value::NewDouble(PythonFloatToDouble(value));
 		}
 		if (PyList_Check(value))
 		{
 			SharedPtr<BoundList> l = new PythonBoundList(value);
-			Value *til = new Value(l);
+			Value *til = Value::NewList(l);
 			return til;
 		}
 		if (PyClass_Check(value))
 		{
 			SharedPtr<BoundObject> v = new PythonBoundObject(value);
-			Value* tiv = new Value(v);
+			Value* tiv = Value::NewObject(v);
 			return tiv;
 		}
 		if (PyInstance_Check(value))
 		{
 			SharedPtr<BoundObject> v = new PythonBoundObject(value);
-			Value* tiv = new Value(v);
+			Value* tiv = Value::NewObject(v);
 			return tiv;
 		}
 		if (PyMethod_Check(value))
 		{
 			SharedBoundMethod m = new PythonBoundMethod(value,name);
-			Value* tiv = new Value(m);
+			Value* tiv = Value::NewMethod(m);
 			return tiv;
 		}
 		if (PyFunction_Check(value))
 		{
 			SharedBoundMethod m = new PythonBoundMethod(value,name);
-			Value* tiv = new Value(m);
+			Value* tiv = Value::NewMethod(m);
 			return tiv;
 		}
 		if (PyCallable_Check(value))
 		{
 			SharedBoundMethod m = new PythonBoundMethod(value,name);
-			Value* tiv = new Value(m);
+			Value* tiv = Value::NewMethod(m);
 			return tiv;
 		}
 		if (PyObject_TypeCheck(value,&PyBoundObjectType))
 		{
 			PyBoundObject *o = reinterpret_cast<PyBoundObject*>(value);
-			Value* tiv = new Value(o->object);
+			Value* tiv = Value::NewObject(o->object);
 			return tiv;
 		}
 

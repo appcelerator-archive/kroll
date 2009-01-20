@@ -76,9 +76,9 @@ namespace kroll
 		KR_ASSERT(!logMethod.isNull());
 
 		ValueList args;
-		SharedValue sv = new Value(severity);
+		SharedValue sv = Value::NewInt(severity);
 		args.push_back(sv);
-		SharedValue mv = new Value(msg);
+		SharedValue mv = Value::NewString(msg);
 		args.push_back(mv);
 
 		// invoke directly against interface
@@ -90,7 +90,7 @@ namespace kroll
 		// invoke with varargs
 		//logMethod->Call(sv,mv);
 
-		SharedValue v = new Value(1);
+		SharedValue v = Value::NewInt(1);
 		binding->Set("foo",v);
 		SharedValue vr = binding->Get("foo");
 		KR_ASSERT(v->ToInt() == vr->ToInt());
@@ -107,7 +107,7 @@ namespace kroll
 		std::string event("kr.api.log");
 		TestClass* testObject = new TestClass;
 		int ref = binding->Register(event,testObject);
-		SharedValue data = new Value("some data here");
+		SharedValue data = Value::NewString("some data here");
 		//ScopedDereferencer dr(data);
 		//ScopedDereferencer tod(testObject);
 

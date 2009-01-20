@@ -75,23 +75,23 @@ namespace kroll
 				// is this a method ?
 				if (typeid(object->get()) == typeid(BoundMethod*)) {
 					SharedPtr<BoundMethod> method = object->cast<BoundMethod>();
-					return new Value(method);
+					return Value::NewMethod(method);
 				}
 				// is this a list ?
 				if (typeid(object->get()) == typeid(BoundList*)) {
 					SharedPtr<BoundList> list = object->cast<BoundList>();
-					return new Value(list);
+					return Value::NewList(list);
 				}
 
 				// nope, it's just a plain 'ole object
-				return new Value(object->get());
+				return Value::NewObject(object->get());
 			}
 			break;
-			case T_STRING: return new Value(StringValueCStr(value));
-			case T_FIXNUM: return new Value(NUM2INT(value));
-			case T_FLOAT: return new Value(NUM2DBL(value));
-			case T_TRUE: return new Value(true);
-			case T_FALSE: return new Value(false);
+			case T_STRING: return Value::NewString(StringValueCStr(value));
+			case T_FIXNUM: return Value::NewInt(NUM2INT(value));
+			case T_FLOAT: return Value::NewDouble(NUM2DBL(value));
+			case T_TRUE: return Value::NewBool(true);
+			case T_FALSE: return Value::NewBool(false);
 			case T_ARRAY:
 			{
 				SharedPtr<BoundList> list = new StaticBoundList();
@@ -102,7 +102,7 @@ namespace kroll
 					list->Append(arg);
 					//KR_DECREF(arg);
 				}
-				return new Value(list);
+				return Value::NewList(list);
 			} break;
 		}
 		return Value::Undefined;
@@ -331,7 +331,7 @@ namespace kroll
 			rb_define_global_const(ToUpper(PRODUCT_NAME),scope_value);
 
 			// now bind our new scope to python module
-			SharedValue scopeRef = new Value(scope);
+			SharedValue scopeRef = Value::NewObject(scope);
 			host->GetGlobalObject()->Set((const char*)"ruby",scopeRef);
 			//KR_DECREF(scopeRef);
 			// don't release the scope

@@ -115,7 +115,7 @@ namespace kroll
 	{
 		if (std::string(name) == std::string("length"))
 		{
-			return new Value(this->Size());
+			return Value::NewInt(this->Size());
 		}
 		// get should returned undefined if we don't have a property
 		// named "name" to mimic what happens in Javascript

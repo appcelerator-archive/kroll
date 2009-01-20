@@ -36,7 +36,7 @@ namespace kroll
 			if (next_val->IsUndefined())
 			{
 				next = new StaticBoundObject();
-				next_val = new Value(next);
+				next_val = Value::NewObject(next);
 				scope->Set(token, next_val);
 
 			}
@@ -44,7 +44,7 @@ namespace kroll
 			         && !next_val->IsMethod()
 			         && !next_val->IsList())
 			{
-				throw new Value("Invalid namespace on setNS");
+				throw Value::NewString("Invalid namespace on setNS");
 			}
 
 			else

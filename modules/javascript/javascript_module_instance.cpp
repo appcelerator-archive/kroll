@@ -35,7 +35,7 @@ namespace kroll
 		std::ifstream js_file(this->path.c_str());
 		if (!js_file.is_open())
 		{
-			SharedValue e = new Value("Could not read Javascript file");
+			SharedValue e = Value::NewString("Could not read Javascript file");
 			throw e;
 		}
 

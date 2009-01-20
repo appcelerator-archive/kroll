@@ -10,7 +10,7 @@ namespace kroll
 {
 	APIBinding::APIBinding(SharedBoundObject global) : record(0), global(global)
 	{
-		SharedValue version = new Value(1.0);
+		SharedValue version = Value::NewDouble(1.0);
 		this->Set((const char*) "version", version);
 		this->SetMethod("set", &APIBinding::_Set);
 		this->SetMethod("get", &APIBinding::_Get);
@@ -186,10 +186,10 @@ namespace kroll
 		{
 			SharedBoundMethod method = *i;
 			ValueList args;
-			args.push_back(new Value(event));
+			args.push_back(Value::NewString(event));
 			args.push_back(value);
 			method->Call(args);
 		}
-		
+
 	}
 }

@@ -11,15 +11,15 @@
 namespace kroll
 {
 	Value::Value() { init(); SetUndefined(); }
-	Value::Value(int value) { init(); this->SetInt(value); }
-	Value::Value(double value) { init(); this->SetDouble(value); }
-	Value::Value(bool value) { init(); this->SetBool(value); }
-	Value::Value(const char* value) { init(); this->SetString(value); }
-	Value::Value(std::string& value) { init(); this->SetString(value.c_str()); }
-	Value::Value(SharedBoundList value) { init(); this->SetList(value); }
-	Value::Value(SharedBoundMethod method) { init(); this->SetMethod(method); }
-	Value::Value(SharedBoundObject value) { init(); this->SetObject(value); }
-	Value::Value(SharedPtr<StaticBoundObject> value) { init(); this->SetStaticBoundObject(value); }
+	SharedValue Value::NewInt(int value) { SharedValue v(new Value()); v->init(); v->SetInt(value); return v; }
+	SharedValue Value::NewDouble(double value) { SharedValue v(new Value()); v->init(); v->SetDouble(value); return v; }
+	SharedValue Value::NewBool(bool value) { SharedValue v(new Value()); v->init(); v->SetBool(value); return v; }
+	SharedValue Value::NewString(const char* value) { SharedValue v(new Value()); v->init(); v->SetString(value); return v; }
+	SharedValue Value::NewString(std::string& value) { SharedValue v(new Value()); v->init(); v->SetString(value.c_str()); return v; }
+	SharedValue Value::NewList(SharedBoundList value) { SharedValue v(new Value()); v->init(); v->SetList(value); return v; }
+	SharedValue Value::NewMethod(SharedBoundMethod method) { SharedValue v(new Value()); v->init(); v->SetMethod(method); return v; }
+	SharedValue Value::NewObject(SharedBoundObject value) { SharedValue v(new Value()); v->init(); v->SetObject(value); return v; }
+	SharedValue Value::NewObject(SharedPtr<StaticBoundObject> value) { SharedValue v(new Value()); v->init(); v->SetStaticBoundObject(value); return v; }
 	Value::Value(SharedValue value) { init(); this->SetValue(value); }
 	Value::Value(const Value& value)
 	{

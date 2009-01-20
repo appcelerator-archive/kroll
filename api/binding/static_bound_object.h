@@ -72,7 +72,7 @@ namespace kroll
 			MethodCallback* callback = NewCallback<T, const ValueList&, SharedValue>(static_cast<T*>(this), method);
 
 			SharedBoundMethod bound_method = new StaticBoundMethod(callback);
-			SharedValue method_value = new Value(bound_method);
+			SharedValue method_value = Value::NewMethod(bound_method);
 
 			this->Set(name, method_value);
 		}

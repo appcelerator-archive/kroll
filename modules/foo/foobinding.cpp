@@ -12,15 +12,15 @@ namespace kroll
 	{
 		printf("foobinding: %i\n", (int) this);
 
-		SharedValue number = new Value(42);
+		SharedValue number = Value::NewInt(42);
 		this->Set("number", number);
 		this->SetMethod("bar", &FooBinding::Bar);
 
 		SharedPtr<BoundList> arr = new StaticBoundList();
-		arr->Append(new Value("one"));
-		arr->Append(new Value("42"));
-		arr->Append(new Value("false"));
-		this->Set("list", new Value(arr));
+		arr->Append(Value::NewString("one"));
+		arr->Append(Value::NewString("42"));
+		arr->Append(Value::NewString("false"));
+		this->Set("list", Value::NewList(arr));
 
 		//KR_DECREF(number);
 		//KR_DECREF(arr);

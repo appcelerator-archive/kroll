@@ -38,11 +38,11 @@ namespace kroll
 
 		if (JSValueIsNumber(ctx, value))
 		{
-			kr_val = new Value(JSValueToNumber(ctx, value, &exception));
+			kr_val = Value::NewInt(JSValueToNumber(ctx, value, &exception));
 		}
 		else if (JSValueIsBoolean(ctx, value))
 		{
-			kr_val = new Value(JSValueToBoolean(ctx, value));
+			kr_val = Value::NewBool(JSValueToBoolean(ctx, value));
 		}
 		else if (JSValueIsString(ctx, value))
 		{
@@ -54,7 +54,7 @@ namespace kroll
 				std::string to_ret = std::string(chars);
 				JSStringRelease(string_ref);
 				free(chars);
-				kr_val = new Value(to_ret);
+				kr_val = Value::NewString(to_ret);
 			}
 
 		}
@@ -69,14 +69,14 @@ namespace kroll
 				{
 					// this is a pure JS method: proxy it
 					SharedBoundMethod tibm = new KJSBoundMethod(ctx, o, this_obj);
-					kr_val = new Value(tibm);
+					kr_val = Value::NewMethod(tibm);
 					//KR_DECREF(tibm);
 				}
 				else if (JSObjectIsFunction(ctx, o))
 				{
 					// this is a TiBoundMethod: unwrap it
-					SharedBoundMethod tibm = (BoundMethod*) data;
-					kr_val = new Value(tibm);
+					SharedBoundMethod * tibm = (SharedBoundMethod *) data;
+					kr_val = Value::NewMethod(*tibm);
 				}
 				//else if (KJSUtil::IsArrayLike(o, ctx) && data == NULL)
 				//{
@@ -95,14 +95,14 @@ namespace kroll
 				{
 					// this is a pure JS object: proxy it
 					SharedBoundObject tibo = new KJSBoundObject(ctx, o);
-					kr_val = new Value(tibo);
+					kr_val = Value::NewObject(tibo);
 					//KR_DECREF(tibo);
 				}
 				else
 				{
 					// this is a kroll::BoundObject: unwrap it
-					SharedBoundObject tibo = (BoundObject*) data;
-					kr_val = new Value(tibo);
+					SharedBoundObject * tibo = (SharedBoundObject*) data;
+					kr_val = Value::NewObject(*tibo);
 				}
 			}
 
