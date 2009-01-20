@@ -70,33 +70,30 @@ namespace kroll
 					// this is a pure JS method: proxy it
 					SharedBoundMethod tibm = new KJSBoundMethod(ctx, o, this_obj);
 					kr_val = Value::NewMethod(tibm);
-					//KR_DECREF(tibm);
 				}
 				else if (JSObjectIsFunction(ctx, o))
 				{
-					// this is a TiBoundMethod: unwrap it
-					SharedBoundMethod * tibm = (SharedBoundMethod *) data;
+					// this is a BoundMethod: unwrap it
+					SharedBoundMethod *tibm = (SharedBoundMethod *) data;
 					kr_val = Value::NewMethod(*tibm);
 				}
-				//else if (KJSUtil::IsArrayLike(o, ctx) && data == NULL)
-				//{
-				//	// this is a pure JS array: proxy it
-				//	BoundList* tibl = new KJSBoundList(ctx, o);
-				//	kr_val = new Value(tibl);
-				//	KR_DECREF(tibl);
-				//}
-				//else if (JSObjectIsArrayLike(ctx, o))
-				//{
-				//	// this is a TiBoundList: unwrap it
-				//	BoundList* tibl = (BoundList*) data;
-				//	kr_val = new Value(tibl);
-				//}
+				else if (data == NULL && IsArrayLike(o, ctx))
+				{
+					// this is a pure JS array: proxy it
+					SharedBoundList tibl = new KJSBoundList(ctx, o);
+					kr_val = Value::NewList(tibl);
+				}
+				else if (IsArrayLike(o,ctx))
+				{
+					// this is a BoundList: unwrap it
+					SharedBoundList tibl = (BoundList*) data;
+					kr_val = Value::NewList(tibl);
+				}
 				else if (data == NULL)
 				{
 					// this is a pure JS object: proxy it
 					SharedBoundObject tibo = new KJSBoundObject(ctx, o);
 					kr_val = Value::NewObject(tibo);
-					//KR_DECREF(tibo);
 				}
 				else
 				{
@@ -222,7 +219,6 @@ namespace kroll
 			js_class_def.setProperty = set_property_cb;
 			tibo_class = JSClassCreate (&js_class_def);
 		}
-		//KR_ADDREF(object);
 		return JSObjectMake (c, tibo_class, new SharedBoundObject(object));
 	}
 
@@ -240,7 +236,6 @@ namespace kroll
 			js_class_def.callAsFunction = call_as_function_cb;
 			tibm_class = JSClassCreate (&js_class_def);
 		}
-		//KR_ADDREF(method);
 		return JSObjectMake (c, tibm_class, new SharedBoundMethod(method));
 	}
 
@@ -273,7 +268,6 @@ namespace kroll
 			tibl_class = JSClassCreate (&js_class_def);
 		}
 
-		//KR_ADDREF(list);
 		JSObjectRef object = JSObjectMake (c, tibl_class, new SharedBoundList(list));
 
 		JSValueRef args[1] = { JSValueMakeNumber(c, 3) };
@@ -305,13 +299,22 @@ namespace kroll
 
 	bool KJSUtil::IsArrayLike(JSObjectRef object, JSContextRef c)
 	{
+		JSStringRef pop = JSStringCreateWithUTF8CString("pop");
+		bool hasPop = JSObjectHasProperty(c,object,pop);
+		JSStringRelease(pop);
+		if (hasPop)
+		{
+			JSStringRef concat = JSStringCreateWithUTF8CString("concat");
+			bool hasConcat = JSObjectHasProperty(c,object,concat);
+			JSStringRelease(concat);
+			return hasConcat;
+		}
 		return false;
 	}
 
 	void finalize_cb(JSObjectRef js_object)
 	{
 		SharedBoundObject* object = (SharedBoundObject*) JSObjectGetPrivate (js_object);
-		//KR_DECREF(object);
 		delete object;
 	}
 

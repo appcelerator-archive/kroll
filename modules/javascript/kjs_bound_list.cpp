@@ -21,7 +21,6 @@ namespace kroll
 	KJSBoundList::~KJSBoundList()
 	{
 		JSValueUnprotect(this->context, this->object);
-		//KR_DECREF(kjs_bound_object);
 	}
 
 	SharedValue KJSBoundList::Get(const char *name)
@@ -89,15 +88,11 @@ namespace kroll
 
 	char* KJSBoundList::IntToChars(int value)
 	{
-		int digits = (int) floor(log((double)value)) + 1;
-		char* str = new char[digits + 1];
-	#if defined(OS_WIN32)
-		_snprintf(str, digits + 1, "%d", value);
-	#else
-		snprintf(str, digits + 1, "%d", value);
-	#endif
+		char buf[10];
+		sprintf(buf,"%d",value);
+		char *str = new char[strlen(buf)];
+		strcpy(str,buf);
 		return str;
 	}
 
 }
-
