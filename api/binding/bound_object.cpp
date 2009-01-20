@@ -29,15 +29,16 @@ namespace kroll
 		for (size_t i = 0; i < tokens.size() - 1; i++)
 		{
 			const char* token = tokens[i].c_str();
-			SharedBoundObject next;
+			StaticBoundObject *next;
 			SharedValue next_val = scope->Get(token);
 
 			if (next_val->IsUndefined())
 			{
 				next = new StaticBoundObject();
-				next_val = Value::NewObject(next);
+				SharedBoundObject so = next;
+				next_val = Value::NewObject(so);
 				scope->Set(token, next_val);
-
+				scope = next;
 			}
 			else if (!next_val->IsObject()
 			         && !next_val->IsMethod()
@@ -45,13 +46,10 @@ namespace kroll
 			{
 				throw Value::NewString("Invalid namespace on setNS");
 			}
-
 			else
 			{
-				next = next_val->ToObject();
+				scope = next_val->ToObject().get();
 			}
-
-			scope = next.get();
 		}
 
 		const char *prop_name = tokens[tokens.size()-1].c_str();

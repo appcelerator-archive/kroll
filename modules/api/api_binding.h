@@ -56,7 +56,7 @@ namespace kroll
 		std::map<std::string, EventRecords> registrations;
 		std::map<int, BoundEventEntry> registrationsById;
 		int record;
-		SharedPtr<BoundObject> global;
+		SharedBoundObject global;
 
 		int GetNextRecord();
 	};

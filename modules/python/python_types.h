@@ -24,7 +24,7 @@ namespace kroll
 		static void InitializeDefaultBindings(Host*);
 	private:
 		// retain scope for the lifetime of this class
-		static SharedPtr<BoundObject> scope;
+		static SharedBoundObject scope;
 
 		PythonUtils() {}
 		~PythonUtils () {}

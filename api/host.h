@@ -205,7 +205,6 @@ namespace kroll
 		const char **argv;
 		ModuleMap modules;
 		Mutex moduleMutex;
-		std::map<std::string,BoundObject*> bound_objects;
 		std::vector<ModuleProvider *> module_providers;
 		std::map<std::string,ModuleProvider*> module_creators;
 		SharedPtr<StaticBoundObject> global_object;

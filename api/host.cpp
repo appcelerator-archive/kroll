@@ -48,15 +48,13 @@ namespace kroll
 		// link the name of our global variable to ourself so we can reference
 		// from global scope directly to get it
 		const char *name = GLOBAL_NS_VARNAME;
-		SharedPtr<BoundObject> b = global_object;
+		SharedBoundObject b = global_object;
 		SharedValue wrapper = Value::NewObject(b);
 		this->global_object->Set(name,wrapper);
-		//KR_DECREF(wrapper);
 	}
 
 	Host::~Host()
 	{
-		//KR_DECREF(this->global_object);
 	}
 
 	void Host::RegisterModule(std::string& path, Module* module)
