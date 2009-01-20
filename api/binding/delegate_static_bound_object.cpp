@@ -57,6 +57,7 @@ namespace kroll
 				if (delegate_list->at(i).get() == list->at(j).get())
 				{
 					found = true;
+					break;
 				}
 			}
 

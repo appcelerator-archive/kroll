@@ -20,7 +20,6 @@ namespace kroll
 
 	void APIModule::Destroy()
 	{
-		//KR_DECREF(binding);
 	}
 
 	class TestClass : public BoundMethod

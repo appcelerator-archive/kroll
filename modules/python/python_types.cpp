@@ -59,13 +59,14 @@ namespace kroll
 			{
 				// we're going to clone the methods from api into our
 				// own python scoped object
-				scope = ScopeMethodDelegate::CreateDelegate(host->GetGlobalObject(),api->ToObject());
+				SharedBoundObject hostobj = host->GetGlobalObject();
+				SharedBoundObject apiobj = api->ToObject();
+				scope = ScopeMethodDelegate::CreateDelegate(hostobj,apiobj);
 				PyObject *pyapi = PythonUtils::ToObject(NULL,NULL,scope);
 				PyObject_SetAttrString(mod,PRODUCT_NAME,pyapi);
 				// now bind our new scope to python module
 				SharedValue scopeRef = Value::NewObject(scope);
 				host->GetGlobalObject()->Set((const char*)"python",scopeRef);
-				//KR_DECREF(scopeRef);
 				// don't release the scope
 			}
 			Py_DECREF(mod);
@@ -98,7 +99,7 @@ namespace kroll
 	static PyObject *BoundMethodDispatcher (PyObject *s, PyObject *args)
 	{
 		void *sp = PyCObject_AsVoidPtr(s);
-		SharedBoundMethod* method = static_cast< SharedBoundMethod* >(sp);
+		SharedBoundMethod* method = static_cast<SharedBoundMethod*>(sp);
 		ValueList a;
 		try
 		{
@@ -110,7 +111,7 @@ namespace kroll
 			SharedValue result = (*method)->Call(a);
 			return PythonUtils::ToObject(result);
 		}
-		catch (Value *ex)
+		catch (SharedValue ex)
 		{
 			PyErr_SetObject(PyExc_Exception,PythonUtils::ToObject(ex));
 			Py_INCREF(Py_None);
@@ -129,7 +130,8 @@ namespace kroll
 
 	PyObject* PythonUtils::ToObject(SharedBoundMethod method)
 	{
-		PyObject *self = PyCObject_FromVoidPtr(new SharedBoundMethod(method),&PyDeleteBoundMethod);
+		SharedBoundMethod *m = new SharedBoundMethod(method);
+		PyObject *self = PyCObject_FromVoidPtr(m,&PyDeleteBoundMethod);
 		return PyCFunction_New(&BoundMethodDispatcherDef, self);
 	}
 
@@ -160,7 +162,7 @@ namespace kroll
 		}
 		if (value->IsObject())
 		{
-			SharedPtr<BoundObject> obj = value->ToObject();
+			SharedBoundObject obj = value->ToObject();
 			if (typeid(obj.get()) == typeid(PythonBoundObject*))
 			{
 				return (PyObject*)((PythonBoundObject*)obj.get())->ToPython();
@@ -177,7 +179,7 @@ namespace kroll
 		}
 		if (value->IsList())
 		{
-			SharedPtr<BoundList> list = value->ToList();
+			SharedBoundList list = value->ToList();
 			if (typeid(list.get()) == typeid(PythonBoundList*))
 			{
 				return ((PythonBoundList*)list.get())->ToPython();
@@ -190,14 +192,14 @@ namespace kroll
 
 	typedef struct {
 	    PyObject_HEAD
-		SharedPtr<BoundObject> object;
+		SharedBoundObject* object;
 	} PyBoundObject;
 
 	static void PyBoundObject_dealloc(PyObject* self)
 	{
-		//PyBoundObject *boundSelf = (PyBoundObject*)self;
+		PyBoundObject *boundSelf = (PyBoundObject*)self;
 		// std::cout << "PyBoundObject_dealloc called for " <<(void*)boundSelf << std::endl;
-		//KR_DECREF(boundSelf->object);
+		delete boundSelf;
 		PyObject_Del(self);
 	}
 
@@ -205,7 +207,7 @@ namespace kroll
 	{
 		PyBoundObject *boundSelf = reinterpret_cast<PyBoundObject*>(self);
 		// std::cout << "PyBoundObject_getattr called with " << name << " for " << (void*)boundSelf << std::endl;
-		SharedValue result = boundSelf->object->Get(name);
+		SharedValue result = boundSelf->object->get()->Get(name);
 		return PythonUtils::ToObject(result);
 	}
 
@@ -214,7 +216,7 @@ namespace kroll
 		PyBoundObject *boundSelf = (PyBoundObject*)self;
 		// std::cout << KR_FUNC << " called for " <<(void*)boundSelf << std::endl;
 		SharedValue tiValue = PythonUtils::ToValue(value,name);
-		boundSelf->object->Set(name,tiValue);
+		boundSelf->object->get()->Set(name,tiValue);
 		return 0;
 	}
 
@@ -222,7 +224,7 @@ namespace kroll
 	{
 		PyBoundObject *boundSelf = (PyBoundObject*)self;
 		// std::cout << KR_FUNC << " called for " <<(void*)boundSelf << std::endl;
-		SharedValue result = boundSelf->object->Get("toString");
+		SharedValue result = boundSelf->object->get()->Get("toString");
 		if (result->IsMethod())
 		{
 			SharedBoundMethod method = result->ToMethod();
@@ -264,7 +266,7 @@ namespace kroll
 		0,							/*tp_doc*/
 	};
 
-	PyObject* PythonUtils::ToObject(PyObject* self, PyObject* args, SharedPtr<BoundObject> bo)
+	PyObject* PythonUtils::ToObject(PyObject* self, PyObject* args, SharedBoundObject bo)
 	{
 		//CHECK bo
 		if (bo.isNull())
@@ -272,7 +274,7 @@ namespace kroll
 			throw "BoundObject cannot be null";
 		}
 		PyBoundObject* obj;
-		SharedPtr<BoundList> list = bo.cast<BoundList>();
+		SharedBoundList list = bo.cast<BoundList>();
 		if (!list.isNull())
 		{
 			// convert it into a list of wrapped Value objects
@@ -289,7 +291,7 @@ namespace kroll
 		{
 			obj = PyObject_New(PyBoundObject, &PyBoundObjectType);
 		}
-		obj->object = bo;
+		obj->object = new SharedBoundObject(bo);
 		return (PyObject*)obj;
 	}
 
@@ -330,19 +332,19 @@ namespace kroll
 		}
 		if (PyList_Check(value))
 		{
-			SharedPtr<BoundList> l = new PythonBoundList(value);
+			SharedBoundList l = new PythonBoundList(value);
 			Value *til = Value::NewList(l);
 			return til;
 		}
 		if (PyClass_Check(value))
 		{
-			SharedPtr<BoundObject> v = new PythonBoundObject(value);
+			SharedBoundObject v = new PythonBoundObject(value);
 			Value* tiv = Value::NewObject(v);
 			return tiv;
 		}
 		if (PyInstance_Check(value))
 		{
-			SharedPtr<BoundObject> v = new PythonBoundObject(value);
+			SharedBoundObject v = new PythonBoundObject(value);
 			Value* tiv = Value::NewObject(v);
 			return tiv;
 		}
@@ -367,7 +369,7 @@ namespace kroll
 		if (PyObject_TypeCheck(value,&PyBoundObjectType))
 		{
 			PyBoundObject *o = reinterpret_cast<PyBoundObject*>(value);
-			Value* tiv = Value::NewObject(o->object);
+			Value* tiv = Value::NewObject(o->object->get());
 			return tiv;
 		}
 

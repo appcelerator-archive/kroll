@@ -22,6 +22,7 @@ namespace kroll
 
 	APIBinding::~APIBinding()
 	{
+		std::cout << "before ~APiBinding: " << (void*)this <<std::endl;
 		ScopedLock lock(&mutex);
 
 		/* clear old registrations -- memory mangement will be

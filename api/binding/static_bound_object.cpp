@@ -55,7 +55,7 @@ namespace kroll
 		iter = this->properties.find(std::string(name));
 		if (this->properties.end() != iter)
 		{
-			this->properties.erase(iter);
+//			this->properties.erase(iter);
 		}
 	}
 
