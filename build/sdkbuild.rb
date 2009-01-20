@@ -56,4 +56,9 @@ Zip::ZipFile.open(sdk_zip, Zip::ZipFile::CREATE) do |zipfile|
 		name = f.gsub("#{OS}/include/", '')
 		zipfile.add "include/#{name}", f
 	end
+
+	Dir["../docs/**/*"].each do |f|
+		name = f.gsub("../docs/", '')
+		zipfile.add 'docs/'+name, f	
+	end
 end
