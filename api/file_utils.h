@@ -102,12 +102,12 @@ namespace kroll
 			Function: Tokenize
 		*/
 		static void Tokenize(const std::string& str, std::vector<std::string>& tokens, const std::string &delimeters);
-		
+
 		/*
 			Function: Trim
-				 
+
 			Parameters:
-			
+
 				str - The string to trim
 		*/
 		static std::string Trim(std::string str);
@@ -132,6 +132,21 @@ namespace kroll
 		*/
 		static bool IsFile(std::string &file);
 
+		/*
+			Function: GetApplicationDirectory
+			  This function uses the KR_HOME environment variable set by the boot process
+
+			Returns: the directory for the application files
+		*/
+		static std::string GetApplicationDirectory();
+
+		/*
+			Function: GetResourcesDirectory
+			  This function indirectly uses the KR_HOME environment variable set by the boot process
+
+			Returns: the directory for the applicatin's resource files
+		*/
+		static std::string GetResourcesDirectory();
 		/*
 		    Function: GetDirectory
 

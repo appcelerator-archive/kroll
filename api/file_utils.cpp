@@ -21,6 +21,38 @@ namespace kroll
 		int b1 = FileUtils::MakeVersion(b);
 		return b1 > a1;
 	}
+	std::string FileUtils::GetApplicationDirectory()
+	{
+#ifdef OS_OSX
+		// TODO test this
+		NSString* bundlePath = [[NSBundle mainBundle] bundlePath];
+		std::string dir = std::string([bundlePath UTF8String]);
+#elif OS_WIN32
+		char * krHome = getenv("KR_HOME");
+		std::string dir(krHome);
+#elif OS_LINUX
+		// TODO test this
+		char * krHome = getenv("KR_HOME");
+		std::string dir(krHome);
+#endif
+		return dir;
+	}
+	std::string FileUtils::GetResourcesDirectory()
+	{
+#ifdef OS_OSX
+		// TODO test this
+		NSString* resourcePath = [[NSBundle mainBundle] resourcePath];
+		std::string dir = std::string([resourcePath UTF8String]);
+#elif OS_WIN32
+		std::string dir = FileUtils::GetApplicationDirectory();
+		dir.append("\\Resources");
+#elif OS_LINUX
+		// TODO test this
+		std::string dir = FileUtils::GetApplicationDirectory();
+		dir.append("/Resources");
+#endif
+		return dir;
+	}
 	bool FileUtils::IsFile(std::string &file)
 	{
 #ifdef OS_OSX
