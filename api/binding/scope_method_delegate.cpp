@@ -14,16 +14,10 @@ ScopeMethodDelegate::ScopeMethodDelegate(MethodDelegateType type,
                                          SharedBoundMethod delegate) :
 	type(type), global(global), scope(scope), delegate(delegate)
 {
-	//KR_ADDREF(global);
-	//KR_ADDREF(scope);
-	//KR_ADDREF(delegate);
 }
 
 ScopeMethodDelegate::~ScopeMethodDelegate()
 {
-	//KR_DECREF(global);
-	//KR_DECREF(scope);
-	//KR_DECREF(delegate);
 }
 
 
@@ -59,7 +53,8 @@ SharedValue ScopeMethodDelegate::Call(const ValueList& args)
 	}
 	else
 	{
-		obj->SetNS(key.c_str(),args.at(1));
+		SharedValue result = args.at(1);
+		obj->SetNS(key.c_str(),result);
 		return Value::Undefined;
 	}
 }
@@ -78,18 +73,14 @@ SharedPtr<StaticBoundObject> ScopeMethodDelegate::CreateDelegate(SharedBoundObje
 
 		if (key == "set")
 		{
-			SharedBoundMethod d = new ScopeMethodDelegate(SET, global, scope,value->ToMethod());
+			SharedBoundMethod d = new ScopeMethodDelegate(SET, global, scope, value->ToMethod());
 			SharedValue v = Value::NewMethod(d);
-			//ScopedDereferencer d1(d);
-			//ScopedDereferencer d2(v);
 			scope->Set(key.c_str(), v);
 		}
 		else if (key == "get")
 		{
-			SharedBoundMethod d = new ScopeMethodDelegate(GET, global, scope,value->ToMethod());
+			SharedBoundMethod d = new ScopeMethodDelegate(GET, global, scope, value->ToMethod());
 			SharedValue v = Value::NewMethod(d);
-			//ScopedDereferencer d1(d);
-			//ScopedDereferencer d2(v);
 			scope->Set(key.c_str(), v);
 		}
 		else

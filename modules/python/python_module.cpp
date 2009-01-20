@@ -47,26 +47,16 @@ namespace kroll
 
 	Module* PythonModule::CreateModule(std::string& path)
 	{
-		char* path2 = (char*)malloc(sizeof(char)*path.length()+1);
-		size_t length = path.copy(path2, path.length(), 0);
-		path2[length] = '\0';
+		std::cout << "Create module: " << path << std::endl;
 
-		std::cout << "Create module: " << path2 << std::endl;
-
-		FILE *file = fopen(path2, "r");
+		FILE *file = fopen(path.c_str(), "r");
 		printf("got python file: %d\n", (int) file);
 
-		//FIXME - we need to create a separate version of scope stuff
-
-		// right now python is crashing in win32, need to investigate
-		PyRun_SimpleFile(file,path2);
+		PyRun_SimpleFile(file,path.c_str());
 		std::cout << "PyRan simple file" << std::endl;
 
-		std::string path3(path2);
-		free(path2);
-
-		std::cout << "return new PythonModuleInstance " << path3 << std::endl;
-		return new PythonModuleInstance(host, path3);
+		std::cout << "return new PythonModuleInstance " << path << std::endl;
+		return new PythonModuleInstance(host, path);
 	}
 
 	void PythonModule::Test()

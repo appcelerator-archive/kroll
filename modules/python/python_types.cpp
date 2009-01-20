@@ -106,7 +106,8 @@ namespace kroll
 			for (int c=0;c<PyTuple_Size(args);c++)
 			{
 				PyObject *arg=PyTuple_GET_ITEM(args,c);
-				a.push_back(PythonUtils::ToValue(arg,NULL));
+				SharedValue argument = PythonUtils::ToValue(arg,NULL);
+				a.push_back(argument);
 			}
 			SharedValue result = (*method)->Call(a);
 			return PythonUtils::ToObject(result);

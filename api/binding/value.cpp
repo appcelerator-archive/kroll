@@ -33,20 +33,12 @@ namespace kroll
 		else
 		{
 			this->SetValue((Value*)&value);
-			//if (value.IsObject())
-			//{
-			//	KR_ADDREF(this->value.objectValue);
-			//}
 		}
 	}
 
 	Value::~Value()
 	{
-		if (IsObject())
-		{
-			//KR_DECREF(this->value.objectValue);
-		}
-		else if (IsString())
+		if (IsString())
 		{
 			delete this->stringValue;
 			this->stringValue = 0;
@@ -79,11 +71,7 @@ namespace kroll
 
 	void Value::defaults()
 	{
-		if (this->IsObject())
-		{
-			//KR_DECREF(this->value.objectValue);
-		}
-		else if (this->IsString())
+		if (this->IsString())
 		{
 			delete this->stringValue;
 			this->stringValue = 0;
@@ -181,7 +169,6 @@ namespace kroll
 	{
 		defaults();
 		this->objectValue = value;
-		//KR_ADDREF(this->value.objectValue);
 		type = LIST;
 	}
 
@@ -189,7 +176,6 @@ namespace kroll
 	{
 		defaults();
 		this->objectValue = value;
-		//KR_ADDREF(this->value.objectValue);
 		type = OBJECT;
 	}
 
@@ -204,7 +190,6 @@ namespace kroll
 	{
 		defaults();
 		this->objectValue = value;
-		//KR_ADDREF(this->value.objectValue);
 		type = METHOD;
 	}
 

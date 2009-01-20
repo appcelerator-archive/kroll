@@ -32,7 +32,6 @@ namespace kroll
 		length = length + 1;
 		SharedValue len = Value::NewInt(length);
 		this->object->Set("length", len);
-		//KR_DECREF(len);
 	}
 
 	int StaticBoundList::Size()
@@ -65,7 +64,6 @@ namespace kroll
 			{
 				SharedValue len = Value::NewInt(val);
 				this->object->Set("length", len);
-				//KR_DECREF(len);
 			}
 		}
 
