@@ -18,7 +18,7 @@ namespace kroll
 	 *
 	 * an interface that exposes a Kroll Module
 	 */
-	class KROLL_API Module : public RefCounted
+	class KROLL_API Module
 	{
 	public:
 		/*
@@ -26,10 +26,8 @@ namespace kroll
 		 */
 		Module(Host *host, const char *path)
 			 : host(host), path(std::string(path)) {} 
-
-	protected:
 		virtual ~Module() {}
-		
+
 	public:
 
 		/*
@@ -123,13 +121,6 @@ using namespace kroll;
 	std::cout << "Creating module: " << #s << std::endl; \
 	return new s(host,path);\
 }  \
-extern "C" EXPORT void DestroyModule(s* p)\
-{\
-	if (p) { \
-		KR_DECREF(p); \
-	} \
-	p = 0; \
-}\
 const char* s::GetName() \
 { \
 	return #s; \

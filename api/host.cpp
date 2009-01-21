@@ -144,28 +144,27 @@ namespace kroll
 		return isModule;
 	}
 
-	Module* Host::LoadModule(std::string& path, ModuleProvider *provider)
+	SharedPtr<Module> Host::LoadModule(std::string& path, ModuleProvider *provider)
 	{
 		ScopedLock lock(&moduleMutex);
-		Module *module = provider->CreateModule(path);
+		SharedPtr<Module> module = provider->CreateModule(path);
 
-		if (module == NULL)
+		if (!module.isNull())
 		{
-			return NULL;
+			module->SetProvider(provider); // set the provider
+			modules[path] = module; // add to the module map
+
+			std::cout << "Module loaded " << module->GetName()
+			          << " from " << path << std::endl;
+
+			// Call module Load lifecycle event
+			module->Load();
 		}
+		else
+		{
+			std::cout << "Could not load module from: " << path << std::endl;
 
-		printf("Module->SetProvider\n");
-		module->SetProvider(provider);
-
-		printf("Register Module\n");
-		KR_ADDREF(module);
-		modules[path] = module;
-
-		std::cout << "module loaded " << module->GetName()
-		          << " from " << path << std::endl;
-
-		// Call module Load lifecycle event
-		module->Load();
+		}
 
 		return module;
 	}
@@ -234,8 +233,8 @@ namespace kroll
 			ModuleProvider *provider = FindModuleProvider(path);
 			if (provider != NULL)
 			{
-				Module *m = this->LoadModule(path, provider);
-				if (m != NULL)
+				SharedPtr<Module> m = this->LoadModule(path, provider);
+				if (!m.isNull())
 				{
 					just_loaded[path] = m;
 					invalid_module_files.erase(iter);
@@ -260,24 +259,22 @@ namespace kroll
 		ModuleMap::iterator iter = to_init.begin();
 		while (iter != to_init.end())
 		{
-			Module *m = iter->second;
+			SharedPtr<Module> m = iter->second;
 			m->Initialize();
 			*iter++;
 		}
 	}
 
-	Module* Host::GetModule(std::string& name)
+	SharedPtr<Module> Host::GetModule(std::string& name)
 	{
 
 		ScopedLock lock(&moduleMutex);
 		ModuleMap::iterator iter = this->modules.find(name);
 		if (this->modules.end() == iter) {
-			return NULL;
+			return SharedPtr<Module>(NULL);
 		}
 
-		Module *module = iter->second;
-		KR_ADDREF(module);
-		return module;
+		return iter->second;
 	}
 
 	bool Host::HasModule(std::string name)
@@ -293,15 +290,13 @@ namespace kroll
 		ModuleMap::iterator iter = this->modules.begin();
 		while (iter != this->modules.end())
 		{
-			if (module == iter->second)
+			SharedPtr<Module> other_module = iter->second;
+			if (module == other_module.get())
 			{
 				std::cout << "Unregistering " << module->GetName()
 				          << std::endl;
-
-				// Call Destroy() lifecycle event
-				module->Destroy();
-				this->modules.erase(iter);
-				KR_DECREF(module);
+				module->Destroy(); // Call Destroy() lifecycle event
+				this->modules.erase(iter); // SharedPtr will do the work
 			}
 
 			iter++;

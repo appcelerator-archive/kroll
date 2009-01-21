@@ -11,7 +11,7 @@
 namespace kroll
 {
 	class Module;
-	typedef std::map<std::string,Module*> ModuleMap;
+	typedef std::map<std::string, SharedPtr<Module> > ModuleMap;
 
 	/*
 		Class: Host
@@ -56,18 +56,27 @@ namespace kroll
 		void RemoveModuleProvider(ModuleProvider *provider);
 
 		/*
-		* Function: UnegisterModule
-		*
-			TODO: Document me
-		*/
+		 * Function: UnegisterModule
+		 *
+		 * Call the Destroy() lifecycle event on this a module and
+		 * remove it from our map of modules.
+		 *
+		 * Parameters:
+		 *    module - The module to remove.
+		 */
 		void UnregisterModule(Module* module);
 
 		/*
 		 * Function: GetModule
 		 *
-		 * TODO: Document me
+		 * Get a module given the module path.
+		 *
+		 * Parameters:
+		 *    path - The path of the module to get
+		 *
+		 * Returns: A reference to the module.
 		 */
-		Module* GetModule(std::string& name);
+		SharedPtr<Module> GetModule(std::string& path);
 
 		/*
 			Function: HasModule
@@ -175,9 +184,9 @@ namespace kroll
 		 *  path - Path to the module to attempt to load.
 		 *  provider - The provider to attempt to load with.
 		 *
-		 * Returns: The Module* that was loaded or NULL on failure.
+		 * Returns: The module that was loaded or NULL on failure.
 		*/
-		Module* LoadModule(std::string& path, ModuleProvider *provider);
+		SharedPtr<Module> LoadModule(std::string& path, ModuleProvider *provider);
 
 		/*
 		 * Function: LoadModules
