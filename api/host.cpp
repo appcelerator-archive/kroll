@@ -6,10 +6,8 @@
 #ifdef OS_OSX
 #include <Cocoa/Cocoa.h>
 #endif
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/types.h>
 #if defined(OS_WIN32)
+# include "base.h"
 # include <windows.h>
 #else
 # include <dirent.h>
@@ -17,6 +15,9 @@
 #include <errno.h>
 #include <vector>
 #include <string>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/types.h>
 
 #include "kroll.h"
 #include <Poco/DirectoryIterator.h>
