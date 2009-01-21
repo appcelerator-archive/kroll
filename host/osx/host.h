@@ -23,7 +23,6 @@ namespace kroll
 		virtual Module* CreateModule(std::string& path);
 
 	private:
-		std::vector<std::string> module_paths, modules;
 		std::string appConfig;
 	};
 }

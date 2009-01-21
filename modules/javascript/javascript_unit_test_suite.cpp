@@ -48,8 +48,8 @@ namespace kroll
 		//KR_DECREF(bound);
 
 		// tear it down
-		JSGlobalContextRelease(context);
 		JSGarbageCollect(context);
+		JSGlobalContextRelease(context);
 	}
 }
 

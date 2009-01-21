@@ -17,16 +17,11 @@ namespace kroll
 	OSXHost::OSXHost(int _argc, const char **_argv) : Host(_argc,_argv)
 	{
 		SetupLog(_argc,_argv,[NSString stringWithFormat:@"%s/run.log",this->GetApplicationHome().c_str()]);
+
 		char *p = getenv("KR_PLUGINS");
 		if (p)
 		{
-			char *tok = strtok(p,":");
-			while (tok)
-			{
-				std::cout << "adding module: " << tok << std::endl;
-				module_paths.push_back(std::string(tok));
-				tok = strtok(NULL,":");
-			}
+			FileUtils::Tokenize(p, this->module_paths, ":");
 		}
 	}
 
@@ -37,17 +32,9 @@ namespace kroll
 
 	int OSXHost::Run()
 	{
-		TRACE(@PRODUCT_NAME" Running (OSX)...");
-
-		// load our modules through the host implementation but let
-		// the base class do the hard work for us
-		std::vector<std::string>::iterator iter;
-		for (iter = module_paths.begin(); iter != module_paths.end(); iter++)
-		{
-			FindModules((*iter), modules);
-		}
-
-		this->LoadModules(modules);
+		TRACE(@PRODUCT_NAME" Kroll Running (OSX)...");
+		this->AddModuleProvider(this);
+		this->LoadModules();
 
 		[NSApp run];
 		return 0;

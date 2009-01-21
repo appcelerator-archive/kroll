@@ -24,9 +24,11 @@ namespace kroll
 
 	Win32Host::Win32Host(HINSTANCE hInstance, int _argc, const char** _argv) : Host(_argc,_argv), instance_handle(hInstance)
 	{
-		std::string p(getenv("KR_PLUGINS"));
-		std::string delimiter(";");
-		FileUtils::Tokenize(p,this->module_paths,delimiter);
+		char *p = getenv("KR_PLUGINS");
+		if (p)
+		{
+			FileUtils::Tokenize(p, this->module_paths, ";");
+		}
 
 	}
 
@@ -39,19 +41,9 @@ namespace kroll
 
 	int Win32Host::Run()
 	{
-		std::vector<std::string>::iterator iter = this->module_paths.begin();
-		while (iter!=this->module_paths.end())
-		{
-			std::string path = (*iter++);
-			printf("Finding modules..\n");
-			this->FindModules(path,this->modules);
-		}
-
-		// load our modules through the host implementation but let
-		// the base class do the hard work for us
-		this->LoadModules(this->modules);
-
-		printf("Kroll Started (Win32)\n");
+		std::cout << "Kroll Running (Win32)..." << std::endl;
+		this->AddModuleProvider(this);
+		this->LoadModules();
 
 		MSG message;
 		while (GetMessage(&message, NULL, 0, 0))
@@ -59,6 +51,7 @@ namespace kroll
 			TranslateMessage(&message);
 			DispatchMessage(&message);
 		}
+
 		return 0;
 	}
 

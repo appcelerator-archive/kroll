@@ -35,27 +35,24 @@ int main(int argc, const char* argv[])
 	setenv("KR_RUNTIME",basedir,1);
 #endif
 
-	std::vector<std::string> modulepaths;
-	TestHost *host = new TestHost(modulepaths);
+
+	// prepare the module paths
+	std::vector<std::string> module_paths;
+	for (int c=1; c < argc; c++)
+	{
+		module_paths.push_back(std::string(argv[c]));
+	}
+
+	TestHost *host = new TestHost(module_paths);
+
+	// Load all modules
 	host->Run();
 
-	std::vector<Module*> modules;
-	for (int c=1;c<argc;c++)
-	{
-		std::string path(argv[c]);
-		ModuleProvider *provider = host->FindModuleProvider(path);
-		Module *module = provider->CreateModule(path);
-		modules.push_back(module);
-		module->GetName();
-	}
+	// Run all tests
+	host->TestAll();
 
-	std::vector<Module*>::iterator i = modules.begin();
-	while(i!=modules.end())
-	{
-		Module* module = (*i++);
-		module->Test();
-		module->Destroy();
-	}
+	// Unregister all modules
+	delete host;
 
 #if defined(OS_OSX)
 	[pool release];

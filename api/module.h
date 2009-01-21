@@ -14,70 +14,93 @@ namespace kroll
 	class Host;
 
 	/*
-		Class: Module
-
-		an interface that exposes a Kroll Module
+	 * Class: Module
+	 *
+	 * an interface that exposes a Kroll Module
 	 */
 	class KROLL_API Module : public RefCounted
 	{
 	public:
 		/*
-			Constructor: Module
-		*/
-		Module(Host *host, const char *path) : host(host),path(std::string(path)) {} 
-	
+		 * Constructor: Module
+		 */
+		Module(Host *host, const char *path)
+			 : host(host), path(std::string(path)) {} 
+
 	protected:
 		virtual ~Module() {}
 		
 	public:
 
 		/*
-			Function: GetName
-
-			Return the name of the module
-		*/
-		virtual const char * GetName() = 0;
-
-		/*
-			Function: Initialize
-
-			Called once the module has been created to load the module and start it
-		*/
-		virtual void Initialize() = 0;
+		 * Function: GetName
+		 *
+		 * Return the name of the module
+		 */
+		virtual const char* GetName() = 0;
 
 		/*
-			Function: Destroy
-
-			Called to unload and cleanup the module
-		*/
-		virtual void Destroy() = 0;
-
-		/*
-			Function: SetProvider
-
-			Called to set the provider that created the module
-		*/
-		void SetProvider(ModuleProvider* provider) { this->provider = provider; }
+		 *Function: Load
+		 *
+		 * Called directly after module loading, during the loading
+		 * process. Perform all initialization here that does not
+		 * depend on the existence of other modules.
+		 */
+		virtual void Load() {};
 
 		/*
-			Function: GetProvider
+		 *Function: Initialize
+		 *
+		 * Called once all modules have been loaded. Use this to
+		 * perform initialization that depends on the existence of
+		 * other modules.
+		 */
+		virtual void Initialize() {};
 
-			Return the provider that created the module
-		*/
-		const ModuleProvider* GetProvider() { return provider; }
+		/*
+		 * Function: Destroy
+		 *
+		 * Called before the Host unregisters the module.
+		 * Perform all unloda cleanup here.
+		 */
+		virtual void Destroy() {};
+
+		/*
+		 * Function: SetProvider
+		 *
+		 * Called to set the provider that created the module
+		 */
+		void SetProvider(ModuleProvider* provider)
+		{
+			this->provider = provider;
+		}
+
+		/*
+		 * Function: GetProvider
+		 * 
+		 * Return the provider that created the module
+		 */
+		const ModuleProvider* GetProvider()
+		{
+			return provider;
+		}
+
 		
 		/*
-			Function: GetPath
+		 * Function: GetPath
+		 *
+		 * Return the path to the modules main directory
+		 */
+		const char *GetPath()
+		{
+			return path.c_str();
+		}
 
-			Return the path to the modules main directory
-		*/
-		const char *GetPath() { return path.c_str(); }
-	
 		/*
-			Function: Test
-
-			Entry point for unit testing the module
-		*/
+		 * Function: Test
+		 *
+		 * Entry point for unit testing the module
+		 */
 		virtual void Test() {}
 
 	protected:
@@ -98,16 +121,11 @@ using namespace kroll;
 #define KROLL_MODULE_FACTORY_DEFINE(s) extern "C" EXPORT s* CreateModule(Host *host, const char *path) \
 { \
 	std::cout << "Creating module: " << #s << std::endl; \
-	s *p = new s(host,path);\
-	std::cout << "Initializing module: " << #s << std::endl; \
-	p->Initialize(); \
-	std::cout << "After create module: " << #s << std::endl; \
-	return p; \
+	return new s(host,path);\
 }  \
 extern "C" EXPORT void DestroyModule(s* p)\
 {\
 	if (p) { \
-		p->Destroy(); \
 		KR_DECREF(p); \
 	} \
 	p = 0; \

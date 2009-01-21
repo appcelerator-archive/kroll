@@ -13,14 +13,15 @@ namespace kroll
 	class EXPORT TestHost : public Host
 	{
 	public:
-		TestHost(std::vector<std::string>& modules);
+		TestHost(std::vector<std::string> module_paths);
 		virtual ~TestHost();
-
 		virtual int Run();
+		void TestAll();
 		virtual Module* CreateModule(std::string& path);
 
 	private:
-		std::vector<std::string> module_paths, modules;
+		std::vector<std::string> module_paths;
+		std::vector<Module*> test_modules;
 		std::string appConfig;
 	};
 }

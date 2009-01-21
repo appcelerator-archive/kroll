@@ -34,9 +34,6 @@ namespace kroll
 		HINSTANCE GetInstanceHandle() { return instance_handle; }
 
 	private:
-		std::vector<std::string> module_paths;
-		std::vector<std::string> modules;
-
 		HINSTANCE instance_handle;
 		static bool ole_initialized;
 	};

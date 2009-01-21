@@ -17,27 +17,79 @@
 
 namespace kroll
 {
-	TestHost::TestHost(std::vector<std::string>& modules) : Host(0,0)
+	TestHost::TestHost(std::vector<std::string> module_paths)
+		 : Host(0,0),
+		   module_paths(module_paths)
 	{
+
 	}
 
 	TestHost::~TestHost()
 	{
+		ModuleMap::iterator iter = this->modules.begin();
+		while (iter != this->modules.end())
+		{
+			std::string mod_path = iter->first;
+			Module *mod = iter->second;
+			std::cout << "Trying to unregister: " << mod_path << std::endl;
+			this->UnregisterModule(mod);
+			iter++;
+		}
 	}
 
 	int TestHost::Run()
 	{
-		// load our modules through the host implementation but let
-		// the base class do the hard work for us
-		std::vector<std::string>::iterator iter;
-		for (iter = module_paths.begin(); iter != module_paths.end(); iter++)
+		this->AddModuleProvider(this);
+
+		/* Load all test modules */
+		for (size_t i = 0; i < module_paths.size(); i++)
 		{
-			FindModules((*iter), modules);
+			std::string path = module_paths.at(i);
+			ModuleProvider *p = this->FindModuleProvider(path);
+
+			if (p == NULL)
+			{
+				std::cerr << "Could not find provider for: " << path << std::endl;
+				continue;
+			}
+
+			Module *m = this->LoadModule(path, p);
+
+			if (m == NULL)
+			{
+				std::cerr << "Could not load module: " << path << std::endl;
+				continue;
+			}
+
+			this->test_modules.push_back(m);
 		}
 
-		this->LoadModules(modules);
+		/* Initialize all test modules */
+		ModuleMap::iterator iter = this->modules.begin();
+		while (iter != this->modules.end())
+		{
+			Module *m = iter->second;
+			m->Initialize();
+			iter++;
+		}
 
 		return 0;
+
+	}
+
+	void TestHost::TestAll()
+	{
+		/* Test all modules */
+		ModuleMap::iterator iter = this->modules.begin();
+		while (iter != this->modules.end())
+		{
+			std::string mod_path = iter->first;
+			Module *mod = iter->second;
+			std::cout << "Testing: " << mod_path << std::endl;
+			mod->Test();
+
+			iter++;
+		}
 	}
 
 	Module* TestHost::CreateModule(std::string& path)

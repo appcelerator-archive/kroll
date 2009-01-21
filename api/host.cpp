@@ -3,7 +3,6 @@
  * see LICENSE in the root folder for details on the license.
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
-#include "base.h"
 #ifdef OS_OSX
 #include <Cocoa/Cocoa.h>
 #endif
@@ -20,11 +19,12 @@
 #include <string>
 
 #include "kroll.h"
+#include <Poco/DirectoryIterator.h>
+#include <Poco/File.h>
 
 namespace kroll
 {
-	Host::Host(int _argc, const char *_argv[]) :
-		argc(_argc), argv(_argv)
+	Host::Host(int argc, const char *argv[])
 	{
 		char *ti_home = getenv("KR_HOME");
 		char *ti_runtime = getenv("KR_RUNTIME");
@@ -45,47 +45,236 @@ namespace kroll
 		this->runtimeDirectory = std::string(ti_runtime);
 		this->global_object = new StaticBoundObject();
 
-		// link the name of our global variable to ourself so we can reference
-		// from global scope directly to get it
+		// link the name of our global variable to ourself so
+		//  we can reference from global scope directly to get it
 		const char *name = GLOBAL_NS_VARNAME;
 		SharedBoundObject b = global_object;
 		SharedValue wrapper = Value::NewObject(b);
 		this->global_object->Set(name,wrapper);
+
+#if defined(OS_WIN32)
+		this->module_suffix = "module.dll";
+#elif defined(OS_OSX)
+		this->module_suffix = "module.dylib";
+#elif defined(OS_LINUX)
+		this->module_suffix = "module.so";
+#endif
+
+		this->basicModulesLoaded = false;
+
+		// Sometimes libraries parsing argc and argv will
+		// modify them, so we want to keep our own copy here
+		for (int i = 0; i < argc; i++)
+		{
+			this->args.push_back(std::string(argv[i]));
+		}
+
+
 	}
 
 	Host::~Host()
 	{
 	}
 
-	void Host::RegisterModule(std::string& path, Module* module)
+	const int Host::GetCommandLineArgCount()
 	{
-		ScopedLock lock(&moduleMutex);
-		KR_ADDREF(module);
-		modules[path] = module;
+		return this->args.size();
 	}
 
-	void Host::UnregisterModule(Module* module)
+	const char* Host::GetCommandLineArg(int index)
+	{
+		if ((int) this->args.size() > index)
+		{
+			return this->args.at(index).c_str();
+		}
+		else
+		{
+			return NULL;
+		}
+	}
+
+	void Host::AddModuleProvider(ModuleProvider *provider) {
+		ScopedLock lock(&moduleMutex);
+		module_providers.push_back(provider);
+
+		/* Don't automatically scan invalid files until
+		 * all basic modules are loaded. This prevents lots
+		 * of scanning during boot. */
+		if (this->basicModulesLoaded)
+		{
+			ScanInvalidModuleFiles(true);
+		}
+
+	}
+
+	ModuleProvider* Host::FindModuleProvider(std::string& filename)
 	{
 		ScopedLock lock(&moduleMutex);
-		std::map<std::string, Module*>::iterator iter = this->modules.find(
-				module->GetName());
-		if (this->modules.end() != iter)
+
+		std::vector<ModuleProvider*>::iterator iter;
+		for (iter = module_providers.begin();
+		     iter != module_providers.end();
+		     iter++)
 		{
-			Module *p = iter->second;
-			this->modules.erase(iter);
-			KR_DECREF(p);
+			ModuleProvider *provider = (*iter);
+			if (provider != NULL && provider->IsModule(filename)) {
+				return provider;
+			}
 		}
-		this->modules[module->GetName()] = module;
+		return NULL;
+	}
+
+	void Host::RemoveModuleProvider(ModuleProvider *provider) {
+		ScopedLock lock(&moduleMutex);
+
+		std::vector<ModuleProvider*>::iterator iter =
+		    std::find(module_providers.begin(),
+		              module_providers.end(), provider);
+		if (iter != module_providers.end()) {
+			module_providers.erase(iter);
+		}
+
+	}
+
+	bool Host::IsModule(std::string& filename)
+	{
+		bool isModule = (filename.length() > module_suffix.length() && filename.substr(
+				filename.length() - this->module_suffix.length()) == this->module_suffix);
+
+		return isModule;
+	}
+
+	Module* Host::LoadModule(std::string& path, ModuleProvider *provider)
+	{
+		ScopedLock lock(&moduleMutex);
+		Module *module = provider->CreateModule(path);
+
+		if (module == NULL)
+		{
+			return NULL;
+		}
+
+		printf("Module->SetProvider\n");
+		module->SetProvider(provider);
+
+		printf("Register Module\n");
 		KR_ADDREF(module);
+		modules[path] = module;
+
+		std::cout << "module loaded " << module->GetName()
+		          << " from " << path << std::endl;
+
+		// Call module Load lifecycle event
+		module->Load();
+
+		return module;
+	}
+
+	void Host::LoadModules()
+	{
+		ScopedLock lock(&moduleMutex);
+
+		/* Scan module paths for modules which can be
+		 * loaded by the basic shared-object provider */
+		std::vector<std::string>::iterator iter;
+		iter = this->module_paths.begin();
+		while (iter != this->module_paths.end())
+		{
+			this->FindBasicModules((*iter++));
+		}
+
+		/* From now on, adding a module provider triggers
+ 		 * a rescan of all invalid module files */
+		this->basicModulesLoaded = true;
+
+		/* Try to load files that weren't modules
+		 * using newly available module providers */
+		this->ScanInvalidModuleFiles();
+
+		/* All modules are now loaded,
+		 * so initialize them all */
+		this->InitializeModules(this->modules);
+	}
+
+	void Host::FindBasicModules(std::string& dir)
+	{
+		ScopedLock lock(&moduleMutex);
+
+		Poco::DirectoryIterator iter = Poco::DirectoryIterator(dir);
+		Poco::DirectoryIterator end;
+		while (iter != end)
+		{
+			Poco::File f = *iter;
+			if (!f.isDirectory() && !f.isHidden())
+			{
+				std::string fpath = iter.path().absolute().toString();
+				if (IsModule(fpath))
+				{
+					this->LoadModule(fpath, this);
+				}
+				else
+				{
+					this->invalid_module_files.push_back(fpath);
+				}
+			}
+			iter++;
+		}
+	}
+
+	void Host::ScanInvalidModuleFiles(bool also_initialize)
+	{
+		// keep track in case we need to initialize
+		ModuleMap just_loaded;
+
+		std::vector<std::string>::iterator iter;
+		iter = this->invalid_module_files.begin();
+		while (iter != this->invalid_module_files.end())
+		{
+			std::string path = *iter;
+			ModuleProvider *provider = FindModuleProvider(path);
+			if (provider != NULL)
+			{
+				Module *m = this->LoadModule(path, provider);
+				if (m != NULL)
+				{
+					just_loaded[path] = m;
+					invalid_module_files.erase(iter);
+				}
+			}
+			iter++;
+		}
+
+		/* This happens when we scan invalid module files after
+		 * the initial load of the application. This
+		 * way all modules are initialized in waves. */
+		if (also_initialize)
+		{
+			this->InitializeModules(just_loaded);
+		}
+	}
+
+	void Host::InitializeModules(ModuleMap to_init)
+	{
+		ScopedLock lock(&moduleMutex);
+
+		ModuleMap::iterator iter = to_init.begin();
+		while (iter != to_init.end())
+		{
+			Module *m = iter->second;
+			m->Initialize();
+			*iter++;
+		}
 	}
 
 	Module* Host::GetModule(std::string& name)
 	{
+
 		ScopedLock lock(&moduleMutex);
-		std::map<std::string, Module*>::iterator iter = this->modules.find(name);
+		ModuleMap::iterator iter = this->modules.find(name);
 		if (this->modules.end() == iter) {
-			return 0;
+			return NULL;
 		}
+
 		Module *module = iter->second;
 		KR_ADDREF(module);
 		return module;
@@ -94,167 +283,33 @@ namespace kroll
 	bool Host::HasModule(std::string name)
 	{
 		ScopedLock lock(&moduleMutex);
-		std::map<std::string, Module*>::iterator iter = this->modules.find(name);
+		ModuleMap::iterator iter = this->modules.find(name);
 		return (this->modules.end() != iter);
 	}
 
-	void Host::LoadModules(std::vector<std::string>& files)
+	void Host::UnregisterModule(Module* module)
 	{
 		ScopedLock lock(&moduleMutex);
-		std::cout << "have " << files.size() << " files" << std::endl;
-
-		std::vector<std::string>::iterator iter = files.begin();
-		for (; iter != files.end(); iter++) {
-			std::string path = (*iter);
-			std::cout << "loading next module: " << path << std::endl;
-
-			// get the module factory
-			Module* module = module_creators[path]->CreateModule(path);
-			if (module==NULL)
+		ModuleMap::iterator iter = this->modules.begin();
+		while (iter != this->modules.end())
+		{
+			if (module == iter->second)
 			{
-				std::cerr << "Couldn't load module: " << path << ", skipping..." << std::endl;
-			}
-			else
-			{
-				module->SetProvider(module_creators[path]);
+				std::cout << "Unregistering " << module->GetName()
+				          << std::endl;
 
-				std::cout << "module loaded " << module->GetName() << " from " << path
-						<< std::endl;
-
-				// register our module
-				this->RegisterModule(path, module);
-
-				//we can now release our reference since the host has it
+				// Call Destroy() lifecycle event
+				module->Destroy();
+				this->modules.erase(iter);
 				KR_DECREF(module);
 			}
+
+			iter++;
 		}
-	}
-
-	#if defined(OS_WIN32)
-	std::string module_suffix = "module.dll";
-	#elif defined(OS_OSX)
-	std::string module_suffix = "module.dylib";
-	#elif defined(OS_LINUX)
-	std::string module_suffix = "module.so";
-	#endif
-
-	bool Host::IsModule(std::string& filename)
-	{
-		bool isModule = (filename.length() > module_suffix.length() && filename.substr(
-				filename.length() - module_suffix.length()) == module_suffix);
-
-		std::cout << "IsModule? " << filename << " " << (isModule ? "true" : "false") << std::endl;
-		return isModule;
-	}
-
-	ModuleProvider* Host::FindModuleProvider(std::string& filename)
-	{
-		ScopedLock lock(&moduleMutex);
-		if (IsModule(filename))
-		{
-			return this;
-		}
-
-		std::vector<ModuleProvider*>::iterator iter;
-		for (iter = module_providers.begin(); iter != module_providers.end(); iter++) {
-			ModuleProvider *provider = (*iter);
-			if (provider != NULL && provider->IsModule(filename)) {
-				//std::cout << "Found [" << provider->GetDescription()
-				//		<< "] provider for module: " << filename << std::endl;
-				return provider;
-			}
-		}
-		return NULL;
-	}
-
-	int Host::FindModules(std::string &dir, std::vector<std::string> &files)
-	{
-		ScopedLock lock(&moduleMutex);
-	#if defined(OS_WIN32)
-
-		std::string searchdir = (dir);
-		searchdir.append("\\*");
-
-		WIN32_FIND_DATA findFileData;
-
-		HANDLE hFind = FindFirstFile(searchdir.c_str(), &findFileData);
-
-		if (hFind != INVALID_HANDLE_VALUE) {
-			do {
-				if (!(findFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
-					std::string filename = findFileData.cFileName;
-					ModuleProvider *p = FindModuleProvider(filename);
-					std::string fullpath = dir + "\\" + filename;
-					if (p != NULL) {
-						module_creators[fullpath] = p;
-						files.push_back(fullpath);
-					} else {
-						invalid_module_files.push_back(fullpath);
-					}
-				}
-			} while (FindNextFile(hFind, &findFileData));
-			FindClose(hFind);
-			return 0;
-		} else {
-			return (int)GetLastError();
-		}
-
-	#else
-		DIR *dp;
-		struct dirent *dirp;
-		if ((dp = opendir(dir.c_str())) == NULL) {
-			return errno;
-		}
-
-		while ((dirp = readdir(dp)) != NULL) {
-			std::string fn = std::string(dirp->d_name);
-			std::string fullpath = dir + "/" + fn;
-			if (fn.substr(0, 1) == "." || fn.substr(0, 2) == "..")
-				continue;
-			ModuleProvider *p = FindModuleProvider(fn);
-			if (p != NULL) {
-				module_creators[fullpath] = p;
-				files.push_back(fullpath);
-			} else {
-				invalid_module_files.push_back(fullpath);
-			}
-		}
-		closedir(dp);
-		return 0;
-	#endif
 	}
 
 	SharedPtr<StaticBoundObject> Host::GetGlobalObject() {
 		return this->global_object;
-	}
-
-	void Host::ScanInvalidModuleFiles()
-	{
-		ScopedLock lock(&moduleMutex);
-		std::vector<std::string>::iterator iter = invalid_module_files.begin();
-
-		while (iter != invalid_module_files.end()) {
-			//printf("Find Module Provider for: %s\n", (*iter).c_str());
-			ModuleProvider *provider = FindModuleProvider(*iter);
-
-			if (provider != NULL) {
-				//printf("Creating module from external provider: %s\n", (*iter).c_str());
-
-				Module *module = provider->CreateModule(*iter);
-				printf("Module->SetProvider\n");
-				module->SetProvider(provider);
-
-				//printf("Registering module from external provider: %s\n", (*iter).c_str());
-				printf("Register Module\n");
-				RegisterModule(*iter, module);
-
-				iter = invalid_module_files.erase(iter);
-				KR_DECREF(module);
-			}
-			else {
-				iter++;
-			}
-		}
 	}
 }
 

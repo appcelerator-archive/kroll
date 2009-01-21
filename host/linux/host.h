@@ -23,10 +23,6 @@ namespace kroll
 
 		virtual int Run();
 		virtual Module* CreateModule(std::string& path);
-
-	private:
-		std::vector<std::string> module_paths;
-		std::vector<std::string> modules;
 	};
 }
 

@@ -18,9 +18,12 @@ namespace kroll
 	{
 		gtk_init(&argc, (char***) &argv);
 
-		std::string p(getenv("KR_PLUGINS"));
-		std::string delimiter(":");
-		FileUtils::Tokenize(p,module_paths,delimiter);
+		char *p = getenv("KR_PLUGINS");
+		if (p)
+		{
+			FileUtils::Tokenize(p, this->module_paths, ":");
+		}
+
 	}
 
 	LinuxHost::~LinuxHost()
@@ -31,19 +34,9 @@ namespace kroll
 	int LinuxHost::Run()
 	{
 		std::cout << "Kroll Running (Linux)..." << std::endl;
+		this->AddModuleProvider(this);
+		this->LoadModules();
 
-		std::vector<std::string>::iterator iter = this->module_paths.begin();
-		while (iter!=this->module_paths.end())
-		{
-			this->FindModules((*iter++),this->modules);
-		}
-
-		// load our modules through the host implementation but let 
-		// the base class do the hard work for us
-		this->LoadModules(this->modules);
-
-
-		//TODO: finish loading
 		gtk_main();
 
 		return 0;

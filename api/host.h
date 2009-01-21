@@ -11,6 +11,7 @@
 namespace kroll
 {
 	class Module;
+	typedef std::map<std::string,Module*> ModuleMap;
 
 	/*
 		Class: Host
@@ -21,8 +22,6 @@ namespace kroll
 	class KROLL_API Host : public RefCounted, public ModuleProvider
 	{
 	public:
-		typedef std::map<std::string,Module*> ModuleMap;
-
 		/*
 			Constructor: Host
 
@@ -34,67 +33,40 @@ namespace kroll
 		virtual ~Host();
 
 	public:
-		/*
-			Function: GetDescription
-
-			TODO: Document me
-		*/
-		virtual const char * GetDescription() { return "Native module"; }
 
 		/*
-			Function: IsModule
-
-			TODO: Document me
-		*/
-		virtual bool IsModule(std::string& path);
-
-		/*
-			Function: Run
-
-			TODO: Document me
-		*/
+		 * Function: Run
+		 *
+		 * TODO: Document me
+		 */
 		virtual int Run() = 0;
 
 		/*
-			Function: FindModuleProvider
-
-			TODO: Document me
-		*/
-		ModuleProvider* FindModuleProvider(std::string& filename);
-
-		/*
-			Function: FindModules
-
-			TODO: Document me
-		*/
-		int FindModules (std::string &dir, std::vector<std::string> &files);
+		 * Function: AddModuleProvider
+		 *
+		 * TODO: Document me
+		 */
+		void AddModuleProvider(ModuleProvider *provider);
 
 		/*
-			Function: LoadModules
-
-			TODO: Document me
-		*/
-		void LoadModules(std::vector<std::string>& paths);
-
-		/*
-			Function: RegisterModule
-
-			TODO: Document me
-		*/
-		void RegisterModule(std::string& path, Module* module);
+		 * Function: RemoveModuleProvider
+		 *
+		 * TODO: Document me
+		 */
+		void RemoveModuleProvider(ModuleProvider *provider);
 
 		/*
-			Function: UnegisterModule
-
+		* Function: UnegisterModule
+		*
 			TODO: Document me
 		*/
 		void UnregisterModule(Module* module);
 
 		/*
-			Function: GetModule
-
-			TODO: Document me
-		*/
+		 * Function: GetModule
+		 *
+		 * TODO: Document me
+		 */
 		Module* GetModule(std::string& name);
 
 		/*
@@ -103,28 +75,6 @@ namespace kroll
 			TODO: Document me
 		*/
 		bool HasModule(std::string name);
-
-		/*
-			Function: GetModulesBegin
-
-			TODO: Document me
-		*/
-		ModuleMap::iterator GetModulesBegin()
-		{
-			ScopedLock lock(&moduleMutex);
-			return modules.begin();
-		}
-
-		/*
-			Function: GetModulesEnd
-
-			TODO: Document me
-		*/
-		ModuleMap::iterator GetModulesEnd()
-		{
-			ScopedLock lock(&moduleMutex);
-			return modules.end();
-		}
 
 		/*
 			Function: GetGlobalObject
@@ -148,77 +98,124 @@ namespace kroll
 		const std::string& GetRuntimeHome() const { return runtimeDirectory; }
 
 		/*
-			Function: GetApplicationConfig
-
-			TODO: Document me
-		*/
-		virtual const std::string& GetApplicationConfig() const { return appConfigPath; }
-
-		/*
-			Function: AddModuleProvider
-
-			TODO: Document me
-		*/
-		void AddModuleProvider(ModuleProvider *provider) {
-			ScopedLock lock(&moduleMutex);
-			module_providers.push_back(provider);
-			ScanInvalidModuleFiles();
-		}
+		 * Function: GetCommandLineArgCount
+		 *
+		 * TODO: Document me
+		 */
+		const int GetCommandLineArgCount();
 
 		/*
-			Function: RemoveModuleProvider
-
-			TODO: Document me
+		 * Function: GetCommandLineArg
+		 *
+		 * TODO: Document me
 		*/
-		void RemoveModuleProvider(ModuleProvider *provider) {
-			ScopedLock lock(&moduleMutex);
-			std::find(module_providers.begin(), module_providers.end(), provider);
-			std::vector<ModuleProvider*>::iterator iter;
-			iter = std::find(module_providers.begin(), module_providers.end(), provider);
-			if (iter != module_providers.end()) {
-				module_providers.erase(iter);
-			}
-		}
+		const char* GetCommandLineArg(int index);
 
 		/*
-			Function: GetCommandLineArgCount
-
-			TODO: Document me
-		*/
-		const int GetCommandLineArgCount() const {
-			return argc;
-		}
+		 * Function: IsModule
+		 *
+		 * TODO: Document me
+		 */
+		virtual bool IsModule(std::string& path);
 
 		/*
-			Function: GetCommandLineArg
-
-			TODO: Document me
+		 * Function: GetDescription
+		 *
+		 * TODO: Document me
 		*/
-		const char* GetCommandLineArg(int index) const {
-			if (index >= argc) return NULL;
-			return argv[index];
-		}
+		virtual const char * GetDescription() { return "Native module"; }
 
 
 	protected:
-		int argc;
-		const char **argv;
 		ModuleMap modules;
 		Mutex moduleMutex;
 		std::vector<ModuleProvider *> module_providers;
-		std::map<std::string,ModuleProvider*> module_creators;
+		std::vector<std::string> module_paths;
 		SharedPtr<StaticBoundObject> global_object;
+		std::vector<std::string> args;
+
+		// This is the module suffix for this module provider. Since 
+		// this is the basic provider the suffix is "module.(dll|dylib|so)"
+		// Other modules providers can override this property and use the
+		// default behavior of IsModule().
+		std::string module_suffix;
+
 
 		// we store a cache of invalid module files so external providers
 		// can re-query them without initiating a filesystem search
 		std::vector<std::string> invalid_module_files;
 
-		void ScanInvalidModuleFiles();
+		/*
+		 * Function: FindModuleProvider
+		 *
+		 * Find the module provider for a given filename or return
+		 * NULL if no module provider can be found.
+		*/
+		ModuleProvider* FindModuleProvider(std::string& filename);
+
+		/*
+		 * Function: ScanInvalidModuleFiles
+		 *
+		 * Load modules from all paths in invalid_module_files
+		 * that can be loaded by module providers found in
+		 * module_providers.
+		 *
+		 * Parameters:
+		 *  also_initialize - Whether to call the Initialize() lifecycle
+		 *                    event when this method loads a module.
+		*/
+		void ScanInvalidModuleFiles(bool also_initialize=false);
+
+		/*
+		 * Function: LoadModule
+		 *
+		 * Load a modules from a path given a module provider.
+		 *
+		 * Parameters:
+		 *  path - Path to the module to attempt to load.
+		 *  provider - The provider to attempt to load with.
+		 *
+		 * Returns: The Module* that was loaded or NULL on failure.
+		*/
+		Module* LoadModule(std::string& path, ModuleProvider *provider);
+
+		/*
+		 * Function: LoadModules
+		 *
+		 * Do the initial round of module loading. First load all modules
+		 * that can be loaded by the main Host module provider (shared 
+		 * libraries) and then load all modules which can be loaded by
+		 * freshly installed module providers.
+		*/
+		void LoadModules();
+
+		/*
+		 * Function: FindBasicModules
+		 *
+		 * Scan a directory (no-recursion) for basic (shared library) modules
+		 * and, if any are found, load them.
+		 *
+		 * Parameters:
+		 *  dir - The directory to scan.
+		*/
+		void FindBasicModules(std::string& dir);
+
+		/*
+		 * Function: InitializeModules
+		 *
+		 * Call the Initialize() lifecycle event on a vector of modules.
+		 *
+		 * Parameters:
+		 *  to_init - A vector of modules to initialize.
+		*/
+		void InitializeModules(ModuleMap to_init);
 
 	private:
 		std::string appDirectory;
 		std::string runtimeDirectory;
 		std::string appConfigPath;
+		bool basicModulesLoaded;
+
 		DISALLOW_EVIL_CONSTRUCTORS(Host);
 	};
 
