@@ -379,6 +379,24 @@ namespace kroll
 		{
 			*js_exception = KJSUtil::ToJSValue(exception, js_context);
 		}
+		catch (std::string& exception)
+		{
+			JSStringRef s = JSStringCreateWithUTF8CString(exception.c_str());
+			*js_exception = JSValueMakeString(js_context, s);
+			JSStringRelease(s);
+		}
+		catch (SharedValue& exception)
+		{
+			*js_exception = KJSUtil::ToJSValue(exception, js_context);
+		}
+		catch (...)
+		{
+			// uncaught exceptions cause the app to crash - so catch it here
+			std::string exception("UnknownException");
+			JSStringRef s = JSStringCreateWithUTF8CString(exception.c_str());
+			*js_exception = JSValueMakeString(js_context, s);
+			JSStringRelease(s);
+		}
 
 		free(name);
 		return js_val;
@@ -394,19 +412,40 @@ namespace kroll
 		if (object == NULL)
 			return false;
 
+		bool propertySet = false;
+
 		char* prop_name = KJSUtil::ToChars(js_property);
 		try
 		{
 			SharedValue ti_val = KJSUtil::ToKrollValue(js_value, js_context, js_object);
 			(*object)->Set(prop_name, ti_val);
+			propertySet = true;
 		}
 		catch (Value* exception)
 		{
 			*js_exception = KJSUtil::ToJSValue(exception, js_context);
 		}
+		catch (std::string& exception)
+		{
+			JSStringRef s = JSStringCreateWithUTF8CString(exception.c_str());
+			*js_exception = JSValueMakeString(js_context, s);
+			JSStringRelease(s);
+		}
+		catch (SharedValue& exception)
+		{
+			*js_exception = KJSUtil::ToJSValue(exception, js_context);
+		}
+		catch (...)
+		{
+			// uncaught exceptions cause the app to crash - so catch it here
+			std::string exception("UnknownException");
+			JSStringRef s = JSStringCreateWithUTF8CString(exception.c_str());
+			*js_exception = JSValueMakeString(js_context, s);
+			JSStringRelease(s);
+		}
 
 		free(prop_name);
-		return true;
+		return propertySet;
 	}
 
 	JSValueRef call_as_function_cb (JSContextRef     js_context,
@@ -437,9 +476,30 @@ namespace kroll
 			*js_exception = KJSUtil::ToJSValue(exception, js_context);
 			js_val = NULL;
 		}
+		catch (std::string& exception)
+		{
+			JSStringRef s = JSStringCreateWithUTF8CString(exception.c_str());
+			*js_exception = JSValueMakeString(js_context, s);
+			JSStringRelease(s);
+			js_val = NULL;
+		}
+		catch (SharedValue& exception)
+		{
+			*js_exception = KJSUtil::ToJSValue(exception, js_context);
+			js_val = NULL;
+		}
+		catch (...)
+		{
+			// uncaught exceptions cause the app to crash - so catch it here
+			std::string exception("UnknownException");
+			JSStringRef s = JSStringCreateWithUTF8CString(exception.c_str());
+			*js_exception = JSValueMakeString(js_context, s);
+			JSStringRelease(s);
+
+			js_val = NULL;
+		}
 
 		return js_val;
-
 	}
 
 	SharedPtr<KJSBoundObject> KJSUtil::ToBoundObject(JSContextRef context,
