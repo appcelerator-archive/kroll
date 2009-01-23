@@ -44,6 +44,7 @@ namespace kroll
 			         && !next_val->IsMethod()
 			         && !next_val->IsList())
 			{
+				std::cerr << "invalid namespace for " << name << ", token: " << token << " was " << next_val->ToTypeString() << std::endl;
 				throw Value::NewString("Invalid namespace on setNS");
 			}
 			else
