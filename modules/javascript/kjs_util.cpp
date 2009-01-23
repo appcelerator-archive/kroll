@@ -83,11 +83,11 @@ namespace kroll
 					SharedBoundList tibl = new KJSBoundList(ctx, o);
 					kr_val = Value::NewList(tibl);
 				}
-				else if (IsArrayLike(o,ctx))
+				else if (IsArrayLike(o, ctx))
 				{
 					// this is a BoundList: unwrap it
-					SharedBoundList tibl = (BoundList*) data;
-					kr_val = Value::NewList(tibl);
+					SharedBoundList *tibl = (SharedBoundList*) data;
+					kr_val = Value::NewList(*tibl);
 				}
 				else if (data == NULL)
 				{
@@ -285,6 +285,7 @@ namespace kroll
 		CopyJSProperty(c, array, list, object, "splice");
 		CopyJSProperty(c, array, list, object, "join");
 		CopyJSProperty(c, array, list, object, "slice");
+		CopyJSProperty(c, array, list, object, "concat");
 
 		return object;
 	}
@@ -299,17 +300,21 @@ namespace kroll
 
 	bool KJSUtil::IsArrayLike(JSObjectRef object, JSContextRef c)
 	{
+		bool array_like = true;
+
 		JSStringRef pop = JSStringCreateWithUTF8CString("pop");
-		bool hasPop = JSObjectHasProperty(c,object,pop);
+		array_like = array_like && JSObjectHasProperty(c, object, pop);
 		JSStringRelease(pop);
-		if (hasPop)
-		{
-			JSStringRef concat = JSStringCreateWithUTF8CString("concat");
-			bool hasConcat = JSObjectHasProperty(c,object,concat);
-			JSStringRelease(concat);
-			return hasConcat;
-		}
-		return false;
+
+		JSStringRef concat = JSStringCreateWithUTF8CString("concat");
+		array_like = array_like && JSObjectHasProperty(c, object, concat);
+		JSStringRelease(concat);
+
+		JSStringRef length = JSStringCreateWithUTF8CString("length");
+		array_like = array_like && JSObjectHasProperty(c, object, length);
+		JSStringRelease(length);
+
+		return array_like;
 	}
 
 	void finalize_cb(JSObjectRef js_object)
@@ -503,20 +508,21 @@ namespace kroll
 	}
 
 	SharedPtr<KJSBoundObject> KJSUtil::ToBoundObject(JSContextRef context,
-										 JSObjectRef ref)
+	                                                 JSObjectRef object)
 	{
-		return new KJSBoundObject(context,ref);
+		return new KJSBoundObject(context, object);
 	}
 
 	SharedPtr<KJSBoundMethod> KJSUtil::ToBoundMethod(JSContextRef context,
-										 JSObjectRef ref)
+	                                                 JSObjectRef method,
+	                                                 JSObjectRef this_object)
 	{
-		return new KJSBoundMethod(context,ref,NULL);
+		return new KJSBoundMethod(context, method, this_object);
 	}
 
 	SharedPtr<KJSBoundList> KJSUtil::ToBoundList(JSContextRef context,
-									 JSObjectRef ref)
+	                                             JSObjectRef list)
 	{
-		return new KJSBoundList(context,ref);
+		return new KJSBoundList(context, list);
 	}
 }

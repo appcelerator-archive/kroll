@@ -35,12 +35,12 @@ namespace kroll
 	typedef SharedPtr<StringList> SharedStringList;
 
 	/*
-		Type: ValueList
-	
-	  This typdef is only used for argument lists. For
-	  a list implementation to be used as a value in the
-	  binding layer, take a look at BoundList and
-	  StaticBoundList.
+	 * Type: ValueList
+	 *
+	 * This typdef is only used for argument lists. For
+	 * a list implementation to be used as a value in the
+	 * binding layer, take a look at BoundList and
+	 * StaticBoundList.
 	 */
 	typedef std::vector<SharedValue> ValueList;
 

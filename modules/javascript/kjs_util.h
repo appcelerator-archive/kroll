@@ -36,13 +36,14 @@ namespace kroll
 		                        JSContextRef context);
 
 		static SharedPtr<KJSBoundObject> ToBoundObject(JSContextRef context,
-		                                               JSObjectRef ref);
+		                                               JSObjectRef object);
 
 		static SharedPtr<KJSBoundMethod> ToBoundMethod(JSContextRef context,
-		                                                JSObjectRef ref);
+		                                               JSObjectRef method,
+		                                               JSObjectRef this_object);
 
 		static SharedPtr<KJSBoundList> ToBoundList(JSContextRef context,
-		                                           JSObjectRef ref);
+		                                           JSObjectRef list);
 
 	};
 

@@ -22,7 +22,7 @@ namespace kroll
 		{
 			SharedString exception_string = e->DisplayString();
 			std::cerr << "Could not execute " << path <<
-			             " because: " << exception_string.get() << std::endl;
+			             " because: " << *exception_string.get() << std::endl;
 		}
 
 	}
