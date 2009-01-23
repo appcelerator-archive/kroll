@@ -1,3 +1,4 @@
+print "+++++++++ begining to load python module (from script)"
 
 class Foo:
     """A simple class"""
@@ -20,11 +21,11 @@ class Foo:
     def win(self,window):
 	    return window.title
 
-# test setting to the ti.python.foopy key (implicit)		
+# test setting to the Titanium.python.foopy key (implicit)		
 Titanium.set("foopy",Foo())
 
-# test setting to the ti.blah.foopy key (explicit)
-Titanium.set("ti.blah.foopy",Foo())
+# test setting to the Titanium.blah.foopy key (explicit)
+Titanium.set("Titanium.blah.foopy",Foo())
 
 print "hello, world from inside Python module!"
 

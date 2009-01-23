@@ -183,10 +183,11 @@ namespace kroll
 		 * Parameters:
 		 *  path - Path to the module to attempt to load.
 		 *  provider - The provider to attempt to load with.
+		 *  error - pointer to a boolean that will be set to true if error occurs loading module
 		 *
 		 * Returns: The module that was loaded or NULL on failure.
 		*/
-		SharedPtr<Module> LoadModule(std::string& path, ModuleProvider *provider);
+		SharedPtr<Module> LoadModule(std::string& path, ModuleProvider *provider, bool *error);
 
 		/*
 		 * Function: LoadModules
@@ -224,6 +225,7 @@ namespace kroll
 		std::string runtimeDirectory;
 		std::string appConfigPath;
 		bool basicModulesLoaded;
+		bool scanInProgress;
 
 		DISALLOW_EVIL_CONSTRUCTORS(Host);
 	};

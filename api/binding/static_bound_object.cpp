@@ -49,7 +49,7 @@ namespace kroll
 	void StaticBoundObject::UnSet(const char *name)
 	{
 		ScopedLock lock(&mutex);
-
+		
 		std::map<std::string, SharedValue>::iterator iter;
 		iter = this->properties.find(std::string(name));
 		if (this->properties.end() != iter)
