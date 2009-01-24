@@ -9,8 +9,18 @@
 
 #include <Poco/SharedPtr.h>
 #include <vector>
+#include "base.h"
 
 using Poco::SharedPtr;
+
+#ifndef OS_WIN32
+	// this is important which essentially marks all of
+	// these classes below and the typedef/templates to be 
+	// visible outside of the library.  if you don't do this
+	// you won't be able to catch exceptions of SharedValue for 
+	// example
+	#pragma GCC visibility push(default)
+#endif
 
 namespace kroll
 {
@@ -47,7 +57,10 @@ namespace kroll
 
 }
 
-#include "base.h"
+#ifndef OS_WIN32
+	#pragma GCC visibility pop
+#endif
+
 #include "ref_counted.h"
 #include "file_utils.h"
 #include "scoped_ref_counted.h"
