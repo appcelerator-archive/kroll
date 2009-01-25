@@ -233,7 +233,7 @@ namespace kroll
 	/**
 	 * method that invokes a bound method on the main host thread
 	 */
-	extern KROLL_API Value* InvokeMethodOnMainThread(BoundMethod *method, ValueList* args);
+	extern KROLL_API SharedValue InvokeMethodOnMainThread(SharedBoundMethod method, SharedPtr<ValueList> args);
 }
 #endif
 

@@ -348,13 +348,13 @@ namespace kroll
 	SharedPtr<kroll::Value> *result;
 	SharedPtr<kroll::ValueList> *args;
 }
-- (id)initWithBoundMethod:(SharedPtr<kroll::BoundMethod>)method args:(ValueList*)args;
+- (id)initWithBoundMethod:(SharedPtr<kroll::BoundMethod>)method args:(SharedPtr<ValueList>)args;
 - (void)call;
 - (SharedPtr<kroll::Value>)getResult;
 @end
 
 @implementation KrollMainThreadCaller
-- (id)initWithBoundMethod:(SharedPtr<kroll::BoundMethod>)m args:(ValueList*)a
+- (id)initWithBoundMethod:(SharedPtr<kroll::BoundMethod>)m args:(SharedPtr<ValueList>)a
 {
 	self = [super init];
 	if (self)
@@ -362,14 +362,11 @@ namespace kroll
 		method = new SharedPtr<kroll::BoundMethod>(m);
 		args = new SharedPtr<kroll::ValueList>(a);
 		result = new SharedPtr<kroll::Value>();
-		//KR_ADDREF(method);
 	}
 	return self;
 }
 - (void)dealloc
 {
-	//KR_DECREF(method);
-	//KR_DECREF(result);
 	delete method;
 	delete result;
 	delete args;
@@ -391,22 +388,18 @@ namespace kroll
 		}
 	}
 	result->assign((*method)->Call(a));
-	//KR_ADDREF(result);
 }
 @end
 #endif
 
 namespace kroll
 {
-	SharedValue InvokeMethodOnMainThread(SharedBoundMethod method, ValueList* args)
+	SharedValue InvokeMethodOnMainThread(SharedBoundMethod method, SharedPtr<ValueList> args)
 	{
 #ifdef OS_OSX
 	    KrollMainThreadCaller *caller = [[KrollMainThreadCaller alloc] initWithBoundMethod:method args:args];
 	    [caller performSelectorOnMainThread:@selector(call) withObject:nil waitUntilDone:YES];
 		SharedValue result = [caller getResult];
-		// make sure to return a new reference because we'll release it
-		// when we release the caller
-		//if (result) KR_ADDREF(result);
 		[caller release];
 #else
 		//FIXME - implement for Win32 and Linux. Until then...we
