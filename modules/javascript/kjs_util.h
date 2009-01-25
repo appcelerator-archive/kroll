@@ -45,6 +45,10 @@ namespace kroll
 		static SharedPtr<KJSBoundList> ToBoundList(JSContextRef context,
 		                                           JSObjectRef list);
 
+		static void RegisterGlobalContext(JSContextGroupRef,
+		                                  JSGlobalContextRef);
+		static JSGlobalContextRef GetGlobalContext(JSContextGroupRef);
+
 	};
 
 }
