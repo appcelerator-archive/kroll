@@ -41,7 +41,7 @@ namespace kroll
 		if (IsString())
 		{
 			delete this->stringValue;
-			this->stringValue = 0;
+			this->stringValue = NULL;
 		}
 	}
 
@@ -65,8 +65,8 @@ namespace kroll
 	void Value::init()
 	{
 		this->type = UNDEFINED;
-		this->objectValue = 0;
-		this->stringValue = 0;
+		this->objectValue = NULL;
+		this->stringValue = NULL;
 	}
 
 	void Value::defaults()
@@ -74,11 +74,11 @@ namespace kroll
 		if (this->IsString())
 		{
 			delete this->stringValue;
-			this->stringValue = 0;
+			this->stringValue = NULL;
 		}
 		this->type = UNDEFINED;
-		this->objectValue = 0;
-		this->stringValue = 0;
+		this->objectValue = NULL;
+		this->stringValue = NULL;
 	}
 
 	bool Value::IsInt() const { return type == INT; }
