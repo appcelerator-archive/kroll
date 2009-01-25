@@ -34,8 +34,8 @@ namespace kroll
 			// This context hasn't been registered. Something has gone pretty
 			// terribly wrong and Kroll will likely crash soon. Nonetheless, keep
 			// the user up-to-date to keep their hopes up.
-			std::cerr << "Could not locate global context for a KJS method.
-			          << " One of the modules is misbehaving." << std::endl;
+			std::cerr << "Could not locate global context for a KJS method."  <<
+			             " One of the modules is misbehaving." << std::endl;
 		}
 
 		this->kjs_bound_object = new KJSBoundObject(context, js_object);
