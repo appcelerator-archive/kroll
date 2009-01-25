@@ -53,9 +53,10 @@ namespace kroll
 				continue;
 			}
 
-			Module *m = this->LoadModule(path, p);
+			bool error = false;
+			Module *m = this->LoadModule(path, p, &error);
 
-			if (m == NULL)
+			if (m == NULL || error)
 			{
 				std::cerr << "Could not load module: " << path << std::endl;
 				continue;

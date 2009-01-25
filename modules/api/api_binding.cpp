@@ -10,14 +10,31 @@ namespace kroll
 {
 	APIBinding::APIBinding(SharedBoundObject global) : record(0), global(global)
 	{
-		SharedValue version = Value::NewDouble(1.0);
-		this->Set((const char*) "version", version);
 		this->SetMethod("set", &APIBinding::_Set);
 		this->SetMethod("get", &APIBinding::_Get);
 		this->SetMethod("log", &APIBinding::_Log);
 		this->SetMethod("register", &APIBinding::_Register);
 		this->SetMethod("unregister", &APIBinding::_Unregister);
 		this->SetMethod("fire", &APIBinding::_Fire);
+
+		// these are properties for log severity levels
+		this->Set("DEBUG",Value::NewInt(KR_LOG_DEBUG));
+		this->Set("INFO",Value::NewInt(KR_LOG_INFO));
+		this->Set("ERROR",Value::NewInt(KR_LOG_ERROR));
+		this->Set("WARN",Value::NewInt(KR_LOG_WARN));
+		
+		// these are convenience methods so you can do:
+		//
+		// Titanium.api.debug("hello") 
+		//
+		// or 
+		//
+		// Titanium.api.log(Titanium.api.DEBUG,"hello")
+		//
+		this->SetMethod("debug", &APIBinding::_LogDebug);
+		this->SetMethod("info", &APIBinding::_LogInfo);
+		this->SetMethod("error", &APIBinding::_LogError);
+		this->SetMethod("warn", &APIBinding::_LogWarn);
 	}
 
 	APIBinding::~APIBinding()
@@ -76,12 +93,74 @@ namespace kroll
 		}
 		result->SetValue(r);
 	}
-
+	void APIBinding::_LogInfo(const ValueList& args, SharedValue result)
+	{
+		SharedValue arg1 = args.at(0);
+		std::string msg = arg1->ToString();
+		int severity = KR_LOG_INFO;
+		this->Log(severity,msg);
+	}
+	void APIBinding::_LogDebug(const ValueList& args, SharedValue result)
+	{
+		SharedValue arg1 = args.at(0);
+		std::string msg = arg1->ToString();
+		int severity = KR_LOG_DEBUG;
+		this->Log(severity,msg);
+	}
+	void APIBinding::_LogWarn(const ValueList& args, SharedValue result)
+	{
+		SharedValue arg1 = args.at(0);
+		std::string msg = arg1->ToString();
+		int severity = KR_LOG_WARN;
+		this->Log(severity,msg);
+	}
+	void APIBinding::_LogError(const ValueList& args, SharedValue result)
+	{
+		SharedValue arg1 = args.at(0);
+		std::string msg = arg1->ToString();
+		int severity = KR_LOG_ERROR;
+		this->Log(severity,msg);
+	}
 	void APIBinding::_Log(const ValueList& args, SharedValue result)
 	{
-		int severity = args.at(0)->ToInt();
-		std::string message = args.at(1)->ToString();
-		this->Log(severity, message);
+		SharedValue arg1 = args.at(0);
+		if (arg1->IsString() && args.size()==1)
+		{
+			std::string msg = arg1->ToString();
+			int severity = KR_LOG_INFO;
+			this->Log(severity,msg);
+		}
+		else if (args.size()==2)
+		{
+			int severity = KR_LOG_INFO;
+			
+			if (arg1->IsString())
+			{
+				std::string type = arg1->ToString();
+				if (type == "DEBUG")
+				{
+					severity = KR_LOG_DEBUG;
+				}
+				else if (type == "INFO")
+				{
+					severity = KR_LOG_INFO;
+				}
+				else if (type == "WARN")
+				{
+					severity = KR_LOG_WARN;
+				}
+				else if (type == "ERROR")
+				{
+					severity = KR_LOG_ERROR;
+				}
+			}
+			else if (arg1->IsInt())
+			{
+				severity = arg1->ToInt();
+			}
+			std::string message = args.at(1)->ToString();
+			this->Log(severity, message);
+		}
 	}
 
 	void APIBinding::_Register(const ValueList& args, SharedValue result)

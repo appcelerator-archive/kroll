@@ -88,6 +88,46 @@ namespace kroll
 		 */
 		SharedString DisplayString(int levels=3);
 
+		/**
+		 * Function: GetString
+		 *   gets a string property for this object
+		 *
+		 * Params:
+		 *   name - the name of the property
+		 *   defaultValue - the default value for the string if the property is not found
+		 *
+		 * Returns:
+		 *   the string value of the property if found; defaultValue if this object doesn't have the specified property
+		 */
+		std::string GetString(const char *name, std::string defaultValue);
+
+		/**
+		 * Function: GetBool
+		 *   gets a boolean property for this object
+		 *
+		 * Params:
+		 *   name - the name of the property
+		 *   defaultValue - the default value to return if the property is not found
+		 *
+		 * Returns:
+		 *   the bool value of the propety if found; defaultValue if this object doesn't have the specified property
+		 */
+		bool GetBool(const char *name, bool defaultValue);
+
+		/**
+		 * Function: GetStringList
+		 *   gets a list of strings for the given property for this object.  the list vector is gets the list of strings
+		 *   appended to the end of the list
+		 *
+		 * Params:
+		 *   name - the name of the property
+		 *   list - the vector where the list of strings is appended to
+		 *
+		 * Returns:
+		 *   void
+		 */
+		void GetStringList(const char *name, std::vector<std::string> &list);
+
 	private:
 		DISALLOW_EVIL_CONSTRUCTORS(BoundObject);
 	};

@@ -44,6 +44,7 @@ namespace kroll
 			         && !next_val->IsMethod()
 			         && !next_val->IsList())
 			{
+				std::cerr << "invalid namespace for " << name << ", token: " << token << " was " << next_val->ToTypeString() << std::endl;
 				throw Value::NewString("Invalid namespace on setNS");
 			}
 			else
@@ -117,6 +118,53 @@ namespace kroll
 		}
 
 		return new std::string(oss.str());
+	}
+
+	std::string BoundObject::GetString(const char * name, std::string defaultValue)
+	{
+		SharedValue prop = this->Get(name);
+		if(!prop->IsNull() && prop->IsString())
+		{
+			return prop->ToString();
+		}
+		else
+		{
+			return defaultValue;
+		}
+	}
+
+	bool BoundObject::GetBool(const char * name, bool defaultValue)
+	{
+		SharedValue prop = this->Get(name);
+		if(!prop->IsNull())
+		{
+			return prop->ToBool();
+		}
+		else
+		{
+			return defaultValue;
+		}
+	}
+
+	void BoundObject::GetStringList(const char *name, std::vector<std::string> &list)
+	{
+		SharedValue prop = this->Get(name);
+		if(!prop->IsNull() && prop->IsList())
+		{
+			SharedBoundList values = prop->ToList();
+			if (values->Size() > 0)
+			{
+				for (int c=0; c < values->Size(); c++)
+				{
+					SharedValue v = values->At(c);
+					if (v->IsString())
+					{
+						const char *s = v->ToString();
+						list.push_back(s);
+					}
+				}
+			}
+		}
 	}
 
 }

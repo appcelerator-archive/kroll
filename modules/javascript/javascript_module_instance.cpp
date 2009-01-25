@@ -22,7 +22,7 @@ namespace kroll
 		{
 			SharedString exception_string = e->DisplayString();
 			std::cerr << "Could not execute " << path <<
-			             " because: " << exception_string.get() << std::endl;
+			             " because: " << *exception_string.get() << std::endl;
 		}
 
 	}
@@ -53,6 +53,8 @@ namespace kroll
 
 		JSValueRef exception;
 		JSGlobalContextRef context = JSGlobalContextCreate(NULL);
+		JSContextGroupRef group = JSContextGetGroup(context);
+		KJSUtil::RegisterGlobalContext(group, context);
 
 		/* Take some steps to insert the API into the Javascript context */
 		/* Create a crazy, crunktown delegate hybrid object for Javascript */

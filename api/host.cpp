@@ -14,6 +14,7 @@
 #endif
 #include <errno.h>
 #include <vector>
+#include <algorithm>
 #include <string>
 #include <stdio.h>
 #include <stdlib.h>
@@ -69,8 +70,6 @@ namespace kroll
 		{
 			this->args.push_back(std::string(argv[i]));
 		}
-
-
 	}
 
 	Host::~Host()
@@ -97,15 +96,6 @@ namespace kroll
 	void Host::AddModuleProvider(ModuleProvider *provider) {
 		ScopedLock lock(&moduleMutex);
 		module_providers.push_back(provider);
-
-		/* Don't automatically scan invalid files until
-		 * all basic modules are loaded. This prevents lots
-		 * of scanning during boot. */
-		if (this->basicModulesLoaded)
-		{
-			ScanInvalidModuleFiles(true);
-		}
-
 	}
 
 	ModuleProvider* Host::FindModuleProvider(std::string& filename)
@@ -145,10 +135,20 @@ namespace kroll
 		return isModule;
 	}
 
-	SharedPtr<Module> Host::LoadModule(std::string& path, ModuleProvider *provider)
+	SharedPtr<Module> Host::LoadModule(std::string& path, ModuleProvider *provider, bool *error)
 	{
 		ScopedLock lock(&moduleMutex);
-		SharedPtr<Module> module = provider->CreateModule(path);
+		
+		SharedPtr<Module> module;
+		
+		try
+		{
+			module = provider->CreateModule(path);
+		}
+		catch(...)
+		{
+			std::cerr << "Error generated loading module: " << path << std::endl;
+		}
 
 		if (!module.isNull())
 		{
@@ -163,8 +163,8 @@ namespace kroll
 		}
 		else
 		{
-			std::cout << "Could not load module from: " << path << std::endl;
-
+			std::cerr << "Could not load module from: " << path << std::endl;
+			*error = true;
 		}
 
 		return module;
@@ -210,9 +210,10 @@ namespace kroll
 				std::string fpath = iter.path().absolute().toString();
 				if (IsModule(fpath))
 				{
-					this->LoadModule(fpath, this);
+					bool error = false;
+					this->LoadModule(fpath, this, &error);
 				}
-				else
+				else if (std::find(this->invalid_module_files.begin(),this->invalid_module_files.end(),fpath)==this->invalid_module_files.end())
 				{
 					this->invalid_module_files.push_back(fpath);
 				}
@@ -223,34 +224,63 @@ namespace kroll
 
 	void Host::ScanInvalidModuleFiles(bool also_initialize)
 	{
-		// keep track in case we need to initialize
-		ModuleMap just_loaded;
-
-		std::vector<std::string>::iterator iter;
-		iter = this->invalid_module_files.begin();
-		while (iter != this->invalid_module_files.end())
+		ScopedLock lock(&moduleMutex);
+		if (scanInProgress) return;
+		
+		scanInProgress = true;
+		
+		while (this->invalid_module_files.size() > 0)
 		{
-			std::string path = *iter;
-			ModuleProvider *provider = FindModuleProvider(path);
-			if (provider != NULL)
+			// keep track in case we need to initialize
+			ModuleMap modulesLoaded;
+			std::map<std::string,bool> just_loaded;
+
+			std::vector<std::string>::iterator iter;
+			iter = this->invalid_module_files.begin();
+			while (iter != this->invalid_module_files.end())
 			{
-				SharedPtr<Module> m = this->LoadModule(path, provider);
-				if (!m.isNull())
+				std::string path = *iter;
+				// check to ensure that we're not in the same 
+				// cycle of the module we just loaded so we 
+				// don't reload again
+				if (just_loaded[path] || path.length()==0)
 				{
-					just_loaded[path] = m;
-					invalid_module_files.erase(iter);
+					iter++;
+					continue;
 				}
+				ModuleProvider *provider = FindModuleProvider(path);
+				if (provider != NULL)
+				{
+					bool error = false;
+					SharedPtr<Module> m = this->LoadModule(path, provider, &error);
+					if (!m.isNull())
+					{
+						just_loaded[path] = true;
+						modulesLoaded[path] = m;
+						invalid_module_files.erase(iter);
+					}
+					else if (error)
+					{
+						just_loaded[path] = true;
+						invalid_module_files.erase(iter);
+					}
+				}
+				iter++;
 			}
-			iter++;
+		
+			/* This happens when we scan invalid module files after
+			 * the initial load of the application. This
+			 * way all modules are initialized in waves. */
+			if (also_initialize && modulesLoaded.size() > 0)
+			{
+				this->InitializeModules(modulesLoaded);
+				continue;
+			}
+			
+			break;
 		}
-
-		/* This happens when we scan invalid module files after
-		 * the initial load of the application. This
-		 * way all modules are initialized in waves. */
-		if (also_initialize)
-		{
-			this->InitializeModules(just_loaded);
-		}
+		
+		scanInProgress = false;
 	}
 
 	void Host::InitializeModules(ModuleMap to_init)
@@ -318,13 +348,13 @@ namespace kroll
 	SharedPtr<kroll::Value> *result;
 	SharedPtr<kroll::ValueList> *args;
 }
-- (id)initWithBoundMethod:(SharedPtr<kroll::BoundMethod>)method args:(ValueList*)args;
+- (id)initWithBoundMethod:(SharedPtr<kroll::BoundMethod>)method args:(SharedPtr<ValueList>)args;
 - (void)call;
 - (SharedPtr<kroll::Value>)getResult;
 @end
 
 @implementation KrollMainThreadCaller
-- (id)initWithBoundMethod:(SharedPtr<kroll::BoundMethod>)m args:(ValueList*)a
+- (id)initWithBoundMethod:(SharedPtr<kroll::BoundMethod>)m args:(SharedPtr<ValueList>)a
 {
 	self = [super init];
 	if (self)
@@ -332,14 +362,11 @@ namespace kroll
 		method = new SharedPtr<kroll::BoundMethod>(m);
 		args = new SharedPtr<kroll::ValueList>(a);
 		result = new SharedPtr<kroll::Value>();
-		//KR_ADDREF(method);
 	}
 	return self;
 }
 - (void)dealloc
 {
-	//KR_DECREF(method);
-	//KR_DECREF(result);
 	delete method;
 	delete result;
 	delete args;
@@ -361,22 +388,18 @@ namespace kroll
 		}
 	}
 	result->assign((*method)->Call(a));
-	//KR_ADDREF(result);
 }
 @end
 #endif
 
 namespace kroll
 {
-	SharedValue InvokeMethodOnMainThread(SharedBoundMethod method, ValueList* args)
+	SharedValue InvokeMethodOnMainThread(SharedBoundMethod method, SharedPtr<ValueList> args)
 	{
 #ifdef OS_OSX
 	    KrollMainThreadCaller *caller = [[KrollMainThreadCaller alloc] initWithBoundMethod:method args:args];
 	    [caller performSelectorOnMainThread:@selector(call) withObject:nil waitUntilDone:YES];
 		SharedValue result = [caller getResult];
-		// make sure to return a new reference because we'll release it
-		// when we release the caller
-		//if (result) KR_ADDREF(result);
 		[caller release];
 #else
 		//FIXME - implement for Win32 and Linux. Until then...we

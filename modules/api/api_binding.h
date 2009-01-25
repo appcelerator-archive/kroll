@@ -45,6 +45,10 @@ namespace kroll
 		void _Set(const ValueList& args, SharedValue result);
 		void _Get(const ValueList& args, SharedValue result);
 		void _Log(const ValueList& args, SharedValue result);
+		void _LogDebug(const ValueList& args, SharedValue result);
+		void _LogInfo(const ValueList& args, SharedValue result);
+		void _LogWarn(const ValueList& args, SharedValue result);
+		void _LogError(const ValueList& args, SharedValue result);
 		void _Register(const ValueList& args, SharedValue result);
 		void _Unregister(const ValueList& args, SharedValue result);
 		void _Fire(const ValueList& args, SharedValue result);
