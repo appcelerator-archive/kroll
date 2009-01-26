@@ -1,6 +1,6 @@
 /**
  * Appcelerator Kroll - licensed under the Apache Public License 2
- * see LICENSE in the root folder for details on the license. 
+ * see LICENSE in the root folder for details on the license.
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
 
@@ -15,9 +15,9 @@ using Poco::SharedPtr;
 
 #ifndef OS_WIN32
 	// this is important which essentially marks all of
-	// these classes below and the typedef/templates to be 
+	// these classes below and the typedef/templates to be
 	// visible outside of the library.  if you don't do this
-	// you won't be able to catch exceptions of SharedValue for 
+	// you won't be able to catch exceptions of SharedValue for
 	// example
 	#pragma GCC visibility push(default)
 #endif
@@ -35,7 +35,9 @@ namespace kroll
 	class DelegateStaticBoundObject;
 	class ScopeMethodDelegate;
 
-	typedef SharedPtr<Value> SharedValue;
+	class ValueReleasePolicy;
+
+	typedef SharedPtr<Value, Poco::ReferenceCounter, ValueReleasePolicy> SharedValue;
 	typedef SharedPtr<BoundObject> SharedBoundObject;
 	typedef SharedPtr<BoundMethod> SharedBoundMethod;
 	typedef SharedPtr<BoundList> SharedBoundList;
