@@ -30,10 +30,7 @@ namespace kroll
 		JSStringRef s = JSStringCreateWithUTF8CString(name);
 		JSValueRef exception = NULL;
 		JSValueRef js_value =
-		    JSObjectGetProperty(this->context,
-		                        this->object,
-		                        s,
-		                        NULL);
+		    JSObjectGetProperty(this->context, this->object, s, NULL);
 		JSStringRelease(s);
 
 		if (exception != NULL) //exception thrown

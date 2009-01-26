@@ -15,11 +15,11 @@ namespace kroll
 	                                        0, 0, 0, 0, 0, 0,
 	                                        0, 0, 0, 0, 0 };
 	/* callback for BoundObject proxying to KJS */
-	void get_property_names_cb (JSContextRef, JSObjectRef, JSPropertyNameAccumulatorRef);
-	bool has_property_cb (JSContextRef, JSObjectRef, JSStringRef);
-	JSValueRef get_property_cb (JSContextRef, JSObjectRef, JSStringRef, JSValueRef*);
-	bool set_property_cb (JSContextRef, JSObjectRef, JSStringRef, JSValueRef, JSValueRef*);
-	JSValueRef call_as_function_cb (JSContextRef, JSObjectRef, JSObjectRef, size_t, const JSValueRef[], JSValueRef*);
+	void get_property_names_cb(JSContextRef, JSObjectRef, JSPropertyNameAccumulatorRef);
+	bool has_property_cb(JSContextRef, JSObjectRef, JSStringRef);
+	JSValueRef get_property_cb(JSContextRef, JSObjectRef, JSStringRef, JSValueRef*);
+	bool set_property_cb(JSContextRef, JSObjectRef, JSStringRef, JSValueRef, JSValueRef*);
+	JSValueRef call_as_function_cb(JSContextRef, JSObjectRef, JSObjectRef, size_t, const JSValueRef[], JSValueRef*);
 	void finalize_cb(JSObjectRef);
 
 	SharedValue KJSUtil::ToKrollValue(JSValueRef value,
@@ -268,7 +268,7 @@ namespace kroll
 			tibl_class = JSClassCreate (&js_class_def);
 		}
 
-		JSObjectRef object = JSObjectMake (c, tibl_class, new SharedBoundList(list));
+		JSObjectRef object = JSObjectMake(c, tibl_class, new SharedBoundList(list));
 
 		JSValueRef args[1] = { JSValueMakeNumber(c, 3) };
 		JSObjectRef array = JSObjectMakeArray(c, 1, args, NULL);
@@ -292,7 +292,7 @@ namespace kroll
 
 	char* KJSUtil::ToChars(JSStringRef js_string)
 	{
-		size_t size = JSStringGetMaximumUTF8CStringSize (js_string);
+		size_t size = JSStringGetMaximumUTF8CStringSize(js_string);
 		char* string = (char*) malloc(size);
 		JSStringGetUTF8CString(js_string, string, size);
 		return string;
@@ -323,11 +323,11 @@ namespace kroll
 		delete object;
 	}
 
-	void get_property_names_cb (JSContextRef js_context,
+	void get_property_names_cb(JSContextRef js_context,
 	                            JSObjectRef js_object,
 	                            JSPropertyNameAccumulatorRef js_properties)
 	{
-		SharedBoundObject* object = (SharedBoundObject*) JSObjectGetPrivate (js_object);
+		SharedBoundObject* object = (SharedBoundObject*) JSObjectGetPrivate(js_object);
 
 		if (object == NULL)
 			return;
@@ -341,11 +341,11 @@ namespace kroll
 		}
 	}
 
-	bool has_property_cb (JSContextRef js_context,
+	bool has_property_cb(JSContextRef js_context,
 	                      JSObjectRef  js_object,
 	                      JSStringRef  js_property)
 	{
-		SharedBoundObject* object = (SharedBoundObject*) JSObjectGetPrivate (js_object);
+		SharedBoundObject* object = (SharedBoundObject*) JSObjectGetPrivate(js_object);
 		if (object == NULL)
 			return false;
 
@@ -364,12 +364,12 @@ namespace kroll
 		return false;
 	}
 
-	JSValueRef get_property_cb (JSContextRef js_context,
+	JSValueRef get_property_cb(JSContextRef js_context,
 	                            JSObjectRef  js_object,
 	                            JSStringRef  js_property,
 	                            JSValueRef*  js_exception)
 	{
-		SharedBoundObject* object = (SharedBoundObject*) JSObjectGetPrivate (js_object);
+		SharedBoundObject* object = (SharedBoundObject*) JSObjectGetPrivate(js_object);
 		if (object == NULL)
 			return JSValueMakeUndefined(js_context);
 
@@ -407,13 +407,13 @@ namespace kroll
 		return js_val;
 	}
 
-	bool set_property_cb (JSContextRef js_context,
+	bool set_property_cb(JSContextRef js_context,
 	                      JSObjectRef  js_object,
 	                      JSStringRef  js_property,
 	                      JSValueRef   js_value,
 	                      JSValueRef*  js_exception)
 	{
-		SharedBoundObject* object = (SharedBoundObject*) JSObjectGetPrivate (js_object);
+		SharedBoundObject* object = (SharedBoundObject*) JSObjectGetPrivate(js_object);
 		if (object == NULL)
 			return false;
 
@@ -453,7 +453,7 @@ namespace kroll
 		return propertySet;
 	}
 
-	JSValueRef call_as_function_cb (JSContextRef     js_context,
+	JSValueRef call_as_function_cb(JSContextRef     js_context,
 	                                JSObjectRef      js_function,
 	                                JSObjectRef      js_this,
 	                                size_t           num_args,
@@ -524,5 +524,25 @@ namespace kroll
 	                                             JSObjectRef list)
 	{
 		return new KJSBoundList(context, list);
+	}
+
+	std::map<JSContextGroupRef, JSGlobalContextRef> context_map;
+	void KJSUtil::RegisterGlobalContext(
+	    JSContextGroupRef group,
+	    JSGlobalContextRef global_ctx)
+	{
+		context_map[group] = global_ctx;
+	}
+
+	JSGlobalContextRef KJSUtil::GetGlobalContext(JSContextGroupRef group)
+	{
+		if (context_map.find(group) == context_map.end())
+		{
+			return NULL;
+		}
+		else
+		{
+			return context_map[group];
+		}
 	}
 }

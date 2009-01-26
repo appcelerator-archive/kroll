@@ -10,6 +10,7 @@
 
 namespace kroll
 {
+
 	Value::Value() { init(); SetUndefined(); }
 	SharedValue Value::NewInt(int value) { SharedValue v(new Value()); v->init(); v->SetInt(value); return v; }
 	SharedValue Value::NewDouble(double value) { SharedValue v(new Value()); v->init(); v->SetDouble(value); return v; }
