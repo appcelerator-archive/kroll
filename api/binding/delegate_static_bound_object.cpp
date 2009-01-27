@@ -21,6 +21,7 @@ namespace kroll
 		// The SharedPtr implementation should decrement
 		// all members of properties, when the properties
 		// map destructs
+//		KR_DUMP_LOCATION
 	}
 
 	SharedValue DelegateStaticBoundObject::Get(const char *name)

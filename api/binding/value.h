@@ -383,6 +383,7 @@ namespace kroll
 		static void release(Value* pObj)
 		{
 			delete pObj;
+			pObj = NULL;
 		}
 	};
 

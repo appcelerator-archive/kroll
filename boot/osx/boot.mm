@@ -257,7 +257,8 @@ int main(int argc, char* argv[])
 		dylibPath = [dylibPath stringByAppendingFormat:@":%s",runtimePath.c_str()];
 	
 		// create our environment
-		NSMutableDictionary *env = [[NSMutableDictionary alloc] init];
+		NSDictionary *ce = [[NSProcessInfo processInfo] environment];
+		NSMutableDictionary *env = [[NSMutableDictionary alloc] initWithDictionary:ce];
 		[env setValue:appDir forKey:@"KR_HOME"];
 		[env setValue:[NSString stringWithCString:runtimePath.c_str()] forKey:@"KR_RUNTIME"];
 		[env setValue:runtime forKey:@"KR_RUNTIME_HOME"];

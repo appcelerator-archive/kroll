@@ -16,6 +16,7 @@ namespace kroll
 
 	StaticBoundMethod::~StaticBoundMethod()
 	{
+//		KR_DUMP_LOCATION
 	}
 
 	SharedValue StaticBoundMethod::Call(const ValueList& args)
