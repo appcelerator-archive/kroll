@@ -13,8 +13,18 @@
 #include <api/host.h>
 #include <api/binding/bound_object.h>
 
+#include <Poco/ScopedLock.h>
+#include <Poco/Mutex.h>
+
 namespace kroll
 {
+
+	struct Job
+	{
+		SharedBoundMethod method;
+		SharedPtr<ValueList> args;
+	};
+
 	class EXPORT LinuxHost : public Host
 	{
 	public:
@@ -25,6 +35,13 @@ namespace kroll
 		virtual Module* CreateModule(std::string& path);
 		SharedValue InvokeMethodOnMainThread(SharedBoundMethod method,
 		                                     SharedPtr<ValueList> args);
+
+		Poco::Mutex& GetJobQueueMutex();
+		std::vector<Job>& GetJobs();
+
+	private:
+		Poco::Mutex job_queue_mutex;
+		std::vector<Job> jobs;
 	};
 }
 

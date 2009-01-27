@@ -14,6 +14,8 @@
 
 namespace kroll
 {
+	gboolean main_thread_job_handler(gpointer);
+
 	LinuxHost::LinuxHost(int argc, const char *argv[]) : Host(argc, argv)
 	{
 		gtk_init(&argc, (char***) &argv);
@@ -37,6 +39,7 @@ namespace kroll
 		this->AddModuleProvider(this);
 		this->LoadModules();
 
+		g_idle_add(&main_thread_job_handler, this);
 		gtk_main();
 
 		return 0;
@@ -66,14 +69,51 @@ namespace kroll
 		return create(this,FileUtils::GetDirectory(path));
 	}
 
-	SharedValue LinuxHost::InvokeMethodOnMainThread(SharedBoundMethod method,
-                                                  SharedPtr<ValueList> args)
+	Poco::Mutex& LinuxHost::GetJobQueueMutex()
 	{
-		//FIXME - implement for Win32 and Linux. Until then...we
-		//will just forward on same thread
-		std::cerr << "WARNING: Invoking method on non-main Thread!" << std::endl;
-		SharedValue result = method->Call(*args);
-		return result;
+		return this->job_queue_mutex;
+	}
+
+	std::vector<Job>& LinuxHost::GetJobs()
+	{
+		return this->jobs;
+	}
+
+	SharedValue LinuxHost::InvokeMethodOnMainThread(SharedBoundMethod method,
+	                                                SharedPtr<ValueList> args)
+	{
+		Poco::ScopedLock<Poco::Mutex> s(this->GetJobQueueMutex());
+
+		Job new_job;
+		new_job.method = method;
+		new_job.args = args;
+
+		this->jobs.push_back(new_job);
+		return Value::Undefined;
+	}
+
+	gboolean main_thread_job_handler(gpointer data)
+	{
+		LinuxHost *host = (LinuxHost*) data;
+		Poco::ScopedLock<Poco::Mutex> s(host->GetJobQueueMutex());
+
+
+		std::vector<Job>& jobs = host->GetJobs();
+		if (jobs.size() == 0)
+			return TRUE;
+
+		printf("in handler: %i\n", jobs.size());
+		std::vector<Job>::iterator i;
+		for (i = jobs.begin(); i != jobs.end(); i++)
+		{
+			SharedBoundMethod method = (*i).method;
+			SharedPtr<ValueList> args = (*i).args;
+			method->Call(*args);
+		}
+
+		jobs.clear();
+		printf("end: %i\n", jobs.size());
+		return TRUE;
 	}
 }
 
