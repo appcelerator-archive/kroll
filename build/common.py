@@ -56,8 +56,6 @@ class BuildConfig(object):
 	def is_win32(self): return self.os == 'win32'
 
 	def add_thirdparty(self, env, name):
-		print "adding %s lib" % name
-		print self.thirdparty_libs[name][self.os]['libs']
 		env.Append(LIBPATH=[self.thirdparty_libs[name][self.os]['lib_path']])
 		env.Append(CPPPATH=[self.thirdparty_libs[name][self.os]['cpp_path']])
 		env.Append(LIBS=[self.thirdparty_libs[name][self.os]['libs']])
