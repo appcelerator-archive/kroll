@@ -23,6 +23,8 @@ namespace kroll
 
 		virtual int Run();
 		virtual Module* CreateModule(std::string& path);
+		SharedValue InvokeMethodOnMainThread(SharedBoundMethod method,
+		                                     SharedPtr<ValueList> args);
 	};
 }
 

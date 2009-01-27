@@ -65,5 +65,15 @@ namespace kroll
 		}
 		return create(this,FileUtils::GetDirectory(path));
 	}
+
+	SharedValue LinuxHost::InvokeMethodOnMainThread(SharedBoundMethod method,
+                                                  SharedPtr<ValueList> args)
+	{
+		//FIXME - implement for Win32 and Linux. Until then...we
+		//will just forward on same thread
+		std::cerr << "WARNING: Invoking method on non-main Thread!" << std::endl;
+		SharedValue result = method->Call(*args);
+		return result;
+	}
 }
 

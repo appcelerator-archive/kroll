@@ -7,9 +7,6 @@
 #define _OSX_HOST_H
 
 #include <api/kroll.h>
-#include <api/module.h>
-#include <api/host.h>
-#include <api/binding/bound_object.h>
 
 namespace kroll
 {
@@ -21,6 +18,9 @@ namespace kroll
 
 		virtual int Run();
 		virtual Module* CreateModule(std::string& path);
+
+		SharedValue InvokeMethodOnMainThread(SharedBoundMethod method,
+		                                     SharedPtr<ValueList> args);
 
 	private:
 		std::string appConfig;

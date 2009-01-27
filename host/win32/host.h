@@ -32,6 +32,8 @@ namespace kroll
 		virtual int Run();
 
 		HINSTANCE GetInstanceHandle() { return instance_handle; }
+		SharedValue InvokeMethodOnMainThread(SharedBoundMethod method,
+		                                     SharedPtr<ValueList> args);
 
 	private:
 		HINSTANCE instance_handle;

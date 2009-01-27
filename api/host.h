@@ -42,6 +42,15 @@ namespace kroll
 		virtual int Run() = 0;
 
 		/*
+		 * Function: InvokeMethodOnMainThread
+		 *
+		 * TODO: Document me
+		 */
+		virtual SharedValue InvokeMethodOnMainThread(
+			SharedBoundMethod,
+			SharedPtr<ValueList> args) = 0;
+
+		/*
 		 * Function: AddModuleProvider
 		 *
 		 * TODO: Document me

@@ -9,15 +9,6 @@
 
 namespace kroll
 {
-
-	class KROLL_API ValueReleasePolicy : public Poco::ReleasePolicy<Value> {
-	public:
-		static void release(Value* pObj)
-		{
-			delete pObj;
-		}
-	};
-
 	/*
 		Class: Value
 	  Value is a container object which internally contains
@@ -386,6 +377,15 @@ namespace kroll
 		void init();
 
 	};
+
+	class KROLL_API ValueReleasePolicy : public Poco::ReleasePolicy<Value> {
+	public:
+		static void release(Value* pObj)
+		{
+			delete pObj;
+		}
+	};
+
 }
 
 #endif

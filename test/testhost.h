@@ -18,6 +18,8 @@ namespace kroll
 		virtual int Run();
 		void TestAll();
 		virtual Module* CreateModule(std::string& path);
+		SharedValue InvokeMethodOnMainThread(SharedBoundMethod method,
+		                                     SharedPtr<ValueList> args);
 
 	private:
 		std::vector<std::string> module_paths;
