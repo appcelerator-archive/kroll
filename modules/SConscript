@@ -10,6 +10,6 @@ for module in modules:
 
 	out_dir = build.dir
 	script = os.path.join(build.kroll_build_dir, 'module.py')
-	os.system('%s %s %s %s' % (script, out_dir, module_dir, build.os))
+	os.system('python %s %s %s %s' % (script, out_dir, module_dir, build.os))
 
 
