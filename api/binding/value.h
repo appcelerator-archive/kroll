@@ -164,6 +164,13 @@ namespace kroll
 		bool IsDouble() const;
 
 		/*
+			Function: IsNumber
+
+		  return true if the internal value is an INT or a DOUBLE
+		 */
+		bool IsNumber() const;
+
+		/*
 			Function: IsBool
 
 		  return true if the internal value is a BOOL
@@ -225,6 +232,15 @@ namespace kroll
 		  return the value as a double
 		 */
 		double ToDouble() const;
+
+		/*
+			Function: ToNumber
+
+		  Return the value of a value as a double
+		  whether it is an int or a double.
+		 */
+		double ToNumber() const;
+
 
 		/*
 			Function: ToBool

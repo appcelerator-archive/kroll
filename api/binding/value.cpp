@@ -84,6 +84,7 @@ namespace kroll
 
 	bool Value::IsInt() const { return type == INT; }
 	bool Value::IsDouble() const { return type == DOUBLE; }
+	bool Value::IsNumber() const { return type == DOUBLE || type == INT; }
 	bool Value::IsBool() const { return type == BOOL; }
 	bool Value::IsString() const {  return type == STRING; }
 	bool Value::IsList() const { return type == LIST; }
@@ -94,6 +95,7 @@ namespace kroll
 
 	int Value::ToInt() const { return (int) numberValue; }
 	double Value::ToDouble() const { return numberValue; }
+	double Value::ToNumber() const { return numberValue; }
 	bool Value::ToBool() const { return boolValue; }
 	const char* Value::ToString() const { return stringValue; }
 	SharedBoundObject Value::ToObject() const { return objectValue; }
