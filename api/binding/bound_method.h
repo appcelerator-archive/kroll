@@ -62,6 +62,7 @@ namespace kroll
 		 */
 		virtual SharedStringList GetPropertyNames() = 0;
 
+
 		/*
 			Function: Call
 

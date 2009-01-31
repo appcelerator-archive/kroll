@@ -20,5 +20,7 @@
 #include "static_bound_object.h"
 #include "delegate_static_bound_object.h"
 #include "scope_method_delegate.h"
+#include "value_exception.h"
+#include "arg_utils.h"
 
 #endif

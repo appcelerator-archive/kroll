@@ -96,7 +96,7 @@ namespace kroll
 		if (js_value == NULL && exception != NULL) //exception thrown
 		{
 			SharedValue tv_exp = KJSUtil::ToKrollValue(exception, this->context, NULL);
-			throw tv_exp.get();
+			throw ValueException(tv_exp);
 		}
 
 		return KJSUtil::ToKrollValue(js_value, this->context, NULL);

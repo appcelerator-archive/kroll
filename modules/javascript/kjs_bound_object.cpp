@@ -36,7 +36,7 @@ namespace kroll
 		if (exception != NULL) //exception thrown
 		{
 			SharedValue tv_exp = KJSUtil::ToKrollValue(exception, this->context, NULL);
-			throw tv_exp;
+			throw ValueException(tv_exp);
 		}
 
 		return KJSUtil::ToKrollValue(js_value, this->context, this->object);
@@ -59,7 +59,7 @@ namespace kroll
 		if (exception != NULL) //exception thrown
 		{
 			Value* tv_exp = KJSUtil::ToKrollValue(exception, this->context, NULL);
-			throw tv_exp;
+			throw ValueException(tv_exp);
 		}
 	}
 

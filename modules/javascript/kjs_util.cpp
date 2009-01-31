@@ -38,7 +38,7 @@ namespace kroll
 
 		if (JSValueIsNumber(ctx, value))
 		{
-			kr_val = Value::NewInt(JSValueToNumber(ctx, value, &exception));
+			kr_val = Value::NewDouble(JSValueToNumber(ctx, value, &exception));
 		}
 		else if (JSValueIsBoolean(ctx, value))
 		{
@@ -380,27 +380,13 @@ namespace kroll
 			SharedValue ti_val = (*object)->Get(name);
 			js_val = KJSUtil::ToJSValue(ti_val, js_context);
 		}
-		catch (Value* exception)
+		catch (ValueException& exception)
 		{
-			*js_exception = KJSUtil::ToJSValue(exception, js_context);
-		}
-		catch (std::string& exception)
-		{
-			JSStringRef s = JSStringCreateWithUTF8CString(exception.c_str());
-			*js_exception = JSValueMakeString(js_context, s);
-			JSStringRelease(s);
-		}
-		catch (SharedValue& exception)
-		{
-			*js_exception = KJSUtil::ToJSValue(exception, js_context);
+			*js_exception = KJSUtil::ToJSValue(exception.GetValue(), js_context);
 		}
 		catch (...)
 		{
-			// uncaught exceptions cause the app to crash - so catch it here
-			std::string exception("UnknownException");
-			JSStringRef s = JSStringCreateWithUTF8CString(exception.c_str());
-			*js_exception = JSValueMakeString(js_context, s);
-			JSStringRelease(s);
+			std::cerr << "Caught an exception that I don't know how to handle!" << std::endl;
 		}
 
 		free(name);
@@ -426,27 +412,13 @@ namespace kroll
 			(*object)->Set(prop_name, ti_val);
 			propertySet = true;
 		}
-		catch (Value* exception)
+		catch (ValueException& exception)
 		{
-			*js_exception = KJSUtil::ToJSValue(exception, js_context);
-		}
-		catch (std::string& exception)
-		{
-			JSStringRef s = JSStringCreateWithUTF8CString(exception.c_str());
-			*js_exception = JSValueMakeString(js_context, s);
-			JSStringRelease(s);
-		}
-		catch (SharedValue& exception)
-		{
-			*js_exception = KJSUtil::ToJSValue(exception, js_context);
+			*js_exception = KJSUtil::ToJSValue(exception.GetValue(), js_context);
 		}
 		catch (...)
 		{
-			// uncaught exceptions cause the app to crash - so catch it here
-			std::string exception("UnknownException");
-			JSStringRef s = JSStringCreateWithUTF8CString(exception.c_str());
-			*js_exception = JSValueMakeString(js_context, s);
-			JSStringRelease(s);
+			std::cerr << "Caught an exception that I don't know how to handle!" << std::endl;
 		}
 
 		free(prop_name);
@@ -476,32 +448,13 @@ namespace kroll
 			SharedValue ti_val = method->cast<BoundMethod>()->Call(args);
 			js_val = KJSUtil::ToJSValue(ti_val, js_context);
 		}
-		catch (Value* exception)
+		catch (ValueException& exception)
 		{
-			*js_exception = KJSUtil::ToJSValue(exception, js_context);
-			js_val = NULL;
-		}
-		catch (std::string& exception)
-		{
-			JSStringRef s = JSStringCreateWithUTF8CString(exception.c_str());
-			*js_exception = JSValueMakeString(js_context, s);
-			JSStringRelease(s);
-			js_val = NULL;
-		}
-		catch (SharedValue& exception)
-		{
-			*js_exception = KJSUtil::ToJSValue(exception, js_context);
-			js_val = NULL;
+			*js_exception = KJSUtil::ToJSValue(exception.GetValue(), js_context);
 		}
 		catch (...)
 		{
-			// uncaught exceptions cause the app to crash - so catch it here
-			std::string exception("UnknownException");
-			JSStringRef s = JSStringCreateWithUTF8CString(exception.c_str());
-			*js_exception = JSValueMakeString(js_context, s);
-			JSStringRelease(s);
-
-			js_val = NULL;
+			std::cerr << "Caught an exception that I don't know how to handle!" << std::endl;
 		}
 
 		return js_val;

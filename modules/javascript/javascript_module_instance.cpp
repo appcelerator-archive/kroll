@@ -18,11 +18,10 @@ namespace kroll
 			this->Load();
 			this->Run();
 		}
-		catch (SharedValue e)
+		catch (ValueException& e)
 		{
-			SharedString exception_string = e->DisplayString();
-			std::cerr << "Could not execute " << path <<
-			             " because: " << *exception_string.get() << std::endl;
+			std::cerr << "Could not execute " << path << " because: "
+			          << e.GetValue()->DisplayString() << std::endl;
 		}
 
 	}
@@ -35,8 +34,7 @@ namespace kroll
 		std::ifstream js_file(this->path.c_str());
 		if (!js_file.is_open())
 		{
-			SharedValue e = Value::NewString("Could not read Javascript file");
-			throw e;
+			throw ValueException::FromString("Could not read Javascript file");
 		}
 
 		std::string line;
@@ -77,7 +75,7 @@ namespace kroll
 		if (!syntax)
 		{
 			SharedValue e = KJSUtil::ToKrollValue(exception, context, NULL);
-			throw e;
+			throw ValueException(e);
 		}
 
 		/* evaluate the script */
@@ -87,7 +85,7 @@ namespace kroll
 		if (ret == NULL)
 		{
 			SharedValue e = KJSUtil::ToKrollValue(exception, context, NULL);
-			throw e;
+			throw ValueException(e);
 		}
 	}
 

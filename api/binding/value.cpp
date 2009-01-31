@@ -82,7 +82,7 @@ namespace kroll
 		this->stringValue = NULL;
 	}
 
-	bool Value::IsInt() const { return type == INT; }
+	bool Value::IsInt() const { return type == INT || (type == DOUBLE && ((int) numberValue) == numberValue); }
 	bool Value::IsDouble() const { return type == DOUBLE; }
 	bool Value::IsNumber() const { return type == DOUBLE || type == INT; }
 	bool Value::IsBool() const { return type == BOOL; }

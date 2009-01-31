@@ -60,7 +60,7 @@ namespace kroll
 		}
 		else
 		{
-			throw (Value::NewString("Could not find push method on KJS array."));
+			throw ValueException::FromString("Could not find push method on KJS array.");
 		}
 	}
 
