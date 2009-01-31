@@ -18,6 +18,7 @@ elif build.is_linux():
 
 if build.is_osx():
 	Env.Append(LINKFLAGS='-install_name libkroll.dylib')
+	Env.Append(FRAMEWORKS=['IOKit'])
 
 sources=Glob('*.cpp')
 sources.extend(Glob('config/*.cpp'))

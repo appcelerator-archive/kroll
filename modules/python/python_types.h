@@ -25,7 +25,7 @@ namespace kroll
 	private:
 		// retain scope for the lifetime of this class
 		static SharedBoundObject scope;
-
+		static SharedBoundMethod evaluator;
 		PythonUtils() {}
 		~PythonUtils () {}
 	};

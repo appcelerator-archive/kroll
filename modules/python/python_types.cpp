@@ -7,7 +7,7 @@
 
 namespace kroll
 {
-	SharedPtr<BoundObject> PythonUtils::scope;
+	SharedBoundObject PythonUtils::scope;
 
 	const char * PythonUtils::ToString(PyObject* value)
 	{
@@ -45,6 +45,23 @@ namespace kroll
 		return 0.0;
 	}
 
+	class PythonEvaluator : public BoundMethod
+	{
+	public:
+		virtual SharedValue Call(const ValueList& args) {
+			if (args.size() == 2 && args[1]->IsString()) {
+				PyRun_SimpleString(args[1]->ToString());
+			}
+			return Value::Null;
+		}
+
+		virtual void Set(const char *name, SharedValue value) {}
+		virtual SharedValue Get(const char *name) { return Value::Null; }
+		virtual SharedStringList GetPropertyNames() { return SharedStringList(); }
+	};
+
+	SharedBoundMethod PythonUtils::evaluator = SharedBoundMethod(new PythonEvaluator());
+
 	void PythonUtils::InitializeDefaultBindings (Host *host)
 	{
 		PyObject* mod = PyImport_ImportModule("__builtin__");
@@ -61,12 +78,13 @@ namespace kroll
 				// own python scoped object
 				SharedBoundObject hostobj = host->GetGlobalObject();
 				SharedBoundObject apiobj = api->ToObject();
-				scope = ScopeMethodDelegate::CreateDelegate(hostobj,apiobj);
+				scope = ScopeMethodDelegate::CreateDelegate(hostobj, apiobj);
+				scope->Set("evaluate", Value::NewMethod(evaluator));
 				PyObject *pyapi = PythonUtils::ToObject(NULL,NULL,scope);
 				PyObject_SetAttrString(mod,PRODUCT_NAME,pyapi);
 				// now bind our new scope to python module
 				SharedValue scopeRef = Value::NewObject(scope);
-				host->GetGlobalObject()->Set((const char*)"python",scopeRef);
+				host->GetGlobalObject()->Set((const char*)"Python",scopeRef);
 				// don't release the scope
 			}
 			Py_DECREF(mod);
