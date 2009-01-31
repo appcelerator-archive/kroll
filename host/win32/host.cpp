@@ -45,6 +45,7 @@ namespace kroll
 		this->AddModuleProvider(this);
 		this->LoadModules();
 
+		thread_id = GetCurrentThreadId();
 		MSG message;
 		while (GetMessage(&message, NULL, 0, 0))
 		{
@@ -86,9 +87,10 @@ namespace kroll
 		//FIXME - implement for Win32 and Linux. Until then...we
 		//will just forward on same thread
 		std::cerr << "WARNING: Invoking method on non-main Thread!" << std::endl;
+		//PostThreadMessage(thread_id)
+
 		SharedValue result = method->Call(*args);
 		return result;
 	}
 }
-
 

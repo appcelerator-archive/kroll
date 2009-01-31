@@ -38,6 +38,7 @@ namespace kroll
 	private:
 		HINSTANCE instance_handle;
 		static bool ole_initialized;
+		DWORD thread_id;
 	};
 }
 
