@@ -2,5 +2,5 @@
 Import('build')
 
 Env = build.env.Clone()
-Env.Append(FRAMEWORKS=['Cocoa'])
+Env.Append(FRAMEWORKS=['Cocoa','IOKit'])
 Env.Program(build.dir + '/kboot', ['boot.mm','../api/file_utils.cpp'])

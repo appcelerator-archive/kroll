@@ -96,63 +96,13 @@ void termination(int)
 int main(int argc, char* argv[])
 {
 	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-	
-	BOOL installOnly = NO;
-	
-	if (argc > 1)
-	{
-		for (int c=0;c<argc;c++)
-		{
-			if (strcmp(argv[c],"--kinstall")==0)
-			{
-				installOnly = YES;
-				break;
-			}
-		}
-	}
 
 	NSString* bundlePath = [[NSBundle mainBundle] bundlePath];
 	NSString* bundleName = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleName"];
-	NSString* runtime = [NSString stringWithCString:FileUtils::GetRuntimeBaseDirectory().c_str()];
-	
-	NSLog(@"Runtime: %@",runtime);
-	NSLog(@"bundleName: %@",bundleName);
-	NSLog(@"bundlePath: %@",bundlePath);
-
-	if (!FileUtils::IsRuntimeInstalled())
-	{
-		// we don't have runtime, we need to launch our installer 
-		// to install it which should be inside our bundle directory
-		NSString *bundledInstaller = [NSString stringWithFormat:@"%@/installer",bundlePath];
-		std::string bdir = std::string([bundledInstaller UTF8String]);
-		if (!FileUtils::IsDirectory(bdir))
-		{
-			NSLog(@"invalid bundle. installer path doesn't exist at %@",bundledInstaller);
-			[pool release];
-			return __LINE__;
-		}
-		NSString *installer = [NSString stringWithFormat:@"%@/kinstall", bundledInstaller];
-		std::string si = std::string([installer UTF8String]);
-		if (!FileUtils::IsFile(si))
-		{
-			NSLog(@"invalid bundle. installer file doesn't exist at %@",installer);
-			[pool release];
-			return __LINE__;
-		}
-		NSLog(@"runtime set to %@",runtime);
-		std::vector<std::string> args;
-		args.push_back(std::string([bundledInstaller UTF8String]));
-		args.push_back(std::string([runtime UTF8String]));
-		int exitCode = FileUtils::RunAndWait(std::string([installer UTF8String]),args);
-		NSLog(@"exit code %d",exitCode);
-	}
-	
-	// at this point, we now need to determine which runtime and modules
-	// so we can launch our runtime kernels with the appropriate paths
-	// and environment pre-setup
 	
 	// 1. read the application manifest to determine what's needed
 	NSString *manifestNS = [NSString stringWithFormat:@"%@/manifest",bundlePath];
+
 	std::string ms = std::string([manifestNS UTF8String]);
 	if (!FileUtils::IsFile(ms))
 	{
@@ -161,7 +111,7 @@ int main(int argc, char* argv[])
 		return __LINE__;
 	}
 
-	std::vector<std::string> modules;
+	std::vector< std::pair< std::pair<std::string,std::string>,bool> > modules;
 	std::vector<std::string> moduleDirs;
 	std::string manifest([manifestNS UTF8String]);
 	std::string runtimePath;
@@ -171,6 +121,133 @@ int main(int argc, char* argv[])
 		NSLog(@"Could not read manifest: %@", manifestNS);
 		[pool release];
 		return __LINE__;
+	}
+	
+	std::vector< std::pair<std::string,std::string> > missing;
+	std::vector< std::pair< std::pair<std::string,std::string>, bool> >::iterator i = modules.begin();
+	while(i!=modules.end())
+	{
+		std::pair< std::pair<std::string,std::string>,bool> p = (*i++);
+		if (!p.second)
+		{
+			missing.push_back(p.first);
+			NSLog(@"missing module: %s/%s",p.first.first.c_str(),p.first.second.c_str());
+		}
+	}
+	std::string runtimeBase = FileUtils::GetRuntimeBaseDirectory();
+
+	if (missing.size()>0)
+	{
+		const char *updatesite = getenv("TITANIUM_UPDATESITE");
+		std::string url;
+		if (!updatesite)
+		{
+			//FIXME
+//			url = "http://updatesite.titaniumapp.com/";
+
+			url = "http://localhost/~";
+			url+=[NSUserName() UTF8String];
+			url+="/titanium";
+			NSLog(@"path => %s",url.c_str());
+		}
+		else
+		{
+			url = std::string(updatesite);
+		}
+		//TODO: delete this directory!
+		std::string sourceTemp = FileUtils::GetTempDirectory();
+		
+		std::vector<std::string> args;
+		// appname
+		args.push_back([bundleName UTF8String]);
+		// title 
+		//I18N: localize these
+		args.push_back("Additional application files required");
+		// message
+		//I18N: localize these
+		args.push_back([[NSString stringWithFormat:@"There are additional application files that are required for %@. These will be downloaded from the network. Please press Continue to download these files now to complete the installation of %@.",bundleName,bundleName] UTF8String]);
+		// extract directory
+		args.push_back(sourceTemp);
+		// runtime base
+		args.push_back(runtimeBase);
+
+		// make sure we create our runtime directory
+		[[NSFileManager defaultManager] createDirectoryAtPath:[NSString stringWithCString:runtimeBase.c_str()] attributes:nil];
+		
+		//TODO: get aid
+		std::string aid;
+		std::string sid = kroll::FileUtils::GetMachineId();
+		std::string qs("?os=osx&sid="+sid+"&aid="+aid);
+		std::vector< std::pair<std::string,std::string> >::iterator iter = missing.begin();
+		int missingCount = 0;
+		while (iter!=missing.end())
+		{
+			std::pair<std::string,std::string> p = (*iter++);
+			std::string name;
+			std::string path;
+			bool found = false;
+			if (p.first == "runtime")
+			{
+				name = "runtime-osx-" + p.second;
+				// see if we have a private runtime installed and we can link to that
+				NSString *rt = [NSString stringWithFormat:@"%@/installer/runtime",bundlePath];
+				path = std::string([rt UTF8String]);
+				if (FileUtils::IsDirectory(path))
+				{
+					found = true;
+					runtimePath = path;
+				}
+			}
+			else
+			{
+				name = "module-" + p.first + "-" + p.second;
+				// see if we have a private module installed and we can link to that
+				NSString *pm = [NSString stringWithFormat:@"%@/installer/modules/%s",bundlePath,p.first.c_str()];
+				path = std::string([pm UTF8String]);
+				if (FileUtils::IsDirectory(path))
+				{
+					found = true;
+				}
+			}
+			if (found)
+			{
+				moduleDirs.push_back(path);
+			}
+			else
+			{
+				NSURL *u = [NSURL URLWithString:[NSString stringWithFormat:@"%s/%s.zip%s",url.c_str(),name.c_str(),qs.c_str()]];
+				args.push_back([[u absoluteString] UTF8String]);
+				missingCount++;
+			}
+		}
+
+		// we have to check again in case the private module/runtime was
+		// resolved inside the application folder
+		if (missingCount>0)
+		{
+			// run the installer app which will fetch remote modules/runtime for us
+			NSString *exec = [NSString stringWithFormat:@"%@/installer/Installer App.app/Contents/MacOS/Installer App",bundlePath];
+			NSLog(@"launching: %@",exec);
+		
+			FileUtils::RunAndWait([exec UTF8String],args);
+		
+			//TODO: improve check for error/cancel
+			modules.clear();
+			moduleDirs.clear();
+			bool success = FileUtils::ReadManifest(manifest,runtimePath,modules,moduleDirs);
+			if (!success)
+			{
+				// must have failed
+				// unlink the temporary directory
+				[[NSFileManager defaultManager] removeFileAtPath:[NSString stringWithCString:sourceTemp.c_str()] handler:nil];
+				[pool release];
+				return __LINE__;
+			}
+
+			NSLog(@"new runtime path is: %s",runtimePath.c_str());
+		}
+		// unlink the temporary directory
+		[[NSFileManager defaultManager] removeFileAtPath:[NSString stringWithCString:sourceTemp.c_str()] handler:nil];
 	}
 
 	// 2. now we're going to make sure we have our application structure setup
@@ -182,15 +259,13 @@ int main(int argc, char* argv[])
 	NSString *appMacOSDir = [NSString stringWithFormat:@"%@/Contents/MacOS",appDir];
 	
 	NSString *runtimeExec = [NSString stringWithFormat:@"%@/%@",appMacOSDir,bundleName];
-	NSLog(@"tikernel path = %@",runtimeExec);
 	
 	// we need to construct a parallel structure for the application
 	// to trick OSX into thinking that the tikernel process is our 
 	// real application bundle - which really is just a set of symlinks
 	std::string ads = std::string([appDir UTF8String]);
-	if (!FileUtils::IsDirectory(ads) || installOnly)
+	if (!FileUtils::IsDirectory(ads))
 	{
-		NSLog(@"need to install to %@",appRootDir);
 		NSFileManager *fm = [NSFileManager defaultManager];
 		[fm createDirectoryAtPath:appRootDir attributes:nil];
 		[fm createDirectoryAtPath:appDir attributes:nil];
@@ -224,64 +299,62 @@ int main(int argc, char* argv[])
 		}
 	}
 	
-	// if we passed in --install, we're going to just exit after we've
-	// done the install setup for the application
-	if (installOnly == NO)
-	{
-		
-		NSMutableString *libpath = [NSMutableString stringWithCapacity:255];
-		[libpath appendString:[NSString stringWithCString:runtimePath.c_str()]];
-		[libpath appendString:@":"];
+	NSMutableString *libpath = [NSMutableString stringWithCapacity:255];
+	[libpath appendString:[NSString stringWithCString:runtimePath.c_str()]];
+	[libpath appendString:@":"];
 
-		NSMutableString *modulePath = [NSMutableString stringWithCapacity:255];
-	
-		for (int c=0;c<(int)moduleDirs.size();c++)
-		{
-			std::string module = moduleDirs.at(c);
-			NSString *p = [NSString stringWithCString:module.c_str()];
-			[libpath appendString:p];
-			[libpath appendString:@":"];
-			[modulePath appendString:p];
-			[modulePath appendString:@":"];
-		}
-	
-		// create our program args (just pass what was passed to us)
-		NSMutableArray *args = [[[NSMutableArray alloc] init] autorelease];
-		for (int c=1;c<argc;c++)
-		{
-			[args addObject:[NSString stringWithFormat:@"%s",argv[c]]];
-		}
-		NSString *dylibPath = [NSString stringWithFormat:@"%@:%s/WebKit.framework/Versions/Current",libpath,runtimePath.c_str()];
-		dylibPath = [dylibPath stringByAppendingFormat:@":%s/WebCore.framework/Versions/Current",runtimePath.c_str()];
-		dylibPath = [dylibPath stringByAppendingFormat:@":%s/JavaScriptCore.framework/Versions/Current",runtimePath.c_str()];
-		dylibPath = [dylibPath stringByAppendingFormat:@":%s",runtimePath.c_str()];
-	
-		// create our environment
-		NSDictionary *ce = [[NSProcessInfo processInfo] environment];
-		NSMutableDictionary *env = [[NSMutableDictionary alloc] initWithDictionary:ce];
-		[env setValue:appDir forKey:@"KR_HOME"];
-		[env setValue:[NSString stringWithCString:runtimePath.c_str()] forKey:@"KR_RUNTIME"];
-		[env setValue:runtime forKey:@"KR_RUNTIME_HOME"];
-		[env setValue:modulePath forKey:@"KR_PLUGINS"];
-		[env setValue:dylibPath forKey:@"DYLD_LIBRARY_PATH"];
-	
-		NSLog(@"executing: %@ %@ with %@, path=%@",runtimeExec,args,env,bundlePath);
-	
-		// 4. now launch the process. 
-		invoker = [TaskInvoker alloc];
-		NSInvocation* terminateInvocation = [TaskCallback createInvocation: @selector(terminated:)];
-	
-		// setup termination handlers that will ensure that we don't 
-		// orphan our subprocess
-		signal(SIGHUP, &termination);
-		signal(SIGTERM, &termination);
-		signal(SIGINT, &termination);
-		signal(SIGKILL, &termination);
-	
-		[invoker initWithApplication:runtimeExec environment:env arguments:args currentDirectory:bundlePath];
-		[invoker launch:terminateInvocation];
+	NSMutableString *modulePath = [NSMutableString stringWithCapacity:255];
+
+	for (int c=0;c<(int)moduleDirs.size();c++)
+	{
+		std::string module = moduleDirs.at(c);
+		NSString *p = [NSString stringWithCString:module.c_str()];
+		[libpath appendString:p];
+		[libpath appendString:@":"];
+		[modulePath appendString:p];
+		[modulePath appendString:@":"];
+	}
+
+	// create our program args (just pass what was passed to us)
+	NSMutableArray *args = [[[NSMutableArray alloc] init] autorelease];
+	for (int c=1;c<argc;c++)
+	{
+		[args addObject:[NSString stringWithFormat:@"%s",argv[c]]];
 	}
 	
+	//TODO: we need to refactor this out since these are Titanium specific
+	//for now, it doesn't hurt if you don't have them
+	NSString *dylibPath = [NSString stringWithFormat:@"%@:%s/WebKit.framework/Versions/Current",libpath,runtimePath.c_str()];
+	dylibPath = [dylibPath stringByAppendingFormat:@":%s/WebCore.framework/Versions/Current",runtimePath.c_str()];
+	dylibPath = [dylibPath stringByAppendingFormat:@":%s/JavaScriptCore.framework/Versions/Current",runtimePath.c_str()];
+	dylibPath = [dylibPath stringByAppendingFormat:@":%s",runtimePath.c_str()];
+
+	NSString *runtime = [NSString stringWithCString:runtimeBase.c_str()];
+	// create our environment
+	NSDictionary *ce = [[NSProcessInfo processInfo] environment];
+	NSMutableDictionary *env = [[NSMutableDictionary alloc] initWithDictionary:ce];
+	[env setValue:appDir forKey:@"KR_HOME"];
+	[env setValue:[NSString stringWithCString:runtimePath.c_str()] forKey:@"KR_RUNTIME"];
+	[env setValue:runtime forKey:@"KR_RUNTIME_HOME"];
+	[env setValue:modulePath forKey:@"KR_PLUGINS"];
+	[env setValue:dylibPath forKey:@"DYLD_LIBRARY_PATH"];
+	
+	NSLog(@"executing: %@ %@ with %@, path=%@",runtimeExec,args,env,bundlePath);
+
+	// 4. now launch the process. 
+	invoker = [TaskInvoker alloc];
+	NSInvocation* terminateInvocation = [TaskCallback createInvocation: @selector(terminated:)];
+
+	// setup termination handlers that will ensure that we don't 
+	// orphan our subprocess
+	signal(SIGHUP, &termination);
+	signal(SIGTERM, &termination);
+	signal(SIGINT, &termination);
+	signal(SIGKILL, &termination);
+
+	[invoker initWithApplication:runtimeExec environment:env arguments:args currentDirectory:bundlePath];
+	[invoker launch:terminateInvocation];
 	[pool release];
+	
 	return 0;
 }

@@ -115,7 +115,7 @@ namespace kroll
 		/*
 			Function: ReadManifest
 		*/
-		static bool ReadManifest(std::string& path, std::string &runtimePath, std::vector<std::string>& modules, std::vector<std::string> &moduleDirs);
+		static bool ReadManifest(std::string& path, std::string &runtimePath, std::vector< std::pair< std::pair<std::string,std::string>,bool> >& modules, std::vector<std::string> &moduleDirs);
 
 		/*
 			Function: ListDir
@@ -131,6 +131,20 @@ namespace kroll
 			Function: IsFile
 		*/
 		static bool IsFile(std::string &file);
+		
+		/*
+		    Function: GetMachineId
+		 
+		    This functions returns a unique machine identifier
+		 */
+		static std::string GetMachineId();
+		
+		/*
+		 	Function: GetTempDirectory
+		
+		    This function returns temporary directory for application
+		 */
+		static std::string GetTempDirectory();
 
 		/*
 			Function: GetApplicationDirectory
