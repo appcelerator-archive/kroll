@@ -7,9 +7,9 @@
 
 #ifdef OS_OSX
 #include <Cocoa/Cocoa.h>
-#include <IOKit/IOKitLib.h> 
-#include <IOKit/network/IOEthernetInterface.h> 
-#include <IOKit/network/IONetworkInterface.h> 
+#include <IOKit/IOKitLib.h>
+#include <IOKit/network/IOEthernetInterface.h>
+#include <IOKit/network/IONetworkInterface.h>
 #include <IOKit/network/IOEthernetController.h>
 #elif defined(OS_WIN32)
 #include <windows.h>
@@ -43,7 +43,7 @@ namespace kroll
 	}
 	std::string FileUtils::GetTempDirectory()
 	{
-#ifdef OS_OSX		
+#ifdef OS_OSX
 		NSString * tempDir = NSTemporaryDirectory();
 		if (tempDir == nil)
 		    tempDir = @"/tmp";
@@ -56,11 +56,11 @@ namespace kroll
 		mkdtemp(buffer);
 		NSString * temporaryDirectory = [[NSFileManager defaultManager]
 		        stringWithFileSystemRepresentation: buffer
-		                                    length: strlen(buffer)];		
+		                                    length: strlen(buffer)];
 		return std::string([temporaryDirectory UTF8String]);
 #elif defined(OS_WIN32)
-		int BUFSIZE = 512;
-		TCHAR szTempName[BUFSIZE];  
+#define BUFSIZE 512
+		TCHAR szTempName[BUFSIZE];
 		GetTempPath(BUFSIZE,szTempName);
 		int j = 1 + (int) (10000 * (rand() / (RAND_MAX + 10000)));
 		std::string dir(szTempName);
@@ -359,62 +359,62 @@ namespace kroll
 	std::string FileUtils::GetMachineId()
 	{
 #ifdef OS_OSX
-		kern_return_t kernResult; 
-		mach_port_t machPort; 
-		char serialNumber[256]; 
+		kern_return_t kernResult;
+		mach_port_t machPort;
+		char serialNumber[256];
 
-		kernResult = IOMasterPort( MACH_PORT_NULL, &machPort ); 
+		kernResult = IOMasterPort( MACH_PORT_NULL, &machPort );
 
-		serialNumber[0] = 0; 
+		serialNumber[0] = 0;
 
-		// if we got the master port 
-		if ( kernResult == KERN_SUCCESS ) 
-		{ 
-			// create a dictionary matching IOPlatformExpertDevice 
-			CFMutableDictionaryRef classesToMatch = IOServiceMatching("IOPlatformExpertDevice" ); 
+		// if we got the master port
+		if ( kernResult == KERN_SUCCESS )
+		{
+			// create a dictionary matching IOPlatformExpertDevice
+			CFMutableDictionaryRef classesToMatch = IOServiceMatching("IOPlatformExpertDevice" );
 
-			// if we are successful 
-			if (classesToMatch) 
-			{ 
-				// get the matching services iterator 
-				io_iterator_t iterator; 
-				kernResult = IOServiceGetMatchingServices( machPort, 
-				classesToMatch, &iterator ); 
+			// if we are successful
+			if (classesToMatch)
+			{
+				// get the matching services iterator
+				io_iterator_t iterator;
+				kernResult = IOServiceGetMatchingServices( machPort,
+				classesToMatch, &iterator );
 
-				// if we succeeded 
-				if ( (kernResult == KERN_SUCCESS) && iterator ) 
-				{ 
-					io_object_t serviceObj; 
-					bool done = false; 
-					do { 
-						// get the next item out of the dictionary 
-						serviceObj = IOIteratorNext( iterator ); 
+				// if we succeeded
+				if ( (kernResult == KERN_SUCCESS) && iterator )
+				{
+					io_object_t serviceObj;
+					bool done = false;
+					do {
+						// get the next item out of the dictionary
+						serviceObj = IOIteratorNext( iterator );
 
-						// if it is not NULL 
-						if (serviceObj) 
-						{ 
-							CFDataRef data = (CFDataRef) IORegistryEntryCreateCFProperty( serviceObj, CFSTR("serial-number"), kCFAllocatorDefault, 0 ); 
+						// if it is not NULL
+						if (serviceObj)
+						{
+							CFDataRef data = (CFDataRef) IORegistryEntryCreateCFProperty( serviceObj, CFSTR("serial-number"), kCFAllocatorDefault, 0 );
 
-							if (data != NULL) 
-							{ 
-								CFIndex datalen = CFDataGetLength(data); 
-								const UInt8* rawdata = CFDataGetBytePtr(data); 
-								char dataBuffer[256]; 
-								memcpy(dataBuffer, rawdata, datalen); 
-								sprintf(serialNumber, "%s%s", dataBuffer+13,dataBuffer); 
-								CFRelease(data); 
-								done = true; 
-							} 
-						} 
+							if (data != NULL)
+							{
+								CFIndex datalen = CFDataGetLength(data);
+								const UInt8* rawdata = CFDataGetBytePtr(data);
+								char dataBuffer[256];
+								memcpy(dataBuffer, rawdata, datalen);
+								sprintf(serialNumber, "%s%s", dataBuffer+13,dataBuffer);
+								CFRelease(data);
+								done = true;
+							}
+						}
 
-					} while (done == false); 
+					} while (done == false);
 
-					IOObjectRelease(serviceObj); 
-				} 
-				
-				IOObjectRelease(iterator); 
-			} 
-		} 
+					IOObjectRelease(serviceObj);
+				}
+
+				IOObjectRelease(iterator);
+			}
+		}
 		return std::string(serialNumber);
 #elif defined(OS_WIN32)
 		//http://www.codeguru.com/cpp/i-n/network/networkinformation/article.php/c5451
