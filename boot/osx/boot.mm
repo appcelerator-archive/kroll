@@ -235,7 +235,7 @@ int main(int argc, char* argv[])
 			modules.clear();
 			moduleDirs.clear();
 			bool success = FileUtils::ReadManifest(manifest,runtimePath,modules,moduleDirs);
-			if (!success)
+			if (!success || modules.size()!=moduleDirs.size())
 			{
 				// must have failed
 				// unlink the temporary directory
@@ -314,13 +314,27 @@ int main(int argc, char* argv[])
 		[modulePath appendString:p];
 		[modulePath appendString:@":"];
 	}
+	
+	NSString *startDir = appContentsDir;
 
 	// create our program args (just pass what was passed to us)
 	NSMutableArray *args = [[[NSMutableArray alloc] init] autorelease];
 	for (int c=1;c<argc;c++)
 	{
 		[args addObject:[NSString stringWithFormat:@"%s",argv[c]]];
+		std::string arg(argv[c]);
+		int t = arg.find("--kstart=");
+		if (t==0)
+		{
+			std::string value = arg.substr(arg.find("=")+1);
+			// this means start the app from a different home directory
+			// we use kstart to (hopefully) not conflict with a normal
+			// Kroll app's own command line variables
+			startDir = [NSString stringWithCString:value.c_str()];
+		}
 	}
+	
+	NSLog(@"start directory is = %@",startDir);
 	
 	//TODO: we need to refactor this out since these are Titanium specific
 	//for now, it doesn't hurt if you don't have them
@@ -333,7 +347,7 @@ int main(int argc, char* argv[])
 	// create our environment
 	NSDictionary *ce = [[NSProcessInfo processInfo] environment];
 	NSMutableDictionary *env = [[NSMutableDictionary alloc] initWithDictionary:ce];
-	[env setValue:appDir forKey:@"KR_HOME"];
+	[env setValue:startDir forKey:@"KR_HOME"];
 	[env setValue:[NSString stringWithCString:runtimePath.c_str()] forKey:@"KR_RUNTIME"];
 	[env setValue:runtime forKey:@"KR_RUNTIME_HOME"];
 	[env setValue:modulePath forKey:@"KR_PLUGINS"];
