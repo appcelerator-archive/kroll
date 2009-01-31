@@ -7,6 +7,10 @@
 
 #ifdef OS_OSX
 #include <Cocoa/Cocoa.h>
+#include <IOKit/IOKitLib.h> 
+#include <IOKit/network/IOEthernetInterface.h> 
+#include <IOKit/network/IONetworkInterface.h> 
+#include <IOKit/network/IOEthernetController.h>
 #elif defined(OS_WIN32)
 #include <windows.h>
 #include <shlobj.h>
@@ -37,10 +41,58 @@ namespace kroll
 #endif
 		return dir;
 	}
+	std::string FileUtils::GetTempDirectory()
+	{
+#ifdef OS_OSX		
+		NSString * tempDir = NSTemporaryDirectory();
+		if (tempDir == nil)
+		    tempDir = @"/tmp";
+
+		NSString *tmp = [tempDir stringByAppendingPathComponent:@"kXXXXX"];
+		const char * fsTemplate = [tmp fileSystemRepresentation];
+		NSMutableData * bufferData = [NSMutableData dataWithBytes: fsTemplate
+		                                                   length: strlen(fsTemplate)+1];
+		char * buffer = (char*)[bufferData mutableBytes];
+		mkdtemp(buffer);
+		NSString * temporaryDirectory = [[NSFileManager defaultManager]
+		        stringWithFileSystemRepresentation: buffer
+		                                    length: strlen(buffer)];		
+		return std::string([temporaryDirectory UTF8String]);
+#elif defined(OS_WIN32)
+		int BUFSIZE = 512;
+		TCHAR szTempName[BUFSIZE];  
+		GetTempPath(BUFSIZE,szTempName);
+		int j = 1 + (int) (10000 * (rand() / (RAND_MAX + 10000)));
+		std::string dir(szTempName);
+		dir+="\\k" + j;
+		return dir;
+#else
+		int j = 1 + (int) (10000 * (rand() / (RAND_MAX + 10000)));
+		std::string dir;
+		const char* tmp = getenv("TMPDIR");
+		if (tmp)
+		{
+			dir = std::string(tmp);
+		}
+		else
+		{
+			const char *tmp2 = getenv("TEMP");
+			if (tmp2)
+			{
+				dir = std::string(tmp2);
+			}
+			else
+			{
+				dir = std::string("/tmp");
+			}
+		}
+		dir += "/k" + j;
+		return std::string(dir);
+#endif
+	}
 	std::string FileUtils::GetResourcesDirectory()
 	{
 #ifdef OS_OSX
-		// TODO test this
 		NSString* resourcePath = [[NSBundle mainBundle] resourcePath];
 		std::string dir = std::string([resourcePath UTF8String]);
 #elif OS_WIN32
@@ -304,6 +356,74 @@ namespace kroll
 		}
 		return std::string();
 	}
+	std::string FileUtils::GetMachineId()
+	{
+#ifdef OS_OSX
+		kern_return_t kernResult; 
+		mach_port_t machPort; 
+		char serialNumber[256]; 
+
+		kernResult = IOMasterPort( MACH_PORT_NULL, &machPort ); 
+
+		serialNumber[0] = 0; 
+
+		// if we got the master port 
+		if ( kernResult == KERN_SUCCESS ) 
+		{ 
+			// create a dictionary matching IOPlatformExpertDevice 
+			CFMutableDictionaryRef classesToMatch = IOServiceMatching("IOPlatformExpertDevice" ); 
+
+			// if we are successful 
+			if (classesToMatch) 
+			{ 
+				// get the matching services iterator 
+				io_iterator_t iterator; 
+				kernResult = IOServiceGetMatchingServices( machPort, 
+				classesToMatch, &iterator ); 
+
+				// if we succeeded 
+				if ( (kernResult == KERN_SUCCESS) && iterator ) 
+				{ 
+					io_object_t serviceObj; 
+					bool done = false; 
+					do { 
+						// get the next item out of the dictionary 
+						serviceObj = IOIteratorNext( iterator ); 
+
+						// if it is not NULL 
+						if (serviceObj) 
+						{ 
+							CFDataRef data = (CFDataRef) IORegistryEntryCreateCFProperty( serviceObj, CFSTR("serial-number"), kCFAllocatorDefault, 0 ); 
+
+							if (data != NULL) 
+							{ 
+								CFIndex datalen = CFDataGetLength(data); 
+								const UInt8* rawdata = CFDataGetBytePtr(data); 
+								char dataBuffer[256]; 
+								memcpy(dataBuffer, rawdata, datalen); 
+								sprintf(serialNumber, "%s%s", dataBuffer+13,dataBuffer); 
+								CFRelease(data); 
+								done = true; 
+							} 
+						} 
+
+					} while (done == false); 
+
+					IOObjectRelease(serviceObj); 
+				} 
+				
+				IOObjectRelease(iterator); 
+			} 
+		} 
+		return std::string(serialNumber);
+#elif defined(OS_WIN32)
+		//http://www.codeguru.com/cpp/i-n/network/networkinformation/article.php/c5451
+		return std::string();	//FIXME: implement
+#else
+		//http://adywicaksono.wordpress.com/2007/11/08/detecting-mac-address-using-c-application/
+		return std::string();	//FIXME: implement
+#endif
+	}
 	void FileUtils::Tokenize(const std::string& str, std::vector<std::string>& tokens, const std::string &delimeters)
 	{
 		std::string::size_type lastPos = str.find_first_not_of(delimeters,0);
@@ -327,9 +447,18 @@ namespace kroll
 			}
 			c = c.substr(0,pos);
 		}
+		while(1)
+		{
+			size_t pos = c.find(" ");
+			if (pos != 0)
+			{
+				break;
+			}
+			c = c.substr(1);
+		}
 		return c;
 	}
-	bool FileUtils::ReadManifest(std::string& path, std::string &runtimePath, std::vector<std::string>& modules, std::vector<std::string> &moduleDirs)
+	bool FileUtils::ReadManifest(std::string& path, std::string &runtimePath, std::vector< std::pair< std::pair<std::string,std::string>, bool> >& modules, std::vector<std::string> &moduleDirs)
 	{
 		std::ifstream file(path.c_str());
 		if (file.bad() || file.fail())
@@ -353,16 +482,22 @@ namespace kroll
 				int op;
 				std::string version;
 				ExtractVersion(value,&op,version);
+				std::pair<std::string,std::string> p(key,version);
 				if (key == "runtime")
 				{
 					runtimePath = FindRuntime(op,version);
+					if (runtimePath == "")
+					{
+						modules.push_back(std::pair< std::pair<std::string,std::string>, bool>(p,false));
+					}
 				}
 				else
 				{
 					std::string dir = FindModule(key,op,version);
-					if (dir != "")
+					bool found = dir!="";
+					modules.push_back(std::pair< std::pair<std::string,std::string>, bool>(p,found));
+					if (found)
 					{
-						modules.push_back(key);
 						moduleDirs.push_back(dir);
 					}
 				}

@@ -3,4 +3,5 @@ Import('build')
 
 
 Env = build.env.Clone()
+Env.Append(FRAMEWORKS=['IOKit'])
 Env.Program(build.dir + '/kinstall', ['installer.mm','../api/file_utils.o'])
