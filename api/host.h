@@ -48,7 +48,7 @@ namespace kroll
 		 */
 		virtual SharedValue InvokeMethodOnMainThread(
 			SharedBoundMethod,
-			SharedPtr<ValueList> args) = 0;
+			const ValueList& args) = 0;
 
 		/*
 		 * Function: AddModuleProvider
@@ -242,7 +242,7 @@ namespace kroll
 	/**
 	 * method that invokes a bound method on the main host thread
 	 */
-	extern KROLL_API SharedValue InvokeMethodOnMainThread(SharedBoundMethod method, SharedPtr<ValueList> args);
+	extern KROLL_API SharedValue InvokeMethodOnMainThread(SharedBoundMethod method, const ValueList& args);
 }
 #endif
 

@@ -15,15 +15,11 @@
 
 #include <Poco/ScopedLock.h>
 #include <Poco/Mutex.h>
+#include <Poco/Condition.h>
+#include "linux_job.h"
 
 namespace kroll
 {
-
-	struct Job
-	{
-		SharedBoundMethod method;
-		SharedPtr<ValueList> args;
-	};
 
 	class EXPORT LinuxHost : public Host
 	{
@@ -34,14 +30,14 @@ namespace kroll
 		virtual int Run();
 		virtual Module* CreateModule(std::string& path);
 		SharedValue InvokeMethodOnMainThread(SharedBoundMethod method,
-		                                     SharedPtr<ValueList> args);
+		                                     const ValueList& args);
 
 		Poco::Mutex& GetJobQueueMutex();
-		std::vector<Job>& GetJobs();
+		std::vector<LinuxJob*>& GetJobs();
 
 	private:
 		Poco::Mutex job_queue_mutex;
-		std::vector<Job> jobs;
+		std::vector<LinuxJob*> jobs;
 	};
 }
 

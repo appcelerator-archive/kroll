@@ -11,6 +11,10 @@
 #include <gtk/gtk.h>
 #include <api/kroll.h>
 #include "host.h"
+#include "linux_job.h"
+
+using Poco::ScopedLock;
+using Poco::Mutex;
 
 namespace kroll
 {
@@ -74,45 +78,52 @@ namespace kroll
 		return this->job_queue_mutex;
 	}
 
-	std::vector<Job>& LinuxHost::GetJobs()
+	std::vector<LinuxJob*>& LinuxHost::GetJobs()
 	{
 		return this->jobs;
 	}
 
-	SharedValue LinuxHost::InvokeMethodOnMainThread(SharedBoundMethod method,
-	                                                SharedPtr<ValueList> args)
+	SharedValue LinuxHost::InvokeMethodOnMainThread(
+		SharedBoundMethod method,
+		const ValueList& args)
 	{
-		Poco::ScopedLock<Poco::Mutex> s(this->GetJobQueueMutex());
+		printf("invoking on main method\n");
+		LinuxJob* job = new LinuxJob(method, args);
 
-		Job new_job;
-		new_job.method = method;
-		new_job.args = args;
+		{
+			Poco::ScopedLock<Poco::Mutex> s(this->GetJobQueueMutex());
+			this->jobs.push_back(job); // Enqueue job
+		}
+		job->Wait(); // Wait for processing
 
-		this->jobs.push_back(new_job);
-		return Value::Undefined;
+		SharedValue r = job->GetResult();
+		ValueException e = job->GetException();
+		delete job;
+
+		if (!r.isNull())
+			return r;
+		else
+			throw e;
 	}
 
 	gboolean main_thread_job_handler(gpointer data)
 	{
 		LinuxHost *host = (LinuxHost*) data;
+		// Prevent other threads trying to queue jobs.
 		Poco::ScopedLock<Poco::Mutex> s(host->GetJobQueueMutex());
 
+		std::vector<LinuxJob*>& jobs = host->GetJobs();
+		std::vector<LinuxJob*>::iterator j;
 
-		std::vector<Job>& jobs = host->GetJobs();
 		if (jobs.size() == 0)
 			return TRUE;
 
-		printf("in handler: %i\n", jobs.size());
-		std::vector<Job>::iterator i;
-		for (i = jobs.begin(); i != jobs.end(); i++)
+		for (j = jobs.begin(); j != jobs.end(); j++)
 		{
-			SharedBoundMethod method = (*i).method;
-			SharedPtr<ValueList> args = (*i).args;
-			method->Call(*args);
+			(*j)->Execute();
 		}
 
 		jobs.clear();
-		printf("end: %i\n", jobs.size());
 		return TRUE;
 	}
 }
