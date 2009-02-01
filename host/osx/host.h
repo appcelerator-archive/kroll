@@ -14,19 +14,24 @@ namespace kroll
 	{
 	public:
 		OSXHost(int argc, const char **argv);
-		virtual ~OSXHost();
 
-		virtual int Run();
 		virtual Module* CreateModule(std::string& path);
 
 		SharedValue InvokeMethodOnMainThread(SharedBoundMethod method,
 		                                     SharedPtr<ValueList> args);
 
+	protected:
+		virtual ~OSXHost();
+		virtual bool RunLoop();
+		
 	private:
 		std::string appConfig;
 	};
 }
 
-EXPORT kroll::Host* createHost(int argc, const char **argv);
+extern "C"
+{
+	EXPORT int Execute(int argc,const char** argv);
+}
 
 #endif

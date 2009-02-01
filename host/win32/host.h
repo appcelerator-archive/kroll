@@ -42,6 +42,9 @@ namespace kroll
 	};
 }
 
-KROLL_HOST_API kroll::Host* createHost(HINSTANCE hInstance, int argc, const char **argv);
+extern "C"
+{
+	KROLL_HOST_API int Execute(HINSTANCE hInstance, int argc, const char **argv);
+}
 
 #endif

@@ -24,7 +24,7 @@ namespace kroll
 
 	Win32Host::Win32Host(HINSTANCE hInstance, int _argc, const char** _argv) : Host(_argc,_argv), instance_handle(hInstance)
 	{
-		char *p = getenv("KR_PLUGINS");
+		char *p = getenv("KR_MODULES");
 		if (p)
 		{
 			FileUtils::Tokenize(p, this->module_paths, ";");
@@ -94,6 +94,10 @@ namespace kroll
 	}
 }
 
-kroll::Host* createHost(HINSTANCE hInstance, int argc, const char **argv){
-	return new kroll::Win32Host(hInstance,argc,argv);
+extern "C"
+{
+	int Execute(HINSTANCE hInstance, int argc, const char **argv){
+		Host *host = kroll::Win32Host(hInstance,argc,argv);
+		return host->Run();
+	}
 }

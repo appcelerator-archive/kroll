@@ -108,7 +108,7 @@ std::cout << "runtime = " << runtimeDir << std::endl;
 	ldlib.append(libPath);
 	env[cur_env + 0]=(char*)ldlib.c_str();
 
-	std::string plug = std::string("KR_PLUGINS=");
+	std::string plug = std::string("KR_MODULES=");
 	plug.append(moduleArgs);
 	env[cur_env + 1]=(char*)plug.c_str();
 
@@ -121,7 +121,7 @@ std::cout << "runtime = " << runtimeDir << std::endl;
 	env[cur_env + 3]=(char*)rhome.c_str();
 
 	std::cout << "LD_LIBRARY_PATH=" << libPath << std::endl;
-	std::cout << "KR_PLUGINS=" << moduleArgs << std::endl;
+	std::cout << "KR_MODULES=" << moduleArgs << std::endl;
 	std::cout << "KR_HOME=" << cwd << std::endl;
 	std::cout << "KR_RUNTIME=" << runtimeDir << std::endl;
 	

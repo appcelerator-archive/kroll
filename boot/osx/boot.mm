@@ -350,7 +350,7 @@ int main(int argc, char* argv[])
 	[env setValue:startDir forKey:@"KR_HOME"];
 	[env setValue:[NSString stringWithCString:runtimePath.c_str()] forKey:@"KR_RUNTIME"];
 	[env setValue:runtime forKey:@"KR_RUNTIME_HOME"];
-	[env setValue:modulePath forKey:@"KR_PLUGINS"];
+	[env setValue:modulePath forKey:@"KR_MODULES"];
 	[env setValue:dylibPath forKey:@"DYLD_LIBRARY_PATH"];
 	
 	NSLog(@"executing: %@ %@ with %@, path=%@",runtimeExec,args,env,bundlePath);

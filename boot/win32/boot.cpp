@@ -141,7 +141,7 @@ int WinMain(HINSTANCE, HINSTANCE, LPSTR cl, int show)
 	libPath.append(runtimePath + "\\bin");
 
 	SetEnvironmentVariable("PATH",libPath.c_str());
-	SetEnvironmentVariable("KR_PLUGINS",moduleArgs.c_str());
+	SetEnvironmentVariable("KR_MODULES",moduleArgs.c_str());
 	SetEnvironmentVariable("KR_HOME",cwd.c_str());
 	SetEnvironmentVariable("KR_RUNTIME",runtimeDir.c_str());
 

@@ -133,5 +133,9 @@ namespace kroll
 		SharedValue result = method->Call(*args);
 		return result;
 	}
+	bool TestHost::RunLoop()
+	{
+		return false;
+	}
 }
 

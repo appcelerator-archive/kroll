@@ -26,7 +26,7 @@ namespace kroll
 	};
 
 	class EXPORT LinuxHost : public Host
-	{
+	{ 
 	public:
 		LinuxHost(int argc, const char* argv[]);
 		virtual ~LinuxHost();
@@ -45,7 +45,10 @@ namespace kroll
 	};
 }
 
-EXPORT kroll::Host* createHost(int argc,const char** argv);
+extern "C"
+{
+	EXPORT int Execute(int argc,const char** argv);
+}
 
 
 #endif

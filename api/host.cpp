@@ -30,9 +30,11 @@ namespace kroll
 	{
 		char *ti_home = getenv("KR_HOME");
 		char *ti_runtime = getenv("KR_RUNTIME");
-		
+
+#ifdef DEBUG		
 		std::cout << ">>> KR_HOME=" << ti_home << std::endl;
 		std::cout << ">>> KR_RUNTIME=" << ti_runtime << std::endl;
+#endif
 
 		if (ti_home == NULL)
 		{
@@ -45,6 +47,9 @@ namespace kroll
 			std::cerr << "KR_RUNTIME not defined, aborting." << std::endl;
 			exit(1);
 		}
+		
+		this->running = false;
+		this->exitCode = 0;
 
 		this->appDirectory = std::string(ti_home);
 		this->runtimeDirectory = std::string(ti_runtime);
@@ -96,7 +101,8 @@ namespace kroll
 		}
 	}
 
-	void Host::AddModuleProvider(ModuleProvider *provider) {
+	void Host::AddModuleProvider(ModuleProvider *provider) 
+	{
 		ScopedLock lock(&moduleMutex);
 		module_providers.push_back(provider);
 	}
@@ -118,7 +124,8 @@ namespace kroll
 		return NULL;
 	}
 
-	void Host::RemoveModuleProvider(ModuleProvider *provider) {
+	void Host::RemoveModuleProvider(ModuleProvider *provider) 
+	{
 		ScopedLock lock(&moduleMutex);
 
 		std::vector<ModuleProvider*>::iterator iter =
@@ -128,6 +135,14 @@ namespace kroll
 			module_providers.erase(iter);
 		}
 
+	}
+	void Host::UnloadModuleProviders()
+	{
+		while (module_providers.size()>0)
+		{
+			ModuleProvider* provider = module_providers.at(0);
+			this->RemoveModuleProvider(provider);
+		}
 	}
 
 	bool Host::IsModule(std::string& filename)
@@ -140,6 +155,7 @@ namespace kroll
 
 	SharedPtr<Module> Host::LoadModule(std::string& path, ModuleProvider *provider, bool *error)
 	{
+		KR_DUMP_LOCATION
 		ScopedLock lock(&moduleMutex);
 		
 		SharedPtr<Module> module;
@@ -163,6 +179,9 @@ namespace kroll
 
 			// Call module Load lifecycle event
 			module->Load();
+			
+			// store module
+			loaded_modules.push_back(module);
 		}
 		else
 		{
@@ -173,34 +192,49 @@ namespace kroll
 		return module;
 	}
 
+	void Host::UnloadModules ()
+	{
+		KR_DUMP_LOCATION
+		ScopedLock lock(&moduleMutex);
+		
+		while (this->loaded_modules.size() > 0)
+		{
+			SharedPtr<Module> module = this->loaded_modules.at(0);
+			this->UnregisterModule(module);
+		}
+	}
+	
 	void Host::LoadModules()
 	{
-		ScopedLock lock(&moduleMutex);
-
-		/* Scan module paths for modules which can be
-		 * loaded by the basic shared-object provider */
-		std::vector<std::string>::iterator iter;
-		iter = this->module_paths.begin();
-		while (iter != this->module_paths.end())
-		{
-			this->FindBasicModules((*iter++));
-		}
-
-		/* From now on, adding a module provider triggers
- 		 * a rescan of all invalid module files */
-		this->basicModulesLoaded = true;
-
-		/* Try to load files that weren't modules
-		 * using newly available module providers */
-		this->ScanInvalidModuleFiles();
-
-		/* All modules are now loaded,
-		 * so initialize them all */
-		this->InitializeModules(this->modules);
+		KR_DUMP_LOCATION
+		
+		// ScopedLock lock(&moduleMutex);
+		// 
+		// /* Scan module paths for modules which can be
+		//  * loaded by the basic shared-object provider */
+		// std::vector<std::string>::iterator iter;
+		// iter = this->module_paths.begin();
+		// while (iter != this->module_paths.end())
+		// {
+		// 	this->FindBasicModules((*iter++));
+		// }
+		// 
+		// /* From now on, adding a module provider triggers
+		//  		 * a rescan of all invalid module files */
+		// this->basicModulesLoaded = true;
+		// 
+		// /* Try to load files that weren't modules
+		//  * using newly available module providers */
+		// this->ScanInvalidModuleFiles();
+		// 
+		// /* All modules are now loaded,
+		//  * so initialize them all */
+		// this->InitializeModules(this->modules);
 	}
 
 	void Host::FindBasicModules(std::string& dir)
 	{
+		KR_DUMP_LOCATION
 		ScopedLock lock(&moduleMutex);
 
 		Poco::DirectoryIterator iter = Poco::DirectoryIterator(dir);
@@ -227,6 +261,7 @@ namespace kroll
 
 	void Host::ScanInvalidModuleFiles(bool also_initialize)
 	{
+		KR_DUMP_LOCATION
 		ScopedLock lock(&moduleMutex);
 		if (scanInProgress) return;
 		
@@ -288,6 +323,7 @@ namespace kroll
 
 	void Host::InitializeModules(ModuleMap to_init)
 	{
+		KR_DUMP_LOCATION
 		ScopedLock lock(&moduleMutex);
 
 		ModuleMap::iterator iter = to_init.begin();
@@ -301,7 +337,7 @@ namespace kroll
 
 	SharedPtr<Module> Host::GetModule(std::string& name)
 	{
-
+		KR_DUMP_LOCATION
 		ScopedLock lock(&moduleMutex);
 		ModuleMap::iterator iter = this->modules.find(name);
 		if (this->modules.end() == iter) {
@@ -320,6 +356,7 @@ namespace kroll
 
 	void Host::UnregisterModule(Module* module)
 	{
+		KR_DUMP_LOCATION
 		ScopedLock lock(&moduleMutex);
 		ModuleMap::iterator iter = this->modules.begin();
 		while (iter != this->modules.end())
@@ -341,8 +378,54 @@ namespace kroll
 		return this->global_object;
 	}
 	
+	bool Host::Start()
+	{
+		KR_DUMP_LOCATION
+		return true;
+	}
+	
+	void Host::Stop ()
+	{
+		KR_DUMP_LOCATION
+	}
+
+	int Host::Run()
+	{
+		KR_DUMP_LOCATION
+
+		std::cout << "++++++++ RUN" << std::endl;
+		
+		{
+			ScopedLock lock(&moduleMutex);
+			this->AddModuleProvider(this);
+			this->LoadModules();
+
+			// allow start to immediately end
+			this->running = this->Start();
+		}
+		
+		while (this->running)
+		{
+			ScopedLock lock(&moduleMutex);
+			if (!this->RunLoop())
+			{
+				break; 
+			}
+		}
+		
+		ScopedLock lock(&moduleMutex);
+		this->Stop();
+		this->UnloadModules();
+		this->UnloadModuleProviders();
+		
+		return this->exitCode;
+	}
+	
 	void Host::Exit(int exitcode)
 	{
-		//FIXME: implement
+		KR_DUMP_LOCATION
+		ScopedLock lock(&moduleMutex);
+		running = false;
+		this->exitCode = exitcode;
 	}
 }

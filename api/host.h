@@ -34,12 +34,13 @@ namespace kroll
 
 	public:
 
+
 		/*
 		 * Function: Run
 		 *
 		 * called to run the host
 		 */
-		virtual int Run() = 0;
+		int Run();
 		
 		/**
 		 * Function: Exit
@@ -155,6 +156,7 @@ namespace kroll
 	protected:
 		ModuleMap modules;
 		Mutex moduleMutex;
+		std::vector< SharedPtr<Module> > loaded_modules;
 		std::vector<ModuleProvider *> module_providers;
 		std::vector<std::string> module_paths;
 		SharedPtr<StaticBoundObject> global_object;
@@ -216,6 +218,10 @@ namespace kroll
 		*/
 		void LoadModules();
 
+		void UnloadModules();
+		
+		void UnloadModuleProviders();
+		
 		/*
 		 * Function: FindBasicModules
 		 *
@@ -236,13 +242,19 @@ namespace kroll
 		 *  to_init - A vector of modules to initialize.
 		*/
 		void InitializeModules(ModuleMap to_init);
-
+		
+		virtual bool Start ();
+		virtual bool RunLoop()=0;
+		virtual void Stop ();
+		
 	private:
 		std::string appDirectory;
 		std::string runtimeDirectory;
 		std::string appConfigPath;
 		bool basicModulesLoaded;
 		bool scanInProgress;
+		bool running;
+		int exitCode;
 
 		DISALLOW_EVIL_CONSTRUCTORS(Host);
 	};

@@ -21,6 +21,9 @@ namespace kroll
 		SharedValue InvokeMethodOnMainThread(SharedBoundMethod method,
 		                                     SharedPtr<ValueList> args);
 
+	protected:
+		virtual bool RunLoop();
+		
 	private:
 		std::vector<std::string> module_paths;
 		std::vector<Module*> test_modules;

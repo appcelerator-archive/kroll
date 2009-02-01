@@ -48,7 +48,9 @@ int main(int argc, const char* argv[])
 		WaitForDebugger();
 	}
 #endif
+	std::cout << "BFORE RUN" << std::endl;
 	int rc = host->Run();
+	std::cout << "AFTER RUN => " << rc << std::endl;
 
 #if defined(OS_OSX)
 	[pool release];

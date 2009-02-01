@@ -20,7 +20,7 @@ namespace kroll
 	{
 		gtk_init(&argc, (char***) &argv);
 
-		char *p = getenv("KR_PLUGINS");
+		char *p = getenv("KR_MODULES");
 		if (p)
 		{
 			FileUtils::Tokenize(p, this->module_paths, ":");
@@ -117,8 +117,11 @@ namespace kroll
 	}
 }
 
-kroll::Host* createHost(int argc,const char **argv)
+extern "C"
 {
-	return new LinuxHost(argc,argv);
+	int Execute(int argc,const char **argv)
+	{
+		Host *host = new LinuxHost(argc,argv);
+		return host->Run();
+	}
 }
-

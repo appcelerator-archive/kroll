@@ -16,29 +16,39 @@ namespace kroll
 {
 	OSXHost::OSXHost(int _argc, const char **_argv) : Host(_argc,_argv)
 	{
-		SetupLog(_argc,_argv,[NSString stringWithFormat:@"%s/run.log",this->GetApplicationHome().c_str()]);
+		// SetupLog(_argc,_argv,[NSString stringWithFormat:@"%s/run.log",this->GetApplicationHome().c_str()]);
 
-		char *p = getenv("KR_PLUGINS");
+//FIXME - push this us
+		char *p = getenv("KR_MODULES");
 		if (p)
 		{
 			FileUtils::Tokenize(p, this->module_paths, ":");
 		}
+		
+		std::cout << "OSXHost::OSXHost" << std::endl;
 	}
 
 	OSXHost::~OSXHost()
 	{
-		CloseLog();
+		// CloseLog();
 	}
 
-	int OSXHost::Run()
+	bool OSXHost::RunLoop()
 	{
-		TRACE(@PRODUCT_NAME" Kroll Running (OSX)...");
-		this->AddModuleProvider(this);
-		this->LoadModules();
-
-		[NSApp run];
-		return 0;
+		// we pull out an event from the queue, blocking a little bit before returning
+		NSEvent *event = [NSApp nextEventMatchingMask:NSAnyEventMask untilDate:[NSDate dateWithTimeIntervalSinceNow:1] inMode:NSDefaultRunLoopMode dequeue:YES];
+		if (event) 
+		{
+			[NSApp sendEvent:event];
+		}
+		return true;
 	}
+	
+	// int OSXHost::PerformRun()
+	// {
+	// 	[NSApp run];
+	// 	return 0;
+	// }
 
 	Module* OSXHost::CreateModule(std::string& path)
 	{
@@ -126,7 +136,12 @@ namespace kroll
 	}
 }
 
-kroll::Host* createHost(int argc, const char **argv)
+
+extern "C" 
 {
-	return new kroll::OSXHost(argc,argv);
+	int Execute(int argc,const char **argv)
+	{
+		kroll::Host *host = new kroll::OSXHost(argc,argv);
+		return host->Run();
+	}
 }
