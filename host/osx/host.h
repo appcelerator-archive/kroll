@@ -20,7 +20,7 @@ namespace kroll
 		virtual Module* CreateModule(std::string& path);
 
 		SharedValue InvokeMethodOnMainThread(SharedBoundMethod method,
-		                                     SharedPtr<ValueList> args);
+		                                     const ValueList& args);
 
 	private:
 		std::string appConfig;
