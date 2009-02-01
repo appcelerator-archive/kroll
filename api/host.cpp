@@ -30,6 +30,9 @@ namespace kroll
 	{
 		char *ti_home = getenv("KR_HOME");
 		char *ti_runtime = getenv("KR_RUNTIME");
+		
+		std::cout << ">>> KR_HOME=" << ti_home << std::endl;
+		std::cout << ">>> KR_RUNTIME=" << ti_runtime << std::endl;
 
 		if (ti_home == NULL)
 		{
@@ -336,5 +339,10 @@ namespace kroll
 
 	SharedPtr<StaticBoundObject> Host::GetGlobalObject() {
 		return this->global_object;
+	}
+	
+	void Host::Exit(int exitcode)
+	{
+		//FIXME: implement
 	}
 }

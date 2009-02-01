@@ -117,3 +117,8 @@ namespace kroll
 	}
 }
 
+kroll::Host* createHost(int argc,const char **argv)
+{
+	return new LinuxHost(argc,argv);
+}
+

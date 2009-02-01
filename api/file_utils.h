@@ -22,12 +22,14 @@
 #ifdef OS_WIN32
 #define KR_PATH_SEP "\\"
 #define KR_PATH_SEP_OTHER "/"
+#define KR_LIB_SEP ";"
 #ifndef NO_UNZIP
 #include "unzip/unzip.h"
 #endif
 #else
 #define KR_PATH_SEP "/"
 #define KR_PATH_SEP_OTHER "\\"
+#define KR_LIB_SEP ":"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <pwd.h>
@@ -115,7 +117,7 @@ namespace kroll
 		/*
 			Function: ReadManifest
 		*/
-		static bool ReadManifest(std::string& path, std::string &runtimePath, std::vector< std::pair< std::pair<std::string,std::string>,bool> >& modules, std::vector<std::string> &moduleDirs);
+		static bool ReadManifest(std::string& path, std::string &runtimePath, std::vector< std::pair< std::pair<std::string,std::string>,bool> >& modules, std::vector<std::string> &moduleDirs, std::string &appname, std::string &appid);
 
 		/*
 			Function: ListDir
@@ -133,9 +135,26 @@ namespace kroll
 		static bool IsFile(std::string &file);
 		
 		/*
+			Function: CreateDirectory
+		*/
+		static bool CreateDirectory(std::string &dir);
+		
+		/* 
+			Function: DeleteDirectory
+		*/
+		static bool DeleteDirectory(std::string &dir);
+		
+		/*
+		 	Function: Join
+			
+			This function joins paths together in an OS specific way 
+		 */
+		static const char* Join(char*, ...);
+		
+		/*
 		    Function: GetMachineId
 		 
-		    This functions returns a unique machine identifier
+		    This function returns a unique machine identifier
 		 */
 		static std::string GetMachineId();
 		
@@ -206,7 +225,11 @@ namespace kroll
 		*/
 		static int RunAndWait(std::string path, std::vector<std::string> args);
 
-
+		/*
+			Function: GetUsername
+		*/
+		static const char* GetUsername();
+	
 	private:
 		FileUtils() {}
 		~FileUtils() {}

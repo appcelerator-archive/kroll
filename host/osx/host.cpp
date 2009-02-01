@@ -113,7 +113,7 @@ namespace kroll
 }
 @end
 
-namespace ti
+namespace kroll
 {
 	SharedValue OSXHost::InvokeMethodOnMainThread(SharedBoundMethod method,
 	                                              SharedPtr<ValueList> args)
@@ -126,3 +126,7 @@ namespace ti
 	}
 }
 
+kroll::Host* createHost(int argc, const char **argv)
+{
+	return new kroll::OSXHost(argc,argv);
+}

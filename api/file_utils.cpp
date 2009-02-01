@@ -28,18 +28,30 @@ namespace kroll
 	std::string FileUtils::GetApplicationDirectory()
 	{
 #ifdef OS_OSX
-		// TODO test this
 		NSString* bundlePath = [[NSBundle mainBundle] bundlePath];
-		std::string dir = std::string([bundlePath UTF8String]);
+		NSString* contents = [NSString stringWithFormat:@"%@/Contents",bundlePath];
+		return std::string([contents UTF8String]);
 #elif OS_WIN32
-		char * krHome = getenv("KR_HOME");
-		std::string dir(krHome);
+		char path[MAX_PATH];
+		GetModuleFileName(NULL,path,MAX_PATH);
+		std::string p(path);
+		std::string::size_type pos = p.rfind("\\");
+		if (pos!=std::string::npos)
+		{
+		  return p.substr(0,pos);
+		}
+	  	return p;
 #elif OS_LINUX
-		// TODO test this
-		char * krHome = getenv("KR_HOME");
-		std::string dir(krHome);
+		char tmp[100];
+		sprintf(tmp,"/proc/%d/exe",getpid());
+		char pbuf[255];
+		int c = readlink(tmp,pbuf,255);
+		pbuf[c]='\0';
+		std::string str(pbuf);
+		size_t pos = str.rfind("/");
+		if (pos==std::string::npos) return str;
+		return str.substr(0,pos);
 #endif
-		return dir;
 	}
 	std::string FileUtils::GetTempDirectory()
 	{
@@ -126,7 +138,28 @@ namespace kroll
 		return (stat(file.c_str(),&st)==0) && S_ISREG(st.st_mode);
 #endif
 	}
-
+	bool FileUtils::CreateDirectory(std::string &dir)
+	{
+#ifdef OS_OSX
+		return [[NSFileManager defaultManager] createDirectoryAtPath:[NSString stringWithCString:dir.c_str()] attributes:nil];
+#elif OS_WIN32
+		return ::CreateDirectory(dir.c_str(),NULL);
+#else OS_LINUX
+		return mkdir(dir.c_str(),0755) == 0;
+#endif
+		return false;
+	}
+	bool FileUtils::DeleteDirectory(std::string &dir)
+	{
+#ifdef OS_OSX
+		[[NSFileManager defaultManager] removeFileAtPath:[NSString stringWithCString:dir.c_str()] handler:nil];
+#elif OS_WIN32
+		return ::RemoveDirectory(dir.c_str());
+#else OS_LINUX
+		return unlink(dir.c_str()) == 0;
+#endif
+		return false;
+	}
 	bool FileUtils::IsDirectory(std::string &dir)
 	{
 #ifdef OS_OSX
@@ -161,6 +194,36 @@ namespace kroll
 			}
 		}
 		return file.substr(0,pos).c_str();
+	}
+	
+	const char* FileUtils::Join(char* path, ...)
+	{
+		va_list ap;
+		char *i = NULL;
+		va_start(ap, path);
+		std::vector<std::string> parts;
+		for (i = path; i != NULL; i = va_arg(ap, char*))
+		{
+			parts.push_back(i);
+		}
+		va_end(ap);
+		std::string filepath;
+		std::vector<std::string>::iterator iter = parts.begin();
+		while (iter!=parts.end())
+		{
+			std::string p = (*iter++);
+			filepath+=p;
+			if (iter!=parts.end())
+			{
+				filepath+=KR_PATH_SEP;
+			}
+		}
+#ifdef OS_OSX
+		NSString *s = [NSString stringWithCString:filepath.c_str()];
+		return [s fileSystemRepresentation];
+#else		
+		return filepath.c_str();
+#endif
 	}
 
 	bool FileUtils::IsHidden(std::string &file)
@@ -458,7 +521,7 @@ namespace kroll
 		}
 		return c;
 	}
-	bool FileUtils::ReadManifest(std::string& path, std::string &runtimePath, std::vector< std::pair< std::pair<std::string,std::string>, bool> >& modules, std::vector<std::string> &moduleDirs)
+	bool FileUtils::ReadManifest(std::string& path, std::string &runtimePath, std::vector< std::pair< std::pair<std::string,std::string>, bool> >& modules, std::vector<std::string> &moduleDirs, std::string &appname, std::string &appid)
 	{
 		std::ifstream file(path.c_str());
 		if (file.bad() || file.fail())
@@ -479,6 +542,16 @@ namespace kroll
 			{
 				std::string key = Trim(line.substr(0,pos));
 				std::string value = Trim(line.substr(pos+1,line.length()));
+				if (key == "appname")
+				{
+					appname = value;
+					continue;
+				}
+				else if (key == "appid")
+				{
+					appid = value;
+					continue;
+				}
 				int op;
 				std::string version;
 				ExtractVersion(value,&op,version);
@@ -605,6 +678,12 @@ namespace kroll
 		}
 
 		return _spawnvp(_P_WAIT, path.c_str(), argv);
+#endif
+	}
+	const char* FileUtils::GetUsername()
+	{
+#ifdef OS_OSX
+		return [NSUserName() UTF8String];		
 #endif
 	}
 #ifndef NO_UNZIP

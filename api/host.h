@@ -37,14 +37,22 @@ namespace kroll
 		/*
 		 * Function: Run
 		 *
-		 * TODO: Document me
+		 * called to run the host
 		 */
 		virtual int Run() = 0;
+		
+		/**
+		 * Function: Exit
+		 *
+		 * called to exit the host and terminate the process
+		 */
+		virtual void Exit (int exitcode);
 
 		/*
 		 * Function: InvokeMethodOnMainThread
 		 *
-		 * TODO: Document me
+		 * call with a method and arguments to invoke the method
+		 * on the main UI thread and return a value (blocking until run)
 		 */
 		virtual SharedValue InvokeMethodOnMainThread(
 			SharedBoundMethod,

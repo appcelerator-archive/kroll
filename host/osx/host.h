@@ -27,6 +27,6 @@ namespace kroll
 	};
 }
 
-EXPORT kroll::Host* createHost;
+EXPORT kroll::Host* createHost(int argc, const char **argv);
 
 #endif

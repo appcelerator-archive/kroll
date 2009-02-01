@@ -94,3 +94,6 @@ namespace kroll
 	}
 }
 
+kroll::Host* createHost(HINSTANCE hInstance, int argc, const char **argv){
+	return new kroll::Win32Host(hInstance,argc,argv);
+}
