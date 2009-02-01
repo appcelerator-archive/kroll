@@ -1,8 +1,0 @@
-#!/usr/bin/env python
-Import('build')
-
-Env = build.env.Clone()
-Env.Append(CPPDEFINES={'KROLL_HOST_EXPORT':1})
-Env.Append(CPPPATH=['#common/linux','#common'])
-Env.Program(build.dir + '/kinstall', ['installer.cpp','../api/file_utils.o'])
-

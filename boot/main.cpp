@@ -398,7 +398,6 @@ int main(int argc, const char* argv[])
 	#elif OS_LINUX
 					dylib << "LD_LIBRARY_PATH=";
 	#elif OS_WIN32
-					dylib << "PATH=";
 	#define BUFSIZE 1024
 					char path[BUFSIZE];
 					if (GetEnvironmentVariable("PATH",&path,BUFSIZE))
@@ -416,25 +415,31 @@ int main(int argc, const char* argv[])
 					std::cout << "library: " << dylib.str() << std::endl;
 	#endif					
 					std::stringstream runtimeEnv;
+	#ifndef OS_WIN32
 					runtimeEnv << "KR_RUNTIME=" << runtimePath;
+	#endif
 	#ifdef DEBUG
 					std::cout << "runtime: " << runtimeEnv.str() << std::endl;
 	#endif					
 					std::stringstream runtimeHomeEnv;
 					std::string runtimeBase = kroll::FileUtils::GetRuntimeBaseDirectory();
+	#ifndef OS_WIN32
 					runtimeHomeEnv << "KR_RUNTIME_HOME=" << runtimeBase;
+	#endif
 	#ifdef DEBUG
 					std::cout << "runtimeHomeEnv: " << runtimeHomeEnv.str() << std::endl;
 	#endif				
 					std::stringstream home;
+	#ifndef OS_WIN32
 					home << "KR_HOME=" << homedir;
-
+	#endif
 	#ifdef DEBUG
 					std::cout << "home: " << home.str() << std::endl;
 	#endif
 					std::stringstream modules; // FIXME name
+	#ifndef OS_WIN32
 					modules << "KR_MODULES=";
-
+	#endif
 					std::vector<std::string>::iterator i = moduleDirs.begin();
 					while(i!=moduleDirs.end())
 					{
@@ -455,7 +460,50 @@ int main(int argc, const char* argv[])
 	#endif
 
 	#ifdef OS_WIN32
-					#error Complete this implementation for win32
+					SetEnvironmentVariable("PATH",dylib.str().c_str());
+					SetEnvironmentVariable("KR_RUNTIME",runtimeEnv.str().c_str());
+					SetEnvironmentVariable("KR_HOME",home.str().c_str());
+					SetEnvironmentVariable("KR_MODULES",modules.str().c_str());
+					SetEnvironmentVariable("KR_RUNTIME_HOME",runtimeHomeEnv.str().c_str());
+					SetEnvironmentVariable("KR_BOOT_PROCESS","1");
+
+					LPTCH env = GetEnvironmentStrings();
+				    STARTUPINFO si;
+				    PROCESS_INFORMATION pi;
+				    memset(&si, 0, sizeof(si));
+				    memset(&pi, 0, sizeof(pi));
+				    si.cb = sizeof(si);
+
+					// launch our subprocess as a child of this process
+					// and wait for it to exit before we exit
+				    if (CreateProcessA(NULL,
+										GetCommandLine(),
+										0,
+										0,
+										false,
+										CREATE_NEW_CONSOLE,
+										env,
+										runtimePath.c_str(),
+				                        &si,
+										&pi) != false)
+					{
+						//we're running!
+						 WaitForSingleObject( pi.hProcess, INFINITE );
+						
+						// get the exit code
+						GetExitCodeProcess(pi.hProcess, &rc);
+					}
+					else
+					{
+						// just use the error code as exit code
+						rc = GetLastError();
+					}
+					
+					// clean up process
+					CloseHandle(pi.hProcess);
+					
+					// free environment
+					FreeEnvironmentStrings(env);
 	#else
 					char **childArgv = (char**)alloca(sizeof(char *) * (argc + 1));
 					for (int c=0;c<argc;c++)
