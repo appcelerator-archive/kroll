@@ -3,6 +3,8 @@
 import os, re, sys, inspect, os.path as path
 from build.common import BuildConfig
 
+Import('debug')
+
 build = BuildConfig(
     PRODUCT_NAME = 'Kroll',
     INSTALL_PREFIX = '/usr/local',
@@ -24,7 +26,7 @@ build.env.Append(CPPPATH=[build.kroll_source_dir, build.kroll_include_dir])
 build.env.Append(LIBPATH=[build.dir])
 
 # debug build flags
-if ARGUMENTS.get('debug', 0):
+if ARGUMENTS.get('debug', 0) or debug:
 	build.env.Append(CPPDEFINES = {'DEBUG' : 1})
 	if not build.is_win32():
 		build.env.Append(CCFLAGS = ['-g'])  # debug

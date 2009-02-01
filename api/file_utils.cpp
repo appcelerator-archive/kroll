@@ -639,30 +639,17 @@ namespace kroll
 	}
 	int FileUtils::RunAndWait(std::string path, std::vector<std::string> args)
 	{
-#ifdef OS_OSX
-		NSMutableArray *margs = [[[NSMutableArray alloc] init] autorelease];
+#ifndef OS_WIN32
+		std::string p;
+		p+="\"";
+		p+=path;
+		p+="\" ";
 		std::vector<std::string>::iterator i = args.begin();
 		while (i!=args.end())
 		{
-			std::string arg = (*i++);
-			[margs addObject:[NSString stringWithCString:arg.c_str()]];
-		}
-		NSTask *cmnd=[[NSTask alloc] init];
-		[cmnd setLaunchPath:[NSString stringWithCString:path.c_str()]];
-		[cmnd setArguments:margs];
-		[cmnd launch];
-		[cmnd waitUntilExit];
-		int status = [cmnd terminationStatus];
-		[cmnd release];
-		cmnd = nil;
-		return status;
-#elif defined(OS_LINUX)
-		std::string p(path);
-		std::vector<std::string>::iterator i = args.begin();
-		while (i!=args.end())
-		{
-			p+=" ";
+			p+="\"";
 			p+=(*i++);
+			p+="\" ";
 		}
 #ifdef DEBUG
 		std::cout << "running: " << p << std::endl;
@@ -676,7 +663,6 @@ namespace kroll
 		{
 			argv[idx++] = (*i++).c_str();
 		}
-
 		return _spawnvp(_P_WAIT, path.c_str(), argv);
 #endif
 	}

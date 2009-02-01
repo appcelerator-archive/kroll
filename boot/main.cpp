@@ -12,6 +12,7 @@
 #include <windows.h>
 #else
 #include <dlfcn.h>
+#include <signal.h>
 #endif
 
 #include <iostream>
@@ -125,7 +126,9 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 		if (!p.second)
 		{
 			missing.push_back(p.first);
+#ifdef DEBUG
 			std::cout << "missing module: " << p.first.first << "/" << p.first.second <<std::endl;
+#endif
 		}
 	}
 	// this is where kroll should be installed
@@ -264,17 +267,7 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 	return result;
 }
 
-static pid_t child_pid = 0;
-void termination(int term)
-{
-	if (child_pid>0)
-	{
-		 kill(child_pid, term);
-	}
-}
-
 #if defined(OS_WIN32) && !defined(WIN32_CONSOLE)
-#include <windows.h>
 int WinMain(HINSTANCE, HINSTANCE, LPSTR command_line, int)
 #else
 int main(int argc, const char* argv[])
@@ -285,10 +278,9 @@ int main(int argc, const char* argv[])
 	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 #endif
 
-	// 1. read the application manifest to determine what's needed
+	// read the application manifest to determine what's needed
 	std::string homedir = kroll::FileUtils::GetApplicationDirectory();
 	std::string manifest = kroll::FileUtils::Join((char*)homedir.c_str(),"manifest",NULL);
-	std::cout << "manifest: " << manifest << std::endl;
 	
 	if (!kroll::FileUtils::IsFile(manifest))
 	{
@@ -340,17 +332,26 @@ int main(int argc, const char* argv[])
 				dylib << kroll::FileUtils::Join((char*)runtimePath.c_str(),"WebKit.framework","Versions","Current",NULL) << ":";
 				dylib << kroll::FileUtils::Join((char*)runtimePath.c_str(),"WebCore.framework","Versions","Current",NULL) << ":";
 				dylib << kroll::FileUtils::Join((char*)runtimePath.c_str(),"JavaScriptCore.framework","Versions","Current",NULL) << ":";
-
+#ifdef DEBUG
+				std::cout << "library: " << dylib.str() << std::endl;
+#endif					
 				std::stringstream runtimeEnv;
 				runtimeEnv << "KR_RUNTIME=" << runtimePath;
-	
+#ifdef DEBUG
+				std::cout << "runtime: " << runtimeEnv.str() << std::endl;
+#endif					
 				std::stringstream runtimeHomeEnv;
 				std::string runtimeBase = kroll::FileUtils::GetRuntimeBaseDirectory();
 				runtimeHomeEnv << "KR_RUNTIME_HOME=" << runtimeBase;
-				
+#ifdef DEBUG
+				std::cout << "runtimeHomeEnv: " << runtimeHomeEnv.str() << std::endl;
+#endif				
 				std::stringstream home;
 				home << "KR_HOME=" << homedir;
 
+#ifdef DEBUG
+				std::cout << "home: " << home.str() << std::endl;
+#endif
 				std::stringstream modules; // FIXME name
 				modules << "KR_PLUGINS=";
 
@@ -360,7 +361,9 @@ int main(int argc, const char* argv[])
 					std::string dir = (*i++);
 					modules << dir << KR_LIB_SEP;
 				}
-				
+#ifdef DEBUG
+				std::cout << "modules: " << modules.str() << std::endl;
+#endif				
 				std::stringstream exec;
 #ifdef OS_WIN32
 				exec << kroll::FileUtils::Join((char*)runtimePath.c_str(),"kkernel.exe",NULL);
@@ -387,6 +390,9 @@ int main(int argc, const char* argv[])
 				env[4] = (char*)strdup(runtimeHomeEnv.str().c_str());
 				env[5] = NULL;
 
+#ifdef DEBUG
+				std::cout << "exec: " << exec.str() << std::endl;
+#endif				
 				int result = execve(exec.str().c_str(),(char* const*)childArgv,(char* const*)env);
 				if (result < 0)
 				{
