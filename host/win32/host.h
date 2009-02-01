@@ -33,7 +33,7 @@ namespace kroll
 
 		HINSTANCE GetInstanceHandle() { return instance_handle; }
 		SharedValue InvokeMethodOnMainThread(SharedBoundMethod method,
-		                                     SharedPtr<ValueList> args);
+		                                     const ValueList& args);
 
 	private:
 		HINSTANCE instance_handle;

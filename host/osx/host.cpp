@@ -66,9 +66,9 @@ namespace kroll
 
 @interface KrollMainThreadCaller : NSObject
 {
-	SharedPtr<kroll::BoundMethod> *method;
-	SharedPtr<kroll::Value> *result;
-	SharedPtr<kroll::ValueList> *args;
+	SharedPtr<kroll::BoundMethod> method;
+	SharedPtr<kroll::Value> result;
+	kroll::ValueList args;
 }
 - (id)initWithBoundMethod:(SharedPtr<kroll::BoundMethod>)method args:(SharedPtr<ValueList>)args;
 - (void)call;
@@ -81,42 +81,30 @@ namespace kroll
 	self = [super init];
 	if (self)
 	{
-		method = new SharedPtr<kroll::BoundMethod>(m);
-		args = new SharedPtr<kroll::ValueList>(a);
-		result = new SharedPtr<kroll::Value>();
+		method = m;
+		args = a;
+		result = NULL;
 	}
 	return self;
 }
 - (void)dealloc
 {
-	delete method;
-	delete result;
-	delete args;
 	[super dealloc];
 }
 - (SharedPtr<kroll::Value>)getResult
 {
-	return *result;
+	return result;
 }
 - (void)call
 {
-	kroll::ValueList a;
-	if (!args->isNull())
-	{
-		ValueList::iterator i = (*args)->begin();
-		while (i!=(*args)->end())
-		{
-			a.push_back((*i++));
-		}
-	}
-	result->assign((*method)->Call(a));
+	result->assign(method->Call(args));
 }
 @end
 
 namespace ti
 {
 	SharedValue OSXHost::InvokeMethodOnMainThread(SharedBoundMethod method,
-	                                              SharedPtr<ValueList> args)
+	                                              const ValueList& args)
 	{
 		KrollMainThreadCaller *caller = [[KrollMainThreadCaller alloc] initWithBoundMethod:method args:args];
 		[caller performSelectorOnMainThread:@selector(call) withObject:nil waitUntilDone:YES];

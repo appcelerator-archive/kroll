@@ -82,14 +82,14 @@ namespace kroll
 	}
 
 	SharedValue Win32Host::InvokeMethodOnMainThread(SharedBoundMethod method,
-                                                  SharedPtr<ValueList> args)
+                                                    const ValueList& args)
 	{
 		//FIXME - implement for Win32 and Linux. Until then...we
 		//will just forward on same thread
 		std::cerr << "WARNING: Invoking method on non-main Thread!" << std::endl;
 		//PostThreadMessage(thread_id)
 
-		SharedValue result = method->Call(*args);
+		SharedValue result = method->Call(args);
 		return result;
 	}
 }
