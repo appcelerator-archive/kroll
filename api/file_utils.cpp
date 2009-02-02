@@ -161,7 +161,14 @@ namespace kroll
 #ifdef OS_OSX
 		[[NSFileManager defaultManager] removeFileAtPath:[NSString stringWithCString:dir.c_str()] handler:nil];
 #elif OS_WIN32
-		return ::RemoveDirectory(dir.c_str());
+		SHFILEOPSTRUCT op;
+		op.hwnd = NULL;
+		op.wFunc = FO_DELETE;
+		op.pFrom = dir.c_str();
+		op.pTo = NULL;
+		op.fFlags = FOF_NOCONFIRMATION | FOF_SILENT | FOF_NOERRORUI;
+		int rc = SHFileOperation(&op);
+		return (rc == 0);
 #else OS_LINUX
 		return unlink(dir.c_str()) == 0;
 #endif
@@ -681,8 +688,8 @@ namespace kroll
 			argv[0]=path.c_str();
 			argv[1]=NULL;
 		}
-		int rc = _spawnv(_P_WAIT, path.c_str(), argv);
-		if (argv) delete argv;
+		int rc = _spawnvp(_P_WAIT, path.c_str(), argv);
+		if (argv) delete[] argv;
 		return rc;
 #endif
 	}
