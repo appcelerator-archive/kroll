@@ -61,7 +61,7 @@ std::cout << "runtime = " << runtimeDir << std::endl;
 	// 1. read the application manifest to determine what's needed
 	std::string c=std::string(cwd);
 	c.append("/manifest");
-	std::vector<std::string> modules;
+	std::vector<std::pair<std::pair<std::string,std::string>,bool> > modules;
 	std::vector<std::string> moduleDirs;
 	std::string runtimePath;
 	bool success = FileUtils::ReadManifest(c,runtimePath,modules,moduleDirs);

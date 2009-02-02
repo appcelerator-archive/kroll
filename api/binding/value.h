@@ -344,6 +344,14 @@ namespace kroll
 
 		  change the internal value of this instance to value
 		 */
+		void SetString(std::string& value) {
+			SetString(value.c_str());
+		}
+		/*
+			Function: Set
+
+		  change the internal value of this instance to value
+		 */
 		void SetList(SharedBoundList value);
 
 		/*
