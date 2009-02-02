@@ -163,7 +163,13 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 		kroll::FileUtils::CreateDirectory(runtimeBase);
 
 		//FIXME - this needs to be compiled in!!
+#ifdef OS_WIN32
+		char updatesite[512];
+		int size = GetEnvironmentVariable("UPDATESITE",(char*)&updatesite,512);
+		updatesite[size]='\0';
+#else
 		const char *updatesite = getenv("UPDATESITE");
+#endif
 		std::string url;
 		if (!updatesite)
 		{
@@ -271,7 +277,7 @@ bool IsForkedProcess()
 {
 #ifdef OS_WIN32
 	char e[2];
-	return GetEnvironmentString("KR_BOOT_PROCESS",e,1)==1;
+	return GetEnvironmentVariable("KR_BOOT_PROCESS",(char*)&e,1)==1;
 #else
 	const char *e = getenv("KR_BOOT_PROCESS");
 	return e!=NULL;
@@ -292,24 +298,24 @@ int Boot(int argc, const char** argv)
 
 #if defined(OS_WIN32)
 	char home[512];
-	int size = GetEnvironmentString("KR_RUNTIME",home,512);
+	int size = GetEnvironmentVariable("KR_RUNTIME",(char*)&home,512);
 	home[size]='\0';
 	std::string path = kroll::FileUtils::Join(home,"khost.dll",NULL);
 	HMODULE dll = LoadLibraryA(path.c_str());
 
 	if (!dll)
 	{
-		char msg[512];
-		sprintf(msg, "Error loading module (%d): %s", GetLastError(), path.c_str());
-		KR_FATAL_ERROR(msg);
+		std::ostringstream msg;
+		msg << "Error loading module: " << path << ", Error: " << GetLastError();
+		KR_FATAL_ERROR(msg.str().c_str());
 		return 1;
 	}
 	Executor *executor = (Executor*)GetProcAddress(dll, "Execute");
-	if (!create)
+	if (!executor)
 	{
-		char msg[512];
-		sprintf(msg, "Invalid entry point for %s", path.c_str());
-		KR_FATAL_ERROR(msg);
+		std::ostringstream msg;
+		msg << "Invalid entry point for " << path;
+		KR_FATAL_ERROR(msg.str().c_str());
 		return 1;
 	}
 	return executor(::GetModuleHandle(NULL), __argc,(const char**)__argv);
@@ -323,17 +329,17 @@ int Boot(int argc, const char** argv)
 	void* lib = dlopen(path.c_str(), RTLD_LAZY | RTLD_GLOBAL);
 	if (!lib)
 	{
-		char msg[512];
-		sprintf(msg, "Error loading module (%s): %s", path.c_str(), dlerror());
-		KR_FATAL_ERROR(msg);
+		std::ostringstream msg;
+		msg << "Error loading module: " << path << ", Error: " << dlerror();
+		KR_FATAL_ERROR(msg.str().c_str());
 		return 1;
 	}
 	Executor* executor = (Executor*)dlsym(lib, "Execute");
 	if (!executor)
 	{
-		char msg[512];
-		sprintf(msg, "Invalid entry point for %s", path.c_str());
-		KR_FATAL_ERROR(msg);
+		std::string ostringstream msg;
+		msg << "Invalid entry point for " <<  path;
+		KR_FATAL_ERROR(msg.str().c_str());
 		return 1;
 	}
 	return executor(argc,argv);
@@ -400,17 +406,22 @@ int main(int argc, const char* argv[])
 	#elif OS_WIN32
 	#define BUFSIZE 1024
 					char path[BUFSIZE];
-					if (GetEnvironmentVariable("PATH",&path,BUFSIZE))
+					int bufsize = BUFSIZE;
+					bufsize = GetEnvironmentVariable("PATH",(char*)&path,bufsize);
+					if (bufsize > 0)
 					{
-						dylib << path << ";";
+						path[bufsize]='\0';
 					}
+					dylib << path << ";";
 	#endif				
 					//TODO: we need to refactor this out since these are Titanium specific
 					//for now, it doesn't hurt if you don't have them
+	#ifdef OS_OSX
 					dylib << [[NSString stringWithCString:runtimePath.c_str()] fileSystemRepresentation] << ":";
 					dylib << kroll::FileUtils::Join((char*)runtimePath.c_str(),"WebKit.framework","Versions","Current",NULL) << ":";
 					dylib << kroll::FileUtils::Join((char*)runtimePath.c_str(),"WebCore.framework","Versions","Current",NULL) << ":";
 					dylib << kroll::FileUtils::Join((char*)runtimePath.c_str(),"JavaScriptCore.framework","Versions","Current",NULL) << ":";
+	#endif
 	#ifdef DEBUG
 					std::cout << "library: " << dylib.str() << std::endl;
 	#endif					
@@ -491,7 +502,9 @@ int main(int argc, const char* argv[])
 						 WaitForSingleObject( pi.hProcess, INFINITE );
 						
 						// get the exit code
-						GetExitCodeProcess(pi.hProcess, &rc);
+						DWORD exitCode;
+						GetExitCodeProcess(pi.hProcess, &exitCode);
+						rc = (int)exitCode;
 					}
 					else
 					{

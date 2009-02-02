@@ -393,8 +393,6 @@ namespace kroll
 	{
 		KR_DUMP_LOCATION
 
-		std::cout << "++++++++ RUN" << std::endl;
-		
 		{
 			ScopedLock lock(&moduleMutex);
 			this->AddModuleProvider(this);

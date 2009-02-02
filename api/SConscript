@@ -9,7 +9,7 @@ Env.Append(CPPDEFINES={'KROLL_API_EXPORT': 1})
 build.add_thirdparty(Env, 'poco')
 
 if build.is_win32():
-	Env.Append(LIBS=['shell32', 'user32'])
+	Env.Append(LIBS=['shell32', 'user32', 'Advapi32'])
 elif build.is_linux():
 	if os.environ.has_key('PKG_CONFIG_PATH'):
 		Env.AppendENVPath('PKG_CONFIG_PATH', os.environ['PKG_CONFIG_PATH'])

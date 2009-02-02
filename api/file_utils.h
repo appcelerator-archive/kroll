@@ -36,6 +36,11 @@
 #include <dirent.h>
 #endif
 
+#ifdef USE_NO_EXPORT
+#undef KROLL_API
+#define KROLL_API
+#endif
+
 /*
 	Constants: Version operators
 

@@ -71,7 +71,7 @@ namespace kroll
 		                                    length: strlen(buffer)];		
 		return std::string([temporaryDirectory UTF8String]);
 #elif defined(OS_WIN32)
-		int BUFSIZE = 512;
+#define BUFSIZE 512
 		TCHAR szTempName[BUFSIZE];  
 		GetTempPath(BUFSIZE,szTempName);
 		int j = 1 + (int) (10000 * (rand() / (RAND_MAX + 10000)));
@@ -670,6 +670,14 @@ namespace kroll
 	{
 #ifdef OS_OSX
 		return [NSUserName() UTF8String];		
+#elif OS_WIN32
+		char buf[100];
+		DWORD size = 100;
+        if (::GetUserName(buf,&size))
+		{
+			buf[size]='\0';
+		}
+		return std::string(buf).c_str();
 #endif
 	}
 #ifndef NO_UNZIP

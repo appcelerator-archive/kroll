@@ -39,21 +39,23 @@ namespace kroll
 		}
 	}
 
-	int Win32Host::Run()
+	bool Win32Host::Start()
 	{
-		std::cout << "Kroll Running (Win32)..." << std::endl;
-		this->AddModuleProvider(this);
-		this->LoadModules();
-
+		Host::Start();
 		thread_id = GetCurrentThreadId();
+		return true;
+	}
+
+	bool Win32Host::RunLoop()
+	{
+		// just process one message at a time
 		MSG message;
-		while (GetMessage(&message, NULL, 0, 0))
+		if (GetMessage(&message, NULL, 0, 0))
 		{
 			TranslateMessage(&message);
 			DispatchMessage(&message);
 		}
-
-		return 0;
+		return true;
 	}
 
 	Module* Win32Host::CreateModule(std::string& path)
@@ -97,7 +99,7 @@ namespace kroll
 extern "C"
 {
 	int Execute(HINSTANCE hInstance, int argc, const char **argv){
-		Host *host = kroll::Win32Host(hInstance,argc,argv);
+		Host *host = new kroll::Win32Host(hInstance,argc,argv);
 		return host->Run();
 	}
 }
