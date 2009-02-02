@@ -164,6 +164,15 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 		args.push_back(sourceTemp);
 		// runtime base
 		args.push_back(runtimeBase);
+
+#ifdef OS_WIN32
+		// in Win32 installer, we push the path to this process so he can 
+		// invoke back on us to do the unzip
+		char path[MAX_PATH];
+		GetModuleFileName(NULL,path,MAX_PATH);
+		std::string exe(path);
+		args.push_back(exe);
+#endif
 		
 		// make sure we create our runtime directory
 		kroll::FileUtils::CreateDirectory(runtimeBase);
@@ -291,6 +300,29 @@ bool IsForkedProcess()
 }
 
 #if defined(OS_WIN32)
+bool IsUnzipper(int argc, char **argv)
+{
+	if (argc > 1)
+	{
+		for (int c=1;c<argc;c++)
+		{
+			if (strcmp(argv[c],"--tiunzip")==0)
+			{
+				return true;
+			}
+		}
+	}
+	return false;
+}
+void Unzip(char **argv)
+{
+	std::string src = std::string(argv[2]);
+	std::string dest = std::string(argv[3]);
+	kroll::FileUtils::Unzip(src,dest);
+}
+#endif
+
+#if defined(OS_WIN32)
 typedef int Executor(HINSTANCE hInstance, int argc, const char **argv);
 #else
 typedef int Executor(int argc, const char **argv);
@@ -361,6 +393,19 @@ int main(int argc, const char* argv[])
 	int rc = 0;
 #if defined(OS_OSX)
 	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+#endif
+
+#if defined(OS_WIN32)
+	// win32 is special .... since unzip isn't built-in to 
+	// .NET, we are going to just use the bundled libraries
+	// for zlib in C++ to do it.  so, the C# installer will
+	// call back into this process in Win32 to have us to 
+	// the unzip crap
+	if (IsUnzipper( __argc,__argv))
+	{
+		Unzip(__argv);
+		return 0;
+	}
 #endif
 
 	if (IsForkedProcess())
