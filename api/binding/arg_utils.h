@@ -24,17 +24,17 @@ namespace kroll
 		/**
 		 * Function: VerifyArgs
 		 *   Verify an argument list given a collection of argument
-		 *   string formats.
+		 *   string formats. Note that VerifyArgs is not intended for
+		 *   use in performance sensitive methods.
 		 *
 		 * Params:
 		 *   args - The argument list
-		 *   ... - A number of const char* arguments which specify
-		 *         type of a paramter in the argument list. Some examples
-		 *         include "s" for a string, "so" for a string or an object,
-		 *         or "?so" for an optional string or object. The first
-		 *         optional argument will cause the remaining arguments to
-		 *         be optional.
-		 *
+		 *   sig - A string containing argument characters separated by
+		 *        commas. Some examples include "s" for a string, "so"
+		 *        for a string or an object, or "?so" for an optional string
+		 *        or object and "s,?so,l,m" for a complete signature string.
+		 *        Note that the first optional argument will cause the
+		 *        remaining arguments to be optional.
 		 *         Supported types:
 		 *           s: string
 		 *           i: int
@@ -47,10 +47,15 @@ namespace kroll
 		 * Returns:
 		 *   True if the argument list is valid, false otherwise
 		 */
-		static bool VerifyArgs(const ValueList& args, ...);
+		static bool VerifyArgs(const ValueList& args, const char* sig);
+		static void VerifyArgsException(const char *name, const ValueList& args, const char* sig);
+
 
 	private:
-		static inline bool VerifyArg(SharedValue arg, const char* type_string);
+		static inline std::vector<std::string>* ParseSigString(const char* sig);
+		static SharedString GenerateSignature(const char* name, std::vector<std::string>* sig_vector);
+		static bool VerifyArgsImpl(const ValueList& args, std::vector<std::string>* sig_vector);
+		static inline bool VerifyArg(SharedValue arg, const char* t);
 
 	};
 
