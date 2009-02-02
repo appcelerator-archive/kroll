@@ -29,15 +29,17 @@ namespace kroll
 	{ 
 	public:
 		LinuxHost(int argc, const char* argv[]);
-		virtual ~LinuxHost();
 
-		virtual int Run();
 		virtual Module* CreateModule(std::string& path);
 		SharedValue InvokeMethodOnMainThread(SharedBoundMethod method,
 		                                     SharedPtr<ValueList> args);
 
 		Poco::Mutex& GetJobQueueMutex();
 		std::vector<Job>& GetJobs();
+
+	protected:
+		virtual bool RunLoop();
+		virtual ~LinuxHost();
 
 	private:
 		Poco::Mutex job_queue_mutex;

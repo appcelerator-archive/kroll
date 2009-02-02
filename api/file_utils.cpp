@@ -15,6 +15,9 @@
 #include <windows.h>
 #include <shlobj.h>
 #include <process.h>
+#elif defined(OS_LINUX)
+#include <cstdarg>
+#include <unistd.h>
 #endif
 
 namespace kroll
@@ -79,7 +82,7 @@ namespace kroll
 		dir+="\\k" + j;
 		return dir;
 #else
-		int j = 1 + (int) (10000 * (rand() / (RAND_MAX + 10000)));
+		int j = 1 + (int) (10000 * (rand() / RAND_MAX));
 		std::string dir;
 		const char* tmp = getenv("TMPDIR");
 		if (tmp)
@@ -144,7 +147,7 @@ namespace kroll
 		return [[NSFileManager defaultManager] createDirectoryAtPath:[NSString stringWithCString:dir.c_str()] attributes:nil];
 #elif OS_WIN32
 		return ::CreateDirectory(dir.c_str(),NULL);
-#else OS_LINUX
+#elif OS_LINUX
 		return mkdir(dir.c_str(),0755) == 0;
 #endif
 		return false;
@@ -155,7 +158,7 @@ namespace kroll
 		[[NSFileManager defaultManager] removeFileAtPath:[NSString stringWithCString:dir.c_str()] handler:nil];
 #elif OS_WIN32
 		return ::RemoveDirectory(dir.c_str());
-#else OS_LINUX
+#elif OS_LINUX
 		return unlink(dir.c_str()) == 0;
 #endif
 		return false;
@@ -678,6 +681,8 @@ namespace kroll
 			buf[size]='\0';
 		}
 		return std::string(buf).c_str();
+#elif OS_LINUX
+		return getlogin();
 #endif
 	}
 #ifndef NO_UNZIP

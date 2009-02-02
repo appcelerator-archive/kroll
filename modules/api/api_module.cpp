@@ -19,7 +19,7 @@ namespace kroll
 		host->GetGlobalObject()->SetObject("api", binding);
 	}
 
-	void APIModule::Destroy()
+	void APIModule::Stop()
 	{
 	}
 

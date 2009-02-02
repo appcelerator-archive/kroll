@@ -8,6 +8,10 @@
 #import <Cocoa/Cocoa.h>
 #endif
 
+#if defined(OS_LINUX)
+#include <gtk/gtk.h>
+#endif
+
 #if defined(OS_WIN32)
 #include <windows.h>
 #else
@@ -98,15 +102,17 @@
   }
 #elif OS_LINUX
   #define KR_FATAL_ERROR(msg) \
-  { \
-	GtkWidget* dialog = gtk_message_dialog_new (NULL,  \
-	                  GTK_DIALOG_MODAL, \
-					  GTK_MESSAGE_ERROR,  \
-	                  GTK_BUTTONS_OK, \
-	                  msg); \
-	gtk_dialog_run (GTK_DIALOG (dialog)); \
-	gtk_widget_destroy (dialog); \
-  }
+{ \
+	GtkWidget* dialog = gtk_message_dialog_new(\
+		NULL,  \
+		GTK_DIALOG_MODAL, \
+		GTK_MESSAGE_ERROR,  \
+		GTK_BUTTONS_OK, \
+		"%s", \
+		msg); \
+	gtk_dialog_run(GTK_DIALOG(dialog)); \
+	gtk_widget_destroy(dialog); \
+}
 #endif
 
 bool RunAppInstallerIfNeeded(std::string &homedir,
@@ -337,7 +343,7 @@ int Boot(int argc, const char** argv)
 	Executor* executor = (Executor*)dlsym(lib, "Execute");
 	if (!executor)
 	{
-		std::string ostringstream msg;
+		std::ostringstream msg;
 		msg << "Invalid entry point for " <<  path;
 		KR_FATAL_ERROR(msg.str().c_str());
 		return 1;
@@ -518,26 +524,39 @@ int main(int argc, const char* argv[])
 					// free environment
 					FreeEnvironmentStrings(env);
 	#else
-					char **childArgv = (char**)alloca(sizeof(char *) * (argc + 1));
-					for (int c=0;c<argc;c++)
+					const char** childArgv = (const char**) alloca(sizeof(char *) * (argc + 1));
+					for (int c = 0; c < argc; c++)
 					{
-						childArgv[c] = strdup((char*)argv[c]);
+						childArgv[c] = argv[c];
 					}
 					childArgv[argc] = NULL;
 
-					char **env = (char **)alloca(sizeof(char *) * 7);
-					env[0]=strdup(dylib.str().c_str());
-					env[1] = (char*)strdup(runtimeEnv.str().c_str());
-					env[2] = (char*)strdup(home.str().c_str());
-					env[3] = (char*)strdup(modules.str().c_str());
-					env[4] = (char*)strdup(runtimeHomeEnv.str().c_str());
-					env[5] = "KR_BOOT_PROCESS=1";
-					env[6] = NULL;
+					// Determine size of the environment
+					int env_size = 0;
+					extern char** environ;
+					while (environ[env_size] != NULL)
+						env_size++;
+
+					// Copy existing environment variables
+					const char** env = (const char**) alloca (sizeof(char*) * (7 + env_size));
+					for (int i = 0; i < env_size; i++)
+					{
+						env[i] = environ[i];
+					}
+
+					// Add our own environment variables
+					env[env_size + 0] = dylib.str().c_str();
+					env[env_size + 1] = runtimeEnv.str().c_str();
+					env[env_size + 2] = home.str().c_str();
+					env[env_size + 3] = modules.str().c_str();
+					env[env_size + 4] = runtimeHomeEnv.str().c_str();
+					env[env_size + 5] = "KR_BOOT_PROCESS=1";
+					env[env_size + 6] = NULL;
 
 	#ifdef DEBUG
 					std::cout << "exec: " << exec.str() << std::endl;
 	#endif				
-					int result = execve(exec.str().c_str(),(char* const*)childArgv,(char* const*)env);
+					int result = execve(exec.str().c_str(), (char* const*) childArgv, (char * const *) env);
 					if (result < 0)
 					{
 						perror("execve");

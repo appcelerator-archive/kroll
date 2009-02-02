@@ -26,25 +26,20 @@ namespace kroll
 			FileUtils::Tokenize(p, this->module_paths, ":");
 		}
 
+		std::cout << "Kroll Running (Linux)..." << std::endl;
 	}
 
 	LinuxHost::~LinuxHost()
 	{
-		gtk_main_quit ();
+		gtk_main_quit();
 	}
 
-	int LinuxHost::Run()
+	bool LinuxHost::RunLoop()
 	{
-		std::cout << "Kroll Running (Linux)..." << std::endl;
-		this->AddModuleProvider(this);
-		this->LoadModules();
-
 		g_idle_add(&main_thread_job_handler, this);
 		gtk_main();
-
-		return 0;
+		return false;
 	}
-
 
 	Module* LinuxHost::CreateModule(std::string& path)
 	{

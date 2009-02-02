@@ -39,8 +39,6 @@ namespace kroll
 
 	int TestHost::Run()
 	{
-		this->AddModuleProvider(this);
-
 		/* Load all test modules */
 		for (size_t i = 0; i < module_paths.size(); i++)
 		{
@@ -54,7 +52,7 @@ namespace kroll
 			}
 
 			bool error = false;
-			Module *m = this->LoadModule(path, p, &error);
+			Module *m = this->LoadModule(path, p);
 
 			if (m == NULL || error)
 			{
@@ -65,14 +63,8 @@ namespace kroll
 			this->test_modules.push_back(m);
 		}
 
-		/* Initialize all test modules */
-		ModuleMap::iterator iter = this->modules.begin();
-		while (iter != this->modules.end())
-		{
-			Module *m = iter->second;
-			m->Initialize();
-			iter++;
-		}
+		/* Start all test modules */
+		this->StartModules(this->modules);
 
 		return 0;
 
@@ -133,8 +125,10 @@ namespace kroll
 		SharedValue result = method->Call(*args);
 		return result;
 	}
+
 	bool TestHost::RunLoop()
 	{
+		this->TestAll();
 		return false;
 	}
 }

@@ -60,7 +60,7 @@ namespace kroll
 		const char *name = GLOBAL_NS_VARNAME;
 		SharedBoundObject b = global_object;
 		SharedValue wrapper = Value::NewObject(b);
-		this->global_object->Set(name,wrapper);
+		this->global_object->Set(name, wrapper);
 
 #if defined(OS_WIN32)
 		this->module_suffix = "module.dll";
@@ -70,7 +70,7 @@ namespace kroll
 		this->module_suffix = "module.so";
 #endif
 
-		this->basicModulesLoaded = false;
+		this->autoScan = false;
 
 		// Sometimes libraries parsing argc and argv will
 		// modify them, so we want to keep our own copy here
@@ -105,6 +105,12 @@ namespace kroll
 	{
 		ScopedLock lock(&moduleMutex);
 		module_providers.push_back(provider);
+
+		if (autoScan)
+		{
+			this->ScanInvalidModuleFiles();
+		}
+
 	}
 
 	ModuleProvider* Host::FindModuleProvider(std::string& filename)
@@ -138,7 +144,7 @@ namespace kroll
 	}
 	void Host::UnloadModuleProviders()
 	{
-		while (module_providers.size()>0)
+		while (module_providers.size() > 0)
 		{
 			ModuleProvider* provider = module_providers.at(0);
 			this->RemoveModuleProvider(provider);
@@ -153,24 +159,15 @@ namespace kroll
 		return isModule;
 	}
 
-	SharedPtr<Module> Host::LoadModule(std::string& path, ModuleProvider *provider, bool *error)
+	SharedPtr<Module> Host::LoadModule(std::string& path, ModuleProvider *provider)
 	{
 		KR_DUMP_LOCATION
 		ScopedLock lock(&moduleMutex);
-		
-		SharedPtr<Module> module;
-		
+
+		SharedPtr<Module> module = NULL;
 		try
 		{
 			module = provider->CreateModule(path);
-		}
-		catch(...)
-		{
-			std::cerr << "Error generated loading module: " << path << std::endl;
-		}
-
-		if (!module.isNull())
-		{
 			module->SetProvider(provider); // set the provider
 			modules[path] = module; // add to the module map
 
@@ -178,21 +175,26 @@ namespace kroll
 			          << " from " << path << std::endl;
 
 			// Call module Load lifecycle event
-			module->Load();
+			module->Initialize();
 			
 			// store module
 			loaded_modules.push_back(module);
 		}
-		else
+		catch (kroll::ValueException& e)
 		{
-			std::cerr << "Could not load module from: " << path << std::endl;
-			*error = true;
+			SharedString s = e.GetValue()->DisplayString();
+			std::cerr << "Error generated loading module ("
+			          << path << "): " << *s << std::endl;
+		}
+		catch(...)
+		{
+			std::cerr << "Error generated loading module: " << path << std::endl;
 		}
 
 		return module;
 	}
 
-	void Host::UnloadModules ()
+	void Host::UnloadModules()
 	{
 		KR_DUMP_LOCATION
 		ScopedLock lock(&moduleMutex);
@@ -207,29 +209,28 @@ namespace kroll
 	void Host::LoadModules()
 	{
 		KR_DUMP_LOCATION
-		
-		// ScopedLock lock(&moduleMutex);
-		// 
-		// /* Scan module paths for modules which can be
-		//  * loaded by the basic shared-object provider */
-		// std::vector<std::string>::iterator iter;
-		// iter = this->module_paths.begin();
-		// while (iter != this->module_paths.end())
-		// {
-		// 	this->FindBasicModules((*iter++));
-		// }
-		// 
-		// /* From now on, adding a module provider triggers
-		//  		 * a rescan of all invalid module files */
-		// this->basicModulesLoaded = true;
-		// 
-		// /* Try to load files that weren't modules
-		//  * using newly available module providers */
-		// this->ScanInvalidModuleFiles();
-		// 
-		// /* All modules are now loaded,
-		//  * so initialize them all */
-		// this->InitializeModules(this->modules);
+		ScopedLock lock(&moduleMutex);
+
+		/* Scan module paths for modules which can be
+		 * loaded by the basic shared-object provider */
+		std::vector<std::string>::iterator iter;
+		iter = this->module_paths.begin();
+		while (iter != this->module_paths.end())
+		{
+			this->FindBasicModules((*iter++));
+		}
+
+		/* All modules are now loaded,
+		 * so start them all */
+		this->StartModules(this->modules);
+
+		/* Try to load files that weren't modules
+		 * using newly available module providers */
+		this->ScanInvalidModuleFiles();
+
+		/* From now on, adding a module provider will trigger
+		 * a rescan of all invalid module files */
+		this->autoScan = true;
 	}
 
 	void Host::FindBasicModules(std::string& dir)
@@ -247,81 +248,68 @@ namespace kroll
 				std::string fpath = iter.path().absolute().toString();
 				if (IsModule(fpath))
 				{
-					bool error = false;
-					this->LoadModule(fpath, this, &error);
+					this->LoadModule(fpath, this);
 				}
-				else if (std::find(this->invalid_module_files.begin(),this->invalid_module_files.end(),fpath)==this->invalid_module_files.end())
+				else
 				{
-					this->invalid_module_files.push_back(fpath);
+					this->AddInvalidModuleFile(fpath);
 				}
 			}
 			iter++;
 		}
 	}
 
-	void Host::ScanInvalidModuleFiles(bool also_initialize)
+	void Host::AddInvalidModuleFile(std::string path)
+	{
+		// Don't add module twice
+		std::vector<std::string>& invalid = this->invalid_module_files;
+		if (std::find(invalid.begin(), invalid.end(), path) == invalid.end())
+		{
+			this->invalid_module_files.push_back(path);
+		}
+	}
+
+	void Host::ScanInvalidModuleFiles()
 	{
 		KR_DUMP_LOCATION
 		ScopedLock lock(&moduleMutex);
-		if (scanInProgress) return;
-		
-		scanInProgress = true;
-		
-		while (this->invalid_module_files.size() > 0)
-		{
-			// keep track in case we need to initialize
-			ModuleMap modulesLoaded;
-			std::map<std::string,bool> just_loaded;
 
-			std::vector<std::string>::iterator iter;
-			iter = this->invalid_module_files.begin();
-			while (iter != this->invalid_module_files.end())
+		this->autoScan = false; // Do not recursively scan
+		ModuleMap modulesLoaded; // Track loaded modules
+
+		std::vector<std::string>::iterator iter;
+		iter = this->invalid_module_files.begin();
+		while (iter != this->invalid_module_files.end())
+		{
+			std::string path = *iter;
+			ModuleProvider *provider = FindModuleProvider(path);
+			if (provider != NULL)
 			{
-				std::string path = *iter;
-				// check to ensure that we're not in the same 
-				// cycle of the module we just loaded so we 
-				// don't reload again
-				if (just_loaded[path] || path.length()==0)
-				{
-					iter++;
-					continue;
-				}
-				ModuleProvider *provider = FindModuleProvider(path);
-				if (provider != NULL)
-				{
-					bool error = false;
-					SharedPtr<Module> m = this->LoadModule(path, provider, &error);
-					if (!m.isNull())
-					{
-						just_loaded[path] = true;
-						modulesLoaded[path] = m;
-						invalid_module_files.erase(iter);
-					}
-					else if (error)
-					{
-						just_loaded[path] = true;
-						invalid_module_files.erase(iter);
-					}
-				}
-				iter++;
+				SharedPtr<Module> m = this->LoadModule(path, provider);
+
+				// Module was loaded successfully
+				if (!m.isNull()) 
+					modulesLoaded[path] = m;
+
+				// Erase path, even on failure
+				invalid_module_files.erase(iter);
 			}
-		
-			/* This happens when we scan invalid module files after
-			 * the initial load of the application. This
-			 * way all modules are initialized in waves. */
-			if (also_initialize && modulesLoaded.size() > 0)
-			{
-				this->InitializeModules(modulesLoaded);
-				continue;
-			}
-			
-			break;
+			iter++;
 		}
-		
-		scanInProgress = false;
+
+		if (modulesLoaded.size() > 0)
+		{
+			this->StartModules(modulesLoaded);
+
+			/* If any of the invalid module files added
+			 * a ModuleProvider, let them load their modules */
+			this->ScanInvalidModuleFiles();
+		}
+
+		this->autoScan = true;
 	}
 
-	void Host::InitializeModules(ModuleMap to_init)
+	void Host::StartModules(ModuleMap to_init)
 	{
 		KR_DUMP_LOCATION
 		ScopedLock lock(&moduleMutex);
@@ -330,7 +318,7 @@ namespace kroll
 		while (iter != to_init.end())
 		{
 			SharedPtr<Module> m = iter->second;
-			m->Initialize();
+			m->Start();
 			*iter++;
 		}
 	}
@@ -366,7 +354,7 @@ namespace kroll
 			{
 				std::cout << "Unregistering " << module->GetName()
 				          << std::endl;
-				module->Destroy(); // Call Destroy() lifecycle event
+				module->Stop(); // Call Stop() lifecycle event
 				this->modules.erase(iter); // SharedPtr will do the work
 			}
 
