@@ -67,7 +67,8 @@ namespace kroll
 		dir+="\\k" + j;
 		return dir;
 #else
-		int j = 1 + (int) (10000 * (rand() / (RAND_MAX + 10000)));
+		// TODO - is this what we need?  took out RAND_MAX + 10000 to fix compile issue
+		int j = 1 + (int) (10000 * (rand() / (RAND_MAX)));
 		std::string dir;
 		const char* tmp = getenv("TMPDIR");
 		if (tmp)
