@@ -314,6 +314,34 @@ void Unzip(char **argv)
 	std::string dest = std::string(argv[3]);
 	kroll::FileUtils::Unzip(src,dest);
 }
+std::string GetExecutablePath()
+{
+	char path[MAX_PATH];
+	int size = GetModuleFileName(NULL,path,MAX_PATH);
+	if (size>0)
+	{
+		path[size]='\0';
+	}
+	return std::string(path);
+}
+bool IsSelfExtractor()
+{
+	// skip check if we're running from self-extractor
+	if (__argc > 1 && strcmp(__argv[1],"--kselfextracter")==0) return false;
+	std::string path = GetExecutablePath();
+	HZIP hzip = OpenZip(path.c_str(),0);
+	if (hzip!=0)
+	{
+		CloseZip(hzip);
+		return true;
+	}
+	return false;
+}
+void SelfExtract(std::string &dir)
+{
+	std::string zip = GetExecutablePath();
+	kroll::FileUtils::Unzip(zip,dir);
+}
 #endif
 
 #if defined(OS_WIN32)
@@ -399,6 +427,24 @@ int main(int argc, const char* argv[])
 	{
 		Unzip(__argv);
 		return 0;
+	}
+	if (IsSelfExtractor())
+	{
+		std::string tmpdir = kroll::FileUtils::GetTempDirectory();
+		SelfExtract(tmpdir);
+		std::string src = GetExecutablePath();
+ 		std::string dest = kroll::FileUtils::Join((char*)tmpdir.c_str(),"installer.exe",NULL); 
+		::CopyFile(src.c_str(),dest.c_str(),true);
+		std::vector<std::string> args;
+		args.push_back(dest.c_str()); // binary is always first
+		args.push_back("--kselfextracter"); // give ourselves a flag so we don't try this again
+		for (int c=1;c<__argc;c++)
+		{
+			args.push_back(__argv[c]);
+		}
+		rc = kroll::FileUtils::RunAndWait(dest,args);
+		kroll::FileUtils::DeleteDirectory(tmpdir);
+		return rc;
 	}
 #endif
 

@@ -17,6 +17,11 @@
 #include <process.h>
 #endif
 
+#include <iostream>
+#include <sstream>
+#include <cstring>
+
+
 namespace kroll
 {
 	static bool CompareVersions(std::string a, std::string b)
@@ -74,12 +79,14 @@ namespace kroll
 #define BUFSIZE 512
 		TCHAR szTempName[BUFSIZE];  
 		GetTempPath(BUFSIZE,szTempName);
-		int j = 1 + (int) (10000 * (rand() / (RAND_MAX + 10000)));
+		std::ostringstream s;
+		srand(GetTickCount()); // initialize seed
 		std::string dir(szTempName);
-		dir+="\\k" + j;
-		return dir;
+		s << dir;
+		s << "\\k";
+		s << (double)rand();
+		return s.str();
 #else
-		int j = 1 + (int) (10000 * (rand() / (RAND_MAX + 10000)));
 		std::string dir;
 		const char* tmp = getenv("TMPDIR");
 		if (tmp)
@@ -98,7 +105,7 @@ namespace kroll
 				dir = std::string("/tmp");
 			}
 		}
-		dir += "/k" + j;
+		dir += "/k" + (double)rand();
 		return std::string(dir);
 #endif
 	}
@@ -196,7 +203,7 @@ namespace kroll
 		return file.substr(0,pos).c_str();
 	}
 	
-	const char* FileUtils::Join(char* path, ...)
+	std::string FileUtils::Join(char* path, ...)
 	{
 		va_list ap;
 		char *i = NULL;
@@ -220,9 +227,9 @@ namespace kroll
 		}
 #ifdef OS_OSX
 		NSString *s = [NSString stringWithCString:filepath.c_str()];
-		return [s fileSystemRepresentation];
+		return std::string([s fileSystemRepresentation]);
 #else		
-		return filepath.c_str();
+		return filepath;
 #endif
 	}
 
@@ -637,7 +644,7 @@ namespace kroll
 		}
 	#endif
 	}
-	int FileUtils::RunAndWait(std::string path, std::vector<std::string> args)
+	int FileUtils::RunAndWait(std::string &path, std::vector<std::string> &args)
 	{
 #ifndef OS_WIN32
 		std::string p;
@@ -656,14 +663,27 @@ namespace kroll
 #endif
 		return system(p.c_str());
 #elif defined(OS_WIN32)
-		const char **argv = new const char*[args.size()];
-		std::vector<std::string>::iterator i = args.begin();
-		int idx = 0;
-		while (i!=args.end())
+		const char **argv = new const char*[args.size() > 0 ? args.size() : 2];
+		if (args.size() > 0 )
 		{
-			argv[idx++] = (*i++).c_str();
+			argv = new const char*[args.size()+1];
+			std::vector<std::string>::iterator i = args.begin();
+			int idx = 0;
+			while (i!=args.end())
+			{
+				argv[idx++] = (*i++).c_str();
+			}
+			argv[idx]=NULL;
 		}
-		return _spawnvp(_P_WAIT, path.c_str(), argv);
+		else
+		{
+			// spawn requires the path to be in the first argv
+			argv[0]=path.c_str();
+			argv[1]=NULL;
+		}
+		int rc = _spawnv(_P_WAIT, path.c_str(), argv);
+		if (argv) delete argv;
+		return rc;
 #endif
 	}
 	const char* FileUtils::GetUsername()

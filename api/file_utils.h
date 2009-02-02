@@ -154,7 +154,7 @@ namespace kroll
 			
 			This function joins paths together in an OS specific way 
 		 */
-		static const char* Join(char*, ...);
+		static std::string Join(char*, ...);
 		
 		/*
 		    Function: GetMachineId
@@ -228,7 +228,7 @@ namespace kroll
 		/*
 			Function: RunAndWait
 		*/
-		static int RunAndWait(std::string path, std::vector<std::string> args);
+		static int RunAndWait(std::string& path, std::vector<std::string>& args);
 
 		/*
 			Function: GetUsername
