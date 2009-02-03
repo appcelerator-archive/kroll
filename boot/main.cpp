@@ -115,13 +115,27 @@
 }
 #endif
 
+#ifdef OS_WIN32
+std::string GetExecutablePath()
+{
+	char path[MAX_PATH];
+	int size = GetModuleFileName(NULL,path,MAX_PATH);
+	if (size>0)
+	{
+		path[size]='\0';
+	}
+	return std::string(path);
+}
+#endif
+
 bool RunAppInstallerIfNeeded(std::string &homedir,
 						 std::string &runtimePath,
 						 std::string &manifest, 
 						 std::vector< std::pair< std::pair<std::string,std::string>,bool> > &modules, 
 						 std::vector<std::string> &moduleDirs,
 						 std::string &appname,
-						 std::string &appid)
+						 std::string &appid,
+						 std::string &runtimeOverride)
 {
 	bool result = true;
 	std::vector< std::pair<std::string,std::string> > missing;
@@ -168,10 +182,7 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 #ifdef OS_WIN32
 		// in Win32 installer, we push the path to this process so he can 
 		// invoke back on us to do the unzip
-		char path[MAX_PATH];
-		GetModuleFileName(NULL,path,MAX_PATH);
-		std::string exe(path);
-		args.push_back(exe);
+		args.push_back(GetExecutablePath());
 #endif
 		
 		// make sure we create our runtime directory
@@ -255,7 +266,7 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 #ifdef OS_OSX
 			std::string exec = kroll::FileUtils::Join((char*)installerDir.c_str(),"Installer App.app","Contents","MacOS","Installer App",NULL);
 #elif OS_WIN32
-			std::string exec = kroll::FileUtils::Join((char*)installerDir.c_str(),"installer.exe",NULL);
+			std::string exec = kroll::FileUtils::Join((char*)installerDir.c_str(),"Installer.exe",NULL);
 #elif OS_LINUX
 			std::string exec = kroll::FileUtils::Join((char*)installerDir.c_str(),"installer",NULL);
 #endif	
@@ -267,7 +278,7 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 
 				modules.clear();
 				moduleDirs.clear();
-				bool success = kroll::FileUtils::ReadManifest(manifest,runtimePath,modules,moduleDirs,appname,appid);
+				bool success = kroll::FileUtils::ReadManifest(manifest,runtimePath,modules,moduleDirs,appname,appid,runtimeOverride);
 				if (!success || modules.size()!=moduleDirs.size())
 				{
 					// must have failed
@@ -300,7 +311,7 @@ bool IsForkedProcess()
 }
 
 #if defined(OS_WIN32)
-bool IsUnzipper(int argc, char **argv)
+bool IsUnzipper(int argc, const char **argv)
 {
 	if (argc > 1)
 	{
@@ -314,11 +325,29 @@ bool IsUnzipper(int argc, char **argv)
 	}
 	return false;
 }
-void Unzip(char **argv)
+void Unzip(const char **argv)
 {
 	std::string src = std::string(argv[2]);
 	std::string dest = std::string(argv[3]);
 	kroll::FileUtils::Unzip(src,dest);
+}
+bool IsSelfExtractor()
+{
+	// skip check if we're running from self-extractor
+	if (__argc > 1 && strcmp(__argv[1],"--kselfextractor")==0) return false;
+	std::string path = GetExecutablePath();
+	HZIP hzip = OpenZip(path.c_str(),0);
+	if (hzip!=0)
+	{
+		CloseZip(hzip);
+		return true;
+	}
+	return false;
+}
+void SelfExtract(std::string &dir)
+{
+	std::string zip = GetExecutablePath();
+	kroll::FileUtils::Unzip(zip,dir);
 }
 #endif
 
@@ -384,6 +413,24 @@ int Boot(int argc, const char** argv)
 #endif
 }
 
+std::string GetArgValue(int argc, const char **argv, std::string name, std::string defaultValue)
+{
+	for (int c=1;c<argc;c++)
+	{
+		std::string arg(argv[c]);
+		if (arg.find(name) == 0)
+		{
+			size_t i = arg.find("=");
+			if (i!=std::string::npos)
+			{
+				return arg.substr(i+1);
+			}
+			return arg;
+		}
+	}
+	return defaultValue;
+}
+
 #if defined(OS_WIN32) && !defined(WIN32_CONSOLE)
 int WinMain(HINSTANCE, HINSTANCE, LPSTR command_line, int)
 #else
@@ -396,15 +443,49 @@ int main(int argc, const char* argv[])
 #endif
 
 #if defined(OS_WIN32)
+#if !defined(WIN32_CONSOLE)
+	int argc = __argc;
+	const char **argv = __argv;
+#endif
 	// win32 is special .... since unzip isn't built-in to 
 	// .NET, we are going to just use the bundled libraries
 	// for zlib in C++ to do it.  so, the C# installer will
 	// call back into this process in Win32 to have us to 
 	// the unzip crap
-	if (IsUnzipper( __argc,__argv))
+	if (IsUnzipper(argc,argv))
 	{
-		Unzip(__argv);
+#ifdef DEBUG
+		std::cout << "Unzip request from installer ..." << std::endl;
+#endif	
+		Unzip(argv);
 		return 0;
+	}
+	if (IsSelfExtractor())
+	{
+		std::string tmpdir = kroll::FileUtils::GetTempDirectory();
+#ifdef DEBUG
+		std::cout << "Looks like a self-extracting executable ... extract to " << tmpdir << std::endl;
+#endif	
+		SelfExtract(tmpdir);
+		std::string src = GetExecutablePath();
+ 		std::string dest = kroll::FileUtils::Join((char*)tmpdir.c_str(),"installer.exe",NULL); 
+		::CopyFile(src.c_str(),dest.c_str(),true);
+		std::vector<std::string> args;
+		std::string khome("--khome=");
+		khome+=tmpdir;
+		std::string kr("--kruntime=");
+		kr+=tmpdir;
+		args.push_back(dest.c_str()); // binary is always first
+		args.push_back("--kselfextractor"); // give ourselves a flag so we don't try this again
+		args.push_back(khome); // set our main home dir to the self-extracted temp dir
+		args.push_back(kr); // set our titanium dir to the self-extracted temp dir
+		for (int c=1;c<argc;c++)
+		{
+			args.push_back(argv[c]);
+		}
+		rc = kroll::FileUtils::RunAndWait(dest,args);
+		kroll::FileUtils::DeleteDirectory(tmpdir);
+		return rc;
 	}
 #endif
 
@@ -415,9 +496,15 @@ int main(int argc, const char* argv[])
 	}
 	else
 	{
+		std::string runtimeOverride = GetArgValue(argc,argv,"--kruntime",std::string());
 		// read the application manifest to determine what's needed
-		std::string homedir = kroll::FileUtils::GetApplicationDirectory();
+		std::string homedir = GetArgValue(argc,argv,"--khome",kroll::FileUtils::GetApplicationDirectory());
 		std::string manifest = kroll::FileUtils::Join((char*)homedir.c_str(),"manifest",NULL);
+#ifdef DEBUG
+		std::cout << "KR_HOME = " << homedir << std::endl;
+		std::cout << "KR RUNTIME OVERRIDE= " << runtimeOverride << std::endl;
+		std::cout << "KR MANIFEST = " << manifest << std::endl;
+#endif
 
 		if (!kroll::FileUtils::IsFile(manifest))
 		{
@@ -433,7 +520,7 @@ int main(int argc, const char* argv[])
 			std::string runtimePath;
 			std::string appname;
 			std::string appid;
-			bool success = kroll::FileUtils::ReadManifest(manifest,runtimePath,modules,moduleDirs,appname,appid);
+			bool success = kroll::FileUtils::ReadManifest(manifest,runtimePath,modules,moduleDirs,appname,appid,runtimeOverride);
 			if (!success)
 			{
 				rc = __LINE__;
@@ -442,20 +529,24 @@ int main(int argc, const char* argv[])
 			{
 				// run the app installer if any missing modules/runtime or 
 				// version specs not met
-				if (!RunAppInstallerIfNeeded(homedir,runtimePath,manifest,modules,moduleDirs,appname,appid))
+				if (!RunAppInstallerIfNeeded(homedir,runtimePath,manifest,modules,moduleDirs,appname,appid,runtimeOverride))
 				{
 					rc = __LINE__;
 				}
 				else
 				{
+#ifdef DEBUG
+					std::cout << "Runtime Directory = " << runtimePath << std::endl;
+#endif
+
 					// now we should be able to just load the host
 					std::stringstream dylib;
-	#ifdef OS_OSX
+#ifdef OS_OSX
 					dylib << "DYLD_LIBRARY_PATH=";
-	#elif OS_LINUX
+#elif OS_LINUX
 					dylib << "LD_LIBRARY_PATH=";
-	#elif OS_WIN32
-	#define BUFSIZE 1024
+#elif OS_WIN32
+#define BUFSIZE 1024
 					char path[BUFSIZE];
 					int bufsize = BUFSIZE;
 					bufsize = GetEnvironmentVariable("PATH",(char*)&path,bufsize);
@@ -464,64 +555,61 @@ int main(int argc, const char* argv[])
 						path[bufsize]='\0';
 					}
 					dylib << path << ";";
-	#endif				
+#endif				
 					//TODO: we need to refactor this out since these are Titanium specific
 					//for now, it doesn't hurt if you don't have them
-	#ifdef OS_OSX
+#ifdef OS_OSX
 					dylib << [[NSString stringWithCString:runtimePath.c_str()] fileSystemRepresentation] << ":";
 					dylib << kroll::FileUtils::Join((char*)runtimePath.c_str(),"WebKit.framework","Versions","Current",NULL) << ":";
 					dylib << kroll::FileUtils::Join((char*)runtimePath.c_str(),"WebCore.framework","Versions","Current",NULL) << ":";
 					dylib << kroll::FileUtils::Join((char*)runtimePath.c_str(),"JavaScriptCore.framework","Versions","Current",NULL) << ":";
-	#endif
-	#ifdef DEBUG
+#endif
+#ifdef DEBUG
 					std::cout << "library: " << dylib.str() << std::endl;
-	#endif					
+#endif					
 					std::stringstream runtimeEnv;
-	#ifndef OS_WIN32
+#ifndef OS_WIN32
 					runtimeEnv << "KR_RUNTIME=" << runtimePath;
-	#endif
-	#ifdef DEBUG
+#endif
+#ifdef DEBUG
 					std::cout << "runtime: " << runtimeEnv.str() << std::endl;
-	#endif					
+#endif					
 					std::stringstream runtimeHomeEnv;
 					std::string runtimeBase = kroll::FileUtils::GetRuntimeBaseDirectory();
-	#ifndef OS_WIN32
+#ifndef OS_WIN32
 					runtimeHomeEnv << "KR_RUNTIME_HOME=" << runtimeBase;
-	#endif
-	#ifdef DEBUG
+#endif
+#ifdef DEBUG
 					std::cout << "runtimeHomeEnv: " << runtimeHomeEnv.str() << std::endl;
-	#endif				
+#endif				
 					std::stringstream home;
-	#ifndef OS_WIN32
+#ifndef OS_WIN32
 					home << "KR_HOME=" << homedir;
-	#endif
-	#ifdef DEBUG
+#endif
+#ifdef DEBUG
 					std::cout << "home: " << home.str() << std::endl;
-	#endif
-					std::stringstream modules; // FIXME name
-	#ifndef OS_WIN32
+#endif
+					std::stringstream modules;
+#ifndef OS_WIN32
 					modules << "KR_MODULES=";
-	#endif
+#endif
 					std::vector<std::string>::iterator i = moduleDirs.begin();
 					while(i!=moduleDirs.end())
 					{
 						std::string dir = (*i++);
 						modules << dir << KR_LIB_SEP;
 					}
-	#ifdef DEBUG
+#ifdef DEBUG
 					std::cout << "modules: " << modules.str() << std::endl;
-	#endif				
+#endif				
 					std::stringstream exec;
-	#ifdef OS_WIN32
-					char filename[512];
-					int size = GetModuleFileName(GetModuleHandle(NULL),filename,512);
-					filename[size]='\0';
-					exec << filename;
-	#else
+#ifdef OS_WIN32
+					exec << GetExecutablePath();
+#else
 					exec << argv[0];
-	#endif
+#endif
 
-	#ifdef OS_WIN32
+#ifdef OS_WIN32
 					SetEnvironmentVariable("PATH",dylib.str().c_str());
 					SetEnvironmentVariable("KR_RUNTIME",runtimeEnv.str().c_str());
 					SetEnvironmentVariable("KR_HOME",home.str().c_str());
@@ -598,16 +686,16 @@ int main(int argc, const char* argv[])
 					env[env_size + 5] = "KR_BOOT_PROCESS=1";
 					env[env_size + 6] = NULL;
 
-	#ifdef DEBUG
+#ifdef DEBUG
 					std::cout << "exec: " << exec.str() << std::endl;
 	#endif				
-					int result = execve(exec.str().c_str(), (char* const*) childArgv, (char * const *) env);
+					int result = execve(exec.str().c_str(), (char* const*) childArgv, (char* const*) env);
 					if (result < 0)
 					{
 						perror("execve");
 						rc = __LINE__;
 					}
-	#endif
+#endif
 				}
 			}
 		}

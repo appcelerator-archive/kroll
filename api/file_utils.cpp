@@ -20,6 +20,11 @@
 #include <unistd.h>
 #endif
 
+#include <iostream>
+#include <sstream>
+#include <cstring>
+
+
 namespace kroll
 {
 	static bool CompareVersions(std::string a, std::string b)
@@ -77,32 +82,34 @@ namespace kroll
 #define BUFSIZE 512
 		TCHAR szTempName[BUFSIZE];  
 		GetTempPath(BUFSIZE,szTempName);
-		int j = 1 + (int) (10000 * (rand() / (RAND_MAX + 10000)));
+		std::ostringstream s;
+		srand(GetTickCount()); // initialize seed
 		std::string dir(szTempName);
-		dir+="\\k" + j;
-		return dir;
+		s << dir;
+		s << "\\k";
+		s << (double)rand();
+		return s.str();
 #else
-		int j = 1 + (int) (10000 * (rand() / RAND_MAX));
-		std::string dir;
+		std::ostringstream dir;
 		const char* tmp = getenv("TMPDIR");
 		if (tmp)
 		{
-			dir = std::string(tmp);
+			dir << std::string(tmp);
 		}
 		else
 		{
 			const char *tmp2 = getenv("TEMP");
 			if (tmp2)
 			{
-				dir = std::string(tmp2);
+				dir << std::string(tmp2);
 			}
 			else
 			{
-				dir = std::string("/tmp");
+				dir << std::string("/tmp");
 			}
 		}
-		dir += "/k" + j;
-		return std::string(dir);
+		dir << "/k" << (double)rand();
+		return dir.str();
 #endif
 	}
 	std::string FileUtils::GetResourcesDirectory()
@@ -157,7 +164,14 @@ namespace kroll
 #ifdef OS_OSX
 		[[NSFileManager defaultManager] removeFileAtPath:[NSString stringWithCString:dir.c_str()] handler:nil];
 #elif OS_WIN32
-		return ::RemoveDirectory(dir.c_str());
+		SHFILEOPSTRUCT op;
+		op.hwnd = NULL;
+		op.wFunc = FO_DELETE;
+		op.pFrom = dir.c_str();
+		op.pTo = NULL;
+		op.fFlags = FOF_NOCONFIRMATION | FOF_SILENT | FOF_NOERRORUI;
+		int rc = SHFileOperation(&op);
+		return (rc == 0);
 #elif OS_LINUX
 		return unlink(dir.c_str()) == 0;
 #endif
@@ -199,15 +213,17 @@ namespace kroll
 		return file.substr(0,pos).c_str();
 	}
 	
-	const char* FileUtils::Join(char* path, ...)
+	std::string FileUtils::Join(const char* path, ...)
 	{
 		va_list ap;
-		char *i = NULL;
 		va_start(ap, path);
 		std::vector<std::string> parts;
-		for (i = path; i != NULL; i = va_arg(ap, char*))
+		parts.push_back(std::string(path));
+		while (true)
 		{
-			parts.push_back(i);
+			const char *i = va_arg(ap,const char*);
+			if (i == NULL) break;
+			parts.push_back(std::string(i));
 		}
 		va_end(ap);
 		std::string filepath;
@@ -223,9 +239,9 @@ namespace kroll
 		}
 #ifdef OS_OSX
 		NSString *s = [NSString stringWithCString:filepath.c_str()];
-		return [s fileSystemRepresentation];
+		return std::string([s fileSystemRepresentation]);
 #else		
-		return filepath.c_str();
+		return filepath;
 #endif
 	}
 
@@ -524,7 +540,7 @@ namespace kroll
 		}
 		return c;
 	}
-	bool FileUtils::ReadManifest(std::string& path, std::string &runtimePath, std::vector< std::pair< std::pair<std::string,std::string>, bool> >& modules, std::vector<std::string> &moduleDirs, std::string &appname, std::string &appid)
+	bool FileUtils::ReadManifest(std::string& path, std::string &runtimePath, std::vector< std::pair< std::pair<std::string,std::string>, bool> >& modules, std::vector<std::string> &moduleDirs, std::string &appname, std::string &appid, std::string &runtimeOverride)
 	{
 		std::ifstream file(path.c_str());
 		if (file.bad() || file.fail())
@@ -558,9 +574,25 @@ namespace kroll
 				int op;
 				std::string version;
 				ExtractVersion(value,&op,version);
+#ifdef DEBUG
+				std::cout << "Component: " << key << ":" << version << ", operation: " << op << std::endl;
+#endif				
 				std::pair<std::string,std::string> p(key,version);
 				if (key == "runtime")
 				{
+					// check to see if our runtime is found in our override directory
+					if (runtimeOverride.length () > 0)
+					{
+						std::string potentialRuntime = Join(runtimeOverride.c_str(),"runtime",NULL);
+						if (IsDirectory(potentialRuntime))
+						{
+							runtimePath = potentialRuntime;
+#ifdef DEBUG
+							std::cout << "found override runtime at: " << runtimePath << std::endl;
+#endif
+							continue;
+						}
+					}
 					runtimePath = FindRuntime(op,version);
 					if (runtimePath == "")
 					{
@@ -569,6 +601,21 @@ namespace kroll
 				}
 				else
 				{
+					// check to see if our module is contained within our runtime override
+					// directory and if it is, use it...
+					if (runtimeOverride.length () > 0)
+					{
+						std::string potentialModule = Join(runtimeOverride.c_str(),"modules",key.c_str(),NULL);
+						if (IsDirectory(potentialModule))
+						{
+							modules.push_back(std::pair< std::pair<std::string,std::string>, bool>(p,true));
+							moduleDirs.push_back(potentialModule);
+#ifdef DEBUG
+							std::cout << "found override module at: " << potentialModule << std::endl;
+#endif
+							continue;
+						}
+					}
 					std::string dir = FindModule(key,op,version);
 					bool found = dir!="";
 					modules.push_back(std::pair< std::pair<std::string,std::string>, bool>(p,found));
@@ -640,7 +687,7 @@ namespace kroll
 		}
 	#endif
 	}
-	int FileUtils::RunAndWait(std::string path, std::vector<std::string> args)
+	int FileUtils::RunAndWait(std::string &path, std::vector<std::string> &args)
 	{
 #ifndef OS_WIN32
 		std::string p;
@@ -659,14 +706,27 @@ namespace kroll
 #endif
 		return system(p.c_str());
 #elif defined(OS_WIN32)
-		const char **argv = new const char*[args.size()];
-		std::vector<std::string>::iterator i = args.begin();
-		int idx = 0;
-		while (i!=args.end())
+		const char **argv = new const char*[args.size() > 0 ? args.size() : 2];
+		if (args.size() > 0 )
 		{
-			argv[idx++] = (*i++).c_str();
+			argv = new const char*[args.size()+1];
+			std::vector<std::string>::iterator i = args.begin();
+			int idx = 0;
+			while (i!=args.end())
+			{
+				argv[idx++] = (*i++).c_str();
+			}
+			argv[idx]=NULL;
 		}
-		return _spawnvp(_P_WAIT, path.c_str(), argv);
+		else
+		{
+			// spawn requires the path to be in the first argv
+			argv[0]=path.c_str();
+			argv[1]=NULL;
+		}
+		int rc = _spawnvp(_P_WAIT, path.c_str(), argv);
+		if (argv) delete[] argv;
+		return rc;
 #endif
 	}
 	const char* FileUtils::GetUsername()
