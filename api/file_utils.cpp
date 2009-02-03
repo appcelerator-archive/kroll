@@ -210,15 +210,17 @@ namespace kroll
 		return file.substr(0,pos).c_str();
 	}
 	
-	std::string FileUtils::Join(char* path, ...)
+	std::string FileUtils::Join(const char* path, ...)
 	{
 		va_list ap;
-		char *i = NULL;
 		va_start(ap, path);
 		std::vector<std::string> parts;
-		for (i = path; i != NULL; i = va_arg(ap, char*))
+		parts.push_back(std::string(path));
+		while (true)
 		{
-			parts.push_back(i);
+			const char *i = va_arg(ap,const char*);
+			if (i == NULL) break;
+			parts.push_back(std::string(i));
 		}
 		va_end(ap);
 		std::string filepath;
@@ -535,7 +537,7 @@ namespace kroll
 		}
 		return c;
 	}
-	bool FileUtils::ReadManifest(std::string& path, std::string &runtimePath, std::vector< std::pair< std::pair<std::string,std::string>, bool> >& modules, std::vector<std::string> &moduleDirs, std::string &appname, std::string &appid)
+	bool FileUtils::ReadManifest(std::string& path, std::string &runtimePath, std::vector< std::pair< std::pair<std::string,std::string>, bool> >& modules, std::vector<std::string> &moduleDirs, std::string &appname, std::string &appid, std::string &runtimeOverride)
 	{
 		std::ifstream file(path.c_str());
 		if (file.bad() || file.fail())
@@ -569,9 +571,25 @@ namespace kroll
 				int op;
 				std::string version;
 				ExtractVersion(value,&op,version);
+#ifdef DEBUG
+				std::cout << "Component: " << key << ":" << version << ", operation: " << op << std::endl;
+#endif				
 				std::pair<std::string,std::string> p(key,version);
 				if (key == "runtime")
 				{
+					// check to see if our runtime is found in our override directory
+					if (runtimeOverride.length () > 0)
+					{
+						std::string potentialRuntime = Join(runtimeOverride.c_str(),"runtime",NULL);
+						if (IsDirectory(potentialRuntime))
+						{
+							runtimePath = potentialRuntime;
+#ifdef DEBUG
+							std::cout << "found override runtime at: " << runtimePath << std::endl;
+#endif
+							continue;
+						}
+					}
 					runtimePath = FindRuntime(op,version);
 					if (runtimePath == "")
 					{
@@ -580,6 +598,21 @@ namespace kroll
 				}
 				else
 				{
+					// check to see if our module is contained within our runtime override
+					// directory and if it is, use it...
+					if (runtimeOverride.length () > 0)
+					{
+						std::string potentialModule = Join(runtimeOverride.c_str(),"modules",key,NULL);
+						if (IsDirectory(potentialModule))
+						{
+							modules.push_back(std::pair< std::pair<std::string,std::string>, bool>(p,true));
+							moduleDirs.push_back(potentialModule);
+#ifdef DEBUG
+							std::cout << "found override module at: " << potentialModule << std::endl;
+#endif
+							continue;
+						}
+					}
 					std::string dir = FindModule(key,op,version);
 					bool found = dir!="";
 					modules.push_back(std::pair< std::pair<std::string,std::string>, bool>(p,found));

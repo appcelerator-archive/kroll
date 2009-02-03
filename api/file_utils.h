@@ -122,7 +122,7 @@ namespace kroll
 		/*
 			Function: ReadManifest
 		*/
-		static bool ReadManifest(std::string& path, std::string &runtimePath, std::vector< std::pair< std::pair<std::string,std::string>,bool> >& modules, std::vector<std::string> &moduleDirs, std::string &appname, std::string &appid);
+		static bool ReadManifest(std::string& path, std::string &runtimePath, std::vector< std::pair< std::pair<std::string,std::string>,bool> >& modules, std::vector<std::string> &moduleDirs, std::string &appname, std::string &appid, std::string &runtimeOverride);
 
 		/*
 			Function: ListDir
@@ -154,7 +154,7 @@ namespace kroll
 			
 			This function joins paths together in an OS specific way 
 		 */
-		static std::string Join(char*, ...);
+		static std::string Join(const char*, ...);
 		
 		/*
 		    Function: GetMachineId
