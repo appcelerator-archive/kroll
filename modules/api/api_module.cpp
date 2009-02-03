@@ -21,11 +21,12 @@ namespace kroll
 
 	void APIModule::Stop()
 	{
+		host->GetGlobalObject()->Set("api", Value::Undefined);
 	}
 
 	void APIModule::Test()
 	{
 		APIUnitTestSuite suite;
-		suite.Run(host,binding);
+		suite.Run(host, binding);
 	}
 }

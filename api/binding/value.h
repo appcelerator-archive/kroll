@@ -383,10 +383,9 @@ namespace kroll
 
 	private:
 		Type type;
-		// had to get rid of union: SharedPtr can't be stored in a union
 		double numberValue;
 		bool boolValue;
-		const char *stringValue;
+		char* stringValue;
 		SharedBoundObject objectValue;
 
 		void defaults();

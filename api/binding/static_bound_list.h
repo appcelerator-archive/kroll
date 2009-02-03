@@ -46,7 +46,7 @@ namespace kroll
 		  reference counted and must be released.
 		  When an error occurs will throw an exception of type Value*.
 		 */
-		virtual SharedValue At(int index);
+		virtual SharedValue At(unsigned int index);
 
 		/*
 			Function: Set
@@ -76,7 +76,7 @@ namespace kroll
 		virtual SharedStringList GetPropertyNames();
 
 	protected:
-		static char* IntToChars(int value);
+		static char* IntToChars(unsigned int value);
 		SharedPtr<StaticBoundObject> object;
 
 	private:

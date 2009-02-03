@@ -15,7 +15,6 @@ namespace kroll
 	public:
 		TestHost(std::vector<std::string> module_paths);
 		virtual ~TestHost();
-		virtual int Run();
 		void TestAll();
 		virtual Module* CreateModule(std::string& path);
 		SharedValue InvokeMethodOnMainThread(SharedBoundMethod method,
@@ -23,6 +22,7 @@ namespace kroll
 
 	protected:
 		virtual bool RunLoop();
+		virtual bool Start();
 		
 	private:
 		std::vector<std::string> module_paths;

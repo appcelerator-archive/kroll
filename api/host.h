@@ -12,6 +12,7 @@ namespace kroll
 {
 	class Module;
 	typedef std::map<std::string, SharedPtr<Module> > ModuleMap;
+	typedef std::vector<SharedPtr<Module> > ModuleList;
 
 	/*
 		Class: Host
@@ -155,8 +156,9 @@ namespace kroll
 
 	protected:
 		ModuleMap modules;
+		ModuleList loaded_modules;
+
 		Mutex moduleMutex;
-		std::vector< SharedPtr<Module> > loaded_modules;
 		std::vector<ModuleProvider *> module_providers;
 		std::vector<std::string> module_paths;
 		SharedPtr<StaticBoundObject> global_object;
@@ -237,7 +239,7 @@ namespace kroll
 		 * Parameters:
 		 *  to_init - A vector of modules to initialize.
 		*/
-		void StartModules(ModuleMap to_init);
+		void StartModules(std::vector<SharedPtr<Module> > modules);
 		
 		virtual bool Start ();
 		virtual bool RunLoop() = 0;

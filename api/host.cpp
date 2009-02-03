@@ -169,7 +169,6 @@ namespace kroll
 		{
 			module = provider->CreateModule(path);
 			module->SetProvider(provider); // set the provider
-			modules[path] = module; // add to the module map
 
 			std::cout << "Module loaded " << module->GetName()
 			          << " from " << path << std::endl;
@@ -177,8 +176,9 @@ namespace kroll
 			// Call module Load lifecycle event
 			module->Initialize();
 			
-			// store module
-			loaded_modules.push_back(module);
+			// Store module
+			this->modules[path] = module;
+			this->loaded_modules.push_back(module);
 		}
 		catch (kroll::ValueException& e)
 		{
@@ -198,12 +198,13 @@ namespace kroll
 	{
 		KR_DUMP_LOCATION
 		ScopedLock lock(&moduleMutex);
-		
+
+		// Stop all modules
 		while (this->loaded_modules.size() > 0)
 		{
-			SharedPtr<Module> module = this->loaded_modules.at(0);
-			this->UnregisterModule(module);
+			this->UnregisterModule(this->loaded_modules.at(0));
 		}
+
 	}
 	
 	void Host::LoadModules()
@@ -222,7 +223,7 @@ namespace kroll
 
 		/* All modules are now loaded,
 		 * so start them all */
-		this->StartModules(this->modules);
+		this->StartModules(this->loaded_modules);
 
 		/* Try to load files that weren't modules
 		 * using newly available module providers */
@@ -275,7 +276,7 @@ namespace kroll
 		ScopedLock lock(&moduleMutex);
 
 		this->autoScan = false; // Do not recursively scan
-		ModuleMap modulesLoaded; // Track loaded modules
+		ModuleList modulesLoaded; // Track loaded modules
 
 		std::vector<std::string>::iterator iter;
 		iter = this->invalid_module_files.begin();
@@ -289,7 +290,7 @@ namespace kroll
 
 				// Module was loaded successfully
 				if (!m.isNull()) 
-					modulesLoaded[path] = m;
+					modulesLoaded.push_back(m);
 
 				// Erase path, even on failure
 				invalid_module_files.erase(iter);
@@ -309,16 +310,15 @@ namespace kroll
 		this->autoScan = true;
 	}
 
-	void Host::StartModules(ModuleMap to_init)
+	void Host::StartModules(ModuleList to_init)
 	{
 		KR_DUMP_LOCATION
 		ScopedLock lock(&moduleMutex);
 
-		ModuleMap::iterator iter = to_init.begin();
+		ModuleList::iterator iter = to_init.begin();
 		while (iter != to_init.end())
 		{
-			SharedPtr<Module> m = iter->second;
-			m->Start();
+			(*iter)->Start();
 			*iter++;
 		}
 	}
@@ -346,20 +346,34 @@ namespace kroll
 	{
 		KR_DUMP_LOCATION
 		ScopedLock lock(&moduleMutex);
-		ModuleMap::iterator iter = this->modules.begin();
-		while (iter != this->modules.end())
-		{
-			SharedPtr<Module> other_module = iter->second;
-			if (module == other_module.get())
-			{
-				std::cout << "Unregistering " << module->GetName()
-				          << std::endl;
-				module->Stop(); // Call Stop() lifecycle event
-				this->modules.erase(iter); // SharedPtr will do the work
-			}
 
-			iter++;
+		std::cout << "Unregistering " << module->GetName() << std::endl;
+
+		// Remove from the module map
+		ModuleMap::iterator i = this->modules.begin();
+		while (i != this->modules.end())
+		{
+			if (module == (i->second).get())
+				break;
+			i++;
 		}
+
+		// Remove from the list of loaded modules
+		ModuleList::iterator j = this->loaded_modules.begin();
+		while (j != this->loaded_modules.end())
+		{
+			if (module == (*j).get())
+				break;
+			j++;
+		}
+
+		module->Stop(); // Call Stop() lifecycle event
+
+		if (i != this->modules.end())
+			this->modules.erase(i); 
+
+		if (j != this->loaded_modules.end())
+			this->loaded_modules.erase(j);
 	}
 
 	SharedPtr<StaticBoundObject> Host::GetGlobalObject() {
@@ -385,11 +399,10 @@ namespace kroll
 			ScopedLock lock(&moduleMutex);
 			this->AddModuleProvider(this);
 			this->LoadModules();
-
-			// allow start to immediately end
-			this->running = this->Start();
 		}
-		
+
+		// allow start to immediately end
+		this->running = this->Start();
 		while (this->running)
 		{
 			ScopedLock lock(&moduleMutex);
@@ -401,9 +414,12 @@ namespace kroll
 		
 		ScopedLock lock(&moduleMutex);
 		this->Stop();
-		this->UnloadModules();
 		this->UnloadModuleProviders();
-		
+		this->UnloadModules();
+
+		// Clear the global object
+		this->global_object = NULL;
+
 		return this->exitCode;
 	}
 	

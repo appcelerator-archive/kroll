@@ -41,7 +41,7 @@ namespace kroll
 	{
 		if (IsString())
 		{
-			delete this->stringValue;
+			free(this->stringValue);
 			this->stringValue = NULL;
 		}
 	}
@@ -74,7 +74,7 @@ namespace kroll
 	{
 		if (this->IsString())
 		{
-			delete this->stringValue;
+			free(this->stringValue);
 			this->stringValue = NULL;
 		}
 		this->type = UNDEFINED;

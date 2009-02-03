@@ -41,8 +41,6 @@ namespace kroll
 	{
 		ScopedLock lock(&mutex);
 
-		/* clear old registrations -- memory mangement will be
-		 * handled by the SharedPtr implementation */
 		registrations.clear();
 		registrationsById.clear();
 	}
@@ -222,7 +220,7 @@ namespace kroll
 		 * implementation will insert it into the map */
 		std::string en(event);
 		EventRecords records = this->registrations[en];
-		records.push_back(new SharedBoundMethod(callback));
+		records.push_back(SharedBoundMethod(callback));
 
 		BoundEventEntry e;
 		e.method = callback;
@@ -247,8 +245,8 @@ namespace kroll
 		EventRecords::iterator fi = records.begin();
 		while (fi != records.end())
 		{
-			SharedBoundMethod* callback = (*fi);
-			if (callback->get() == entry.method.get())
+			SharedBoundMethod callback = (*fi);
+			if (callback.get() == entry.method.get())
 			{
 				records.erase(fi);
 				break;
@@ -272,11 +270,11 @@ namespace kroll
 			EventRecords::iterator i = records.begin();
 			while (i != records.end())
 			{
-				SharedBoundMethod* method = (*i++);
+				SharedBoundMethod method = (*i++);
 				ValueList args;
 				args.push_back(Value::NewString(event));
 				args.push_back(value);
-				(*method)->Call(args);
+				method->Call(args);
 			}
 		}
 	}

@@ -78,7 +78,7 @@ namespace kroll
 		}
 	}
 
-	SharedValue KJSBoundList::At(int index)
+	SharedValue KJSBoundList::At(unsigned int index)
 	{
 		char* name = KJSBoundList::IntToChars(index);
 		SharedValue value = this->kjs_bound_object->Get(name);
@@ -88,11 +88,13 @@ namespace kroll
 
 	char* KJSBoundList::IntToChars(int value)
 	{
-		char buf[10];
-		sprintf(buf,"%d",value);
-		char *str = new char[strlen(buf)];
-		strcpy(str,buf);
-		return str;
+		int digits = 1;
+		if (value > 0)
+			digits += floor(log10((double) value));
+
+		char *buf = new char[digits + 1];
+		sprintf(buf, "%d", value);
+		return buf;
 	}
 
 }
