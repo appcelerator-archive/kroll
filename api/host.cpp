@@ -57,10 +57,7 @@ namespace kroll
 
 		// link the name of our global variable to ourself so
 		//  we can reference from global scope directly to get it
-		const char *name = GLOBAL_NS_VARNAME;
-		SharedBoundObject b = global_object;
-		SharedValue wrapper = Value::NewObject(b);
-		this->global_object->Set(name, wrapper);
+		this->global_object->SetObject(GLOBAL_NS_VARNAME, this->global_object);
 
 #if defined(OS_WIN32)
 		this->module_suffix = "module.dll";
@@ -417,7 +414,9 @@ namespace kroll
 		this->UnloadModuleProviders();
 		this->UnloadModules();
 
-		// Clear the global object
+		// Clear the global object, being sure to remove the recursion, so
+		// that the memory will be cleared
+		this->global_object->Set(GLOBAL_NS_VARNAME, Value::Undefined);
 		this->global_object = NULL;
 
 		return this->exitCode;
