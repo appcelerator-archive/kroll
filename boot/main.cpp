@@ -10,6 +10,7 @@
 
 #if defined(OS_WIN32)
 #include <windows.h>
+#include <process.h>
 #else
 #include <dlfcn.h>
 #include <signal.h>
@@ -327,17 +328,7 @@ bool IsForkedProcess()
 #if defined(OS_WIN32)
 bool IsUnzipper(int argc, const char **argv)
 {
-	if (argc > 1)
-	{
-		for (int c=1;c<argc;c++)
-		{
-			if (strcmp(argv[c],"--tiunzip")==0)
-			{
-				return true;
-			}
-		}
-	}
-	return false;
+	return !GetArgValue(argc,argv,"--tiunzip",std::string()).empty();
 }
 void Unzip(const char **argv)
 {
@@ -391,7 +382,7 @@ int Boot(int argc, const char** argv)
 #ifdef DEBUG
 	std::cout << "Boot attempting to load: " << path << std::endl;
 #endif
-	
+
 	HMODULE dll = LoadLibraryA(path.c_str());
 
 	if (!dll)
@@ -437,7 +428,7 @@ int Boot(int argc, const char** argv)
 #endif
 }
 
-int ForkProcess(std::string &manifest, std::string &homedir, std::string &runtimeOverride)
+int ForkProcess(std::string &exec, std::string &manifest, std::string &homedir, std::string &runtimeOverride)
 {
 	int rc = 0;
 	// ok, we have a manifest, now do some resolving
@@ -540,13 +531,8 @@ int ForkProcess(std::string &manifest, std::string &homedir, std::string &runtim
 			}
 #ifdef DEBUG
 			std::cout << "modules: " << modules.str() << std::endl;
+			std::cout << "exec: " << exec << std::endl;
 #endif				
-			std::stringstream exec;
-#ifdef OS_WIN32
-			exec << GetExecutablePath();
-#else
-			exec << argv[0];
-#endif
 
 #ifdef OS_WIN32
 			SetEnvironmentVariable("PATH",dylib.str().c_str());
@@ -555,46 +541,42 @@ int ForkProcess(std::string &manifest, std::string &homedir, std::string &runtim
 			SetEnvironmentVariable("KR_MODULES",modules.str().c_str());
 			SetEnvironmentVariable("KR_RUNTIME_HOME",runtimeHomeEnv.str().c_str());
 			SetEnvironmentVariable("KR_BOOT_PROCESS","1");
-
-			LPTCH env = GetEnvironmentStrings();
-			STARTUPINFO si;
-			PROCESS_INFORMATION pi;
-			memset(&si, 0, sizeof(si));
-			memset(&pi, 0, sizeof(pi));
-			si.cb = sizeof(si);
-
-			// launch our subprocess as a child of this process
-			// and wait for it to exit before we exit
-			if (CreateProcessA(NULL,
-								GetCommandLine(),
-								0,
-								0,
-								false,
-								0, /*CREATE_NEW_CONSOLE,*/
-								env,
-								runtimePath.c_str(),
-								&si,
-								&pi) != false)
-			{
-				//we're running!
-				 WaitForSingleObject( pi.hProcess, INFINITE );
-				
-				// get the exit code
-				DWORD exitCode;
-				GetExitCodeProcess(pi.hProcess, &exitCode);
-				rc = (int)exitCode;
-			}
-			else
-			{
-				// just use the error code as exit code
-				rc = GetLastError();
-			}
 			
-			// clean up process
-			CloseHandle(pi.hProcess);
+			std::ostringstream ose;
+
+			char *env = GetEnvironmentStrings();
+			LPTSTR penv = env;
+			int count = 0;
+			while (true)
+			{
+               if (*penv == 0) break;
+               while (*penv != 0) penv++;
+               penv++;
+               count++;
+			}
+
+			char **childEnv = (char**)alloca(sizeof(char *) * count+1);
+			for (int i = 0; i < count; i++)
+			{
+              ose << env << "\n";
+			  childEnv[i] = env;
+              while(*env != '\0')
+                 env++;
+              env++;
+			}
+			childEnv[count] = NULL;
+
+			char **childArgv = (char**)alloca(sizeof(char *) * __argc+1);
+//			childArgv[0]=(char*)exec.str().c_str();
+			childArgv[0]=__argv[0];
+			for (int c=1;c<__argc;c++)
+			{
+				childArgv[c] = strdup((char*)__argv[c]);
+			}
+			childArgv[__argc] = NULL;
 			
-			// free environment
-			FreeEnvironmentStrings(env);
+//			rc = _spawnvpe( _P_OVERLAY, exec.str().c_str(), childArgv, childEnv );
+			rc = _spawnvpe( _P_OVERLAY, __argv[0], childArgv, childEnv );
 #else
 			char **childArgv = (char**)alloca(sizeof(char *) * (argc + 1));
 			for (int c=0;c<argc;c++)
@@ -612,9 +594,6 @@ int ForkProcess(std::string &manifest, std::string &homedir, std::string &runtim
 			env[5] = "KR_BOOT_PROCESS=1";
 			env[6] = NULL;
 
-#ifdef DEBUG
-			std::cout << "exec: " << exec.str() << std::endl;
-#endif				
 			int result = execve(exec.str().c_str(),(char* const*)childArgv,(char* const*)env);
 			if (result < 0)
 			{
@@ -643,7 +622,7 @@ int main(int argc, const char* argv[])
 #if defined(OS_WIN32)
 #if !defined(WIN32_CONSOLE)
 	int argc = __argc;
-	const char **argv = __argv;
+	const char **argv = (const char**)__argv;
 #endif
 	// win32 is special .... since unzip isn't built-in to 
 	// .NET, we are going to just use the bundled libraries
@@ -679,7 +658,7 @@ int main(int argc, const char* argv[])
 		}
 		else
 		{
-			rc = ForkProcess(manifest,tmpdir,tmpdir);
+			rc = ForkProcess(src,manifest,tmpdir,tmpdir);
 #ifdef DEBUG
 			std::cout << "ran " << dest << " and exited with: " << rc << std::endl;
 #endif
@@ -714,7 +693,12 @@ int main(int argc, const char* argv[])
 		}
 		else
 		{
-			rc = ForkProcess(manifest,homedir,runtimeOverride);
+#ifdef WIN32
+			std::string exec = GetExecutablePath();
+#else
+			std::string exec = argv[0];
+#endif
+			rc = ForkProcess(exec,manifest,homedir,runtimeOverride);
 		}
 	}
 
