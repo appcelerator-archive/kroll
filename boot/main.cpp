@@ -122,6 +122,24 @@ std::string GetExecutablePath()
 }
 #endif
 
+std::string GetArgValue(int argc, const char **argv, std::string name, std::string defaultValue)
+{
+	for (int c=1;c<argc;c++)
+	{
+		std::string arg(argv[c]);
+		if (arg.find(name) == 0)
+		{
+			int i = arg.find("=");
+			if (i!=std::string::npos)
+			{
+				return arg.substr(i+1);
+			}
+			return arg;
+		}
+	}
+	return defaultValue;
+}
+
 bool RunAppInstallerIfNeeded(std::string &homedir,
 						 std::string &runtimePath,
 						 std::string &manifest, 
@@ -151,7 +169,7 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 	if (missing.size()>0)
 	{
 		// if we don't have an installer directory, just bail...
-		std::string installerDir = kroll::FileUtils::Join((char*)homedir.c_str(),"installer",NULL);
+		std::string installerDir = kroll::FileUtils::Join(homedir.c_str(),"installer",NULL);
 		if (!kroll::FileUtils::IsDirectory(installerDir))
 		{
 			KR_FATAL_ERROR("Missing installer and application has modules that are not found.");
@@ -219,7 +237,7 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 			{
 				name = "runtime-osx-" + p.second;
 				// see if we have a private runtime installed and we can link to that
-				path = kroll::FileUtils::Join((char*)installerDir.c_str(),"runtime",NULL);
+				path = kroll::FileUtils::Join(installerDir.c_str(),"runtime",NULL);
 				if (kroll::FileUtils::IsDirectory(path))
 				{
 					found = true;
@@ -230,7 +248,7 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 			{
 				name = "module-" + p.first + "-" + p.second;
 				// see if we have a private module installed and we can link to that
-				path = kroll::FileUtils::Join((char*)installerDir.c_str(),"modules",(char*)p.first.c_str(),NULL);
+				path = kroll::FileUtils::Join(installerDir.c_str(),"modules",p.first.c_str(),NULL);
 				if (kroll::FileUtils::IsDirectory(path))
 				{
 					found = true;
@@ -258,11 +276,11 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 		{
 			// run the installer app which will fetch remote modules/runtime for us
 #ifdef OS_OSX
-			std::string exec = kroll::FileUtils::Join((char*)installerDir.c_str(),"Installer App.app","Contents","MacOS","Installer App",NULL);
+			std::string exec = kroll::FileUtils::Join(installerDir.c_str(),"Installer App.app","Contents","MacOS","Installer App",NULL);
 #elif OS_WIN32
-			std::string exec = kroll::FileUtils::Join((char*)installerDir.c_str(),"Installer.exe",NULL);
+			std::string exec = kroll::FileUtils::Join(installerDir.c_str(),"Installer.exe",NULL);
 #elif OS_LINUX
-			std::string exec = kroll::FileUtils::Join((char*)installerDir.c_str(),"installer",NULL);
+			std::string exec = kroll::FileUtils::Join(installerDir.c_str(),"installer",NULL);
 #endif	
 			// paranoia check
 			if (kroll::FileUtils::IsFile(exec))
@@ -297,10 +315,12 @@ bool IsForkedProcess()
 {
 #ifdef OS_WIN32
 	char e[2];
-	return GetEnvironmentVariable("KR_BOOT_PROCESS",(char*)&e,1)==1;
+	int size = GetEnvironmentVariable("KR_BOOT_PROCESS",(char*)&e,2);
+	e[size]='\0';
+	return strcmp(e,"1") == 0;
 #else
 	const char *e = getenv("KR_BOOT_PROCESS");
-	return e!=NULL;
+	return e!=NULL && strcmp(e,"1")==0;
 #endif	
 }
 
@@ -328,7 +348,8 @@ void Unzip(const char **argv)
 bool IsSelfExtractor()
 {
 	// skip check if we're running from self-extractor
-	if (__argc > 1 && strcmp(__argv[1],"--kselfextractor")==0) return false;
+	std::string check = GetArgValue(__argc,(const char**)__argv,"--kselfextractor","");
+	if (!check.empty()) return false;
 	std::string path = GetExecutablePath();
 	HZIP hzip = OpenZip(path.c_str(),0);
 	if (hzip!=0)
@@ -341,6 +362,9 @@ bool IsSelfExtractor()
 void SelfExtract(std::string &dir)
 {
 	std::string zip = GetExecutablePath();
+#ifdef DEBUG
+	std::cout << "SelfExtracting: " << zip << std::endl;
+#endif	
 	kroll::FileUtils::Unzip(zip,dir);
 }
 #endif
@@ -361,7 +385,13 @@ int Boot(int argc, const char** argv)
 	char home[512];
 	int size = GetEnvironmentVariable("KR_RUNTIME",(char*)&home,512);
 	home[size]='\0';
-	std::string path = kroll::FileUtils::Join(home,"khost.dll",NULL);
+	std::string h(home);
+	std::string path = kroll::FileUtils::Join(h.c_str(),"khost.dll",NULL);
+
+#ifdef DEBUG
+	std::cout << "Boot attempting to load: " << path << std::endl;
+#endif
+	
 	HMODULE dll = LoadLibraryA(path.c_str());
 
 	if (!dll)
@@ -407,22 +437,194 @@ int Boot(int argc, const char** argv)
 #endif
 }
 
-std::string GetArgValue(int argc, const char **argv, std::string name, std::string defaultValue)
+int ForkProcess(std::string &manifest, std::string &homedir, std::string &runtimeOverride)
 {
-	for (int c=1;c<argc;c++)
+	int rc = 0;
+	// ok, we have a manifest, now do some resolving
+	std::vector< std::pair< std::pair<std::string,std::string>,bool> > modules;
+	std::vector<std::string> moduleDirs;
+	std::string runtimePath;
+	std::string appname;
+	std::string appid;
+	bool success = kroll::FileUtils::ReadManifest(manifest,runtimePath,modules,moduleDirs,appname,appid,runtimeOverride);
+	if (!success)
 	{
-		std::string arg(argv[c]);
-		if (arg.find(name) == 0)
+		rc = __LINE__;
+	}
+	else
+	{
+		// run the app installer if any missing modules/runtime or 
+		// version specs not met
+		if (!RunAppInstallerIfNeeded(homedir,runtimePath,manifest,modules,moduleDirs,appname,appid,runtimeOverride))
 		{
-			int i = arg.find("=");
-			if (i!=std::string::npos)
+			rc = __LINE__;
+		}
+		else
+		{
+#ifdef DEBUG
+			std::cout << "Runtime Directory = " << runtimePath << std::endl;
+#endif
+			//TODO: add existing to path
+			
+			// now we should be able to just load the host
+			std::stringstream dylib;
+#ifdef OS_OSX
+			dylib << "DYLD_LIBRARY_PATH=";
+			const char *cd = getenv("DYLD_LIBRARY_PATH");
+			if (cd) dylib << cd << ":";
+#elif OS_LINUX
+			dylib << "LD_LIBRARY_PATH=";
+			const char *cd = getenv("LD_LIBRARY_PATH");
+			if (cd) dylib << cd << ":";
+#elif OS_WIN32
+#define BUFSIZE 1024
+			char path[BUFSIZE];
+			int bufsize = BUFSIZE;
+			bufsize = GetEnvironmentVariable("PATH",(char*)&path,bufsize);
+			if (bufsize > 0)
 			{
-				return arg.substr(i+1);
+				path[bufsize]='\0';
 			}
-			return arg;
+			dylib << path << ";";
+#endif				
+			dylib << runtimePath << KR_LIB_SEP;
+			//TODO: we need to refactor this out since these are Titanium specific
+			//for now, it doesn't hurt if you don't have them
+#ifdef OS_OSX
+			dylib << [[NSString stringWithCString:runtimePath.c_str()] fileSystemRepresentation] << ":";
+			dylib << kroll::FileUtils::Join(runtimePath.c_str(),"WebKit.framework","Versions","Current",NULL) << ":";
+			dylib << kroll::FileUtils::Join(runtimePath.c_str(),"WebCore.framework","Versions","Current",NULL) << ":";
+			dylib << kroll::FileUtils::Join(runtimePath.c_str(),"JavaScriptCore.framework","Versions","Current",NULL) << ":";
+#endif
+#ifdef DEBUG
+			std::cout << "library: " << dylib.str() << std::endl;
+#endif					
+			std::stringstream runtimeEnv;
+#ifndef OS_WIN32
+			runtimeEnv << "KR_RUNTIME=" << runtimePath;
+#else
+			runtimeEnv << runtimePath;
+#endif
+#ifdef DEBUG
+			std::cout << "runtime: " << runtimeEnv.str() << std::endl;
+#endif					
+			std::stringstream runtimeHomeEnv;
+			std::string runtimeBase = kroll::FileUtils::GetRuntimeBaseDirectory();
+#ifndef OS_WIN32
+			runtimeHomeEnv << "KR_RUNTIME_HOME=" << runtimeBase;
+#else
+			runtimeHomeEnv << runtimeBase;
+#endif
+#ifdef DEBUG
+			std::cout << "runtimeHomeEnv: " << runtimeHomeEnv.str() << std::endl;
+#endif				
+			std::stringstream home;
+#ifndef OS_WIN32
+			home << "KR_HOME=" << homedir;
+#else
+			home << homedir;
+#endif
+#ifdef DEBUG
+			std::cout << "home: " << home.str() << std::endl;
+#endif
+			std::stringstream modules;
+#ifndef OS_WIN32
+			modules << "KR_MODULES=";
+#endif
+			std::vector<std::string>::iterator i = moduleDirs.begin();
+			while(i!=moduleDirs.end())
+			{
+				std::string dir = (*i++);
+				modules << dir << KR_LIB_SEP;
+				dylib << dir << KR_LIB_SEP;
+			}
+#ifdef DEBUG
+			std::cout << "modules: " << modules.str() << std::endl;
+#endif				
+			std::stringstream exec;
+#ifdef OS_WIN32
+			exec << GetExecutablePath();
+#else
+			exec << argv[0];
+#endif
+
+#ifdef OS_WIN32
+			SetEnvironmentVariable("PATH",dylib.str().c_str());
+			SetEnvironmentVariable("KR_RUNTIME",runtimeEnv.str().c_str());
+			SetEnvironmentVariable("KR_HOME",home.str().c_str());
+			SetEnvironmentVariable("KR_MODULES",modules.str().c_str());
+			SetEnvironmentVariable("KR_RUNTIME_HOME",runtimeHomeEnv.str().c_str());
+			SetEnvironmentVariable("KR_BOOT_PROCESS","1");
+
+			LPTCH env = GetEnvironmentStrings();
+			STARTUPINFO si;
+			PROCESS_INFORMATION pi;
+			memset(&si, 0, sizeof(si));
+			memset(&pi, 0, sizeof(pi));
+			si.cb = sizeof(si);
+
+			// launch our subprocess as a child of this process
+			// and wait for it to exit before we exit
+			if (CreateProcessA(NULL,
+								GetCommandLine(),
+								0,
+								0,
+								false,
+								0, /*CREATE_NEW_CONSOLE,*/
+								env,
+								runtimePath.c_str(),
+								&si,
+								&pi) != false)
+			{
+				//we're running!
+				 WaitForSingleObject( pi.hProcess, INFINITE );
+				
+				// get the exit code
+				DWORD exitCode;
+				GetExitCodeProcess(pi.hProcess, &exitCode);
+				rc = (int)exitCode;
+			}
+			else
+			{
+				// just use the error code as exit code
+				rc = GetLastError();
+			}
+			
+			// clean up process
+			CloseHandle(pi.hProcess);
+			
+			// free environment
+			FreeEnvironmentStrings(env);
+#else
+			char **childArgv = (char**)alloca(sizeof(char *) * (argc + 1));
+			for (int c=0;c<argc;c++)
+			{
+				childArgv[c] = strdup((char*)argv[c]);
+			}
+			childArgv[argc] = NULL;
+
+			char **env = (char **)alloca(sizeof(char *) * 7);
+			env[0]=strdup(dylib.str().c_str());
+			env[1] = (char*)strdup(runtimeEnv.str().c_str());
+			env[2] = (char*)strdup(home.str().c_str());
+			env[3] = (char*)strdup(modules.str().c_str());
+			env[4] = (char*)strdup(runtimeHomeEnv.str().c_str());
+			env[5] = "KR_BOOT_PROCESS=1";
+			env[6] = NULL;
+
+#ifdef DEBUG
+			std::cout << "exec: " << exec.str() << std::endl;
+#endif				
+			int result = execve(exec.str().c_str(),(char* const*)childArgv,(char* const*)env);
+			if (result < 0)
+			{
+				perror("execve");
+				rc = __LINE__;
+			}
+#endif
 		}
 	}
-	return defaultValue;
+	return rc;
 }
 
 #if defined(OS_WIN32) && !defined(WIN32_CONSOLE)
@@ -436,6 +638,8 @@ int main(int argc, const char* argv[])
 	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 #endif
 
+	bool forkedProcess = IsForkedProcess();
+
 #if defined(OS_WIN32)
 #if !defined(WIN32_CONSOLE)
 	int argc = __argc;
@@ -446,7 +650,7 @@ int main(int argc, const char* argv[])
 	// for zlib in C++ to do it.  so, the C# installer will
 	// call back into this process in Win32 to have us to 
 	// the unzip crap
-	if (IsUnzipper(argc,argv))
+	if (!forkedProcess && IsUnzipper(argc,argv))
 	{
 #ifdef DEBUG
 		std::cout << "Unzip request from installer ..." << std::endl;
@@ -454,7 +658,7 @@ int main(int argc, const char* argv[])
 		Unzip(argv);
 		return 0;
 	}
-	if (IsSelfExtractor())
+	if (!forkedProcess && IsSelfExtractor())
 	{
 		std::string tmpdir = kroll::FileUtils::GetTempDirectory();
 #ifdef DEBUG
@@ -462,28 +666,30 @@ int main(int argc, const char* argv[])
 #endif	
 		SelfExtract(tmpdir);
 		std::string src = GetExecutablePath();
- 		std::string dest = kroll::FileUtils::Join((char*)tmpdir.c_str(),"installer.exe",NULL); 
-		::CopyFile(src.c_str(),dest.c_str(),true);
-		std::vector<std::string> args;
-		std::string khome("--khome=");
-		khome+=tmpdir;
-		std::string kr("--kruntime=");
-		kr+=tmpdir;
-		args.push_back(dest.c_str()); // binary is always first
-		args.push_back("--kselfextractor"); // give ourselves a flag so we don't try this again
-		args.push_back(khome); // set our main home dir to the self-extracted temp dir
-		args.push_back(kr); // set our titanium dir to the self-extracted temp dir
-		for (int c=1;c<argc;c++)
+ 		std::string dest = kroll::FileUtils::Join(tmpdir.c_str(),"_installer.exe",NULL); 
+#ifdef DEBUG
+		std::cout << "source=" << src << std::endl;
+		std::cout << "dest=" << dest << std::endl;
+#endif
+		std::string manifest = kroll::FileUtils::Join(tmpdir.c_str(),"manifest",NULL);
+		if (!kroll::FileUtils::IsFile(manifest))
 		{
-			args.push_back(argv[c]);
+			KR_FATAL_ERROR("Error loading manifest. Your application is not properly configured or packaged.");
+			rc = __LINE__;
 		}
-		rc = kroll::FileUtils::RunAndWait(dest,args);
+		else
+		{
+			rc = ForkProcess(manifest,tmpdir,tmpdir);
+#ifdef DEBUG
+			std::cout << "ran " << dest << " and exited with: " << rc << std::endl;
+#endif
+		}
 		kroll::FileUtils::DeleteDirectory(tmpdir);
 		return rc;
 	}
 #endif
 
-	if (IsForkedProcess())
+	if (forkedProcess)
 	{
 		// we're inside the fork, boot
 		rc = Boot(argc,argv);
@@ -493,7 +699,7 @@ int main(int argc, const char* argv[])
 		std::string runtimeOverride = GetArgValue(argc,argv,"--kruntime",std::string());
 		// read the application manifest to determine what's needed
 		std::string homedir = GetArgValue(argc,argv,"--khome",kroll::FileUtils::GetApplicationDirectory());
-		std::string manifest = kroll::FileUtils::Join((char*)homedir.c_str(),"manifest",NULL);
+		std::string manifest = kroll::FileUtils::Join(homedir.c_str(),"manifest",NULL);
 #ifdef DEBUG
 		std::cout << "KR_HOME = " << homedir << std::endl;
 		std::cout << "KR RUNTIME OVERRIDE= " << runtimeOverride << std::endl;
@@ -508,177 +714,7 @@ int main(int argc, const char* argv[])
 		}
 		else
 		{
-			// ok, we have a manifest, now do some resolving
-			std::vector< std::pair< std::pair<std::string,std::string>,bool> > modules;
-			std::vector<std::string> moduleDirs;
-			std::string runtimePath;
-			std::string appname;
-			std::string appid;
-			bool success = kroll::FileUtils::ReadManifest(manifest,runtimePath,modules,moduleDirs,appname,appid,runtimeOverride);
-			if (!success)
-			{
-				rc = __LINE__;
-			}
-			else
-			{
-				// run the app installer if any missing modules/runtime or 
-				// version specs not met
-				if (!RunAppInstallerIfNeeded(homedir,runtimePath,manifest,modules,moduleDirs,appname,appid,runtimeOverride))
-				{
-					rc = __LINE__;
-				}
-				else
-				{
-#ifdef DEBUG
-					std::cout << "Runtime Directory = " << runtimePath << std::endl;
-#endif
-
-					// now we should be able to just load the host
-					std::stringstream dylib;
-#ifdef OS_OSX
-					dylib << "DYLD_LIBRARY_PATH=";
-#elif OS_LINUX
-					dylib << "LD_LIBRARY_PATH=";
-#elif OS_WIN32
-#define BUFSIZE 1024
-					char path[BUFSIZE];
-					int bufsize = BUFSIZE;
-					bufsize = GetEnvironmentVariable("PATH",(char*)&path,bufsize);
-					if (bufsize > 0)
-					{
-						path[bufsize]='\0';
-					}
-					dylib << path << ";";
-#endif				
-					//TODO: we need to refactor this out since these are Titanium specific
-					//for now, it doesn't hurt if you don't have them
-#ifdef OS_OSX
-					dylib << [[NSString stringWithCString:runtimePath.c_str()] fileSystemRepresentation] << ":";
-					dylib << kroll::FileUtils::Join((char*)runtimePath.c_str(),"WebKit.framework","Versions","Current",NULL) << ":";
-					dylib << kroll::FileUtils::Join((char*)runtimePath.c_str(),"WebCore.framework","Versions","Current",NULL) << ":";
-					dylib << kroll::FileUtils::Join((char*)runtimePath.c_str(),"JavaScriptCore.framework","Versions","Current",NULL) << ":";
-#endif
-#ifdef DEBUG
-					std::cout << "library: " << dylib.str() << std::endl;
-#endif					
-					std::stringstream runtimeEnv;
-#ifndef OS_WIN32
-					runtimeEnv << "KR_RUNTIME=" << runtimePath;
-#endif
-#ifdef DEBUG
-					std::cout << "runtime: " << runtimeEnv.str() << std::endl;
-#endif					
-					std::stringstream runtimeHomeEnv;
-					std::string runtimeBase = kroll::FileUtils::GetRuntimeBaseDirectory();
-#ifndef OS_WIN32
-					runtimeHomeEnv << "KR_RUNTIME_HOME=" << runtimeBase;
-#endif
-#ifdef DEBUG
-					std::cout << "runtimeHomeEnv: " << runtimeHomeEnv.str() << std::endl;
-#endif				
-					std::stringstream home;
-#ifndef OS_WIN32
-					home << "KR_HOME=" << homedir;
-#endif
-#ifdef DEBUG
-					std::cout << "home: " << home.str() << std::endl;
-#endif
-					std::stringstream modules;
-#ifndef OS_WIN32
-					modules << "KR_MODULES=";
-#endif
-					std::vector<std::string>::iterator i = moduleDirs.begin();
-					while(i!=moduleDirs.end())
-					{
-						std::string dir = (*i++);
-						modules << dir << KR_LIB_SEP;
-					}
-#ifdef DEBUG
-					std::cout << "modules: " << modules.str() << std::endl;
-#endif				
-					std::stringstream exec;
-#ifdef OS_WIN32
-					exec << GetExecutablePath();
-#else
-					exec << argv[0];
-#endif
-
-#ifdef OS_WIN32
-					SetEnvironmentVariable("PATH",dylib.str().c_str());
-					SetEnvironmentVariable("KR_RUNTIME",runtimeEnv.str().c_str());
-					SetEnvironmentVariable("KR_HOME",home.str().c_str());
-					SetEnvironmentVariable("KR_MODULES",modules.str().c_str());
-					SetEnvironmentVariable("KR_RUNTIME_HOME",runtimeHomeEnv.str().c_str());
-					SetEnvironmentVariable("KR_BOOT_PROCESS","1");
-
-					LPTCH env = GetEnvironmentStrings();
-				    STARTUPINFO si;
-				    PROCESS_INFORMATION pi;
-				    memset(&si, 0, sizeof(si));
-				    memset(&pi, 0, sizeof(pi));
-				    si.cb = sizeof(si);
-
-					// launch our subprocess as a child of this process
-					// and wait for it to exit before we exit
-				    if (CreateProcessA(NULL,
-										GetCommandLine(),
-										0,
-										0,
-										false,
-										CREATE_NEW_CONSOLE,
-										env,
-										runtimePath.c_str(),
-				                        &si,
-										&pi) != false)
-					{
-						//we're running!
-						 WaitForSingleObject( pi.hProcess, INFINITE );
-						
-						// get the exit code
-						DWORD exitCode;
-						GetExitCodeProcess(pi.hProcess, &exitCode);
-						rc = (int)exitCode;
-					}
-					else
-					{
-						// just use the error code as exit code
-						rc = GetLastError();
-					}
-					
-					// clean up process
-					CloseHandle(pi.hProcess);
-					
-					// free environment
-					FreeEnvironmentStrings(env);
-#else
-					char **childArgv = (char**)alloca(sizeof(char *) * (argc + 1));
-					for (int c=0;c<argc;c++)
-					{
-						childArgv[c] = strdup((char*)argv[c]);
-					}
-					childArgv[argc] = NULL;
-
-					char **env = (char **)alloca(sizeof(char *) * 7);
-					env[0]=strdup(dylib.str().c_str());
-					env[1] = (char*)strdup(runtimeEnv.str().c_str());
-					env[2] = (char*)strdup(home.str().c_str());
-					env[3] = (char*)strdup(modules.str().c_str());
-					env[4] = (char*)strdup(runtimeHomeEnv.str().c_str());
-					env[5] = "KR_BOOT_PROCESS=1";
-					env[6] = NULL;
-
-#ifdef DEBUG
-					std::cout << "exec: " << exec.str() << std::endl;
-#endif				
-					int result = execve(exec.str().c_str(),(char* const*)childArgv,(char* const*)env);
-					if (result < 0)
-					{
-						perror("execve");
-						rc = __LINE__;
-					}
-#endif
-				}
-			}
+			rc = ForkProcess(manifest,homedir,runtimeOverride);
 		}
 	}
 

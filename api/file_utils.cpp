@@ -215,12 +215,12 @@ namespace kroll
 		va_list ap;
 		va_start(ap, path);
 		std::vector<std::string> parts;
-		parts.push_back(std::string(path));
+		parts.push_back(path);
 		while (true)
 		{
-			const char *i = va_arg(ap,const char*);
-			if (i == NULL) break;
-			parts.push_back(std::string(i));
+			char *i = va_arg(ap,char*);
+			if (i==NULL) break;
+			parts.push_back(i);
 		}
 		va_end(ap);
 		std::string filepath;
@@ -544,6 +544,11 @@ namespace kroll
 		{
 			return false;
 		}
+		bool foundRuntime = false;
+		const char *rt = runtimeOverride.c_str();
+#ifdef DEBUG
+				std::cout << "Read Manifest: " << rt << std::endl;
+#endif				
 
 		while (!file.eof())
 		{
@@ -578,15 +583,16 @@ namespace kroll
 				if (key == "runtime")
 				{
 					// check to see if our runtime is found in our override directory
-					if (runtimeOverride.length () > 0)
+					if (!runtimeOverride.empty())
 					{
-						std::string potentialRuntime = Join(runtimeOverride.c_str(),"runtime",NULL);
+						std::string potentialRuntime = Join(rt,"runtime",NULL);
 						if (IsDirectory(potentialRuntime))
 						{
 							runtimePath = potentialRuntime;
 #ifdef DEBUG
 							std::cout << "found override runtime at: " << runtimePath << std::endl;
 #endif
+							foundRuntime = true;
 							continue;
 						}
 					}
@@ -595,14 +601,18 @@ namespace kroll
 					{
 						modules.push_back(std::pair< std::pair<std::string,std::string>, bool>(p,false));
 					}
+					else
+					{
+						foundRuntime = true;
+					}
 				}
 				else
 				{
 					// check to see if our module is contained within our runtime override
 					// directory and if it is, use it...
-					if (runtimeOverride.length () > 0)
+					if (!runtimeOverride.empty())
 					{
-						std::string potentialModule = Join(runtimeOverride.c_str(),"modules",key,NULL);
+						std::string potentialModule = kroll::FileUtils::Join(rt,"modules",key.c_str(),NULL);
 						if (IsDirectory(potentialModule))
 						{
 							modules.push_back(std::pair< std::pair<std::string,std::string>, bool>(p,true));
@@ -622,6 +632,12 @@ namespace kroll
 					}
 				}
 			}
+		}
+		// we gotta always have a runtime
+		if (!foundRuntime)
+		{
+			std::pair<std::string,std::string> p("runtime","0.2"); //TODO: huh, what do we use?
+			modules.push_back(std::pair< std::pair<std::string,std::string>, bool>(p,false));
 		}
 		file.close();
 		return true;
