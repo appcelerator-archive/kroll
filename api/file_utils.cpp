@@ -771,7 +771,8 @@ namespace kroll
 		args.push_back("--rsrc");
 		args.push_back(source);
 		args.push_back(destination);
-		RunAndWait(std::string("/usr/bin/ditto"),args);
+		std::string cmdline = "/usr/bin/ditto";
+		RunAndWait(cmdline,args);
 #elif OS_LINUX
 		std::vector<std::string> args;
 		args.push_back("-qq");

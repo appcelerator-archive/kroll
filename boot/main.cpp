@@ -4,23 +4,6 @@
  * Copyright (c) 2008-2009 Appcelerator, Inc. All Rights Reserved.
  */
 
-#if defined(OS_OSX)
-#import <Cocoa/Cocoa.h>
-#endif
-
-#if defined(OS_WIN32)
-#include <windows.h>
-#include <process.h>
-#else
-#include <dlfcn.h>
-#include <signal.h>
-#endif
-
-#include <iostream>
-#include <sstream>
-#include <cstring>
-#include <api/file_utils.h>
-
 //////////////////////////////////////////////////////////
 //
 // ---------------
@@ -78,6 +61,26 @@
 // 
 //
 //////////////////////////////////////////////////////////
+#if defined(OS_OSX)
+#import <Cocoa/Cocoa.h>
+#endif
+
+#if defined(OS_WIN32)
+#include <windows.h>
+#include <process.h>
+#else
+#include <dlfcn.h>
+#include <signal.h>
+#endif
+
+#include <iostream>
+#include <sstream>
+#include <cstring>
+#include <api/file_utils.h>
+
+static char **argv;
+static int argc;
+
 
 #ifdef OS_OSX
   #define KR_FATAL_ERROR(msg) \
@@ -123,14 +126,101 @@ std::string GetExecutablePath()
 }
 #endif
 
-std::string GetArgValue(int argc, const char **argv, std::string name, std::string defaultValue)
+
+#ifdef OS_OSX
+@interface TaskCallback : NSObject
++ (NSInvocation*) createInvocation: (SEL) selector;
+- (BOOL) terminated: (NSNotification*) note;
+@end
+
+@implementation TaskCallback
++ (NSInvocation*) createInvocation: (SEL) selector {
+  NSMethodSignature* signature = [self instanceMethodSignatureForSelector:selector];
+  NSInvocation* invocation = [NSInvocation invocationWithMethodSignature:signature];
+  [invocation setSelector:selector];
+  [invocation setTarget:[self alloc]];
+  return invocation;
+}
+- (BOOL) terminated: (NSNotification*) note {
+  [NSApp terminate:nil];
+  return YES;
+}
+@end
+
+@interface TaskInvoker : NSObject {
+  	NSInvocation* terminateInvocation;
+	NSTask *task;
+}
+-(void)terminate;
+@end
+
+@implementation TaskInvoker
+- (id)initWithApplication:(NSString*)app environment:(NSDictionary*)env arguments:(NSArray*)args currentDirectory:(NSString*)dir {
+	if ((self = [super init])) 
+	{
+	    terminateInvocation = nil;
+		task = [[NSTask alloc] init];
+		[task setLaunchPath: app];
+		if (env) [task setEnvironment: env];
+		if (args) [task setArguments: args];
+		if (dir) [task setCurrentDirectoryPath: dir];
+  	}
+  	return self;
+}
+- (void)dealloc{
+	[task release];
+	[super dealloc];
+}
+- (BOOL)launch:(NSInvocation*) terminated{
+  	terminateInvocation = terminated;
+
+  	if (terminateInvocation != nil) 
+	{
+    	[[NSNotificationCenter defaultCenter] addObserver:self
+				    selector:@selector(taskTerminated:)
+				    name:NSTaskDidTerminateNotification
+				    object:nil];
+  	}
+	[task launch];	
+	[task waitUntilExit];
+	return YES;
+}
+- (void)taskTerminated:(NSNotification *)note {
+  	if (terminateInvocation != nil) 
+	{
+		int terminationStatus = [task terminationStatus];
+	    [terminateInvocation setArgument:&terminationStatus atIndex:2];
+	    [terminateInvocation invoke];
+	}
+}
+- (void)terminate
+{
+	[task terminate];
+}
+@end
+static TaskInvoker* invoker = nil;
+
+//
+// this will capture console termination signals
+// and cause the invoker to terminate
+//
+void termination(int)
+{
+	[invoker terminate];
+    [NSApp terminate:nil];
+}
+
+#endif
+
+
+std::string GetArgValue(int argc, char **argv, std::string name, std::string defaultValue)
 {
 	for (int c=1;c<argc;c++)
 	{
 		std::string arg(argv[c]);
 		if (arg.find(name) == 0)
 		{
-			int i = arg.find("=");
+			size_t i = arg.find("=");
 			if (i!=std::string::npos)
 			{
 				return arg.substr(i+1);
@@ -366,7 +456,7 @@ typedef int Executor(HINSTANCE hInstance, int argc, const char **argv);
 typedef int Executor(int argc, const char **argv);
 #endif
 
-int Boot(int argc, const char** argv)
+int Boot(int argc, char** argv)
 {
 #if defined(OS_OSX)
 	[NSApplication sharedApplication];
@@ -419,17 +509,24 @@ int Boot(int argc, const char** argv)
 	Executor* executor = (Executor*)dlsym(lib, "Execute");
 	if (!executor)
 	{
-		std::string ostringstream msg;
+		std::ostringstream msg;
 		msg << "Invalid entry point for " <<  path;
 		KR_FATAL_ERROR(msg.str().c_str());
 		return 1;
 	}
-	return executor(argc,argv);
+	return executor(argc,(const char**)argv);
 #endif
 }
 
 int ForkProcess(std::string &exec, std::string &manifest, std::string &homedir, std::string &runtimeOverride)
 {
+#ifdef DEBUG
+	std::cout << "ForkProcess - exec=" << exec << std::endl;
+	std::cout << "ForkProcess - manifest=" << manifest << std::endl;
+	std::cout << "ForkProcess - homedir=" << homedir << std::endl;
+	std::cout << "ForkProcess - runtimeOverride=" << runtimeOverride << std::endl;
+#endif
+	
 	int rc = 0;
 	// ok, we have a manifest, now do some resolving
 	std::vector< std::pair< std::pair<std::string,std::string>,bool> > modules;
@@ -455,12 +552,9 @@ int ForkProcess(std::string &exec, std::string &manifest, std::string &homedir, 
 #ifdef DEBUG
 			std::cout << "Runtime Directory = " << runtimePath << std::endl;
 #endif
-			//TODO: add existing to path
-			
 			// now we should be able to just load the host
 			std::stringstream dylib;
 #ifdef OS_OSX
-			dylib << "DYLD_LIBRARY_PATH=";
 			const char *cd = getenv("DYLD_LIBRARY_PATH");
 			if (cd) dylib << cd << ":";
 #elif OS_LINUX
@@ -491,7 +585,7 @@ int ForkProcess(std::string &exec, std::string &manifest, std::string &homedir, 
 			std::cout << "library: " << dylib.str() << std::endl;
 #endif					
 			std::stringstream runtimeEnv;
-#ifndef OS_WIN32
+#ifdef OS_LINUX
 			runtimeEnv << "KR_RUNTIME=" << runtimePath;
 #else
 			runtimeEnv << runtimePath;
@@ -501,7 +595,7 @@ int ForkProcess(std::string &exec, std::string &manifest, std::string &homedir, 
 #endif					
 			std::stringstream runtimeHomeEnv;
 			std::string runtimeBase = kroll::FileUtils::GetRuntimeBaseDirectory();
-#ifndef OS_WIN32
+#ifdef OS_LINUX
 			runtimeHomeEnv << "KR_RUNTIME_HOME=" << runtimeBase;
 #else
 			runtimeHomeEnv << runtimeBase;
@@ -510,7 +604,7 @@ int ForkProcess(std::string &exec, std::string &manifest, std::string &homedir, 
 			std::cout << "runtimeHomeEnv: " << runtimeHomeEnv.str() << std::endl;
 #endif				
 			std::stringstream home;
-#ifndef OS_WIN32
+#ifdef OS_LINUX
 			home << "KR_HOME=" << homedir;
 #else
 			home << homedir;
@@ -519,7 +613,7 @@ int ForkProcess(std::string &exec, std::string &manifest, std::string &homedir, 
 			std::cout << "home: " << home.str() << std::endl;
 #endif
 			std::stringstream modules;
-#ifndef OS_WIN32
+#ifdef OS_LINUX
 			modules << "KR_MODULES=";
 #endif
 			std::vector<std::string>::iterator i = moduleDirs.begin();
@@ -577,7 +671,8 @@ int ForkProcess(std::string &exec, std::string &manifest, std::string &homedir, 
 			
 //			rc = _spawnvpe( _P_OVERLAY, exec.str().c_str(), childArgv, childEnv );
 			rc = _spawnvpe( _P_OVERLAY, __argv[0], childArgv, childEnv );
-#else
+#elif OS_LINUX
+			//FIXME: copy in existing env 
 			char **childArgv = (char**)alloca(sizeof(char *) * (argc + 1));
 			for (int c=0;c<argc;c++)
 			{
@@ -593,13 +688,43 @@ int ForkProcess(std::string &exec, std::string &manifest, std::string &homedir, 
 			env[4] = (char*)strdup(runtimeHomeEnv.str().c_str());
 			env[5] = "KR_BOOT_PROCESS=1";
 			env[6] = NULL;
-
-			int result = execve(exec.str().c_str(),(char* const*)childArgv,(char* const*)env);
+			int result = execve(exec.c_str(),(char* const*)childArgv,(char* const*)env);
 			if (result < 0)
 			{
 				perror("execve");
 				rc = __LINE__;
 			}
+			
+			free(childArgv);
+			free(env);
+#else			
+			invoker = [TaskInvoker alloc];
+			NSInvocation* terminateInvocation = [TaskCallback createInvocation: @selector(terminated:)];
+
+			// setup termination handlers that will ensure that we don't 
+			// orphan our subprocess
+			signal(SIGHUP, &termination);
+			signal(SIGTERM, &termination);
+			signal(SIGINT, &termination);
+			signal(SIGKILL, &termination);
+			
+			// create our program args (just pass what was passed to us)
+			NSMutableArray *a = [[[NSMutableArray alloc] init] autorelease];
+			for (int c=1;c<argc;c++)
+			{
+				[a addObject:[NSString stringWithFormat:@"%s",argv[c]]];
+			}
+			
+			NSMutableDictionary *e = [[[NSMutableDictionary alloc] init] autorelease];
+			[e setValue:[NSString stringWithCString:home.str().c_str()] forKey:@"KR_HOME"];
+			[e setValue:[NSString stringWithCString:runtimeEnv.str().c_str()] forKey:@"KR_RUNTIME"];
+			[e setValue:[NSString stringWithCString:runtimeHomeEnv.str().c_str()] forKey:@"KR_RUNTIME_HOME"];
+			[e setValue:[NSString stringWithCString:modules.str().c_str()] forKey:@"KR_MODULES"];
+			[e setValue:[NSString stringWithCString:dylib.str().c_str()] forKey:@"DYLD_LIBRARY_PATH"];
+			[e setValue:@"1" forKey:@"KR_BOOT_PROCESS"];
+
+			[invoker initWithApplication:[NSString stringWithCString:exec.c_str()] environment:e arguments:a currentDirectory:[[NSBundle mainBundle] bundlePath]];
+			[invoker launch:terminateInvocation];
 #endif
 		}
 	}
@@ -609,7 +734,7 @@ int ForkProcess(std::string &exec, std::string &manifest, std::string &homedir, 
 #if defined(OS_WIN32) && !defined(WIN32_CONSOLE)
 int WinMain(HINSTANCE, HINSTANCE, LPSTR command_line, int)
 #else
-int main(int argc, const char* argv[])
+int main(int _argc, const char* _argv[])
 #endif
 {
 	int rc = 0;
@@ -617,12 +742,17 @@ int main(int argc, const char* argv[])
 	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 #endif
 
+	std::cout << "arg count = " << _argc << std::endl;
+
 	bool forkedProcess = IsForkedProcess();
 
 #if defined(OS_WIN32)
 #if !defined(WIN32_CONSOLE)
-	int argc = __argc;
-	const char **argv = (const char**)__argv;
+	argc = __argc;
+	argv = __argv;
+#else
+	argc = _argc;
+	argv = argv;
 #endif
 	// win32 is special .... since unzip isn't built-in to 
 	// .NET, we are going to just use the bundled libraries
@@ -675,9 +805,9 @@ int main(int argc, const char* argv[])
 	}
 	else
 	{
-		std::string runtimeOverride = GetArgValue(argc,argv,"--kruntime",std::string());
 		// read the application manifest to determine what's needed
 		std::string homedir = GetArgValue(argc,argv,"--khome",kroll::FileUtils::GetApplicationDirectory());
+		std::string runtimeOverride = GetArgValue(argc,argv,"--kruntime",homedir);
 		std::string manifest = kroll::FileUtils::Join(homedir.c_str(),"manifest",NULL);
 #ifdef DEBUG
 		std::cout << "KR_HOME = " << homedir << std::endl;
@@ -693,8 +823,11 @@ int main(int argc, const char* argv[])
 		}
 		else
 		{
-#ifdef WIN32
+#ifdef OS_WIN32
 			std::string exec = GetExecutablePath();
+#elif OS_OSX
+			NSString* e = [[NSBundle mainBundle] executablePath];
+			std::string exec = [e UTF8String];
 #else
 			std::string exec = argv[0];
 #endif
