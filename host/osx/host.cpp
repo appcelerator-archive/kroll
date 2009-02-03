@@ -10,15 +10,12 @@
 #include <string>
 #import <Cocoa/Cocoa.h>
 #include "host.h"
-#include "log.h"
 
 namespace kroll
 {
 	OSXHost::OSXHost(int _argc, const char **_argv) : Host(_argc,_argv)
 	{
-		// SetupLog(_argc,_argv,[NSString stringWithFormat:@"%s/run.log",this->GetApplicationHome().c_str()]);
-
-//FIXME - push this us
+		//FIXME - push this up
 		char *p = getenv("KR_MODULES");
 		if (p)
 		{
@@ -26,29 +23,33 @@ namespace kroll
 		}
 		
 		std::cout << "OSXHost::OSXHost" << std::endl;
+		
+		[NSApplication sharedApplication];
 	}
 
 	OSXHost::~OSXHost()
 	{
-		// CloseLog();
+	}
+	
+	bool OSXHost::Start()
+	{
+		Host::Start();
+		NSApplication *app = [NSApplication sharedApplication];
+		[app finishLaunching];
+		return true;
 	}
 
 	bool OSXHost::RunLoop()
 	{
+		NSApplication *app = [NSApplication sharedApplication];
 		// we pull out an event from the queue, blocking a little bit before returning
-		NSEvent *event = [NSApp nextEventMatchingMask:NSAnyEventMask untilDate:[NSDate dateWithTimeIntervalSinceNow:1] inMode:NSDefaultRunLoopMode dequeue:YES];
+		NSEvent *event = [app nextEventMatchingMask:NSAnyEventMask untilDate:[NSDate dateWithTimeIntervalSinceNow:1] inMode:NSDefaultRunLoopMode dequeue:YES];
 		if (event) 
 		{
-			[NSApp sendEvent:event];
+			[app sendEvent:event];
 		}
 		return true;
 	}
-	
-	// int OSXHost::PerformRun()
-	// {
-	// 	[NSApp run];
-	// 	return 0;
-	// }
 
 	Module* OSXHost::CreateModule(std::string& path)
 	{

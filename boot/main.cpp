@@ -465,7 +465,7 @@ typedef int Executor(int argc, const char **argv);
 int Boot(int argc, char** argv)
 {
 #if defined(OS_OSX)
-	[NSApplication sharedApplication];
+//	[NSApplication sharedApplication];
 #endif
 
 #if defined(OS_WIN32)

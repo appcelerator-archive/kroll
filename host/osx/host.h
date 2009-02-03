@@ -23,6 +23,7 @@ namespace kroll
 	protected:
 		virtual ~OSXHost();
 		virtual bool RunLoop();
+		virtual bool Start();
 		
 	private:
 		std::string appConfig;
