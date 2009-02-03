@@ -12,13 +12,13 @@
 // by Jeff Haynie, 1/31/09
 //
 // The boot process for the microkernel has several stages
-// that it goes through to start a kroll container.  
+// that it goes through to start a kroll container.
 //
-// It first needs to resolve all module dependencies for 
-// the applications by reading the manifest file in the 
+// It first needs to resolve all module dependencies for
+// the applications by reading the manifest file in the
 // application folder.  The manifest file has dependency
 // related information for the application, namely what
-// the runtime version must be and what modules are 
+// the runtime version must be and what modules are
 // required and with what version.  The boot will attempt
 // to locate the modules based on the Kroll runtime path
 // and then if it cannot find one or more required components
@@ -41,24 +41,24 @@
 // from here once they have been resolved.  Nice try. It
 // doesn't work that way since the dynamic loader records the
 // (DY)LD_LIBRARY_PATH (PATH on win32) before handing
-// control to the main entrypoint.  Even if you set the 
+// control to the main entrypoint.  Even if you set the
 // environment in main, it will be ignored since the dynamic
-// loader has already resolved libraries and setup the 
+// loader has already resolved libraries and setup the
 // processes path.  So, we fork-and-replace our process to
 // get around this.
 //
 // The boot is designed such that it requires no external
 // dependencies - nada.  That's important and shouldn't get
 // jacked up if you change it or the build file.  BE VERY
-// CAREFUL which libraries you link against.  Don't link 
+// CAREFUL which libraries you link against.  Don't link
 // against any thirdparty libraries, including the Kroll API,
 // etc.  The boot will be renamed to the name of the application
 // process on application bundling, but it's an exact copy
 // of what was built.  The boot should be as tiny as possible,
-// have no depedencies, and provide minimal functionality to 
-// bootstrap the microkernel and handoff to the appropriate 
+// have no depedencies, and provide minimal functionality to
+// bootstrap the microkernel and handoff to the appropriate
 // kernal runtime and modules.
-// 
+//
 //
 //////////////////////////////////////////////////////////
 #if defined(OS_OSX)
@@ -162,7 +162,7 @@ std::string GetExecutablePath()
 
 @implementation TaskInvoker
 - (id)initWithApplication:(NSString*)app environment:(NSDictionary*)env arguments:(NSArray*)args currentDirectory:(NSString*)dir {
-	if ((self = [super init])) 
+	if ((self = [super init]))
 	{
 	    terminateInvocation = nil;
 		task = [[NSTask alloc] init];
@@ -180,19 +180,19 @@ std::string GetExecutablePath()
 - (BOOL)launch:(NSInvocation*) terminated{
   	terminateInvocation = terminated;
 
-  	if (terminateInvocation != nil) 
+  	if (terminateInvocation != nil)
 	{
     	[[NSNotificationCenter defaultCenter] addObserver:self
 				    selector:@selector(taskTerminated:)
 				    name:NSTaskDidTerminateNotification
 				    object:nil];
   	}
-	[task launch];	
+	[task launch];
 	[task waitUntilExit];
 	return YES;
 }
 - (void)taskTerminated:(NSNotification *)note {
-  	if (terminateInvocation != nil) 
+  	if (terminateInvocation != nil)
 	{
 		int terminationStatus = [task terminationStatus];
 	    [terminateInvocation setArgument:&terminationStatus atIndex:2];
@@ -239,8 +239,8 @@ std::string GetArgValue(int argc, char **argv, std::string name, std::string def
 
 bool RunAppInstallerIfNeeded(std::string &homedir,
 						 std::string &runtimePath,
-						 std::string &manifest, 
-						 std::vector< std::pair< std::pair<std::string,std::string>,bool> > &modules, 
+						 std::string &manifest,
+						 std::vector< std::pair< std::pair<std::string,std::string>,bool> > &modules,
 						 std::vector<std::string> &moduleDirs,
 						 std::string &appname,
 						 std::string &appid,
@@ -262,7 +262,7 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 	}
 	// this is where kroll should be installed
 	std::string runtimeBase = kroll::FileUtils::GetRuntimeBaseDirectory();
-	
+
 	if (missing.size()>0)
 	{
 		// if we don't have an installer directory, just bail...
@@ -272,12 +272,12 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 			KR_FATAL_ERROR("Missing installer and application has modules that are not found.");
 			return false;
 		}
-		
+
 		std::string sourceTemp = kroll::FileUtils::GetTempDirectory();
 		std::vector<std::string> args;
 		// appname
 		args.push_back(appname);
-		// title 
+		// title
 		//I18N: localize these
 		args.push_back("Additional application files required");
 		// message
@@ -289,11 +289,11 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 		args.push_back(runtimeBase);
 
 #ifdef OS_WIN32
-		// in Win32 installer, we push the path to this process so he can 
+		// in Win32 installer, we push the path to this process so he can
 		// invoke back on us to do the unzip
 		args.push_back(GetExecutablePath());
 #endif
-		
+
 		// make sure we create our runtime directory
 		kroll::FileUtils::CreateDirectory(runtimeBase);
 
@@ -319,7 +319,7 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 		{
 			url = std::string(updatesite);
 		}
-		
+
 		std::string sid = kroll::FileUtils::GetMachineId();
 		std::string qs("?os=osx&sid="+sid+"&aid="+appid);
 		std::vector< std::pair<std::string,std::string> >::iterator iter = missing.begin();
@@ -366,7 +366,7 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 				missingCount++;
 			}
 		}
-		
+
 		// we have to check again in case the private module/runtime was
 		// resolved inside the application folder
 		if (missingCount>0)
@@ -378,7 +378,7 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 			std::string exec = kroll::FileUtils::Join(installerDir.c_str(),"Installer.exe",NULL);
 #elif OS_LINUX
 			std::string exec = kroll::FileUtils::Join(installerDir.c_str(),"installer",NULL);
-#endif	
+#endif
 			// paranoia check
 			if (kroll::FileUtils::IsFile(exec))
 			{
@@ -418,13 +418,13 @@ bool IsForkedProcess()
 #else
 	const char *e = getenv("KR_BOOT_PROCESS");
 	return e!=NULL && strcmp(e,"1")==0;
-#endif	
+#endif
 }
 
 #if defined(OS_WIN32)
 bool IsUnzipper(int argc, const char **argv)
 {
-	return !GetArgValue(argc,argv,"--tiunzip",std::string()).empty();
+	return !GetArgValue(argc,(char **)argv,"--tiunzip",std::string()).empty();
 }
 void Unzip(const char **argv)
 {
@@ -435,7 +435,7 @@ void Unzip(const char **argv)
 bool IsSelfExtractor()
 {
 	// skip check if we're running from self-extractor
-	std::string check = GetArgValue(__argc,(const char**)__argv,"--kselfextractor","");
+	std::string check = GetArgValue(__argc,__argv,"--kselfextractor","");
 	if (!check.empty()) return false;
 	std::string path = GetExecutablePath();
 	HZIP hzip = OpenZip(path.c_str(),0);
@@ -451,7 +451,7 @@ void SelfExtract(std::string &dir)
 	std::string zip = GetExecutablePath();
 #ifdef DEBUG
 	std::cout << "SelfExtracting: " << zip << std::endl;
-#endif	
+#endif
 	kroll::FileUtils::Unzip(zip,dir);
 }
 #endif
@@ -532,7 +532,7 @@ int ForkProcess(std::string &exec, std::string &manifest, std::string &homedir, 
 	std::cout << "ForkProcess - homedir=" << homedir << std::endl;
 	std::cout << "ForkProcess - runtimeOverride=" << runtimeOverride << std::endl;
 #endif
-	
+
 	int rc = 0;
 	// ok, we have a manifest, now do some resolving
 	std::vector< std::pair< std::pair<std::string,std::string>,bool> > modules;
@@ -547,7 +547,7 @@ int ForkProcess(std::string &exec, std::string &manifest, std::string &homedir, 
 	}
 	else
 	{
-		// run the app installer if any missing modules/runtime or 
+		// run the app installer if any missing modules/runtime or
 		// version specs not met
 		if (!RunAppInstallerIfNeeded(homedir,runtimePath,manifest,modules,moduleDirs,appname,appid,runtimeOverride))
 		{
@@ -577,7 +577,7 @@ int ForkProcess(std::string &exec, std::string &manifest, std::string &homedir, 
 				path[bufsize]='\0';
 			}
 			dylib << path << ";";
-#endif				
+#endif
 			dylib << runtimePath << KR_LIB_SEP;
 			//TODO: we need to refactor this out since these are Titanium specific
 			//for now, it doesn't hurt if you don't have them
@@ -589,7 +589,7 @@ int ForkProcess(std::string &exec, std::string &manifest, std::string &homedir, 
 #endif
 #ifdef DEBUG
 			std::cout << "library: " << dylib.str() << std::endl;
-#endif					
+#endif
 			std::stringstream runtimeEnv;
 #ifdef OS_LINUX
 			runtimeEnv << "KR_RUNTIME=" << runtimePath;
@@ -598,7 +598,7 @@ int ForkProcess(std::string &exec, std::string &manifest, std::string &homedir, 
 #endif
 #ifdef DEBUG
 			std::cout << "runtime: " << runtimeEnv.str() << std::endl;
-#endif					
+#endif
 			std::stringstream runtimeHomeEnv;
 			std::string runtimeBase = kroll::FileUtils::GetRuntimeBaseDirectory();
 #ifdef OS_LINUX
@@ -608,7 +608,7 @@ int ForkProcess(std::string &exec, std::string &manifest, std::string &homedir, 
 #endif
 #ifdef DEBUG
 			std::cout << "runtimeHomeEnv: " << runtimeHomeEnv.str() << std::endl;
-#endif				
+#endif
 			std::stringstream home;
 #ifdef OS_LINUX
 			home << "KR_HOME=" << homedir;
@@ -632,7 +632,7 @@ int ForkProcess(std::string &exec, std::string &manifest, std::string &homedir, 
 #ifdef DEBUG
 			std::cout << "modules: " << modules.str() << std::endl;
 			std::cout << "exec: " << exec << std::endl;
-#endif				
+#endif
 
 #ifdef OS_WIN32
 			SetEnvironmentVariable("PATH",dylib.str().c_str());
@@ -641,7 +641,7 @@ int ForkProcess(std::string &exec, std::string &manifest, std::string &homedir, 
 			SetEnvironmentVariable("KR_MODULES",modules.str().c_str());
 			SetEnvironmentVariable("KR_RUNTIME_HOME",runtimeHomeEnv.str().c_str());
 			SetEnvironmentVariable("KR_BOOT_PROCESS","1");
-			
+
 			std::ostringstream ose;
 
 			char *env = GetEnvironmentStrings();
@@ -674,7 +674,7 @@ int ForkProcess(std::string &exec, std::string &manifest, std::string &homedir, 
 				childArgv[c] = strdup((char*)__argv[c]);
 			}
 			childArgv[__argc] = NULL;
-			
+
 //			rc = _spawnvpe( _P_OVERLAY, exec.str().c_str(), childArgv, childEnv );
 			rc = _spawnvpe( _P_OVERLAY, __argv[0], childArgv, childEnv );
 #elif OS_LINUX
@@ -697,7 +697,7 @@ int ForkProcess(std::string &exec, std::string &manifest, std::string &homedir, 
 			{
 				env[i] = environ[i];
 			}
-			
+
 			// Add our own environment variables
 			env[env_size + 0] = dylib.str().c_str();
 			env[env_size + 1] = runtimeEnv.str().c_str();
@@ -712,25 +712,25 @@ int ForkProcess(std::string &exec, std::string &manifest, std::string &homedir, 
 				perror("execve");
 				rc = __LINE__;
 			}
-			
+
 #else
 			invoker = [TaskInvoker alloc];
 			NSInvocation* terminateInvocation = [TaskCallback createInvocation: @selector(terminated:)];
 
-			// setup termination handlers that will ensure that we don't 
+			// setup termination handlers that will ensure that we don't
 			// orphan our subprocess
 			signal(SIGHUP, &termination);
 			signal(SIGTERM, &termination);
 			signal(SIGINT, &termination);
 			signal(SIGKILL, &termination);
-			
+
 			// create our program args (just pass what was passed to us)
 			NSMutableArray *a = [[[NSMutableArray alloc] init] autorelease];
 			for (int c=1;c<argc;c++)
 			{
 				[a addObject:[NSString stringWithFormat:@"%s",argv[c]]];
 			}
-			
+
 			NSMutableDictionary *e = [[[NSMutableDictionary alloc] init] autorelease];
 			[e setValue:[NSString stringWithCString:home.str().c_str()] forKey:@"KR_HOME"];
 			[e setValue:[NSString stringWithCString:runtimeEnv.str().c_str()] forKey:@"KR_RUNTIME"];
@@ -758,7 +758,7 @@ int main(int _argc, const char* _argv[])
 	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 #endif
 
-	std::cout << "arg count = " << _argc << std::endl;
+	std::cout << "arg count = " << __argc << std::endl;
 
 	bool forkedProcess = IsForkedProcess();
 
@@ -770,17 +770,17 @@ int main(int _argc, const char* _argv[])
 	argc = _argc;
 	argv = argv;
 #endif
-	// win32 is special .... since unzip isn't built-in to 
+	// win32 is special .... since unzip isn't built-in to
 	// .NET, we are going to just use the bundled libraries
 	// for zlib in C++ to do it.  so, the C# installer will
-	// call back into this process in Win32 to have us to 
+	// call back into this process in Win32 to have us to
 	// the unzip crap
-	if (!forkedProcess && IsUnzipper(argc,argv))
+	if (!forkedProcess && IsUnzipper(argc,(const char **)argv))
 	{
 #ifdef DEBUG
 		std::cout << "Unzip request from installer ..." << std::endl;
-#endif	
-		Unzip(argv);
+#endif
+		Unzip((const char **)argv);
 		return 0;
 	}
 	if (!forkedProcess && IsSelfExtractor())
@@ -788,10 +788,10 @@ int main(int _argc, const char* _argv[])
 		std::string tmpdir = kroll::FileUtils::GetTempDirectory();
 #ifdef DEBUG
 		std::cout << "Looks like a self-extracting executable ... extract to " << tmpdir << std::endl;
-#endif	
+#endif
 		SelfExtract(tmpdir);
 		std::string src = GetExecutablePath();
- 		std::string dest = kroll::FileUtils::Join(tmpdir.c_str(),"_installer.exe",NULL); 
+ 		std::string dest = kroll::FileUtils::Join(tmpdir.c_str(),"_installer.exe",NULL);
 #ifdef DEBUG
 		std::cout << "source=" << src << std::endl;
 		std::cout << "dest=" << dest << std::endl;
