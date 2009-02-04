@@ -80,10 +80,12 @@ namespace kroll
 	SharedPtr<kroll::BoundMethod> *method;
 	SharedPtr<kroll::Value> *result;
 	SharedPtr<kroll::ValueList> *args;
+	SharedPtr<kroll::Value> *exception;
 }
 - (id)initWithBoundMethod:(SharedPtr<kroll::BoundMethod>)method args:(SharedPtr<ValueList>)args;
 - (void)call;
 - (SharedPtr<kroll::Value>)getResult;
+- (SharedPtr<kroll::Value>)getException;
 @end
 
 @implementation KrollMainThreadCaller
@@ -95,6 +97,7 @@ namespace kroll
 		method = new SharedPtr<kroll::BoundMethod>(m);
 		args = new SharedPtr<kroll::ValueList>(a);
 		result = new SharedPtr<kroll::Value>();
+		exception = new SharedPtr<kroll::Value>();
 	}
 	return self;
 }
@@ -103,11 +106,16 @@ namespace kroll
 	delete method;
 	delete result;
 	delete args;
+	delete exception;
 	[super dealloc];
 }
 - (SharedPtr<kroll::Value>)getResult
 {
 	return *result;
+}
+- (SharedPtr<kroll::Value>)getException
+{
+	return *exception;
 }
 - (void)call
 {
@@ -120,7 +128,22 @@ namespace kroll
 			a.push_back((*i++));
 		}
 	}
-	result->assign((*method)->Call(a));
+	try
+	{
+		result->assign((*method)->Call(a));
+	}
+	catch (ValueException &e)
+	{
+		exception->assign(e.GetValue());
+	}
+	catch (std::exception &e)
+	{
+		exception->assign(Value::NewString(e.what()));
+	}
+	catch (...)
+	{
+		exception->assign(Value::NewString("unhandled exception"));
+	}
 }
 @end
 
@@ -129,11 +152,15 @@ namespace kroll
 	SharedValue OSXHost::InvokeMethodOnMainThread(SharedBoundMethod method,
 	                                              SharedPtr<ValueList> args)
 	{
-		KrollMainThreadCaller *caller = [[KrollMainThreadCaller alloc] initWithBoundMethod:method args:args];
+		KrollMainThreadCaller *caller = [[[KrollMainThreadCaller alloc] initWithBoundMethod:method args:args] autorelease];
 		[caller performSelectorOnMainThread:@selector(call) withObject:nil waitUntilDone:YES];
-		SharedValue result = [caller getResult];
-		[caller release];
-		return result;
+		SharedValue exception = [caller getException];
+		if (exception.isNull())
+		{
+			SharedValue result = [caller getResult];
+			return result;
+		}
+		return exception;
 	}
 }
 
