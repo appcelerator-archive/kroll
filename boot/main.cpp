@@ -758,8 +758,6 @@ int main(int _argc, const char* _argv[])
 	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 #endif
 
-	std::cout << "arg count = " << __argc << std::endl;
-
 	bool forkedProcess = IsForkedProcess();
 
 #if defined(OS_WIN32)
