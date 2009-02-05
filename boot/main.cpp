@@ -751,7 +751,7 @@ int ForkProcess(std::string &exec, std::string &manifest, std::string &homedir, 
 #if defined(OS_WIN32) && !defined(WIN32_CONSOLE)
 int WinMain(HINSTANCE, HINSTANCE, LPSTR command_line, int)
 #else
-int main(int _argc, char* _argv[])
+int main(int _argc, const char* _argv[])
 #endif
 {
 	int rc = 0;
@@ -763,7 +763,7 @@ int main(int _argc, char* _argv[])
 
 #if defined(OS_LINUX)
 	argc = _argc;
-	argv = _argv;
+	argv = (char **)_argv;
 	gtk_init(&argc, &_argv);
 #endif
 
@@ -773,7 +773,7 @@ int main(int _argc, char* _argv[])
 	argv = __argv;
 #else
 	argc = _argc;
-	argv = _argv;
+	argv = (char **)_argv;
 #endif
 	// win32 is special .... since unzip isn't built-in to
 	// .NET, we are going to just use the bundled libraries

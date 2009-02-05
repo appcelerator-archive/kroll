@@ -31,7 +31,7 @@ namespace kroll
 			             " One of the modules is misbehaving." << std::endl;
 		}
 
-		JSValueProtect(context, js_object);
+		JSValueProtect(this->context, js_object);
 	}
 
 	KJSBoundObject::~KJSBoundObject()
