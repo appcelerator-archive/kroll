@@ -46,7 +46,7 @@ namespace kroll
 		}
 	}
 
-	SharedValue StaticBoundList::At(int index)
+	SharedValue StaticBoundList::At(unsigned int index)
 	{
 		char* name = StaticBoundList::IntToChars(index);
 		SharedValue value = this->object->Get(name);
@@ -79,13 +79,15 @@ namespace kroll
 		return this->object->GetPropertyNames();
 	}
 
-	char* StaticBoundList::IntToChars(int value)
+	char* StaticBoundList::IntToChars(unsigned int value)
 	{
-		char buf[10];
-		sprintf(buf,"%d",value);
-		char *str = new char[strlen(buf)];
-		strcpy(str,buf);
-		return str;
+		int digits = 1;
+		if (value > 0)
+			digits += floor(log10((double) value));
+
+		char *buf = new char[digits + 1];
+		sprintf(buf, "%d", value);
+		return buf;
 	}
 
 }

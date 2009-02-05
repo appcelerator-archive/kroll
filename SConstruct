@@ -3,6 +3,10 @@
 import os, re, sys, inspect, os.path as path
 from build.common import BuildConfig
 
+Import('debug')
+#debug = 0 
+# FIXME ^^^^
+
 build = BuildConfig(
     PRODUCT_NAME = 'Kroll',
     INSTALL_PREFIX = '/usr/local',
@@ -24,7 +28,7 @@ build.env.Append(CPPPATH=[build.kroll_source_dir, build.kroll_include_dir])
 build.env.Append(LIBPATH=[build.dir])
 
 # debug build flags
-if ARGUMENTS.get('debug', 0):
+if ARGUMENTS.get('debug', 0) or debug:
 	build.env.Append(CPPDEFINES = {'DEBUG' : 1})
 	if not build.is_win32():
 		build.env.Append(CCFLAGS = ['-g'])  # debug
@@ -50,8 +54,8 @@ if build.is_linux() or build.is_osx():
 
 if build.is_osx():
 	OSX_SDK = '/Developer/SDKs/MacOSX10.5.sdk'
-	OSX_UNIV_COMPILER = '-isysroot '+OSX_SDK+' -arch i386 -arch ppc -mmacosx-version-min=10.5 -x objective-c++'
-	OSX_UNIV_LINKER = '-isysroot '+OSX_SDK+' -syslibroot,'+OSX_SDK+' -arch i386 -arch ppc -mmacosx-version-min=10.5'
+	OSX_UNIV_COMPILER = '-isysroot '+OSX_SDK+' -arch i386 -mmacosx-version-min=10.5 -x objective-c++'
+	OSX_UNIV_LINKER = '-isysroot '+OSX_SDK+' -syslibroot,'+OSX_SDK+' -arch i386 -mmacosx-version-min=10.5'
 	build.env.Append(CXXFLAGS=OSX_UNIV_COMPILER)
 	build.env.Append(LINKFLAGS=OSX_UNIV_LINKER)
 	build.env.Append(FRAMEWORKS=['Foundation'])

@@ -23,32 +23,19 @@ namespace kroll
 	LinuxHost::LinuxHost(int argc, const char *argv[]) : Host(argc, argv)
 	{
 		gtk_init(&argc, (char***) &argv);
-
-		char *p = getenv("KR_PLUGINS");
-		if (p)
-		{
-			FileUtils::Tokenize(p, this->module_paths, ":");
-		}
-
 	}
 
 	LinuxHost::~LinuxHost()
 	{
-		gtk_main_quit ();
+		gtk_main_quit();
 	}
 
-	int LinuxHost::Run()
+	bool LinuxHost::RunLoop()
 	{
-		std::cout << "Kroll Running (Linux)..." << std::endl;
-		this->AddModuleProvider(this);
-		this->LoadModules();
-
 		g_idle_add(&main_thread_job_handler, this);
 		gtk_main();
-
-		return 0;
+		return false;
 	}
-
 
 	Module* LinuxHost::CreateModule(std::string& path)
 	{
@@ -128,3 +115,11 @@ namespace kroll
 	}
 }
 
+extern "C"
+{
+	int Execute(int argc,const char **argv)
+	{
+		Host *host = new LinuxHost(argc,argv);
+		return host->Run();
+	}
+}

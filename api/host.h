@@ -12,6 +12,7 @@ namespace kroll
 {
 	class Module;
 	typedef std::map<std::string, SharedPtr<Module> > ModuleMap;
+	typedef std::vector<SharedPtr<Module> > ModuleList;
 
 	/*
 		Class: Host
@@ -34,17 +35,26 @@ namespace kroll
 
 	public:
 
+
 		/*
 		 * Function: Run
 		 *
-		 * TODO: Document me
+		 * called to run the host
 		 */
-		virtual int Run() = 0;
+		int Run();
+		
+		/**
+		 * Function: Exit
+		 *
+		 * called to exit the host and terminate the process
+		 */
+		virtual void Exit(int exitcode);
 
 		/*
 		 * Function: InvokeMethodOnMainThread
 		 *
-		 * TODO: Document me
+		 * call with a method and arguments to invoke the method
+		 * on the main UI thread and return a value (blocking until run)
 		 */
 		virtual SharedValue InvokeMethodOnMainThread(
 			SharedBoundMethod,
@@ -146,16 +156,18 @@ namespace kroll
 
 	protected:
 		ModuleMap modules;
+		ModuleList loaded_modules;
+
 		Mutex moduleMutex;
 		std::vector<ModuleProvider *> module_providers;
 		std::vector<std::string> module_paths;
 		SharedPtr<StaticBoundObject> global_object;
 		std::vector<std::string> args;
 
-		// This is the module suffix for this module provider. Since 
-		// this is the basic provider the suffix is "module.(dll|dylib|so)"
-		// Other modules providers can override this property and use the
-		// default behavior of IsModule().
+		/* This is the module suffix for this module provider. Since 
+		 * this is the basic provider the suffix is "module.(dll|dylib|so)"
+		 * Other modules providers can override this property and use the
+		 * default behavior of IsModule(). */
 		std::string module_suffix;
 
 
@@ -178,11 +190,8 @@ namespace kroll
 		 * that can be loaded by module providers found in
 		 * module_providers.
 		 *
-		 * Parameters:
-		 *  also_initialize - Whether to call the Initialize() lifecycle
-		 *                    event when this method loads a module.
 		*/
-		void ScanInvalidModuleFiles(bool also_initialize=false);
+		void ScanInvalidModuleFiles();
 
 		/*
 		 * Function: LoadModule
@@ -192,11 +201,10 @@ namespace kroll
 		 * Parameters:
 		 *  path - Path to the module to attempt to load.
 		 *  provider - The provider to attempt to load with.
-		 *  error - pointer to a boolean that will be set to true if error occurs loading module
 		 *
 		 * Returns: The module that was loaded or NULL on failure.
 		*/
-		SharedPtr<Module> LoadModule(std::string& path, ModuleProvider *provider, bool *error);
+		SharedPtr<Module> LoadModule(std::string& path, ModuleProvider *provider);
 
 		/*
 		 * Function: LoadModules
@@ -208,6 +216,10 @@ namespace kroll
 		*/
 		void LoadModules();
 
+		void UnloadModules();
+		
+		void UnloadModuleProviders();
+		
 		/*
 		 * Function: FindBasicModules
 		 *
@@ -220,21 +232,28 @@ namespace kroll
 		void FindBasicModules(std::string& dir);
 
 		/*
-		 * Function: InitializeModules
+		 * Function: StartModules
 		 *
-		 * Call the Initialize() lifecycle event on a vector of modules.
+		 * Call the Start() lifecycle event on a vector of modules.
 		 *
 		 * Parameters:
 		 *  to_init - A vector of modules to initialize.
 		*/
-		void InitializeModules(ModuleMap to_init);
+		void StartModules(std::vector<SharedPtr<Module> > modules);
+		
+		virtual bool Start ();
+		virtual bool RunLoop() = 0;
+		virtual void Stop ();
+
+		void AddInvalidModuleFile(std::string path);
 
 	private:
 		std::string appDirectory;
 		std::string runtimeDirectory;
 		std::string appConfigPath;
-		bool basicModulesLoaded;
-		bool scanInProgress;
+		bool autoScan;
+		bool running;
+		int exitCode;
 
 		DISALLOW_EVIL_CONSTRUCTORS(Host);
 	};

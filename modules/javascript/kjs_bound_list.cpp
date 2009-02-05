@@ -14,8 +14,27 @@ namespace kroll
 		: context(context),
 		  object(js_object)
 	{
-		JSValueProtect(context, js_object);
-		this->kjs_bound_object = new KJSBoundObject(context, js_object);
+		/* KJS methods run in the global context that they originated from
+		 * this seems to prevent nasty crashes from trying to access invalid
+		 * contexts later. Global contexts need to be registered by all modules
+		 * that use a KJS context. */
+		JSContextGroupRef group = JSContextGetGroup(context);
+		JSGlobalContextRef global_context = KJSUtil::GetGlobalContext(group);
+		if (global_context != NULL)
+		{
+			this->context = global_context;
+		}
+		else
+		{
+			// This context hasn't been registered. Something has gone pretty
+			// terribly wrong and Kroll will likely crash soon. Nonetheless, keep
+			// the user up-to-date to keep their hopes up.
+			std::cerr << "Could not locate global context for a KJS method."  <<
+			             " One of the modules is misbehaving." << std::endl;
+		}
+
+		JSValueProtect(this->context, js_object);
+		this->kjs_bound_object = new KJSBoundObject(this->context, js_object);
 	}
 
 	KJSBoundList::~KJSBoundList()
@@ -78,7 +97,7 @@ namespace kroll
 		}
 	}
 
-	SharedValue KJSBoundList::At(int index)
+	SharedValue KJSBoundList::At(unsigned int index)
 	{
 		char* name = KJSBoundList::IntToChars(index);
 		SharedValue value = this->kjs_bound_object->Get(name);
@@ -88,11 +107,13 @@ namespace kroll
 
 	char* KJSBoundList::IntToChars(int value)
 	{
-		char buf[10];
-		sprintf(buf,"%d",value);
-		char *str = new char[strlen(buf)];
-		strcpy(str,buf);
-		return str;
+		int digits = 1;
+		if (value > 0)
+			digits += floor(log10((double) value));
+
+		char *buf = new char[digits + 1];
+		sprintf(buf, "%d", value);
+		return buf;
 	}
 
 }

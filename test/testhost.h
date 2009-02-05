@@ -15,12 +15,15 @@ namespace kroll
 	public:
 		TestHost(std::vector<std::string> module_paths);
 		virtual ~TestHost();
-		virtual int Run();
 		void TestAll();
 		virtual Module* CreateModule(std::string& path);
 		SharedValue InvokeMethodOnMainThread(SharedBoundMethod method,
 		                                     const ValueList& args);
 
+	protected:
+		virtual bool RunLoop();
+		virtual bool Start();
+		
 	private:
 		std::vector<std::string> module_paths;
 		std::vector<Module*> test_modules;

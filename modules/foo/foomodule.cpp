@@ -16,8 +16,7 @@ namespace kroll
 		host->GetGlobalObject()->SetObject("foo", binding);
 	}
 
-	void FooModule::Destroy()
+	void FooModule::Stop()
 	{
-		//KR_DECREF(binding);
 	}
 }

@@ -26,7 +26,7 @@ namespace kroll
 		host->AddModuleProvider(this);
 	}
 
-	void PythonModule::Destroy()
+	void PythonModule::Stop()
 	{
 		KR_DUMP_LOCATION
 

@@ -37,47 +37,6 @@ namespace kroll
 		}
 	}
 
-	int TestHost::Run()
-	{
-		this->AddModuleProvider(this);
-
-		/* Load all test modules */
-		for (size_t i = 0; i < module_paths.size(); i++)
-		{
-			std::string path = module_paths.at(i);
-			ModuleProvider *p = this->FindModuleProvider(path);
-
-			if (p == NULL)
-			{
-				std::cerr << "Could not find provider for: " << path << std::endl;
-				continue;
-			}
-
-			bool error = false;
-			Module *m = this->LoadModule(path, p, &error);
-
-			if (m == NULL || error)
-			{
-				std::cerr << "Could not load module: " << path << std::endl;
-				continue;
-			}
-
-			this->test_modules.push_back(m);
-		}
-
-		/* Initialize all test modules */
-		ModuleMap::iterator iter = this->modules.begin();
-		while (iter != this->modules.end())
-		{
-			Module *m = iter->second;
-			m->Initialize();
-			iter++;
-		}
-
-		return 0;
-
-	}
-
 	void TestHost::TestAll()
 	{
 		/* Test all modules */
@@ -132,6 +91,47 @@ namespace kroll
 		std::cerr << "WARNING: Invoking method on non-main Thread!" << std::endl;
 		SharedValue result = method->Call(args);
 		return result;
+	}
+
+	bool TestHost::RunLoop()
+	{
+		return false;
+	}
+
+	bool TestHost::Start()
+	{
+		/* Load all test modules */
+		for (size_t i = 0; i < module_paths.size(); i++)
+		{
+			std::string path = module_paths.at(i);
+			ModuleProvider *p = this->FindModuleProvider(path);
+
+			if (p == NULL)
+			{
+				std::cerr << "Could not find provider for: " << path << std::endl;
+				continue;
+			}
+
+			bool error = false;
+			Module *m = this->LoadModule(path, p);
+
+			if (m == NULL || error)
+			{
+				std::cerr << "Could not load module: " << path << std::endl;
+				continue;
+			}
+
+		}
+
+		///* Start all test modules */
+		this->StartModules(this->loaded_modules);
+
+		//try {
+
+		SharedPtr<Module> m = this->loaded_modules.at(0);
+		this->TestAll();
+
+		return false;
 	}
 }
 

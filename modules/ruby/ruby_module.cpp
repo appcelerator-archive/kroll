@@ -27,7 +27,7 @@ namespace kroll
 		host->AddModuleProvider(this);
 	}
 
-	void RubyModule::Destroy()
+	void RubyModule::Stop()
 	{
 		KR_DUMP_LOCATION
 

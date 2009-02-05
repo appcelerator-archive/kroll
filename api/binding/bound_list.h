@@ -47,7 +47,7 @@ namespace kroll
 		  reference counted and must be released.
 		  When an error occurs will throw an exception of type Value*.
 		 */
-		virtual SharedValue At(int index) = 0;
+		virtual SharedValue At(unsigned int index) = 0;
 
 		/*
 			Function: Set

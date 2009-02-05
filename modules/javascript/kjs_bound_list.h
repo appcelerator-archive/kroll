@@ -32,7 +32,7 @@ namespace kroll
 
 		void Append(SharedValue value);
 		int Size();
-		SharedValue At(int index);
+		SharedValue At(unsigned int index);
 
 		JSObjectRef GetJSObject();
 
