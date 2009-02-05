@@ -3,7 +3,7 @@
 import os, re, sys, inspect, os.path as path
 from build.common import BuildConfig
 
-#Import('debug')
+Import('debug')
 #debug = 0 
 # FIXME ^^^^
 

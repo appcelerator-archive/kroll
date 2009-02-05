@@ -123,7 +123,7 @@ namespace kroll
 	std::string BoundObject::GetString(const char * name, std::string defaultValue)
 	{
 		SharedValue prop = this->Get(name);
-		if (prop->IsString())
+		if(!prop->IsNull() && prop->IsString())
 		{
 			return prop->ToString();
 		}
@@ -136,7 +136,7 @@ namespace kroll
 	bool BoundObject::GetBool(const char * name, bool defaultValue)
 	{
 		SharedValue prop = this->Get(name);
-		if (prop->IsBool())
+		if(!prop->IsNull())
 		{
 			return prop->ToBool();
 		}

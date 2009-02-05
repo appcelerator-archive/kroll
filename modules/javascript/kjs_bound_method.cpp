@@ -14,10 +14,6 @@ namespace kroll
 		  object(js_object),
 		  this_obj(this_obj)
 	{
-		JSValueProtect(context, js_object);
-
-		if (this_obj != NULL)
-			JSValueProtect(context, this_obj);
 
 		/* KJS methods run in the global context that they originated from
 		 * this seems to prevent nasty crashes from trying to access invalid
@@ -38,7 +34,11 @@ namespace kroll
 			             " One of the modules is misbehaving." << std::endl;
 		}
 
-		this->kjs_bound_object = new KJSBoundObject(context, js_object);
+		JSValueProtect(this->context, js_object);
+		if (this_obj != NULL)
+			JSValueProtect(this->context, this_obj);
+
+		this->kjs_bound_object = new KJSBoundObject(this->context, js_object);
 	}
 
 	KJSBoundMethod::~KJSBoundMethod()
