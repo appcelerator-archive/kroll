@@ -74,17 +74,17 @@ namespace kroll
 {
 	kroll::BoundMethod *method;
 	SharedPtr<kroll::Value> *result;
-	ValueList* args;
+	const ValueList* args;
 	SharedPtr<kroll::Value> *exception;
 }
-- (id)initWithBoundMethod:(SharedPtr<kroll::BoundMethod>)method args:(ValueList*)args;
+- (id)initWithBoundMethod:(SharedPtr<kroll::BoundMethod>)method args:(const ValueList*)args;
 - (void)call;
 - (SharedPtr<kroll::Value>)getResult;
 - (SharedPtr<kroll::Value>)getException;
 @end
 
 @implementation KrollMainThreadCaller
-- (id)initWithBoundMethod:(SharedPtr<kroll::BoundMethod>)m args:(ValueList*)a
+- (id)initWithBoundMethod:(SharedPtr<kroll::BoundMethod>)m args:(const ValueList*)a
 {
 	self = [super init];
 	if (self)
@@ -98,9 +98,8 @@ namespace kroll
 }
 - (void)dealloc
 {
-//	delete result;
-//	delete args;
-//	delete exception;
+	delete result;
+	delete exception;
 	[super dealloc];
 }
 - (SharedPtr<kroll::Value>)getResult
@@ -115,7 +114,7 @@ namespace kroll
 {
 	try
 	{
-		result->assign(method->Call(*a));
+		result->assign(method->Call(*args));
 	}
 	catch (ValueException &e)
 	{
