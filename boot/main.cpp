@@ -107,7 +107,6 @@ static int argc;
 #elif OS_LINUX
   #define KR_FATAL_ERROR(msg) \
 { \
-	printf("%i\n", __LINE__); \
 	GtkWidget* dialog = gtk_message_dialog_new(\
 		NULL,  \
 		GTK_DIALOG_MODAL, \
@@ -500,6 +499,10 @@ int Boot(int argc, char** argv)
 	return executor(::GetModuleHandle(NULL), __argc,(const char**)__argv);
 #else
 	const char *home = getenv("KR_RUNTIME");
+	if (home == NULL)
+	{
+		KR_FATAL_ERROR("Cannot find KR_RUNTIME environment variable");
+	}
 #ifdef OS_OSX
 	std::string path = kroll::FileUtils::Join((char*)home,"libkhost.dylib",NULL);
 #else
@@ -700,20 +703,25 @@ int ForkProcess(std::string &exec, std::string &manifest, std::string &homedir, 
 			}
 
 			// Add our own environment variables
-			env[env_size + 0] = dylib.str().c_str();
-			env[env_size + 1] = runtimeEnv.str().c_str();
-			env[env_size + 2] = home.str().c_str();
-			env[env_size + 3] = modules.str().c_str();
-			env[env_size + 4] = runtimeHomeEnv.str().c_str();
+			std::string dylib_str = dylib.str();
+			std::string runtimeEnv_str = runtimeEnv.str();
+			std::string home_str = home.str();
+			std::string modules_str = modules.str();
+			std::string runtimeHomeEnv_str = modules.str();
+			env[env_size + 0] = dylib_str.c_str();
+			env[env_size + 1] = runtimeEnv_str.c_str();
+			env[env_size + 2] = home_str.c_str();
+			env[env_size + 3] = modules_str.c_str();
+			env[env_size + 4] = runtimeHomeEnv_str.c_str();
 			env[env_size + 5] = "KR_BOOT_PROCESS=1";
 			env[env_size + 6] = NULL;
+
 			int result = execve(exec.c_str(), (char* const*) childArgv, (char* const*) env);
 			if (result < 0)
 			{
 				perror("execve");
 				rc = __LINE__;
 			}
-
 #else
 			invoker = [TaskInvoker alloc];
 			NSInvocation* terminateInvocation = [TaskCallback createInvocation: @selector(terminated:)];
