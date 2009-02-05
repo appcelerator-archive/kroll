@@ -111,7 +111,11 @@
 	}
 #endif
 
+#ifdef DEBUG
 #define KR_DUMP_LOCATION std::cout << "[" << KR_FUNC << "::" << __LINE__ << "]" << std::endl;
+#else
+#define KR_DUMP_LOCATION 
+#endif
 	
 #define KR_UNUSED(o) if (o) {} 
 

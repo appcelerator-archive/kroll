@@ -43,6 +43,7 @@ namespace kroll
 
 	KJSBoundMethod::~KJSBoundMethod()
 	{
+		this->kjs_bound_object = NULL;
 		JSValueUnprotect(this->context, this->object);
 
 		if (this->this_obj != NULL)
