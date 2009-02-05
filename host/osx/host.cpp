@@ -22,8 +22,6 @@ namespace kroll
 			FileUtils::Tokenize(p, this->module_paths, ":");
 		}
 		
-		std::cout << "OSXHost::OSXHost" << std::endl;
-		
 		[NSApplication sharedApplication];
 	}
 
@@ -53,9 +51,6 @@ namespace kroll
 
 	Module* OSXHost::CreateModule(std::string& path)
 	{
-		std::cout << "Creating module " << path << std::endl;
-
-
 		void* lib_handle = dlopen(path.c_str(), RTLD_LAZY | RTLD_GLOBAL);
 		if (!lib_handle)
 		{
@@ -77,7 +72,7 @@ namespace kroll
 
 @interface KrollMainThreadCaller : NSObject
 {
-	SharedPtr<kroll::BoundMethod> *method;
+	kroll::BoundMethod *method;
 	SharedPtr<kroll::Value> *result;
 	SharedPtr<kroll::ValueList> *args;
 	SharedPtr<kroll::Value> *exception;
@@ -94,7 +89,7 @@ namespace kroll
 	self = [super init];
 	if (self)
 	{
-		method = new SharedPtr<kroll::BoundMethod>(m);
+		method = m.get();
 		args = new SharedPtr<kroll::ValueList>(a);
 		result = new SharedPtr<kroll::Value>();
 		exception = new SharedPtr<kroll::Value>();
@@ -103,10 +98,9 @@ namespace kroll
 }
 - (void)dealloc
 {
-	delete method;
-	delete result;
-	delete args;
-	delete exception;
+//	delete result;
+//	delete args;
+//	delete exception;
 	[super dealloc];
 }
 - (SharedPtr<kroll::Value>)getResult
@@ -130,7 +124,7 @@ namespace kroll
 	}
 	try
 	{
-		result->assign((*method)->Call(a));
+		result->assign(method->Call(a));
 	}
 	catch (ValueException &e)
 	{
