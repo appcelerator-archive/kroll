@@ -25,8 +25,8 @@ class BuildConfig(object):
 			'_GLOBAL_NS_VARNAME': '${GLOBAL_NS_VARNAME}',
 			'_CONFIG_FILENAME' : '${CONFIG_FILENAME}'
 		})
-		self.dir = kwargs['BUILD_DIR'] + '/' + self.os
-		self.third_party = kwargs['THIRD_PARTY_DIR'] + '/' + self.os
+		self.dir = path.abspath(path.join(kwargs['BUILD_DIR'], self.os))
+		self.third_party = path.abspath(path.join(kwargs['THIRD_PARTY_DIR'],self.os))
 		self.init_thirdparty_libs()
 
 	def init_thirdparty_libs(self):

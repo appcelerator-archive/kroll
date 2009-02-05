@@ -8,10 +8,8 @@ Import('build')
 # between both builds -- so basically no Kroll-standalone
 # specific stuff
 
-SConscript('api/SConscript', build_dir=build.dir + '/api', duplicate=0)
+SConscript('api/SConscript', build_dir=path.join(build.dir,'api'), duplicate=0)
 SConscript('boot/SConscript')
 SConscript('host/SConscript')
-SConscript('install/SConscript')
-SConscript('kernel/SConscript', build_dir=build.dir + '/kernel', duplicate=0)
 SConscript('modules/SConscript')
-SConscript('test/SConscript', build_dir=build.dir + '/test')
+SConscript('test/SConscript', build_dir=path.join(build.dir,'test'))

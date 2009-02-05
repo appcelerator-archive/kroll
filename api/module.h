@@ -38,30 +38,30 @@ namespace kroll
 		virtual const char* GetName() = 0;
 
 		/*
-		 *Function: Load
+		 *Function: Initialize
 		 *
 		 * Called directly after module loading, during the loading
 		 * process. Perform all initialization here that does not
 		 * depend on the existence of other modules.
 		 */
-		virtual void Load() {};
+		virtual void Initialize() {};
 
 		/*
-		 *Function: Initialize
+		 *Function: Start
 		 *
 		 * Called once all modules have been loaded. Use this to
 		 * perform initialization that depends on the existence of
 		 * other modules.
 		 */
-		virtual void Initialize() {};
+		virtual void Start() {};
 
 		/*
-		 * Function: Destroy
+		 * Function: Stop
 		 *
 		 * Called before the Host unregisters the module.
-		 * Perform all unloda cleanup here.
+		 * Perform all unload cleanup here.
 		 */
-		virtual void Destroy() {};
+		virtual void Stop() {};
 
 		/*
 		 * Function: SetProvider
@@ -132,8 +132,8 @@ typedef void* ModuleMethod;
 s(kroll::Host *host, const char *path); \
 virtual ~s(); \
 const char* GetName(); \
-void Initialize (); \
-void Destroy ();
+void Initialize(); \
+void Stop();
 
 #define KROLL_MODULE_CONSTRUCTOR(s) s::s(Host *host, const char *path) : kroll::Module(host,path)
 #define KROLL_MODULE_DESTRUCTOR(s) s::~s()

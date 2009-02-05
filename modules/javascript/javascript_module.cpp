@@ -22,7 +22,7 @@ namespace kroll
 		host->AddModuleProvider(this);
 	}
 
-	void JavascriptModule::Destroy()
+	void JavascriptModule::Stop()
 	{
 		KR_DUMP_LOCATION
 		

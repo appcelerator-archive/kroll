@@ -31,6 +31,11 @@ namespace kroll
 		char *ti_home = getenv("KR_HOME");
 		char *ti_runtime = getenv("KR_RUNTIME");
 
+#ifdef DEBUG		
+		std::cout << ">>> KR_HOME=" << ti_home << std::endl;
+		std::cout << ">>> KR_RUNTIME=" << ti_runtime << std::endl;
+#endif
+
 		if (ti_home == NULL)
 		{
 			std::cerr << "KR_HOME not defined, aborting." << std::endl;
@@ -42,6 +47,9 @@ namespace kroll
 			std::cerr << "KR_RUNTIME not defined, aborting." << std::endl;
 			exit(1);
 		}
+		
+		this->running = false;
+		this->exitCode = 0;
 
 		this->appDirectory = std::string(ti_home);
 		this->runtimeDirectory = std::string(ti_runtime);
@@ -49,10 +57,7 @@ namespace kroll
 
 		// link the name of our global variable to ourself so
 		//  we can reference from global scope directly to get it
-		const char *name = GLOBAL_NS_VARNAME;
-		SharedBoundObject b = global_object;
-		SharedValue wrapper = Value::NewObject(b);
-		this->global_object->Set(name,wrapper);
+		this->global_object->SetObject(GLOBAL_NS_VARNAME, this->global_object);
 
 #if defined(OS_WIN32)
 		this->module_suffix = "module.dll";
@@ -62,7 +67,7 @@ namespace kroll
 		this->module_suffix = "module.so";
 #endif
 
-		this->basicModulesLoaded = false;
+		this->autoScan = false;
 
 		// Sometimes libraries parsing argc and argv will
 		// modify them, so we want to keep our own copy here
@@ -93,9 +98,16 @@ namespace kroll
 		}
 	}
 
-	void Host::AddModuleProvider(ModuleProvider *provider) {
+	void Host::AddModuleProvider(ModuleProvider *provider) 
+	{
 		ScopedLock lock(&moduleMutex);
 		module_providers.push_back(provider);
+
+		if (autoScan)
+		{
+			this->ScanInvalidModuleFiles();
+		}
+
 	}
 
 	ModuleProvider* Host::FindModuleProvider(std::string& filename)
@@ -115,7 +127,8 @@ namespace kroll
 		return NULL;
 	}
 
-	void Host::RemoveModuleProvider(ModuleProvider *provider) {
+	void Host::RemoveModuleProvider(ModuleProvider *provider) 
+	{
 		ScopedLock lock(&moduleMutex);
 
 		std::vector<ModuleProvider*>::iterator iter =
@@ -126,6 +139,14 @@ namespace kroll
 		}
 
 	}
+	void Host::UnloadModuleProviders()
+	{
+		while (module_providers.size() > 0)
+		{
+			ModuleProvider* provider = module_providers.at(0);
+			this->RemoveModuleProvider(provider);
+		}
+	}
 
 	bool Host::IsModule(std::string& filename)
 	{
@@ -135,43 +156,57 @@ namespace kroll
 		return isModule;
 	}
 
-	SharedPtr<Module> Host::LoadModule(std::string& path, ModuleProvider *provider, bool *error)
+	SharedPtr<Module> Host::LoadModule(std::string& path, ModuleProvider *provider)
 	{
+		KR_DUMP_LOCATION
 		ScopedLock lock(&moduleMutex);
-		
-		SharedPtr<Module> module;
-		
+
+		SharedPtr<Module> module = NULL;
 		try
 		{
 			module = provider->CreateModule(path);
+			module->SetProvider(provider); // set the provider
+
+			std::cout << "Module loaded " << module->GetName()
+			          << " from " << path << std::endl;
+
+			// Call module Load lifecycle event
+			module->Initialize();
+			
+			// Store module
+			this->modules[path] = module;
+			this->loaded_modules.push_back(module);
+		}
+		catch (kroll::ValueException& e)
+		{
+			SharedString s = e.GetValue()->DisplayString();
+			std::cerr << "Error generated loading module ("
+			          << path << "): " << *s << std::endl;
 		}
 		catch(...)
 		{
 			std::cerr << "Error generated loading module: " << path << std::endl;
 		}
 
-		if (!module.isNull())
-		{
-			module->SetProvider(provider); // set the provider
-			modules[path] = module; // add to the module map
-
-			std::cout << "Module loaded " << module->GetName()
-			          << " from " << path << std::endl;
-
-			// Call module Load lifecycle event
-			module->Load();
-		}
-		else
-		{
-			std::cerr << "Could not load module from: " << path << std::endl;
-			*error = true;
-		}
-
 		return module;
 	}
 
+	void Host::UnloadModules()
+	{
+		KR_DUMP_LOCATION
+		ScopedLock lock(&moduleMutex);
+
+		// Stop all modules
+		while (this->loaded_modules.size() > 0)
+		{
+			this->UnregisterModule(this->loaded_modules.at(0));
+		}
+
+	}
+	
 	void Host::LoadModules()
 	{
+		KR_DUMP_LOCATION
 		ScopedLock lock(&moduleMutex);
 
 		/* Scan module paths for modules which can be
@@ -183,21 +218,22 @@ namespace kroll
 			this->FindBasicModules((*iter++));
 		}
 
-		/* From now on, adding a module provider triggers
- 		 * a rescan of all invalid module files */
-		this->basicModulesLoaded = true;
+		/* All modules are now loaded,
+		 * so start them all */
+		this->StartModules(this->loaded_modules);
 
 		/* Try to load files that weren't modules
 		 * using newly available module providers */
 		this->ScanInvalidModuleFiles();
 
-		/* All modules are now loaded,
-		 * so initialize them all */
-		this->InitializeModules(this->modules);
+		/* From now on, adding a module provider will trigger
+		 * a rescan of all invalid module files */
+		this->autoScan = true;
 	}
 
 	void Host::FindBasicModules(std::string& dir)
 	{
+		KR_DUMP_LOCATION
 		ScopedLock lock(&moduleMutex);
 
 		Poco::DirectoryIterator iter = Poco::DirectoryIterator(dir);
@@ -210,95 +246,83 @@ namespace kroll
 				std::string fpath = iter.path().absolute().toString();
 				if (IsModule(fpath))
 				{
-					bool error = false;
-					this->LoadModule(fpath, this, &error);
+					this->LoadModule(fpath, this);
 				}
-				else if (std::find(this->invalid_module_files.begin(),this->invalid_module_files.end(),fpath)==this->invalid_module_files.end())
+				else
 				{
-					this->invalid_module_files.push_back(fpath);
+					this->AddInvalidModuleFile(fpath);
 				}
 			}
 			iter++;
 		}
 	}
 
-	void Host::ScanInvalidModuleFiles(bool also_initialize)
+	void Host::AddInvalidModuleFile(std::string path)
 	{
-		ScopedLock lock(&moduleMutex);
-		if (scanInProgress) return;
-		
-		scanInProgress = true;
-		
-		while (this->invalid_module_files.size() > 0)
+		// Don't add module twice
+		std::vector<std::string>& invalid = this->invalid_module_files;
+		if (std::find(invalid.begin(), invalid.end(), path) == invalid.end())
 		{
-			// keep track in case we need to initialize
-			ModuleMap modulesLoaded;
-			std::map<std::string,bool> just_loaded;
-
-			std::vector<std::string>::iterator iter;
-			iter = this->invalid_module_files.begin();
-			while (iter != this->invalid_module_files.end())
-			{
-				std::string path = *iter;
-				// check to ensure that we're not in the same 
-				// cycle of the module we just loaded so we 
-				// don't reload again
-				if (just_loaded[path] || path.length()==0)
-				{
-					iter++;
-					continue;
-				}
-				ModuleProvider *provider = FindModuleProvider(path);
-				if (provider != NULL)
-				{
-					bool error = false;
-					SharedPtr<Module> m = this->LoadModule(path, provider, &error);
-					if (!m.isNull())
-					{
-						just_loaded[path] = true;
-						modulesLoaded[path] = m;
-						invalid_module_files.erase(iter);
-					}
-					else if (error)
-					{
-						just_loaded[path] = true;
-						invalid_module_files.erase(iter);
-					}
-				}
-				iter++;
-			}
-		
-			/* This happens when we scan invalid module files after
-			 * the initial load of the application. This
-			 * way all modules are initialized in waves. */
-			if (also_initialize && modulesLoaded.size() > 0)
-			{
-				this->InitializeModules(modulesLoaded);
-				continue;
-			}
-			
-			break;
+			this->invalid_module_files.push_back(path);
 		}
-		
-		scanInProgress = false;
 	}
 
-	void Host::InitializeModules(ModuleMap to_init)
+	void Host::ScanInvalidModuleFiles()
 	{
+		KR_DUMP_LOCATION
 		ScopedLock lock(&moduleMutex);
 
-		ModuleMap::iterator iter = to_init.begin();
+		this->autoScan = false; // Do not recursively scan
+		ModuleList modulesLoaded; // Track loaded modules
+
+		std::vector<std::string>::iterator iter;
+		iter = this->invalid_module_files.begin();
+		while (iter != this->invalid_module_files.end())
+		{
+			std::string path = *iter;
+			ModuleProvider *provider = FindModuleProvider(path);
+			if (provider != NULL)
+			{
+				SharedPtr<Module> m = this->LoadModule(path, provider);
+
+				// Module was loaded successfully
+				if (!m.isNull()) 
+					modulesLoaded.push_back(m);
+
+				// Erase path, even on failure
+				invalid_module_files.erase(iter);
+			}
+			iter++;
+		}
+
+		if (modulesLoaded.size() > 0)
+		{
+			this->StartModules(modulesLoaded);
+
+			/* If any of the invalid module files added
+			 * a ModuleProvider, let them load their modules */
+			this->ScanInvalidModuleFiles();
+		}
+
+		this->autoScan = true;
+	}
+
+	void Host::StartModules(ModuleList to_init)
+	{
+		KR_DUMP_LOCATION
+		ScopedLock lock(&moduleMutex);
+
+		ModuleList::iterator iter = to_init.begin();
 		while (iter != to_init.end())
 		{
-			SharedPtr<Module> m = iter->second;
-			m->Initialize();
+			(*iter)->Start();
 			*iter++;
 		}
 	}
 
 	SharedPtr<Module> Host::GetModule(std::string& name)
 	{
-
+		KR_DUMP_LOCATION
 		ScopedLock lock(&moduleMutex);
 		ModuleMap::iterator iter = this->modules.find(name);
 		if (this->modules.end() == iter) {
@@ -317,24 +341,92 @@ namespace kroll
 
 	void Host::UnregisterModule(Module* module)
 	{
+		KR_DUMP_LOCATION
 		ScopedLock lock(&moduleMutex);
-		ModuleMap::iterator iter = this->modules.begin();
-		while (iter != this->modules.end())
-		{
-			SharedPtr<Module> other_module = iter->second;
-			if (module == other_module.get())
-			{
-				std::cout << "Unregistering " << module->GetName()
-				          << std::endl;
-				module->Destroy(); // Call Destroy() lifecycle event
-				this->modules.erase(iter); // SharedPtr will do the work
-			}
 
-			iter++;
+		std::cout << "Unregistering " << module->GetName() << std::endl;
+
+		// Remove from the module map
+		ModuleMap::iterator i = this->modules.begin();
+		while (i != this->modules.end())
+		{
+			if (module == (i->second).get())
+				break;
+			i++;
 		}
+
+		// Remove from the list of loaded modules
+		ModuleList::iterator j = this->loaded_modules.begin();
+		while (j != this->loaded_modules.end())
+		{
+			if (module == (*j).get())
+				break;
+			j++;
+		}
+
+		module->Stop(); // Call Stop() lifecycle event
+
+		if (i != this->modules.end())
+			this->modules.erase(i); 
+
+		if (j != this->loaded_modules.end())
+			this->loaded_modules.erase(j);
 	}
 
 	SharedPtr<StaticBoundObject> Host::GetGlobalObject() {
 		return this->global_object;
+	}
+	
+	bool Host::Start()
+	{
+		KR_DUMP_LOCATION
+		return true;
+	}
+	
+	void Host::Stop ()
+	{
+		KR_DUMP_LOCATION
+	}
+
+	int Host::Run()
+	{
+		KR_DUMP_LOCATION
+
+		{
+			ScopedLock lock(&moduleMutex);
+			this->AddModuleProvider(this);
+			this->LoadModules();
+		}
+
+		// allow start to immediately end
+		this->running = this->Start();
+		while (this->running)
+		{
+			ScopedLock lock(&moduleMutex);
+			if (!this->RunLoop())
+			{
+				break; 
+			}
+		}
+		
+		ScopedLock lock(&moduleMutex);
+		this->Stop();
+		this->UnloadModuleProviders();
+		this->UnloadModules();
+
+		// Clear the global object, being sure to remove the recursion, so
+		// that the memory will be cleared
+		this->global_object->Set(GLOBAL_NS_VARNAME, Value::Undefined);
+		this->global_object = NULL;
+
+		return this->exitCode;
+	}
+	
+	void Host::Exit(int exitcode)
+	{
+		KR_DUMP_LOCATION
+		ScopedLock lock(&moduleMutex);
+		running = false;
+		this->exitCode = exitcode;
 	}
 }

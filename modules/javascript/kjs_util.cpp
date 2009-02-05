@@ -384,9 +384,16 @@ namespace kroll
 		{
 			*js_exception = KJSUtil::ToJSValue(exception.GetValue(), js_context);
 		}
+		catch (std::exception &e)
+		{
+			SharedValue value = Value::NewString(e.what());
+			*js_exception = KJSUtil::ToJSValue(value, js_context);
+		}
 		catch (...)
 		{
 			std::cerr << "Caught an exception that I don't know how to handle!" << std::endl;
+			SharedValue value = Value::NewString("unknown exception");
+			*js_exception = KJSUtil::ToJSValue(value, js_context);
 		}
 
 		free(name);
@@ -416,8 +423,15 @@ namespace kroll
 		{
 			*js_exception = KJSUtil::ToJSValue(exception.GetValue(), js_context);
 		}
+		catch (std::exception &e)
+		{
+			SharedValue value = Value::NewString(e.what());
+			*js_exception = KJSUtil::ToJSValue(value, js_context);
+		}
 		catch (...)
 		{
+			SharedValue value = Value::NewString("unknown exception");
+			*js_exception = KJSUtil::ToJSValue(value, js_context);
 			std::cerr << "Caught an exception that I don't know how to handle!" << std::endl;
 		}
 
@@ -452,8 +466,15 @@ namespace kroll
 		{
 			*js_exception = KJSUtil::ToJSValue(exception.GetValue(), js_context);
 		}
+		catch (std::exception &e)
+		{
+			SharedValue value = Value::NewString(e.what());
+			*js_exception = KJSUtil::ToJSValue(value, js_context);
+		}
 		catch (...)
 		{
+			SharedValue value = Value::NewString("unknown exception");
+			*js_exception = KJSUtil::ToJSValue(value, js_context);
 			std::cerr << "Caught an exception that I don't know how to handle!" << std::endl;
 		}
 

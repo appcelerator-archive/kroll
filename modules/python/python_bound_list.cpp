@@ -51,7 +51,7 @@ namespace kroll
 	 * reference counted and must be released.
 	 * When an error occurs will throw an exception of type Value*.
 	 */
-	SharedValue PythonBoundList::At(int index)
+	SharedValue PythonBoundList::At(unsigned int index)
 	{
 		PyObject *p = PyList_GET_ITEM(this->object,index);
 		if (Py_None == p)

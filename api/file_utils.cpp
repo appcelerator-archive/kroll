@@ -7,15 +7,23 @@
 
 #ifdef OS_OSX
 #include <Cocoa/Cocoa.h>
-#include <IOKit/IOKitLib.h>
-#include <IOKit/network/IOEthernetInterface.h>
-#include <IOKit/network/IONetworkInterface.h>
+#include <IOKit/IOKitLib.h> 
+#include <IOKit/network/IOEthernetInterface.h> 
+#include <IOKit/network/IONetworkInterface.h> 
 #include <IOKit/network/IOEthernetController.h>
 #elif defined(OS_WIN32)
 #include <windows.h>
 #include <shlobj.h>
 #include <process.h>
+#elif defined(OS_LINUX)
+#include <cstdarg>
+#include <unistd.h>
 #endif
+
+#include <iostream>
+#include <sstream>
+#include <cstring>
+
 
 namespace kroll
 {
@@ -28,22 +36,34 @@ namespace kroll
 	std::string FileUtils::GetApplicationDirectory()
 	{
 #ifdef OS_OSX
-		// TODO test this
 		NSString* bundlePath = [[NSBundle mainBundle] bundlePath];
-		std::string dir = std::string([bundlePath UTF8String]);
+		NSString* contents = [NSString stringWithFormat:@"%@/Contents",bundlePath];
+		return std::string([contents UTF8String]);
 #elif OS_WIN32
-		char * krHome = getenv("KR_HOME");
-		std::string dir(krHome);
+		char path[MAX_PATH];
+		GetModuleFileName(NULL,path,MAX_PATH);
+		std::string p(path);
+		std::string::size_type pos = p.rfind("\\");
+		if (pos!=std::string::npos)
+		{
+		  return p.substr(0,pos);
+		}
+	  	return p;
 #elif OS_LINUX
-		// TODO test this
-		char * krHome = getenv("KR_HOME");
-		std::string dir(krHome);
+		char tmp[100];
+		sprintf(tmp,"/proc/%d/exe",getpid());
+		char pbuf[255];
+		int c = readlink(tmp,pbuf,255);
+		pbuf[c]='\0';
+		std::string str(pbuf);
+		size_t pos = str.rfind("/");
+		if (pos==std::string::npos) return str;
+		return str.substr(0,pos);
 #endif
-		return dir;
 	}
 	std::string FileUtils::GetTempDirectory()
 	{
-#ifdef OS_OSX
+#ifdef OS_OSX		
 		NSString * tempDir = NSTemporaryDirectory();
 		if (tempDir == nil)
 		    tempDir = @"/tmp";
@@ -56,39 +76,44 @@ namespace kroll
 		mkdtemp(buffer);
 		NSString * temporaryDirectory = [[NSFileManager defaultManager]
 		        stringWithFileSystemRepresentation: buffer
-		                                    length: strlen(buffer)];
+		                                    length: strlen(buffer)];		
 		return std::string([temporaryDirectory UTF8String]);
 #elif defined(OS_WIN32)
 #define BUFSIZE 512
-		TCHAR szTempName[BUFSIZE];
+		TCHAR szTempName[BUFSIZE];  
 		GetTempPath(BUFSIZE,szTempName);
-		int j = 1 + (int) (10000 * (rand() / (RAND_MAX + 10000)));
+		std::ostringstream s;
+		srand(GetTickCount()); // initialize seed
 		std::string dir(szTempName);
-		dir+="\\k" + j;
-		return dir;
+		s << dir;
+		s << "\\k";
+		s << (double)rand();
+		return s.str();
 #else
-		// TODO - is this what we need?  took out RAND_MAX + 10000 to fix compile issue
-		int j = 1 + (int) (10000 * (rand() / (RAND_MAX)));
-		std::string dir;
+		char t[] = "kXXXXXX";
+		char* tempdir = mkdtemp(t);
+		printf("Tempdir: %s\n", tempdir);
+
+		std::ostringstream dir;
 		const char* tmp = getenv("TMPDIR");
 		if (tmp)
 		{
-			dir = std::string(tmp);
+			dir << std::string(tmp);
 		}
 		else
 		{
 			const char *tmp2 = getenv("TEMP");
 			if (tmp2)
 			{
-				dir = std::string(tmp2);
+				dir << std::string(tmp2);
 			}
 			else
 			{
-				dir = std::string("/tmp");
+				dir << std::string("/tmp");
 			}
 		}
-		dir += "/k" + j;
-		return std::string(dir);
+		dir << "/k" << (double)rand();
+		return dir.str();
 #endif
 	}
 	std::string FileUtils::GetResourcesDirectory()
@@ -127,7 +152,35 @@ namespace kroll
 		return (stat(file.c_str(),&st)==0) && S_ISREG(st.st_mode);
 #endif
 	}
-
+	bool FileUtils::CreateDirectory(std::string &dir)
+	{
+#ifdef OS_OSX
+		return [[NSFileManager defaultManager] createDirectoryAtPath:[NSString stringWithCString:dir.c_str()] attributes:nil];
+#elif OS_WIN32
+		return ::CreateDirectory(dir.c_str(),NULL);
+#elif OS_LINUX
+		return mkdir(dir.c_str(),0755) == 0;
+#endif
+		return false;
+	}
+	bool FileUtils::DeleteDirectory(std::string &dir)
+	{
+#ifdef OS_OSX
+		[[NSFileManager defaultManager] removeFileAtPath:[NSString stringWithCString:dir.c_str()] handler:nil];
+#elif OS_WIN32
+		SHFILEOPSTRUCT op;
+		op.hwnd = NULL;
+		op.wFunc = FO_DELETE;
+		op.pFrom = dir.c_str();
+		op.pTo = NULL;
+		op.fFlags = FOF_NOCONFIRMATION | FOF_SILENT | FOF_NOERRORUI;
+		int rc = SHFileOperation(&op);
+		return (rc == 0);
+#elif OS_LINUX
+		return unlink(dir.c_str()) == 0;
+#endif
+		return false;
+	}
 	bool FileUtils::IsDirectory(std::string &dir)
 	{
 #ifdef OS_OSX
@@ -162,6 +215,38 @@ namespace kroll
 			}
 		}
 		return file.substr(0,pos).c_str();
+	}
+	
+	std::string FileUtils::Join(const char* path, ...)
+	{
+		va_list ap;
+		va_start(ap, path);
+		std::vector<std::string> parts;
+		parts.push_back(std::string(path));
+		while (true)
+		{
+			const char *i = va_arg(ap,const char*);
+			if (i == NULL) break;
+			parts.push_back(std::string(i));
+		}
+		va_end(ap);
+		std::string filepath;
+		std::vector<std::string>::iterator iter = parts.begin();
+		while (iter!=parts.end())
+		{
+			std::string p = (*iter++);
+			filepath+=p;
+			if (iter!=parts.end())
+			{
+				filepath+=KR_PATH_SEP;
+			}
+		}
+#ifdef OS_OSX
+		NSString *s = [NSString stringWithCString:filepath.c_str()];
+		return std::string([s fileSystemRepresentation]);
+#else		
+		return filepath;
+#endif
 	}
 
 	bool FileUtils::IsHidden(std::string &file)
@@ -360,62 +445,62 @@ namespace kroll
 	std::string FileUtils::GetMachineId()
 	{
 #ifdef OS_OSX
-		kern_return_t kernResult;
-		mach_port_t machPort;
-		char serialNumber[256];
+		kern_return_t kernResult; 
+		mach_port_t machPort; 
+		char serialNumber[256]; 
 
-		kernResult = IOMasterPort( MACH_PORT_NULL, &machPort );
+		kernResult = IOMasterPort( MACH_PORT_NULL, &machPort ); 
 
-		serialNumber[0] = 0;
+		serialNumber[0] = 0; 
 
-		// if we got the master port
-		if ( kernResult == KERN_SUCCESS )
-		{
-			// create a dictionary matching IOPlatformExpertDevice
-			CFMutableDictionaryRef classesToMatch = IOServiceMatching("IOPlatformExpertDevice" );
+		// if we got the master port 
+		if ( kernResult == KERN_SUCCESS ) 
+		{ 
+			// create a dictionary matching IOPlatformExpertDevice 
+			CFMutableDictionaryRef classesToMatch = IOServiceMatching("IOPlatformExpertDevice" ); 
 
-			// if we are successful
-			if (classesToMatch)
-			{
-				// get the matching services iterator
-				io_iterator_t iterator;
-				kernResult = IOServiceGetMatchingServices( machPort,
-				classesToMatch, &iterator );
+			// if we are successful 
+			if (classesToMatch) 
+			{ 
+				// get the matching services iterator 
+				io_iterator_t iterator; 
+				kernResult = IOServiceGetMatchingServices( machPort, 
+				classesToMatch, &iterator ); 
 
-				// if we succeeded
-				if ( (kernResult == KERN_SUCCESS) && iterator )
-				{
-					io_object_t serviceObj;
-					bool done = false;
-					do {
-						// get the next item out of the dictionary
-						serviceObj = IOIteratorNext( iterator );
+				// if we succeeded 
+				if ( (kernResult == KERN_SUCCESS) && iterator ) 
+				{ 
+					io_object_t serviceObj; 
+					bool done = false; 
+					do { 
+						// get the next item out of the dictionary 
+						serviceObj = IOIteratorNext( iterator ); 
 
-						// if it is not NULL
-						if (serviceObj)
-						{
-							CFDataRef data = (CFDataRef) IORegistryEntryCreateCFProperty( serviceObj, CFSTR("serial-number"), kCFAllocatorDefault, 0 );
+						// if it is not NULL 
+						if (serviceObj) 
+						{ 
+							CFDataRef data = (CFDataRef) IORegistryEntryCreateCFProperty( serviceObj, CFSTR("serial-number"), kCFAllocatorDefault, 0 ); 
 
-							if (data != NULL)
-							{
-								CFIndex datalen = CFDataGetLength(data);
-								const UInt8* rawdata = CFDataGetBytePtr(data);
-								char dataBuffer[256];
-								memcpy(dataBuffer, rawdata, datalen);
-								sprintf(serialNumber, "%s%s", dataBuffer+13,dataBuffer);
-								CFRelease(data);
-								done = true;
-							}
-						}
+							if (data != NULL) 
+							{ 
+								CFIndex datalen = CFDataGetLength(data); 
+								const UInt8* rawdata = CFDataGetBytePtr(data); 
+								char dataBuffer[256]; 
+								memcpy(dataBuffer, rawdata, datalen); 
+								sprintf(serialNumber, "%s%s", dataBuffer+13,dataBuffer); 
+								CFRelease(data); 
+								done = true; 
+							} 
+						} 
 
-					} while (done == false);
+					} while (done == false); 
 
-					IOObjectRelease(serviceObj);
-				}
-
-				IOObjectRelease(iterator);
-			}
-		}
+					IOObjectRelease(serviceObj); 
+				} 
+				
+				IOObjectRelease(iterator); 
+			} 
+		} 
 		return std::string(serialNumber);
 #elif defined(OS_WIN32)
 		//http://www.codeguru.com/cpp/i-n/network/networkinformation/article.php/c5451
@@ -459,13 +544,18 @@ namespace kroll
 		}
 		return c;
 	}
-	bool FileUtils::ReadManifest(std::string& path, std::string &runtimePath, std::vector< std::pair< std::pair<std::string,std::string>, bool> >& modules, std::vector<std::string> &moduleDirs)
+	bool FileUtils::ReadManifest(std::string& path, std::string &runtimePath, std::vector< std::pair< std::pair<std::string,std::string>, bool> >& modules, std::vector<std::string> &moduleDirs, std::string &appname, std::string &appid, std::string &runtimeOverride)
 	{
 		std::ifstream file(path.c_str());
 		if (file.bad() || file.fail())
 		{
 			return false;
 		}
+		bool foundRuntime = false;
+		const char *rt = runtimeOverride.c_str();
+#ifdef DEBUG
+				std::cout << "Read Manifest: " << rt << std::endl;
+#endif				
 
 		while (!file.eof())
 		{
@@ -480,20 +570,66 @@ namespace kroll
 			{
 				std::string key = Trim(line.substr(0,pos));
 				std::string value = Trim(line.substr(pos+1,line.length()));
+				if (key == "appname")
+				{
+					appname = value;
+					continue;
+				}
+				else if (key == "appid")
+				{
+					appid = value;
+					continue;
+				}
 				int op;
 				std::string version;
 				ExtractVersion(value,&op,version);
+#ifdef DEBUG
+				std::cout << "Component: " << key << ":" << version << ", operation: " << op << std::endl;
+#endif				
 				std::pair<std::string,std::string> p(key,version);
 				if (key == "runtime")
 				{
+					// check to see if our runtime is found in our override directory
+					if (!runtimeOverride.empty())
+					{
+						std::string potentialRuntime = Join(rt,"runtime",NULL);
+						if (IsDirectory(potentialRuntime))
+						{
+							runtimePath = potentialRuntime;
+#ifdef DEBUG
+							std::cout << "found override runtime at: " << runtimePath << std::endl;
+#endif
+							foundRuntime = true;
+							continue;
+						}
+					}
 					runtimePath = FindRuntime(op,version);
 					if (runtimePath == "")
 					{
 						modules.push_back(std::pair< std::pair<std::string,std::string>, bool>(p,false));
 					}
+					else
+					{
+						foundRuntime = true;
+					}
 				}
 				else
 				{
+					// check to see if our module is contained within our runtime override
+					// directory and if it is, use it...
+					if (!runtimeOverride.empty())
+					{
+						std::string potentialModule = kroll::FileUtils::Join(rt,"modules",key.c_str(),NULL);
+						if (IsDirectory(potentialModule))
+						{
+							modules.push_back(std::pair< std::pair<std::string,std::string>, bool>(p,true));
+							moduleDirs.push_back(potentialModule);
+#ifdef DEBUG
+							std::cout << "found override module at: " << potentialModule << std::endl;
+#endif
+							continue;
+						}
+					}
 					std::string dir = FindModule(key,op,version);
 					bool found = dir!="";
 					modules.push_back(std::pair< std::pair<std::string,std::string>, bool>(p,found));
@@ -503,6 +639,12 @@ namespace kroll
 					}
 				}
 			}
+		}
+		// we gotta always have a runtime
+		if (!foundRuntime)
+		{
+			std::pair<std::string,std::string> p("runtime","0.2"); //TODO: huh, what do we use?
+			modules.push_back(std::pair< std::pair<std::string,std::string>, bool>(p,false));
 		}
 		file.close();
 		return true;
@@ -565,47 +707,62 @@ namespace kroll
 		}
 	#endif
 	}
-	int FileUtils::RunAndWait(std::string path, std::vector<std::string> args)
+	int FileUtils::RunAndWait(std::string &path, std::vector<std::string> &args)
 	{
-#ifdef OS_OSX
-		NSMutableArray *margs = [[[NSMutableArray alloc] init] autorelease];
+#ifndef OS_WIN32
+		std::string p;
+		p+="\"";
+		p+=path;
+		p+="\" ";
 		std::vector<std::string>::iterator i = args.begin();
 		while (i!=args.end())
 		{
-			std::string arg = (*i++);
-			[margs addObject:[NSString stringWithCString:arg.c_str()]];
-		}
-		NSTask *cmnd=[[NSTask alloc] init];
-		[cmnd setLaunchPath:[NSString stringWithCString:path.c_str()]];
-		[cmnd setArguments:margs];
-		[cmnd launch];
-		[cmnd waitUntilExit];
-		int status = [cmnd terminationStatus];
-		[cmnd release];
-		cmnd = nil;
-		return status;
-#elif defined(OS_LINUX)
-		std::string p(path);
-		std::vector<std::string>::iterator i = args.begin();
-		while (i!=args.end())
-		{
-			p+=" ";
+			p+="\"";
 			p+=(*i++);
+			p+="\" ";
 		}
 #ifdef DEBUG
 		std::cout << "running: " << p << std::endl;
 #endif
 		return system(p.c_str());
 #elif defined(OS_WIN32)
-		const char **argv = new const char*[args.size()];
-		std::vector<std::string>::iterator i = args.begin();
-		int idx = 0;
-		while (i!=args.end())
+		const char **argv = new const char*[args.size() > 0 ? args.size() : 2];
+		if (args.size() > 0 )
 		{
-			argv[idx++] = (*i++).c_str();
+			argv = new const char*[args.size()+1];
+			std::vector<std::string>::iterator i = args.begin();
+			int idx = 0;
+			while (i!=args.end())
+			{
+				argv[idx++] = (*i++).c_str();
+			}
+			argv[idx]=NULL;
 		}
-
-		return _spawnvp(_P_WAIT, path.c_str(), argv);
+		else
+		{
+			// spawn requires the path to be in the first argv
+			argv[0]=path.c_str();
+			argv[1]=NULL;
+		}
+		int rc = _spawnvp(_P_WAIT, path.c_str(), argv);
+		if (argv) delete[] argv;
+		return rc;
+#endif
+	}
+	const char* FileUtils::GetUsername()
+	{
+#ifdef OS_OSX
+		return [NSUserName() UTF8String];		
+#elif OS_WIN32
+		char buf[100];
+		DWORD size = 100;
+        if (::GetUserName(buf,&size))
+		{
+			buf[size]='\0';
+		}
+		return std::string(buf).c_str();
+#elif OS_LINUX
+		return getlogin();
 #endif
 	}
 #ifndef NO_UNZIP
@@ -623,10 +780,12 @@ namespace kroll
 		args.push_back("--rsrc");
 		args.push_back(source);
 		args.push_back(destination);
-		RunAndWait(std::string("/usr/bin/ditto"),args);
+		std::string cmdline = "/usr/bin/ditto";
+		RunAndWait(cmdline,args);
 #elif OS_LINUX
 		std::vector<std::string> args;
 		args.push_back("-qq");
+		args.push_back("-o");
 		args.push_back(source);
 		args.push_back("-d");
 		args.push_back(destination);

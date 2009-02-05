@@ -24,7 +24,7 @@ namespace kroll
 
 	Win32Host::Win32Host(HINSTANCE hInstance, int _argc, const char** _argv) : Host(_argc,_argv), instance_handle(hInstance)
 	{
-		char *p = getenv("KR_PLUGINS");
+		char *p = getenv("KR_MODULES");
 		if (p)
 		{
 			FileUtils::Tokenize(p, this->module_paths, ";");
@@ -39,21 +39,23 @@ namespace kroll
 		}
 	}
 
-	int Win32Host::Run()
+	bool Win32Host::Start()
 	{
-		std::cout << "Kroll Running (Win32)..." << std::endl;
-		this->AddModuleProvider(this);
-		this->LoadModules();
-
+		Host::Start();
 		thread_id = GetCurrentThreadId();
+		return true;
+	}
+
+	bool Win32Host::RunLoop()
+	{
+		// just process one message at a time
 		MSG message;
-		while (GetMessage(&message, NULL, 0, 0))
+		if (GetMessage(&message, NULL, 0, 0))
 		{
 			TranslateMessage(&message);
 			DispatchMessage(&message);
 		}
-
-		return 0;
+		return true;
 	}
 
 	Module* Win32Host::CreateModule(std::string& path)
@@ -94,3 +96,20 @@ namespace kroll
 	}
 }
 
+extern "C"
+{
+	int Execute(HINSTANCE hInstance, int argc, const char **argv){
+		Host *host = new kroll::Win32Host(hInstance,argc,argv);
+
+		if (argc > 1) {
+			if (strcmp(argv[1], "--wait-for-debugger") == 0) {
+				printf("Waiting for debugger (Press Any Key to Continue)...\n");
+				do {
+					int c = getc(stdin);
+					if (c > 0) break;
+				} while (true);
+			}
+		}
+		return host->Run();
+	}
+}

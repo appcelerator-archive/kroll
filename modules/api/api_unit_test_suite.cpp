@@ -59,7 +59,7 @@ namespace kroll
 		std::string msg("hello");
 		int severity = KR_LOG_DEBUG;
 		
-		APIBinding *api = (APIBinding*)binding.get();
+		SharedPtr<APIBinding> api = binding.cast<APIBinding>();
 
 		SharedValue logMethodValue = binding->Get("log");
 		SharedPtr<BoundMethod> logMethod = logMethodValue->ToMethod();
@@ -89,8 +89,10 @@ namespace kroll
 		// TEST registering an event handler and then receiving it
 		// once it's fired
 		std::string event("kr.api.log");
-		TestClass* testObject = new TestClass;
-		int ref = api->Register(event,testObject);
+		SharedBoundMethod sTestObject = new TestClass();
+		TestClass* testObject = (TestClass*) sTestObject.get();
+
+		int ref = api->Register(event,sTestObject);
 		KR_ASSERT(ref!=0);
 		SharedValue data = Value::NewString("some data here");
 

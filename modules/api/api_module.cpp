@@ -19,13 +19,14 @@ namespace kroll
 		host->GetGlobalObject()->SetObject("api", binding);
 	}
 
-	void APIModule::Destroy()
+	void APIModule::Stop()
 	{
+		host->GetGlobalObject()->Set("api", Value::Undefined);
 	}
 
 	void APIModule::Test()
 	{
 		APIUnitTestSuite suite;
-		suite.Run(host,binding);
+		suite.Run(host, binding);
 	}
 }

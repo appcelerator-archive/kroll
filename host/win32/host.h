@@ -29,17 +29,25 @@ namespace kroll
 		virtual ~Win32Host();
 
 		virtual Module* CreateModule(std::string& path);
-		virtual int Run();
 
 		HINSTANCE GetInstanceHandle() { return instance_handle; }
 		SharedValue InvokeMethodOnMainThread(SharedBoundMethod method,
 		                                     const ValueList& args);
+
+	protected:
+		bool RunLoop();
+		bool Start();
 
 	private:
 		HINSTANCE instance_handle;
 		static bool ole_initialized;
 		DWORD thread_id;
 	};
+}
+
+extern "C"
+{
+	KROLL_HOST_API int Execute(HINSTANCE hInstance, int argc, const char **argv);
 }
 
 #endif

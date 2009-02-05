@@ -22,12 +22,10 @@ namespace kroll
 {
 
 	class EXPORT LinuxHost : public Host
-	{
+	{ 
 	public:
 		LinuxHost(int argc, const char* argv[]);
-		virtual ~LinuxHost();
 
-		virtual int Run();
 		virtual Module* CreateModule(std::string& path);
 		SharedValue InvokeMethodOnMainThread(SharedBoundMethod method,
 		                                     const ValueList& args);
@@ -35,13 +33,20 @@ namespace kroll
 		Poco::Mutex& GetJobQueueMutex();
 		std::vector<LinuxJob*>& GetJobs();
 
+	protected:
+		virtual bool RunLoop();
+		virtual ~LinuxHost();
+
 	private:
 		Poco::Mutex job_queue_mutex;
 		std::vector<LinuxJob*> jobs;
 	};
 }
 
-EXPORT kroll::Host* createHost;
+extern "C"
+{
+	EXPORT int Execute(int argc,const char** argv);
+}
 
 
 #endif

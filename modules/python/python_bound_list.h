@@ -37,7 +37,7 @@ namespace kroll
 		 * reference counted and must be released.
 		 * When an error occurs will throw an exception of type Value*.
 		 */
-		SharedValue At(int index);
+		SharedValue At(unsigned int index);
 
 		/**
 		 * Set a property on this object to the given value. Value should be
