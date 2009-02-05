@@ -766,7 +766,7 @@ int main(int _argc, const char* _argv[])
 	argv = __argv;
 #else
 	argc = _argc;
-	argv = argv;
+	argv = (char **)_argv;
 #endif
 	// win32 is special .... since unzip isn't built-in to
 	// .NET, we are going to just use the bundled libraries

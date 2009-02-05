@@ -14,7 +14,7 @@ if os.environ.has_key("TITANIUM_LIBPATH"):
 
 build.env.Append(CCFLAGS=['/EHsc', '/MD'])
 # disable this for release builds?
-#build.env.Append(CPPDEFINES={'WIN32_CONSOLE': 1})
+build.env.Append(CPPDEFINES={'WIN32_CONSOLE': 1})
 build.env.Append(CPPPATH=titanium_includes)
 build.env.Append(LIBPATH=titanium_libpath)
 
