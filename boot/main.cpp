@@ -107,6 +107,7 @@ static int argc;
 #elif OS_LINUX
   #define KR_FATAL_ERROR(msg) \
 { \
+	printf("%i\n", __LINE__); \
 	GtkWidget* dialog = gtk_message_dialog_new(\
 		NULL,  \
 		GTK_DIALOG_MODAL, \
@@ -750,7 +751,7 @@ int ForkProcess(std::string &exec, std::string &manifest, std::string &homedir, 
 #if defined(OS_WIN32) && !defined(WIN32_CONSOLE)
 int WinMain(HINSTANCE, HINSTANCE, LPSTR command_line, int)
 #else
-int main(int _argc, const char* _argv[])
+int main(int _argc, char* _argv[])
 #endif
 {
 	int rc = 0;
@@ -760,13 +761,19 @@ int main(int _argc, const char* _argv[])
 
 	bool forkedProcess = IsForkedProcess();
 
+#if defined(OS_LINUX)
+	argc = _argc;
+	argv = _argv;
+	gtk_init(&argc, &_argv);
+#endif
+
 #if defined(OS_WIN32)
 #if !defined(WIN32_CONSOLE)
 	argc = __argc;
 	argv = __argv;
 #else
 	argc = _argc;
-	argv = argv;
+	argv = _argv;
 #endif
 	// win32 is special .... since unzip isn't built-in to
 	// .NET, we are going to just use the bundled libraries

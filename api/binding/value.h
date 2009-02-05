@@ -388,8 +388,7 @@ namespace kroll
 		char* stringValue;
 		SharedBoundObject objectValue;
 
-		void defaults();
-		void init();
+		void reset();
 
 	};
 

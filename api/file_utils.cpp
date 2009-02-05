@@ -90,6 +90,10 @@ namespace kroll
 		s << (double)rand();
 		return s.str();
 #else
+		char t[] = "kXXXXXX";
+		char* tempdir = mkdtemp(t);
+		printf("Tempdir: %s\n", tempdir);
+
 		std::ostringstream dir;
 		const char* tmp = getenv("TMPDIR");
 		if (tmp)
@@ -781,6 +785,7 @@ namespace kroll
 #elif OS_LINUX
 		std::vector<std::string> args;
 		args.push_back("-qq");
+		args.push_back("-o");
 		args.push_back(source);
 		args.push_back("-d");
 		args.push_back(destination);

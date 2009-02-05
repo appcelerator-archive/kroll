@@ -11,39 +11,111 @@
 namespace kroll
 {
 
-	Value::Value() { init(); SetUndefined(); }
-	SharedValue Value::NewInt(int value) { SharedValue v(new Value()); v->init(); v->SetInt(value); return v; }
-	SharedValue Value::NewDouble(double value) { SharedValue v(new Value()); v->init(); v->SetDouble(value); return v; }
-	SharedValue Value::NewBool(bool value) { SharedValue v(new Value()); v->init(); v->SetBool(value); return v; }
-	SharedValue Value::NewString(const char* value) { SharedValue v(new Value()); v->init(); v->SetString(value); return v; }
-	SharedValue Value::NewString(std::string& value) { SharedValue v(new Value()); v->init(); v->SetString(value.c_str()); return v; }
-	SharedValue Value::NewList(SharedBoundList value) { SharedValue v(new Value()); v->init(); v->SetList(value); return v; }
-	SharedValue Value::NewMethod(SharedBoundMethod method) { SharedValue v(new Value()); v->init(); v->SetMethod(method); return v; }
-	SharedValue Value::NewObject(SharedBoundObject value) { SharedValue v(new Value()); v->init(); v->SetObject(value); return v; }
-	SharedValue Value::NewObject(SharedPtr<StaticBoundObject> value) { SharedValue v(new Value()); v->init(); v->SetStaticBoundObject(value); return v; }
-	Value::Value(SharedValue value) { init(); this->SetValue(value); }
-	Value::Value(const Value& value)
+	void Value::reset()
 	{
-		init();
-		this->type = value.type;
-		if (value.IsString())
-		{
-			// make a copy
-			this->stringValue = strdup(value.ToString());
-		}
-		else
-		{
-			this->SetValue((Value*)&value);
-		}
-	}
-
-	Value::~Value()
-	{
-		if (IsString())
+		if (this->IsString())
 		{
 			free(this->stringValue);
 			this->stringValue = NULL;
 		}
+		this->type = UNDEFINED;
+		this->objectValue = NULL;
+		this->stringValue = NULL;
+		this->numberValue = 0;
+	}
+
+	Value::Value()
+	 : type(UNDEFINED),
+	   numberValue(0),
+	   stringValue(NULL),
+	   objectValue(NULL)
+	{
+	}
+
+	Value::Value(SharedValue value)
+	 : type(UNDEFINED),
+	   numberValue(0),
+	   stringValue(NULL),
+	   objectValue(NULL)
+	{
+		this->SetValue(value);
+	}
+
+	Value::Value(const Value& value)
+	 : type(UNDEFINED),
+	   numberValue(0),
+	   stringValue(NULL),
+	   objectValue(NULL)
+	{
+		this->SetValue((Value*) &value);
+	}
+
+	Value::~Value()
+	{
+		reset();
+	}
+
+	SharedValue Value::NewInt(int value)
+	{
+		SharedValue v(new Value());
+		v->SetInt(value);
+		return v;
+	}
+
+	SharedValue Value::NewDouble(double value)
+	{
+		SharedValue v(new Value());
+		v->SetDouble(value);
+		return v;
+	}
+
+	SharedValue Value::NewBool(bool value)
+	{
+		SharedValue v(new Value());
+		v->SetBool(value);
+		return v;
+	}
+
+	SharedValue Value::NewString(const char* value)
+	{
+		SharedValue v(new Value());
+		v->SetString(value);
+		return v;
+	}
+
+	SharedValue Value::NewString(std::string& value)
+	{
+		SharedValue v(new Value());
+		v->SetString(value.c_str());
+		return v;
+	}
+
+	SharedValue Value::NewList(SharedBoundList value)
+	{
+		SharedValue v(new Value());
+		v->SetList(value);
+		return v;
+	}
+
+	SharedValue Value::NewMethod(SharedBoundMethod method)
+	{
+		SharedValue v(new Value());
+		v->SetMethod(method);
+		return v;
+	}
+
+	SharedValue Value::NewObject(SharedBoundObject value)
+	{
+		SharedValue v(new Value());
+		v->SetObject(value);
+		return v;
+	}
+
+	SharedValue Value::NewObject(SharedPtr<StaticBoundObject> value)
+	{
+		SharedValue v(new Value());
+		v->SetStaticBoundObject(value);
+		return v;
 	}
 
 	SharedValue Value::Undefined = CreateUndefined();
@@ -63,24 +135,6 @@ namespace kroll
 		return v;
 	}
 
-	void Value::init()
-	{
-		this->type = UNDEFINED;
-		this->objectValue = NULL;
-		this->stringValue = NULL;
-	}
-
-	void Value::defaults()
-	{
-		if (this->IsString())
-		{
-			free(this->stringValue);
-			this->stringValue = NULL;
-		}
-		this->type = UNDEFINED;
-		this->objectValue = NULL;
-		this->stringValue = NULL;
-	}
 
 	bool Value::IsInt() const { return type == INT || (type == DOUBLE && ((int) numberValue) == numberValue); }
 	bool Value::IsDouble() const { return type == DOUBLE; }
@@ -88,7 +142,7 @@ namespace kroll
 	bool Value::IsBool() const { return type == BOOL; }
 	bool Value::IsString() const {  return type == STRING; }
 	bool Value::IsList() const { return type == LIST; }
-	bool Value::IsObject() const { return type == OBJECT; }
+	bool Value::IsObject() const { return this->type == OBJECT; }
 	bool Value::IsMethod() const { return type == METHOD; }
 	bool Value::IsNull() const { return type == NULLV; }
 	bool Value::IsUndefined() const { return type == UNDEFINED; }
@@ -142,69 +196,69 @@ namespace kroll
 
 	void Value::SetInt(int value)
 	{
-		defaults();
+		reset();
 		this->numberValue = value;
 		type = INT;
 	}
 
 	void Value::SetDouble(double value)
 	{
-		defaults();
+		reset();
 		this->numberValue = value;
 		type = DOUBLE;
 	}
 
 	void Value::SetBool(bool value)
 	{
-		defaults();
+		reset();
 		this->boolValue = value;
 		type = BOOL;
 	}
 
 	void Value::SetString(const char* value)
 	{
-		defaults();
+		reset();
 		this->stringValue = strdup(value);
 		type = STRING;
 	}
 
 	void Value::SetList(SharedBoundList value)
 	{
-		defaults();
+		reset();
 		this->objectValue = value;
 		type = LIST;
 	}
 
 	void Value::SetObject(SharedBoundObject value)
 	{
-		defaults();
+		reset();
 		this->objectValue = value;
-		type = OBJECT;
+		this->type = OBJECT;
 	}
 
 	void Value::SetStaticBoundObject(SharedPtr<StaticBoundObject> value)
 	{
-		defaults();
+		reset();
 		this->objectValue = value;
 		type = OBJECT;
 	}
 
 	void Value::SetMethod(SharedBoundMethod value)
 	{
-		defaults();
+		reset();
 		this->objectValue = value;
 		type = METHOD;
 	}
 
 	void Value::SetNull()
 	{
-		defaults();
+		reset();
 		type = NULLV;
 	}
 
 	void Value::SetUndefined()
 	{
-		defaults();
+		reset();
 		type = UNDEFINED;
 	}
 
