@@ -23,14 +23,6 @@ namespace kroll
 	LinuxHost::LinuxHost(int argc, const char *argv[]) : Host(argc, argv)
 	{
 		gtk_init(&argc, (char***) &argv);
-
-		char *p = getenv("KR_MODULES");
-		if (p)
-		{
-			FileUtils::Tokenize(p, this->module_paths, ":");
-		}
-
-		std::cout << "Kroll Running (Linux)..." << std::endl;
 	}
 
 	LinuxHost::~LinuxHost()

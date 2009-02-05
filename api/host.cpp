@@ -47,6 +47,31 @@ namespace kroll
 			std::cerr << "KR_RUNTIME not defined, aborting." << std::endl;
 			exit(1);
 		}
+
+#ifdef OS_WIN32
+		#define BUFSIZE 8024
+		char paths[BUFSIZE];
+		int bufsize = BUFSIZE;
+		bufsize = GetEnvironmentVariable("KR_MODULES",(char*)&paths,bufsize);
+		if (bufsize > 0)
+		{
+			paths[bufsize]='\0';
+		}
+		else
+		{
+			std::cerr << "KR_MODULES not defined, aborting." << std::endl;
+			exit(1);
+		}
+#else		
+		char *paths = getenv("KR_MODULES");
+		if (!paths)
+		{
+			std::cerr << "KR_MODULES not defined, aborting." << std::endl;
+			exit(1);
+		}
+#endif		
+		FileUtils::Tokenize(paths, this->module_paths, KR_LIB_SEP);
+		
 		
 		this->running = false;
 		this->exitCode = 0;

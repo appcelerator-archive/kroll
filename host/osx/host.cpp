@@ -15,14 +15,6 @@ namespace kroll
 {
 	OSXHost::OSXHost(int _argc, const char **_argv) : Host(_argc,_argv)
 	{
-		//FIXME - push this up
-		char *p = getenv("KR_MODULES");
-		if (p)
-		{
-			FileUtils::Tokenize(p, this->module_paths, ":");
-		}
-		
-		[NSApplication sharedApplication];
 	}
 
 	OSXHost::~OSXHost()
@@ -32,6 +24,7 @@ namespace kroll
 	bool OSXHost::Start()
 	{
 		Host::Start();
+		[NSApplication sharedApplication];
 		NSApplication *app = [NSApplication sharedApplication];
 		[app finishLaunching];
 		return true;
