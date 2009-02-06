@@ -464,17 +464,15 @@ typedef int Executor(int argc, const char **argv);
 
 int Boot(int argc, char** argv)
 {
-#if defined(OS_OSX)
-//	[NSApplication sharedApplication];
-#endif
-
 #if defined(OS_WIN32)
 	char home[512];
 	int size = GetEnvironmentVariable("KR_RUNTIME",(char*)&home,512);
 	home[size]='\0';
 	std::string h(home);
 	std::string path = kroll::FileUtils::Join(h.c_str(),"khost.dll",NULL);
-
+	// unset before we launch in case this process launches 
+	// another kroll process we don't want it to think we're already loaded
+	SetEnvironmentVariable("KR_BOOT_PROCESS",NULL);
 #ifdef DEBUG
 	std::cout << "Boot attempting to load: " << path << std::endl;
 #endif
@@ -508,6 +506,9 @@ int Boot(int argc, char** argv)
 #else
 	std::string path = kroll::FileUtils::Join((char*)home,"libkhost.so",NULL);
 #endif
+	// unset before we launch in case this process launches 
+	// another kroll process we don't want it to think we're already loaded
+	unsetenv("KR_BOOT_PROCESS");
 	void* lib = dlopen(path.c_str(), RTLD_LAZY | RTLD_GLOBAL);
 	if (!lib)
 	{

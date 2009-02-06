@@ -7,8 +7,8 @@
 #include <Cocoa/Cocoa.h>
 #endif
 #if defined(OS_WIN32)
-# include "base.h"
-# include <windows.h>
+#include "base.h"
+#include <windows.h>
 #else
 # include <dirent.h>
 #endif
@@ -31,7 +31,7 @@ namespace kroll
 		char *ti_home = getenv("KR_HOME");
 		char *ti_runtime = getenv("KR_RUNTIME");
 
-#ifdef DEBUG		
+#ifdef DEBUG
 		std::cout << ">>> KR_HOME=" << ti_home << std::endl;
 		std::cout << ">>> KR_RUNTIME=" << ti_runtime << std::endl;
 #endif
@@ -47,7 +47,17 @@ namespace kroll
 			std::cerr << "KR_RUNTIME not defined, aborting." << std::endl;
 			exit(1);
 		}
-		
+
+		char *paths = getenv("KR_MODULES");
+		if (!paths)
+		{
+			std::cerr << "KR_MODULES not defined, aborting." << std::endl;
+			exit(1);
+		}
+
+		FileUtils::Tokenize(paths, this->module_paths, KR_LIB_SEP);
+
+
 		this->running = false;
 		this->exitCode = 0;
 
@@ -98,7 +108,7 @@ namespace kroll
 		}
 	}
 
-	void Host::AddModuleProvider(ModuleProvider *provider) 
+	void Host::AddModuleProvider(ModuleProvider *provider)
 	{
 		ScopedLock lock(&moduleMutex);
 		module_providers.push_back(provider);
@@ -127,7 +137,7 @@ namespace kroll
 		return NULL;
 	}
 
-	void Host::RemoveModuleProvider(ModuleProvider *provider) 
+	void Host::RemoveModuleProvider(ModuleProvider *provider)
 	{
 		ScopedLock lock(&moduleMutex);
 
@@ -172,7 +182,7 @@ namespace kroll
 
 			// Call module Load lifecycle event
 			module->Initialize();
-			
+
 			// Store module
 			this->modules[path] = module;
 			this->loaded_modules.push_back(module);
@@ -203,7 +213,7 @@ namespace kroll
 		}
 
 	}
-	
+
 	void Host::LoadModules()
 	{
 		KR_DUMP_LOCATION
@@ -286,7 +296,7 @@ namespace kroll
 				SharedPtr<Module> m = this->LoadModule(path, provider);
 
 				// Module was loaded successfully
-				if (!m.isNull()) 
+				if (!m.isNull())
 					modulesLoaded.push_back(m);
 
 				// Erase path, even on failure
@@ -367,7 +377,7 @@ namespace kroll
 		module->Stop(); // Call Stop() lifecycle event
 
 		if (i != this->modules.end())
-			this->modules.erase(i); 
+			this->modules.erase(i);
 
 		if (j != this->loaded_modules.end())
 			this->loaded_modules.erase(j);
@@ -376,13 +386,13 @@ namespace kroll
 	SharedPtr<StaticBoundObject> Host::GetGlobalObject() {
 		return this->global_object;
 	}
-	
+
 	bool Host::Start()
 	{
 		KR_DUMP_LOCATION
 		return true;
 	}
-	
+
 	void Host::Stop ()
 	{
 		KR_DUMP_LOCATION
@@ -405,10 +415,10 @@ namespace kroll
 			ScopedLock lock(&moduleMutex);
 			if (!this->RunLoop())
 			{
-				break; 
+				break;
 			}
 		}
-		
+
 		ScopedLock lock(&moduleMutex);
 		this->Stop();
 		this->UnloadModuleProviders();
@@ -421,7 +431,7 @@ namespace kroll
 
 		return this->exitCode;
 	}
-	
+
 	void Host::Exit(int exitcode)
 	{
 		KR_DUMP_LOCATION

@@ -24,12 +24,6 @@ namespace kroll
 
 	Win32Host::Win32Host(HINSTANCE hInstance, int _argc, const char** _argv) : Host(_argc,_argv), instance_handle(hInstance)
 	{
-		char *p = getenv("KR_MODULES");
-		if (p)
-		{
-			FileUtils::Tokenize(p, this->module_paths, ";");
-		}
-
 	}
 
 	Win32Host::~Win32Host()
