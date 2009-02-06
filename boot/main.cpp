@@ -61,64 +61,11 @@
 //
 //
 //////////////////////////////////////////////////////////
-#if defined(OS_OSX)
-#import <Cocoa/Cocoa.h>
-#endif
-
-#if defined(OS_LINUX)
-#include <gtk/gtk.h>
-#endif
-
-#if defined(OS_WIN32)
-#include <windows.h>
-#include <process.h>
-#else
-#include <dlfcn.h>
-#include <signal.h>
-#endif
-
-#include <iostream>
-#include <sstream>
-#include <cstring>
-#include <api/file_utils.h>
+#include "main.h"
 
 static char **argv;
 static int argc;
 
-
-#ifdef OS_OSX
-  #define KR_FATAL_ERROR(msg) \
-  { \
-	[NSApplication sharedApplication]; \
-	NSAlert *alert = [[NSAlert alloc] init]; \
-	[alert addButtonWithTitle:@"OK"]; \
-	[alert setMessageText:@"Application Error"]; \
-	[alert setInformativeText:[NSString stringWithCString:msg]]; \
-	[alert setAlertStyle:NSCriticalAlertStyle]; \
-	[alert runModal]; \
-	[alert release]; \
-	 \
-  }
-#elif OS_WIN32
-  #define KR_FATAL_ERROR(msg) \
-  { \
-	MessageBox(NULL,msg,"Application Error",MB_OK|MB_ICONERROR|MB_SYSTEMMODAL); \
-  }
-#elif OS_LINUX
-  #define KR_FATAL_ERROR(msg) \
-{ \
-	printf("%i\n", __LINE__); \
-	GtkWidget* dialog = gtk_message_dialog_new(\
-		NULL,  \
-		GTK_DIALOG_MODAL, \
-		GTK_MESSAGE_ERROR,  \
-		GTK_BUTTONS_OK, \
-		"%s", \
-		msg); \
-	gtk_dialog_run(GTK_DIALOG(dialog)); \
-	gtk_widget_destroy(dialog); \
-}
-#endif
 
 #ifdef OS_WIN32
 std::string GetExecutablePath()
@@ -300,109 +247,118 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 
 		//FIXME - this needs to be compiled in!!
 #ifdef OS_WIN32
-		char updatesite[512];
-		int size = GetEnvironmentVariable("UPDATESITE",(char*)&updatesite,512);
+		char updatesite[MAX_PATH];
+		int size = GetEnvironmentVariable(BOOT_UPDATESITE_ENVNAME,(char*)&updatesite,MAX_PATH);
 		updatesite[size]='\0';
 #else
-		const char *updatesite = getenv("UPDATESITE");
+		const char *updatesite = getenv(BOOT_UPDATESITE_ENVNAME);
 #endif
 		std::string url;
 		if (!updatesite)
 		{
-			//FIXME
-//			url = "http://updatesite.titaniumapp.com/";
-
-			url = "http://localhost/~";
-			url+= kroll::FileUtils::GetUsername();
-			url+="/titanium";
+			const char *us = BOOT_UPDATESITE_URL;
+			if (strlen(us)>0)
+			{
+				url = std::string(us);
+			}
 		}
 		else
 		{
 			url = std::string(updatesite);
 		}
-
-		std::string sid = kroll::FileUtils::GetMachineId();
-		std::string qs("?os=osx&sid="+sid+"&aid="+appid);
-		std::vector< std::pair<std::string,std::string> >::iterator iter = missing.begin();
-		int missingCount = 0;
-		while (iter!=missing.end())
+		
+		if (!url.empty())
 		{
-			std::pair<std::string,std::string> p = (*iter++);
-			std::string name;
-			std::string path;
-			bool found = false;
-			if (p.first == "runtime")
+			std::string sid = kroll::FileUtils::GetMachineId();
+			std::string os = OS_NAME;
+			std::string qs("?os="+os+"&sid="+sid+"&aid="+appid);
+			std::vector< std::pair<std::string,std::string> >::iterator iter = missing.begin();
+			int missingCount = 0;
+			while (iter!=missing.end())
 			{
-				name = "runtime-osx-" + p.second;
-				// see if we have a private runtime installed and we can link to that
-				path = kroll::FileUtils::Join(installerDir.c_str(),"runtime",NULL);
-				if (kroll::FileUtils::IsDirectory(path))
+				std::pair<std::string,std::string> p = (*iter++);
+				std::string name;
+				std::string path;
+				bool found = false;
+				if (p.first == "runtime")
 				{
-					found = true;
-					runtimePath = path;
+					name = "runtime-" + os + "-" + p.second;
+					// see if we have a private runtime installed and we can link to that
+					path = kroll::FileUtils::Join(installerDir.c_str(),"runtime",NULL);
+					if (kroll::FileUtils::IsDirectory(path))
+					{
+						found = true;
+						runtimePath = path;
+					}
+				}
+				else
+				{
+					name = "module-" + p.first + "-" + p.second;
+					// see if we have a private module installed and we can link to that
+					path = kroll::FileUtils::Join(installerDir.c_str(),"modules",p.first.c_str(),NULL);
+					if (kroll::FileUtils::IsDirectory(path))
+					{
+						found = true;
+					}
+				}
+				if (found)
+				{
+					moduleDirs.push_back(path);
+				}
+				else
+				{
+					std::string u(url);
+					u+="/";
+					u+=name;
+					u+=".zip";
+					u+=qs;
+					args.push_back(u);
+					missingCount++;
 				}
 			}
-			else
-			{
-				name = "module-" + p.first + "-" + p.second;
-				// see if we have a private module installed and we can link to that
-				path = kroll::FileUtils::Join(installerDir.c_str(),"modules",p.first.c_str(),NULL);
-				if (kroll::FileUtils::IsDirectory(path))
-				{
-					found = true;
-				}
-			}
-			if (found)
-			{
-				moduleDirs.push_back(path);
-			}
-			else
-			{
-				std::string u(url);
-				u+="/";
-				u+=name;
-				u+=".zip";
-				u+=qs;
-				args.push_back(u);
-				missingCount++;
-			}
-		}
 
-		// we have to check again in case the private module/runtime was
-		// resolved inside the application folder
-		if (missingCount>0)
-		{
-			// run the installer app which will fetch remote modules/runtime for us
+			// we have to check again in case the private module/runtime was
+			// resolved inside the application folder
+			if (missingCount>0)
+			{
+				// run the installer app which will fetch remote modules/runtime for us
 #ifdef OS_OSX
-			std::string exec = kroll::FileUtils::Join(installerDir.c_str(),"Installer App.app","Contents","MacOS","Installer App",NULL);
+				std::string exec = kroll::FileUtils::Join(installerDir.c_str(),"Installer App.app","Contents","MacOS","Installer App",NULL);
 #elif OS_WIN32
-			std::string exec = kroll::FileUtils::Join(installerDir.c_str(),"Installer.exe",NULL);
+				std::string exec = kroll::FileUtils::Join(installerDir.c_str(),"Installer.exe",NULL);
 #elif OS_LINUX
-			std::string exec = kroll::FileUtils::Join(installerDir.c_str(),"installer",NULL);
+				std::string exec = kroll::FileUtils::Join(installerDir.c_str(),"installer",NULL);
 #endif
-			// paranoia check
-			if (kroll::FileUtils::IsFile(exec))
-			{
-				// run and wait for it to exit..
-				kroll::FileUtils::RunAndWait(exec,args);
-
-				modules.clear();
-				moduleDirs.clear();
-				bool success = kroll::FileUtils::ReadManifest(manifest,runtimePath,modules,moduleDirs,appname,appid,runtimeOverride);
-				if (!success || modules.size()!=moduleDirs.size())
+				// paranoia check
+				if (kroll::FileUtils::IsFile(exec))
 				{
-					// must have failed
-					// no need to error has installer probably was cancelled
+					// run and wait for it to exit..
+					kroll::FileUtils::RunAndWait(exec,args);
+
+					modules.clear();
+					moduleDirs.clear();
+					bool success = kroll::FileUtils::ReadManifest(manifest,runtimePath,modules,moduleDirs,appname,appid,runtimeOverride);
+					if (!success || modules.size()!=moduleDirs.size())
+					{
+						// must have failed
+						// no need to error has installer probably was cancelled
+						result = false;
+					}
+				}
+				else
+				{
+					// something crazy happened
 					result = false;
+					KR_FATAL_ERROR("Missing installer and application has additional modules that are needed.");
 				}
 			}
-			else
-			{
-				// something crazy happened
-				result = false;
-				KR_FATAL_ERROR("Missing installer and application has additional modules that are needed.");
-			}
 		}
+		else
+		{
+			result = false;
+			KR_FATAL_ERROR("Missing installer and application has additional modules that are needed.");
+		}
+		
 		// unlink the temporary directory
 		kroll::FileUtils::DeleteDirectory(sourceTemp);
 	}
@@ -466,8 +422,8 @@ typedef int Executor(int argc, const char **argv);
 int Boot(int argc, char** argv)
 {
 #if defined(OS_WIN32)
-	char home[512];
-	int size = GetEnvironmentVariable("KR_RUNTIME",(char*)&home,512);
+	char home[MAX_PATH];
+	int size = GetEnvironmentVariable("KR_RUNTIME",(char*)&home,MAX_PATH);
 	home[size]='\0';
 	std::string h(home);
 	std::string path = kroll::FileUtils::Join(h.c_str(),"khost.dll",NULL);
@@ -570,9 +526,8 @@ int ForkProcess(std::string &exec, std::string &manifest, std::string &homedir, 
 			const char *cd = getenv("LD_LIBRARY_PATH");
 			if (cd) dylib << cd << ":";
 #elif OS_WIN32
-#define BUFSIZE 1024
-			char path[BUFSIZE];
-			int bufsize = BUFSIZE;
+			char path[MAX_PATH];
+			int bufsize = MAX_PATH;
 			bufsize = GetEnvironmentVariable("PATH",(char*)&path,bufsize);
 			if (bufsize > 0)
 			{
@@ -828,8 +783,8 @@ int main(int _argc, const char* _argv[])
 	else
 	{
 		// read the application manifest to determine what's needed
-		std::string homedir = GetArgValue(argc,argv,"--khome",kroll::FileUtils::GetApplicationDirectory());
-		std::string runtimeOverride = GetArgValue(argc,argv,"--kruntime",homedir);
+		std::string homedir = GetArgValue(argc,argv,BOOT_HOME_FLAG,kroll::FileUtils::GetApplicationDirectory());
+		std::string runtimeOverride = GetArgValue(argc,argv,BOOT_RUNTIME_FLAG,homedir);
 		std::string manifest = kroll::FileUtils::Join(homedir.c_str(),"manifest",NULL);
 #ifdef DEBUG
 		std::cout << "KR_HOME = " << homedir << std::endl;

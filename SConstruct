@@ -9,8 +9,13 @@ build = BuildConfig(
     GLOBAL_NS_VARNAME = 'kroll',
     CONFIG_FILENAME = 'tiapp.xml',
     BUILD_DIR = path.abspath('build'),
-    THIRD_PARTY_DIR = path.abspath('thirdparty')
+    THIRD_PARTY_DIR = path.abspath('thirdparty'),
+	BOOT_RUNTIME_FLAG = '--runtime',
+	BOOT_HOME_FLAG = '--start',
+	BOOT_UPDATESITE_ENVNAME = 'KR_UPDATESITE',
+	BOOT_UPDATESITE_URL = ''
 )
+
 
 build.kroll_source_dir = path.abspath('.')
 build.kroll_include_dir = path.join(build.dir, 'include')
