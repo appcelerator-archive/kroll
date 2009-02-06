@@ -708,7 +708,7 @@ int ForkProcess(std::string &exec, std::string &manifest, std::string &homedir, 
 			std::string runtimeEnv_str = runtimeEnv.str();
 			std::string home_str = home.str();
 			std::string modules_str = modules.str();
-			std::string runtimeHomeEnv_str = modules.str();
+			std::string runtimeHomeEnv_str = runtimeHomeEnv.str();
 			env[env_size + 0] = dylib_str.c_str();
 			env[env_size + 1] = runtimeEnv_str.c_str();
 			env[env_size + 2] = home_str.c_str();
