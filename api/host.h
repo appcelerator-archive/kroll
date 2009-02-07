@@ -22,6 +22,7 @@ namespace kroll
 	 */
 	class KROLL_API Host : public RefCounted, public ModuleProvider
 	{
+		friend class Poco::ReleasePolicy<Host>;
 	public:
 		/*
 			Constructor: Host
@@ -29,6 +30,8 @@ namespace kroll
 			TODO: Document me
 		*/
 		Host(int argc, const char **argv);
+
+		static SharedPtr<Host> GetInstance() { return instance_; }
 
 	protected:
 		virtual ~Host();
@@ -255,6 +258,7 @@ namespace kroll
 		bool running;
 		int exitCode;
 
+		static SharedPtr<Host> instance_;
 		DISALLOW_EVIL_CONSTRUCTORS(Host);
 	};
 

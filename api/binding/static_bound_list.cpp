@@ -22,6 +22,17 @@ namespace kroll
 	{
 	}
 
+	SharedBoundList FromVector(std::vector<SharedValue> values)
+	{
+		SharedBoundList l = new StaticBoundList();
+		std::vector<SharedValue>::iterator i = values.begin();
+		while (i != values.end())
+		{
+			l->Append(*i);
+		}
+		return l;
+	}
+
 	void StaticBoundList::Append(SharedValue value)
 	{
 		int length = this->Size();

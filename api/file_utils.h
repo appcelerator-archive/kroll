@@ -177,6 +177,13 @@ namespace kroll
 			Returns: the directory for the application files
 		*/
 		static std::string GetApplicationDirectory();
+		
+		/*
+			Function: GetApplicationDataDirectory
+			  This returns the applications data directory
+		
+		 */
+		static std::string GetApplicationDataDirectory(std::string &appid);
 
 		/*
 			Function: GetResourcesDirectory

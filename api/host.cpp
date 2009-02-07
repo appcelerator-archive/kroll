@@ -26,11 +26,14 @@
 
 namespace kroll
 {
+	SharedPtr<Host> Host::instance_;
+
 	Host::Host(int argc, const char *argv[])
 	{
 		char *ti_home = getenv("KR_HOME");
 		char *ti_runtime = getenv("KR_RUNTIME");
 
+		instance_ = this;
 #ifdef DEBUG
 		std::cout << ">>> KR_HOME=" << ti_home << std::endl;
 		std::cout << ">>> KR_RUNTIME=" << ti_runtime << std::endl;
@@ -192,6 +195,10 @@ namespace kroll
 			SharedString s = e.GetValue()->DisplayString();
 			std::cerr << "Error generated loading module ("
 			          << path << "): " << *s << std::endl;
+		}
+		catch(std::exception &e)
+		{
+			std::cerr << "Error generated loading module (" << path <<"): " << e.what()<< std::endl;
 		}
 		catch(...)
 		{
