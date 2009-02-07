@@ -10,6 +10,7 @@
 
 #if defined(OS_LINUX)
 #include <gtk/gtk.h>
+#include <unistd.h>
 #endif
 
 #if defined(OS_WIN32)

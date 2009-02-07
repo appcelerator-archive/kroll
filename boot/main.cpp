@@ -63,6 +63,7 @@
 //////////////////////////////////////////////////////////
 #include "main.h"
 
+typedef std::pair<std::string, std::string> StringPair;
 static char **argv;
 static int argc;
 
@@ -695,47 +696,45 @@ int ForkProcess(std::string &exec, std::string &manifest, std::string &homedir, 
 			}
 			childArgv[argc] = NULL;
 
-			// Determine size of the environment
-			int env_size = 0;
+			// Copy all current environment variables
 			extern char** environ;
-			while (environ[env_size] != NULL)
-				env_size++;
-
-			env_size+=addToEnvironment.size();
-
-			// Copy existing environment variables
-			const char** env = (const char**) alloca (sizeof(char*) * (7 + env_size));
-			for (int i = 0; i < env_size; i++)
+			int e = 0;
+			while (environ[e] != NULL)
 			{
-				env[i] = environ[i];
-			}
-			int env_offset = 0;
-			if (addToEnvironment.size()>0)
-			{
-				std::vector< std::pair<std::string,std::string> >::iterator i = addToEnvironment.begin();
-				while(i!=addToEnvironment.end())
-				{
-					std::pair<std::string,std::string> entry = (*i++);
-					std::string line(env.first);
-					line.append("=");
-					line.append(env.second);
-					env[env_offset++] = line.c_str();
-				}
+				addToEnvironment.push_back(StringPair(environ[e++], ""));
 			}
 
 			// Add our own environment variables
+			std::string em = std::string("");
 			std::string dylib_str = dylib.str();
 			std::string runtimeEnv_str = runtimeEnv.str();
 			std::string home_str = home.str();
 			std::string modules_str = modules.str();
 			std::string runtimeHomeEnv_str = runtimeHomeEnv.str();
-			env[env_offset + 0] = dylib_str.c_str();
-			env[env_offset + 1] = runtimeEnv_str.c_str();
-			env[env_offset + 2] = home_str.c_str();
-			env[env_offset + 3] = modules_str.c_str();
-			env[env_offset + 4] = runtimeHomeEnv_str.c_str();
-			env[env_offset + 5] = "KR_BOOT_PROCESS=1";
-			env[env_offset + 6] = NULL;
+			addToEnvironment.push_back(StringPair(dylib_str, em));
+			addToEnvironment.push_back(StringPair(runtimeEnv_str, em));
+			addToEnvironment.push_back(StringPair(home_str, em));
+			addToEnvironment.push_back(StringPair(modules_str, em));
+			addToEnvironment.push_back(StringPair(runtimeHomeEnv_str, em));
+			addToEnvironment.push_back(StringPair(std::string("KR_BOOT_PROCESS"), std::string("1")));
+
+			// Allocate this memory on the stack
+			int env_size = addToEnvironment.size() + 1;
+			const char** env = (const char**) alloca (sizeof(char*) * (env_size));
+
+			// Convert our environment variable vector to a char** array
+			for (size_t i = 0; i < addToEnvironment.size(); i++)
+			{
+				StringPair& pair = addToEnvironment.at(i);
+				std::string line = pair.first;
+				if (pair.second != "")
+				{
+					line.append("=");
+					line.append(pair.second);
+				}
+				env[i] = line.c_str();
+			}
+			env[env_size] = NULL;
 
 			int result = execve(exec.c_str(), (char* const*) childArgv, (char* const*) env);
 			if (result < 0)
