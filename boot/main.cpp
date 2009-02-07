@@ -66,7 +66,6 @@
 static char **argv;
 static int argc;
 
-
 #ifdef OS_WIN32
 std::string GetExecutablePath()
 {
@@ -169,8 +168,6 @@ void termination(int)
 
 std::string GetArgValue(int argc, char **argv, std::string name, std::string defaultValue)
 {
-	std::cout << "^^^^ looking for " << name << ", count=" << argc << std::endl;
-	 
 	for (int c=1;c<argc;c++)
 	{
 		std::string arg(argv[c]);
@@ -426,7 +423,6 @@ bool IsInstallRequired()
 	std::string homedir = GetArgValue(argc,argv,BOOT_HOME_FLAG,kroll::FileUtils::GetApplicationDirectory());
 	std::string marker = kroll::FileUtils::Join(homedir.c_str(),".installed",NULL);
 
-	std::cout << "looking for marker at = " << marker << std::endl;	
 	return !kroll::FileUtils::IsFile(marker);
 }
 
@@ -471,6 +467,10 @@ int Boot(int argc, char** argv)
 	return executor(::GetModuleHandle(NULL), __argc,(const char**)__argv);
 #else
 	const char *home = getenv("KR_RUNTIME");
+	if (home == NULL)
+	{
+		KR_FATAL_ERROR("Cannot find KR_RUNTIME environment variable");
+	}
 #ifdef OS_OSX
 	std::string path = kroll::FileUtils::Join((char*)home,"libkhost.dylib",NULL);
 #else
@@ -724,20 +724,25 @@ int ForkProcess(std::string &exec, std::string &manifest, std::string &homedir, 
 			}
 
 			// Add our own environment variables
-			env[env_offset + 0] = dylib.str().c_str();
-			env[env_offset + 1] = runtimeEnv.str().c_str();
-			env[env_offset + 2] = home.str().c_str();
-			env[env_offset + 3] = modules.str().c_str();
-			env[env_offset + 4] = runtimeHomeEnv.str().c_str();
+			std::string dylib_str = dylib.str();
+			std::string runtimeEnv_str = runtimeEnv.str();
+			std::string home_str = home.str();
+			std::string modules_str = modules.str();
+			std::string runtimeHomeEnv_str = runtimeHomeEnv.str();
+			env[env_offset + 0] = dylib_str.c_str();
+			env[env_offset + 1] = runtimeEnv_str.c_str();
+			env[env_offset + 2] = home_str.c_str();
+			env[env_offset + 3] = modules_str.c_str();
+			env[env_offset + 4] = runtimeHomeEnv_str.c_str();
 			env[env_offset + 5] = "KR_BOOT_PROCESS=1";
 			env[env_offset + 6] = NULL;
+
 			int result = execve(exec.c_str(), (char* const*) childArgv, (char* const*) env);
 			if (result < 0)
 			{
 				perror("execve");
 				rc = __LINE__;
 			}
-
 #else
 			invoker = [TaskInvoker alloc];
 			NSInvocation* terminateInvocation = [TaskCallback createInvocation: @selector(terminated:)];
