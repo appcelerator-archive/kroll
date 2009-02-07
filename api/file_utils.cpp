@@ -61,6 +61,30 @@ namespace kroll
 		return str.substr(0,pos);
 #endif
 	}
+	std::string FileUtils::GetApplicationDataDirectory(std::string &appid)
+	{
+#ifdef OS_WIN32
+		char path[MAX_PATH];
+		int size = GetEnvironmentString("KR_RUNTIME_HOME",(char*)path,MAX_PATH);
+		path[size]='\0';
+		std::string dir = path;
+#else
+		std::string dir = getenv("KR_RUNTIME_HOME");
+#endif
+		dir+=KR_PATH_SEP;
+		dir+="appdata";
+		if (!IsDirectory(dir))
+		{
+			CreateDirectory(dir);
+		}
+		dir+=KR_PATH_SEP;
+		dir+=appid;
+		if (!IsDirectory(dir))
+		{
+			CreateDirectory(dir);
+		}
+		return dir;
+	}
 	std::string FileUtils::GetTempDirectory()
 	{
 #ifdef OS_OSX		

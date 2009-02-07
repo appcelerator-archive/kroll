@@ -193,6 +193,10 @@ namespace kroll
 			std::cerr << "Error generated loading module ("
 			          << path << "): " << *s << std::endl;
 		}
+		catch(std::exception &e)
+		{
+			std::cerr << "Error generated loading module (" << path <<"): " << e.what()<< std::endl;
+		}
 		catch(...)
 		{
 			std::cerr << "Error generated loading module: " << path << std::endl;

@@ -169,6 +169,8 @@ void termination(int)
 
 std::string GetArgValue(int argc, char **argv, std::string name, std::string defaultValue)
 {
+	std::cout << "^^^^ looking for " << name << ", count=" << argc << std::endl;
+	 
 	for (int c=1;c<argc;c++)
 	{
 		std::string arg(argv[c]);
@@ -413,6 +415,21 @@ void SelfExtract(std::string &dir)
 }
 #endif
 
+bool IsInstallRequired()
+{
+	// first check to make sure we're not running with the boot
+	// start flag
+	std::string check = GetArgValue(argc,argv,BOOT_HOME_FLAG,"");
+	if (!check.empty()) return false;
+	
+	// check for a marker file named .installed in the application directory
+	std::string homedir = GetArgValue(argc,argv,BOOT_HOME_FLAG,kroll::FileUtils::GetApplicationDirectory());
+	std::string marker = kroll::FileUtils::Join(homedir.c_str(),".installed",NULL);
+
+	std::cout << "looking for marker at = " << marker << std::endl;	
+	return !kroll::FileUtils::IsFile(marker);
+}
+
 #if defined(OS_WIN32)
 typedef int Executor(HINSTANCE hInstance, int argc, const char **argv);
 #else
@@ -513,6 +530,32 @@ int ForkProcess(std::string &exec, std::string &manifest, std::string &homedir, 
 		}
 		else
 		{
+			std::vector< std::pair<std::string,std::string> > addToEnvironment;
+			if (IsInstallRequired())
+			{
+				// in this case, we need to change the path to the installer
+				// override some ENV switches and continue
+				std::string installer = kroll::FileUtils::Join(runtimePath.c_str(),"appinstaller",NULL);
+				if (kroll::FileUtils::IsDirectory(installer))
+				{
+#ifdef DEBUG
+					std::cout << "Detected a new app that needs installation. Loading installer from " << installer << std::endl;
+#endif					
+					// in the case there is no directory, just assume they don't want
+					// to have an app installer and continue booting...
+					addToEnvironment.push_back(std::pair<std::string,std::string>("KR_APP_INSTALL_FROM",homedir));
+					// change the directory to load the app from to be our installer
+					homedir = installer;
+					//TODO: do we need to also override modules in case an app isn't using some of the 
+					//modules that the installer needs?
+				}
+#ifdef DEBUG
+				else
+				{
+					std::cout << "Detected a new app that needs installation, but no installer found in " << installer << std::endl;
+				}
+#endif
+			}
 #ifdef DEBUG
 			std::cout << "Runtime Directory = " << runtimePath << std::endl;
 #endif
@@ -599,6 +642,16 @@ int ForkProcess(std::string &exec, std::string &manifest, std::string &homedir, 
 			SetEnvironmentVariable("KR_RUNTIME_HOME",runtimeHomeEnv.str().c_str());
 			SetEnvironmentVariable("KR_BOOT_PROCESS","1");
 
+			if (addToEnvironment.size()>0)
+			{
+				std::vector< std::pair<std::string,std::string> >::iterator i = addToEnvironment.begin();
+				while(i!=addToEnvironment.end())
+				{
+					std::pair<std::string,std::string> entry = (*i++);
+					SetEnvironmentVariable(entry.first.c_str(),entry.second.c_str());
+				}
+			}
+
 			std::ostringstream ose;
 
 			char *env = GetEnvironmentStrings();
@@ -648,21 +701,36 @@ int ForkProcess(std::string &exec, std::string &manifest, std::string &homedir, 
 			while (environ[env_size] != NULL)
 				env_size++;
 
+			env_size+=addToEnvironment.size();
+
 			// Copy existing environment variables
 			const char** env = (const char**) alloca (sizeof(char*) * (7 + env_size));
 			for (int i = 0; i < env_size; i++)
 			{
 				env[i] = environ[i];
 			}
+			int env_offset = 0;
+			if (addToEnvironment.size()>0)
+			{
+				std::vector< std::pair<std::string,std::string> >::iterator i = addToEnvironment.begin();
+				while(i!=addToEnvironment.end())
+				{
+					std::pair<std::string,std::string> entry = (*i++);
+					std::string line(env.first);
+					line.append("=");
+					line.append(env.second);
+					env[env_offset++] = line.c_str();
+				}
+			}
 
 			// Add our own environment variables
-			env[env_size + 0] = dylib.str().c_str();
-			env[env_size + 1] = runtimeEnv.str().c_str();
-			env[env_size + 2] = home.str().c_str();
-			env[env_size + 3] = modules.str().c_str();
-			env[env_size + 4] = runtimeHomeEnv.str().c_str();
-			env[env_size + 5] = "KR_BOOT_PROCESS=1";
-			env[env_size + 6] = NULL;
+			env[env_offset + 0] = dylib.str().c_str();
+			env[env_offset + 1] = runtimeEnv.str().c_str();
+			env[env_offset + 2] = home.str().c_str();
+			env[env_offset + 3] = modules.str().c_str();
+			env[env_offset + 4] = runtimeHomeEnv.str().c_str();
+			env[env_offset + 5] = "KR_BOOT_PROCESS=1";
+			env[env_offset + 6] = NULL;
 			int result = execve(exec.c_str(), (char* const*) childArgv, (char* const*) env);
 			if (result < 0)
 			{
@@ -696,6 +764,16 @@ int ForkProcess(std::string &exec, std::string &manifest, std::string &homedir, 
 			[e setValue:[NSString stringWithCString:dylib.str().c_str()] forKey:@"DYLD_LIBRARY_PATH"];
 			[e setValue:@"1" forKey:@"KR_BOOT_PROCESS"];
 
+			if (addToEnvironment.size()>0)
+			{
+				std::vector< std::pair<std::string,std::string> >::iterator i = addToEnvironment.begin();
+				while(i!=addToEnvironment.end())
+				{
+					std::pair<std::string,std::string> entry = (*i++);
+					[e setValue:[NSString stringWithCString:entry.second.c_str()] forKey:[NSString stringWithCString:entry.first.c_str()]];
+				}
+			}
+
 			[invoker initWithApplication:[NSString stringWithCString:exec.c_str()] environment:e arguments:a currentDirectory:[[NSBundle mainBundle] bundlePath]];
 			[invoker launch:terminateInvocation];
 #endif
@@ -715,22 +793,29 @@ int main(int _argc, const char* _argv[])
 	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 #endif
 
-	bool forkedProcess = IsForkedProcess();
-
-#if defined(OS_LINUX)
-	argc = _argc;
-	argv = (char **)_argv;
-	gtk_init(&argc, &argv);
-#endif
-
 #if defined(OS_WIN32)
-#if !defined(WIN32_CONSOLE)
-	argc = __argc;
-	argv = __argv;
+	#if !defined(WIN32_CONSOLE)
+		argc = __argc;
+		argv = __argv;
+	#else
+		argc = _argc;
+		argv = (char **)_argv;
+	#endif
 #else
 	argc = _argc;
 	argv = (char **)_argv;
 #endif
+
+	bool forkedProcess = IsForkedProcess();
+
+#if defined(OS_LINUX)
+	if (forkedProcess)
+	{
+		gtk_init(&argc, &argv);
+	}
+#endif
+
+#if defined(OS_WIN32)
 	// win32 is special .... since unzip isn't built-in to
 	// .NET, we are going to just use the bundled libraries
 	// for zlib in C++ to do it.  so, the C# installer will
