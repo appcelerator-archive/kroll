@@ -22,13 +22,13 @@ namespace kroll
 	{
 	}
 
-	SharedBoundList FromVector(std::vector<SharedValue> values)
+	SharedBoundList StaticBoundList::FromStringVector(std::vector<std::string>& values)
 	{
 		SharedBoundList l = new StaticBoundList();
-		std::vector<SharedValue>::iterator i = values.begin();
+		std::vector<std::string>::iterator i = values.begin();
 		while (i != values.end())
 		{
-			l->Append(*i);
+			l->Append(Value::NewString(*i));
 		}
 		return l;
 	}
