@@ -92,6 +92,44 @@ namespace kroll
 		return current;
 	}
 
+	SharedValue BoundObject::CallNS(const char *name, SharedValue val1)
+	{
+		ValueList args;
+		args.push_back(val1);
+		return CallNS(name, args);
+	}
+
+	SharedValue BoundObject::CallNS(const char *name, SharedValue val1, SharedValue val2)
+	{
+		ValueList args;
+		args.push_back(val1);
+		args.push_back(val2);
+		return CallNS(name, args);
+	}
+
+	SharedValue BoundObject::CallNS(const char *name, SharedValue val1, SharedValue val2, SharedValue val3)
+	{
+		ValueList args;
+		args.push_back(val1);
+		args.push_back(val2);
+		args.push_back(val3);
+		return CallNS(name, args);
+	}
+
+	SharedValue BoundObject::CallNS(const char *name, const ValueList& args)
+	{
+		SharedValue callableValue = GetNS(name);
+		if (callableValue->IsUndefined()) {
+			return callableValue;
+		}
+
+		if (!callableValue->IsMethod()) {
+			return Value::Undefined;
+		}
+
+		return callableValue->ToMethod()->Call(args);
+	}
+
 	SharedString BoundObject::DisplayString(int levels)
 	{
 		std::ostringstream oss;

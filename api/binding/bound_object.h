@@ -81,6 +81,16 @@ namespace kroll
 		*/
 		SharedValue GetNS(const char *name);
 
+		/*
+			Function: CallNS
+
+			TODO: Document me
+		 */
+		SharedValue CallNS(const char *name, SharedValue val1);
+		SharedValue CallNS(const char *name, SharedValue val1, SharedValue val2);
+		SharedValue CallNS(const char *name, SharedValue val1, SharedValue val2, SharedValue val3);
+		SharedValue CallNS(const char *name, const ValueList& args);
+
 		/**
 		 * Function: DisplayString
 		 *

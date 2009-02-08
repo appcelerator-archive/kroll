@@ -81,6 +81,7 @@ namespace kroll
 #endif
 
 		this->autoScan = false;
+		this->runUILoop = true;
 
 		// Sometimes libraries parsing argc and argv will
 		// modify them, so we want to keep our own copy here
@@ -417,12 +418,14 @@ namespace kroll
 
 		// allow start to immediately end
 		this->running = this->Start();
-		while (this->running)
-		{
-			ScopedLock lock(&moduleMutex);
-			if (!this->RunLoop())
+		if (this->runUILoop) {
+			while (this->running)
 			{
-				break;
+				ScopedLock lock(&moduleMutex);
+				if (!this->RunLoop())
+				{
+					break;
+				}
 			}
 		}
 

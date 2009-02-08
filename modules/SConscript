@@ -2,8 +2,8 @@
 Import('build')
 import os
 
-#modules = ['api', 'python', 'javascript', 'ruby', 'foo', 'foopy', 'foojs', 'foorb']
-modules = ['api', 'javascript', 'foo', 'foopy', 'foojs', 'foorb']
+modules = ['api', 'python', 'javascript', 'ruby', 'foo', 'foopy', 'foojs', 'foorb']
+#modules = ['api', 'javascript', 'foo', 'foopy', 'foojs', 'foorb']
 
 for module in modules:
 	module_dir = os.path.join(build.dir,'modules',module)
