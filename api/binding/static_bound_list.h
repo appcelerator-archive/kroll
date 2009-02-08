@@ -20,7 +20,7 @@ namespace kroll
 		*/
 		StaticBoundList();
 		virtual ~StaticBoundList();
-		static SharedBoundList FromVector(std::vector<SharedValue>);
+		static SharedBoundList FromStringVector(std::vector<std::string>&);
 
 		/*
 			Function: Append

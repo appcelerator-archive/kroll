@@ -260,7 +260,7 @@ namespace kroll
 		{
 			std::string p = (*iter++);
 			filepath+=p;
-			if (iter!=parts.end())
+			if (filepath.length() != 0 && iter!=parts.end())
 			{
 				filepath+=KR_PATH_SEP;
 			}
