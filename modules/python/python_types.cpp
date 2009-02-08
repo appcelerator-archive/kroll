@@ -90,7 +90,7 @@ namespace kroll
 				SharedBoundObject apiobj = api->ToObject();
 				scope = ScopeMethodDelegate::CreateDelegate(hostobj, apiobj);
 				scope->Set("evaluate", Value::NewMethod(evaluator));
-				PyObject *pyapi = PythonUtils::ToObject(NULL,NULL,scope);
+				PyObject *pyapi = PythonUtils::ToObject(NULL,NULL,hostobj);
 				printf("binding %s into Python __builtin__\n", PRODUCT_NAME);
 				PyObject_SetAttrString(mod,PRODUCT_NAME,pyapi);
 				// now bind our new scope to python module
