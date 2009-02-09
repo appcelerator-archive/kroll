@@ -50,7 +50,15 @@ namespace kroll
 	public:
 		virtual SharedValue Call(const ValueList& args) {
 			if (args.size() == 2 && args[1]->IsString()) {
-				PyRun_SimpleString(args[1]->ToString());
+
+				// strip the beginning so we have some sense of tab normalization
+				std::string code = args[1]->ToString();
+				size_t startpos = code.find_first_not_of(" \t\n");
+				if (std::string::npos != startpos)
+					code = code.substr(startpos);
+
+				std::cout << "Evaluating python source code:\n" << code << std::endl;
+				PyRun_SimpleString(code.c_str());
 			}
 			return Value::Null;
 		}
@@ -64,6 +72,8 @@ namespace kroll
 
 	void PythonUtils::InitializeDefaultBindings (Host *host)
 	{
+		printf("Python::InitializeDefaultBindings\n");
+
 		PyObject* mod = PyImport_ImportModule("__builtin__");
 
 		if (mod)
@@ -80,7 +90,8 @@ namespace kroll
 				SharedBoundObject apiobj = api->ToObject();
 				scope = ScopeMethodDelegate::CreateDelegate(hostobj, apiobj);
 				scope->Set("evaluate", Value::NewMethod(evaluator));
-				PyObject *pyapi = PythonUtils::ToObject(NULL,NULL,scope);
+				PyObject *pyapi = PythonUtils::ToObject(NULL,NULL,hostobj);
+				printf("binding %s into Python __builtin__\n", PRODUCT_NAME);
 				PyObject_SetAttrString(mod,PRODUCT_NAME,pyapi);
 				// now bind our new scope to python module
 				SharedValue scopeRef = Value::NewObject(scope);

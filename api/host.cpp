@@ -28,7 +28,7 @@ namespace kroll
 {
 	SharedPtr<Host> Host::instance_;
 
-	Host::Host(int argc, const char *argv[])
+	Host::Host(int argc, const char *argv[]) : debug(false)
 	{
 		char *ti_home = getenv("KR_HOME");
 		char *ti_runtime = getenv("KR_RUNTIME");
@@ -81,17 +81,33 @@ namespace kroll
 #endif
 
 		this->autoScan = false;
+		this->runUILoop = true;
 
 		// Sometimes libraries parsing argc and argv will
 		// modify them, so we want to keep our own copy here
 		for (int i = 0; i < argc; i++)
 		{
 			this->args.push_back(std::string(argv[i]));
+#ifdef DEBUG
+			std::cout << "ARGUMENT[" << i << "] => " << argv[i] << std::endl;
+#endif
+			if (strcmp(argv[i],"--debug")==0)
+			{
+#ifdef DEBUG
+				std::cout << "DEBUGGING DETECTED!" << std::endl;
+#endif
+				this->debug = true;
+			}
 		}
 	}
 
 	Host::~Host()
 	{
+	}
+
+	bool Host::IsDebugMode()
+	{
+		return this->debug;
 	}
 
 	const int Host::GetCommandLineArgCount()
@@ -417,12 +433,14 @@ namespace kroll
 
 		// allow start to immediately end
 		this->running = this->Start();
-		while (this->running)
-		{
-			ScopedLock lock(&moduleMutex);
-			if (!this->RunLoop())
+		if (this->runUILoop) {
+			while (this->running)
 			{
-				break;
+				ScopedLock lock(&moduleMutex);
+				if (!this->RunLoop())
+				{
+					break;
+				}
 			}
 		}
 

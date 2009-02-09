@@ -45,7 +45,7 @@ namespace kroll
 		 * called to run the host
 		 */
 		int Run();
-		
+
 		/**
 		 * Function: Exit
 		 *
@@ -141,6 +141,14 @@ namespace kroll
 		 * TODO: Document me
 		*/
 		const char* GetCommandLineArg(int index);
+		
+		/**
+		 * Function: IsDebugMode
+		 *
+		 * returns true if the host is in debug mode, specified
+		 * by the command line switch --debug
+		 */
+		bool IsDebugMode();
 
 		/*
 		 * Function: IsModule
@@ -156,6 +164,8 @@ namespace kroll
 		*/
 		virtual const char * GetDescription() { return "Native module"; }
 
+		bool RunUILoop() { return runUILoop; }
+		void SetRunUILoop(bool runUILoop) { this->runUILoop = runUILoop; }
 
 	protected:
 		ModuleMap modules;
@@ -166,8 +176,9 @@ namespace kroll
 		std::vector<std::string> module_paths;
 		SharedPtr<StaticBoundObject> global_object;
 		std::vector<std::string> args;
+		bool runUILoop;
 
-		/* This is the module suffix for this module provider. Since 
+		/* This is the module suffix for this module provider. Since
 		 * this is the basic provider the suffix is "module.(dll|dylib|so)"
 		 * Other modules providers can override this property and use the
 		 * default behavior of IsModule(). */
@@ -213,16 +224,16 @@ namespace kroll
 		 * Function: LoadModules
 		 *
 		 * Do the initial round of module loading. First load all modules
-		 * that can be loaded by the main Host module provider (shared 
+		 * that can be loaded by the main Host module provider (shared
 		 * libraries) and then load all modules which can be loaded by
 		 * freshly installed module providers.
 		*/
 		void LoadModules();
 
 		void UnloadModules();
-		
+
 		void UnloadModuleProviders();
-		
+
 		/*
 		 * Function: FindBasicModules
 		 *
@@ -243,7 +254,7 @@ namespace kroll
 		 *  to_init - A vector of modules to initialize.
 		*/
 		void StartModules(std::vector<SharedPtr<Module> > modules);
-		
+
 		virtual bool Start ();
 		virtual bool RunLoop() = 0;
 		virtual void Stop ();
@@ -257,6 +268,7 @@ namespace kroll
 		bool autoScan;
 		bool running;
 		int exitCode;
+		bool debug;
 
 		static SharedPtr<Host> instance_;
 		DISALLOW_EVIL_CONSTRUCTORS(Host);

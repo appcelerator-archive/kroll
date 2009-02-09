@@ -16,18 +16,19 @@ namespace kroll
 		this->SetMethod("register", &APIBinding::_Register);
 		this->SetMethod("unregister", &APIBinding::_Unregister);
 		this->SetMethod("fire", &APIBinding::_Fire);
+		this->SetMethod("setRunUILoop", &APIBinding::_SetRunUILoop);
 
 		// these are properties for log severity levels
 		this->Set("DEBUG",Value::NewInt(KR_LOG_DEBUG));
 		this->Set("INFO",Value::NewInt(KR_LOG_INFO));
 		this->Set("ERROR",Value::NewInt(KR_LOG_ERROR));
 		this->Set("WARN",Value::NewInt(KR_LOG_WARN));
-		
+
 		// these are convenience methods so you can do:
 		//
-		// Titanium.api.debug("hello") 
+		// Titanium.api.debug("hello")
 		//
-		// or 
+		// or
 		//
 		// Titanium.api.log(Titanium.api.DEBUG,"hello")
 		//
@@ -131,7 +132,7 @@ namespace kroll
 		else if (args.size()==2)
 		{
 			int severity = KR_LOG_INFO;
-			
+
 			if (arg1->IsString())
 			{
 				std::string type = arg1->ToString();
@@ -214,7 +215,7 @@ namespace kroll
 	{
 		ScopedLock lock(&mutex);
 		int record = GetNextRecord();
-		
+
 		/* Fetch the records for this event. If the EventRecords
 		 * doesn't exist in registrations, the STL map
 		 * implementation will insert it into the map */
@@ -255,7 +256,7 @@ namespace kroll
 		}
 		if (records.size()==0)
 		{
-			this->registrations.erase(entry.event);	
+			this->registrations.erase(entry.event);
 		}
 		registrationsById.erase(id);
 	}
@@ -276,6 +277,13 @@ namespace kroll
 				args.push_back(value);
 				method->Call(args);
 			}
+		}
+	}
+
+	void APIBinding::_SetRunUILoop(const ValueList& args, SharedValue result)
+	{
+		if (args.size() > 0 && args[0]->IsBool()) {
+			Host::GetInstance()->SetRunUILoop(args[0]->ToBool());
 		}
 	}
 }

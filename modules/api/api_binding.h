@@ -52,6 +52,7 @@ namespace kroll
 		void _Register(const ValueList& args, SharedValue result);
 		void _Unregister(const ValueList& args, SharedValue result);
 		void _Fire(const ValueList& args, SharedValue result);
+		void _SetRunUILoop(const ValueList& args, SharedValue result);
 
 		// void Unload(const ValueList& args, Value *result);
 		// void Reload(const ValueList& args, Value *result);
