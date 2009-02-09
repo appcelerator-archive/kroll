@@ -178,6 +178,10 @@ namespace kroll
 		{
 			return value->ToBool() ? Py_True : Py_False;
 		}
+		if (value->IsDouble())
+		{
+			return PyFloat_FromDouble(value->ToDouble());
+		}
 		if (value->IsInt())
 		{
 			return PyInt_FromLong(value->ToInt());
@@ -196,6 +200,15 @@ namespace kroll
 			}
 			return PythonUtils::ToObject(value->ToMethod());
 		}
+		if (value->IsList())
+		{
+			SharedBoundList list = value->ToList();
+			if (typeid(list.get()) == typeid(PythonBoundList*))
+			{
+				return ((PythonBoundList*)list.get())->ToPython();
+			}
+			return PythonUtils::ToObject(NULL,NULL,list);
+		}
 		if (value->IsObject())
 		{
 			SharedBoundObject obj = value->ToObject();
@@ -209,32 +222,20 @@ namespace kroll
 		{
 			return PyString_FromString(value->ToString());
 		}
-		if (value->IsDouble())
-		{
-			return PyFloat_FromDouble(value->ToDouble());
-		}
-		if (value->IsList())
-		{
-			SharedBoundList list = value->ToList();
-			if (typeid(list.get()) == typeid(PythonBoundList*))
-			{
-				return ((PythonBoundList*)list.get())->ToPython();
-			}
-			return PythonUtils::ToObject(NULL,NULL,list);
-		}
 		Py_INCREF(Py_None);
 		return Py_None;
 	}
 
 	typedef struct {
-	    PyObject_HEAD
+		PyObject_HEAD
 		SharedBoundObject* object;
 	} PyBoundObject;
 
 	static void PyBoundObject_dealloc(PyObject* self)
 	{
 		// std::cout << "++PyBoundObject_dealloc called for " <<(void*)self << std::endl;
-		PyBoundObject *boundSelf = (PyBoundObject*)self;
+		PyBoundObject *boundSelf = (PyBoundObject*) self;
+		delete boundSelf->object;
 		delete boundSelf;
 		PyObject_Del(self);
 	}
@@ -244,8 +245,7 @@ namespace kroll
 		PyBoundObject *boundSelf = reinterpret_cast<PyBoundObject*>(self);
 	 	// std::cout << "PyBoundObject_getattr called with " << name << " for " << (void*)boundSelf << std::endl;
 		Py_INCREF(boundSelf);
-		SharedBoundObject bo = *boundSelf->object;
-		SharedValue result = bo->Get(name);
+		SharedValue result = boundSelf->object->get()->Get(name);
 		Py_DECREF(boundSelf);
 		return PythonUtils::ToObject(result);
 	}
@@ -256,8 +256,7 @@ namespace kroll
 		// std::cout << KR_FUNC << " called for " <<(void*)boundSelf << std::endl;
 		Py_INCREF(boundSelf);
 		SharedValue tiValue = PythonUtils::ToValue(value,name);
-		SharedBoundObject bo = *boundSelf->object;
-		bo->Set(name,tiValue);
+		boundSelf->object->get()->Set(name, tiValue);
 		Py_DECREF(boundSelf);
 		return 0;
 	}
@@ -267,8 +266,7 @@ namespace kroll
 		PyBoundObject *boundSelf = (PyBoundObject*)self;
 		//std::cout << KR_FUNC << " called for " <<(void*)boundSelf << std::endl;
 		Py_INCREF(boundSelf);
-		SharedBoundObject bo = *boundSelf->object;
-		SharedValue result = bo->Get("toString");
+		SharedValue result = boundSelf->object->get()->Get("toString");
 		Py_DECREF(boundSelf);
 		if (result->IsMethod())
 		{
@@ -318,7 +316,6 @@ namespace kroll
 		{
 			throw "BoundObject cannot be null";
 		}
-		PyBoundObject* obj;
 		SharedBoundList list = bo.cast<BoundList>();
 		if (!list.isNull())
 		{
@@ -334,10 +331,11 @@ namespace kroll
 		}
 		else
 		{
-			obj = PyObject_New(PyBoundObject, &PyBoundObjectType);
+			PyBoundObject* obj = PyObject_New(PyBoundObject, &PyBoundObjectType);
+			SharedBoundObject* bo_ptr = new SharedBoundObject(bo);
+			obj->object = bo_ptr;
+			return (PyObject*)obj;
 		}
-		obj->object = new SharedBoundObject(bo);
-		return (PyObject*)obj;
 	}
 
 	void PythonUtils::ThrowException()
@@ -378,43 +376,43 @@ namespace kroll
 		if (PyList_Check(value))
 		{
 			SharedBoundList l = new PythonBoundList(value);
-			Value *til = Value::NewList(l);
+			SharedValue til = Value::NewList(l);
 			return til;
 		}
 		if (PyClass_Check(value))
 		{
 			SharedBoundObject v = new PythonBoundObject(value);
-			Value* tiv = Value::NewObject(v);
+			SharedValue tiv = Value::NewObject(v);
 			return tiv;
 		}
 		if (PyInstance_Check(value))
 		{
 			SharedBoundObject v = new PythonBoundObject(value);
-			Value* tiv = Value::NewObject(v);
+			SharedValue tiv = Value::NewObject(v);
 			return tiv;
 		}
 		if (PyMethod_Check(value))
 		{
 			SharedBoundMethod m = new PythonBoundMethod(value,name);
-			Value* tiv = Value::NewMethod(m);
+			SharedValue tiv = Value::NewMethod(m);
 			return tiv;
 		}
 		if (PyFunction_Check(value))
 		{
 			SharedBoundMethod m = new PythonBoundMethod(value,name);
-			Value* tiv = Value::NewMethod(m);
+			SharedValue tiv = Value::NewMethod(m);
 			return tiv;
 		}
 		if (PyCallable_Check(value))
 		{
 			SharedBoundMethod m = new PythonBoundMethod(value,name);
-			Value* tiv = Value::NewMethod(m);
+			SharedValue tiv = Value::NewMethod(m);
 			return tiv;
 		}
 		if (PyObject_TypeCheck(value,&PyBoundObjectType))
 		{
 			PyBoundObject *o = reinterpret_cast<PyBoundObject*>(value);
-			Value* tiv = Value::NewObject(o->object->get());
+			SharedValue tiv = Value::NewObject(*(o->object));
 			return tiv;
 		}
 

@@ -30,9 +30,11 @@ int main(int argc, const char* argv[])
 #if defined(OS_WIN32)
 	SetEnvironmentVariableA("KR_HOME", basedir);
 	SetEnvironmentVariableA("KR_RUNTIME", basedir);
+	SetEnvironmentVariableA("KR_MODULES", "");
 #else
 	setenv("KR_HOME",basedir,1);
 	setenv("KR_RUNTIME",basedir,1);
+	setenv("KR_MODULES","",1);
 #endif
 
 
@@ -51,8 +53,9 @@ int main(int argc, const char* argv[])
 	// Run all tests
 	host->TestAll();
 
-	// Unregister all modules
-	delete host;
+	// No need to delete Host* instance, because it
+	// is handled by the instance_ ptr inside of the
+	// host class
 
 #if defined(OS_OSX)
 	[pool release];
