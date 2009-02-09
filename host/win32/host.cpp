@@ -13,6 +13,7 @@
 namespace kroll
 {
 	bool Win32Host::ole_initialized = false;
+	std::vector<std::pair<SharedBoundMethod, ValueList> > Win32Host::methodsToInvoke;
 
 	/*static*/
 	void Win32Host::InitOLE() {
@@ -46,8 +47,15 @@ namespace kroll
 		MSG message;
 		if (GetMessage(&message, NULL, 0, 0))
 		{
-			TranslateMessage(&message);
-			DispatchMessage(&message);
+			if(message.message == WM_USER)
+			{
+				this->InvokeMethods();
+			}
+			else
+			{
+				TranslateMessage(&message);
+				DispatchMessage(&message);
+			}
 		}
 		return true;
 	}
@@ -80,13 +88,33 @@ namespace kroll
 	SharedValue Win32Host::InvokeMethodOnMainThread(SharedBoundMethod method,
                                                     const ValueList& args)
 	{
-		//FIXME - implement for Win32 and Linux. Until then...we
-		//will just forward on same thread
-		std::cerr << "WARNING: Invoking method on non-main Thread!" << std::endl;
-		//PostThreadMessage(thread_id)
+		std::pair<SharedBoundMethod, ValueList> p(method, args);
+		methodsToInvoke.push_back(p);
 
-		SharedValue result = method->Call(args);
-		return result;
+		// TODO use a different msg for this ..
+		PostThreadMessage(thread_id, WM_USER, 0, 0);
+
+		// TODO if we need to return the callback result, then need to add logic for that here
+		// otherwise, change the method signature to not return a value
+		return NULL;
+	}
+
+	void Win32Host::InvokeMethods()
+	{
+		while(this->methodsToInvoke.size() > 0)
+		{
+			std::pair<SharedBoundMethod, ValueList> p = this->methodsToInvoke.at(0);
+			this->methodsToInvoke.erase(this->methodsToInvoke.begin());
+
+			try
+			{
+				SharedValue result = p.first->Call(p.second);
+			}
+			catch (...)
+			{
+				std::cerr << "Exception occurred during JS callback" << std::endl;
+			}
+		}
 	}
 }
 
