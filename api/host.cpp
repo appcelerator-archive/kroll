@@ -12,16 +12,15 @@
 #else
 # include <dirent.h>
 #endif
-#include <errno.h>
+#include <cerrno>
 #include <vector>
 #include <algorithm>
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstring>
+#include <cstdio>
+#include <cstdlib>
 #include <sys/types.h>
 
 #include "kroll.h"
-#include <cstring>
 #include <Poco/DirectoryIterator.h>
 #include <Poco/File.h>
 
