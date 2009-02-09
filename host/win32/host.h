@@ -41,6 +41,8 @@ namespace kroll
 	private:
 		HINSTANCE instance_handle;
 		static bool ole_initialized;
+		static std::vector<std::pair<SharedBoundMethod, ValueList> > methodsToInvoke;
+		void InvokeMethods();
 		DWORD thread_id;
 	};
 }
