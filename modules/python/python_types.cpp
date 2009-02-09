@@ -49,7 +49,7 @@ namespace kroll
 	{
 	public:
 		virtual SharedValue Call(const ValueList& args) {
-			if (args.size() == 2 && args[1]->IsString()) {
+			if (args.size() == 3 && args[1]->IsString()) {
 
 				// strip the beginning so we have some sense of tab normalization
 				std::string code = args[1]->ToString();
@@ -58,7 +58,21 @@ namespace kroll
 					code = code.substr(startpos);
 
 				std::cout << "Evaluating python source code:\n" << code << std::endl;
-				PyRun_SimpleString(code.c_str());
+				SharedBoundObject context = args[2]->ToObject();
+				PyObject *py_context = PythonUtils::ToObject(NULL, NULL, context);
+
+				PyObject *main_module = PyImport_AddModule("__main__");
+				PyObject *main_dict = PyModule_GetDict(main_module);
+
+				PyDict_SetItemString(main_dict, "window", py_context);
+				PyObject *returnValue = PyRun_StringFlags(code.c_str(), Py_file_input, main_dict, main_dict, NULL);
+				if (returnValue == NULL) {
+					PyErr_Print();
+					return Value::Undefined;
+				}
+				Py_DECREF(returnValue);
+
+				PyRun_String(code.c_str(), 0, main_dict, main_dict);
 			}
 			return Value::Null;
 		}
@@ -72,8 +86,6 @@ namespace kroll
 
 	void PythonUtils::InitializeDefaultBindings (Host *host)
 	{
-		printf("Python::InitializeDefaultBindings\n");
-
 		PyObject* mod = PyImport_ImportModule("__builtin__");
 
 		if (mod)
