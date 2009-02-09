@@ -2,7 +2,7 @@
 Import('build')
 
 Env = build.env.Clone()
-Env.Append(CPPDEFINES={'KROLL_HOST_EXPORT':1})
+Env.Append(CPPDEFINES=('KROLL_HOST_EXPORT',1))
 Env.Append(CPPPATH=['#common/linux','#common'])
 Env.ParseConfig('pkg-config --cflags --libs gtk+-2.0 gdk-2.0')
 build.add_thirdparty(Env, 'poco')

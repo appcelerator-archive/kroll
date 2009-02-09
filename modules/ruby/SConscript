@@ -3,7 +3,7 @@ Import('build')
 
 Env = build.env.Clone()
 Env.Append(LIBS=['kroll'])
-Env.Append(CPPDEFINES={'KROLL_RUBY_API_EXPORT': 1})
+Env.Append(CPPDEFINES=('KROLL_RUBY_API_EXPORT', 1))
 build.add_thirdparty(Env, 'poco')
 
 if build.is_osx():

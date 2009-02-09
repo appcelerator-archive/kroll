@@ -30,13 +30,13 @@ build.env.Append(LIBPATH=[build.dir])
 
 # debug build flags
 if ARGUMENTS.get('debug', 0):
-	build.env.Append(CPPDEFINES = {'DEBUG' : 1})
+	build.env.Append(CPPDEFINES = ('DEBUG', 1))
 	if not build.is_win32():
 		build.env.Append(CCFLAGS = ['-g'])  # debug
 	else:
 		build.env.Append(CCFLAGS = ['/Z7','/GR'])  # max debug, C++ RTTI
 else:
-	build.env.Append(CPPDEFINES = {'NDEBUG' : 1 })
+	build.env.Append(CPPDEFINES = ('NDEBUG', 1))
 	if not build.is_win32():
 		build.env.Append(CCFLAGS = ['-O9']) # max optimizations
 	else:
@@ -45,7 +45,7 @@ else:
 
 # turn on special debug printouts for reference counting
 if ARGUMENTS.get('debug_refcount', 0):
-	build.env.Append(CPPDEFINES = {'DEBUG_REFCOUNT': 1})
+	build.env.Append(CPPDEFINES = ('DEBUG_REFCOUNT', 1))
 
 if build.is_win32():
 	execfile('build/win32.py')

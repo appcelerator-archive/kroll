@@ -5,7 +5,7 @@ import distutils.dir_util as dirutil
 Import('build')
 
 Env = build.env.Clone()
-Env.Append(CPPDEFINES={'KROLL_API_EXPORT': 1})
+Env.Append(CPPDEFINES=('KROLL_API_EXPORT', 1))
 build.add_thirdparty(Env, 'poco')
 
 if build.is_win32():

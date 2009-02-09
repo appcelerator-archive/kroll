@@ -24,18 +24,18 @@ class BuildConfig(object):
 		vars.Add('BOOT_UPDATESITE_URL','The URL of the Kroll update site', kwargs['BOOT_UPDATESITE_URL'])
 
 		self.env = SCons.Environment.Environment(variables = vars)
-		self.env.Append(CPPDEFINES = {
-			'OS_' + self.os.upper(): 1,
-			'_OS_NAME' : self.os,
-			'_INSTALL_PREFIX': '${INSTALL_PREFIX}',
-			'_PRODUCT_NAME': '${PRODUCT_NAME}',
-			'_GLOBAL_NS_VARNAME': '${GLOBAL_NS_VARNAME}',
-			'_CONFIG_FILENAME' : '${CONFIG_FILENAME}',
-			'_BOOT_RUNTIME_FLAG': '${BOOT_RUNTIME_FLAG}',
-			'_BOOT_HOME_FLAG': '${BOOT_HOME_FLAG}',
-			'_BOOT_UPDATESITE_ENVNAME': '${BOOT_UPDATESITE_ENVNAME}',
-			'_BOOT_UPDATESITE_URL': '${BOOT_UPDATESITE_URL}',
-		})
+		self.env.Append(CPPDEFINES = [
+			['OS_' + self.os.upper(), 1],
+			['_OS_NAME', self.os],
+			['_INSTALL_PREFIX', '${INSTALL_PREFIX}'],
+			['_PRODUCT_NAME', '${PRODUCT_NAME}'],
+			['_GLOBAL_NS_VARNAME', '${GLOBAL_NS_VARNAME}'],
+			['_CONFIG_FILENAME' , '${CONFIG_FILENAME}'],
+			['_BOOT_RUNTIME_FLAG', '${BOOT_RUNTIME_FLAG}'],
+			['_BOOT_HOME_FLAG', '${BOOT_HOME_FLAG}'],
+			['_BOOT_UPDATESITE_ENVNAME', '${BOOT_UPDATESITE_ENVNAME}'],
+			['_BOOT_UPDATESITE_URL', '${BOOT_UPDATESITE_URL}']
+		])
 		self.dir = path.abspath(path.join(kwargs['BUILD_DIR'], self.os))
 		self.third_party = path.abspath(path.join(kwargs['THIRD_PARTY_DIR'],self.os))
 		self.init_thirdparty_libs()
