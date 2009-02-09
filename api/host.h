@@ -141,6 +141,14 @@ namespace kroll
 		 * TODO: Document me
 		*/
 		const char* GetCommandLineArg(int index);
+		
+		/**
+		 * Function: IsDebugMode
+		 *
+		 * returns true if the host is in debug mode, specified
+		 * by the command line switch --debug
+		 */
+		bool IsDebugMode();
 
 		/*
 		 * Function: IsModule
@@ -260,6 +268,7 @@ namespace kroll
 		bool autoScan;
 		bool running;
 		int exitCode;
+		bool debug;
 
 		static SharedPtr<Host> instance_;
 		DISALLOW_EVIL_CONSTRUCTORS(Host);
