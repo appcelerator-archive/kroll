@@ -71,8 +71,6 @@ namespace kroll
 					return Value::Undefined;
 				}
 				Py_DECREF(returnValue);
-
-				PyRun_String(code.c_str(), 0, main_dict, main_dict);
 			}
 			return Value::Null;
 		}

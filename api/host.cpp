@@ -417,6 +417,16 @@ namespace kroll
 	{
 		KR_DUMP_LOCATION
 
+		if (args.size() > 1) {
+			if (args.at(1) == "--attach-debugger") {
+				printf("Waiting for debugger (Press Any Key to Continue)...\n");
+				do {
+					int c = getc(stdin);
+					if (c > 0) break;
+				} while (true);
+			}
+		}
+
 		{
 			ScopedLock lock(&moduleMutex);
 			this->AddModuleProvider(this);
