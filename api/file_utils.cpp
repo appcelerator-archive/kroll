@@ -238,7 +238,12 @@ namespace kroll
 				return "."KR_PATH_SEP; //??
 			}
 		}
+#ifdef OS_OSX
+		NSString *s = [[NSString stringWithCString:file.substr(0,pos).c_str()] stringByExpandingTildeInPath];
+		return [s fileSystemRepresentation];
+#else
 		return file.substr(0,pos).c_str();
+#endif
 	}
 
 	std::string FileUtils::Join(const char* path, ...)
@@ -266,7 +271,7 @@ namespace kroll
 			}
 		}
 #ifdef OS_OSX
-		NSString *s = [NSString stringWithCString:filepath.c_str()];
+		NSString *s = [[NSString stringWithCString:filepath.c_str()] stringByExpandingTildeInPath];
 		return std::string([s fileSystemRepresentation]);
 #else
 		return filepath;
