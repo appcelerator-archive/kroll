@@ -47,7 +47,7 @@ namespace kroll
 		void* lib_handle = dlopen(path.c_str(), RTLD_LAZY | RTLD_GLOBAL);
 		if (!lib_handle)
 		{
-			std::cerr << "Error load module: " << path << std::endl;
+			std::cerr << "Error load module: " << path << ", error: " << dlerror() << std::endl;
 			return 0;
 		}
 
