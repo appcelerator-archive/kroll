@@ -104,6 +104,7 @@ namespace kroll
 		for (size_t i = 0; i < module_paths.size(); i++)
 		{
 			std::string path = module_paths.at(i);
+			std::cout << "Trying to laod: " << module_paths.at(i) << std::endl;
 			ModuleProvider *p = this->FindModuleProvider(path);
 
 			if (p == NULL)
@@ -123,12 +124,10 @@ namespace kroll
 
 		}
 
-		///* Start all test modules */
+		/* Start all test modules */
 		this->StartModules(this->loaded_modules);
 
-		//try {
-
-		SharedPtr<Module> m = this->loaded_modules.at(0);
+		/* Test all modules */
 		this->TestAll();
 
 		return false;

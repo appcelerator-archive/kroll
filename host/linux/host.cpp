@@ -74,7 +74,6 @@ namespace kroll
 		SharedBoundMethod method,
 		const ValueList& args)
 	{
-		printf("invoking on main method\n");
 		LinuxJob* job = new LinuxJob(method, args);
 
 		{

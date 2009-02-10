@@ -12,12 +12,12 @@
 #else
 # include <dirent.h>
 #endif
-#include <errno.h>
+#include <cerrno>
 #include <vector>
 #include <algorithm>
-#include <string>
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstring>
+#include <cstdio>
+#include <cstdlib>
 #include <sys/types.h>
 
 #include "kroll.h"
@@ -187,7 +187,6 @@ namespace kroll
 
 	SharedPtr<Module> Host::LoadModule(std::string& path, ModuleProvider *provider)
 	{
-		KR_DUMP_LOCATION
 		ScopedLock lock(&moduleMutex);
 
 		SharedPtr<Module> module = NULL;
@@ -226,7 +225,6 @@ namespace kroll
 
 	void Host::UnloadModules()
 	{
-		KR_DUMP_LOCATION
 		ScopedLock lock(&moduleMutex);
 
 		// Stop all modules
@@ -239,7 +237,6 @@ namespace kroll
 
 	void Host::LoadModules()
 	{
-		KR_DUMP_LOCATION
 		ScopedLock lock(&moduleMutex);
 
 		/* Scan module paths for modules which can be
@@ -266,7 +263,6 @@ namespace kroll
 
 	void Host::FindBasicModules(std::string& dir)
 	{
-		KR_DUMP_LOCATION
 		ScopedLock lock(&moduleMutex);
 
 		Poco::DirectoryIterator iter = Poco::DirectoryIterator(dir);
@@ -302,7 +298,6 @@ namespace kroll
 
 	void Host::ScanInvalidModuleFiles()
 	{
-		KR_DUMP_LOCATION
 		ScopedLock lock(&moduleMutex);
 
 		this->autoScan = false; // Do not recursively scan
@@ -342,7 +337,6 @@ namespace kroll
 
 	void Host::StartModules(ModuleList to_init)
 	{
-		KR_DUMP_LOCATION
 		ScopedLock lock(&moduleMutex);
 
 		ModuleList::iterator iter = to_init.begin();
@@ -355,7 +349,6 @@ namespace kroll
 
 	SharedPtr<Module> Host::GetModule(std::string& name)
 	{
-		KR_DUMP_LOCATION
 		ScopedLock lock(&moduleMutex);
 		ModuleMap::iterator iter = this->modules.find(name);
 		if (this->modules.end() == iter) {
@@ -374,7 +367,6 @@ namespace kroll
 
 	void Host::UnregisterModule(Module* module)
 	{
-		KR_DUMP_LOCATION
 		ScopedLock lock(&moduleMutex);
 
 		std::cout << "Unregistering " << module->GetName() << std::endl;

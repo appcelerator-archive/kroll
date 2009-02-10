@@ -20,7 +20,7 @@ namespace kroll
 	  Class that is implemented by the OS to handle OS-specific
 	  loading and unloading of Kroll.
 	 */
-	class KROLL_API Host : public RefCounted, public ModuleProvider
+	class KROLL_API Host : public ModuleProvider
 	{
 		friend class Poco::ReleasePolicy<Host>;
 	public:
