@@ -161,7 +161,7 @@ namespace kroll
 	std::string BoundObject::GetString(const char * name, std::string defaultValue)
 	{
 		SharedValue prop = this->Get(name);
-		if(!prop->IsNull() && prop->IsString())
+		if(!prop->IsUndefined() && prop->IsString())
 		{
 			return prop->ToString();
 		}
@@ -174,7 +174,7 @@ namespace kroll
 	bool BoundObject::GetBool(const char * name, bool defaultValue)
 	{
 		SharedValue prop = this->Get(name);
-		if(!prop->IsNull())
+		if(!prop->IsUndefined())
 		{
 			return prop->ToBool();
 		}
@@ -187,7 +187,7 @@ namespace kroll
 	void BoundObject::GetStringList(const char *name, std::vector<std::string> &list)
 	{
 		SharedValue prop = this->Get(name);
-		if(!prop->IsNull() && prop->IsList())
+		if(!prop->IsUndefined() && prop->IsList())
 		{
 			SharedBoundList values = prop->ToList();
 			if (values->Size() > 0)

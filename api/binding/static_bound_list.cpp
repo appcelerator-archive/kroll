@@ -29,6 +29,7 @@ namespace kroll
 		while (i != values.end())
 		{
 			l->Append(Value::NewString(*i));
+			i++;
 		}
 		return l;
 	}
