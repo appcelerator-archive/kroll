@@ -584,9 +584,9 @@ int ForkProcess(std::string &exec, std::string &manifest, std::string &homedir, 
 			//for now, it doesn't hurt if you don't have them
 #ifdef OS_OSX
 			dylib << [[NSString stringWithCString:runtimePath.c_str()] fileSystemRepresentation] << ":";
-			dylib << kroll::FileUtils::Join(runtimePath.c_str(),"WebKit.framework","Versions","A",NULL) << ":";
-			dylib << kroll::FileUtils::Join(runtimePath.c_str(),"WebCore.framework","Versions","A",NULL) << ":";
-			dylib << kroll::FileUtils::Join(runtimePath.c_str(),"JavaScriptCore.framework","Versions","A",NULL) << ":";
+			dylib << kroll::FileUtils::Join(runtimePath.c_str(),"WebKit.framework","Versions","Current",NULL) << ":";
+			dylib << kroll::FileUtils::Join(runtimePath.c_str(),"WebCore.framework","Versions","Current",NULL) << ":";
+			dylib << kroll::FileUtils::Join(runtimePath.c_str(),"JavaScriptCore.framework","Versions","Current",NULL) << ":";
 #endif
 #ifdef DEBUG
 			std::cout << "library: " << dylib.str() << std::endl;
