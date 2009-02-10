@@ -122,16 +122,6 @@ extern "C"
 {
 	int Execute(HINSTANCE hInstance, int argc, const char **argv){
 		Host *host = new kroll::Win32Host(hInstance,argc,argv);
-
-		if (argc > 1) {
-			if (strcmp(argv[1], "--wait-for-debugger") == 0) {
-				printf("Waiting for debugger (Press Any Key to Continue)...\n");
-				do {
-					int c = getc(stdin);
-					if (c > 0) break;
-				} while (true);
-			}
-		}
 		return host->Run();
 	}
 }
