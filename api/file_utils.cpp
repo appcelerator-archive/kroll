@@ -646,18 +646,19 @@ namespace kroll
 				{
 					// check to see if our module is contained within our runtime override
 					// directory and if it is, use it...
-					if (!runtimeOverride.empty())
-					{
-						std::string potentialModule = kroll::FileUtils::Join(rt,"modules",key.c_str(),NULL);
-						if (IsDirectory(potentialModule))
-						{
-							modules.push_back(std::pair< std::pair<std::string,std::string>, bool>(p,true));
-							moduleDirs.push_back(potentialModule);
+					std::string potentialModule = kroll::FileUtils::Join(rt,"modules",key.c_str(),NULL);
+
 #ifdef DEBUG
-							std::cout << "found override module at: " << potentialModule << std::endl;
+					std::cout << "looking for bundled module at " << potentialModule << std::endl;
 #endif
-							continue;
-						}
+					if (IsDirectory(potentialModule))
+					{
+						modules.push_back(std::pair< std::pair<std::string,std::string>, bool>(p,true));
+						moduleDirs.push_back(potentialModule);
+#ifdef DEBUG
+						std::cout << "found override module at: " << potentialModule << std::endl;
+#endif
+						continue;
 					}
 					std::string dir = FindModule(key,op,version);
 					bool found = dir!="";
