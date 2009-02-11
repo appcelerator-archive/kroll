@@ -5,21 +5,21 @@
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
 
-#ifndef _KR_ACCESSOR_BOUND_LIST_H_
-#define _KR_ACCESSOR_BOUND_LIST_H_
+#ifndef _KR_ACCESSOR_BOUND_OBJECT_H_
+#define _KR_ACCESSOR_BOUND_OBJECT_H_
 
 namespace kroll
 {
 	/*
-		Class: AccessorBoundList
+		Class: AccessorBoundObject
 	*/
-	class KROLL_API AccessorBoundList : public StaticBoundList
+	class KROLL_API AccessorBoundObject : public StaticBoundObject
 	{
 	public:
 		/*
-			Constructor: AccessorBoundList
+			Constructor: AccessorBoundObject
 		*/
-		AccessorBoundList();
+		AccessorBoundObject();
 
 		/*
 			Function: Set
@@ -46,7 +46,7 @@ namespace kroll
 		void RawSet(const char *name, SharedValue value);
 
 	private:
-		DISALLOW_EVIL_CONSTRUCTORS(AccessorBoundList);
+		DISALLOW_EVIL_CONSTRUCTORS(AccessorBoundObject);
 		static std::string Capitalize(const char *word);
 	};
 }
