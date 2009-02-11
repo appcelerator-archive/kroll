@@ -456,6 +456,9 @@ namespace kroll
 		this->global_object->Set(GLOBAL_NS_VARNAME, Value::Undefined);
 		this->global_object = NULL;
 
+#ifdef DEBUG
+		std::cout << "EXITING WITH EXITCODE = " << exitCode << std::endl;
+#endif
 		return this->exitCode;
 	}
 
