@@ -125,7 +125,7 @@ std::string GetExecutablePath()
 	[task release];
 	[super dealloc];
 }
-- (BOOL)launch:(NSInvocation*) terminated{
+- (int)launch:(NSInvocation*) terminated{
   	terminateInvocation = terminated;
 
   	if (terminateInvocation != nil)
@@ -137,7 +137,7 @@ std::string GetExecutablePath()
   	}
 	[task launch];
 	[task waitUntilExit];
-	return YES;
+	return [task terminationStatus];
 }
 - (void)taskTerminated:(NSNotification *)note {
   	if (terminateInvocation != nil)
@@ -531,258 +531,280 @@ int ForkProcess(std::string &exec, std::string &manifest, std::string &homedir, 
 		}
 		else
 		{
-			std::vector< std::pair<std::string,std::string> > addToEnvironment;
-			if (IsInstallRequired())
+			std::string backup_homedir = homedir;
+			while(1)
 			{
-				// in this case, we need to change the path to the installer
-				// override some ENV switches and continue
-				std::string installer = kroll::FileUtils::Join(runtimePath.c_str(),"appinstaller",NULL);
-				if (kroll::FileUtils::IsDirectory(installer))
+				std::vector< std::pair<std::string,std::string> > addToEnvironment;
+				if (IsInstallRequired())
 				{
+					// in this case, we need to change the path to the installer
+					// override some ENV switches and continue
+					std::string installer = kroll::FileUtils::Join(runtimePath.c_str(),"appinstaller",NULL);
+					if (kroll::FileUtils::IsDirectory(installer))
+					{
 #ifdef DEBUG
-					std::cout << "Detected a new app that needs installation. Loading installer from " << installer << std::endl;
+						std::cout << "Detected a new app that needs installation. Loading installer from " << installer << std::endl;
 #endif					
-					// in the case there is no directory, just assume they don't want
-					// to have an app installer and continue booting...
-					addToEnvironment.push_back(std::pair<std::string,std::string>("KR_APP_INSTALL_FROM",homedir));
-					// change the directory to load the app from to be our installer
-					homedir = installer;
-					//TODO: do we need to also override modules in case an app isn't using some of the 
-					//modules that the installer needs?
+						// in the case there is no directory, just assume they don't want
+						// to have an app installer and continue booting...
+						addToEnvironment.push_back(std::pair<std::string,std::string>("KR_APP_INSTALL_FROM",homedir));
+						// change the directory to load the app from to be our installer
+						homedir = installer;
+						//TODO: do we need to also override modules in case an app isn't using some of the 
+						//modules that the installer needs?
+					}
+#ifdef DEBUG
+					else
+					{
+						std::cout << "Detected a new app that needs installation, but no installer found in " << installer << std::endl;
+					}
+#endif
 				}
 #ifdef DEBUG
-				else
-				{
-					std::cout << "Detected a new app that needs installation, but no installer found in " << installer << std::endl;
-				}
+				std::cout << "Runtime Directory = " << runtimePath << std::endl;
 #endif
-			}
-#ifdef DEBUG
-			std::cout << "Runtime Directory = " << runtimePath << std::endl;
-#endif
-			// now we should be able to just load the host
-			std::stringstream dylib;
+				// now we should be able to just load the host
+				std::stringstream dylib;
 #ifdef OS_OSX
-			const char *cd = getenv("DYLD_LIBRARY_PATH");
-			if (cd) dylib << cd << ":";
+				const char *cd = getenv("DYLD_LIBRARY_PATH");
+				if (cd) dylib << cd << ":";
 #elif OS_LINUX
-			dylib << "LD_LIBRARY_PATH=";
-			const char *cd = getenv("LD_LIBRARY_PATH");
-			if (cd) dylib << cd << ":";
+				dylib << "LD_LIBRARY_PATH=";
+				const char *cd = getenv("LD_LIBRARY_PATH");
+				if (cd) dylib << cd << ":";
 #elif OS_WIN32
-			char path[MAX_PATH];
-			int bufsize = MAX_PATH;
-			bufsize = GetEnvironmentVariable("PATH",(char*)&path,bufsize);
-			if (bufsize > 0)
-			{
-				path[bufsize]='\0';
-			}
-			dylib << path << ";";
+				char path[MAX_PATH];
+				int bufsize = MAX_PATH;
+				bufsize = GetEnvironmentVariable("PATH",(char*)&path,bufsize);
+				if (bufsize > 0)
+				{
+					path[bufsize]='\0';
+				}
+				dylib << path << ";";
 #endif
-			dylib << runtimePath << KR_LIB_SEP;
-			//TODO: we need to refactor this out since these are Titanium specific
-			//for now, it doesn't hurt if you don't have them
+				dylib << runtimePath << KR_LIB_SEP;
+				//TODO: we need to refactor this out since these are Titanium specific
+				//for now, it doesn't hurt if you don't have them
 #ifdef OS_OSX
-			dylib << [[NSString stringWithCString:runtimePath.c_str()] fileSystemRepresentation] << ":";
-			dylib << kroll::FileUtils::Join(runtimePath.c_str(),"WebKit.framework","Versions","Current",NULL) << ":";
-			dylib << kroll::FileUtils::Join(runtimePath.c_str(),"WebCore.framework","Versions","Current",NULL) << ":";
-			dylib << kroll::FileUtils::Join(runtimePath.c_str(),"JavaScriptCore.framework","Versions","Current",NULL) << ":";
+				dylib << [[NSString stringWithCString:runtimePath.c_str()] fileSystemRepresentation] << ":";
+				dylib << kroll::FileUtils::Join(runtimePath.c_str(),"WebKit.framework","Versions","Current",NULL) << ":";
+				dylib << kroll::FileUtils::Join(runtimePath.c_str(),"WebCore.framework","Versions","Current",NULL) << ":";
+				dylib << kroll::FileUtils::Join(runtimePath.c_str(),"JavaScriptCore.framework","Versions","Current",NULL) << ":";
 #endif
 #ifdef DEBUG
-			std::cout << "library: " << dylib.str() << std::endl;
+				std::cout << "library: " << dylib.str() << std::endl;
 #endif
-			std::stringstream runtimeEnv;
+				std::stringstream runtimeEnv;
 #ifdef OS_LINUX
-			runtimeEnv << "KR_RUNTIME=" << runtimePath;
+				runtimeEnv << "KR_RUNTIME=" << runtimePath;
 #else
-			runtimeEnv << runtimePath;
+				runtimeEnv << runtimePath;
 #endif
 #ifdef DEBUG
-			std::cout << "runtime: " << runtimeEnv.str() << std::endl;
+				std::cout << "runtime: " << runtimeEnv.str() << std::endl;
 #endif
-			std::stringstream runtimeHomeEnv;
-			std::string runtimeBase = kroll::FileUtils::GetRuntimeBaseDirectory();
+				std::stringstream runtimeHomeEnv;
+				std::string runtimeBase = kroll::FileUtils::GetRuntimeBaseDirectory();
 #ifdef OS_LINUX
-			runtimeHomeEnv << "KR_RUNTIME_HOME=" << runtimeBase;
+				runtimeHomeEnv << "KR_RUNTIME_HOME=" << runtimeBase;
 #else
-			runtimeHomeEnv << runtimeBase;
+				runtimeHomeEnv << runtimeBase;
 #endif
 #ifdef DEBUG
-			std::cout << "runtimeHomeEnv: " << runtimeHomeEnv.str() << std::endl;
+				std::cout << "runtimeHomeEnv: " << runtimeHomeEnv.str() << std::endl;
 #endif
-			std::stringstream home;
+				std::stringstream home;
 #ifdef OS_LINUX
-			home << "KR_HOME=" << homedir;
+				home << "KR_HOME=" << homedir;
 #else
-			home << homedir;
+				home << homedir;
 #endif
 #ifdef DEBUG
-			std::cout << "home: " << home.str() << std::endl;
+				std::cout << "home: " << home.str() << std::endl;
 #endif
-			std::stringstream modules;
+				std::stringstream modules;
 #ifdef OS_LINUX
-			modules << "KR_MODULES=";
+				modules << "KR_MODULES=";
 #endif
-			std::vector<std::string>::iterator i = moduleDirs.begin();
-			while(i!=moduleDirs.end())
-			{
-				std::string dir = (*i++);
-				modules << dir << KR_LIB_SEP;
-				dylib << dir << KR_LIB_SEP;
-			}
+				std::vector<std::string>::iterator i = moduleDirs.begin();
+				while(i!=moduleDirs.end())
+				{
+					std::string dir = (*i++);
+					modules << dir << KR_LIB_SEP;
+					dylib << dir << KR_LIB_SEP;
+				}
 #ifdef DEBUG
-			std::cout << "modules: " << modules.str() << std::endl;
-			std::cout << "exec: " << exec << std::endl;
+				std::cout << "modules: " << modules.str() << std::endl;
+				std::cout << "exec: " << exec << std::endl;
 #endif
 
 #ifdef OS_WIN32
-			SetEnvironmentVariable("PATH",dylib.str().c_str());
-			SetEnvironmentVariable("KR_RUNTIME",runtimeEnv.str().c_str());
-			SetEnvironmentVariable("KR_HOME",home.str().c_str());
-			SetEnvironmentVariable("KR_MODULES",modules.str().c_str());
-			SetEnvironmentVariable("KR_RUNTIME_HOME",runtimeHomeEnv.str().c_str());
-			SetEnvironmentVariable("KR_BOOT_PROCESS","1");
+				SetEnvironmentVariable("PATH",dylib.str().c_str());
+				SetEnvironmentVariable("KR_RUNTIME",runtimeEnv.str().c_str());
+				SetEnvironmentVariable("KR_HOME",home.str().c_str());
+				SetEnvironmentVariable("KR_MODULES",modules.str().c_str());
+				SetEnvironmentVariable("KR_RUNTIME_HOME",runtimeHomeEnv.str().c_str());
+				SetEnvironmentVariable("KR_BOOT_PROCESS","1");
 
-			if (addToEnvironment.size()>0)
-			{
-				std::vector< std::pair<std::string,std::string> >::iterator i = addToEnvironment.begin();
-				while(i!=addToEnvironment.end())
+				if (addToEnvironment.size()>0)
 				{
-					std::pair<std::string,std::string> entry = (*i++);
-					SetEnvironmentVariable(entry.first.c_str(),entry.second.c_str());
+					std::vector< std::pair<std::string,std::string> >::iterator i = addToEnvironment.begin();
+					while(i!=addToEnvironment.end())
+					{
+						std::pair<std::string,std::string> entry = (*i++);
+						SetEnvironmentVariable(entry.first.c_str(),entry.second.c_str());
+					}
 				}
-			}
 
-			std::ostringstream ose;
+				std::ostringstream ose;
 
-			char *env = GetEnvironmentStrings();
-			LPTSTR penv = env;
-			int count = 0;
-			while (true)
-			{
-               if (*penv == 0) break;
-               while (*penv != 0) penv++;
-               penv++;
-               count++;
-			}
+				char *env = GetEnvironmentStrings();
+				LPTSTR penv = env;
+				int count = 0;
+				while (true)
+				{
+	               if (*penv == 0) break;
+	               while (*penv != 0) penv++;
+	               penv++;
+	               count++;
+				}
 
-			char **childEnv = (char**)alloca(sizeof(char *) * count+1);
-			for (int i = 0; i < count; i++)
-			{
-              ose << env << "\n";
-			  childEnv[i] = env;
-              while(*env != '\0')
-                 env++;
-              env++;
-			}
-			childEnv[count] = NULL;
+				char **childEnv = (char**)alloca(sizeof(char *) * count+1);
+				for (int i = 0; i < count; i++)
+				{
+	              ose << env << "\n";
+				  childEnv[i] = env;
+	              while(*env != '\0')
+	                 env++;
+	              env++;
+				}
+				childEnv[count] = NULL;
 
-			char **childArgv = (char**)alloca(sizeof(char *) * __argc+1);
-//			childArgv[0]=(char*)exec.str().c_str();
-			childArgv[0]=__argv[0];
-			for (int c=1;c<__argc;c++)
-			{
-				childArgv[c] = strdup((char*)__argv[c]);
-			}
-			childArgv[__argc] = NULL;
+				char **childArgv = (char**)alloca(sizeof(char *) * __argc+1);
+	//			childArgv[0]=(char*)exec.str().c_str();
+				childArgv[0]=__argv[0];
+				for (int c=1;c<__argc;c++)
+				{
+					childArgv[c] = strdup((char*)__argv[c]);
+				}
+				childArgv[__argc] = NULL;
 
-//			rc = _spawnvpe( _P_OVERLAY, exec.str().c_str(), childArgv, childEnv );
-			rc = _spawnvpe( _P_OVERLAY, __argv[0], childArgv, childEnv );
+	//			rc = _spawnvpe( _P_OVERLAY, exec.str().c_str(), childArgv, childEnv );
+				rc = _spawnvpe( _P_OVERLAY, __argv[0], childArgv, childEnv );
 #elif OS_LINUX
-			const char** childArgv = (const char**) alloca(sizeof(char *) * (argc + 1));
-			for (int c = 0; c < argc; c++)
-			{
-			        childArgv[c] = argv[c];
-			}
-			childArgv[argc] = NULL;
-
-			// Copy all current environment variables
-			extern char** environ;
-			int e = 0;
-			while (environ[e] != NULL)
-			{
-				addToEnvironment.push_back(StringPair(environ[e++], ""));
-			}
-
-			// Add our own environment variables
-			std::string em = std::string("");
-			std::string dylib_str = dylib.str();
-			std::string runtimeEnv_str = runtimeEnv.str();
-			std::string home_str = home.str();
-			std::string modules_str = modules.str();
-			std::string runtimeHomeEnv_str = runtimeHomeEnv.str();
-			addToEnvironment.push_back(StringPair(dylib_str, em));
-			addToEnvironment.push_back(StringPair(runtimeEnv_str, em));
-			addToEnvironment.push_back(StringPair(home_str, em));
-			addToEnvironment.push_back(StringPair(modules_str, em));
-			addToEnvironment.push_back(StringPair(runtimeHomeEnv_str, em));
-			addToEnvironment.push_back(StringPair(std::string("KR_BOOT_PROCESS"), std::string("1")));
-
-			// Allocate this memory on the stack
-			int env_size = addToEnvironment.size() + 1;
-			const char** env = (const char**) alloca (sizeof(char*) * (env_size));
-
-			// Convert our environment variable vector to a char** array
-			for (size_t i = 0; i < addToEnvironment.size(); i++)
-			{
-				StringPair& pair = addToEnvironment.at(i);
-				std::string line = pair.first;
-				if (pair.second != "")
+				const char** childArgv = (const char**) alloca(sizeof(char *) * (argc + 1));
+				for (int c = 0; c < argc; c++)
 				{
-					line.append("=");
-					line.append(pair.second);
+				        childArgv[c] = argv[c];
 				}
-				env[i] = line.c_str();
-			}
-			env[env_size] = NULL;
+				childArgv[argc] = NULL;
 
-			int result = execve(exec.c_str(), (char* const*) childArgv, (char* const*) env);
-			if (result < 0)
-			{
-				perror("execve");
-				rc = __LINE__;
-			}
+				// Copy all current environment variables
+				extern char** environ;
+				int e = 0;
+				while (environ[e] != NULL)
+				{
+					addToEnvironment.push_back(StringPair(environ[e++], ""));
+				}
+
+				// Add our own environment variables
+				std::string em = std::string("");
+				std::string dylib_str = dylib.str();
+				std::string runtimeEnv_str = runtimeEnv.str();
+				std::string home_str = home.str();
+				std::string modules_str = modules.str();
+				std::string runtimeHomeEnv_str = runtimeHomeEnv.str();
+				addToEnvironment.push_back(StringPair(dylib_str, em));
+				addToEnvironment.push_back(StringPair(runtimeEnv_str, em));
+				addToEnvironment.push_back(StringPair(home_str, em));
+				addToEnvironment.push_back(StringPair(modules_str, em));
+				addToEnvironment.push_back(StringPair(runtimeHomeEnv_str, em));
+				addToEnvironment.push_back(StringPair(std::string("KR_BOOT_PROCESS"), std::string("1")));
+
+				// Allocate this memory on the stack
+				int env_size = addToEnvironment.size() + 1;
+				const char** env = (const char**) alloca (sizeof(char*) * (env_size));
+
+				// Convert our environment variable vector to a char** array
+				for (size_t i = 0; i < addToEnvironment.size(); i++)
+				{
+					StringPair& pair = addToEnvironment.at(i);
+					std::string line = pair.first;
+					if (pair.second != "")
+					{
+						line.append("=");
+						line.append(pair.second);
+					}
+					env[i] = line.c_str();
+				}
+				env[env_size] = NULL;
+
+				int result = execve(exec.c_str(), (char* const*) childArgv, (char* const*) env);
+				if (result < 0)
+				{
+					perror("execve");
+					rc = __LINE__;
+				}
 #else
-			invoker = [TaskInvoker alloc];
-			NSInvocation* terminateInvocation = [TaskCallback createInvocation: @selector(terminated:)];
+				invoker = [TaskInvoker alloc];
+				NSInvocation* terminateInvocation = [TaskCallback createInvocation: @selector(terminated:)];
 
-			// setup termination handlers that will ensure that we don't
-			// orphan our subprocess
-			signal(SIGHUP, &termination);
-			signal(SIGTERM, &termination);
-			signal(SIGINT, &termination);
-			signal(SIGKILL, &termination);
+				// setup termination handlers that will ensure that we don't
+				// orphan our subprocess
+				signal(SIGHUP, &termination);
+				signal(SIGTERM, &termination);
+				signal(SIGINT, &termination);
+				signal(SIGKILL, &termination);
 
-			// create our program args (just pass what was passed to us)
-			NSMutableArray *a = [[[NSMutableArray alloc] init] autorelease];
-			for (int c=1;c<argc;c++)
-			{
-				[a addObject:[NSString stringWithFormat:@"%s",argv[c]]];
-			}
-
-			NSMutableDictionary *e = [[[NSMutableDictionary alloc] init] autorelease];
-			[e setValue:[NSString stringWithCString:home.str().c_str()] forKey:@"KR_HOME"];
-			[e setValue:[NSString stringWithCString:runtimeEnv.str().c_str()] forKey:@"KR_RUNTIME"];
-			[e setValue:[NSString stringWithCString:runtimeHomeEnv.str().c_str()] forKey:@"KR_RUNTIME_HOME"];
-			[e setValue:[NSString stringWithCString:modules.str().c_str()] forKey:@"KR_MODULES"];
-			[e setValue:[NSString stringWithCString:dylib.str().c_str()] forKey:@"DYLD_LIBRARY_PATH"];
-			[e setValue:@"1" forKey:@"KR_BOOT_PROCESS"];
-
-			if (addToEnvironment.size()>0)
-			{
-				std::vector< std::pair<std::string,std::string> >::iterator i = addToEnvironment.begin();
-				while(i!=addToEnvironment.end())
+				// create our program args (just pass what was passed to us)
+				NSMutableArray *a = [[[NSMutableArray alloc] init] autorelease];
+				for (int c=1;c<argc;c++)
 				{
-					std::pair<std::string,std::string> entry = (*i++);
-					[e setValue:[NSString stringWithCString:entry.second.c_str()] forKey:[NSString stringWithCString:entry.first.c_str()]];
+					[a addObject:[NSString stringWithFormat:@"%s",argv[c]]];
 				}
-			}
 
-			[invoker initWithApplication:[NSString stringWithCString:exec.c_str()] environment:e arguments:a currentDirectory:[[NSBundle mainBundle] bundlePath]];
-			[invoker launch:terminateInvocation];
+				NSMutableDictionary *e = [[[NSMutableDictionary alloc] init] autorelease];
+				[e setValue:[NSString stringWithCString:home.str().c_str()] forKey:@"KR_HOME"];
+				[e setValue:[NSString stringWithCString:runtimeEnv.str().c_str()] forKey:@"KR_RUNTIME"];
+				[e setValue:[NSString stringWithCString:runtimeHomeEnv.str().c_str()] forKey:@"KR_RUNTIME_HOME"];
+				[e setValue:[NSString stringWithCString:modules.str().c_str()] forKey:@"KR_MODULES"];
+				[e setValue:[NSString stringWithCString:dylib.str().c_str()] forKey:@"DYLD_LIBRARY_PATH"];
+				[e setValue:@"1" forKey:@"KR_BOOT_PROCESS"];
+
+				if (addToEnvironment.size()>0)
+				{
+					std::vector< std::pair<std::string,std::string> >::iterator i = addToEnvironment.begin();
+					while(i!=addToEnvironment.end())
+					{
+						std::pair<std::string,std::string> entry = (*i++);
+						[e setValue:[NSString stringWithCString:entry.second.c_str()] forKey:[NSString stringWithCString:entry.first.c_str()]];
+					}
+				}
+
+				[invoker initWithApplication:[NSString stringWithCString:exec.c_str()] environment:e arguments:a currentDirectory:[[NSBundle mainBundle] bundlePath]];
+				rc = [invoker launch:terminateInvocation];
+				invoker = nil;
+			
+				if (rc == 253) // this is a restart request, loop to re-run
+				{
+#ifdef DEBUG
+					std::cout << "Special exit with restart detected, here we go again ..." << std::endl;
 #endif
+					// we need to reset our home directory in case
+					// it was changed during launch (like app installer)
+					homedir = backup_homedir;
+					rc = 0;
+					continue;
+				}
+				// if we get anything else, break and exit
+				break;
+#endif
+			}
 		}
 	}
+#ifdef DEBUG
+	std::cout << "ForkProcess returning exit code = " << rc << std::endl;
+#endif
 	return rc;
 }
 

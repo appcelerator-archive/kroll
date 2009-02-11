@@ -24,7 +24,6 @@ namespace kroll
 	bool OSXHost::Start()
 	{
 		Host::Start();
-		[NSApplication sharedApplication];
 		NSApplication *app = [NSApplication sharedApplication];
 		[app finishLaunching];
 		return true;
@@ -34,7 +33,7 @@ namespace kroll
 	{
 		NSApplication *app = [NSApplication sharedApplication];
 		// we pull out an event from the queue, blocking a little bit before returning
-		NSEvent *event = [app nextEventMatchingMask:NSAnyEventMask untilDate:[NSDate dateWithTimeIntervalSinceNow:1] inMode:NSDefaultRunLoopMode dequeue:YES];
+		NSEvent *event = [app nextEventMatchingMask:NSAnyEventMask untilDate:[NSDate dateWithTimeIntervalSinceNow:10] inMode:NSDefaultRunLoopMode dequeue:YES];
 		if (event) 
 		{
 			[app sendEvent:event];

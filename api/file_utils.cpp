@@ -590,7 +590,7 @@ namespace kroll
 		{
 			std::string line;
 			std::getline(file,line);
-			if (line.find("#")==0 || line.find(" ")==0)
+			if (line.find(" ")==0)
 			{
 				continue;
 			}
@@ -599,14 +599,18 @@ namespace kroll
 			{
 				std::string key = Trim(line.substr(0,pos));
 				std::string value = Trim(line.substr(pos+1,line.length()));
-				if (key == "appname")
+				if (key == "#appname")
 				{
 					appname = value;
 					continue;
 				}
-				else if (key == "appid")
+				else if (key == "#appid")
 				{
 					appid = value;
+					continue;
+				}
+				else if (key.c_str()[0]=='#')
+				{
 					continue;
 				}
 				int op;
