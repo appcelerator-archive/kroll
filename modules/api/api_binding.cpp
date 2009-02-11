@@ -102,37 +102,38 @@ namespace kroll
 	void APIBinding::_LogDebug(const ValueList& args, SharedValue result)
 	{
 		SharedValue arg1 = args.at(0);
-		std::string msg = arg1->ToString();
+		SharedString msg = arg1->DisplayString();
 		int severity = KR_LOG_DEBUG;
-		this->Log(severity,msg);
+		this->Log(severity, *msg);
 	}
 	void APIBinding::_LogWarn(const ValueList& args, SharedValue result)
 	{
 		SharedValue arg1 = args.at(0);
-		std::string msg = arg1->ToString();
+		SharedString msg = arg1->DisplayString();
 		int severity = KR_LOG_WARN;
-		this->Log(severity,msg);
+		this->Log(severity, *msg);
 	}
 	void APIBinding::_LogError(const ValueList& args, SharedValue result)
 	{
 		SharedValue arg1 = args.at(0);
-		std::string msg = arg1->ToString();
+		SharedString msg = arg1->DisplayString();
 		int severity = KR_LOG_ERROR;
-		this->Log(severity,msg);
+		this->Log(severity, *msg);
 	}
 	void APIBinding::_Log(const ValueList& args, SharedValue result)
 	{
-		SharedValue arg1 = args.at(0);
-		if (arg1->IsString() && args.size()==1)
+		if (args.size()==1)
 		{
-			std::string msg = arg1->ToString();
+			SharedValue arg1 = args.at(0);
+			SharedString msg = arg1->DisplayString();
 			int severity = KR_LOG_INFO;
-			this->Log(severity,msg);
+			this->Log(severity, *msg);
 		}
 		else if (args.size()==2)
 		{
 			int severity = KR_LOG_INFO;
 
+			SharedValue arg1 = args.at(0);
 			if (arg1->IsString())
 			{
 				std::string type = arg1->ToString();
@@ -157,8 +158,9 @@ namespace kroll
 			{
 				severity = arg1->ToInt();
 			}
-			std::string message = args.at(1)->ToString();
-			this->Log(severity, message);
+			SharedValue arg2 = args.at(1);
+			SharedString message = arg2->DisplayString();
+			this->Log(severity, *message);
 		}
 	}
 
