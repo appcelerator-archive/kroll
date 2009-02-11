@@ -788,11 +788,15 @@ namespace kroll
 #ifdef OS_OSX
 		return [NSUserName() UTF8String];
 #elif OS_WIN32
-		char buf[100];
-		DWORD size = 100;
+		char buf[MAX_PATH];
+		DWORD size = MAX_PATH;
         if (::GetUserName(buf,&size))
 		{
 			buf[size]='\0';
+		}
+		else
+		{
+			sprintf(buf,"Unknown");
 		}
 		return std::string(buf).c_str();
 #elif OS_LINUX
