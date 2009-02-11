@@ -24,7 +24,8 @@ namespace kroll
 			for (int i = 0; i < this->Size(); i++)
 			{
 				SharedValue list_val = this->At(i);
-				oss << " " << list_val->DisplayString(levels-1) << ",";
+				SharedString list_str = list_val->DisplayString(levels-1);
+				oss << " " << *list_str << ",";
 			}
 			//int before_last_comma = oss.tellp() - 1;
 			//oss.seekp(before_last_comma);

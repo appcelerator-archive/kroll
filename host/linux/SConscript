@@ -4,6 +4,9 @@ Import('build')
 Env = build.env.Clone()
 Env.Append(CPPDEFINES=('KROLL_HOST_EXPORT',1))
 Env.Append(CPPPATH=['#common/linux','#common'])
-Env.ParseConfig('pkg-config --cflags --libs gtk+-2.0 gdk-2.0')
+Env.Append(LIBS=['kroll'])
+
+Env.ParseConfig('pkg-config --cflags --libs gtk+-2.0 gdk-2.0 glib-2.0 gthread-2.0')
 build.add_thirdparty(Env, 'poco')
-Env.SharedLibrary(build.dir + '/khost', Glob('*.cpp'), LIBS=['kroll'])
+
+Env.SharedLibrary(build.dir + '/khost', Glob('*.cpp'))

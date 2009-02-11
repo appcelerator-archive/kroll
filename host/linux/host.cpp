@@ -9,6 +9,7 @@
 #include <dlfcn.h>
 #include <string>
 #include <gtk/gtk.h>
+#include <gdk/gdk.h>
 #include <api/kroll.h>
 #include "host.h"
 #include "linux_job.h"
@@ -22,6 +23,9 @@ namespace kroll
 
 	LinuxHost::LinuxHost(int argc, const char *argv[]) : Host(argc, argv)
 	{
+		g_thread_init(NULL);
+		gdk_threads_init();
+
 		gtk_init(&argc, (char***) &argv);
 	}
 
