@@ -329,9 +329,6 @@ namespace kroll
 		return false;
 	}
 
-	/* TODO: when the shared_ptr stuff comes through
-	 * BoundObject,List,Method should have their own
-	 * DisplayString impls */
 	SharedString Value::DisplayString(int levels)
 	{
 
