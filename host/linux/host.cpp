@@ -43,9 +43,6 @@ namespace kroll
 
 	Module* LinuxHost::CreateModule(std::string& path)
 	{
-		std::cout << "Creating module " << path << std::endl;
-
-
 		void* lib_handle = dlopen(path.c_str(), RTLD_LAZY | RTLD_GLOBAL);
 		if (!lib_handle)
 		{

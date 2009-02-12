@@ -118,7 +118,6 @@ namespace kroll
 using namespace kroll;
 #define KROLL_MODULE_FACTORY_DEFINE(s) extern "C" EXPORT s* CreateModule(Host *host, const char *path) \
 { \
-	std::cout << "Creating module: " << #s << std::endl; \
 	return new s(host,path);\
 }  \
 const char* s::GetName() \

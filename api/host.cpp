@@ -195,8 +195,8 @@ namespace kroll
 			module = provider->CreateModule(path);
 			module->SetProvider(provider); // set the provider
 
-			std::cout << "Module loaded " << module->GetName()
-			          << " from " << path << std::endl;
+			std::cout << "Loaded " << module->GetName()
+			          << " (" << path << ")" <<std::endl;
 
 			// Call module Load lifecycle event
 			module->Initialize();
@@ -369,7 +369,7 @@ namespace kroll
 	{
 		ScopedLock lock(&moduleMutex);
 
-		std::cout << "Unregistering " << module->GetName() << std::endl;
+		std::cout << "Unregistering: " << module->GetName() << std::endl;
 
 		// Remove from the module map
 		ModuleMap::iterator i = this->modules.begin();
