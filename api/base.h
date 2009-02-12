@@ -29,6 +29,7 @@
 #ifdef OS_WIN32
 #ifndef WINVER
 #define WINVER 0x0501
+#pragma warning(disable: 4005)  // turn off #define redefinition warnings
 #endif
 
 #ifndef _WIN32_WINNT

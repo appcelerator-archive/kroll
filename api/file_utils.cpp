@@ -628,12 +628,23 @@ namespace kroll
 						std::string potentialRuntime = Join(rt,"runtime",NULL);
 						if (IsDirectory(potentialRuntime))
 						{
-							runtimePath = potentialRuntime;
+							// extra special check for Win32 since we have to place the WebKit.dll
+							// inside the same relative path as .exe because of the COM embedded manifest crap-o-la
+							// so if we can't find kroll.dll in the resources folder we don't override
+#ifdef OS_WIN32
+							std::string krolldll = kroll::FileUtils::Join(potentialRuntime.c_str(),"kroll.dll",NULL);
+							if (kroll::FileUtils::IsFile(krolldll))
+							{
+#endif						
+								runtimePath = potentialRuntime;
 #ifdef DEBUG
-							std::cout << "found override runtime at: " << runtimePath << std::endl;
+								std::cout << "found override runtime at: " << runtimePath << std::endl;
 #endif
-							foundRuntime = true;
-							continue;
+								foundRuntime = true;
+								continue;
+#ifdef OS_WIN32
+							}
+#endif						
 						}
 					}
 					runtimePath = FindRuntime(op,version);
