@@ -62,8 +62,6 @@ namespace kroll
 
 	Module* Win32Host::CreateModule(std::string& path)
 	{
-		std::cout << "Win32Host::CreateModule " << path.c_str() << std::endl;
-
 		HMODULE module = LoadLibraryA(path.c_str());
 
 		if (!module)
@@ -79,8 +77,6 @@ namespace kroll
 			fprintf(stderr, "Couldn't find ModuleCreator entry point for %s\n", path.c_str());
 			return 0;
 		}
-
-		std::cout << "Win32Host creating module ..." << std::endl;
 
 		return create(this,FileUtils::GetDirectory(path));
 	}
