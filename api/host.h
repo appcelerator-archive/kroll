@@ -24,6 +24,8 @@ namespace kroll
 	{
 		friend class Poco::ReleasePolicy<Host>;
 	public:
+
+		static const char * Platform;
 		/*
 			Constructor: Host
 
@@ -141,7 +143,7 @@ namespace kroll
 		 * TODO: Document me
 		*/
 		const char* GetCommandLineArg(int index);
-		
+
 		/**
 		 * Function: IsDebugMode
 		 *
@@ -206,6 +208,13 @@ namespace kroll
 		 *
 		*/
 		void ScanInvalidModuleFiles();
+
+		/*
+		 * Function: CopyModuleAppResources
+		 *
+		 * Copy a module's application-specific resources into the currently running app
+		 */
+		void CopyModuleAppResources(std::string& modulePath);
 
 		/*
 		 * Function: LoadModule
