@@ -22,13 +22,15 @@ namespace kroll
 		this->objectValue = NULL;
 		this->stringValue = NULL;
 		this->numberValue = 0;
+		this->voidPtrValue = NULL;
 	}
 
 	Value::Value()
 	 : type(UNDEFINED),
 	   numberValue(0),
 	   stringValue(NULL),
-	   objectValue(NULL)
+	   objectValue(NULL),
+	   voidPtrValue(NULL)
 	{
 	}
 
@@ -36,7 +38,8 @@ namespace kroll
 	 : type(UNDEFINED),
 	   numberValue(0),
 	   stringValue(NULL),
-	   objectValue(NULL)
+	   objectValue(NULL),
+	   voidPtrValue(NULL)
 	{
 		this->SetValue(value);
 	}
@@ -45,7 +48,8 @@ namespace kroll
 	 : type(UNDEFINED),
 	   numberValue(0),
 	   stringValue(NULL),
-	   objectValue(NULL)
+	   objectValue(NULL),
+	   voidPtrValue(NULL)
 	{
 		this->SetValue((Value*) &value);
 	}
@@ -104,6 +108,13 @@ namespace kroll
 		return v;
 	}
 
+	SharedValue Value::NewVoidPtr(void *value)
+	{
+		SharedValue v(new Value());
+		v->SetVoidPtr(value);
+		return v;
+	}
+
 	SharedValue Value::NewObject(SharedBoundObject value)
 	{
 		SharedValue v(new Value());
@@ -144,6 +155,7 @@ namespace kroll
 	bool Value::IsList() const { return type == LIST; }
 	bool Value::IsObject() const { return this->type == OBJECT; }
 	bool Value::IsMethod() const { return type == METHOD; }
+	bool Value::IsVoidPtr() const { return type == VOIDPTR; }
 	bool Value::IsNull() const { return type == NULLV; }
 	bool Value::IsUndefined() const { return type == UNDEFINED; }
 
@@ -154,6 +166,7 @@ namespace kroll
 	const char* Value::ToString() const { return stringValue; }
 	SharedBoundObject Value::ToObject() const { return objectValue; }
 	SharedBoundMethod Value::ToMethod() const { return objectValue.cast<BoundMethod>(); }
+	void* Value::ToVoidPtr() const { return voidPtrValue; }
 	SharedBoundList Value::ToList() const { return objectValue.cast<BoundList>(); }
 
 	void Value::SetValue(SharedValue other)
@@ -180,6 +193,9 @@ namespace kroll
 
 		else if (other->IsMethod())
 			this->SetMethod(other->ToMethod());
+
+		else if (other->IsVoidPtr())
+			this->SetVoidPtr(other->ToVoidPtr());
 
 		else if (other->IsObject())
 			this->SetObject(other->ToObject());
@@ -250,6 +266,13 @@ namespace kroll
 		type = METHOD;
 	}
 
+	void Value::SetVoidPtr(void *value)
+	{
+		reset();
+		this->voidPtrValue = value;
+		type = VOIDPTR;
+	}
+
 	void Value::SetNull()
 	{
 		reset();
@@ -275,6 +298,8 @@ namespace kroll
 		if (this->IsObject() && i.IsObject() && this->ToObject() == i.ToObject())
 			return true;
 		if (this->IsMethod() && i.IsMethod() && this->ToMethod() == i.ToMethod())
+			return true;
+		if (this->IsVoidPtr() && i.IsVoidPtr() && this->ToVoidPtr() == i.ToVoidPtr())
 			return true;
 		if (this->IsNull() && i.IsNull())
 			return true;
@@ -347,6 +372,11 @@ namespace kroll
 			SharedBoundMethod method = this->ToMethod();
 			oss << "<BoundMethod at " << method.get() << ">";
 		}
+		else if (this->IsVoidPtr())
+		{
+			void *value = this->ToVoidPtr();
+			oss << "<void* addr: " << (int) value << ">";
+		}
 		else if (this->IsNull())
 		{
 			oss << "<null>";
@@ -385,6 +415,9 @@ namespace kroll
 
 		else if (IsMethod())
 			return "METHOD";
+
+		else if (IsVoidPtr())
+			return "VOIDPTR";
 
 		else if (IsNull())
 			return "NULL";

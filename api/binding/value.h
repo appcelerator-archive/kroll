@@ -28,6 +28,7 @@ namespace kroll
 			LIST - <ValueList>
 			OBJECT - <BoundObject>
 			METHOD - <BoundMethod>
+			VOIDP - void * (used for raw types internally)
 			NULLV - Null
 			UNDEFINED - Undefined
 		 */
@@ -39,6 +40,7 @@ namespace kroll
 			LIST = 5,
 			OBJECT = 6,
 			METHOD = 7,
+			VOIDPTR = 8,
 			NULLV = 0,
 			UNDEFINED = -1
 		};
@@ -124,6 +126,13 @@ namespace kroll
 
 		/*
 			Constructor: Value
+
+			construct a <VOIDPTR> type
+		 */
+		static SharedValue NewVoidPtr(void *value);
+
+		/*
+			Constructor: Value
 		 */
 		Value(SharedValue value);
 		/*
@@ -206,6 +215,13 @@ namespace kroll
 		bool IsMethod() const;
 
 		/*
+			Function: IsVoidPtr
+
+		  return true if the internal value is a VOIDPTR
+		 */
+		bool IsVoidPtr() const;
+
+		/*
 			Function: IsNull
 
 		  return true if the internal value is a NULL
@@ -276,6 +292,13 @@ namespace kroll
 		  return the value as a BoundMethod*
 		 */
 		SharedBoundMethod ToMethod() const;
+
+		/*
+			Function: ToVoidPtr
+
+		  return the value as a void **
+		 */
+		void* ToVoidPtr() const;
 
 		/*
 			Function: ToTypeString
@@ -376,6 +399,12 @@ namespace kroll
 		void SetMethod(SharedBoundMethod value);
 
 		/*
+			Function: Set
+
+			change the internal value of this instance to value
+		 */
+		void SetVoidPtr(void *value);
+		/*
 			Function: SetNull
 
 		  change the internal value of this instance to NULL
@@ -395,6 +424,7 @@ namespace kroll
 		bool boolValue;
 		char* stringValue;
 		SharedBoundObject objectValue;
+		void *voidPtrValue;
 
 		void reset();
 
