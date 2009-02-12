@@ -31,6 +31,7 @@ build.env.Append(LIBPATH=[build.dir])
 # debug build flags
 if ARGUMENTS.get('debug', 0):
 	build.env.Append(CPPDEFINES = ('DEBUG', 1))
+	build.debug = True
 	if not build.is_win32():
 		build.env.Append(CCFLAGS = ['-g'])  # debug
 	else:

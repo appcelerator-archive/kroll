@@ -287,8 +287,19 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 					path = kroll::FileUtils::Join(installerDir.c_str(),"runtime",NULL);
 					if (kroll::FileUtils::IsDirectory(path))
 					{
-						found = true;
-						runtimePath = path;
+						// extra special check for Win32 since we have to place the WebKit.dll
+						// inside the same relative path as .exe because of the COM embedded manifest crap-o-la
+						// so if we can't find kroll.dll in the resources folder we don't override
+#ifdef OS_WIN32
+						std::string krolldll = kroll::FileUtils::Join(path.c_str(),"kroll.dll",NULL);
+						if (kroll::FileUtils::IsFile(krolldll))
+						{
+#endif						
+							found = true;
+							runtimePath = path;
+#ifdef OS_WIN32
+						}
+#endif
 					}
 				}
 				else
@@ -573,6 +584,11 @@ int ForkProcess(std::string &exec, std::string &manifest, std::string &homedir, 
 				const char *cd = getenv("LD_LIBRARY_PATH");
 				if (cd) dylib << cd << ":";
 #elif OS_WIN32
+				// we need to place the local resources directory on the PATH since
+				// we have this COM crap-o-la issue that requires us to place WebKit.dll
+				// relative to the kboot.exe - we do this before the real path
+//				dylib << kroll::FileUtils::Join(homedir.c_str(),"resources",NULL) << ";" << std::endl;
+
 				char path[MAX_PATH];
 				int bufsize = MAX_PATH;
 				bufsize = GetEnvironmentVariable("PATH",(char*)&path,bufsize);

@@ -5,6 +5,7 @@ import SCons.Environment
 
 class BuildConfig(object): 
 	def __init__(self, **kwargs):
+		self.debug = False
 		if not hasattr(os, 'uname') or self.matches('CYGWIN'):
 			self.os = 'win32'
 		elif self.matches('Darwin'):
