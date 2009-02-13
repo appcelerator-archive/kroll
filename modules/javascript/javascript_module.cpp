@@ -35,7 +35,16 @@ namespace kroll
 
 	bool JavascriptModule::IsModule(std::string& path)
 	{
-		return (path.substr(path.length()-js_suffix.length()) == js_suffix);
+		int plength = path.length();
+		int slength = js_suffix.length();
+		if (path.length() > js_suffix.length())
+		{
+			return (path.substr(plength - slength) == js_suffix);
+		}
+		else
+		{
+			return false;
+		}
 	}
 
 	Module* JavascriptModule::CreateModule(std::string& path)

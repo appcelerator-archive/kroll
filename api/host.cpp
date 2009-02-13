@@ -318,9 +318,12 @@ namespace kroll
 					modulesLoaded.push_back(m);
 
 				// Erase path, even on failure
-				invalid_module_files.erase(iter);
+				iter = invalid_module_files.erase(iter);
 			}
-			iter++;
+			else
+			{
+				iter++;
+			}
 		}
 
 		if (modulesLoaded.size() > 0)

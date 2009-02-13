@@ -20,8 +20,9 @@ namespace kroll
 		}
 		catch (ValueException& e)
 		{
+			SharedString ss = e.GetValue()->DisplayString();
 			std::cerr << "Could not execute " << path << " because: "
-			          << e.GetValue()->DisplayString() << std::endl;
+			          <<  *ss << std::endl;
 		}
 
 	}
