@@ -37,7 +37,7 @@ using namespace kroll;
 #endif
 
 #ifndef _BOOT_UPDATESITE_URL
-  #define _BOOT_UPDATESITE_URL   "http://updatesite.titaniumapp.com"
+  #error "Define _BOOT_UPDATESITE_URL"
 #endif
 
 #ifndef BOOT_RUNTIME_FLAG
@@ -77,7 +77,6 @@ std::string GetExecutablePath()
 	{
 		path[size]='\0';
 	}
-	std::cerr << "exec=" << path << std::endl;
 	return std::string(path);
 }
 std::string GetDirectory(std::string &path)
@@ -85,7 +84,6 @@ std::string GetDirectory(std::string &path)
 	size_t i = path.rfind("\\");
 	if (i != std::string::npos)
 	{
-	std::cerr << "dir=" << path << "=> " << path.substr(0,i) << std::endl;
 		return path.substr(0,i);
 	}
 	return ".";
@@ -146,11 +144,6 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 	{
 		// if we don't have an installer directory, just bail...
 		std::string installerDir = kroll::FileUtils::Join(homedir.c_str(),"installer",NULL);
-		if (!kroll::FileUtils::IsDirectory(installerDir))
-		{
-			KR_FATAL_ERROR("Missing installer and application has modules that are not found.");
-			return false;
-		}
 
 		std::string sourceTemp = kroll::FileUtils::GetTempDirectory();
 		std::vector<std::string> args;
@@ -177,7 +170,7 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 		int size = GetEnvironmentVariable(BOOT_UPDATESITE_ENVNAME,(char*)&updatesite,MAX_PATH);
 		updatesite[size]='\0';
 		std::string url;
-		if (!updatesite)
+		if (size == 0)
 		{
 			const char *us = BOOT_UPDATESITE_URL;
 			if (strlen(us)>0)
@@ -274,7 +267,7 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 		else
 		{
 			result = false;
-			KR_FATAL_ERROR("Missing installer and application has additional modules that are needed.");
+			KR_FATAL_ERROR("Missing installer and application has additional modules that are needed. Not updatesite has been configured.");
 		}
 		
 		// unlink the temporary directory
@@ -349,6 +342,11 @@ int main(int _argc, const char* _argv[])
 	int argc = _argc;
 	char **argv = (char **)_argv;
 #endif
+
+	if (argc > 1 && strcmp(argv[1],"--wait-for-debugger")==0)
+	{
+		DebugBreak();
+	}
 
 	std::string manifest = FindManifest();
 	if (manifest.empty())

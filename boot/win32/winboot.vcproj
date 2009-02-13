@@ -42,7 +42,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="../../api"
-				PreprocessorDefinitions="OS_WIN32;NO_UNZIP;USE_NO_EXPORT"
+				PreprocessorDefinitions="OS_WIN32;NO_UNZIP;USE_NO_EXPORT;_BOOT_UPDATESITE_URL=http://updatesite"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -120,7 +120,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalIncludeDirectories="../../api"
-				PreprocessorDefinitions="OS_WIN32;NO_UNZIP;USE_NO_EXPORT"
+				PreprocessorDefinitions="OS_WIN32;NO_UNZIP;USE_NO_EXPORT;_BOOT_UPDATESITE_URL=http://updatesite"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
