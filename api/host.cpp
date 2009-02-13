@@ -27,6 +27,13 @@
 namespace kroll
 {
 	SharedPtr<Host> Host::instance_;
+#if defined(OS_LINUX)
+		const char * Host::Platform = "linux";
+#elif defined(OS_OSX)
+		const char * Host::Platform = "osx";
+#elif defined(OS_WIN32)
+		const char * Host::Platform = "win32";
+#endif
 
 	Host::Host(int argc, const char *argv[]) : debug(false)
 	{
@@ -185,6 +192,45 @@ namespace kroll
 		return isModule;
 	}
 
+	void Host::CopyModuleAppResources(std::string& modulePath)
+	{
+		std::cout << "CopyModuleAppResources: " << modulePath << std::endl;
+
+		std::string appDir = FileUtils::GetApplicationDirectory();
+
+		try {
+			Poco::Path moduleDir(modulePath);
+			moduleDir = moduleDir.parent();
+
+			Poco::File platformAppResourcesDir(FileUtils::Join(moduleDir.toString().c_str(), "AppResources", Platform));
+			Poco::File allAppResourcesDir(FileUtils::Join(moduleDir.toString().c_str(), "AppResources", "all"));
+
+			if (platformAppResourcesDir.exists()
+				&& platformAppResourcesDir.isDirectory()) {
+
+				std::vector<Poco::File> files;
+				platformAppResourcesDir.list(files);
+				for (size_t i = 0; i < files.size(); i++) {
+					std::cout << "Copying " << files.at(i).path() << " to " << appDir << std::endl;
+					files.at(i).copyTo(appDir);
+				}
+			}
+
+			if (allAppResourcesDir.exists()
+				&& allAppResourcesDir.isDirectory())
+			{
+				std::vector<Poco::File> files;
+				allAppResourcesDir.list(files);
+				for (size_t i = 0; i < files.size(); i++) {
+					std::cout << "Copying " << files.at(i).path() << " to " << appDir << std::endl;
+					files.at(i).copyTo(appDir);
+				}
+			}
+		} catch (Poco::Exception &exc) {
+			// Handle..
+		}
+	}
+
 	SharedPtr<Module> Host::LoadModule(std::string& path, ModuleProvider *provider)
 	{
 		ScopedLock lock(&moduleMutex);
@@ -192,6 +238,7 @@ namespace kroll
 		SharedPtr<Module> module = NULL;
 		try
 		{
+			this->CopyModuleAppResources(path);
 			module = provider->CreateModule(path);
 			module->SetProvider(provider); // set the provider
 
