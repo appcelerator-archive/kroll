@@ -79,14 +79,6 @@ namespace kroll
 		//  we can reference from global scope directly to get it
 		this->global_object->SetObject(GLOBAL_NS_VARNAME, this->global_object);
 
-#if defined(OS_WIN32)
-		this->module_suffix = "module.dll";
-#elif defined(OS_OSX)
-		this->module_suffix = "module.dylib";
-#elif defined(OS_LINUX)
-		this->module_suffix = "module.so";
-#endif
-
 		this->autoScan = false;
 		this->runUILoop = true;
 
@@ -186,8 +178,9 @@ namespace kroll
 
 	bool Host::IsModule(std::string& filename)
 	{
-		bool isModule = (filename.length() > module_suffix.length() && filename.substr(
-				filename.length() - this->module_suffix.length()) == this->module_suffix);
+		std::string suffix = this->GetModuleSuffix();
+		bool isModule = (filename.length() > suffix.length() && filename.substr(
+				filename.length() - suffix.length()) == suffix);
 
 		return isModule;
 	}
@@ -201,9 +194,14 @@ namespace kroll
 		try {
 			Poco::Path moduleDir(modulePath);
 			moduleDir = moduleDir.parent();
+			std::string mds(moduleDir.toString());
 
-			Poco::File platformAppResourcesDir(FileUtils::Join(moduleDir.toString().c_str(), "AppResources", Platform));
-			Poco::File allAppResourcesDir(FileUtils::Join(moduleDir.toString().c_str(), "AppResources", "all"));
+			const char* platform = this->GetPlatform();
+			std::string resources_dir = FileUtils::Join(mds.c_str(), "AppResources", NULL);
+			std::string plt_resources_dir = FileUtils::Join(resources_dir.c_str(), platform, NULL);
+			std::string all_resources_dir = FileUtils::Join(resources_dir.c_str(), "all", NULL);
+			Poco::File platformAppResourcesDir(plt_resources_dir);
+			Poco::File allAppResourcesDir(all_resources_dir);
 
 			if (platformAppResourcesDir.exists()
 				&& platformAppResourcesDir.isDirectory()) {

@@ -19,6 +19,8 @@ namespace kroll
 
 		SharedValue InvokeMethodOnMainThread(SharedBoundMethod method,
 		                                     const ValueList& args);
+		const char* GetPlatform();
+		const char* GetModuleSuffix();
 
 	protected:
 		virtual ~OSXHost();

@@ -20,7 +20,17 @@ namespace kroll
 	OSXHost::~OSXHost()
 	{
 	}
-	
+
+	const char* OSXHost::GetPlatform()
+	{
+		return "osx";
+	}
+
+	const char* OSXHost::GetModuleSuffix()
+	{
+		return "module.dylib";
+	}
+
 	bool OSXHost::Start()
 	{
 		Host::Start();

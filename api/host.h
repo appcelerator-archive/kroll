@@ -164,7 +164,21 @@ namespace kroll
 		 *
 		 * TODO: Document me
 		*/
-		virtual const char * GetDescription() { return "Native module"; }
+		virtual const char* GetDescription() { return "Native module"; }
+
+		/*
+		 * Function: GetPlatform
+		 *
+		 * Get this host implementation's platform description.
+		*/
+		virtual const char* GetPlatform() { return "Base"; }
+
+		/*
+		 * Function: GetModuleSuffix
+		 *
+		 * Get this host implementation's module suffix.
+		*/
+		virtual const char* GetModuleSuffix() { return "unimplemented"; }
 
 		bool RunUILoop() { return runUILoop; }
 		void SetRunUILoop(bool runUILoop) { this->runUILoop = runUILoop; }

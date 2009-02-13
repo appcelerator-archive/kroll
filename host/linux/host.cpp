@@ -34,6 +34,15 @@ namespace kroll
 		gtk_main_quit();
 	}
 
+	const char* LinuxHost::GetPlatform()
+	{
+		return "linux";
+	}
+	const char* LinuxHost::GetModuleSuffix()
+	{
+		return "module.so";
+	}
+
 	bool LinuxHost::RunLoop()
 	{
 		g_idle_add(&main_thread_job_handler, this);

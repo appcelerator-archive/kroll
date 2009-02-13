@@ -33,6 +33,8 @@ namespace kroll
 		HINSTANCE GetInstanceHandle() { return instance_handle; }
 		SharedValue InvokeMethodOnMainThread(SharedBoundMethod method,
 		                                     const ValueList& args);
+		const char* GetPlatform();
+		const char* GetModuleSuffix();
 
 	protected:
 		bool RunLoop();

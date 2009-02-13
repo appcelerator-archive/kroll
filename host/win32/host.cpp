@@ -34,6 +34,16 @@ namespace kroll
 		}
 	}
 
+	const char* Win32Host::GetPlatform()
+	{
+		return "win32";
+	}
+
+	const char* Win32Host::GetModuleSuffix()
+	{
+		return "module.dll";
+	}
+
 	bool Win32Host::Start()
 	{
 		Host::Start();

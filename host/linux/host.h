@@ -29,6 +29,8 @@ namespace kroll
 		virtual Module* CreateModule(std::string& path);
 		SharedValue InvokeMethodOnMainThread(SharedBoundMethod method,
 		                                     const ValueList& args);
+		const char* GetPlatform();
+		const char* GetModuleSuffix();
 
 		Poco::Mutex& GetJobQueueMutex();
 		std::vector<LinuxJob*>& GetJobs();
