@@ -1,0 +1,26 @@
+#!/usr/bin/env python
+Import('build')
+import os, os.path as path
+
+Env = build.env.Clone()
+Env.Append(CPPDEFINES=['USE_NO_EXPORT=1','NO_UNZIP=1'])
+Env.Append(CPPPATH=['#common/win32','#common',path.join(build.kroll_source_dir,'api')])
+Env.Append(LIBS=['kernel32','shell32','user32','advapi32'])
+Env.Append(CCFLAGS=['/O2','/GL','/FD','/EHsc','/MD','/W3','/Wp64','/Zi','/TP'])
+Env.Append(LINKFLAGS=['/MANIFEST','/MANIFESTFILE:build\\win32\\boot.exe.intermediate.manifest','/SUBSYSTEM:WINDOWS','/OPT:REF','/OPT:ICF','/LTCG','/MACHINE:X86'])
+
+fo = os.path.join(build.dir,'file_utils_boot.o')
+o = Env.Object(target = fo, source = path.join(build.kroll_source_dir,'api','file_utils.cpp'))
+
+#zo = os.path.join(build.dir,'unzip_boot.o')
+#o = Env.Object(target = zo, source = path.join(build.kroll_source_dir,'api','unzip','unzip.cpp'))
+
+sources = ['main.cpp', fo]
+p = Env.Program(build.dir + '/kboot', sources)
+
+webkit_tp = path.join(build.third_party, 'webkit')
+webkit_lib = path.join(webkit_tp, 'lib')
+webkit_tlb = path.join(webkit_lib,'WebKit.tlb')
+
+Env.AddPostAction(p, ('mt.exe -nologo /tlb:"%s" /dll:"runtime\WebKit" /outputresource:"%s\kboot.exe;#1" /manifest "%s"' % (webkit_tlb, build.dir, 'build\\win32\\boot.exe.intermediate.manifest')))
+	
