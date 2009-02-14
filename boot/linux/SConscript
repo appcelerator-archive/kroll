@@ -1,0 +1,13 @@
+#!/usr/bin/env python
+Import('build')
+import os, os.path as path
+
+Env = build.env.Clone()
+Env.Append(CPPPATH=[path.join(build.kroll_source_dir,'api')])
+Env.Append(LIBS=['dl'])
+
+fo = os.path.join(build.dir,'file_utils_boot.o')
+o = Env.Object(target = fo, source = path.join(build.kroll_source_dir,'api','file_utils.cpp'))
+
+sources = ['main.cpp', fo]
+p = Env.Program(build.dir + '/kboot', sources)

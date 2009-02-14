@@ -8,11 +8,11 @@ webkit_lib = path.join(webkit_tp, 'lib')
 webkit_inc = path.join(webkit_tp, 'include')
 
 Env = build.env.Clone()
-Env.Append(LIBS=['kroll'])
 Env.Append(CPPDEFINES=('KROLL_JAVASCRIPT_API_EXPORT', 1))
 build.add_thirdparty(Env, 'poco')
 
 if build.is_osx():
+	Env.Append(LIBS=['kroll'])
 	Env.Append(FRAMEWORKPATH=[webkit_tp])
 	Env.Append(FRAMEWORKS=['Cocoa','JavaScriptCore'])
 	Env.Append(CPPPATH=[build.kroll_include_dir])
@@ -23,6 +23,7 @@ elif build.is_linux():
 	Env.Append(CPPPATH=[webkit_inc, build.kroll_include_dir])
 
 elif build.is_win32():
+	Env.Append(LIBS=['kroll'])
 	Env.Append(LIBPATH=[webkit_lib])
 	Env.Append(CPPPATH=[path.join(webkit_inc, 'webkit'),
                         path.join(webkit_inc, 'JavaScriptCore'),
