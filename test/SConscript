@@ -3,7 +3,7 @@ import os
 Import('build')
 
 Env = build.env.Clone()
-build.add_thirdparty(Env, 'poco', True)
+build.add_thirdparty(Env, 'poco', True) # force linking for Linux
 
 if build.is_osx():
 	Env.Append(FRAMEWORKS=['Cocoa'])

@@ -2,11 +2,9 @@
 Import('build')
 
 Env = build.env.Clone()
+build.add_thirdparty(Env, 'poco')
+
 if build.is_osx():
-	build.add_thirdparty(Env, 'poco', True)
 	Env.Append(LIBS=['kroll'])
-else:
-	build.add_thirdparty(Env, 'poco')
-	    
 
 Env.SharedLibrary(build.dir + '/foomodule', Glob('*.cpp'))

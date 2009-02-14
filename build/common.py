@@ -67,8 +67,8 @@ class BuildConfig(object):
 	def is_osx(self): return self.os == 'osx'
 	def is_win32(self): return self.os == 'win32'
 
-	def add_thirdparty(self, env, name, libs_as_well=False):
+	def add_thirdparty(self, env, name, force_libs=False):
 		env.Append(CPPPATH=[self.thirdparty_libs[name][self.os]['cpp_path']])
-		if libs_as_well:
+		if force_libs or not self.is_linux():
 			env.Append(LIBPATH=[self.thirdparty_libs[name][self.os]['lib_path']])
 			env.Append(LIBS=[self.thirdparty_libs[name][self.os]['libs']])

@@ -9,12 +9,7 @@ webkit_inc = path.join(webkit_tp, 'include')
 
 Env = build.env.Clone()
 Env.Append(CPPDEFINES=('KROLL_JAVASCRIPT_API_EXPORT', 1))
-
-if build.is_osx():
-	build.add_thirdparty(Env, 'poco', True)
-else:
-	build.add_thirdparty(Env, 'poco')
-	    
+build.add_thirdparty(Env, 'poco')
 
 if build.is_osx():
 	Env.Append(LIBS=['kroll'])
