@@ -438,7 +438,7 @@
 		path = /Developer/SDKs/MacOSX10.5.sdk/System/Library/Frameworks/Foundation.framework/Headers/NSObjCRuntime.h;
 		sourceTree = "<absolute>";
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {1219, 2296}}";
+			sepNavIntBoundsRect = "{{0, 0}, {1219, 2324}}";
 			sepNavSelRange = "{3897, 27}";
 			sepNavVisRange = "{3458, 950}";
 		};
@@ -811,6 +811,46 @@
 		vrLen = 1369;
 		vrLoc = 9133;
 	};
+	24178EBD0F47629900372FA5 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 29B97316FDCFA39411CA2CEA /* main.mm */;
+		name = "main.mm: 495";
+		rLen = 0;
+		rLoc = 13972;
+		rType = 0;
+		vrLen = 1503;
+		vrLoc = 9117;
+	};
+	24178EBE0F47630000372FA5 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 29B97316FDCFA39411CA2CEA /* main.mm */;
+		name = "main.mm: 508";
+		rLen = 0;
+		rLoc = 14681;
+		rType = 0;
+		vrLen = 1503;
+		vrLoc = 9117;
+	};
+	24178EBF0F47631400372FA5 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 29B97316FDCFA39411CA2CEA /* main.mm */;
+		name = "main.mm: 527";
+		rLen = 0;
+		rLoc = 15433;
+		rType = 0;
+		vrLen = 1598;
+		vrLoc = 9117;
+	};
+	24178EC00F47642200372FA5 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 29B97316FDCFA39411CA2CEA /* main.mm */;
+		name = "main.mm: 531";
+		rLen = 0;
+		rLoc = 15503;
+		rType = 0;
+		vrLen = 1592;
+		vrLoc = 9126;
+	};
 	249C0E7F0F4680D6006EDBE5 /* boot */ = {
 		isa = PBXExecutable;
 		activeArgIndices = (
@@ -965,6 +1005,10 @@
 			24178E750F46A34300372FA5 /* PBXTextBookmark */ = 24178E750F46A34300372FA5 /* PBXTextBookmark */;
 			24178E760F474B3D00372FA5 /* PBXTextBookmark */ = 24178E760F474B3D00372FA5 /* PBXTextBookmark */;
 			24178E770F474C0000372FA5 /* PBXTextBookmark */ = 24178E770F474C0000372FA5 /* PBXTextBookmark */;
+			24178EBD0F47629900372FA5 /* PBXTextBookmark */ = 24178EBD0F47629900372FA5 /* PBXTextBookmark */;
+			24178EBE0F47630000372FA5 /* PBXTextBookmark */ = 24178EBE0F47630000372FA5 /* PBXTextBookmark */;
+			24178EBF0F47631400372FA5 /* PBXTextBookmark */ = 24178EBF0F47631400372FA5 /* PBXTextBookmark */;
+			24178EC00F47642200372FA5 /* PBXTextBookmark */ = 24178EC00F47642200372FA5 /* PBXTextBookmark */;
 		};
 		sourceControlManager = 249C0E8D0F4680DA006EDBE5 /* Source Control */;
 		userBuildSettings = {
@@ -972,9 +1016,9 @@
 	};
 	29B97316FDCFA39411CA2CEA /* main.mm */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {1011, 6748}}";
-			sepNavSelRange = "{13094, 0}";
-			sepNavVisRange = "{9133, 1369}";
+			sepNavIntBoundsRect = "{{0, 0}, {1011, 7840}}";
+			sepNavSelRange = "{15503, 0}";
+			sepNavVisRange = "{9126, 1592}";
 			sepNavWindowFrame = "{{0, 4}, {1280, 774}}";
 		};
 	};

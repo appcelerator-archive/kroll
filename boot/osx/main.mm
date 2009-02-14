@@ -61,15 +61,9 @@ using namespace kroll;
 
 #define KR_FATAL_ERROR(msg) \
 { \
-[NSApplication sharedApplication]; \
-NSAlert *alert = [[NSAlert alloc] init]; \
-[alert addButtonWithTitle:@"OK"]; \
-[alert setMessageText:@"Application Error"]; \
-[alert setInformativeText:[NSString stringWithCString:msg]]; \
-[alert setAlertStyle:NSCriticalAlertStyle]; \
-[alert runModal]; \
-[alert release]; \
-\
+	NSApplicationLoad();\
+	NSRunCriticalAlertPanel(@"Application Error", [NSString stringWithCString:msg], @"Quit", nil, nil); \
+	exit(1); \
 }
 
 #ifndef MAX_PATH
@@ -284,92 +278,35 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 	return result;
 }
 
-std::map<std::string,void*> LoadedLibraries;
-
-bool ResolveManifest(std::string &dir, std::string &localdir, bool required=true)
-{
-	std::string fn = FileUtils::Join(dir.c_str(),"manifest",NULL);
-	std::ifstream file(fn.c_str());
-	if (file.bad() || file.fail())
-	{
-		if (!required)
-		{
-			return true;
-		}
-		char msg[MAX_PATH];
-		sprintf(msg,"Couldn't find required module manifest: %s",fn.c_str());
-		KR_FATAL_ERROR(msg);
-		return false;
-	}
-	while (!file.eof())
-	{
-		std::string line;
-		std::getline(file,line);
-		if (line.empty() || line.find(" ")==0 || line.find("#")==0)
-		{
-			continue;
-		}
-		std::string libname(FileUtils::Trim(line));
-		if (libname.empty())
-		{
-			continue;
-		}
-		std::string library = FileUtils::Join(localdir.c_str(),libname.c_str(),NULL);
-		if (!FileUtils::IsFile(library))
-		{
-			library = FileUtils::Join(dir.c_str(),libname.c_str(),NULL);
-		}
-#ifdef DEBUG
-		std::cout << "Attempting to load: " << library << std::endl;
-#endif
-		void* loaded = LoadedLibraries[library];
-		if (!loaded)
-		{
-			NSString *libname = [NSString stringWithCString:library.c_str()];
-			if ([libname hasSuffix:@".framework"])
-			{
-#ifdef DEBUG
-				std::cout << "Loading framework: " << library << std::endl;
-#endif
-				void *b = [NSBundle bundleWithPath:libname];
-				LoadedLibraries[library]=b;
-			}
-			else
-			{
-				NSString *cwd = [[NSFileManager defaultManager]currentDirectoryPath];
-				std::string newdir = GetDirectory(library);
-				[[NSFileManager defaultManager]changeCurrentDirectoryPath:[NSString stringWithCString:newdir.c_str()]];
-#ifdef DEBUG
-				std::cout << "Loading library: " << library << " from " << newdir << std::endl;
-#endif
-				void* handle = dlopen(library.c_str(), RTLD_NOW | RTLD_GLOBAL);
-				if (handle==NULL)
-				{
-					char msg[MAX_PATH];
-					sprintf(msg,"Error loading module dependency library: %s. Error: %s",library.c_str(),dlerror());
-					KR_FATAL_ERROR(msg);
-					return false;
-				}
-				[[NSFileManager defaultManager]changeCurrentDirectoryPath:cwd];
-				LoadedLibraries[library]=handle;
-			}
-		}
-	}
-	return true;
-}
-
 typedef std::vector< std::pair< std::pair<std::string,std::string>,bool> > ModuleList;
 typedef int Executor(int argc, const char **argv);
+
+static void myExecve(NSString *executable, NSArray *args, NSDictionary *environment)
+{
+    char **argv = (char **)calloc(sizeof(char *), [args count] + 1);
+    char **env = (char **)calloc(sizeof(char *), [environment count] + 1);
+    NSEnumerator *e = [args objectEnumerator];
+    NSString *s;    int i = 0;
+    while ((s = [e nextObject]))
+	{
+		argv[i++] = (char *) [s UTF8String];
+	}        
+    e = [environment keyEnumerator];
+    i = 0;
+    while ((s = [e nextObject]))
+	{
+        env[i++] = (char *) [[NSString stringWithFormat:@"%@=%@", s, [environment objectForKey:s]] UTF8String];
+	}	
+#ifdef DEBUG
+    std::cout << "before exec: " << [executable fileSystemRepresentation] << std::endl;
+#endif
+    execve([executable fileSystemRepresentation], argv, env);
+}
 
 int main(int argc, char *argv[])
 {
 	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 
-	if (argc > 1 && strcmp(argv[1],"--wait-for-debugger")==0)
-	{
-		std::cout << "Press enter after attaching debugger... your PID: " << getpid() << std::endl;
-		fgetc(stdin);
-	}
 	std::string manifest = FindManifest();
 	if (manifest.empty())
 	{
@@ -398,18 +335,13 @@ int main(int argc, char *argv[])
 		return __LINE__;
 	}
 	
+	int rc = 0;
 	std::string localRuntime = FileUtils::Join(homedir.c_str(),"runtime",NULL);
-	if (!ResolveManifest(runtimePath,localRuntime))
-	{
-		[pool release];
-		return __LINE__;
-	}
-	
 	std::string runtimeBasedir = FileUtils::GetRuntimeBaseDirectory();
 	std::string moduleLocalDir = FindModuleDir();
 	std::string moduleBasedir = FileUtils::Join(runtimeBasedir.c_str(),"modules",NULL);
 	std::ostringstream moduleList;
-	
+
 	// we now need to resolve and load each module and dependencies
 	std::vector<std::string>::iterator i = moduleDirs.begin();
 	while (i!=moduleDirs.end())
@@ -417,58 +349,93 @@ int main(int argc, char *argv[])
 		std::string moduleDir = (*i++);
 		std::string moduleName = GetModuleName(moduleDir);
 		std::string localModule = FileUtils::Join(homedir.c_str(),"modules",moduleName.c_str(),NULL);
-		if (!ResolveManifest(moduleDir,localModule,false))
+		moduleList << moduleDir << ":";
+	}
+
+	char *fork_flag = getenv("KR_FORK");
+	if (!fork_flag)
+	{
+		std::string dypath = localRuntime;
+		dypath+=":";
+		dypath+=runtimePath;
+		NSString *frameworkPath = [NSString stringWithCString:dypath.c_str()];
+		NSString *executablePath = [[NSBundle mainBundle] executablePath];
+		NSMutableDictionary *environment = [NSMutableDictionary dictionaryWithDictionary:[[NSProcessInfo processInfo] environment]]; 
+		NSString *curpath = (NSString*)[environment objectForKey:@"DYLD_FRAMEWORK_PATH"];
+		if (curpath)
 		{
+			frameworkPath = [NSString stringWithFormat:@"%@:%@",frameworkPath,curpath];
+		}
+		[environment setObject:frameworkPath forKey:@"DYLD_FRAMEWORK_PATH"];
+		NSString *libpath = [NSString stringWithFormat:@"%s:%s:%s",runtimePath.c_str(),dypath.c_str(),moduleList.str().c_str()];
+		NSString *curlibpath = (NSString*)[environment objectForKey:@"DYLD_LIBRARY_PATH"];
+		if (curlibpath)
+		{
+			libpath = [NSString stringWithFormat:@"%@:%@",libpath,curlibpath];
+		}
+		[environment setObject:libpath forKey:@"DYLD_LIBRARY_PATH"];
+		[environment setObject:@"YES" forKey:@"KR_FORK"];
+		[environment setObject:@"YES" forKey:@"WEBKIT_UNSET_DYLD_FRAMEWORK_PATH"];
+		[environment setObject:executablePath forKey:@"WebKitAppPath"];
+		[environment setObject:[NSString stringWithCString:homedir.c_str()] forKey:@"KR_HOME"];
+		[environment setObject:[NSString stringWithCString:runtimePath.c_str()] forKey:@"KR_RUNTIME"];
+		[environment setObject:[NSString stringWithCString:moduleList.str().c_str()] forKey:@"KR_MODULES"];
+		[environment setObject:[NSString stringWithCString:runtimeBasedir.c_str()] forKey:@"KR_RUNTIME_HOME"];
+
+		NSMutableArray *arguments = [NSMutableArray arrayWithObjects:executablePath, nil];
+		while (*++argv)
+		{
+			[arguments addObject:[NSString stringWithUTF8String:*argv]];
+		}
+		myExecve(executablePath, arguments, environment);
+		char *error = strerror(errno);    
+		NSString *errorMessage = [NSString stringWithFormat:@"Launching application failed with the error '%s' (%d)", error, errno];
+		KR_FATAL_ERROR([errorMessage UTF8String]);
+	}
+	else
+	{
+		if (argc > 1 && strcmp(argv[1],"--wait-for-debugger")==0)
+		{
+			std::cout << "Press enter after attaching debugger... your PID: " << getpid() << std::endl;
+			fgetc(stdin);
+		}
+		unsetenv("KR_FORK");
+		
+		// now we need to load the host and get 'er booted
+		std::string khost = FileUtils::Join(runtimePath.c_str(),"libkhost.dylib",NULL);
+
+		if (!FileUtils::IsFile(khost))
+		{
+			char msg[MAX_PATH];
+			sprintf(msg,"Couldn't find required file: %s",khost.c_str());
+			KR_FATAL_ERROR(msg);
+			return __LINE__;
+		}
+
+		void* lib = dlopen(khost.c_str(), RTLD_LAZY | RTLD_GLOBAL);
+		if (!lib)
+		{
+			char msg[MAX_PATH];
+			sprintf(msg,"Couldn't load file: %s, error: %s",khost.c_str(),dlerror());
+			KR_FATAL_ERROR(msg);
 			[pool release];
 			return __LINE__;
 		}
-		moduleList << moduleDir << ":";
+		Executor *executor = (Executor*)dlsym(lib, "Execute");
+		if (!executor)
+		{
+			char msg[MAX_PATH];
+			sprintf(msg,"Invalid entry point for: %s",khost.c_str());
+			KR_FATAL_ERROR(msg);
+			[pool release];
+			return __LINE__;
+		}
+
+		rc = executor(argc,(const char**)argv);
 	}
-	
-	// NOTE: we use putenv explicitly because we use getenv in host
-	
-	setenv("KR_HOME", homedir.c_str(),1);
-	setenv("KR_RUNTIME",runtimePath.c_str(),1);
-	setenv("KR_MODULES",moduleList.str().c_str(),1);
-	setenv("KR_RUNTIME_HOME",runtimeBasedir.c_str(),1);
-	
-	// now we need to load the host and get 'er booted
-	std::string khost = FileUtils::Join(runtimePath.c_str(),"libkhost.dylib",NULL);
-	
-	if (!FileUtils::IsFile(khost))
-	{
-		char msg[MAX_PATH];
-		sprintf(msg,"Couldn't find required file: %s",khost.c_str());
-		KR_FATAL_ERROR(msg);
-		return __LINE__;
-	}
-	
-	NSString *cwd = [[NSFileManager defaultManager]currentDirectoryPath];
-	[[NSFileManager defaultManager]changeCurrentDirectoryPath:[NSString stringWithCString:runtimePath.c_str()]];
-	void* lib = dlopen(khost.c_str(), RTLD_LAZY | RTLD_GLOBAL);
-	[[NSFileManager defaultManager]changeCurrentDirectoryPath:cwd];
-	if (!lib)
-	{
-		char msg[MAX_PATH];
-		sprintf(msg,"Couldn't load file: %s, error: %s",khost.c_str(),dlerror());
-		KR_FATAL_ERROR(msg);
-		[pool release];
-		return __LINE__;
-	}
-	Executor *executor = (Executor*)dlsym(lib, "Execute");
-	if (!executor)
-	{
-		char msg[MAX_PATH];
-		sprintf(msg,"Invalid entry point for: %s",khost.c_str());
-		KR_FATAL_ERROR(msg);
-		[pool release];
-		return __LINE__;
-	}
-	
-	int rc = executor(argc,(const char**)argv);
-#ifdef DEBUG
-	std::cout << "return code: " << rc << std::endl;
-#endif
+	#ifdef DEBUG
+		std::cout << "return code: " << rc << std::endl;
+	#endif
 	[pool release];
 	return rc;
 }

@@ -6,7 +6,7 @@ Import('build')
 Env = build.env.Clone()
 Env.Append(CPPDEFINES=('KROLL_HOST_EXPORT',1))
 Env.Append(FRAMEWORKS=['Cocoa'])
-build.add_thirdparty(Env, 'poco')
+build.add_thirdparty(Env, 'poco',True)
 
 Env.Append(LIBS=['kroll'])
 
