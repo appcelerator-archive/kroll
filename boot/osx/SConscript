@@ -1,0 +1,15 @@
+#!/usr/bin/env python
+import os, os.path as path
+Import('build')
+
+Env = build.env.Clone()
+Env.Append(CPPDEFINES=['USE_NO_EXPORT=1','NO_UNZIP=1'])
+Env.Append(CPPPATH=[path.join(build.kroll_source_dir,'api')])
+
+fo = os.path.join(build.dir,'file_utils_boot.o')
+sources = ['main.mm', fo]
+Env.Append(FRAMEWORKS=['Cocoa','IOKit'])
+Env.Append(LIBS=['dl'])
+
+o = Env.Object(target = fo, source = '../api/file_utils.cpp')
+p = Env.Program(build.dir + '/kboot', sources)

@@ -4,9 +4,13 @@ import os, os.path as path
 Import('build')
 
 Env = build.env.Clone()
-Env.Append(LIBS=['kroll'])
 Env.Append(CPPPATH = ['#.'])
 Env.Append(CPPDEFINES=('KROLL_API_API_EXPORT', 1))
-build.add_thirdparty(Env, 'poco')
-    
+
+if build.is_osx():
+	build.add_thirdparty(Env, 'poco', True)
+	Env.Append(LIBS=['kroll'])
+else:
+	build.add_thirdparty(Env, 'poco')
+	    
 Env.SharedLibrary(build.dir + '/apimodule', Glob('*.cpp'))

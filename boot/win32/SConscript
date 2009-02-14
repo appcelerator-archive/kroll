@@ -7,13 +7,13 @@ Env.Append(CPPDEFINES=['USE_NO_EXPORT=1','NO_UNZIP=1'])
 Env.Append(CPPPATH=['#common/win32','#common',path.join(build.kroll_source_dir,'api')])
 Env.Append(LIBS=['kernel32','shell32','user32','advapi32'])
 Env.Append(CCFLAGS=['/O2','/GL','/FD','/EHsc','/MD','/W3','/Wp64','/Zi','/TP'])
-Env.Append(LINKFLAGS=['/MANIFEST','/MANIFESTFILE:build\\win32\\boot.exe.intermediate.manifest','/OPT:REF','/OPT:ICF','/LTCG','/MACHINE:X86'])
-
-if ARGUMENTS.get('debug', 0):
-	Env.Append(LINKFLAGS = ['/SUBSYSTEM:CONSOLE'])
+if ARGUMENTS.get('debug', 0) or ARGUMENTS.get('console',0):
+	Env.Append(LINKFLAGS=['/MANIFEST','/MANIFESTFILE:build\\win32\\boot.exe.intermediate.manifest','/SUBSYSTEM:CONSOLE','/OPT:REF','/OPT:ICF','/LTCG','/MACHINE:X86'])	
+	Env.Append(CPPDEFINES=['WIN32_CONSOLE=1'])
 else:
-	Env.Append(LINKFLAGS = ['/SUBSYSTEM:WINDOWS'])
+	Env.Append(LINKFLAGS=['/MANIFEST','/MANIFESTFILE:build\\win32\\boot.exe.intermediate.manifest','/SUBSYSTEM:WINDOWS','/OPT:REF','/OPT:ICF','/LTCG','/MACHINE:X86'])
 
+	
 fo = os.path.join(build.dir,'file_utils_boot.o')
 o = Env.Object(target = fo, source = path.join(build.kroll_source_dir,'api','file_utils.cpp'))
 
