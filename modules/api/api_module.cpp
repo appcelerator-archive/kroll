@@ -16,12 +16,12 @@ namespace kroll
 	void APIModule::Initialize()
 	{
 		binding = new APIBinding(host->GetGlobalObject());
-		host->GetGlobalObject()->SetObject("api", binding);
+		host->GetGlobalObject()->SetObject("API", binding);
 	}
 
 	void APIModule::Stop()
 	{
-		host->GetGlobalObject()->Set("api", Value::Undefined);
+		host->GetGlobalObject()->Set("API", Value::Undefined);
 	}
 
 	void APIModule::Test()

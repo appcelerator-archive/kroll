@@ -26,11 +26,11 @@ namespace kroll
 
 		// these are convenience methods so you can do:
 		//
-		// Titanium.api.debug("hello")
+		// Titanium.API.debug("hello")
 		//
 		// or
 		//
-		// Titanium.api.log(Titanium.api.DEBUG,"hello")
+		// Titanium.API.log(Titanium.API.DEBUG,"hello")
 		//
 		this->SetMethod("debug", &APIBinding::_LogDebug);
 		this->SetMethod("info", &APIBinding::_LogInfo);
@@ -168,6 +168,7 @@ namespace kroll
 	{
 		std::string event = args.at(0)->ToString();
 		BoundMethod* method = args.at(1)->ToMethod();
+
 		int id = this->Register(event, method);
 		result->SetInt(id);
 	}
@@ -217,7 +218,6 @@ namespace kroll
 	{
 		ScopedLock lock(&mutex);
 		int record = GetNextRecord();
-
 		/* Fetch the records for this event. If the EventRecords
 		 * doesn't exist in registrations, the STL map
 		 * implementation will insert it into the map */
@@ -267,6 +267,7 @@ namespace kroll
 	{
 		//TODO: might want to be a little more lenient on how we lock here
 		ScopedLock lock(&mutex);
+
 		EventRecords records = this->registrations[event];
 		if (records.size() > 0)
 		{

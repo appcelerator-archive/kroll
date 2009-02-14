@@ -58,7 +58,7 @@ namespace kroll
 	{
 		std::string msg("hello");
 		int severity = KR_LOG_DEBUG;
-		
+
 		SharedPtr<APIBinding> api = binding.cast<APIBinding>();
 
 		SharedValue logMethodValue = binding->Get("log");
@@ -83,7 +83,7 @@ namespace kroll
 		KR_ASSERT(v->ToInt() == vr->ToInt());
 
 		// TEST retrieving the value from a namespaced string
-		SharedValue foo = host->GetGlobalObject()->GetNS("api.foo");
+		SharedValue foo = host->GetGlobalObject()->GetNS("API.foo");
 		KR_ASSERT(foo->ToInt()==1);
 
 		// TEST registering an event handler and then receiving it
@@ -108,7 +108,7 @@ namespace kroll
 		api->Fire(event,data);
 		KR_ASSERT_STR(testObject->Event().c_str(),"");
 		KR_ASSERT_STR(testObject->Message().c_str(),"");
-		
+
 		// TEST basic list implementation
 		{
 			SharedBoundList l = new StaticBoundList();
