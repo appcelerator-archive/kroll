@@ -14,6 +14,9 @@
 #include <algorithm>
 #endif
 
+#ifdef USE_NO_EXPORT
+#define KROLL_API
+#else
 #if defined(OS_OSX) || defined(OS_LINUX)
 #define EXPORT __attribute__((visibility("default")))
 #define KROLL_API EXPORT
@@ -24,6 +27,7 @@
 #  define KROLL_API __declspec(dllimport)
 # endif
 # define EXPORT __declspec(dllexport)
+#endif
 #endif
 
 #ifdef OS_WIN32
