@@ -110,7 +110,6 @@ struct Module
 			void* r = dlopen(lib.c_str(), RTLD_LAZY | RTLD_GLOBAL);
 			if (r == NULL)
 				throw std::string("Couldn't load required library: ") + lib;
-			std::cout << "loaded" << std::endl;
 		}
 	}
 };
@@ -299,7 +298,6 @@ class Boot
 		if (FileUtils::IsDirectory(path))
 			return path;
 
-		printf("unresolved: %s\n", m->name.c_str());
 		return std::string(); // We couldn't resolve this module!
 	}
 
@@ -323,7 +321,6 @@ class Boot
 		if (FileUtils::IsDirectory(this->bundled_installer_module_path))
 			return this->bundled_installer_module_path;
 
-		printf("unresolved: %s\n", m->path.c_str());
 		return std::string(); // We couldn't resolve this module!
 	}
 
@@ -421,7 +418,6 @@ int main(int argc, const char* argv[])
 		std::vector<Module*> missing = boot.FindModules();
 		if (missing.size() > 0)
 		{
-			printf("found missing: %i\n", missing.size());
 			boot.RunAppInstaller(missing);
 			missing = boot.FindModules();
 		}
