@@ -110,6 +110,7 @@ struct Module
 			void* r = dlopen(lib.c_str(), RTLD_LAZY | RTLD_GLOBAL);
 			if (r == NULL)
 				throw std::string("Couldn't load required library: ") + lib;
+			std::cout << "loaded" << std::endl;
 		}
 	}
 };
@@ -122,14 +123,17 @@ class Boot
 	std::string rt_path;
 	std::string app_name;
 	std::string app_id;
+	std::string installer_path;
 
 	/* Potential paths for installed modules and runtime */
 	std::vector<std::string> module_paths;
 	std::vector<std::string> rt_paths;
 
-	/* Path for bundled modules and runtime */
+	/* Paths for bundled modules and runtime */
 	std::string bundled_module_path;
 	std::string bundled_rt_path;
+	std::string bundled_installer_module_path;
+	std::string bundled_installer_rt_path;
 
 	/* Modules requested by the manifest */
 	std::vector<Module*> modules;
@@ -137,13 +141,7 @@ class Boot
 
 	std::map<std::string, void*> loaded_libraries;
 
-	Boot() :
-		app_path(""),
-		manifest_path(""),
-		rt_path(""),
-		app_name(""),
-		app_id(""),
-		rt_module(NULL)
+	Boot() : rt_module(NULL)
 	{
 	}
 
@@ -182,21 +180,31 @@ class Boot
 			          << rt_path << "), but charging ahead anyhow."
 			          << std::endl;
 		}
+		else
+		{
+			// Later this will be a list of usual locations that
+			// modules might be installed. For now it is the default
+			// runtime location.
+			const char* crt_path = this->rt_path.c_str();
+			std::string rt_module_path =
+				 FileUtils::Join(crt_path, MODULE_DIR, NULL);
+			this->module_paths.push_back(rt_module_path);
 
-		const char* crt_path = this->rt_path.c_str();
+			std::string rt_rt_path =
+				 FileUtils::Join(crt_path, RUNTIME_DIR, "linux", NULL);
+			this->rt_paths.push_back(rt_module_path);
+
+		}
+
 		this->bundled_module_path = FileUtils::Join(capp_path, MODULE_DIR, NULL);
 		this->bundled_rt_path = FileUtils::Join(capp_path, RUNTIME_DIR, NULL);
 
-		// Later this will be a list of usual locations that
-		// modules might be installed. For now it is the default
-		// runtime location.
-		std::string rt_module_path =
-			 FileUtils::Join(crt_path, MODULE_DIR, NULL);
-		this->module_paths.push_back(rt_module_path);
-
-		std::string rt_rt_path =
-			 FileUtils::Join(crt_path, RUNTIME_DIR, "linux", NULL);
-		this->rt_paths.push_back(rt_module_path);
+		// The installer directory contains the package installer and bundled
+		// runtime / modules may also reside there. These locations have a lower
+		// priority than all other locations.
+		this->installer_path = kroll::FileUtils::Join(capp_path, "installer", NULL);
+		this->bundled_installer_module_path = FileUtils::Join(installer_path.c_str(), MODULE_DIR, NULL);
+		this->bundled_installer_rt_path = FileUtils::Join(installer_path.c_str(), RUNTIME_DIR, NULL);
 	}
 
 	void ReadApplicationManifest()
@@ -252,7 +260,8 @@ class Boot
 		std::vector<Module*> unresolved;
 
 		// Find the runtime module
-		if (!this->FindRuntime(this->rt_module))
+		this->rt_module->path = this->FindRuntime(this->rt_module);
+		if (this->rt_module->path.empty())
 			unresolved.push_back(this->rt_module);
 
 		// Find all regular modules
@@ -260,51 +269,62 @@ class Boot
 		while (i != modules.end())
 		{
 			Module* m = *i++;
-			if (!this->FindRegularModule(m))
-			{
+			m->path = this->FindModule(m);
+			if (m->path.empty())
 				unresolved.push_back(m);
-			}
 		}
 
 		return unresolved;
 	}
 
-	bool FindRegularModule(Module *m)
-	{
-		return this->FindModule(m, this->bundled_module_path, this->module_paths);
-	}
-
-	bool FindRuntime(Module *m)
-	{
-		return this->FindModule(m, this->bundled_rt_path, this->rt_paths);
-	}
-
-	bool FindModule(
-		Module* module,
-		std::string& bundled_path,
-		std::vector<std::string>& installed_paths)
+	std::string FindModule(Module *m)
 	{
 		// Try to find the bundled version of this module.
-		std::string path = FileUtils::Join(bundled_path.c_str(), module->name.c_str(), NULL);
+		std::string path = FileUtils::Join(this->bundled_module_path.c_str(), m->name.c_str(), NULL);
 		if (FileUtils::IsDirectory(path))
-		{
-			module->path = path;
-			return true;
-		}
+			return path;
 
 		// Search all possible installed paths.
-		std::vector<std::string>::iterator i = installed_paths.begin();
-		while (i != installed_paths.end())
+		std::vector<std::string>::iterator i = module_paths.begin();
+		while (i != module_paths.end())
 		{
-			std::string result = FileUtils::FindVersioned(*i, module->op, module->version);
+			std::string p = *i++;
+			std::string result = FileUtils::FindVersioned(p, m->op, m->version);
 			if (!result.empty())
-			{
-				module->path = path;
-				return true;
-			}
+				return path;
 		}
 
-		return false; // We couldn't resolve this module!
+		// Try to find this module bundled with the installer
+		path = FileUtils::Join(this->bundled_installer_module_path.c_str(), m->name.c_str(), NULL);
+		if (FileUtils::IsDirectory(path))
+			return path;
+
+		printf("unresolved: %s\n", m->name.c_str());
+		return std::string(); // We couldn't resolve this module!
+	}
+
+	std::string FindRuntime(Module *m)
+	{
+		// Try to find the bundled version of this module.
+		if (FileUtils::IsDirectory(this->bundled_rt_path))
+			return this->bundled_rt_path;
+
+		// Search all possible installed paths.
+		std::vector<std::string>::iterator i = this->rt_paths.begin();
+		while (i != this->rt_paths.end())
+		{
+			std::string p = *i++;
+			std::string result = FileUtils::FindVersioned(p, m->op, m->version);
+			if (!result.empty())
+				return *i;
+		}
+
+		// Try to find this module bundled with the installer
+		if (FileUtils::IsDirectory(this->bundled_installer_module_path))
+			return this->bundled_installer_module_path;
+
+		printf("unresolved: %s\n", m->path.c_str());
+		return std::string(); // We couldn't resolve this module!
 	}
 
 	std::string PrepModules()
@@ -323,173 +343,70 @@ class Boot
 				throw std::string("Could not find module: ") + m->name;
 
 			m->Prep();
-			moduleList << m->path << ";";
+			moduleList << m->path << ":";
 		}
 
 		return moduleList.str();
 	}
 
-	//bool RunAppInstallerIfNeeded(std::string &homedir,
-	//					 std::string &manifest,
-	//					 std::vector< std::pair< std::pair<std::string,std::string>,bool> > &modules,
-	//					 std::vector<std::string> &moduleDirs,
-	//					 std::string &appname,
-	//					 std::string &appid,
-	//					 std::string &runtimeOverride)
-    //{
-	//std::string runtimePath = this->rt_path;
+	void RunAppInstaller(std::vector<Module*> missing)
+    {
+		// If we don't have an installer directory, just bail...
+		const char* ci_path = this->installer_path.c_str();
+		std::string installer = kroll::FileUtils::Join(ci_path, "installer", NULL);
+		if (!FileUtils::IsDirectory(this->installer_path) || !FileUtils::IsFile(installer))
+		{
+			throw std::string("Missing installer and application has additional modules that are needed.");
+		}
 
-	//bool result = true;
-	//std::vector< std::pair<std::string,std::string> > missing;
-	//std::vector< std::pair< std::pair<std::string,std::string>, bool> >::iterator i = modules.begin();
-	//while(i!=modules.end())
-	//{
-	//	std::pair< std::pair<std::string,std::string>,bool> p = (*i++);
-	//	if (!p.second)
-	//	{
-	//		missing.push_back(p.first);
-    //#ifdef DEBUG
-	//		std::cout << "missing module: " << p.first.first << "/" << p.first.second <<std::endl;
-    //#endif
-	//	}
-	//}
-	//// this is where kroll should be installed
-	//std::string runtimeBase = kroll::FileUtils::GetRuntimeBaseDirectory();
+		std::string temp_dir = kroll::FileUtils::GetTempDirectory();
+		std::string sid = kroll::FileUtils::GetMachineId();
+		std::string os = OS_NAME;
+		std::string qs("?os="+os+"&sid="+sid+"&aid="+this->app_id);
 
-	//if (missing.size()>0)
-	//{
-	//	// if we don't have an installer directory, just bail...
-	//	std::string installerDir = kroll::FileUtils::Join(homedir.c_str(),"installer",NULL);
+		// Install to default runtime directory. At some point
+		// net_installer will decide where to install (for Loonix)
+		std::string install_to = this->rt_path;
+		kroll::FileUtils::CreateDirectory(install_to);
 
-	//	std::string sourceTemp = kroll::FileUtils::GetTempDirectory();
-	//	std::vector<std::string> args;
-	//	// appname
-	//	args.push_back(appname);
-	//	// title
-	//	//I18N: localize these
-	//	args.push_back("Additional application files required");
-	//	// message
-	//	//I18N: localize these
-	//	args.push_back("There are additional application files that are required for this application. These will be downloaded from the network. Please press Continue to download these files now to complete the installation of the application.");
-	//	// extract directory
-	//	args.push_back(sourceTemp);
-	//	// runtime base
-	//	args.push_back(runtimeBase);
-	//	// in Win32 installer, we push the path to this process so he can
-	//	// invoke back on us to do the unzip
-	//	args.push_back(GetExecutablePath());
+		// Figure out the update site URL
+		std::string url;
+		if (strlen(BOOT_UPDATESITE_URL))
+			url = std::string(BOOT_UPDATESITE_URL);
+		char* env_site = getenv(BOOT_UPDATESITE_ENVNAME);
+		if (env_site != NULL)
+			url = std::string(env_site);
 
-	//	// make sure we create our runtime directory
-	//	kroll::FileUtils::CreateDirectory(runtimeBase);
+		if (url.empty())
+		{
+			kroll::FileUtils::DeleteDirectory(temp_dir); // Clean up
+			throw std::string("Modules missing and could not find a download site.");
+		}
 
-	//	char updatesite[MAX_PATH];
-	//	int size = GetEnvironmentVariable(BOOT_UPDATESITE_ENVNAME,(char*)&updatesite,MAX_PATH);
-	//	updatesite[size]='\0';
-	//	std::string url;
-	//	if (size == 0)
-	//	{
-	//		const char *us = BOOT_UPDATESITE_URL;
-	//		if (strlen(us)>0)
-	//		{
-	//			url = std::string(us);
-	//		}
-	//	}
-	//	else
-	//	{
-	//		url = std::string(updatesite);
-	//	}
-	//	
-	//	if (!url.empty())
-	//	{
-	//		std::string sid = kroll::FileUtils::GetMachineId();
-	//		std::string os = OS_NAME;
-	//		std::string qs("?os="+os+"&sid="+sid+"&aid="+appid);
-	//		std::vector< std::pair<std::string,std::string> >::iterator iter = missing.begin();
-	//		int missingCount = 0;
-	//		while (iter!=missing.end())
-	//		{
-	//			std::pair<std::string,std::string> p = (*iter++);
-	//			std::string name;
-	//			std::string path;
-	//			bool found = false;
-	//			if (p.first == "runtime")
-	//			{
-	//				name = "runtime-" + os + "-" + p.second;
-	//				// see if we have a private runtime installed and we can link to that
-	//				path = kroll::FileUtils::Join(installerDir.c_str(),"runtime",NULL);
-	//				if (kroll::FileUtils::IsDirectory(path))
-	//				{
-	//						found = true;
-	//						runtimePath = path;
-	//				}
-	//			}
-	//			else
-	//			{
-	//				name = "module-" + p.first + "-" + p.second;
-	//				// see if we have a private module installed and we can link to that
-	//				path = kroll::FileUtils::Join(installerDir.c_str(),"modules",p.first.c_str(),NULL);
-	//				if (kroll::FileUtils::IsDirectory(path))
-	//				{
-	//					found = true;
-	//				}
-	//			}
-	//			if (found)
-	//			{
-	//				moduleDirs.push_back(path);
-	//			}
-	//			else
-	//			{
-	//				std::string u(url);
-	//				u+="/";
-	//				u+=name;
-	//				u+=".zip";
-	//				u+=qs;
-	//				args.push_back(u);
-	//				missingCount++;
-	//			}
-	//		}
+		//I18N: localize here
+		std::vector<std::string> args;
+		args.push_back(this->app_name); // appname
+		args.push_back("Additional application files required"); // title
+		args.push_back("There are additional application files that are required for this application. These will be downloaded from the network. Please press Continue to download these files now to complete the installation of the application."); // intro
+		args.push_back(temp_dir); // temp dir
+		args.push_back(install_to); // where to install
+		args.push_back("unused"); // unused unzip var
 
-	//		// we have to check again in case the private module/runtime was
-	//		// resolved inside the application folder
-	//		if (missingCount>0)
-	//		{
-	//			// run the installer app which will fetch remote modules/runtime for us
-	//			std::string exec = kroll::FileUtils::Join(installerDir.c_str(),"Installer.exe",NULL);
+		std::vector<Module*>::iterator mi = missing.begin();
+		while (mi != missing.end())
+		{
+			Module* mod = *mi++;
+#ifdef DEBUG
+			std::cout << "Trying to install: " << mod->name << "/" << mod->version <<std::endl;
+#endif
+			std::string mod_url = url + "/" + mod->name + ".zip" + qs;
+			args.push_back(mod_url);
+		}
 
-	//			// paranoia check
-	//			if (kroll::FileUtils::IsFile(exec))
-	//			{
-	//				// run and wait for it to exit..
-	//				kroll::FileUtils::RunAndWait(exec,args);
+		kroll::FileUtils::RunAndWait(installer, args);
+		kroll::FileUtils::DeleteDirectory(temp_dir);
+	}
 
-	//				modules.clear();
-	//				moduleDirs.clear();
-	//				bool success = kroll::FileUtils::ReadManifest(manifest,runtimePath,modules,moduleDirs,appname,appid,runtimeOverride);
-	//				if (!success || modules.size()!=moduleDirs.size())
-	//				{
-	//					// must have failed
-	//					// no need to error has installer probably was cancelled
-	//					result = false;
-	//				}
-	//			}
-	//			else
-	//			{
-	//				// something crazy happened
-	//				result = false;
-	//				KR_FATAL_ERROR("Missing installer and application has additional modules that are needed.");
-	//			}
-	//		}
-	//	}
-	//	else
-	//	{
-	//		result = false;
-	//		KR_FATAL_ERROR("Missing installer and application has additional modules that are needed. Not updatesite has been configured.");
-	//	}
-	//	
-	//	// unlink the temporary directory
-	//	kroll::FileUtils::DeleteDirectory(sourceTemp);
-	//}
-	//return result;
 };
 
 int main(int argc, const char* argv[])
@@ -502,13 +419,20 @@ int main(int argc, const char* argv[])
 		boot.ParseManifest();
 
 		std::vector<Module*> missing = boot.FindModules();
+		if (missing.size() > 0)
+		{
+			printf("found missing: %i\n", missing.size());
+			boot.RunAppInstaller(missing);
+			missing = boot.FindModules();
+		}
 
-	// run the app installer if any missing modules/runtime or
-	// version specs not met
-	//if (!RunAppInstallerIfNeeded(homedir,runtimePath,manifest,modules,moduleDirs,appname,appid,runtimeOverride))
-	//{
-	//	return __LINE__;
-	//}
+		if (missing.size() > 0)
+		{
+			// Don't throw an error here, because the module installer
+			// would have thrown an exception on an error, so the user
+			// must have cancelled.
+			return __LINE__;
+		}
 
 		// PropModules also ensure all modules have been found
 		std::string module_list = boot.PrepModules();
@@ -532,7 +456,7 @@ int main(int argc, const char* argv[])
 		putenv(strdup(krruntimehome.str().c_str()));
 
 		// now we need to load the host and get 'er booted
-		std::string khost = FileUtils::Join(boot.rt_module->path.c_str(), "khost.so", NULL);
+		std::string khost = FileUtils::Join(boot.rt_module->path.c_str(), "libkhost.so", NULL);
 		if (!FileUtils::IsFile(khost))
 		{
 			throw std::string("Couldn't find required file: ") + khost;
@@ -541,7 +465,7 @@ int main(int argc, const char* argv[])
 		void* khost_lib = dlopen(khost.c_str(), RTLD_LAZY | RTLD_GLOBAL);
 		if (!khost_lib)
 		{
-			throw std::string("Couldn't load file: ") + khost;
+			throw std::string("Couldn't load host shared-object: ") + dlerror();
 		}
 		Executor* executor = (Executor*) dlsym(khost_lib, "Execute");
 		if (!executor)
@@ -558,7 +482,7 @@ int main(int argc, const char* argv[])
 	}
 	catch (std::string& e)
 	{
-		// Handle exceptions here
+		std::cout << e << std::endl;
 	}
 }
 
