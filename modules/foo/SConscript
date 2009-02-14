@@ -3,6 +3,5 @@ Import('build')
 
 env = build.env.Clone()
 build.add_thirdparty(env, 'poco')
-env.Append(LIBS = ['kroll'])
 
 env.SharedLibrary(build.dir + '/foomodule', Glob('*.cpp'))
