@@ -64,6 +64,9 @@ namespace kroll
 			std::cerr << "KR_MODULES not defined, aborting." << std::endl;
 			exit(1);
 		}
+#ifdef DEBUG
+		std::cout << ">>> KR_MODULES=" << paths << std::endl;
+#endif
 
 		FileUtils::Tokenize(paths, this->module_paths, KR_LIB_SEP);
 

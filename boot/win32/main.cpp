@@ -88,6 +88,19 @@ std::string GetDirectory(std::string &path)
 	}
 	return ".";
 }
+std::string GetModuleName(std::string &path)
+{
+	size_t i = path.rfind("\\");
+	if (i != std::string::npos)
+	{
+		size_t x = path.rfind("\\",i-1);
+		if (x != std::string::npos)
+		{
+			return path.substr(x+1,i-x-1);
+		}
+	}
+	return path;
+}
 std::string GetExecutableDir()
 {
 	std::string exec = GetExecutablePath();
@@ -278,7 +291,7 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 
 std::map<std::string,HMODULE> LoadedLibraries;
 
-bool ResolveManifest(std::string &dir, bool required=true)
+bool ResolveManifest(std::string &dir, std::string &localdir, bool required=true)
 {
 	std::string fn = FileUtils::Join(dir.c_str(),"manifest",NULL);
 	std::ifstream file(fn.c_str());
@@ -306,7 +319,11 @@ bool ResolveManifest(std::string &dir, bool required=true)
 		{
 			continue;
 		}
-		std::string library = FileUtils::Join(dir.c_str(),libname.c_str(),NULL);
+		std::string library = FileUtils::Join(localdir.c_str(),libname.c_str(),NULL);
+		if (!FileUtils::IsFile(library))
+		{
+			library = FileUtils::Join(dir.c_str(),libname.c_str(),NULL);
+		}
 #ifdef DEBUG
 		std::cout << "Attempting to load: " << library << std::endl;
 #endif
@@ -373,7 +390,8 @@ int main(int _argc, const char* _argv[])
 		return __LINE__;
 	}
 
-	if (!ResolveManifest(runtimePath))
+	std::string localRuntime = FileUtils::Join(homedir.c_str(),"runtime",NULL);
+	if (!ResolveManifest(runtimePath,localRuntime))
 	{
 		return __LINE__;
 	}
@@ -384,24 +402,13 @@ int main(int _argc, const char* _argv[])
 	std::ostringstream moduleList;
 
 	// we now need to resolve and load each module and dependencies
-	ModuleList::iterator i = modules.begin();
-	while (i!=modules.end())
+	std::vector<std::string>::iterator i = moduleDirs.begin();
+	while (i!=moduleDirs.end())
 	{
-		std::pair< std::pair<std::string,std::string>,bool> entry = (*i++);
-		std::string module = entry.first.first;
-		std::string moduleDir = FileUtils::Join(moduleLocalDir.c_str(),module.c_str(),NULL);
-		if (!FileUtils::IsDirectory(moduleDir))
-		{
-			moduleDir = FileUtils::Join(moduleBasedir.c_str(),moduleDir.c_str(),entry.first.second.c_str(),NULL);
-			if (!FileUtils::IsDirectory(moduleDir))
-			{
-				char msg[MAX_PATH];
-				sprintf_s(msg,"Couldn't find module directory: %s",moduleDir.c_str());
-				KR_FATAL_ERROR(msg);
-				return __LINE__;
-			}
-		}
-		if (!ResolveManifest(moduleDir,false))
+		std::string moduleDir = (*i++);
+		std::string moduleName = GetModuleName(moduleDir);
+		std::string localModule = FileUtils::Join(homedir.c_str(),"modules",moduleName.c_str(),NULL);
+		if (!ResolveManifest(moduleDir,localModule,false))
 		{
 			return __LINE__;
 		}

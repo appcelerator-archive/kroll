@@ -680,8 +680,17 @@ namespace kroll
 					modules.push_back(std::pair< std::pair<std::string,std::string>, bool>(p,found));
 					if (found)
 					{
+#ifdef DEBUG
+						std::cout << "found module at: " << dir << std::endl;
+#endif
 						moduleDirs.push_back(dir);
 					}
+#ifdef DEBUG
+					else
+					{
+						std::cerr << "couldn't find module module: " << key  << "/" << version << std::endl;
+					}
+#endif
 				}
 			}
 		}
