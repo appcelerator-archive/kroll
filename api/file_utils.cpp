@@ -771,26 +771,54 @@ namespace kroll
 #endif
 		return system(p.c_str());
 #elif defined(OS_WIN32)
-		const char **argv = new const char*[args.size() > 0 ? args.size() : 2];
+		std::ostringstream ostr;
+		ostr << path.c_str();
 		if (args.size() > 0 )
 		{
-			argv = new const char*[args.size()+1];
 			std::vector<std::string>::iterator i = args.begin();
 			int idx = 0;
 			while (i!=args.end())
 			{
-				argv[idx++] = (*i++).c_str();
+				// we need to quote each argument
+				ostr << " \"" << (*i++).c_str() << "\"";
 			}
-			argv[idx]=NULL;
+		}
+		DWORD rc=0;
+		STARTUPINFO si;
+		PROCESS_INFORMATION pi;
+		ZeroMemory( &si, sizeof(si) );
+		si.cb = sizeof(si);
+		ZeroMemory( &pi, sizeof(pi) );
+		char buf[MAX_PATH];
+		DWORD size = GetCurrentDirectory(MAX_PATH,(char*)buf);
+		buf[size]='\0';
+		if (!CreateProcess( NULL,   // No module name (use command line)
+							(char*)ostr.str().c_str(), // Command line
+							NULL,           // Process handle not inheritable
+							NULL,           // Thread handle not inheritable
+							FALSE,          // Set handle inheritance to FALSE
+							0,              // No creation flags
+							NULL,           // Use parent's environment block
+							(char*)buf,		// Use parent's starting directory 
+							&si,            // Pointer to STARTUPINFO structure
+							&pi )           // Pointer to PROCESS_INFORMATION structure
+		) 
+		{
+			rc = -1;
 		}
 		else
 		{
-			// spawn requires the path to be in the first argv
-			argv[0]=path.c_str();
-			argv[1]=NULL;
+			// Wait until child process exits.
+			WaitForSingleObject( pi.hProcess, INFINITE );
+
+			// set the exit code 
+			GetExitCodeProcess(pi.hProcess,&rc);
+
+			// Close process and thread handles. 
+			CloseHandle( pi.hProcess );
+			CloseHandle( pi.hThread );
 		}
-		int rc = _spawnvp(_P_WAIT, path.c_str(), argv);
-		if (argv) delete[] argv;
+
 		return rc;
 #endif
 	}
