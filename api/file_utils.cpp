@@ -24,6 +24,34 @@
 #include <sstream>
 #include <cstring>
 
+const std::string ILLEGAL = "%<>{}|\\\"^`";
+static std::string safe_encode(std::string &str)
+{
+	std::string encodedStr;
+	for (std::string::const_iterator it = str.begin(); it != str.end(); ++it)
+	{
+		char c = *it;
+		if (c >= 'a' && c <= 'z' || 
+		    c >= 'A' && c <= 'Z' || 
+		    c >= '0' && c <= '9' ||
+		    c == '-' || c == '_' || 
+		    c == '.' || c == '~')
+		{
+			encodedStr += c;
+		}
+		else if (c == ' ')
+		{
+			encodedStr += c;
+		}
+		else if (c <= 0x20 || c >= 0x7F || ILLEGAL.find(c) != std::string::npos)
+		{
+			// skip these bad out of range characters ....
+		}
+		else encodedStr += c;
+	}
+	return encodedStr;
+}
+
 
 namespace kroll
 {
@@ -159,7 +187,9 @@ namespace kroll
 	{
 #ifdef OS_OSX
 		BOOL isDir = NO;
-		BOOL found = [[NSFileManager defaultManager] fileExistsAtPath:[NSString stringWithCString:file.c_str()] isDirectory:&isDir];
+		NSString *f = [NSString stringWithCString:file.c_str()];
+		NSString *p = [f stringByStandardizingPath];
+		BOOL found = [[NSFileManager defaultManager] fileExistsAtPath:p isDirectory:&isDir];
 		return found && !isDir;
 #elif OS_WIN32
 		WIN32_FIND_DATA findFileData;
@@ -246,6 +276,7 @@ namespace kroll
 #endif
 	}
 
+
 	std::string FileUtils::Join(const char* path, ...)
 	{
 		va_list ap;
@@ -256,7 +287,7 @@ namespace kroll
 		{
 			const char *i = va_arg(ap,const char*);
 			if (i == NULL) break;
-			parts.push_back(std::string(i));
+			parts.push_back(Trim(i));
 		}
 		va_end(ap);
 		std::string filepath;
@@ -272,7 +303,8 @@ namespace kroll
 		}
 #ifdef OS_OSX
 		NSString *s = [[NSString stringWithCString:filepath.c_str()] stringByExpandingTildeInPath];
-		return std::string([s fileSystemRepresentation]);
+		NSString *p = [s stringByStandardizingPath];
+		return std::string([p fileSystemRepresentation]);
 #else
 		return filepath;
 #endif
@@ -552,7 +584,7 @@ namespace kroll
 	}
 	std::string FileUtils::Trim(std::string str)
 	{
-		std::string c(str);
+		std::string c(safe_encode(str));
 		while (1)
 		{
 			size_t pos = c.rfind(" ");

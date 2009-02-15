@@ -283,6 +283,9 @@ namespace kroll
 		virtual void Stop ();
 
 		void AddInvalidModuleFile(std::string path);
+		char* SetupAppInstallerIfRequired(char *home);
+		char* SetupStartPageOverrideIfRequired(int argc, const char**argv);
+		const char* FindAppInstaller(char *home);
 
 	private:
 		std::string appDirectory;

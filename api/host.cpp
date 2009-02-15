@@ -69,12 +69,36 @@ namespace kroll
 #endif
 
 		FileUtils::Tokenize(paths, this->module_paths, KR_LIB_SEP);
+		
+		// check to see if we have to install the app
+		char *home = SetupAppInstallerIfRequired(ti_home);
+		
+		// check to see if we have a different starting point
+		char* start_page = SetupStartPageOverrideIfRequired(argc,argv);
+		if (start_page)
+		{
+			// will return non-NULL if we have a different home than
+			// the default
+			home = start_page;
+		}
+		
+		// change the KR_HOME environment if changed
+		if (strcmp(home,ti_home)!=0)
+		{
+#ifdef OS_WIN32
+			char env[MAX_PATH];
+			sprintf_s(env,"KR_HOME=\"%s\"",home);
+			_putenv(env);
+#else
+			setenv("KR_HOME",(const char*)home,1);
+#endif			
+		}
 
 
 		this->running = false;
 		this->exitCode = 0;
 
-		this->appDirectory = std::string(ti_home);
+		this->appDirectory = std::string(home);
 		this->runtimeDirectory = std::string(ti_runtime);
 		this->global_object = new StaticBoundObject();
 
@@ -105,6 +129,76 @@ namespace kroll
 
 	Host::~Host()
 	{
+	}
+	
+	char* Host::SetupStartPageOverrideIfRequired(int argc, const char**argv)
+	{
+		if (argc > 1)
+		{
+			for (int c=1;c<argc;c++)
+			{
+				std::string arg(argv[c]);
+				size_t i = arg.find("--start=");
+				if (i!=std::string::npos)
+				{
+					size_t i = arg.find("=");
+					return (char*)arg.substr(i+1).c_str();
+				}
+			}
+		}
+		return NULL;
+	}
+ 	const char* Host::FindAppInstaller(char *home)
+	{
+		std::string appinstaller = FileUtils::Join(home,"appinstaller",NULL);
+		if (FileUtils::IsDirectory(appinstaller))
+		{
+#ifdef DEBUG
+			std::cout << "Found app installer at: " << appinstaller << std::endl;
+#endif
+			return appinstaller.c_str();
+		}
+		char *runtime = getenv("KR_RUNTIME");
+		appinstaller = FileUtils::Join(runtime,"appinstaller",NULL);
+		if (FileUtils::IsDirectory(appinstaller))
+		{
+#ifdef DEBUG
+			std::cout << "Found app installer at: " << appinstaller << std::endl;
+#endif
+			return appinstaller.c_str();
+		}
+#ifdef DEBUG
+			std::cerr << "Couldn't find app installer" << std::endl;
+#endif
+		return NULL;
+	}
+	char* Host::SetupAppInstallerIfRequired(char *home)
+	{
+		std::string marker = FileUtils::Join(home,".installed",NULL);
+		if (!FileUtils::IsFile(marker))
+		{
+			// not yet installed, look for the app installer
+			const char *ai = FindAppInstaller(home);
+			if (ai)
+			{
+#ifdef OS_WIN32
+				char env[MAX_PATH];
+				sprintf_s(env,"KR_APP_INSTALL_FROM=\"%s\"",home);
+				_putenv((char*)env);
+#else
+				setenv("KR_APP_INSTALL_FROM",(const char*)home,1);
+#endif	
+				// make the app installer our new home so that the
+				// app installer will run and set the environment var
+				// to the special setting with the old home
+				std::string appinstaller = FileUtils::Trim(ai);
+				return (char*)appinstaller.c_str();
+			} 
+#ifdef DEBUG
+			std::cerr << "application needs installation but no app installer found" << std::endl;
+#endif
+		}
+		return home;
 	}
 
 	bool Host::IsDebugMode()
