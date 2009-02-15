@@ -77,7 +77,6 @@ namespace kroll
 
 	SharedValue KJSBoundMethod::Call(const ValueList& args)
 	{
-
 		JSValueRef* js_args = new JSValueRef[args.size()];
 		for (int i = 0; i < (int) args.size(); i++)
 		{
@@ -92,6 +91,7 @@ namespace kroll
 		                                             args.size(),
 		                                             js_args,
 		                                             &exception);
+		
 		delete [] js_args; // clean up args
 
 		if (js_value == NULL && exception != NULL) //exception thrown

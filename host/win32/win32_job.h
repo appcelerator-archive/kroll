@@ -15,6 +15,7 @@ namespace kroll
 	{
 		public:
 			Win32Job(SharedBoundMethod method, const ValueList& args);
+			virtual ~Win32Job();
 			void Lock();
 			void Wait();
 			void Execute();

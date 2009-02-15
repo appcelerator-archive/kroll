@@ -446,6 +446,7 @@ namespace kroll
 	                                const JSValueRef js_args[],
 	                                JSValueRef*      js_exception)
 	{
+
 		SharedBoundObject* method = (SharedBoundObject*) JSObjectGetPrivate(js_function);
 		if (method == NULL)
 			return JSValueMakeUndefined(js_context);

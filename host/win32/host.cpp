@@ -14,7 +14,7 @@
 using Poco::ScopedLock;
 using Poco::Mutex;
 
-#define WM_JOB_TICKLE_REQUEST WM_USER
+#define WM_JOB_TICKLE_REQUEST WM_USER+1
 
 namespace kroll
 {
@@ -110,25 +110,18 @@ namespace kroll
 	SharedValue Win32Host::InvokeMethodOnMainThread(SharedBoundMethod method,
                                                     const ValueList& args)
 	{
-		std::cout << "+++ INVOKE ON MAIN THREAD " << std::endl;
 		Win32Job* job = new Win32Job(method, args);
 		{
 			Poco::ScopedLock<Poco::Mutex> s(this->GetJobQueueMutex());
 			this->jobs.push_back(job); // Enqueue job
 		}
-		std::cout << "+++ INVOKE 1" << std::endl;
 		// send a message to tickle the windows message queue
 		PostThreadMessage(thread_id, WM_JOB_TICKLE_REQUEST, 0, 0);
-		std::cout << "+++ INVOKE 2" << std::endl;
 		job->Wait(); // Wait for processing
-		std::cout << "+++ INVOKE 3" << std::endl;
  
 		SharedValue r = job->GetResult();
-		std::cout << "+++ INVOKE 4" << std::endl;
 		ValueException e = job->GetException();
-		std::cout << "+++ INVOKE 5" << std::endl;
 		delete job;
-		std::cout << "+++ INVOKE 6" << std::endl;
  
 		if (!r.isNull())
 			return r;
@@ -138,28 +131,20 @@ namespace kroll
 
 	void Win32Host::InvokeMethods()
 	{
-std::cout << "+++ ENTER INVOKE METHODS " << std::endl;
-	
 		// Prevent other threads trying to queue jobs.
 		Poco::ScopedLock<Poco::Mutex> s(this->GetJobQueueMutex());
-std::cout << "+++ ENTER INVOKE METHODS 1" << std::endl;
 		std::vector<Win32Job*>& jobs = this->GetJobs();
-std::cout << "+++ ENTER INVOKE METHODS 2 = " << jobs.size() << std::endl;
  
 		if (jobs.size() == 0)
 			return;
 		
-std::cout << "+++ ENTER INVOKE METHODS 3" << std::endl;
 		std::vector<Win32Job*>::iterator j;
 		for (j = jobs.begin(); j != jobs.end(); j++)
 		{
-std::cout << "+++ BEFORE EXECUTE" << std::endl;
 			(*j)->Execute();
-std::cout << "+++ AFTER EXECUTE" << std::endl;
 		}
  
 		jobs.clear();
-std::cout << "+++ EXIT INVOKE METHODS " << std::endl;
 	}
 }
 

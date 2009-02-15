@@ -21,6 +21,10 @@ namespace kroll
 		// and the main thread can call set() after job execution
 		// which meets this condition.
 	}
+	
+	Win32Job::~Win32Job()
+	{
+	}
 
 	void Win32Job::Wait()
 	{
