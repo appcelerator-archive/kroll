@@ -240,7 +240,7 @@ namespace kroll
 		/*
 			Function: GetUsername
 		*/
-		static const char* GetUsername();
+		static std::string GetUsername();
 	
 	private:
 		FileUtils() {}

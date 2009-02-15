@@ -865,10 +865,10 @@ namespace kroll
 		return rc;
 #endif
 	}
-	const char* FileUtils::GetUsername()
+	std::string FileUtils::GetUsername()
 	{
 #ifdef OS_OSX
-		return [NSUserName() UTF8String];
+		return std::string([NSUserName() UTF8String]);
 #elif OS_WIN32
 		char buf[MAX_PATH];
 		DWORD size = MAX_PATH;
@@ -880,9 +880,9 @@ namespace kroll
 		{
 			sprintf(buf,"Unknown");
 		}
-		return std::string(buf).c_str();
+		return std::string(buf);
 #elif OS_LINUX
-		return getlogin();
+		return std::string(getlogin());
 #endif
 	}
 #ifndef NO_UNZIP

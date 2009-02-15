@@ -11,7 +11,11 @@
 #include <string>
 #include <vector>
 #include <windows.h>
-
+#include <Poco/ScopedLock.h>
+#include <Poco/Mutex.h>
+#include <Poco/Condition.h>
+#include "win32_job.h"
+ 
 #ifdef KROLL_HOST_EXPORT
 # define KROLL_HOST_API __declspec(dllexport)
 #else
@@ -39,13 +43,16 @@ namespace kroll
 	protected:
 		bool RunLoop();
 		bool Start();
+		Poco::Mutex& GetJobQueueMutex();
+		std::vector<Win32Job*>& GetJobs();
 
 	private:
 		HINSTANCE instance_handle;
 		static bool ole_initialized;
-		static std::vector<std::pair<SharedBoundMethod, ValueList> > methodsToInvoke;
 		void InvokeMethods();
 		DWORD thread_id;
+		Poco::Mutex job_queue_mutex;
+		std::vector<Win32Job*> jobs;
 	};
 }
 
