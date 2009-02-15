@@ -20,7 +20,9 @@ o = Env.Object(target = fo, source = path.join(build.kroll_source_dir,'api','fil
 #zo = os.path.join(build.dir,'unzip_boot.o')
 #o = Env.Object(target = zo, source = path.join(build.kroll_source_dir,'api','unzip','unzip.cpp'))
 
-sources = ['main.cpp', fo]
+resfile = Env.RES('winboot.rc')
+
+sources = ['main.cpp', resfile, fo]
 p = Env.Program(build.dir + '/kboot', sources)
 
 webkit_tp = path.join(build.third_party, 'webkit')
