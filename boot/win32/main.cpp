@@ -9,6 +9,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include "stdlib.h"
+#include <process.h>
 
 #include "file_utils.h"
 
@@ -288,63 +289,20 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 	}
 	return result;
 }
-
-std::map<std::string,HMODULE> LoadedLibraries;
-
-bool ResolveManifest(std::string &dir, std::string &localdir, bool required=true)
-{
-	std::string fn = FileUtils::Join(dir.c_str(),"manifest",NULL);
-	std::ifstream file(fn.c_str());
-	if (file.bad() || file.fail())
-	{
-		if (!required)
-		{
-			return true;
-		}
-		char msg[MAX_PATH];
-		sprintf_s(msg,"Couldn't find required module manifest: %s",fn.c_str());
-		KR_FATAL_ERROR(msg);
-		return false;
-	}
-	while (!file.eof())
-	{
-		std::string line;
-		std::getline(file,line);
-		if (line.empty() || line.find(" ")==0 || line.find("#")==0)
-		{
-			continue;
-		}
-		std::string libname(FileUtils::Trim(line));
-		if (libname.empty())
-		{
-			continue;
-		}
-		std::string library = FileUtils::Join(localdir.c_str(),libname.c_str(),NULL);
-		if (!FileUtils::IsFile(library))
-		{
-			library = FileUtils::Join(dir.c_str(),libname.c_str(),NULL);
-		}
-#ifdef DEBUG
-		std::cout << "Attempting to load: " << library << std::endl;
-#endif
-		HMODULE loaded = LoadedLibraries[library];
-		if (!loaded)
-		{
-			HMODULE handle = LoadLibrary(library.c_str());
-			if (handle==INVALID_HANDLE_VALUE)
-			{
-				char msg[MAX_PATH];
-				sprintf_s(msg,"Couldn't find required module dependency library: %s",library.c_str());
-				KR_FATAL_ERROR(msg);
-				return false;
-			}
-			LoadedLibraries[library]=handle;
-		}
-	}
-	return true;
-}
 typedef std::vector< std::pair< std::pair<std::string,std::string>,bool> > ModuleList;
 typedef int Executor(HINSTANCE hInstance, int argc, const char **argv);
+
+#define MAX_ENV_VARIABLE_SIZE 4096
+
+int getEnv(std::string key, std::string &result)
+{
+	char buf[MAX_ENV_VARIABLE_SIZE];
+	int size = GetEnvironmentVariable(key.c_str(),buf,MAX_ENV_VARIABLE_SIZE);
+	if (size == 0) return 0;
+	buf[size]='\0';
+	result = std::string(buf);
+	return size;
+}
 
 #if defined(OS_WIN32) && !defined(WIN32_CONSOLE)
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR command_line, int)
@@ -359,109 +317,114 @@ int main(int _argc, const char* _argv[])
 	int argc = _argc;
 	char **argv = (char **)_argv;
 #endif
+	std::string buf;
+	int fork_flag = getEnv("KR_FORK",buf);
+	int rc = 0;
+	if (fork_flag == 0)
+	{
+		if (argc > 1 && strcmp(argv[1],"--wait-for-debugger")==0)
+		{
+			DebugBreak();
+		}
 
-	if (argc > 1 && strcmp(argv[1],"--wait-for-debugger")==0)
-	{
-		DebugBreak();
-	}
-
-	std::string manifest = FindManifest();
-	if (manifest.empty())
-	{
-		KR_FATAL_ERROR("Application packaging error. The application manifest was not found in the correct location.");
-		return __LINE__;
-	}
-	std::string homedir = GetExecutableDir();
-	ModuleList modules;
-	std::vector<std::string> moduleDirs;
-	std::string runtimePath;
-	std::string appname;
-	std::string appid;
-	std::string runtimeOverride = homedir;
-	bool success = kroll::FileUtils::ReadManifest(manifest,runtimePath,modules,moduleDirs,appname,appid,runtimeOverride);
-	if (!success)
-	{
-		return __LINE__;
-	}
-	// run the app installer if any missing modules/runtime or
-	// version specs not met
-	if (!RunAppInstallerIfNeeded(homedir,runtimePath,manifest,modules,moduleDirs,appname,appid,runtimeOverride))
-	{
-		return __LINE__;
-	}
-
-	std::string localRuntime = FileUtils::Join(homedir.c_str(),"runtime",NULL);
-	if (!ResolveManifest(runtimePath,localRuntime))
-	{
-		return __LINE__;
-	}
-
-	std::string runtimeBasedir = FileUtils::GetRuntimeBaseDirectory();
-	std::string moduleLocalDir = FindModuleDir();
-	std::string moduleBasedir = FileUtils::Join(runtimeBasedir.c_str(),"modules",NULL);
-	std::ostringstream moduleList;
-
-	// we now need to resolve and load each module and dependencies
-	std::vector<std::string>::iterator i = moduleDirs.begin();
-	while (i!=moduleDirs.end())
-	{
-		std::string moduleDir = (*i++);
-		std::string moduleName = GetModuleName(moduleDir);
-		std::string localModule = FileUtils::Join(homedir.c_str(),"modules",moduleName.c_str(),NULL);
-		if (!ResolveManifest(moduleDir,localModule,false))
+		std::string manifest = FindManifest();
+		if (manifest.empty())
+		{
+			KR_FATAL_ERROR("Application packaging error. The application manifest was not found in the correct location.");
+			return __LINE__;
+		}
+		std::string homedir = GetExecutableDir();
+		ModuleList modules;
+		std::vector<std::string> moduleDirs;
+		std::string runtimePath;
+		std::string appname;
+		std::string appid;
+		std::string runtimeOverride = homedir;
+		bool success = kroll::FileUtils::ReadManifest(manifest,runtimePath,modules,moduleDirs,appname,appid,runtimeOverride);
+		if (!success)
 		{
 			return __LINE__;
 		}
-		moduleList << moduleDir << ";";
+		// run the app installer if any missing modules/runtime or
+		// version specs not met
+		if (!RunAppInstallerIfNeeded(homedir,runtimePath,manifest,modules,moduleDirs,appname,appid,runtimeOverride))
+		{
+			return __LINE__;
+		}
+
+		std::string localRuntime = FileUtils::Join(homedir.c_str(),"runtime",NULL);
+		std::string runtimeBasedir = FileUtils::GetRuntimeBaseDirectory();
+		std::string moduleLocalDir = FindModuleDir();
+		std::string moduleBasedir = FileUtils::Join(runtimeBasedir.c_str(),"modules",NULL);
+		std::ostringstream moduleList;
+
+		// we now need to resolve and load each module and dependencies
+		std::vector<std::string>::iterator i = moduleDirs.begin();
+		while (i!=moduleDirs.end())
+		{
+			std::string moduleDir = (*i++);
+			std::string moduleName = GetModuleName(moduleDir);
+			std::string localModule = FileUtils::Join(homedir.c_str(),"modules",moduleName.c_str(),NULL);
+			moduleList << moduleDir << ";";
+		}
+
+		std::string dypath = localRuntime;
+		dypath+=";";
+		dypath+=runtimePath;
+		std::string path("PATH=");
+		path+=dypath;
+		if (getEnv("PATH",buf) > 0)
+		{
+			path+=";";
+			path+=buf;
+		}
+		
+		SetEnvironmentVariable("KR_FORK","YES");
+		SetEnvironmentVariable("KR_HOME",homedir.c_str());
+		SetEnvironmentVariable("KR_RUNTIME",runtimePath.c_str());
+		SetEnvironmentVariable("KR_MODULES",moduleList.str().c_str());
+		SetEnvironmentVariable("KR_RUNTIME_HOME",runtimeBasedir.c_str());
+		SetEnvironmentVariable("PATH",path.c_str());
+		
+		_execvp(argv[0],argv);
 	}
-
-	// NOTE: we use putenv explicitly because we use getenv in host
-
-	std::ostringstream krhome;
-	krhome << "KR_HOME=" << homedir;
-	_putenv(krhome.str().c_str());
-
-	std::ostringstream krruntime;
-	krruntime << "KR_RUNTIME=" << runtimePath;
-	_putenv(krruntime.str().c_str());
-
-	std::ostringstream krmodules;
-	krmodules << "KR_MODULES=" << moduleList.str();
-	_putenv(krmodules.str().c_str());
-
-	std::ostringstream krruntimehome;
-	krruntimehome << "KR_RUNTIME_HOME=" << runtimeBasedir;
-	_putenv(krruntimehome.str().c_str());
-
-	// now we need to load the host and get 'er booted
-	std::string khost = FileUtils::Join(runtimePath.c_str(),"khost.dll",NULL);
-
-	if (!FileUtils::IsFile(khost))
+	else
 	{
-		char msg[MAX_PATH];
-		sprintf_s(msg,"Couldn't find required file: %s",khost.c_str());
-		KR_FATAL_ERROR(msg);
-		return __LINE__;
+		SetEnvironmentVariable("KR_FORK",NULL);
+		getEnv("KR_RUNTIME",buf);
+		std::string runtimePath = buf;
+		
+		// now we need to load the host and get 'er booted
+		std::string khost = FileUtils::Join(runtimePath.c_str(),"khost.dll",NULL);
+
+		if (!FileUtils::IsFile(khost))
+		{
+			char msg[MAX_PATH];
+			sprintf_s(msg,"Couldn't find required file: %s",khost.c_str());
+			KR_FATAL_ERROR(msg);
+			return __LINE__;
+		}
+
+		HMODULE dll = LoadLibrary(khost.c_str());
+		if (!dll)
+		{
+			char msg[MAX_PATH];
+			sprintf_s(msg,"Couldn't load file: %s, error: %d",khost.c_str(),GetLastError());
+			KR_FATAL_ERROR(msg);
+			return __LINE__;
+		}
+		Executor *executor = (Executor*)GetProcAddress(dll, "Execute");
+		if (!executor)
+		{
+			char msg[MAX_PATH];
+			sprintf_s(msg,"Invalid entry point for: %s",khost.c_str());
+			KR_FATAL_ERROR(msg);
+			return __LINE__;
+		}
+
+		rc = executor(::GetModuleHandle(NULL), argc,(const char**)argv);
 	}
 
-	HMODULE dll = LoadLibrary(khost.c_str());
-	if (!dll)
-	{
-		char msg[MAX_PATH];
-		sprintf_s(msg,"Couldn't load file: %s, error: %d",khost.c_str(),GetLastError());
-		KR_FATAL_ERROR(msg);
-		return __LINE__;
-	}
-	Executor *executor = (Executor*)GetProcAddress(dll, "Execute");
-	if (!executor)
-	{
-		char msg[MAX_PATH];
-		sprintf_s(msg,"Invalid entry point for: %s",khost.c_str());
-		KR_FATAL_ERROR(msg);
-		return __LINE__;
-	}
-
-	int rc = executor(::GetModuleHandle(NULL), argc,(const char**)argv);
 #ifdef DEBUG
 	std::cout << "return code: " << rc << std::endl;
 #endif
