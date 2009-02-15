@@ -35,7 +35,9 @@ static std::string safe_encode(std::string &str)
 		    c >= 'A' && c <= 'Z' || 
 		    c >= '0' && c <= '9' ||
 		    c == '-' || c == '_' || 
-		    c == '.' || c == '~')
+		    c == '.' || c == '~' ||
+			c == '/' || c == '\\' ||
+			c == ' ')
 		{
 			encodedStr += c;
 		}
