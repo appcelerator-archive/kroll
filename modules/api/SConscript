@@ -9,7 +9,7 @@ Env.Append(CPPDEFINES=('KROLL_API_API_EXPORT', 1))
 
 build.add_thirdparty(Env, 'poco')
 
-if build.is_osx():
+if build.is_osx() or build.is_win32():
 	Env.Append(LIBS=['kroll'])
 
 Env.SharedLibrary(build.dir + '/apimodule', Glob('*.cpp'))
