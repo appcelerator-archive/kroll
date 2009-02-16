@@ -68,8 +68,8 @@ struct Module
 
 	void Prep()
 	{
-		this->ReadManifest();
-		this->LoadLibraries();
+		//this->ReadManifest();
+		//this->LoadLibraries();
 	}
 
 	void ReadManifest()
@@ -406,15 +406,14 @@ class Boot
 
 };
 
-int main(int argc, const char* argv[])
+
+int prepare_environment(int argc, const char* argv[])
 {
-
-	Boot boot = Boot();
-
 	try
 	{
-		boot.ParseManifest();
+		Boot boot = Boot();
 
+		boot.ParseManifest();
 		std::vector<Module*> missing = boot.FindModules();
 		if (missing.size() > 0)
 		{
@@ -451,8 +450,33 @@ int main(int argc, const char* argv[])
 		krruntimehome << "KR_RUNTIME_HOME=" << boot.rt_path;
 		putenv(strdup(krruntimehome.str().c_str()));
 
+		const char* prepath = getenv("LD_LIBRARY_PATH");
+		if (prepath == NULL) prepath = "";
+		std::ostringstream ld_library_path;
+		ld_library_path << "LD_LIBRARY_PATH=" << boot.rt_module->path
+		              << ":" << module_list << ":" << prepath;
+		putenv(strdup(ld_library_path.str().c_str()));
+		std::cout << ld_library_path.str() << std::endl;
+
+		execl(argv[0], "--boot", NULL);
+	}
+	catch (std::string& e)
+	{
+		std::cout << e << std::endl;
+	}
+	return 0;
+}
+
+int start_host(int argc, const char* argv[])
+{
+	try
+	{
+		const char* rt_path = getenv("KR_RUNTIME");
+		if (rt_path == NULL)
+			return __LINE__;
+
 		// now we need to load the host and get 'er booted
-		std::string khost = FileUtils::Join(boot.rt_module->path.c_str(), "libkhost.so", NULL);
+		std::string khost = FileUtils::Join(rt_path, "libkhost.so", NULL);
 		if (!FileUtils::IsFile(khost))
 		{
 			throw std::string("Couldn't find required file: ") + khost;
@@ -466,20 +490,32 @@ int main(int argc, const char* argv[])
 		Executor* executor = (Executor*) dlsym(khost_lib, "Execute");
 		if (!executor)
 		{
-			throw std::string("Could not find entry point for host.");
-		}
+		throw std::string("Could not find entry point for host.");
+	}
 
-		int rc = executor(argc, argv);
+	int rc = executor(argc, argv);
 #ifdef DEBUG
 		std::cout << "return code: " << rc << std::endl;
 #endif
 		return rc;
-
 	}
 	catch (std::string& e)
 	{
 		std::cout << e << std::endl;
 	}
+	return 0;
+
 }
 
+int main(int argc, const char* argv[])
+{
+	if (!strcmp(argv[0], "--boot"))
+	{
+		return start_host(argc, argv);
+	}
+	else
+	{
+		return prepare_environment(argc, argv);
+	}
+}
 

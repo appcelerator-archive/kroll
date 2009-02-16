@@ -23,6 +23,9 @@
 #include "kroll.h"
 #include <Poco/DirectoryIterator.h>
 #include <Poco/File.h>
+#include <Poco/Environment.h>
+
+using Poco::Environment;
 
 namespace kroll
 {
@@ -30,59 +33,54 @@ namespace kroll
 
 	Host::Host(int argc, const char *argv[]) : debug(false)
 	{
-		char *ti_home = getenv("KR_HOME");
-		char *ti_runtime = getenv("KR_RUNTIME");
 
 		instance_ = this;
 
-		PRINTD(">>> KR_HOME=" << ti_home);
-		PRINTD(">>> KR_RUNTIME=" << ti_runtime);
+		std::string kr_home_str = "KR_HOME";
+		std::string kr_runtime_str = "KR_RUNTIME";
+		std::string kr_modules_str = "KR_MODULES";
 
-		if (ti_home == NULL)
+		if (!Environment::has(kr_home_str))
 		{
-			std::cerr << "KR_HOME not defined, aborting." << std::endl;
+			std::cerr << kr_home_str << " not defined, aborting." << std::endl;
 			exit(1);
 		}
 
-		if (ti_runtime == NULL)
+		if (!Environment::has(kr_runtime_str))
 		{
-			std::cerr << "KR_RUNTIME not defined, aborting." << std::endl;
+			std::cerr << kr_runtime_str << " not defined, aborting." << std::endl;
 			exit(1);
 		}
 
-		char *paths = getenv("KR_MODULES");
-		if (!paths)
+		if (!Environment::has(kr_modules_str))
 		{
-			std::cerr << "KR_MODULES not defined, aborting." << std::endl;
+			std::cerr << kr_modules_str << " not defined, aborting." << std::endl;
 			exit(1);
 		}
 
-		PRINTD(">>> KR_MODULES=" << paths);
+		std::string ti_home = Environment::get(kr_home_str);
+		std::string ti_runtime = Environment::get(kr_runtime_str);
+		std::string paths = Environment::get(kr_modules_str);
+		PRINTD(">>> " << kr_home_str << "=" << ti_home);
+		PRINTD(">>> " << kr_runtime_str << "=" << ti_runtime);
+		PRINTD(">>> " << kr_modules_str << "=" << paths);
 
 		FileUtils::Tokenize(paths, this->module_paths, KR_LIB_SEP);
-		
 		// check to see if we have to install the app
-		char *home = SetupAppInstallerIfRequired(ti_home);
-		
+		std::string home = SetupAppInstallerIfRequired(ti_home);
+
 		// check to see if we have a different starting point
-		char* start_page = SetupStartPageOverrideIfRequired(argc,argv);
-		if (start_page)
+		std::string start_page = SetupStartPageOverrideIfRequired(argc,argv);
+		if (!start_page.empty())
 		{
-			// will return non-NULL if we have a different home than
-			// the default
+			// will return non-empty if have a non-default home
 			home = start_page;
 		}
-		
+
 		// change the KR_HOME environment if changed
-		if (strcmp(home,ti_home)!=0)
+		if (home != ti_home)
 		{
-#ifdef OS_WIN32
-			char env[MAX_PATH];
-			sprintf_s(env,"KR_HOME=\"%s\"",home);
-			_putenv(env);
-#else
-			setenv("KR_HOME",(const char*)home,1);
-#endif			
+			Environment::set(kr_home_str, home);
 		}
 
 
@@ -118,8 +116,8 @@ namespace kroll
 	Host::~Host()
 	{
 	}
-	
-	char* Host::SetupStartPageOverrideIfRequired(int argc, const char**argv)
+
+	std::string Host::SetupStartPageOverrideIfRequired(int argc, const char**argv)
 	{
 		if (argc > 1)
 		{
@@ -128,54 +126,55 @@ namespace kroll
 				std::string arg(argv[c]);
 				size_t i = arg.find("--start=");
 				if (i!=std::string::npos)
-			{
+				{
 					size_t i = arg.find("=");
-					return (char*)arg.substr(i+1).c_str();
+					return arg.substr(i+1);
 				}
 			}
 		}
-		return NULL;
+		return std::string();
 	}
- 	const char* Host::FindAppInstaller(char *home)
+
+	std::string Host::FindAppInstaller(std::string home)
 	{
-		std::string appinstaller = FileUtils::Join(home,"appinstaller",NULL);
-		if (FileUtils::IsDirectory(appinstaller))
-		{
-			PRINTD("Found app installer at: " << appinstaller);
-			return appinstaller.c_str();
-		}
-		char *runtime = getenv("KR_RUNTIME");
-		appinstaller = FileUtils::Join(runtime,"appinstaller",NULL);
+		std::string appinstaller = FileUtils::Join(home.c_str(), "appinstaller", NULL);
 		if (FileUtils::IsDirectory(appinstaller))
 		{
 			PRINTD("Found app installer at: " << appinstaller);
 			return appinstaller.c_str();
 		}
 
+		std::string ename = "KR_RUNTIME";
+		if (Environment::has(ename))
+		{
+			std::string runtime = Environment::get(ename);
+			appinstaller = FileUtils::Join(runtime.c_str(), "appinstaller", NULL);
+			if (FileUtils::IsDirectory(appinstaller))
+			{
+				PRINTD("Found app installer at: " << appinstaller);
+				return appinstaller.c_str();
+			}
+		}
+
 		PRINTD("Couldn't find app installer");
-		return NULL;
+		return std::string();
 	}
-	char* Host::SetupAppInstallerIfRequired(char *home)
+
+	std::string Host::SetupAppInstallerIfRequired(std::string home)
 	{
-		std::string marker = FileUtils::Join(home,".installed",NULL);
+		std::string marker = FileUtils::Join(home.c_str(), ".installed", NULL);
 		if (!FileUtils::IsFile(marker))
 		{
 			// not yet installed, look for the app installer
-			const char *ai = FindAppInstaller(home);
-			if (ai)
+			std::string ai = FindAppInstaller(home);
+			if (!ai.empty())
 			{
-#ifdef OS_WIN32
-				char env[MAX_PATH];
-				sprintf_s(env,"KR_APP_INSTALL_FROM=\"%s\"",home);
-				_putenv((char*)env);
-#else
-				setenv("KR_APP_INSTALL_FROM",(const char*)home,1);
-#endif	
 				// make the app installer our new home so that the
 				// app installer will run and set the environment var
 				// to the special setting with the old home
-				std::string appinstaller = FileUtils::Trim(ai);
-				return (char*)appinstaller.c_str();
+				std::string ename = "KR_APP_INSTALL_FROM";
+				Environment::set(ename,  home);
+				return FileUtils::Trim(ai);
 			} 
 			PRINTD("Application needs installation but no app installer found");
 		}

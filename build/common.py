@@ -69,6 +69,6 @@ class BuildConfig(object):
 
 	def add_thirdparty(self, env, name, force_libs=False):
 		env.Append(CPPPATH=[self.thirdparty_libs[name][self.os]['cpp_path']])
-		if force_libs or not self.is_linux():
-			env.Append(LIBPATH=[self.thirdparty_libs[name][self.os]['lib_path']])
-			env.Append(LIBS=[self.thirdparty_libs[name][self.os]['libs']])
+		#if force_libs or not self.is_linux():
+		env.Append(LIBPATH=[self.thirdparty_libs[name][self.os]['lib_path']])
+		env.Append(LIBS=[self.thirdparty_libs[name][self.os]['libs']])
