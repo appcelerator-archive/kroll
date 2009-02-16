@@ -138,14 +138,23 @@ namespace kroll
 	SharedValue OSXHost::InvokeMethodOnMainThread(SharedBoundMethod method,
 	                                              const ValueList& args)
 	{
+		// make sure to just invoke if we're already on the 
+		// main thread
+		if ([NSThread isMainThread])
+		{
+			return method->Call(args);
+		}
+		NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 		KrollMainThreadCaller *caller = [[[KrollMainThreadCaller alloc] initWithBoundMethod:method args:&args] autorelease];
 		[caller performSelectorOnMainThread:@selector(call) withObject:nil waitUntilDone:YES];
 		SharedValue exception = [caller getException];
 		if (exception.isNull())
 		{
 			SharedValue result = [caller getResult];
+			[pool release];
 			return result;
 		}
+		[pool release];
 		return exception;
 	}
 }
