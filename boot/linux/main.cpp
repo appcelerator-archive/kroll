@@ -9,6 +9,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <dlfcn.h>
+#include <libgen.h>
 
 
 #include "file_utils.h"
@@ -157,17 +158,31 @@ class Boot
 		this->modules.clear();
 	}
 
-	void ParseManifest()
+	void ParseManifest(const char* argv0)
 	{
-		this->SetupPaths();
+		this->SetupPaths(argv0);
 		this->ReadApplicationManifest();
 	}
 
-	void SetupPaths()
+	void SetupPaths(const char* argv0)
 	{
-		this->app_path = FileUtils::GetApplicationDirectory();
-		const char* capp_path = app_path.c_str();
+		char buffer[256];
+		char* real_path = realpath(argv0, buffer);
+		if (real_path == NULL)
+		{
+			this->app_path = FileUtils::GetApplicationDirectory();
+		}
+		else
+		{
+			struct stat statbuf;
+			int result = stat(real_path, &statbuf);
+			if (result == 0)
+				this->app_path = std::string(dirname(real_path));
+			else
+				this->app_path = FileUtils::GetApplicationDirectory();
+		}
 
+		const char* capp_path = app_path.c_str();
 		this->manifest_path = FileUtils::Join(capp_path, MANIFEST_FILE, NULL);
 		if (!FileUtils::IsFile(this->manifest_path))
 			throw std::string("Could not find manifest!");
@@ -427,7 +442,7 @@ int prepare_environment(int argc, const char* argv[])
 	{
 		Boot boot = Boot();
 
-		boot.ParseManifest();
+		boot.ParseManifest(argv[0]);
 		std::vector<Module*> missing = boot.FindModules();
 		if (missing.size() > 0)
 		{
@@ -446,30 +461,21 @@ int prepare_environment(int argc, const char* argv[])
 		// PropModules also ensure all modules have been found
 		std::string module_list = boot.PrepModules();
 
-		// NOTE: we use putenv explicitly because we use getenv in host
-		// TODO: We need to clean up this memory
-		std::ostringstream krhome;
-		krhome << "KR_HOME=" << boot.app_path;
-		putenv(strdup(krhome.str().c_str()));
-
-		std::ostringstream krruntime;
-		krruntime << "KR_RUNTIME=" << boot.rt_module->path;
-		putenv(strdup(krruntime.str().c_str()));
-
-		std::ostringstream krmodules;
-		krmodules << "KR_MODULES=" << module_list;
-		putenv(strdup(krmodules.str().c_str()));
-
-		std::ostringstream krruntimehome;
-		krruntimehome << "KR_RUNTIME_HOME=" << boot.rt_path;
-		putenv(strdup(krruntimehome.str().c_str()));
+		// This is the signal that we are ready to boot
+		setenv("KR_BOOT_READY", "1", 1);
+		setenv("KR_HOME", boot.app_path.c_str(), 1);
+		setenv("KR_RUNTIME", boot.rt_module->path.c_str(), 1);
+		setenv("KR_MODULES", module_list.c_str(), 1);
+		setenv("KR_RUNTIME_HOME", boot.rt_path.c_str(), 1);
 
 		const char* prepath = getenv("LD_LIBRARY_PATH");
 		if (prepath == NULL) prepath = "";
+
 		std::ostringstream ld_library_path;
-		ld_library_path << "LD_LIBRARY_PATH=" << boot.rt_module->path
-		              << ":" << module_list << ":" << prepath;
-		putenv(strdup(ld_library_path.str().c_str()));
+		ld_library_path << boot.rt_module->path << ":"
+		                 << module_list << ":" << prepath;
+		setenv("LD_LIBRARY_PATH", ld_library_path.str().c_str(), 1);
+
 
 		execv(argv[0], (char* const*) argv);
 	}
@@ -522,12 +528,13 @@ int start_host(int argc, const char* argv[])
 
 int main(int argc, const char* argv[])
 {
-	if (!getenv("KR_RUNTIME") || !getenv("KR_HOME") || !getenv("KR_MODULES"))
+	if (!getenv("KR_BOOT_READY"))
 	{
 		return prepare_environment(argc, argv);
 	}
 	else
 	{
+		unsetenv("KR_BOOT_READY");
 		return start_host(argc, argv);
 	}
 }
