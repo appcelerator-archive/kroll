@@ -23,6 +23,7 @@ namespace kroll
 
 	LinuxHost::LinuxHost(int argc, const char *argv[]) : Host(argc, argv)
 	{
+		// Initialize glib threads
 		g_thread_init(NULL);
 		gdk_threads_init();
 
