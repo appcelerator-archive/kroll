@@ -5,7 +5,7 @@ import os, os.path as path
 Env = build.env.Clone()
 Env.Append(CPPDEFINES=['USE_NO_EXPORT=1','NO_UNZIP=1'])
 Env.Append(CPPPATH=['#common/win32','#common',path.join(build.kroll_source_dir,'api')])
-Env.Append(LIBS=['kernel32','shell32','user32','advapi32'])
+Env.Append(LIBS=['kernel32','shell32','user32','advapi32','iphlpapi'])
 Env.Append(CCFLAGS=['/O2','/GL','/FD','/EHsc','/MD','/W3','/Wp64','/Zi','/TP'])
 if ARGUMENTS.get('debug', 0) or ARGUMENTS.get('console',0):
 	Env.Append(LINKFLAGS=['/MANIFEST','/MANIFESTFILE:build\\win32\\boot.exe.intermediate.manifest','/SUBSYSTEM:CONSOLE','/OPT:REF','/OPT:ICF','/LTCG','/MACHINE:X86'])	

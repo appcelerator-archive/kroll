@@ -14,6 +14,7 @@
 #elif defined(OS_WIN32)
 #include <windows.h>
 #include <shlobj.h>
+#include <Iphlpapi.h>
 #include <process.h>
 #elif defined(OS_LINUX)
 #include <cstdarg>
@@ -562,8 +563,14 @@ namespace kroll
 		}
 		return std::string(serialNumber);
 #elif defined(OS_WIN32)
-		//http://www.codeguru.com/cpp/i-n/network/networkinformation/article.php/c5451
-		return std::string();	//FIXME: implement
+		IP_ADAPTER_INFO adapter;
+		DWORD dwBufLen = sizeof(adapter);
+		DWORD dwStatus = GetAdaptersInfo(&adapter,&dwBufLen);
+		if (dwStatus != ERROR_SUCCESS) return std::string();
+		BYTE *MACData = adapter.Address;
+		char buf[MAX_PATH];
+		sprintf_s(buf,MAX_PATH,"%02X-%02X-%02X-%02X-%02X-%02X", MACData[0], MACData[1], MACData[2], MACData[3], MACData[4], MACData[5]);
+		return std::string(buf);	
 #else
 		//http://adywicaksono.wordpress.com/2007/11/08/detecting-mac-address-using-c-application/
 		return std::string();	//FIXME: implement
