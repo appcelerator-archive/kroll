@@ -45,7 +45,7 @@ namespace kroll
 
 	bool LinuxHost::RunLoop()
 	{
-		g_idle_add(&main_thread_job_handler, this);
+		g_timeout_add(250, &main_thread_job_handler, this);
 		gtk_main();
 		return false;
 	}
