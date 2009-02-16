@@ -353,6 +353,15 @@ class Boot
 
 	void RunAppInstaller(std::vector<Module*> missing)
     {
+#ifdef DEBUG
+		std::vector<Module*>::iterator dmi = missing.begin();
+		while (dmi != missing.end())
+		{
+			Module* m = *dmi++;
+			std::cout << "Missing: " << m->name << std::endl;
+		}
+#endif
+
 		// If we don't have an installer directory, just bail...
 		const char* ci_path = this->installer_path.c_str();
 		std::string installer = kroll::FileUtils::Join(ci_path, "installer", NULL);
@@ -462,14 +471,7 @@ int prepare_environment(int argc, const char* argv[])
 		              << ":" << module_list << ":" << prepath;
 		putenv(strdup(ld_library_path.str().c_str()));
 
-		const char** new_args = (const char**) alloca(sizeof(const char*) * argc + 2);
-		new_args[0] = "--boot";
-		for (int i = 0; i < argc; i++)
-		{
-			new_args[i+1] = argv[i];
-		}
-		new_args[argc+1] = NULL;
-		execv(argv[0], (char* const*)new_args);
+		execv(argv[0], (char* const*) argv);
 	}
 	catch (std::string& e)
 	{
@@ -520,13 +522,13 @@ int start_host(int argc, const char* argv[])
 
 int main(int argc, const char* argv[])
 {
-	if (!strcmp(argv[0], "--boot"))
+	if (!getenv("KR_RUNTIME") || !getenv("KR_HOME") || !getenv("KR_MODULES"))
 	{
-		return start_host(argc, argv);
+		return prepare_environment(argc, argv);
 	}
 	else
 	{
-		return prepare_environment(argc, argv);
+		return start_host(argc, argv);
 	}
 }
 
