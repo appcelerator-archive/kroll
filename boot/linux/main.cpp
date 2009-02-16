@@ -261,7 +261,9 @@ class Boot
 		// Find the runtime module
 		this->rt_module->path = this->FindRuntime(this->rt_module);
 		if (this->rt_module->path.empty())
+		{
 			unresolved.push_back(this->rt_module);
+		}
 
 		// Find all regular modules
 		std::vector<Module*>::iterator i = this->modules.begin();
@@ -270,7 +272,9 @@ class Boot
 			Module* m = *i++;
 			m->path = this->FindModule(m);
 			if (m->path.empty())
+			{
 				unresolved.push_back(m);
+			}
 		}
 
 		return unresolved;
@@ -291,7 +295,7 @@ class Boot
 			p = FileUtils::Join(p.c_str(), m->name.c_str(), NULL);
 			std::string result = FileUtils::FindVersioned(p, m->op, m->version);
 			if (!result.empty())
-				return path;
+				return result;
 		}
 
 		// Try to find this module bundled with the installer
@@ -457,7 +461,6 @@ int prepare_environment(int argc, const char* argv[])
 		ld_library_path << "LD_LIBRARY_PATH=" << boot.rt_module->path
 		              << ":" << module_list << ":" << prepath;
 		putenv(strdup(ld_library_path.str().c_str()));
-		std::cout << ld_library_path.str() << std::endl;
 
 		const char** new_args = (const char**) alloca(sizeof(const char*) * argc + 2);
 		new_args[0] = "--boot";
