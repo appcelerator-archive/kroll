@@ -119,9 +119,7 @@ namespace kroll
 #endif
 			if (strcmp(argv[i],"--debug")==0)
 			{
-#ifdef DEBUG
 				std::cout << "DEBUGGING DETECTED!" << std::endl;
-#endif
 				this->debug = true;
 			}
 		}
