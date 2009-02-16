@@ -372,6 +372,7 @@ namespace kroll
 		// if not, we fall back to installing into user directory
 		return std::string([localDir UTF8String]);
 #elif OS_LINUX
+
 		std::string uid = std::string(getenv("USER"));
 		std::string p(INSTALL_PREFIX);
 		p.append("/");
@@ -382,11 +383,8 @@ namespace kroll
 			return p;
 		}
 		passwd *user = getpwnam(uid.c_str());
-		char *home = user->pw_dir;
-		std::string str(home);
-		str.append("/");
-		str.append(PRODUCT_NAME);
-		return str;
+		std::string dir = std::string(user->pw_dir) + "/" + PRODUCT_NAME + "App";
+		return dir;
 #endif
 	}
 

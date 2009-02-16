@@ -458,7 +458,14 @@ int prepare_environment(int argc, const char* argv[])
 		putenv(strdup(ld_library_path.str().c_str()));
 		std::cout << ld_library_path.str() << std::endl;
 
-		execl(argv[0], "--boot", NULL);
+		const char** new_args = (const char**) alloca(sizeof(const char*) * argc + 2);
+		new_args[0] = "--boot";
+		for (int i = 0; i < argc; i++)
+		{
+			new_args[i+1] = argv[i];
+		}
+		new_args[argc+1] = NULL;
+		execv(argv[0], (char* const*)new_args);
 	}
 	catch (std::string& e)
 	{
