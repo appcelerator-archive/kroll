@@ -31,11 +31,9 @@ static std::string safe_encode(std::string &str)
 	for (std::string::const_iterator it = str.begin(); it != str.end(); ++it)
 	{
 		char c = *it;
-		if (c >= 'a' && c <= 'z' || 
-		    c >= 'A' && c <= 'Z' || 
-		    c >= '0' && c <= '9' ||
-		    c == '-' || c == '_' || 
-		    c == '.' || c == '~' ||
+		if (isalnum(c) ||
+			c == '-' || c == '_' || 
+			c == '.' || c == '~' ||
 			c == '/' || c == '\\' ||
 			c == ' ')
 		{

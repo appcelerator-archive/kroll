@@ -27,13 +27,6 @@
 namespace kroll
 {
 	SharedPtr<Host> Host::instance_;
-#if defined(OS_LINUX)
-		const char * Host::Platform = "linux";
-#elif defined(OS_OSX)
-		const char * Host::Platform = "osx";
-#elif defined(OS_WIN32)
-		const char * Host::Platform = "win32";
-#endif
 
 	Host::Host(int argc, const char *argv[]) : debug(false)
 	{
@@ -41,10 +34,9 @@ namespace kroll
 		char *ti_runtime = getenv("KR_RUNTIME");
 
 		instance_ = this;
-#ifdef DEBUG
-		std::cout << ">>> KR_HOME=" << ti_home << std::endl;
-		std::cout << ">>> KR_RUNTIME=" << ti_runtime << std::endl;
-#endif
+
+		PRINTD(">>> KR_HOME=" << ti_home);
+		PRINTD(">>> KR_RUNTIME=" << ti_runtime);
 
 		if (ti_home == NULL)
 		{
@@ -64,9 +56,8 @@ namespace kroll
 			std::cerr << "KR_MODULES not defined, aborting." << std::endl;
 			exit(1);
 		}
-#ifdef DEBUG
-		std::cout << ">>> KR_MODULES=" << paths << std::endl;
-#endif
+
+		PRINTD(">>> KR_MODULES=" << paths);
 
 		FileUtils::Tokenize(paths, this->module_paths, KR_LIB_SEP);
 		
@@ -114,14 +105,11 @@ namespace kroll
 		for (int i = 0; i < argc; i++)
 		{
 			this->args.push_back(std::string(argv[i]));
-#ifdef DEBUG
-			std::cout << "ARGUMENT[" << i << "] => " << argv[i] << std::endl;
-#endif
+			PRINTD("ARGUMENT[" << i << "] => " << argv[i]);
+
 			if (strcmp(argv[i],"--debug")==0)
 			{
-#ifdef DEBUG
-				std::cout << "DEBUGGING DETECTED!" << std::endl;
-#endif
+				PRINTD("DEBUGGING DETECTED!");
 				this->debug = true;
 			}
 		}
@@ -140,7 +128,7 @@ namespace kroll
 				std::string arg(argv[c]);
 				size_t i = arg.find("--start=");
 				if (i!=std::string::npos)
-				{
+			{
 					size_t i = arg.find("=");
 					return (char*)arg.substr(i+1).c_str();
 				}
@@ -153,23 +141,18 @@ namespace kroll
 		std::string appinstaller = FileUtils::Join(home,"appinstaller",NULL);
 		if (FileUtils::IsDirectory(appinstaller))
 		{
-#ifdef DEBUG
-			std::cout << "Found app installer at: " << appinstaller << std::endl;
-#endif
+			PRINTD("Found app installer at: " << appinstaller);
 			return appinstaller.c_str();
 		}
 		char *runtime = getenv("KR_RUNTIME");
 		appinstaller = FileUtils::Join(runtime,"appinstaller",NULL);
 		if (FileUtils::IsDirectory(appinstaller))
 		{
-#ifdef DEBUG
-			std::cout << "Found app installer at: " << appinstaller << std::endl;
-#endif
+			PRINTD("Found app installer at: " << appinstaller);
 			return appinstaller.c_str();
 		}
-#ifdef DEBUG
-			std::cerr << "Couldn't find app installer" << std::endl;
-#endif
+
+		PRINTD("Couldn't find app installer");
 		return NULL;
 	}
 	char* Host::SetupAppInstallerIfRequired(char *home)
@@ -194,9 +177,7 @@ namespace kroll
 				std::string appinstaller = FileUtils::Trim(ai);
 				return (char*)appinstaller.c_str();
 			} 
-#ifdef DEBUG
-			std::cerr << "application needs installation but no app installer found" << std::endl;
-#endif
+			PRINTD("Application needs installation but no app installer found");
 		}
 		return home;
 	}
@@ -601,9 +582,7 @@ namespace kroll
 		this->global_object->Set(GLOBAL_NS_VARNAME, Value::Undefined);
 		this->global_object = NULL;
 
-#ifdef DEBUG
-		std::cout << "EXITING WITH EXITCODE = " << exitCode << std::endl;
-#endif
+		PRINTD("EXITING WITH EXITCODE = " << exitCode);
 		return this->exitCode;
 	}
 
