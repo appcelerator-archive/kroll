@@ -191,7 +191,7 @@ class Boot
 
 			std::string rt_rt_path =
 				 FileUtils::Join(crt_path, RUNTIME_DIR, "linux", NULL);
-			this->rt_paths.push_back(rt_module_path);
+			this->rt_paths.push_back(rt_rt_path);
 
 		}
 
@@ -288,6 +288,7 @@ class Boot
 		while (i != module_paths.end())
 		{
 			std::string p = *i++;
+			p = FileUtils::Join(p.c_str(), m->name.c_str(), NULL);
 			std::string result = FileUtils::FindVersioned(p, m->op, m->version);
 			if (!result.empty())
 				return path;
@@ -314,7 +315,7 @@ class Boot
 			std::string p = *i++;
 			std::string result = FileUtils::FindVersioned(p, m->op, m->version);
 			if (!result.empty())
-				return *i;
+				return result;
 		}
 
 		// Try to find this module bundled with the installer
