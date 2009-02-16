@@ -107,7 +107,7 @@ namespace kroll
 
 			if (strcmp(argv[i],"--debug")==0)
 			{
-				PRINTD("DEBUGGING DETECTED!");
+				std::cout << "DEBUGGING DETECTED!" << std::endl;
 				this->debug = true;
 			}
 		}
@@ -529,19 +529,15 @@ namespace kroll
 
 	bool Host::Start()
 	{
-		KR_DUMP_LOCATION
 		return true;
 	}
 
 	void Host::Stop ()
 	{
-		KR_DUMP_LOCATION
 	}
 
 	int Host::Run()
 	{
-		KR_DUMP_LOCATION
-
 		if (args.size() > 1) {
 			if (args.at(1) == "--attach-debugger") {
 				printf("Waiting for debugger (Press Any Key to Continue)...\n");
@@ -587,7 +583,6 @@ namespace kroll
 
 	void Host::Exit(int exitcode)
 	{
-		KR_DUMP_LOCATION
 		ScopedLock lock(&moduleMutex);
 		running = false;
 		this->exitCode = exitcode;
