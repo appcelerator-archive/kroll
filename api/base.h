@@ -150,4 +150,10 @@
 #endif
 #endif
 
+#ifdef DEBUG
+#define PRINTD(x) std::cout << x << std::endl;
+#else
+#define PRINTD(x)
+#endif
+
 #endif
