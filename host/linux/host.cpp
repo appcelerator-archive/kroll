@@ -32,6 +32,11 @@ namespace kroll
 
 	LinuxHost::~LinuxHost()
 	{
+	}
+
+	void LinuxHost::Exit(int return_code)
+	{
+		Host::Exit(return_code);
 		gtk_main_quit();
 	}
 
