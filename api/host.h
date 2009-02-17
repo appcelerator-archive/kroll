@@ -58,12 +58,19 @@ namespace kroll
 		/*
 		 * Function: InvokeMethodOnMainThread
 		 *
-		 * call with a method and arguments to invoke the method
+		 * Call with a method and arguments to invoke the method
 		 * on the main UI thread and return a value (blocking until run)
 		 */
 		virtual SharedValue InvokeMethodOnMainThread(
 			SharedBoundMethod,
 			const ValueList& args) = 0;
+
+		/*
+		 * Function: IsMainThread
+		 *
+		 * Determine if this thread is the main Kroll thread.
+		 */
+		bool IsMainThread();
 
 		/*
 		 * Function: AddModuleProvider
@@ -295,6 +302,7 @@ namespace kroll
 		bool running;
 		int exitCode;
 		bool debug;
+		int main_thread_id;
 
 		static SharedPtr<Host> instance_;
 		DISALLOW_EVIL_CONSTRUCTORS(Host);

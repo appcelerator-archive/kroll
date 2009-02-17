@@ -92,11 +92,18 @@ namespace kroll
 	{
 		LinuxJob* job = new LinuxJob(method, args);
 
+		if (this->IsMainThread())
 		{
-			Poco::ScopedLock<Poco::Mutex> s(this->GetJobQueueMutex());
-			this->jobs.push_back(job); // Enqueue job
+			job->Execute();
 		}
-		job->Wait(); // Wait for processing
+		else
+		{
+			{
+				Poco::ScopedLock<Poco::Mutex> s(this->GetJobQueueMutex());
+				this->jobs.push_back(job); // Enqueue job
+			}
+			job->Wait(); // Wait for processing
+		}
 
 		SharedValue r = job->GetResult();
 		ValueException e = job->GetException();

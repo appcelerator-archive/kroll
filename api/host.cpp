@@ -24,6 +24,7 @@
 #include <Poco/DirectoryIterator.h>
 #include <Poco/File.h>
 #include <Poco/Environment.h>
+#include <Poco/Thread.h>
 
 using Poco::Environment;
 
@@ -35,6 +36,7 @@ namespace kroll
 	{
 
 		instance_ = this;
+		this->main_thread_id = Poco::Thread::current()->id();
 
 		std::string kr_home_str = "KR_HOME";
 		std::string kr_runtime_str = "KR_RUNTIME";
@@ -586,5 +588,15 @@ namespace kroll
 		ScopedLock lock(&moduleMutex);
 		running = false;
 		this->exitCode = exitcode;
+	}
+
+	/*
+	 * Function: IsMainThread
+	 *
+	 * Determine if this thread is the main Kroll thread.
+	 */
+	bool Host::IsMainThread()
+	{
+		return Poco::Thread::current()->id() == this->main_thread_id;
 	}
 }
