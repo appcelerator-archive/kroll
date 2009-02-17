@@ -10,7 +10,7 @@
 #include <commctrl.h>
 #include <ole2.h>
 #include "win32_job.h"
- 
+
 using Poco::ScopedLock;
 using Poco::Mutex;
 
@@ -19,7 +19,7 @@ using Poco::Mutex;
 namespace kroll
 {
 	bool Win32Host::ole_initialized = false;
-	
+
 	/*static*/
 	void Win32Host::InitOLE() {
 		if (!ole_initialized) {
@@ -56,12 +56,12 @@ namespace kroll
 		thread_id = GetCurrentThreadId();
 		return true;
 	}
-	
+
 	Poco::Mutex& Win32Host::GetJobQueueMutex()
 	{
 		return this->job_queue_mutex;
 	}
- 
+
 	std::vector<Win32Job*>& Win32Host::GetJobs()
 	{
 		return this->jobs;
@@ -110,6 +110,10 @@ namespace kroll
 	SharedValue Win32Host::InvokeMethodOnMainThread(SharedBoundMethod method,
                                                     const ValueList& args)
 	{
+		if (thread_id == GetCurrentThreadId()) {
+			return method->Call(args);
+		}
+
 		Win32Job* job = new Win32Job(method, args);
 		{
 			Poco::ScopedLock<Poco::Mutex> s(this->GetJobQueueMutex());
@@ -118,11 +122,11 @@ namespace kroll
 		// send a message to tickle the windows message queue
 		PostThreadMessage(thread_id, WM_JOB_TICKLE_REQUEST, 0, 0);
 		job->Wait(); // Wait for processing
- 
+
 		SharedValue r = job->GetResult();
 		ValueException e = job->GetException();
 		delete job;
- 
+
 		if (!r.isNull())
 			return r;
 		else
@@ -134,16 +138,16 @@ namespace kroll
 		// Prevent other threads trying to queue jobs.
 		Poco::ScopedLock<Poco::Mutex> s(this->GetJobQueueMutex());
 		std::vector<Win32Job*>& jobs = this->GetJobs();
- 
+
 		if (jobs.size() == 0)
 			return;
-		
+
 		std::vector<Win32Job*>::iterator j;
 		for (j = jobs.begin(); j != jobs.end(); j++)
 		{
 			(*j)->Execute();
 		}
- 
+
 		jobs.clear();
 	}
 }
