@@ -68,7 +68,8 @@ namespace kroll
 				PyObject *returnValue = PyRun_StringFlags(code.c_str(), Py_file_input, main_dict, main_dict, NULL);
 				if (returnValue == NULL) {
 					PyErr_Print();
-					return Value::Undefined;
+					//FIXME - throw error message here
+					throw Value::NewString("error evaluating python");
 				}
 				Py_DECREF(returnValue);
 			}
@@ -91,7 +92,7 @@ namespace kroll
 			// we bind the special module "api" to the global
 			// variable defined in PRODUCT_NAME to give the
 			// Python runtime access to it
-			SharedValue api = host->GetGlobalObject()->Get("api");
+			SharedValue api = host->GetGlobalObject()->Get("API");
 			if (api->IsObject())
 			{
 				// we're going to clone the methods from api into our
@@ -107,6 +108,10 @@ namespace kroll
 				SharedValue scopeRef = Value::NewObject(scope);
 				host->GetGlobalObject()->Set((const char*)"Python",scopeRef);
 				// don't release the scope
+			}
+			else
+			{
+				std::cerr << "! Couldn't find API module to bind Python module to" << std::endl;
 			}
 			Py_DECREF(mod);
 		}
