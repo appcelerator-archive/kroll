@@ -33,9 +33,7 @@ namespace kroll
 
 	Host::Host(int argc, const char *argv[]) : debug(false)
 	{
-
 		instance_ = this;
-		this->main_thread = 0;
 
 		std::string kr_home_str = "KR_HOME";
 		std::string kr_runtime_str = "KR_RUNTIME";
@@ -587,15 +585,5 @@ namespace kroll
 		ScopedLock lock(&moduleMutex);
 		running = false;
 		this->exitCode = exitcode;
-	}
-
-	/*
-	 * Function: IsMainThread
-	 *
-	 * Determine if this thread is the main Kroll thread.
-	 */
-	bool Host::IsMainThread()
-	{
-		return Poco::Thread::current() == this->main_thread;
 	}
 }
