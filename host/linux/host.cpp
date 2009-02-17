@@ -28,6 +28,8 @@ namespace kroll
 		gdk_threads_init();
 
 		gtk_init(&argc, (char***) &argv);
+
+		this->main_thread = pthread_self();
 	}
 
 	LinuxHost::~LinuxHost()
@@ -54,6 +56,11 @@ namespace kroll
 		g_timeout_add(250, &main_thread_job_handler, this);
 		gtk_main();
 		return false;
+	}
+
+	bool LinuxHost::IsMainThread()
+	{
+		return pthread_equal(this->main_thread, pthread_self());
 	}
 
 	Module* LinuxHost::CreateModule(std::string& path)

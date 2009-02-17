@@ -36,6 +36,7 @@ namespace kroll
 
 		Poco::Mutex& GetJobQueueMutex();
 		std::vector<LinuxJob*>& GetJobs();
+		bool IsMainThread();
 
 	protected:
 		virtual bool RunLoop();
@@ -44,6 +45,7 @@ namespace kroll
 	private:
 		Poco::Mutex job_queue_mutex;
 		std::vector<LinuxJob*> jobs;
+		pthread_t main_thread;
 	};
 }
 

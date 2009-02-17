@@ -7,7 +7,6 @@
  */
 #ifndef _KR_HOST_H_
 #define _KR_HOST_H_
-
 #include <Poco/Thread.h>
 
 namespace kroll
@@ -66,13 +65,6 @@ namespace kroll
 		virtual SharedValue InvokeMethodOnMainThread(
 			SharedBoundMethod,
 			const ValueList& args) = 0;
-
-		/*
-		 * Function: IsMainThread
-		 *
-		 * Determine if this thread is the main Kroll thread.
-		 */
-		bool IsMainThread();
 
 		/*
 		 * Function: AddModuleProvider
@@ -304,7 +296,6 @@ namespace kroll
 		bool running;
 		int exitCode;
 		bool debug;
-		Poco::Thread* main_thread;
 
 		static SharedPtr<Host> instance_;
 		DISALLOW_EVIL_CONSTRUCTORS(Host);
