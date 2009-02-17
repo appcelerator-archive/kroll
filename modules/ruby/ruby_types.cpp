@@ -316,7 +316,7 @@ namespace kroll
 		// we bind the special module "api" to the global
 		// variable defined in PRODUCT_NAME to give the
 		// Python runtime access to it
-		SharedValue api = host->GetGlobalObject()->Get("api");
+		SharedValue api = host->GetGlobalObject()->Get("API");
 		if (api->IsObject())
 		{
 			// we're going to clone the methods from api into our
@@ -332,9 +332,12 @@ namespace kroll
 
 			// now bind our new scope to python module
 			SharedValue scopeRef = Value::NewObject(scope);
-			host->GetGlobalObject()->Set((const char*)"ruby",scopeRef);
-			//KR_DECREF(scopeRef);
+			host->GetGlobalObject()->Set((const char*)"Ruby",scopeRef);
 			// don't release the scope
+		}
+		else
+		{
+			std::cerr << "! API module not bound, Ruby module will not work!" << std::endl;
 		}
 	}
 }
