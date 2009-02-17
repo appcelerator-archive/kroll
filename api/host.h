@@ -8,6 +8,8 @@
 #ifndef _KR_HOST_H_
 #define _KR_HOST_H_
 
+#include <Poco/Thread.h>
+
 namespace kroll
 {
 	class Module;
@@ -302,7 +304,7 @@ namespace kroll
 		bool running;
 		int exitCode;
 		bool debug;
-		int main_thread_id;
+		Poco::Thread* main_thread;
 
 		static SharedPtr<Host> instance_;
 		DISALLOW_EVIL_CONSTRUCTORS(Host);
