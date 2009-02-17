@@ -115,8 +115,6 @@ namespace kroll
 		 */
 		static SharedValue NewObject(SharedBoundObject value);
 
-		static SharedValue NewObject(SharedPtr<StaticBoundObject> value);
-
 		/*
 			Constructor: Value
 
