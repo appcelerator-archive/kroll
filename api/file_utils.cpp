@@ -19,6 +19,12 @@
 #elif defined(OS_LINUX)
 #include <cstdarg>
 #include <unistd.h>
+
+#include <sys/ioctl.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <linux/if.h>
 #endif
 
 #include <iostream>
@@ -571,9 +577,53 @@ namespace kroll
 		char buf[MAX_PATH];
 		sprintf_s(buf,MAX_PATH,"%02X-%02X-%02X-%02X-%02X-%02X", MACData[0], MACData[1], MACData[2], MACData[3], MACData[4], MACData[5]);
 		return std::string(buf);	
-#else
+#elif defined(OS_LINUX)
+		//Based on code from:
 		//http://adywicaksono.wordpress.com/2007/11/08/detecting-mac-address-using-c-application/
-		return std::string();	//FIXME: implement
+		std::string fail = "00:00:00:00:00:00";
+		struct ifreq ifr;
+		struct ifconf ifc;
+		char buf[1024];
+		u_char addr[6] = {'\0','\0','\0','\0','\0','\0'};
+		int s, i;
+
+		s = socket(AF_INET, SOCK_DGRAM, 0);
+		if (s == -1)
+			return fail;
+
+		ifc.ifc_len = sizeof(buf);
+		ifc.ifc_buf = buf;
+		ioctl(s, SIOCGIFCONF, &ifc);
+		struct ifreq* IFR = ifc.ifc_req;
+		bool success = false;
+		for (i = ifc.ifc_len / sizeof(struct ifreq); --i >= 0; IFR++) {
+			strcpy(ifr.ifr_name, IFR->ifr_name);
+			if (ioctl(s, SIOCGIFFLAGS, &ifr) == 0
+				 && (!(ifr.ifr_flags & IFF_LOOPBACK))
+				 && (ioctl(s, SIOCGIFHWADDR, &ifr) == 0))
+			{
+				success = true;
+				bcopy(ifr.ifr_hwaddr.sa_data, addr, 6);
+				break;
+			}
+		}
+		close(s);
+
+		if (success)
+		{
+			char mac_buf[36];
+			std::ostringstream mac;
+			snprintf(mac_buf, 36,
+				"%2.2x:%2.2x:%2.2x:%2.2x:%2.2x:%2.2x",
+				addr[0], addr[1],
+				addr[2], addr[3],
+				addr[4], addr[5]);
+			return std::string(mac_buf);
+		}
+		else
+		{
+			return fail;
+		}
 #endif
 	}
 	void FileUtils::Tokenize(const std::string& str, std::vector<std::string>& tokens, const std::string &delimeters)
