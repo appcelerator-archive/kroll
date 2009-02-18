@@ -197,7 +197,7 @@ namespace kroll
 
 		    Returns the directory for a given file path
 		 */
-		static const char* GetDirectory(std::string &file);
+		static std::string GetDirectory(std::string &file);
 
 		/*
 			Function: IsHidden

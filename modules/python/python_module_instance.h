@@ -13,7 +13,7 @@ namespace kroll
 	class PythonModuleInstance : public Module
 	{
 	public:
-		PythonModuleInstance(Host *host, std::string path_);
+		PythonModuleInstance(Host *host, std::string path);
 	protected:
 		virtual ~PythonModuleInstance();
 	public:

@@ -24,8 +24,8 @@ namespace kroll
 		/*
 		 * Constructor: Module
 		 */
-		Module(Host *host, const char *path)
-			 : host(host), path(std::string(path)) {} 
+		Module(Host *host, std::string path)
+			 : host(host), path(path) {} 
 		virtual ~Module() {}
 
 	public:
@@ -116,9 +116,9 @@ namespace kroll
 //
 
 using namespace kroll;
-#define KROLL_MODULE_FACTORY_DEFINE(s) extern "C" EXPORT s* CreateModule(Host *host, const char *path) \
+#define KROLL_MODULE_FACTORY_DEFINE(s) extern "C" EXPORT s* CreateModule(Host *host, const char* path) \
 { \
-	return new s(host,path);\
+	return new s(host, std::string(path));\
 }  \
 const char* s::GetName() \
 { \
@@ -128,13 +128,13 @@ const char* s::GetName() \
 typedef void* ModuleMethod;
 
 #define KROLL_MODULE_CLASS(s) public: \
-s(kroll::Host *host, const char *path); \
+s(kroll::Host *host, std::string path); \
 virtual ~s(); \
 const char* GetName(); \
 void Initialize(); \
 void Stop();
 
-#define KROLL_MODULE_CONSTRUCTOR(s) s::s(Host *host, const char *path) : kroll::Module(host,path)
+#define KROLL_MODULE_CONSTRUCTOR(s) s::s(Host *host, std::string path) : kroll::Module(host, path)
 #define KROLL_MODULE_DESTRUCTOR(s) s::~s()
 
 

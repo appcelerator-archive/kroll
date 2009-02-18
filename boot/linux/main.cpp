@@ -10,6 +10,7 @@
 #include <cstdlib>
 #include <dlfcn.h>
 #include <libgen.h>
+#include <limits.h>
 
 
 #include "file_utils.h"
@@ -166,7 +167,7 @@ class Boot
 
 	void SetupPaths(const char* argv0)
 	{
-		char buffer[256];
+		char* buffer = (char*) alloca(sizeof(char) * PATH_MAX);
 		char* real_path = realpath(argv0, buffer);
 		if (real_path == NULL)
 		{
