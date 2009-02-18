@@ -264,7 +264,7 @@ namespace kroll
 #endif
 	}
 
-	const char* FileUtils::GetDirectory(std::string &file)
+	std::string FileUtils::GetDirectory(std::string &file)
 	{
 		size_t pos = file.find_last_of(KR_PATH_SEP);
 		if (pos == std::string::npos)
@@ -279,7 +279,7 @@ namespace kroll
 		NSString *s = [[NSString stringWithCString:file.substr(0,pos).c_str()] stringByExpandingTildeInPath];
 		return [s fileSystemRepresentation];
 #else
-		return file.substr(0,pos).c_str();
+		return file.substr(0, pos);
 #endif
 	}
 

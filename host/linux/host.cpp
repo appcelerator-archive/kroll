@@ -80,7 +80,10 @@ namespace kroll
 			std::cerr << "Error load create entry from module: " << path << std::endl;
 			return 0;
 		}
-		return create(this,FileUtils::GetDirectory(path));
+
+		std::string dir = FileUtils::GetDirectory(path);
+		std::cout << dir << std::endl;
+		return create(this, dir.c_str());
 	}
 
 	Poco::Mutex& LinuxHost::GetJobQueueMutex()
