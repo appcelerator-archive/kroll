@@ -7,7 +7,7 @@
 #define RUBY_TYPES_H_
 
 #include <typeinfo>
-#include "ruby_module.h"
+#include "ruby_module.h""
 
 namespace kroll
 {
@@ -23,12 +23,16 @@ namespace kroll
 		static bool ToBool(VALUE value);
 		static int ToInt(VALUE value);
 		static double ToDouble(VALUE value);
-		static SharedValue ToValue(VALUE value);
-		static VALUE ToValue(SharedValue value);
+		static SharedValue ToKrollValue(VALUE value);
+		static VALUE ToRubyValue(SharedValue value);
 		static const char * ToUpper (const char *s);
+		static SharedBoundMethod ToMethod(VALUE value);
+		static SharedBoundObject ToObject(VALUE value);
+		static SharedBoundMethod CreateMethodMissing(VALUE object, std::string& method_name);
 
 	private:
 		static SharedPtr<BoundObject> scope;
+		static SharedBoundMethod evaluator;
 
 		RubyUtils(){}
 		~RubyUtils(){}

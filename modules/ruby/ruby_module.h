@@ -10,6 +10,8 @@
 #include <string>
 #include <vector>
 #include <ruby.h>
+#undef sleep
+#undef close
 #include <kroll/kroll.h>
 
 #include "ruby_api.h"

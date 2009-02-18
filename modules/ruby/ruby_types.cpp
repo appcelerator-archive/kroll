@@ -10,6 +10,10 @@
 #include <algorithm>
 #include <cctype>
 
+#include "ruby_bound_object.h"
+#include "ruby_bound_method.h"
+#include "ruby_method_missing.h"
+
 namespace kroll
 {
 	static VALUE ruby_wrapper_class = NULL;
@@ -64,27 +68,55 @@ namespace kroll
 		return NUM2DBL(value);
 	}
 
-	SharedValue RubyUtils::ToValue(VALUE value)
+	SharedBoundMethod RubyUtils::ToMethod(VALUE value)
+	{
+		return new RubyBoundMethod(value);
+	}
+
+	SharedBoundObject RubyUtils::ToObject(VALUE value)
+	{
+		return new RubyBoundObject(value);
+	}
+
+	SharedBoundMethod RubyUtils::CreateMethodMissing(VALUE object, std::string& method_name)
+	{
+		return new RubyMethodMissing(object, method_name);
+	}
+
+	SharedValue RubyUtils::ToKrollValue(VALUE value)
 	{
 		switch (TYPE(value)) {
 			case T_NIL: return Value::Null;
 			case T_DATA:
 			{
-				SharedPtr<BoundObject> *object = NULL;
-				Data_Get_Struct(value, SharedPtr<BoundObject>, object);
-				// is this a method ?
-				if (typeid(object->get()) == typeid(BoundMethod*)) {
-					SharedPtr<BoundMethod> method = object->cast<BoundMethod>();
-					return Value::NewMethod(method);
-				}
-				// is this a list ?
-				if (typeid(object->get()) == typeid(BoundList*)) {
-					SharedPtr<BoundList> list = object->cast<BoundList>();
-					return Value::NewList(list);
-				}
+				VALUE klass = rb_obj_class(value);
+				if (klass == ruby_wrapper_class) {
+					SharedPtr<BoundObject> *object = NULL;
+					Data_Get_Struct(value, SharedPtr<BoundObject>, object);
+					// is this a method ?
+					if (typeid(object->get()) == typeid(BoundMethod*)) {
+						SharedPtr<BoundMethod> method = object->cast<BoundMethod>();
+						return Value::NewMethod(method);
+					}
+					// is this a list ?
+					if (typeid(object->get()) == typeid(BoundList*)) {
+						SharedPtr<BoundList> list = object->cast<BoundList>();
+						return Value::NewList(list);
+					}
 
-				// nope, it's just a plain 'ole object
-				return Value::NewObject(object->get());
+					// nope, it's just a plain 'ole object
+					return Value::NewObject(object->get());
+				}
+				else {
+					if (rb_funcall(value, rb_intern("is_a?"), 1, rb_path2class("Method"))) {
+						SharedBoundMethod method = RubyUtils::ToMethod(value);
+						return Value::NewMethod(method);
+					}
+					else {
+						SharedBoundObject object = RubyUtils::ToObject(value);
+						return Value::NewObject(object);
+					}
+				}
 			}
 			break;
 			case T_STRING: return Value::NewString(StringValueCStr(value));
@@ -98,7 +130,7 @@ namespace kroll
 				//ScopedDereferencer r(list);
 				for (int i = 0; i < RARRAY_LEN(value); i++)
 				{
-					SharedValue arg = ToValue(rb_ary_entry(value, i));
+					SharedValue arg = ToKrollValue(rb_ary_entry(value, i));
 					list->Append(arg);
 					//KR_DECREF(arg);
 				}
@@ -114,14 +146,14 @@ namespace kroll
 		for (int c=0;c<list->Size();c++)
 		{
 			SharedValue value = list->At(c);
-			VALUE arg = ToValue(value);
+			VALUE arg = ToRubyValue(value);
 			rb_ary_concat(array, arg);
 			//KR_DECREF(value);
 		}
 		return array;
 	}
 
-	VALUE RubyUtils::ToValue(SharedValue value)
+	VALUE RubyUtils::ToRubyValue(SharedValue value)
 	{
 		if (value->IsBool()) {
 			return value->ToBool() ? Qtrue : Qfalse;
@@ -166,6 +198,8 @@ namespace kroll
 	// adopted from http://metaeditor.sourceforge.net/embed/#id2841270
 	static void ThrowOnError(int error)
 	{
+		printf("Ruby error[%d]\n", error);
+
 	    if(error == 0)
 	        return;
 
@@ -175,13 +209,13 @@ namespace kroll
 	    VALUE message = rb_obj_as_string(lasterr);
 		const char *exception = RSTRING(message)->ptr;
 
+        std::ostringstream o;
+		o << "Exception: " << exception << "\n";
 	    // backtrace
 	    if(!NIL_P(ruby_errinfo)) {
-	        std::ostringstream o;
 	        VALUE ary = rb_funcall(
 	            ruby_errinfo, rb_intern("backtrace"), 0);
 	        int c;
-			o << "Exception: " << exception << "\n";
 	        for (c=0; c<RARRAY(ary)->len; c++) {
 	            o << "\tfrom " <<
 	                RSTRING(RARRAY(ary)->ptr[c])->ptr <<
@@ -189,7 +223,7 @@ namespace kroll
 	        }
 			std::cerr << o.str() << std::endl;
 	    }
-	    throw std::runtime_error(exception);
+	    throw ValueException::FromString(o.str());
 	}
 
 	static VALUE RubySafeFuncCall(VALUE args)
@@ -218,7 +252,7 @@ namespace kroll
 	static const char* ToMethodName(VALUE value)
 	{
 		VALUE method = RubyFuncCall(value, rb_intern("to_s"));
-		method = RubyFuncCall(method, rb_intern("downcase"));
+		//method = RubyFuncCall(method, rb_intern("downcase"));
 		return StringValueCStr(method);
 	}
 
@@ -255,7 +289,7 @@ namespace kroll
 			{
 				char *s = strdup(method_name);
 				s[strlen(method_name)-1]='\0'; // trim the =
-				SharedValue arg = RubyUtils::ToValue(argv[1]);
+				SharedValue arg = RubyUtils::ToKrollValue(argv[1]);
 				(*object)->Set(s,arg);
 				free(s);
 				//KR_DECREF(arg);
@@ -274,7 +308,7 @@ namespace kroll
 				// Value* objects suitable for passing to Call
 				for (int i = 1; i < argc; i++)
 				{
-					SharedValue arg = RubyUtils::ToValue(argv[i]);
+					SharedValue arg = RubyUtils::ToKrollValue(argv[i]);
 					args.push_back(arg);
 				}
 				// convert and invoke
@@ -288,17 +322,47 @@ namespace kroll
 					Value *a = (*i++);
 					KR_DECREF(a);
 				}*/
-				return RubyUtils::ToValue(result);
+				return RubyUtils::ToRubyValue(result);
 			}
 			else
 			{
 				// this is a getter
-				return RubyUtils::ToValue(value);
+				return RubyUtils::ToRubyValue(value);
 			}
 		}
 		return Qnil;
 	}
 
+	class RubyEvaluator : public BoundMethod
+	{
+	public:
+		virtual SharedValue Call(const ValueList& args) {
+			if (args.size() == 3 && args[1]->IsString()) {
+
+				// strip the beginning so we have some sense of tab normalization
+				std::string code = args[1]->ToString();
+				SharedBoundObject context = args[2]->ToObject();
+				VALUE ruby_context = RubyUtils::ToRubyValue(args[2]);
+
+				rb_define_global_const("Window", ruby_context);
+
+				int state;
+				VALUE returnValue = rb_eval_string_protect(code.c_str(), &state);
+				if (returnValue == Qnil) {
+					ThrowOnError(state);
+					//FIXME - throw error message here
+					//throw Value::NewString("error evaluating ruby");
+				}
+			}
+			return Value::Null;
+		}
+
+		virtual void Set(const char *name, SharedValue value) {}
+		virtual SharedValue Get(const char *name) { return Value::Null; }
+		virtual SharedStringList GetPropertyNames() { return SharedStringList(); }
+	};
+
+	SharedBoundMethod RubyUtils::evaluator = SharedBoundMethod(new RubyEvaluator());
 	void RubyUtils::InitializeDefaultBindings(Host *host)
 	{
 		ruby_wrapper_class = rb_define_class("RubyBoundObject", rb_cObject);
@@ -321,18 +385,21 @@ namespace kroll
 		{
 			// we're going to clone the methods from api into our
 			// own python scoped object
-			scope = ScopeMethodDelegate::CreateDelegate(host->GetGlobalObject(),api->ToObject());
+			//scope = ScopeMethodDelegate::CreateDelegate(host->GetGlobalObject(),api->ToObject());
+			scope = host->GetGlobalObject();
 
 			// convert our static global guy to a Ruby VALUE
 			// and then make it a global const
 			VALUE scope_value = Create(scope);
 
 			// Ruby global constants must be ALL UPPERCASE
-			rb_define_global_const(ToUpper(PRODUCT_NAME),scope_value);
+			rb_define_global_const(PRODUCT_NAME,scope_value);
 
 			// now bind our new scope to python module
-			SharedValue scopeRef = Value::NewObject(scope);
+			SharedBoundObject rubyObject = new StaticBoundObject();
+			SharedValue scopeRef = Value::NewObject(rubyObject);
 			host->GetGlobalObject()->Set((const char*)"Ruby",scopeRef);
+			host->GetGlobalObject()->SetNS("Ruby.evaluate", Value::NewMethod(evaluator));
 			// don't release the scope
 		}
 		else

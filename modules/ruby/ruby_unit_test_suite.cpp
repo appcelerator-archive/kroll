@@ -26,7 +26,7 @@ namespace kroll
 		// ints
 		{
 			SharedValue value = Value::NewInt(1);
-			VALUE rubyValue = RubyUtils::ToValue(value);
+			VALUE rubyValue = RubyUtils::ToRubyValue(value);
 			KR_ASSERT(rubyValue);
 			KR_ASSERT(1 == RubyUtils::ToInt(rubyValue));
 			//KR_DECREF(value);
@@ -35,7 +35,7 @@ namespace kroll
 		// doubles
 		{
 			SharedValue value = Value::NewDouble(1.0);
-			VALUE rubyValue = RubyUtils::ToValue(value);
+			VALUE rubyValue = RubyUtils::ToRubyValue(value);
 			KR_ASSERT(rubyValue);
 			KR_ASSERT(1.0 == RubyUtils::ToDouble(rubyValue));
 			//KR_DECREF(value);
@@ -44,7 +44,7 @@ namespace kroll
 		// boolean TRUE
 		{
 			SharedValue value = Value::NewBool(true);
-			VALUE rubyValue = RubyUtils::ToValue(value);
+			VALUE rubyValue = RubyUtils::ToRubyValue(value);
 			KR_ASSERT(rubyValue);
 			KR_ASSERT(true == RubyUtils::ToBool(rubyValue));
 			//KR_DECREF(value);
@@ -53,7 +53,7 @@ namespace kroll
 		// boolean FALSE
 		{
 			SharedValue value = Value::NewBool(false);
-			VALUE rubyValue = RubyUtils::ToValue(value);
+			VALUE rubyValue = RubyUtils::ToRubyValue(value);
 			KR_ASSERT(!rubyValue);
 			KR_ASSERT(false == RubyUtils::ToBool(rubyValue));
 			//KR_DECREF(value);
@@ -63,7 +63,7 @@ namespace kroll
 		{
 			std::string s("hello");
 			SharedValue value = Value::NewString(s);
-			VALUE rubyValue = RubyUtils::ToValue(value);
+			VALUE rubyValue = RubyUtils::ToRubyValue(value);
 			KR_ASSERT(rubyValue);
 			KR_ASSERT_STR(RubyUtils::ToString(rubyValue),"hello");
 			//KR_DECREF(value);
@@ -115,7 +115,7 @@ namespace kroll
 			result = rb_eval_string("$jeff.yoyo.blah");
 			KR_ASSERT(result);
 			KR_ASSERT(TYPE(result)==T_NIL);
-			SharedValue vr = RubyUtils::ToValue(result);
+			SharedValue vr = RubyUtils::ToKrollValue(result);
 			KR_ASSERT(vr->IsNull());
 
 			// test to see if our method is defined
