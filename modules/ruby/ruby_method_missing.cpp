@@ -1,5 +1,5 @@
 /**
- * Appcelerator Titanium - licensed under the Apache Public License 2
+ * Appcelerator Kroll - licensed under the Apache Public License 2
  * see LICENSE in the root folder for details on the license.
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
@@ -17,7 +17,7 @@ SharedValue RubyMethodMissing::Call(const ValueList& args)
 {
 	VALUE* ruby_args = (VALUE*)malloc((sizeof(VALUE)*(args.size()+1))+1);
 	ruby_args[0] = rb_str_new2(method_name.c_str());
-	for (int i = 0; i < args.size(); i++) {
+	for (size_t i = 0; i < args.size(); i++) {
 		ruby_args[i] = RubyUtils::ToRubyValue(args[i-1]);
 	}
 
