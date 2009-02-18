@@ -104,7 +104,8 @@ namespace kroll
 			return 0;
 		}
 
-		return create(this,FileUtils::GetDirectory(path));
+		std::string dir = FileUtils::GetDirectory(path);
+		return create(this, dir.c_str());
 	}
 
 	SharedValue Win32Host::InvokeMethodOnMainThread(SharedBoundMethod method,

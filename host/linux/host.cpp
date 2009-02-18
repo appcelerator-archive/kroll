@@ -82,7 +82,6 @@ namespace kroll
 		}
 
 		std::string dir = FileUtils::GetDirectory(path);
-		std::cout << dir << std::endl;
 		return create(this, dir.c_str());
 	}
 
