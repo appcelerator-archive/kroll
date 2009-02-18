@@ -2,7 +2,7 @@
 Import('build')
 import os
 
-modules = ['api', 'python', 'javascript', 'ruby', 'foopy', 'foojs', 'foorb']
+modules = ['api', 'python', 'javascript' ,'ruby'] #'foopy', 'foojs', 'foorb']
 #modules = ['api', 'javascript', 'foo', 'foopy', 'foojs', 'foorb']
 
 for module in modules:
