@@ -12,21 +12,14 @@ namespace kroll
 	KROLL_MODULE(JavascriptModule)
 
 	JavascriptModule* JavascriptModule::instance = NULL;
-
 	void JavascriptModule::Initialize()
 	{
-		KR_DUMP_LOCATION
-		
 		JavascriptModule::instance = this;
-
 		host->AddModuleProvider(this);
 	}
 
 	void JavascriptModule::Stop()
 	{
-		KR_DUMP_LOCATION
-		
-		// FIXME - unregister / unbind?
 		JavascriptModule::instance = NULL;
 	}
 
@@ -49,10 +42,8 @@ namespace kroll
 
 	Module* JavascriptModule::CreateModule(std::string& path)
 	{
-		char *char_path = strdup(path.c_str());
-		std::cout << "Creating module: " << char_path << std::endl;
 		JavascriptModuleInstance* instance =
-		       new JavascriptModuleInstance(this->host, path);
+			new JavascriptModuleInstance(this->host, path);
 		return instance;
 	}
 
