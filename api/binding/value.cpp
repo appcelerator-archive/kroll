@@ -122,13 +122,6 @@ namespace kroll
 		return v;
 	}
 
-	SharedValue Value::NewObject(SharedPtr<StaticBoundObject> value)
-	{
-		SharedValue v(new Value());
-		v->SetStaticBoundObject(value);
-		return v;
-	}
-
 	SharedValue Value::Undefined = CreateUndefined();
 	SharedValue Value::Null = CreateNull();
 

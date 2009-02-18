@@ -64,29 +64,36 @@ namespace kroll
 
 
 		/*
-			Function: Call
-
-		  call the method with a variable list of Value* arguments
-		  When an error occurs will throw an exception of type Value*.
-		 */
-		/*SharedValue Call(SharedValue first, ...)
+		* Function: Call
+		*
+		* Call the method with a variable list of Value* arguments
+		* When an error occurs will throw an exception of type Value*.
+		*/
+		SharedValue Call()
+		{
+			return this->Call(ValueList());
+		}
+		SharedValue Call(SharedValue one)
 		{
 			ValueList args;
-			va_list vaargs;
-			va_start(vaargs,first);
-			args.push_back(first);
-			while(1)
-			{
-		      SharedValue a = va_arg(vaargs,SharedValue);
-		      if (a.isNull()) break;
-		      args.push_back(a);
-			}
-			va_end(vaargs);
+			args.push_back(one);
 			return this->Call(args);
-		}*/
-		//NOTE: this ideally above would be an operator() overload
-		//so you could just method() invoke this function but it doesn't
-		//compile on GCC with "cannot be used as function"
+		}
+		SharedValue Call(SharedValue one, SharedValue two)
+		{
+			ValueList args;
+			args.push_back(one);
+			args.push_back(two);
+			return this->Call(args);
+		}
+		SharedValue Call(SharedValue one, SharedValue two, SharedValue three)
+		{
+			ValueList args;
+			args.push_back(one);
+			args.push_back(two);
+			args.push_back(three);
+			return this->Call(args);
+		}
 
 	private:
 		DISALLOW_EVIL_CONSTRUCTORS(BoundMethod);
