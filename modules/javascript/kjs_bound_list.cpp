@@ -18,8 +18,8 @@ namespace kroll
 		 * this seems to prevent nasty crashes from trying to access invalid
 		 * contexts later. Global contexts need to be registered by all modules
 		 * that use a KJS context. */
-		JSContextGroupRef group = JSContextGetGroup(context);
-		JSGlobalContextRef global_context = KJSUtil::GetGlobalContext(group);
+		JSObjectRef global_object = JSContextGetGlobalObject(context);
+		JSGlobalContextRef global_context = KJSUtil::GetGlobalContext(global_object);
 		if (global_context != NULL)
 		{
 			this->context = global_context;
@@ -32,7 +32,7 @@ namespace kroll
 			std::cerr << "Could not locate global context for a KJS method."  <<
 			             " One of the modules is misbehaving." << std::endl;
 		}
-
+		
 		JSValueProtect(this->context, js_object);
 		this->kjs_bound_object = new KJSBoundObject(this->context, js_object);
 	}

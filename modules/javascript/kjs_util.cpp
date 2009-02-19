@@ -382,16 +382,22 @@ namespace kroll
 		}
 		catch (ValueException& exception)
 		{
+#ifdef DEBUG
+			std::cerr << "Exception raised when getting property: " << name << std::endl;
+#endif	
 			*js_exception = KJSUtil::ToJSValue(exception.GetValue(), js_context);
 		}
 		catch (std::exception &e)
 		{
+#ifdef DEBUG
+			std::cerr << "Exception raised when getting property: " << name << ", "<< e.what() << std::endl;
+#endif	
 			SharedValue value = Value::NewString(e.what());
 			*js_exception = KJSUtil::ToJSValue(value, js_context);
 		}
 		catch (...)
 		{
-			std::cerr << "Caught an exception that I don't know how to handle!" << std::endl;
+			std::cerr << "Caught an exception that I don't know how to handle when getting property: " << name << std::endl;
 			SharedValue value = Value::NewString("unknown exception");
 			*js_exception = KJSUtil::ToJSValue(value, js_context);
 		}
@@ -421,10 +427,16 @@ namespace kroll
 		}
 		catch (ValueException& exception)
 		{
+#ifdef DEBUG
+			std::cerr << "Exception raised when setting property: " << prop_name << std::endl;
+#endif	
 			*js_exception = KJSUtil::ToJSValue(exception.GetValue(), js_context);
 		}
 		catch (std::exception &e)
 		{
+#ifdef DEBUG
+			std::cerr << "Exception raised when setting property: " << prop_name << ", "<< e.what() << std::endl;
+#endif	
 			SharedValue value = Value::NewString(e.what());
 			*js_exception = KJSUtil::ToJSValue(value, js_context);
 		}
@@ -432,7 +444,7 @@ namespace kroll
 		{
 			SharedValue value = Value::NewString("unknown exception");
 			*js_exception = KJSUtil::ToJSValue(value, js_context);
-			std::cerr << "Caught an exception that I don't know how to handle!" << std::endl;
+			std::cerr << "Caught an exception that I don't know how to handle setting property: " << prop_name << ", " << std::endl;
 		}
 
 		free(prop_name);
@@ -465,10 +477,17 @@ namespace kroll
 		}
 		catch (ValueException& exception)
 		{
+#ifdef DEBUG
+ 			const char* se = exception.what();
+ 			std::cerr << "Exception raised when invoking function. Exception: " << se << std::endl;
+#endif	
 			*js_exception = KJSUtil::ToJSValue(exception.GetValue(), js_context);
 		}
 		catch (std::exception &e)
 		{
+#ifdef DEBUG
+			std::cerr << "Exception raised when invoking function. Exception: " << e.what() << std::endl;
+#endif	
 			SharedValue value = Value::NewString(e.what());
 			*js_exception = KJSUtil::ToJSValue(value, js_context);
 		}
@@ -476,7 +495,7 @@ namespace kroll
 		{
 			SharedValue value = Value::NewString("unknown exception");
 			*js_exception = KJSUtil::ToJSValue(value, js_context);
-			std::cerr << "Caught an exception that I don't know how to handle!" << std::endl;
+			std::cerr << "Caught an exception that I don't know how to handle when invoking function!" << std::endl;
 		}
 
 		return js_val;
@@ -501,23 +520,23 @@ namespace kroll
 		return new KJSBoundList(context, list);
 	}
 
-	std::map<JSContextGroupRef, JSGlobalContextRef> context_map;
+	std::map<JSObjectRef, JSGlobalContextRef> context_map;
 	void KJSUtil::RegisterGlobalContext(
-	    JSContextGroupRef group,
+	    JSObjectRef object,
 	    JSGlobalContextRef global_ctx)
 	{
-		context_map[group] = global_ctx;
+		context_map[object] = global_ctx;
 	}
 
-	JSGlobalContextRef KJSUtil::GetGlobalContext(JSContextGroupRef group)
+	JSGlobalContextRef KJSUtil::GetGlobalContext(JSObjectRef object)
 	{
-		if (context_map.find(group) == context_map.end())
+		if (context_map.find(object) == context_map.end())
 		{
 			return NULL;
 		}
 		else
 		{
-			return context_map[group];
+			return context_map[object];
 		}
 	}
 }

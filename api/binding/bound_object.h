@@ -140,7 +140,6 @@ namespace kroll
 		 */
 		void GetStringList(const char *name, std::vector<std::string> &list);
 
-
 	private:
 		DISALLOW_EVIL_CONSTRUCTORS(BoundObject);
 	};
