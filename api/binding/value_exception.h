@@ -35,11 +35,10 @@ namespace kroll
 		static ValueException FromString(std::string s);
 		static ValueException FromObject(SharedBoundObject o);
 		SharedValue GetValue();
-		const char* what() const throw ();
+		SharedString DisplayString();
 
 	private:
 		SharedValue value;
-		const char *message;
 	};
 
 #ifndef OS_WIN32

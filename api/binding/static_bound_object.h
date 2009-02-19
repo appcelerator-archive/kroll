@@ -85,7 +85,6 @@ namespace kroll
 		*/
 		void SetObject(const char *name, SharedBoundObject object);
 
-		void _ToString(const ValueList& args, SharedValue result);
 	protected:
 		std::map<std::string, SharedValue> properties;
 		Mutex mutex;
