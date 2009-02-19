@@ -7,7 +7,7 @@
 #define RUBY_TYPES_H_
 
 #include <typeinfo>
-#include "ruby_module.h""
+#include "ruby_module.h"
 
 namespace kroll
 {
