@@ -11,12 +11,6 @@ namespace kroll
 
 	ValueException::ValueException(SharedValue v) : std::exception(), value(v)
 	{
-		SharedString ss = this->value->DisplayString();
-		std::string s = *ss;
-		this->message = s.c_str();
-#ifdef DEBUG
-		std::cerr << "Creating exception: " << message << std::endl;
-#endif
 	}
 
 	ValueException::~ValueException() throw ()
@@ -42,9 +36,18 @@ namespace kroll
 	{
 		return this->value;
 	}
-	const char* ValueException::what() const throw ()
+
+	SharedString ValueException::DisplayString()
 	{
-		return this->message;
+		if (!this->value.isNull())
+		{
+			return this->value->DisplayString();
+		}
+		else
+		{
+			SharedString s = new std::string("<no exception>");
+			return s;
+		}
 	}
 }
 

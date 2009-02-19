@@ -21,9 +21,12 @@ namespace kroll
 	{
 		Py_DECREF(this->object);
 		this->object = NULL;
-		if (this->name) free(this->name);
-		this->name = NULL;
-		//KR_DECREF(this->delegate);
+
+		if (this->name)
+		{
+			free(this->name);
+			this->name = NULL;
+		}
 	}
 
 	SharedValue PythonBoundMethod::Call(const ValueList& args)

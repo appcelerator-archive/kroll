@@ -19,14 +19,6 @@ namespace kroll
 	{
 	}
 
-	void StaticBoundObject::_ToString(const ValueList& args, SharedValue result)
-	{
-		SharedString ss = this->DisplayString();
-		std::cout << "tostring: " << *ss << std::endl;
-		result->SetString(*ss);
-	}
-
-
 	StaticBoundObject::~StaticBoundObject()
 	{
 		// The SharedPtr implementation should decrement
