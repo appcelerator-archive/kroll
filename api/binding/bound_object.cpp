@@ -8,8 +8,7 @@
 #include <sstream>
 
 namespace kroll
-{
-
+{	
 	void BoundObject::Set(SharedString name, SharedValue value)
 	{
 		this->Set(name->c_str(), value);

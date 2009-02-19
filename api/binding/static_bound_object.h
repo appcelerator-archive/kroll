@@ -73,7 +73,6 @@ namespace kroll
 
 			SharedBoundMethod bound_method = new StaticBoundMethod(callback);
 			SharedValue method_value = Value::NewMethod(bound_method);
-
 			this->Set(name, method_value);
 		}
 
@@ -86,6 +85,7 @@ namespace kroll
 		*/
 		void SetObject(const char *name, SharedBoundObject object);
 
+		void _ToString(const ValueList& args, SharedValue result);
 	protected:
 		std::map<std::string, SharedValue> properties;
 		Mutex mutex;
