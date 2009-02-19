@@ -57,6 +57,11 @@ namespace kroll
 			exit(1);
 		}
 
+#ifdef DEBUG
+		// if you compile in debug, force debug here
+		this->debug = true;
+#endif
+
 		std::string ti_home = Environment::get(kr_home_str);
 		std::string ti_runtime = Environment::get(kr_runtime_str);
 		std::string paths = Environment::get(kr_modules_str);
