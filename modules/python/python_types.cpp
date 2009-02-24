@@ -266,17 +266,14 @@ namespace kroll
 
 	static void PyBoundObject_dealloc(PyObject* self)
 	{
-		// std::cout << "++PyBoundObject_dealloc called for " <<(void*)self << std::endl;
-		PyBoundObject *boundSelf = (PyBoundObject*) self;
+		PyBoundObject *boundSelf = reinterpret_cast<PyBoundObject*>(self);
 		delete boundSelf->object;
-		delete boundSelf;
 		PyObject_Del(self);
 	}
 
 	static PyObject* PyBoundObject_getattr(PyObject *self, char *name)
 	{
 		PyBoundObject *boundSelf = reinterpret_cast<PyBoundObject*>(self);
-	 	// std::cout << "PyBoundObject_getattr called with " << name << " for " << (void*)boundSelf << std::endl;
 		Py_INCREF(boundSelf);
 		SharedValue result = boundSelf->object->get()->Get(name);
 		Py_DECREF(boundSelf);
@@ -285,8 +282,7 @@ namespace kroll
 
 	static int PyBoundObject_setattr(PyObject *self, char *name, PyObject *value)
 	{
-		PyBoundObject *boundSelf = (PyBoundObject*)self;
-		// std::cout << KR_FUNC << " called for " <<(void*)boundSelf << std::endl;
+		PyBoundObject *boundSelf = reinterpret_cast<PyBoundObject*>(self);
 		Py_INCREF(boundSelf);
 		SharedValue tiValue = PythonUtils::ToValue(value,name);
 		boundSelf->object->get()->Set(name, tiValue);
@@ -296,8 +292,7 @@ namespace kroll
 
 	static PyObject* PyBoundObject_tostring(PyObject *self)
 	{
-		PyBoundObject *boundSelf = (PyBoundObject*)self;
-		//std::cout << KR_FUNC << " called for " <<(void*)boundSelf << std::endl;
+		PyBoundObject *boundSelf = reinterpret_cast<PyBoundObject*>(self);
 		Py_INCREF(boundSelf);
 		SharedValue result = boundSelf->object->get()->Get("toString");
 		Py_DECREF(boundSelf);
