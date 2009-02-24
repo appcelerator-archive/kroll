@@ -43,10 +43,28 @@ namespace kroll
 	{
 		NSApplication *app = [NSApplication sharedApplication];
 		// we pull out an event from the queue, blocking a little bit before returning
-		NSEvent *event = [app nextEventMatchingMask:NSAnyEventMask untilDate:[NSDate dateWithTimeIntervalSinceNow:10] inMode:NSDefaultRunLoopMode dequeue:YES];
-		if (event) 
+		try
 		{
-			[app sendEvent:event];
+			@try
+			{
+				NSEvent *event = [app nextEventMatchingMask:NSAnyEventMask untilDate:[NSDate dateWithTimeIntervalSinceNow:10] inMode:NSDefaultRunLoopMode dequeue:YES];
+				if (event) 
+				{
+					[app sendEvent:event];
+				}
+			}
+			@catch(NSException *e)
+			{
+				std::cerr << "Caught NSException in main loop: " << [[e reason] UTF8String] << std::endl;
+			}
+		}
+		catch (std::exception &e)
+		{
+			std::cerr << "Caught exception in main loop: " << e.what() << std::endl;
+		}
+		catch (...)
+		{
+			std::cerr << "Caught unhandled exception in main loop: " << std::endl;
 		}
 		return true;
 	}
