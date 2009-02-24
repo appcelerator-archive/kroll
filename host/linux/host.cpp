@@ -138,7 +138,9 @@ namespace kroll
 
 		for (j = jobs.begin(); j != jobs.end(); j++)
 		{
+			gdk_threads_enter();
 			(*j)->Execute();
+			gdk_threads_leave();
 		}
 
 		jobs.clear();
