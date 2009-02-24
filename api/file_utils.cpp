@@ -808,9 +808,11 @@ namespace kroll
 		std::string runtime = GetRuntimeBaseDirectory();
 		std::string path(runtime);
 #ifdef OS_WIN32
-		path += "\\modules\\";
-#else
-		path += "/modules/";
+		path += "\\modules\\win32\\";
+#elif OS_LINUX
+		path += "/modules/linux/";
+#elif OS_OSX
+		path += "/modules/osx/";
 #endif
 		path += name;
 		return FindVersioned(path,op,version);
