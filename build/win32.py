@@ -13,6 +13,7 @@ if os.environ.has_key("TITANIUM_LIBPATH"):
 
 
 build.env.Append(CCFLAGS=['/EHsc', '/MD'])
+#build.env.Append(LINKFLAGS=['/NODEFAULTLIB:MSVCRT.lib', '/NODEFAULTLIB:MSVCPRT.lib'])
 # disable this for release builds?
 if ARGUMENTS.get('debug', 0):
 	build.env.Append(CPPDEFINES=('WIN32_CONSOLE', 1))
