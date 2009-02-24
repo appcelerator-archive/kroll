@@ -63,9 +63,9 @@ namespace kroll
 		this->debug = true;
 #else
 		// we also support setting debug from an environment 
-		std::string ti_debug = Environment::get(kr_debug_str);
-		if (!ti_debug.empty())
+		if (Environment::has(kr_debug_str))
 		{
+			std::string ti_debug = Environment::get(kr_debug_str);
 			this->debug = (ti_debug == "true" || ti_debug == "yes" || ti_debug == "1");
 		}
 #endif
