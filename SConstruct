@@ -4,16 +4,17 @@ import os, re, sys, inspect, os.path as path
 from build.common import BuildConfig
 
 build = BuildConfig(
+    PRODUCT_VERSION = '0.1',
     PRODUCT_NAME = 'Kroll',
     INSTALL_PREFIX = '/usr/local',
     GLOBAL_NS_VARNAME = 'kroll',
     CONFIG_FILENAME = 'tiapp.xml',
     BUILD_DIR = path.abspath('build'),
     THIRD_PARTY_DIR = path.abspath('thirdparty'),
-	BOOT_RUNTIME_FLAG = '--runtime',
-	BOOT_HOME_FLAG = '--start',
-	BOOT_UPDATESITE_ENVNAME = 'KR_UPDATESITE',
-	BOOT_UPDATESITE_URL = ''
+	 BOOT_RUNTIME_FLAG = '--runtime',
+	 BOOT_HOME_FLAG = '--start',
+	 BOOT_UPDATESITE_ENVNAME = 'KR_UPDATESITE',
+	 BOOT_UPDATESITE_URL = ''
 )
 
 

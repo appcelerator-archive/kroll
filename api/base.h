@@ -75,6 +75,8 @@
   #define CONFIG_FILENAME STRING(_CONFIG_FILENAME)
 #endif
 
+#define PRODUCT_VERSION _PRODUCT_VERSION
+
 
 // define a macro that points to the name of the enclosing function where
 // referenced or if not supported on target compiler, just default to filename
