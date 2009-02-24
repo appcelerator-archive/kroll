@@ -202,7 +202,7 @@ class Boot
 			// runtime location.
 			const char* crt_path = this->rt_path.c_str();
 			std::string rt_module_path =
-				 FileUtils::Join(crt_path, MODULE_DIR, NULL);
+				 FileUtils::Join(crt_path, MODULE_DIR, "linux", NULL);
 			this->module_paths.push_back(rt_module_path);
 
 			std::string rt_rt_path =

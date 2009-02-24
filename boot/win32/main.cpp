@@ -126,7 +126,7 @@ std::string FindModuleDir()
 		return modules;
 	}
 	std::string runtime = FileUtils::GetRuntimeBaseDirectory();
-	return FileUtils::Join(runtime.c_str(),"modules",NULL);
+	return FileUtils::Join(runtime.c_str(),"modules","win32",NULL);
 }
 bool RunAppInstallerIfNeeded(std::string &homedir,
 						 std::string &runtimePath,
@@ -355,7 +355,7 @@ int main(int _argc, const char* _argv[])
 		std::string localRuntime = FileUtils::Join(homedir.c_str(),"runtime",NULL);
 		std::string runtimeBasedir = FileUtils::GetRuntimeBaseDirectory();
 		std::string moduleLocalDir = FindModuleDir();
-		std::string moduleBasedir = FileUtils::Join(runtimeBasedir.c_str(),"modules",NULL);
+		std::string moduleBasedir = FileUtils::Join(runtimeBasedir.c_str(),"modules","win32",NULL);
 		std::ostringstream moduleList;
 
 		// we now need to resolve and load each module and dependencies
