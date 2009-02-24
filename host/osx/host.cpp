@@ -47,10 +47,11 @@ namespace kroll
 		{
 			@try
 			{
-				NSEvent *event = [app nextEventMatchingMask:NSAnyEventMask untilDate:[NSDate dateWithTimeIntervalSinceNow:10] inMode:NSDefaultRunLoopMode dequeue:YES];
+				NSEvent *event = [app nextEventMatchingMask:NSAnyEventMask untilDate:[NSDate distantFuture] inMode:NSDefaultRunLoopMode dequeue:YES];
 				if (event) 
 				{
 					[app sendEvent:event];
+					[app updateWindows];
 				}
 			}
 			@catch(NSException *e)
