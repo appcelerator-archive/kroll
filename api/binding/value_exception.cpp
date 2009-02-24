@@ -36,5 +36,18 @@ namespace kroll
 	{
 		return this->value;
 	}
+
+	SharedString ValueException::DisplayString()
+	{
+		if (!this->value.isNull())
+		{
+			return this->value->DisplayString();
+		}
+		else
+		{
+			SharedString s = new std::string("<no exception>");
+			return s;
+		}
+	}
 }
 

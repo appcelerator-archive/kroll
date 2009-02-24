@@ -21,7 +21,7 @@ namespace kroll
 	/*
 		Class: BoundObject
 	*/
-	class KROLL_API ValueException : std::exception
+	class KROLL_API ValueException : public std::exception
 	{
 	public:
 		/*
@@ -35,6 +35,7 @@ namespace kroll
 		static ValueException FromString(std::string s);
 		static ValueException FromObject(SharedBoundObject o);
 		SharedValue GetValue();
+		SharedString DisplayString();
 
 	private:
 		SharedValue value;

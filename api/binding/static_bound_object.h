@@ -73,7 +73,6 @@ namespace kroll
 
 			SharedBoundMethod bound_method = new StaticBoundMethod(callback);
 			SharedValue method_value = Value::NewMethod(bound_method);
-
 			this->Set(name, method_value);
 		}
 

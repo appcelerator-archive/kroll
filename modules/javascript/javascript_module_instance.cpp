@@ -52,8 +52,8 @@ namespace kroll
 
 		JSValueRef exception;
 		JSGlobalContextRef context = JSGlobalContextCreate(NULL);
-		JSContextGroupRef group = JSContextGetGroup(context);
-		KJSUtil::RegisterGlobalContext(group, context);
+		JSObjectRef global_object = JSContextGetGlobalObject(context);
+		KJSUtil::RegisterGlobalContext(global_object, context);
 
 		/* Take some steps to insert the API into the Javascript context */
 		/* Create a crazy, crunktown delegate hybrid object for Javascript */
@@ -63,7 +63,6 @@ namespace kroll
 		JSValueRef js_api = KJSUtil::ToJSValue(global_value, context);
 
 		/* set the API as a property of the global object */
-		JSObjectRef global_object = JSContextGetGlobalObject(context);
 		JSStringRef prop_name = JSStringCreateWithUTF8CString(PRODUCT_NAME);
 		JSObjectSetProperty(context, global_object, prop_name,
 		                    js_api, kJSPropertyAttributeNone, NULL);

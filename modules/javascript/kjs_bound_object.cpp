@@ -13,11 +13,11 @@ namespace kroll
 		  object(js_object)
 	{
 		/* KJS methods run in the global context that they originated from
-		 * this seems to prevent nasty crashes from trying to access invalid
-		 * contexts later. Global contexts need to be registered by all modules
-		 * that use a KJS context. */
-		JSContextGroupRef group = JSContextGetGroup(context);
-		JSGlobalContextRef global_context = KJSUtil::GetGlobalContext(group);
+		* this seems to prevent nasty crashes from trying to access invalid
+		* contexts later. Global contexts need to be registered by all modules
+		* that use a KJS context. */
+		JSObjectRef global_object = JSContextGetGlobalObject(context);
+		JSGlobalContextRef global_context = KJSUtil::GetGlobalContext(global_object);
 		if (global_context != NULL)
 		{
 			this->context = global_context;

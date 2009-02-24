@@ -38,6 +38,7 @@ namespace kroll
 		std::string kr_home_str = "KR_HOME";
 		std::string kr_runtime_str = "KR_RUNTIME";
 		std::string kr_modules_str = "KR_MODULES";
+		std::string kr_debug_str = "KR_DEBUG";
 
 		if (!Environment::has(kr_home_str))
 		{
@@ -56,6 +57,18 @@ namespace kroll
 			std::cerr << kr_modules_str << " not defined, aborting." << std::endl;
 			exit(1);
 		}
+
+#ifdef DEBUG
+		// if you compile in debug, force debug here
+		this->debug = true;
+#else
+		// we also support setting debug from an environment 
+		if (Environment::has(kr_debug_str))
+		{
+			std::string ti_debug = Environment::get(kr_debug_str);
+			this->debug = (ti_debug == "true" || ti_debug == "yes" || ti_debug == "1");
+		}
+#endif
 
 		std::string ti_home = Environment::get(kr_home_str);
 		std::string ti_runtime = Environment::get(kr_runtime_str);
