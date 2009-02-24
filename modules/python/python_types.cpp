@@ -15,7 +15,10 @@ namespace kroll
 		{
 			return PyString_AsString(value);
 		}
-		return "";
+		PyObject *o = PyObject_Str(value);
+		const char *result = PythonUtils::ToString(o);
+		Py_DECREF(o);
+		return result;
 	}
 
 	bool PythonBoolToBool(PyObject* value)
@@ -44,6 +47,16 @@ namespace kroll
 		}
 		return 0.0;
 	}
+	
+	void ConvertLinefeeds(std::string &code)
+	{
+		while (1)
+		{
+			std::string::size_type loc = code.find("\r\n");
+			if (loc == std::string::npos) break;
+			code.replace(loc,2,"\n");
+		}
+	}
 
 	class PythonEvaluator : public BoundMethod
 	{
@@ -53,11 +66,14 @@ namespace kroll
 
 				// strip the beginning so we have some sense of tab normalization
 				std::string code = args[1]->ToString();
+				ConvertLinefeeds(code);
 				size_t startpos = code.find_first_not_of(" \t\n");
 				if (std::string::npos != startpos)
 					code = code.substr(startpos);
 
+#ifdef DEBUG
 				std::cout << "Evaluating python source code:\n" << code << std::endl;
+#endif
 				SharedBoundObject context = args[2]->ToObject();
 				PyObject *py_context = PythonUtils::ToObject(NULL, NULL, context);
 
@@ -66,10 +82,12 @@ namespace kroll
 
 				PyDict_SetItemString(main_dict, "window", py_context);
 				PyObject *returnValue = PyRun_StringFlags(code.c_str(), Py_file_input, main_dict, main_dict, NULL);
-				if (returnValue == NULL) {
-					PyErr_Print();
-					//FIXME - throw error message here
-					throw Value::NewString("error evaluating python");
+
+				Py_DECREF(py_context);
+
+				if (returnValue == NULL) 
+				{
+					 PythonUtils::ThrowException();
 				}
 				Py_DECREF(returnValue);
 			}
@@ -248,17 +266,14 @@ namespace kroll
 
 	static void PyBoundObject_dealloc(PyObject* self)
 	{
-		// std::cout << "++PyBoundObject_dealloc called for " <<(void*)self << std::endl;
-		PyBoundObject *boundSelf = (PyBoundObject*) self;
+		PyBoundObject *boundSelf = reinterpret_cast<PyBoundObject*>(self);
 		delete boundSelf->object;
-		delete boundSelf;
 		PyObject_Del(self);
 	}
 
 	static PyObject* PyBoundObject_getattr(PyObject *self, char *name)
 	{
 		PyBoundObject *boundSelf = reinterpret_cast<PyBoundObject*>(self);
-	 	// std::cout << "PyBoundObject_getattr called with " << name << " for " << (void*)boundSelf << std::endl;
 		Py_INCREF(boundSelf);
 		SharedValue result = boundSelf->object->get()->Get(name);
 		Py_DECREF(boundSelf);
@@ -267,8 +282,7 @@ namespace kroll
 
 	static int PyBoundObject_setattr(PyObject *self, char *name, PyObject *value)
 	{
-		PyBoundObject *boundSelf = (PyBoundObject*)self;
-		// std::cout << KR_FUNC << " called for " <<(void*)boundSelf << std::endl;
+		PyBoundObject *boundSelf = reinterpret_cast<PyBoundObject*>(self);
 		Py_INCREF(boundSelf);
 		SharedValue tiValue = PythonUtils::ToValue(value,name);
 		boundSelf->object->get()->Set(name, tiValue);
@@ -278,8 +292,7 @@ namespace kroll
 
 	static PyObject* PyBoundObject_tostring(PyObject *self)
 	{
-		PyBoundObject *boundSelf = (PyBoundObject*)self;
-		//std::cout << KR_FUNC << " called for " <<(void*)boundSelf << std::endl;
+		PyBoundObject *boundSelf = reinterpret_cast<PyBoundObject*>(self);
 		Py_INCREF(boundSelf);
 		SharedValue result = boundSelf->object->get()->Get("toString");
 		Py_DECREF(boundSelf);
@@ -358,8 +371,13 @@ namespace kroll
 		PyObject *ptype, *pvalue, *trace;
 		PyErr_Fetch(&ptype,&pvalue,&trace);
 		PyErr_Print();
+		const char *err = PythonUtils::ToString(pvalue);
+		ValueException ex = ValueException::FromString(err);
+		Py_XDECREF(ptype);
+		Py_XDECREF(pvalue);
+		Py_XDECREF(trace);
 		PyErr_Clear();
-		throw PythonUtils::ToValue(pvalue,NULL);
+		throw ex;
 	}
 
 	SharedValue PythonUtils::ToValue(PyObject* value, const char *name)

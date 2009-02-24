@@ -14,6 +14,7 @@ class BuildConfig(object):
 			self.os = 'linux'
 
 		vars = SCons.Variables.Variables()
+		vars.Add('PRODUCT_VERSION', 'The underlying product version for Kroll', kwargs['PRODUCT_VERSION'])
 		vars.Add('PRODUCT_NAME', 'The underlying product name that Kroll will display (default: "Kroll")', kwargs['PRODUCT_NAME'])
 		vars.Add('INSTALL_PREFIX', 'The install prefix of binaries in the system (default: /usr/local)', kwargs['INSTALL_PREFIX'])
 		vars.Add('GLOBAL_NS_VARNAME','The name of the Kroll global variable', kwargs['GLOBAL_NS_VARNAME'])
@@ -29,6 +30,7 @@ class BuildConfig(object):
 			['OS_' + self.os.upper(), 1],
 			['_OS_NAME', self.os],
 			['_INSTALL_PREFIX', '${INSTALL_PREFIX}'],
+			['_PRODUCT_VERSION', '${PRODUCT_VERSION}'],
 			['_PRODUCT_NAME', '${PRODUCT_NAME}'],
 			['_GLOBAL_NS_VARNAME', '${GLOBAL_NS_VARNAME}'],
 			['_CONFIG_FILENAME' , '${CONFIG_FILENAME}'],
