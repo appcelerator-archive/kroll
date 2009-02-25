@@ -5,6 +5,7 @@
  */
 
 #include "blob.h"
+#include <cstring>
 
 namespace kroll
 {
@@ -20,8 +21,8 @@ namespace kroll
 	Blob::~Blob()
 	{
 		delete [] this->buffer;
-		this->buffer = 0;
-		this->length = 0;
+		this->buffer = NULL;
+		this->length = NULL;
 	}
 	void Blob::ToString(const ValueList& args, SharedValue result)
 	{
