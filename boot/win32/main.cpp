@@ -371,13 +371,16 @@ int main(int _argc, const char* _argv[])
 		std::string dypath = localRuntime;
 		dypath+=";";
 		dypath+=runtimePath;
-		std::string path("PATH=");
+		std::string path;
 		path+=dypath;
+		path += moduleList.str();
 		if (getEnv("PATH",buf) > 0)
 		{
 			path+=";";
 			path+=buf;
 		}
+		
+		std::cout << "\n\n\n**** SETTING PATH = " << path << "\n\n\n";
 		
 		SetEnvironmentVariable("KR_FORK","YES");
 		SetEnvironmentVariable("KR_HOME",homedir.c_str());

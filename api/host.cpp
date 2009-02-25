@@ -24,6 +24,9 @@
 #include <Poco/DirectoryIterator.h>
 #include <Poco/File.h>
 #include <Poco/Environment.h>
+#include <Poco/AutoPtr.h>
+#include <Poco/Util/PropertyFileConfiguration.h>
+#include <Poco/StringTokenizer.h>
 
 using Poco::Environment;
 
@@ -318,6 +321,50 @@ namespace kroll
 		}
 	}
 
+	void Host::ReadModuleManifest(std::string& modulePath)
+	{
+		Poco::Path manifestPath(modulePath);
+		Poco::Path moduleTopDir = manifestPath.parent();
+		
+		manifestPath = Poco::Path(FileUtils::Join(moduleTopDir.toString().c_str(), "manifest", NULL));
+		
+		std::cout << "looking for module manifest @ " << manifestPath.toString() << std::endl;
+		Poco::File manifestFile(manifestPath);
+		if (manifestFile.exists()) {
+			std::cout << "Reading manifest for module: " << manifestPath.toString() << std::endl;
+			
+			Poco::AutoPtr<Poco::Util::PropertyFileConfiguration> manifest = new Poco::Util::PropertyFileConfiguration(manifestFile.path());
+			
+			if (manifest->hasProperty("libpath")) {
+				std::cout << "Module has a libpath entry: " << modulePath << std::endl;
+				
+				std::string libPath = manifest->getString("libpath");
+				Poco::StringTokenizer t(libPath, ",", Poco::StringTokenizer::TOK_TRIM);
+	#if defined(OS_WIN32)
+				std::string libPathEnv = "PATH";
+	#elif defined(OS_OSX)
+				std::string libPathEnv = "DYLD_LIBRARY_PATH";
+	#elif defined(OS_LINUX)
+				std::string libPathEnv = "LD_LIBRARY_PATH";
+	#endif
+				std::string newLibPath;
+				
+				if (Environment::has(libPathEnv)) {
+					newLibPath = Environment::get(libPathEnv);
+				}
+					
+				for (size_t i = 0; i < t.count(); i++) {
+					std::string lib = t[i];	
+					newLibPath += KR_LIB_SEP;
+					newLibPath += FileUtils::Join(moduleTopDir.toString().c_str(), lib.c_str(), NULL);
+				}
+				
+				std::cout << "Setting " << libPathEnv << "=" << newLibPath << std::endl;
+				Environment::set(libPathEnv, newLibPath);
+			}
+		}
+	}
+	
 	SharedPtr<Module> Host::LoadModule(std::string& path, ModuleProvider *provider)
 	{
 		ScopedLock lock(&moduleMutex);
@@ -326,6 +373,7 @@ namespace kroll
 		try
 		{
 			this->CopyModuleAppResources(path);
+			this->ReadModuleManifest(path);
 			module = provider->CreateModule(path);
 			module->SetProvider(provider); // set the provider
 
