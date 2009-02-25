@@ -11,6 +11,7 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <cstring>
 
 namespace kroll
 {
