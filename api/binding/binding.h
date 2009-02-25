@@ -24,5 +24,6 @@
 #include "scope_method_delegate.h"
 #include "value_exception.h"
 #include "arg_utils.h"
+#include "blob.h"
 
 #endif

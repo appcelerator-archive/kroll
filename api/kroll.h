@@ -34,6 +34,7 @@ namespace kroll
 	class StaticBoundList;
 	class DelegateStaticBoundObject;
 	class ScopeMethodDelegate;
+	class Blob;
 
 	class ValueReleasePolicy;
 
