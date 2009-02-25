@@ -96,7 +96,7 @@ namespace kroll
 		 *
 		 * Return a string representation of this object
 		 */
-		SharedString DisplayString(int levels=3);
+		virtual SharedString DisplayString(int levels=3);
 
 		/**
 		 * Function: GetString
