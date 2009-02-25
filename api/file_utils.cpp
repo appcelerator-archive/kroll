@@ -31,7 +31,8 @@
 #include <sstream>
 #include <cstring>
 
-const std::string ILLEGAL = "%<>{}|\\\"^`";
+const std::string ILLEGAL = "<>{}|\\\"^`";
+
 static std::string safe_encode(std::string &str)
 {
 	std::string encodedStr;
@@ -39,7 +40,7 @@ static std::string safe_encode(std::string &str)
 	{
 		char c = *it;
 		if (isalnum(c) ||
-			c == '-' || c == '_' || 
+			c == '-' || c == '_' ||
 			c == '.' || c == '~' ||
 			c == '/' || c == '\\' ||
 			c == ' ')
@@ -576,7 +577,7 @@ namespace kroll
 		BYTE *MACData = adapter.Address;
 		char buf[MAX_PATH];
 		sprintf_s(buf,MAX_PATH,"%02X-%02X-%02X-%02X-%02X-%02X", MACData[0], MACData[1], MACData[2], MACData[3], MACData[4], MACData[5]);
-		return std::string(buf);	
+		return std::string(buf);
 #elif defined(OS_LINUX)
 		//Based on code from:
 		//http://adywicaksono.wordpress.com/2007/11/08/detecting-mac-address-using-c-application/
@@ -722,7 +723,7 @@ namespace kroll
 							std::string krolldll = kroll::FileUtils::Join(potentialRuntime.c_str(),"kroll.dll",NULL);
 							if (kroll::FileUtils::IsFile(krolldll))
 							{
-#endif						
+#endif
 								runtimePath = potentialRuntime;
 #ifdef DEBUG
 								std::cout << "found override runtime at: " << runtimePath << std::endl;
@@ -731,7 +732,7 @@ namespace kroll
 								continue;
 #ifdef OS_WIN32
 							}
-#endif						
+#endif
 						}
 					}
 					runtimePath = FindRuntime(op,version);
@@ -897,10 +898,10 @@ namespace kroll
 							FALSE,          // Set handle inheritance to FALSE
 							0,              // No creation flags
 							NULL,           // Use parent's environment block
-							(char*)buf,		// Use parent's starting directory 
+							(char*)buf,		// Use parent's starting directory
 							&si,            // Pointer to STARTUPINFO structure
 							&pi )           // Pointer to PROCESS_INFORMATION structure
-		) 
+		)
 		{
 			rc = -1;
 		}
@@ -909,10 +910,10 @@ namespace kroll
 			// Wait until child process exits.
 			WaitForSingleObject( pi.hProcess, INFINITE );
 
-			// set the exit code 
+			// set the exit code
 			GetExitCodeProcess(pi.hProcess,&rc);
 
-			// Close process and thread handles. 
+			// Close process and thread handles.
 			CloseHandle( pi.hProcess );
 			CloseHandle( pi.hThread );
 		}
