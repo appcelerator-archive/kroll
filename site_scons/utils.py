@@ -33,7 +33,6 @@ def SCopyTree(e, src, dest, include=[], exclude=[], filter=None):
 
 
 	def copy_item(src, dest):
-		print "copy_item %s %s" % (src, dest)
 		if os.path.isdir(src):
 			e.Command(dest, [], Mkdir('$TARGET'))
 			copy_items(src, dest)
@@ -43,7 +42,6 @@ def SCopyTree(e, src, dest, include=[], exclude=[], filter=None):
 			e.Command(dest, src, Copy('$TARGET', '$SOURCE'))
 
 	def copy_items(src, dest):
-		print "copy_items %s %s" % (src, dest)
 		for item in os.listdir(src):
 			src_item = os.path.abspath(os.path.join(src, item))
 			dest_item = os.path.join(dest, item)
@@ -53,7 +51,6 @@ def SCopyTree(e, src, dest, include=[], exclude=[], filter=None):
 	src = os.path.abspath(src)
 	e.Command(dest, [], Mkdir('$TARGET'))
 
-	print "copy_tree %s %s" % (src, dest)
 	if os.path.isdir(src):
 		copy_items(src, dest)
 	else:
@@ -64,6 +61,5 @@ def CopySymlinkBuilder(target, source, env):
 	"""Function called when builder is called"""
 	link_file = str(source[0])
 	dest_file = str(target[0])
-	print "%s %s" % (link_file, dest_file)
 	linkto = os.readlink(link_file)
 	os.symlink(linkto, dest_file)
