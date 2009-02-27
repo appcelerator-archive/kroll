@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import os, inspect, os.path as path
 import distutils.dir_util as dirutil
+import utils
 
 Import('build')
 
@@ -30,13 +31,6 @@ if build.is_win32():
 # copy the includes for building the SDK
 cwd = path.dirname(inspect.currentframe().f_code.co_filename)
 kroll_include = path.join(build.kroll_include_dir, 'kroll')
-if path.exists(kroll_include):
-	dirutil.remove_tree(kroll_include)
-dirutil.copy_tree(cwd, kroll_include, update=1)
-to_remove = Glob(path.join(kroll_include, "*.cpp")) + \
-            Glob(path.join(kroll_include, "**", "*.cpp")) + \
-            [path.join(kroll_include, 'SConscript')]
-for f in to_remove:
-	os.remove(str(f))
+utils.SCopyTree(Env, cwd, kroll_include, include=['.h'])
 
 Env.SharedLibrary(build.dir +'/kroll', source=sources)

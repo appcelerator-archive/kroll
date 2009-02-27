@@ -365,7 +365,7 @@ namespace kroll
 		else if (this->IsVoidPtr())
 		{
 			void *value = this->ToVoidPtr();
-			oss << "<void* addr: " << (int) value << ">";
+			oss << "<void* addr: " << value << ">";
 		}
 		else if (this->IsNull())
 		{

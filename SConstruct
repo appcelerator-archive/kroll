@@ -1,22 +1,20 @@
 #!/usr/bin/env python
-
 import os, re, sys, inspect, os.path as path
-from build.common import BuildConfig
+from kroll import BuildConfig
 
 build = BuildConfig(
-    PRODUCT_VERSION = '0.1',
-    PRODUCT_NAME = 'Kroll',
-    INSTALL_PREFIX = '/usr/local',
-    GLOBAL_NS_VARNAME = 'kroll',
-    CONFIG_FILENAME = 'tiapp.xml',
-    BUILD_DIR = path.abspath('build'),
-    THIRD_PARTY_DIR = path.abspath('thirdparty'),
-	 BOOT_RUNTIME_FLAG = '--runtime',
-	 BOOT_HOME_FLAG = '--start',
-	 BOOT_UPDATESITE_ENVNAME = 'KR_UPDATESITE',
-	 BOOT_UPDATESITE_URL = ''
+	PRODUCT_VERSION = '0.1',
+	PRODUCT_NAME = 'Kroll',
+	INSTALL_PREFIX = '/usr/local',
+	GLOBAL_NS_VARNAME = 'kroll',
+	CONFIG_FILENAME = 'tiapp.xml',
+	BUILD_DIR = path.abspath('build'),
+	THIRD_PARTY_DIR = path.abspath('thirdparty'),
+	BOOT_RUNTIME_FLAG = '--runtime',
+	BOOT_HOME_FLAG = '--start',
+	BOOT_UPDATESITE_ENVNAME = 'KR_UPDATESITE',
+	BOOT_UPDATESITE_URL = ''
 )
-
 
 build.kroll_source_dir = path.abspath('.')
 build.kroll_include_dir = path.join(build.dir, 'include')
@@ -33,12 +31,14 @@ build.env.Append(LIBPATH=[build.dir])
 if ARGUMENTS.get('debug', 0):
 	build.env.Append(CPPDEFINES = ('DEBUG', 1))
 	build.debug = True
+	debug = 1
 	if not build.is_win32():
 		build.env.Append(CCFLAGS = ['-g'])  # debug
 	else:
 		build.env.Append(CCFLAGS = ['/Z7','/GR'])  # max debug, C++ RTTI
 else:
 	build.env.Append(CPPDEFINES = ('NDEBUG', 1))
+	debug = 0
 	if not build.is_win32():
 		build.env.Append(CCFLAGS = ['-O9']) # max optimizations
 	else:
@@ -50,7 +50,7 @@ if ARGUMENTS.get('debug_refcount', 0):
 	build.env.Append(CPPDEFINES = ('DEBUG_REFCOUNT', 1))
 
 if build.is_win32():
-	execfile('build/win32.py')
+	execfile('site_scons/win32.py')
 
 if build.is_linux() or build.is_osx():
     build.env.Append(CPPFLAGS=['-Wall', '-Werror','-fno-common','-fvisibility=hidden'])
@@ -67,4 +67,4 @@ Export('build')
 if 'docs' in COMMAND_LINE_TARGETS:
 	SConscript('SConscript.docs')
 else:
-	SConscript('SConscript')
+	SConscript('SConscript', exports='debug')

@@ -1,17 +1,24 @@
-import os, os.path as path
-import re
 import SCons.Variables
 import SCons.Environment
+from SCons.Script import *
+import os, os.path as path
+import re
+import utils
 
 class BuildConfig(object): 
 	def __init__(self, **kwargs):
 		self.debug = False
+		self.os = None
+		self.arch = None # default x86 32-bit
 		if not hasattr(os, 'uname') or self.matches('CYGWIN'):
 			self.os = 'win32'
 		elif self.matches('Darwin'):
 			self.os = 'osx'
 		elif self.matches('Linux'):
 			self.os = 'linux'
+
+			if (os.uname()[4] == 'x86_64'):
+				self.arch = '64'
 
 		vars = SCons.Variables.Variables()
 		vars.Add('PRODUCT_VERSION', 'The underlying product version for Kroll', kwargs['PRODUCT_VERSION'])
@@ -39,8 +46,14 @@ class BuildConfig(object):
 			['_BOOT_UPDATESITE_ENVNAME', '${BOOT_UPDATESITE_ENVNAME}'],
 			['_BOOT_UPDATESITE_URL', '${BOOT_UPDATESITE_URL}']
 		])
+
+		add_custom_builders(self.env)
+
 		self.dir = path.abspath(path.join(kwargs['BUILD_DIR'], self.os))
 		self.third_party = path.abspath(path.join(kwargs['THIRD_PARTY_DIR'],self.os))
+		if (self.arch):
+			self.third_party += self.arch
+
 		self.init_thirdparty_libs()
 
 	def init_thirdparty_libs(self):
@@ -74,3 +87,15 @@ class BuildConfig(object):
 		#if force_libs or not self.is_linux():
 		env.Append(LIBPATH=[self.thirdparty_libs[name][self.os]['lib_path']])
 		env.Append(LIBS=[self.thirdparty_libs[name][self.os]['libs']])
+
+def add_custom_builders(env):
+	# Add our custom builders
+	# A custom builder for copying diretories
+	copySymlinkBuilder = env.Builder(
+		action=utils.CopySymlinkBuilder,
+		source_factory=SCons.Node.FS.default_fs.Entry,
+		target_factory=SCons.Node.FS.default_fs.Entry,
+		multi=0)
+
+	env['BUILDERS']['CopySymlink'] = copySymlinkBuilder
+

@@ -48,9 +48,7 @@ namespace kroll
 	Module* PythonModule::CreateModule(std::string& path)
 	{
 		std::cout << "Create module: " << path << std::endl;
-
 		FILE *file = fopen(path.c_str(), "r");
-		printf("got python file: %d\n", (int) file);
 
 		PyRun_SimpleFile(file,path.c_str());
 		std::cout << "PyRan simple file" << std::endl;

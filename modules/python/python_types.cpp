@@ -307,7 +307,7 @@ namespace kroll
 			}
 		}
 		char str[255];
-		sprintf(str,"<BoundObject %x>",(unsigned int)self);
+		sprintf(str,"<BoundObject %lx>",(unsigned long)self);
 		return PyString_FromString(str);
 	}
 
