@@ -328,16 +328,15 @@ namespace kroll
 		
 		manifestPath = Poco::Path(FileUtils::Join(moduleTopDir.toString().c_str(), "manifest", NULL));
 		
-		std::cout << "looking for module manifest @ " << manifestPath.toString() << std::endl;
 		Poco::File manifestFile(manifestPath);
 		if (manifestFile.exists()) {
-			std::cout << "Reading manifest for module: " << manifestPath.toString() << std::endl;
+			PRINTD("Reading manifest for module: " << manifestPath.toString());
 			
 			Poco::AutoPtr<Poco::Util::PropertyFileConfiguration> manifest = new Poco::Util::PropertyFileConfiguration(manifestFile.path());
 			
 			if (manifest->hasProperty("libpath")) {
-				std::cout << "Module has a libpath entry: " << modulePath << std::endl;
-				
+				PRINTD("libpath: " << modulePath);
+
 				std::string libPath = manifest->getString("libpath");
 				Poco::StringTokenizer t(libPath, ",", Poco::StringTokenizer::TOK_TRIM);
 	#if defined(OS_WIN32)
@@ -359,7 +358,7 @@ namespace kroll
 					newLibPath += FileUtils::Join(moduleTopDir.toString().c_str(), lib.c_str(), NULL);
 				}
 				
-				std::cout << "Setting " << libPathEnv << "=" << newLibPath << std::endl;
+				PRINTD(libPathEnv << "=" << newLibPath);
 				Environment::set(libPathEnv, newLibPath);
 			}
 		}
