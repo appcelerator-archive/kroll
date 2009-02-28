@@ -1,16 +1,46 @@
-import os.path
-import shutil
-import types
+import os.path, shutil, types, tarfile
 from SCons.Script import *
 
 # Adapted from: http://www.scons.org/wiki/AccumulateBuilder
-def SCopyTree(e, src, dest, include=[], exclude=[], filter=None):
+def SCopyTree(*args, **kwargs):
+	if (type(args[1]) == types.ListType):
+		for src in args[1]:
+			SCopyTreeImpl(args[0], src, args[2], **kwargs)
+	else:
+		SCopyTreeImpl(args[0], args[1], args[2], **kwargs)
+
+def SCopyTreeImpl(e, src, dest, **kwargs):
 	"""Copy a directory recursivley in a sconsy way. If the first
 	argument is a directory, copy the contents of that directory
 	into the target directory. If the first argument is a file,
 	copy that file into the target directory. Will preserve symlinks.
-	
-	Recursively copy a directory tree using copy2().
+
+	Includes is a list of file suffixes to include. If len(include) > 1
+	all other files will be skipped. Excludes is a list of file suffixes
+	to exclude. Filter is a function which given the full path to a file,
+	will exclude is returns False or include if returns True.
+	"""
+	dest = os.path.abspath(str(dest))
+	src = os.path.abspath(str(src))
+
+	if os.path.isdir(src):
+		for item in os.listdir(src):
+			src_item = os.path.abspath(os.path.join(src, item))
+			#print "copy tree u %s %s" % (src_item, dest)
+			SCopyToDir(e, src_item, dest, **kwargs)
+	else:
+		SCopyToDir(e, src, dest, **kwargs)
+
+def SCopyToDir(*args, **kwargs):
+	if (type(args[1]) == types.ListType):
+		for src in args[1]:
+			SCopyToDirImpl(args[0], src, args[2], **kwargs)
+	else:
+		SCopyToDirImpl(args[0], args[1], args[2], **kwargs)
+
+def SCopyToDirImpl(e, src, dest, include=[], exclude=[], filter=None, recurse=True):
+	"""Copy a path into a destination directory in a sconsy way.
+	the original path will be a child of the destination directory.
 
 	Includes is a list of file suffixes to include. If len(include) > 1
 	all other files will be skipped. Excludes is a list of file suffixes
@@ -31,35 +61,66 @@ def SCopyTree(e, src, dest, include=[], exclude=[], filter=None):
 
 		return True
 
-
 	def copy_item(src, dest):
+		#print "copy item %s %s" % (src, dest)
 		if os.path.isdir(src):
-			e.Command(dest, [], Mkdir('$TARGET'))
 			copy_items(src, dest)
 		elif os.path.islink(src) and filter_file(src):
-			e.CopySymlink(dest, src)
+			e.KCopySymlink(dest, src)
 		elif filter_file(src):
 			e.Command(dest, src, Copy('$TARGET', '$SOURCE'))
 
 	def copy_items(src, dest):
+		#print "copy items %s %s" % (src, dest)
 		for item in os.listdir(src):
 			src_item = os.path.abspath(os.path.join(src, item))
 			dest_item = os.path.join(dest, item)
 			copy_item(src_item, dest_item)
 
-	dest = os.path.abspath(dest)
-	src = os.path.abspath(src)
-	e.Command(dest, [], Mkdir('$TARGET'))
+	src = os.path.abspath(str(src))
+	bname = os.path.basename(src)
+	dest = os.path.abspath(str(dest))
 
-	if os.path.isdir(src):
-		copy_items(src, dest)
-	else:
-		dest_item = os.path.join(dest, os.path.basename(src))
-		e.Command(dest_item, src, Copy('$TARGET', '$SOURCE'))
+	dest = os.path.join(dest, bname)
+	#print "copy %s %s" % (src, dest)
+	copy_item(src, dest)
 
-def CopySymlinkBuilder(target, source, env):
-	"""Function called when builder is called"""
+def KCopySymlink(target, source, env):
 	link_file = str(source[0])
 	dest_file = str(target[0])
 	linkto = os.readlink(link_file)
+
+	# Remove link before recreating it
+	# use os.stat so we can sense broken links
+	try:
+		os.remove(dest_file)
+	except:
+		pass
 	os.symlink(linkto, dest_file)
+
+def KTarGzDir(target, source, env):
+	tar_dir = str(source[0])
+	dest_file = str(target[0])
+
+	tar = tarfile.open(dest_file, 'w:gz')
+	files = os.walk(tar_dir)
+	for walk in files:
+		for file in walk[2]:
+			file = os.path.join(walk[0], file)
+			arcname = file.replace(tar_dir + os.sep, "")
+			tar.add(file, arcname)
+	tar.close()
+
+def KConcat(target, source, env):
+	dest_file = str(target[0])
+	out = open(dest_file, 'wb')
+
+	for file in source:
+		file = str(file)
+		inf = open(str(file), 'rb')
+		out.write(inf.read())
+		inf.close()
+
+	out.close()
+
+

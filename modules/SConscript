@@ -6,11 +6,11 @@ modules = ['api', 'python', 'javascript' ,'ruby'] #'foopy', 'foojs', 'foorb']
 #modules = ['api', 'javascript', 'foo', 'foopy', 'foojs', 'foorb']
 
 for module in modules:
-	module_dir = os.path.join(build.dir,'modules',module)
+	module_dir = os.path.join(build.dir,'objs', 'modules', module)
 	SConscript(os.path.join(module,'SConscript'), build_dir=module_dir, duplicate=0)
 
-	out_dir = build.dir
-	script = os.path.join(build.kroll_build_dir, 'module.py')
-	os.system('python "%s" "%s" "%s" "%s"' % (script, out_dir, module_dir, build.os))
+	#out_dir = build.dir
+	#script = os.path.join(build.kroll_build_dir, 'module.py')
+	#os.system('python "%s" "%s" "%s" "%s"' % (script, out_dir, module_dir, build.os))
 
 

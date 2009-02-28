@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import os, inspect
+import os, sys, inspect, utils
 
 Import('build')
 
@@ -13,9 +13,10 @@ if build.is_osx():
 	Env.Append(FRAMEWORKS=['Python'])
 
 elif build.is_linux():
-	Env.Append(CPPPATH=['/usr/lib/python/2.5/i386-linux',
-                        '/usr/include/python2.5',
-						build.kroll_include_dir])
+	Env.Append(CPPPATH=[
+		'/usr/lib/python/2.5/i386-linux',
+		'/usr/include/python2.5',
+		build.kroll_include_dir])
 	Env.Append(LIBS=['python2.5'])
 
 elif build.is_win32():
@@ -25,12 +26,9 @@ elif build.is_win32():
 	Env.Append(LIBPATH=[os.path.join(python_home, 'libs')])
 	Env.Append(LIBS=['python25'])
 	Env.Append(CCFLAGS = ['/MD'])
-    
-Env.SharedLibrary(build.dir + '/pythonmodule', Glob('*.cpp'))
 
-script_dir = build.dir
-cwd = os.path.dirname(inspect.currentframe().f_code.co_filename)
-scripts = Glob(cwd + '/*.py')
-for script in scripts:
-	p = str(script).replace(cwd + os.path.sep, '')
-	Command('%s/%s' % ( script_dir, p), p, Copy("$TARGET", "$SOURCE"))
+m = build.add_module('python', '0.1')
+m.copy_resources()
+Env.SharedLibrary(m.build_dir + '/pythonmodule', Glob('*.cpp'))
+Env.SharedLibrary(build.dir + '/pythonmodule', Glob('*.cpp'))
+build.utils.CopyTree(Glob('*.py'), m.build_dir)
