@@ -63,6 +63,9 @@ class BuildUtils(object):
 	def Delete(self, file):
 		self.env.Command(file, [], Delete('$TARGET'))
 
+	def Mkdir(self, file):
+		self.env.Command(file, [], Mkdir('$TARGET'))
+
 class BuildConfig(object): 
 	def __init__(self, **kwargs):
 		self.debug = False
