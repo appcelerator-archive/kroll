@@ -1,8 +1,5 @@
 #!/usr/bin/env python
-import os, inspect, os.path as path
-import distutils.dir_util as dirutil
-import utils
-
+import os, os.path as path
 Import('build')
 
 Env = build.env.Clone()
@@ -29,8 +26,8 @@ if build.is_win32():
 	sources.extend(Glob('unzip/*.cpp'))
 
 # copy the includes for building the SDK
-cwd = path.dirname(inspect.currentframe().f_code.co_filename)
 kroll_include = path.join(build.kroll_include_dir, 'kroll')
-utils.SCopyTree(Env, cwd, kroll_include, include=['.h'])
+build.utils.CopyTree(build.cwd(), kroll_include, include=['.h'])
 
 Env.SharedLibrary(build.dir +'/kroll', source=sources)
+Env.SharedLibrary(build.dir +'/runtime/kroll', source=sources)

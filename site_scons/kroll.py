@@ -5,11 +5,73 @@ import os, os.path as path
 import re
 import utils
 
+class Module(object):
+	script_exts = ['.js', '.rb', '.py']
+	def __init__(self, name, version, build_dir, build):
+		self.name = name
+		self.version = version
+		self.build_dir = build_dir
+		self.build = build
+
+	def copy_resources(self):
+		d = self.build.cwd(2)
+
+		resources = Glob(d + '/AppResources/all') \
+		           + Glob(d + '/AppResources/%s' % self.build.os) 
+		for r in resources:
+			r = path.abspath(str(r))
+			self.build.utils.CopyToDir(r, path.join(self.build_dir, 'AppResources'))
+
+		resources = Glob(d + '/Resources/all') \
+		           + Glob(d + '/Resources/%s' % self.build.os)
+		for r in resources:
+			r = path.abspath(str(r))
+			self.build.utils.CopyToDir(r, path.join(self.build_dir, 'Resources'))
+
+class BuildUtils(object):
+	def __init__(self, env):
+		self.env = env
+		# Add our custom builders
+		env['BUILDERS']['KCopySymlink'] = env.Builder(
+			action=utils.KCopySymlink,
+			source_factory=SCons.Node.FS.default_fs.Entry,
+			target_factory=SCons.Node.FS.default_fs.Entry,
+			multi=0)
+		env['BUILDERS']['KTarGzDir'] = env.Builder(
+			action=utils.KTarGzDir,
+			source_factory=SCons.Node.FS.default_fs.Entry,
+			target_factory=SCons.Node.FS.default_fs.Entry,
+			multi=0)
+		env['BUILDERS']['KConcat'] = env.Builder(
+			action=utils.KConcat,
+			source_factory=SCons.Node.FS.default_fs.Entry,
+			target_factory=SCons.Node.FS.default_fs.Entry,
+			multi=1)
+
+	def CopyTree(self, *args, **kwargs):
+		utils.SCopyTree(self.env, *args, **kwargs)
+
+	def CopyToDir(self, *args, **kwargs):
+		utils.SCopyToDir(self.env, *args, **kwargs)
+
+	def Copy(self, src, dest): 
+		self.env.Command(dest, src, Copy('$TARGET', '$SOURCE'))
+
+	def Touch(self, file):
+		self.env.Command(file, [], Touch('$TARGET'))
+
+	def Delete(self, file):
+		self.env.Command(file, [], Delete('$TARGET'))
+
+	def Mkdir(self, file):
+		self.env.Command(file, [], Mkdir('$TARGET'))
+
 class BuildConfig(object): 
 	def __init__(self, **kwargs):
 		self.debug = False
 		self.os = None
 		self.arch = None # default x86 32-bit
+		self.modules = {}
 		if not hasattr(os, 'uname') or self.matches('CYGWIN'):
 			self.os = 'win32'
 		elif self.matches('Darwin'):
@@ -33,6 +95,7 @@ class BuildConfig(object):
 		vars.Add('BOOT_UPDATESITE_URL','The URL of the Kroll update site', kwargs['BOOT_UPDATESITE_URL'])
 
 		self.env = SCons.Environment.Environment(variables = vars)
+		self.utils = BuildUtils(self.env)
 		self.env.Append(CPPDEFINES = [
 			['OS_' + self.os.upper(), 1],
 			['_OS_NAME', self.os],
@@ -47,14 +110,13 @@ class BuildConfig(object):
 			['_BOOT_UPDATESITE_URL', '${BOOT_UPDATESITE_URL}']
 		])
 
-		add_custom_builders(self.env)
-
 		self.dir = path.abspath(path.join(kwargs['BUILD_DIR'], self.os))
 		self.third_party = path.abspath(path.join(kwargs['THIRD_PARTY_DIR'],self.os))
 		if (self.arch):
 			self.third_party += self.arch
 
 		self.init_thirdparty_libs()
+
 
 	def init_thirdparty_libs(self):
 		self.thirdparty_libs = {
@@ -82,20 +144,17 @@ class BuildConfig(object):
 	def is_osx(self): return self.os == 'osx'
 	def is_win32(self): return self.os == 'win32'
 
+	def add_module(self, name, version):
+		build_dir = path.join(self.dir, 'modules', name)
+		m = Module(name, version, build_dir, self)
+		self.modules[name] = m
+		return m
+
 	def add_thirdparty(self, env, name, force_libs=False):
 		env.Append(CPPPATH=[self.thirdparty_libs[name][self.os]['cpp_path']])
 		#if force_libs or not self.is_linux():
 		env.Append(LIBPATH=[self.thirdparty_libs[name][self.os]['lib_path']])
 		env.Append(LIBS=[self.thirdparty_libs[name][self.os]['libs']])
 
-def add_custom_builders(env):
-	# Add our custom builders
-	# A custom builder for copying directories
-	copySymlinkBuilder = env.Builder(
-		action=utils.CopySymlinkBuilder,
-		source_factory=SCons.Node.FS.default_fs.Entry,
-		target_factory=SCons.Node.FS.default_fs.Entry,
-		multi=0)
-
-	env['BUILDERS']['CopySymlink'] = copySymlinkBuilder
-
+	def cwd(self, depth=1):
+		return path.dirname(sys._getframe(depth).f_code.co_filename)
