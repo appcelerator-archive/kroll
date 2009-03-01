@@ -33,6 +33,31 @@ namespace kroll
 		}
 		return l;
 	}
+	
+	bool StaticBoundList::Remove(unsigned int index)
+	{
+		unsigned int x = 0;
+		bool found = false;
+		for (unsigned int c=0;c<(unsigned int)this->Size();c++)
+		{
+			if (c == index)
+			{
+				char* name = StaticBoundList::IntToChars(c);
+				this->Set(name,Value::Undefined);
+				delete [] name;
+				found = true;
+			}
+			else
+			{
+				char* prop = StaticBoundList::IntToChars(x);
+				this->Set(prop,this->At(c));
+				delete [] prop;
+				x++;
+			}
+		}
+		this->object->Set("length", Value::NewInt(x));
+		return found;
+	}
 
 	void StaticBoundList::Append(SharedValue value)
 	{

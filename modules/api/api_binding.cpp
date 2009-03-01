@@ -16,7 +16,6 @@ namespace kroll
 		this->SetMethod("register", &APIBinding::_Register);
 		this->SetMethod("unregister", &APIBinding::_Unregister);
 		this->SetMethod("fire", &APIBinding::_Fire);
-		this->SetMethod("setRunUILoop", &APIBinding::_SetRunUILoop);
 
 		// these are properties for log severity levels
 		this->Set("DEBUG",Value::NewInt(KR_LOG_DEBUG));
@@ -181,7 +180,7 @@ namespace kroll
 
 	void APIBinding::_Fire(const ValueList& args, SharedValue result)
 	{
-		std::string event = args.at(0)->ToString();
+		const char* event = args.at(0)->ToString();
 		this->Fire(event,args.at(1));
 	}
 
@@ -231,6 +230,9 @@ namespace kroll
 		this->registrationsById[record] = e;
 		this->registrations[event] = records;
 
+#ifdef DEBUG
+		std::cout << "Register called for event: " << event << std::endl;
+#endif
 		return record;
 	}
 
@@ -263,10 +265,17 @@ namespace kroll
 		registrationsById.erase(id);
 	}
 
-	void APIBinding::Fire(std::string& event, SharedValue value)
+	void APIBinding::Fire(const char* event, SharedValue value)
 	{
+#ifdef DEBUG		
+		std::cout << "FIRING: " << event << std::endl;
+#endif
+		
 		//TODO: might want to be a little more lenient on how we lock here
 		ScopedLock lock(&mutex);
+		
+		// optimize even the lookup
+		if (this->registrations.size() == 0) return;
 
 		EventRecords records = this->registrations[event];
 		if (records.size() > 0)
@@ -275,18 +284,9 @@ namespace kroll
 			while (i != records.end())
 			{
 				SharedBoundMethod method = (*i++);
-				ValueList args;
-				args.push_back(Value::NewString(event));
-				args.push_back(value);
-				method->Call(args);
+				method->Call(event,value);
 			}
 		}
 	}
 
-	void APIBinding::_SetRunUILoop(const ValueList& args, SharedValue result)
-	{
-		if (args.size() > 0 && args[0]->IsBool()) {
-			Host::GetInstance()->SetRunUILoop(args[0]->ToBool());
-		}
-	}
 }

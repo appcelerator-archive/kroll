@@ -90,7 +90,7 @@ class BuildConfig(object):
 
 def add_custom_builders(env):
 	# Add our custom builders
-	# A custom builder for copying diretories
+	# A custom builder for copying directories
 	copySymlinkBuilder = env.Builder(
 		action=utils.CopySymlinkBuilder,
 		source_factory=SCons.Node.FS.default_fs.Entry,

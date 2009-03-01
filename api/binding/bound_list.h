@@ -68,6 +68,13 @@ namespace kroll
 		  When an error occurs will throw an exception of type Value*.
 		 */
 		virtual SharedValue Get(const char *name) = 0;
+		
+		/*
+		    Function: Remove
+		    
+		    remove the entry at index and returns true if found and removed
+		 */
+		virtual bool Remove(unsigned int index) = 0;
 
 		/*
 			Function: GetPropertyNames

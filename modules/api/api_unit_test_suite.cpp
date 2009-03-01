@@ -96,7 +96,7 @@ namespace kroll
 		KR_ASSERT(ref!=0);
 		SharedValue data = Value::NewString("some data here");
 
-		api->Fire(event,data);
+		api->Fire(event.c_str(),data);
 		KR_ASSERT_STR(testObject->Event().c_str(),"kr.api.log");
 		KR_ASSERT_STR(testObject->Message().c_str(),"some data here");
 
@@ -105,7 +105,7 @@ namespace kroll
 		// TEST unregister and then refire -- we shouldn't receive it
 		api->Unregister(ref);
 
-		api->Fire(event,data);
+		api->Fire(event.c_str(),data);
 		KR_ASSERT_STR(testObject->Event().c_str(),"");
 		KR_ASSERT_STR(testObject->Message().c_str(),"");
 

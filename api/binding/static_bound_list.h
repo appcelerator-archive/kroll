@@ -70,6 +70,13 @@ namespace kroll
 		virtual SharedValue Get(const char *name);
 
 		/*
+		    Function: Remove
+		    
+		    remove the entry at index and returns true if found and removed
+		 */
+		virtual bool Remove(unsigned int index);
+
+		/*
 			Function: GetPropertyNames
 
 		  Return a list of this object's property names.

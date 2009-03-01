@@ -51,6 +51,18 @@ namespace kroll
 	{
 		return kjs_bound_object->Set(name, value);
 	}
+	
+	bool KJSBoundList::Remove(unsigned int index)
+	{
+		SharedValue value = this->At(index);
+		if (!value->IsUndefined())
+		{
+			SharedValue slice_method = this->kjs_bound_object->Get("slice");
+			slice_method->ToMethod()->Call(Value::NewInt(index),Value::NewInt(1));
+			return true;
+		}
+		return false;
+	}
 
 	SharedStringList KJSBoundList::GetPropertyNames()
 	{

@@ -71,8 +71,6 @@ namespace kroll
 		{
 			std::string token = s.substr(last,pos-last);
 			current = scope->Get(token.c_str());
-			last = pos + 1;
-		    pos = s.find_first_of(".", last);
 			if (current->IsObject())
 			{
 				scope = current->ToObject().get();
@@ -81,6 +79,8 @@ namespace kroll
 			{
 				return Value::Undefined;
 			}
+			last = pos + 1;
+		    pos = s.find_first_of(".", last);
 		}
 		if (pos!=s.length())
 		{

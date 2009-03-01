@@ -84,7 +84,7 @@ namespace kroll
 		/*
 			Function: CallNS
 
-			TODO: Document me
+			invoke a fully qualified namespaced method passing arguments
 		 */
 		SharedValue CallNS(const char *name, SharedValue val1);
 		SharedValue CallNS(const char *name, SharedValue val1, SharedValue val2);

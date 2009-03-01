@@ -44,6 +44,18 @@ namespace kroll
 	{
 		return PyList_Size(this->object);
 	}
+	
+	/**
+	 * remove the item and return true if removed
+	 */
+	bool PythonBoundList::Remove(unsigned int index)
+	{
+		PyObject* empty_list = PyList_New(0);
+		PyList_SetSlice(this->object, index, index + 1, empty_list);
+		Py_DECREF(empty_list);
+		return true;
+	}
+	
 
 	/**
 	 * When an error occurs will throw an exception of type Value*.

@@ -73,6 +73,36 @@ namespace kroll
 		{
 			return this->Call(ValueList());
 		}
+		SharedValue Call(const char *one)
+		{
+			ValueList args;
+			args.push_back(Value::NewString(one));
+			return this->Call(args);
+		}
+		SharedValue Call(const char *one, SharedValue two)
+		{
+			ValueList args;
+			args.push_back(Value::NewString(one));
+			args.push_back(two);
+			return this->Call(args);
+		}
+		SharedValue Call(const char *one, SharedValue two, SharedValue three)
+		{
+			ValueList args;
+			args.push_back(Value::NewString(one));
+			args.push_back(two);
+			args.push_back(three);
+			return this->Call(args);
+		}
+		SharedValue Call(const char *one, SharedValue two, SharedValue three, SharedValue four)
+		{
+			ValueList args;
+			args.push_back(Value::NewString(one));
+			args.push_back(two);
+			args.push_back(three);
+			args.push_back(four);
+			return this->Call(args);
+		}
 		SharedValue Call(SharedValue one)
 		{
 			ValueList args;

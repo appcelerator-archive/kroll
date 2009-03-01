@@ -40,6 +40,12 @@ namespace kroll
 		SharedValue At(unsigned int index);
 
 		/**
+		 * remove entry at index and returns true if found and removed
+		 */
+		bool Remove(unsigned int index);
+		
+
+		/**
 		 * Set a property on this object to the given value. Value should be
 		 * heap-allocated as implementors are allowed to keep a reference,
 		 * if they increase the reference count.

@@ -39,7 +39,7 @@ namespace kroll
 		void Log(int& severity, std::string& message);
 		int Register(std::string& event, SharedBoundMethod callback);
 		void Unregister(int ref);
-		void Fire(std::string& event, SharedValue data);
+		void Fire(const char* event, SharedValue data);
 
 	private:
 		void _Set(const ValueList& args, SharedValue result);
@@ -52,11 +52,6 @@ namespace kroll
 		void _Register(const ValueList& args, SharedValue result);
 		void _Unregister(const ValueList& args, SharedValue result);
 		void _Fire(const ValueList& args, SharedValue result);
-		void _SetRunUILoop(const ValueList& args, SharedValue result);
-
-		// void Unload(const ValueList& args, Value *result);
-		// void Reload(const ValueList& args, Value *result);
-		// void Modules(const ValueList& args, Value *result);
 
 		std::map<std::string, EventRecords> registrations;
 		std::map<int, BoundEventEntry> registrationsById;
