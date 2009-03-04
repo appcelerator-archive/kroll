@@ -123,10 +123,13 @@ def KConcat(target, source, env):
 
 	out.close()
 
-def KReplaceVars(target, source, env):
-	txt = open(str(target[0])).read()
-	for k, v in env['replacements'].iteritems():
+def KReplaceVars(target, replacements):
+	txt = open(target).read()
+	for k, v in replacements.iteritems():
 		txt = txt.replace(k, v)
-	out = open(src(target[0]), 'w')
+	out = open(target, 'w')
 	out.write(txt)
 	out.close()
+def KReplaceVarsStr(target, replacements):
+    return 'KReplaceVars(%s, %s)' % (target, replacements)
+ReplaceVarsAction = SCons.Action.ActionFactory(KReplaceVars, KReplaceVarsStr)
