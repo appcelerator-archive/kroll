@@ -47,6 +47,11 @@ class BuildUtils(object):
 			source_factory=SCons.Node.FS.default_fs.Entry,
 			target_factory=SCons.Node.FS.default_fs.Entry,
 			multi=1)
+		env['BUILDERS']['KReplaceVars'] = env.Builder(
+			action=utils.KReplaceVars,
+			source_factory=SCons.Node.FS.default_fs.Entry,
+			target_factory=SCons.Node.FS.default_fs.Entry,
+			multi=0)
 
 	def CopyTree(self, *args, **kwargs):
 		utils.SCopyTree(self.env, *args, **kwargs)
@@ -65,6 +70,11 @@ class BuildUtils(object):
 
 	def Mkdir(self, file):
 		self.env.Command(file, [], Mkdir('$TARGET'))
+
+	def ReplaceVars(self, file, replacements):
+		e = self.env.Clone()
+		e['replacements'] = replacements
+		e.KReplaceVars(file, [])
 
 class BuildConfig(object): 
 	def __init__(self, **kwargs):
