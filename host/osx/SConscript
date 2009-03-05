@@ -11,3 +11,4 @@ build.add_thirdparty(Env, 'poco')
 Env.Append(LIBS=['kroll'])
 
 Env.SharedLibrary(build.dir + '/khost', ['host.cpp'])
+Env.SharedLibrary(build.dir + '/runtime/khost', ['host.cpp'])
