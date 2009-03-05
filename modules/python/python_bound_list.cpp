@@ -40,7 +40,7 @@ namespace kroll
 	/**
 	 * Get the length of this list.
 	 */
-	int PythonBoundList::Size()
+	unsigned int PythonBoundList::Size()
 	{
 		return PyList_Size(this->object);
 	}
@@ -88,7 +88,7 @@ namespace kroll
 		if (this->IsNumber(name))
 		{
 			int val = atoi(name);
-			if (val >= this->Size())
+			if (val >= (int) this->Size())
 			{
 				// now we need to create entries
 				// between current size and new size

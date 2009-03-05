@@ -191,7 +191,7 @@ namespace kroll
 			SharedBoundList values = prop->ToList();
 			if (values->Size() > 0)
 			{
-				for (int c=0; c < values->Size(); c++)
+				for (unsigned int c = 0; c < values->Size(); c++)
 				{
 					SharedValue v = values->At(c);
 					if (v->IsString())

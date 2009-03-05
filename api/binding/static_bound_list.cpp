@@ -33,24 +33,24 @@ namespace kroll
 		}
 		return l;
 	}
-	
+
 	bool StaticBoundList::Remove(unsigned int index)
 	{
 		unsigned int x = 0;
 		bool found = false;
-		for (unsigned int c=0;c<(unsigned int)this->Size();c++)
+		for (unsigned int c = 0; c < this->Size(); c++)
 		{
 			if (c == index)
 			{
 				char* name = StaticBoundList::IntToChars(c);
-				this->Set(name,Value::Undefined);
+				this->Set(name, Value::Undefined);
 				delete [] name;
 				found = true;
 			}
 			else
 			{
 				char* prop = StaticBoundList::IntToChars(x);
-				this->Set(prop,this->At(c));
+				this->Set(prop, this->At(c));
 				delete [] prop;
 				x++;
 			}
@@ -70,12 +70,12 @@ namespace kroll
 		this->object->Set("length", len);
 	}
 
-	int StaticBoundList::Size()
+	unsigned int StaticBoundList::Size()
 	{
 		SharedValue size_val = this->Get("length");
 		if (size_val->IsInt())
 		{
-			return size_val->ToInt();
+			return (unsigned int) size_val->ToInt();
 		}
 		else
 		{
@@ -96,7 +96,7 @@ namespace kroll
 		if (BoundList::IsNumber(name))
 		{
 			int val = atoi(name);
-			if (val > this->Size())
+			if (val > (int) this->Size())
 			{
 				SharedValue len = Value::NewInt(val);
 				this->object->Set("length", len);

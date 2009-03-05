@@ -95,13 +95,13 @@ namespace kroll
 		}
 	}
 
-	int KJSBoundList::Size()
+	unsigned int KJSBoundList::Size()
 	{
 		SharedValue length_val = this->kjs_bound_object->Get("length");
 
 		if (length_val->IsInt())
 		{
-			return length_val->ToInt();
+			return (unsigned int) length_val->ToInt();
 		}
 		else
 		{
