@@ -153,6 +153,23 @@ namespace kroll
 }
 @end
 
+@interface NSThread(isMainThreadIsSafeReally)
++ (BOOL) isMainThread;
+@end
+
+@interface NSThread(isMainThreadLegacy)
++ (void) TiLegacyGetCurrentThread: (NSMutableData *) currentThreadData;
+@end
+
+@implementation NSThread(isMainThreadLegacy)
++ (void) TiLegacyGetCurrentThread: (NSMutableData *) currentThreadData;
+{
+	NSThread * currentThread = [NSThread currentThread];
+	NSRange pointerRange = NSMakeRange(0,sizeof(NSThread *));
+	[currentThreadData replaceBytesInRange:pointerRange withBytes:&currentThread]; //This copies the contents of currentThread, not its address.
+}
+@end
+
 namespace kroll
 {
 	SharedValue OSXHost::InvokeMethodOnMainThread(SharedBoundMethod method,
@@ -160,7 +177,17 @@ namespace kroll
 	{
 		// make sure to just invoke if we're already on the 
 		// main thread
-		if ([NSThread isMainThread])
+		bool isMainThread;
+		if ([NSThread respondsToSelector:@selector(isMainThread)]) {
+			isMainThread = [NSThread isMainThread];
+		} else {
+			NSMutableData * mainThreadData= [[NSMutableData alloc] initWithLength:sizeof(NSThread *)];
+			[NSThread performSelectorOnMainThread:@selector(TiLegacyGetCurrentThread:) withObject:mainThreadData waitUntilDone:YES];
+			NSThread * mainThread = *((id *)[mainThreadData bytes]);
+			isMainThread = mainThread == [NSThread currentThread];
+		}
+		
+		if (isMainThread)
 		{
 			return method->Call(args);
 		}
