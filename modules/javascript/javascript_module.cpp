@@ -23,9 +23,7 @@ namespace kroll
 		JavascriptModule::instance = NULL;
 	}
 
-
 	const static std::string js_suffix = "module.js";
-
 	bool JavascriptModule::IsModule(std::string& path)
 	{
 		int plength = path.length();
