@@ -63,10 +63,10 @@ def SCopyToDirImpl(e, src, dest, include=[], exclude=[], filter=None, recurse=Tr
 
 	def copy_item(src, dest):
 		#print "copy item %s %s" % (src, dest)
-		if os.path.isdir(src):
-			copy_items(src, dest)
-		elif os.path.islink(src) and filter_file(src):
+		if os.path.islink(src) and filter_file(src):
 			e.KCopySymlink(dest, src)
+		elif os.path.isdir(src):
+			copy_items(src, dest)
 		elif filter_file(src):
 			e.Command(dest, src, Copy('$TARGET', '$SOURCE'))
 
