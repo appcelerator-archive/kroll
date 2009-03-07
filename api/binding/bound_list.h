@@ -37,7 +37,7 @@ namespace kroll
 
 		  Get the length of this list.
 		 */
-		virtual int Size() = 0;
+		virtual unsigned int Size() = 0;
 
 		/*
 			Function: At

@@ -29,7 +29,7 @@ namespace kroll
 		/**
 		 * Get the length of this list.
 		 */
-		int Size();
+		unsigned int Size();
 
 		/**
 		 * When an error occurs will throw an exception of type Value*.

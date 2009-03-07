@@ -31,7 +31,7 @@ namespace kroll
 		bool SameContextGroup(JSContextRef c);
 
 		void Append(SharedValue value);
-		int Size();
+		unsigned int Size();
 		SharedValue At(unsigned int index);
 		bool Remove(unsigned int index);
 

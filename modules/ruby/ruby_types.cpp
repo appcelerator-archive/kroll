@@ -143,7 +143,7 @@ namespace kroll
 	VALUE RubyUtils::Create(SharedPtr<BoundList> list)
 	{
 		VALUE array = rb_ary_new2(list->Size());
-		for (int c=0;c<list->Size();c++)
+		for (unsigned int c=0; c < list->Size(); c++)
 		{
 			SharedValue value = list->At(c);
 			VALUE arg = ToRubyValue(value);

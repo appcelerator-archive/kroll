@@ -14,6 +14,7 @@ namespace kroll
 	const JSClassDefinition empty_class = { 0, 0, 0, 0, 0, 0,
 	                                        0, 0, 0, 0, 0, 0,
 	                                        0, 0, 0, 0, 0 };
+
 	/* callback for BoundObject proxying to KJS */
 	void get_property_names_cb(JSContextRef, JSObjectRef, JSPropertyNameAccumulatorRef);
 	bool has_property_cb(JSContextRef, JSObjectRef, JSStringRef);
@@ -211,13 +212,13 @@ namespace kroll
 		if (tibo_class == NULL)
 		{
 			JSClassDefinition js_class_def = empty_class;
-			js_class_def.className = strdup("KrollBoundObject");
+			js_class_def.className = "KrollBoundObject";
 			js_class_def.getPropertyNames = get_property_names_cb;
 			js_class_def.finalize = finalize_cb;
 			js_class_def.hasProperty = has_property_cb;
 			js_class_def.getProperty = get_property_cb;
 			js_class_def.setProperty = set_property_cb;
-			tibo_class = JSClassCreate (&js_class_def);
+			tibo_class = JSClassCreate(&js_class_def);
 		}
 		return JSObjectMake (c, tibo_class, new SharedBoundObject(object));
 	}
@@ -227,14 +228,14 @@ namespace kroll
 		if (tibm_class == NULL)
 		{
 			JSClassDefinition js_class_def = empty_class;
-			js_class_def.className = strdup("KrollBoundMethod");
+			js_class_def.className = "KrollBoundMethod";
 			js_class_def.getPropertyNames = get_property_names_cb;
 			js_class_def.finalize = finalize_cb;
 			js_class_def.hasProperty = has_property_cb;
 			js_class_def.getProperty = get_property_cb;
 			js_class_def.setProperty = set_property_cb;
 			js_class_def.callAsFunction = call_as_function_cb;
-			tibm_class = JSClassCreate (&js_class_def);
+			tibm_class = JSClassCreate(&js_class_def);
 		}
 		return JSObjectMake (c, tibm_class, new SharedBoundMethod(method));
 	}
@@ -259,13 +260,13 @@ namespace kroll
 		if (tibl_class == NULL)
 		{
 			JSClassDefinition js_class_def = empty_class;
-			js_class_def.className = strdup("KrollBoundList");
+			js_class_def.className = "KrollBoundList";
 			js_class_def.getPropertyNames = get_property_names_cb;
 			js_class_def.finalize = finalize_cb;
 			js_class_def.hasProperty = has_property_cb;
 			js_class_def.getProperty = get_property_cb;
 			js_class_def.setProperty = set_property_cb;
-			tibl_class = JSClassCreate (&js_class_def);
+			tibl_class = JSClassCreate(&js_class_def);
 		}
 
 		JSObjectRef object = JSObjectMake(c, tibl_class, new SharedBoundList(list));

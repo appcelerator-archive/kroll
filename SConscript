@@ -9,8 +9,8 @@ Import('debug')
 
 
 SConscript('thirdparty/SConscript', duplicate=0)
-SConscript('api/SConscript', build_dir=path.join(build.dir,'api'), duplicate=0)
+SConscript('api/SConscript', build_dir=path.join(build.dir,'objs','api'), duplicate=0)
 SConscript('boot/SConscript')
 SConscript('host/SConscript')
 SConscript('modules/SConscript')
-SConscript('test/SConscript', build_dir=path.join(build.dir,'test'), duplicate=0)
+SConscript('test/SConscript', build_dir=path.join(build.dir,'objs', 'test'), duplicate=0)

@@ -63,10 +63,10 @@ def SCopyToDirImpl(e, src, dest, include=[], exclude=[], filter=None, recurse=Tr
 
 	def copy_item(src, dest):
 		#print "copy item %s %s" % (src, dest)
-		if os.path.isdir(src):
-			copy_items(src, dest)
-		elif os.path.islink(src) and filter_file(src):
+		if os.path.islink(src) and filter_file(src):
 			e.KCopySymlink(dest, src)
+		elif os.path.isdir(src):
+			copy_items(src, dest)
 		elif filter_file(src):
 			e.Command(dest, src, Copy('$TARGET', '$SOURCE'))
 
@@ -123,4 +123,13 @@ def KConcat(target, source, env):
 
 	out.close()
 
-
+def KReplaceVars(target, replacements):
+	txt = open(target).read()
+	for k, v in replacements.iteritems():
+		txt = txt.replace(k, v)
+	out = open(target, 'w')
+	out.write(txt)
+	out.close()
+def KReplaceVarsStr(target, replacements):
+    return 'KReplaceVars(%s, %s)' % (target, replacements)
+ReplaceVarsAction = SCons.Action.ActionFactory(KReplaceVars, KReplaceVarsStr)

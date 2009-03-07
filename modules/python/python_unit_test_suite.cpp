@@ -213,7 +213,7 @@ namespace kroll
 		KR_ASSERT(apylist);
 		KR_ASSERT(listv->IsList());
 		KR_ASSERT(PyList_Check(apylist));
-		KR_ASSERT(PyList_Size(apylist)==list->Size());
+		KR_ASSERT(PyList_Size(apylist)==(int)list->Size());
 
 		PyObject *pitem = PyList_GetItem(apylist,0);
 		KR_ASSERT(pitem);

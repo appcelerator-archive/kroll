@@ -349,7 +349,7 @@ namespace kroll
 		{
 			// convert it into a list of wrapped Value objects
 			PyObject* newlist = PyList_New(list->Size());
-			for (int c = 0; c < list->Size(); c++)
+			for (unsigned int c = 0; c < list->Size(); c++)
 			{
 				SharedValue value = list->At(c);
 				PyObject *item = PythonUtils::ToObject(value);

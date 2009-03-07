@@ -21,7 +21,7 @@ namespace kroll
 		{
 
 			oss << "[";
-			for (int i = 0; i < this->Size(); i++)
+			for (unsigned int i = 0; i < this->Size(); i++)
 			{
 				SharedValue list_val = this->At(i);
 				SharedString list_str = list_val->DisplayString(levels-1);

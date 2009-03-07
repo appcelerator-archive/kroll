@@ -66,6 +66,9 @@ class BuildUtils(object):
 	def Mkdir(self, file):
 		self.env.Command(file, [], Mkdir('$TARGET'))
 
+	def ReplaceVars(self, target, replacements):
+		self.env.AddPostAction(target, utils.ReplaceVarsAction(target, replacements))
+
 class BuildConfig(object): 
 	def __init__(self, **kwargs):
 		self.debug = False
