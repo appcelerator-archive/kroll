@@ -25,5 +25,6 @@
 #include "value_exception.h"
 #include "arg_utils.h"
 #include "blob.h"
+#include "defines.h"
 
 #endif
