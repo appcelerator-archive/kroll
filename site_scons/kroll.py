@@ -124,17 +124,17 @@ class BuildConfig(object):
 				'win32': {
 					'cpp_path': [path.join(self.third_party, 'poco', 'include')],
 					'lib_path': [path.join(self.third_party, 'poco', 'lib')],
-					'libs': ['PocoFoundation', 'PocoNet', 'PocoNetSSL', 'PocoUtil', 'PocoXML']	
+					'libs': ['PocoFoundation', 'PocoNet', 'PocoNetSSL', 'PocoUtil', 'PocoXML', 'PocoZip']	
 				},
 				'linux': {
 					'cpp_path': [path.join(self.third_party, 'poco', 'include')],
 					'lib_path': [path.join(self.third_party, 'poco', 'lib')],
-					'libs': ['PocoFoundation', 'PocoNet', 'PocoNetSSL', 'PocoUtil', 'PocoXML']	
+					'libs': ['PocoFoundation', 'PocoNet', 'PocoNetSSL', 'PocoUtil', 'PocoXML', 'PocoZip']	
 				},
 				'osx': {
 					'cpp_path': [path.join(self.third_party, 'poco', 'headers')],
 					'lib_path': [path.join(self.third_party, 'poco', 'lib')],
-					'libs': ['PocoFoundation', 'PocoNet', 'PocoNetSSL', 'PocoUtil', 'PocoXML']	
+					'libs': ['PocoFoundation', 'PocoNet', 'PocoNetSSL', 'PocoUtil', 'PocoXML', 'PocoZip']	
 				}
 			}
 		}
