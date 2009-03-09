@@ -3,12 +3,12 @@
  * see LICENSE in the root folder for details on the license.
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
-#include "python_bound_method.h"
+#include "k_python_method.h"
 
 namespace kroll
 {
-	PythonBoundMethod::PythonBoundMethod(PyObject *obj, const char *n) :
-		name(NULL), object(obj), delegate(new PythonBoundObject(obj))
+	KPythonMethod::KPythonMethod(PyObject *obj, const char *n) :
+		name(NULL), object(obj), delegate(new KPythonObject(obj))
 	{
 		if (n)
 		{
@@ -17,7 +17,7 @@ namespace kroll
 		Py_INCREF(this->object);
 	}
 
-	PythonBoundMethod::~PythonBoundMethod()
+	KPythonMethod::~KPythonMethod()
 	{
 		Py_DECREF(this->object);
 		this->object = NULL;
@@ -29,7 +29,7 @@ namespace kroll
 		}
 	}
 
-	SharedValue PythonBoundMethod::Call(const ValueList& args)
+	SharedValue KPythonMethod::Call(const ValueList& args)
 	{
 		PyObject *arglist = NULL;
 		if (args.size()>0)
@@ -38,7 +38,7 @@ namespace kroll
 			for (int i = 0; i < (int) args.size(); i++)
 			{
 				SharedValue v = args[i];
-				PyObject *pv = PythonUtils::ToObject(v);
+				PyObject *pv = PythonUtils::ToPyObject(v);
 				PyTuple_SetItem(arglist, i, pv);
 			}
 		}
@@ -53,7 +53,7 @@ namespace kroll
 		SharedValue value;
 		if (response!=NULL)
 		{
-			value = PythonUtils::ToValue(response,NULL);
+			value = PythonUtils::ToKrollValue(response,NULL);
 		}
 		else
 		{
@@ -63,17 +63,17 @@ namespace kroll
 		return value;
 	}
 
-	void PythonBoundMethod::Set(const char *name, SharedValue value)
+	void KPythonMethod::Set(const char *name, SharedValue value)
 	{
 		this->delegate->Set(name,value);
 	}
 
-	SharedValue PythonBoundMethod::Get(const char *name)
+	SharedValue KPythonMethod::Get(const char *name)
 	{
 		return this->delegate->Get(name);
 	}
 
-	SharedStringList PythonBoundMethod::GetPropertyNames()
+	SharedStringList KPythonMethod::GetPropertyNames()
 	{
 		return this->delegate->GetPropertyNames();
 	}

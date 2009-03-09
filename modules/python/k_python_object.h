@@ -4,21 +4,19 @@
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
 
-#ifndef _PYTHON_BOUND_METHOD_H_
-#define _PYTHON_BOUND_METHOD_H_
+#ifndef _K_PYTHON_OBJECT_H_
+#define _K_PYTHON_OBJECT_H_
 
 #include "python_module.h"
 
 namespace kroll
 {
-	class PythonBoundObject;
-	class PythonBoundMethod : public BoundMethod
+	class KPythonObject : public BoundObject
 	{
 	public:
-		PythonBoundMethod(PyObject *obj, const char *name);
-		virtual ~PythonBoundMethod();
+		KPythonObject(PyObject *obj);
+		virtual ~KPythonObject();
 
-		SharedValue Call(const ValueList& args);
 		virtual void Set(const char *name, SharedValue value);
 		virtual SharedValue Get(const char *name);
 		virtual SharedStringList GetPropertyNames();
@@ -26,12 +24,9 @@ namespace kroll
 		const PyObject* ToPython() { Py_INCREF(object); return object; }
 
 	private:
-		char* name;
-		PyObject* object;
-		SharedPtr<BoundObject> delegate;
-        DISALLOW_EVIL_CONSTRUCTORS(PythonBoundMethod);
+		PyObject *object;
+		DISALLOW_EVIL_CONSTRUCTORS(KPythonObject);
 	};
 }
-
 #endif
 

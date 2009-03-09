@@ -8,6 +8,59 @@
 namespace kroll
 {
 	SharedBoundObject PythonUtils::scope;
+	PyObject* PythonUtils::ToPyObject(SharedValue value)
+	{
+		if (value->IsBool())
+		{
+			return value->ToBool() ? Py_True : Py_False;
+		}
+		if (value->IsDouble())
+		{
+			return PyFloat_FromDouble(value->ToDouble());
+		}
+		if (value->IsInt())
+		{
+			return PyInt_FromLong(value->ToInt());
+		}
+		if (value->IsNull() || value->IsUndefined())
+		{
+			Py_INCREF(Py_None);
+			return Py_None;
+		}
+		if (value->IsMethod())
+		{
+			SharedBoundMethod obj = value->ToMethod();
+			if (typeid(obj.get()) == typeid(KPythonMethod*))
+			{
+				return (PyObject*)((KPythonMethod*)obj.get())->ToPython();
+			}
+			return PythonUtils::KMethodToPyObject(value->ToMethod());
+		}
+		if (value->IsList())
+		{
+			SharedBoundList list = value->ToList();
+			if (typeid(list.get()) == typeid(KPythonList*))
+			{
+				return ((KPythonList*)list.get())->ToPython();
+			}
+			return PythonUtils::KObjectToPyObject(list);
+		}
+		if (value->IsObject())
+		{
+			SharedBoundObject obj = value->ToObject();
+			if (typeid(obj.get()) == typeid(KPythonObject*))
+			{
+				return (PyObject*)((KPythonObject*)obj.get())->ToPython();
+			}
+			return PythonUtils::KObjectToPyObject(value->ToObject());
+		}
+		if (value->IsString())
+		{
+			return PyString_FromString(value->ToString());
+		}
+		Py_INCREF(Py_None);
+		return Py_None;
+	}
 
 	const char * PythonUtils::ToString(PyObject* value)
 	{
@@ -47,93 +100,7 @@ namespace kroll
 		}
 		return 0.0;
 	}
-	
-	void ConvertLinefeeds(std::string &code)
-	{
-		while (1)
-		{
-			std::string::size_type loc = code.find("\r\n");
-			if (loc == std::string::npos) break;
-			code.replace(loc,2,"\n");
-		}
-	}
 
-	class PythonEvaluator : public BoundMethod
-	{
-	public:
-		virtual SharedValue Call(const ValueList& args) {
-			if (args.size() == 3 && args[1]->IsString()) {
-
-				// strip the beginning so we have some sense of tab normalization
-				std::string code = args[1]->ToString();
-				ConvertLinefeeds(code);
-				size_t startpos = code.find_first_not_of(" \t\n");
-				if (std::string::npos != startpos)
-					code = code.substr(startpos);
-
-#ifdef DEBUG
-				std::cout << "Evaluating python source code:\n" << code << std::endl;
-#endif
-				SharedBoundObject context = args[2]->ToObject();
-				PyObject *py_context = PythonUtils::ToObject(NULL, NULL, context);
-
-				PyObject *main_module = PyImport_AddModule("__main__");
-				PyObject *main_dict = PyModule_GetDict(main_module);
-
-				PyDict_SetItemString(main_dict, "window", py_context);
-				PyObject *returnValue = PyRun_StringFlags(code.c_str(), Py_file_input, main_dict, main_dict, NULL);
-
-				Py_DECREF(py_context);
-
-				if (returnValue == NULL) 
-				{
-					 PythonUtils::ThrowException();
-				}
-				Py_DECREF(returnValue);
-			}
-			return Value::Null;
-		}
-
-		virtual void Set(const char *name, SharedValue value) {}
-		virtual SharedValue Get(const char *name) { return Value::Null; }
-		virtual SharedStringList GetPropertyNames() { return SharedStringList(); }
-	};
-
-	SharedBoundMethod PythonUtils::evaluator = SharedBoundMethod(new PythonEvaluator());
-
-	void PythonUtils::InitializeDefaultBindings (Host *host)
-	{
-		PyObject* mod = PyImport_ImportModule("__builtin__");
-
-		if (mod)
-		{
-			// we bind the special module "api" to the global
-			// variable defined in PRODUCT_NAME to give the
-			// Python runtime access to it
-			SharedValue api = host->GetGlobalObject()->Get("API");
-			if (api->IsObject())
-			{
-				// we're going to clone the methods from api into our
-				// own python scoped object
-				SharedBoundObject hostobj = host->GetGlobalObject();
-				SharedBoundObject apiobj = api->ToObject();
-				scope = ScopeMethodDelegate::CreateDelegate(hostobj, apiobj);
-				scope->Set("evaluate", Value::NewMethod(evaluator));
-				PyObject *pyapi = PythonUtils::ToObject(NULL,NULL,hostobj);
-				printf("binding %s into Python __builtin__\n", PRODUCT_NAME);
-				PyObject_SetAttrString(mod,PRODUCT_NAME,pyapi);
-				// now bind our new scope to python module
-				SharedValue scopeRef = Value::NewObject(scope);
-				host->GetGlobalObject()->Set((const char*)"Python",scopeRef);
-				// don't release the scope
-			}
-			else
-			{
-				std::cerr << "! Couldn't find API module to bind Python module to" << std::endl;
-			}
-			Py_DECREF(mod);
-		}
-	}
 	// PyObject* ValueListToPythonArray(const ValueList& list)
 	// {
 	// 	int size = list.size();
@@ -148,7 +115,7 @@ namespace kroll
 	// 	for (int c=0;c<size;c++)
 	// 	{
 	// 		Value *value = list.at(c);
-	// 		PyTuple_SET_ITEM(array,c,ValueToPythonBoundObject(value));
+	// 		PyTuple_SET_ITEM(array,c,ValueToKPythonObject(value));
 	// 	}
 	// 	return array;
 	// }
@@ -171,17 +138,17 @@ namespace kroll
 			for (int c=0;c<PyTuple_Size(args);c++)
 			{
 				PyObject *arg=PyTuple_GET_ITEM(args,c);
-				SharedValue argument = PythonUtils::ToValue(arg,NULL);
+				SharedValue argument = PythonUtils::ToKrollValue(arg,NULL);
 				a.push_back(argument);
 			}
 			SharedBoundMethod m = (*method);
 			SharedValue result = m->Call(a);
 			Py_DECREF(s);
-			return PythonUtils::ToObject(result);
+			return PythonUtils::ToPyObject(result);
 		}
 		catch (SharedValue ex)
 		{
-			PyErr_SetObject(PyExc_Exception,PythonUtils::ToObject(ex));
+			PyErr_SetObject(PyExc_Exception,PythonUtils::ToPyObject(ex));
 			Py_INCREF(Py_None);
 			Py_DECREF(s);
 			return Py_None;
@@ -197,7 +164,7 @@ namespace kroll
 			"dispatcher for BoundMethod"
 	};
 
-	PyObject* PythonUtils::ToObject(SharedBoundMethod method)
+	PyObject* PythonUtils::KMethodToPyObject(SharedBoundMethod method)
 	{
 		SharedBoundMethod *m = new SharedBoundMethod(method);
 		PyObject *self = PyCObject_FromVoidPtr(m,&PyDeleteBoundMethod);
@@ -205,59 +172,6 @@ namespace kroll
 	}
 
 
-	PyObject* PythonUtils::ToObject(SharedValue value)
-	{
-		if (value->IsBool())
-		{
-			return value->ToBool() ? Py_True : Py_False;
-		}
-		if (value->IsDouble())
-		{
-			return PyFloat_FromDouble(value->ToDouble());
-		}
-		if (value->IsInt())
-		{
-			return PyInt_FromLong(value->ToInt());
-		}
-		if (value->IsNull() || value->IsUndefined())
-		{
-			Py_INCREF(Py_None);
-			return Py_None;
-		}
-		if (value->IsMethod())
-		{
-			SharedBoundMethod obj = value->ToMethod();
-			if (typeid(obj.get()) == typeid(PythonBoundMethod*))
-			{
-				return (PyObject*)((PythonBoundMethod*)obj.get())->ToPython();
-			}
-			return PythonUtils::ToObject(value->ToMethod());
-		}
-		if (value->IsList())
-		{
-			SharedBoundList list = value->ToList();
-			if (typeid(list.get()) == typeid(PythonBoundList*))
-			{
-				return ((PythonBoundList*)list.get())->ToPython();
-			}
-			return PythonUtils::ToObject(NULL,NULL,list);
-		}
-		if (value->IsObject())
-		{
-			SharedBoundObject obj = value->ToObject();
-			if (typeid(obj.get()) == typeid(PythonBoundObject*))
-			{
-				return (PyObject*)((PythonBoundObject*)obj.get())->ToPython();
-			}
-			return PythonUtils::ToObject(NULL,NULL,value->ToObject());
-		}
-		if (value->IsString())
-		{
-			return PyString_FromString(value->ToString());
-		}
-		Py_INCREF(Py_None);
-		return Py_None;
-	}
 
 	typedef struct {
 		PyObject_HEAD
@@ -277,14 +191,14 @@ namespace kroll
 		Py_INCREF(boundSelf);
 		SharedValue result = boundSelf->object->get()->Get(name);
 		Py_DECREF(boundSelf);
-		return PythonUtils::ToObject(result);
+		return PythonUtils::ToPyObject(result);
 	}
 
 	static int PyBoundObject_setattr(PyObject *self, char *name, PyObject *value)
 	{
 		PyBoundObject *boundSelf = reinterpret_cast<PyBoundObject*>(self);
 		Py_INCREF(boundSelf);
-		SharedValue tiValue = PythonUtils::ToValue(value,name);
+		SharedValue tiValue = PythonUtils::ToKrollValue(value,name);
 		boundSelf->object->get()->Set(name, tiValue);
 		Py_DECREF(boundSelf);
 		return 0;
@@ -337,7 +251,7 @@ namespace kroll
 		0,							/*tp_doc*/
 	};
 
-	PyObject* PythonUtils::ToObject(PyObject* self, PyObject* args, SharedBoundObject bo)
+	PyObject* PythonUtils::KObjectToPyObject(SharedBoundObject bo)
 	{
 		//CHECK bo
 		if (bo.isNull())
@@ -352,7 +266,7 @@ namespace kroll
 			for (unsigned int c = 0; c < list->Size(); c++)
 			{
 				SharedValue value = list->At(c);
-				PyObject *item = PythonUtils::ToObject(value);
+				PyObject *item = PythonUtils::ToPyObject(value);
 				PyList_SetItem(newlist,c,item);
 			}
 			return newlist;
@@ -380,7 +294,7 @@ namespace kroll
 		throw ex;
 	}
 
-	SharedValue PythonUtils::ToValue(PyObject* value, const char *name)
+	SharedValue PythonUtils::ToKrollValue(PyObject* value, const char *name)
 	{
 		//FIXME - who is going to delete ref?
 
@@ -408,37 +322,37 @@ namespace kroll
 		}
 		if (PyList_Check(value))
 		{
-			SharedBoundList l = new PythonBoundList(value);
+			SharedBoundList l = new KPythonList(value);
 			SharedValue til = Value::NewList(l);
 			return til;
 		}
 		if (PyClass_Check(value))
 		{
-			SharedBoundObject v = new PythonBoundObject(value);
+			SharedBoundObject v = new KPythonObject(value);
 			SharedValue tiv = Value::NewObject(v);
 			return tiv;
 		}
 		if (PyInstance_Check(value))
 		{
-			SharedBoundObject v = new PythonBoundObject(value);
+			SharedBoundObject v = new KPythonObject(value);
 			SharedValue tiv = Value::NewObject(v);
 			return tiv;
 		}
 		if (PyMethod_Check(value))
 		{
-			SharedBoundMethod m = new PythonBoundMethod(value,name);
+			SharedBoundMethod m = new KPythonMethod(value,name);
 			SharedValue tiv = Value::NewMethod(m);
 			return tiv;
 		}
 		if (PyFunction_Check(value))
 		{
-			SharedBoundMethod m = new PythonBoundMethod(value,name);
+			SharedBoundMethod m = new KPythonMethod(value,name);
 			SharedValue tiv = Value::NewMethod(m);
 			return tiv;
 		}
 		if (PyCallable_Check(value))
 		{
-			SharedBoundMethod m = new PythonBoundMethod(value,name);
+			SharedBoundMethod m = new KPythonMethod(value,name);
 			SharedValue tiv = Value::NewMethod(m);
 			return tiv;
 		}
@@ -449,7 +363,7 @@ namespace kroll
 			return tiv;
 		}
 
-		std::cerr << "PythonBoundObjectToValue:nothing" << std::endl;
+		std::cerr << "KPythonObjectToKrollValue:nothing" << std::endl;
 		PyObject_Print(value,stdout,0);
 		printf("\n");
 

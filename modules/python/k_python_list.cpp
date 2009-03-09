@@ -3,11 +3,11 @@
  * see LICENSE in the root folder for details on the license.
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
-#include "python_bound_list.h"
+#include "k_python_list.h"
 
 namespace kroll
 {
-	PythonBoundList::PythonBoundList(PyObject *obj) : object(obj)
+	KPythonList::KPythonList(PyObject *obj) : object(obj)
 	{
 		if (!PyList_Check(obj))
 		{
@@ -19,7 +19,7 @@ namespace kroll
 		Py_INCREF(this->object);
 	}
 
-	PythonBoundList::~PythonBoundList()
+	KPythonList::~KPythonList()
 	{
 		Py_DECREF(this->object);
 		this->object = NULL;
@@ -31,16 +31,16 @@ namespace kroll
 	 * reference count.
 	 * When an error occurs will throw an exception of type Value*.
 	 */
-	void PythonBoundList::Append(SharedValue value)
+	void KPythonList::Append(SharedValue value)
 	{
-		PyList_Append(this->object,PythonUtils::ToObject(value));
+		PyList_Append(this->object,PythonUtils::ToPyObject(value));
 		//KR_DECREF(value);
 	}
 
 	/**
 	 * Get the length of this list.
 	 */
-	unsigned int PythonBoundList::Size()
+	unsigned int KPythonList::Size()
 	{
 		return PyList_Size(this->object);
 	}
@@ -48,7 +48,7 @@ namespace kroll
 	/**
 	 * remove the item and return true if removed
 	 */
-	bool PythonBoundList::Remove(unsigned int index)
+	bool KPythonList::Remove(unsigned int index)
 	{
 		PyObject* empty_list = PyList_New(0);
 		PyList_SetSlice(this->object, index, index + 1, empty_list);
@@ -63,7 +63,7 @@ namespace kroll
 	 * reference counted and must be released.
 	 * When an error occurs will throw an exception of type Value*.
 	 */
-	SharedValue PythonBoundList::At(unsigned int index)
+	SharedValue KPythonList::At(unsigned int index)
 	{
 		PyObject *p = PyList_GET_ITEM(this->object,index);
 		if (Py_None == p)
@@ -71,7 +71,7 @@ namespace kroll
 			Py_DECREF(p);
 			return Value::Undefined;
 		}
-		SharedValue v = PythonUtils::ToValue(p,NULL);
+		SharedValue v = PythonUtils::ToKrollValue(p,NULL);
 		Py_DECREF(p);
 		return v;
 	}
@@ -82,7 +82,7 @@ namespace kroll
 	 * if they increase the reference count.
 	 * When an error occurs will throw an exception of type Value*.
 	 */
-	void PythonBoundList::Set(const char *name, SharedValue value)
+	void KPythonList::Set(const char *name, SharedValue value)
 	{
 		// check for integer value as name
 		if (this->IsNumber(name))
@@ -105,7 +105,7 @@ namespace kroll
 		else
 		{
 			// set a named property
-			PyObject* py = PythonUtils::ToObject(value);
+			PyObject* py = PythonUtils::ToPyObject(value);
 			int result = PyObject_SetAttrString(this->object,(char*)name,py);
 			Py_DECREF(py);
 
@@ -123,7 +123,7 @@ namespace kroll
 	 * with the return value (even for Undefined and Null types).
 	 * When an error occurs will throw an exception of type Value*.
 	 */
-	SharedValue PythonBoundList::Get(const char *name)
+	SharedValue KPythonList::Get(const char *name)
 	{
 		if (std::string(name) == std::string("length"))
 		{
@@ -145,7 +145,7 @@ namespace kroll
 			PythonUtils::ThrowException();
 		}
 
-		SharedValue returnValue = PythonUtils::ToValue(response,name);
+		SharedValue returnValue = PythonUtils::ToKrollValue(response,name);
 		Py_DECREF(response);
 		return returnValue;
 	}
@@ -153,7 +153,7 @@ namespace kroll
 	/**
 	 * Return a list of this object's property names.
 	 */
-	SharedStringList PythonBoundList::GetPropertyNames()
+	SharedStringList KPythonList::GetPropertyNames()
 	{
 		SharedStringList property_names(new StringList());
 		property_names->push_back(new std::string("length"));

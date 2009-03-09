@@ -4,18 +4,18 @@
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
 
-#ifndef _PYTHON_BOUND_LIST_H_
-#define _PYTHON_BOUND_LIST_H_
+#ifndef _K_PYTHON_LIST_H_
+#define _K_PYTHON_LIST_H_
 
 #include "python_module.h"
 
 namespace kroll
 {
-	class PythonBoundList : public BoundList
+	class KPythonList : public BoundList
 	{
 	public:
-		PythonBoundList(PyObject *obj);
-		virtual ~PythonBoundList();
+		KPythonList(PyObject *obj);
+		virtual ~KPythonList();
 		PyObject* ToPython() const { Py_INCREF(object); return object; }
 
 		/**
@@ -68,7 +68,7 @@ namespace kroll
 
 	protected:
 		PyObject *object;
-        DISALLOW_EVIL_CONSTRUCTORS(PythonBoundList);
+        DISALLOW_EVIL_CONSTRUCTORS(KPythonList);
 	};
 }
 #endif

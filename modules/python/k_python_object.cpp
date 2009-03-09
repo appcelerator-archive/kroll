@@ -3,24 +3,24 @@
  * see LICENSE in the root folder for details on the license.
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
-#include "python_bound_object.h"
+#include "k_python_object.h"
 
 namespace kroll
 {
-	PythonBoundObject::PythonBoundObject(PyObject *obj) : object(obj)
+	KPythonObject::KPythonObject(PyObject *obj) : object(obj)
 	{
 		Py_INCREF(this->object);
 	}
 
-	PythonBoundObject::~PythonBoundObject()
+	KPythonObject::~KPythonObject()
 	{
 		Py_DECREF(this->object);
 		this->object = NULL;
 	}
 
-	void PythonBoundObject::Set(const char *name, SharedValue value)
+	void KPythonObject::Set(const char *name, SharedValue value)
 	{
-		int result = PyObject_SetAttrString(this->object,(char*)name,PythonUtils::ToObject(value));
+		int result = PyObject_SetAttrString(this->object,(char*)name,PythonUtils::ToPyObject(value));
 
 		PyObject *exception = PyErr_Occurred();
 		if (result == -1 && exception != NULL)
@@ -29,7 +29,7 @@ namespace kroll
 		}
 	}
 
-	SharedValue PythonBoundObject::Get(const char *name)
+	SharedValue KPythonObject::Get(const char *name)
 	{
 		// get should returned undefined if we don't have a property
 		// named "name" to mimic what happens in Javascript
@@ -47,12 +47,12 @@ namespace kroll
 			PythonUtils::ThrowException();
 		}
 
-		SharedValue returnValue = PythonUtils::ToValue(response,name);
+		SharedValue returnValue = PythonUtils::ToKrollValue(response,name);
 		Py_DECREF(response);
 		return returnValue;
 	}
 
-	SharedStringList PythonBoundObject::GetPropertyNames()
+	SharedStringList KPythonObject::GetPropertyNames()
 	{
 		PyObject *props = PyObject_Dir(this->object);
 		SharedStringList property_names(new StringList());
