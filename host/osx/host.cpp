@@ -47,8 +47,8 @@ namespace kroll
 		{
 			@try
 			{
-				NSEvent *event = [app nextEventMatchingMask:NSAnyEventMask untilDate:[NSDate distantFuture] inMode:NSDefaultRunLoopMode dequeue:YES];
-				if (event) 
+				NSEvent *event = [app nextEventMatchingMask:NSAnyEventMask untilDate:[NSDate distantPast] inMode:NSDefaultRunLoopMode dequeue:YES];
+				if (event)
 				{
 					[app sendEvent:event];
 					[app updateWindows];
@@ -175,7 +175,7 @@ namespace kroll
 	SharedValue OSXHost::InvokeMethodOnMainThread(SharedBoundMethod method,
 	                                              const ValueList& args)
 	{
-		// make sure to just invoke if we're already on the 
+		// make sure to just invoke if we're already on the
 		// main thread
 		bool isMainThread;
 		if ([NSThread respondsToSelector:@selector(isMainThread)]) {
@@ -186,7 +186,7 @@ namespace kroll
 			NSThread * mainThread = *((id *)[mainThreadData bytes]);
 			isMainThread = mainThread == [NSThread currentThread];
 		}
-		
+
 		if (isMainThread)
 		{
 			return method->Call(args);
@@ -207,7 +207,7 @@ namespace kroll
 }
 
 
-extern "C" 
+extern "C"
 {
 	int Execute(int argc,const char **argv)
 	{
