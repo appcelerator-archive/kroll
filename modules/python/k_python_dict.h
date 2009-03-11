@@ -4,30 +4,28 @@
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
 
-#ifndef _K_PYTHON_OBJECT_H_
-#define _K_PYTHON_OBJECT_H_
+#ifndef _K_PYTHON_DICT_H_
+#define _K_PYTHON_DICT_H_
 
 #include "python_module.h"
 
 namespace kroll
 {
-	class KPythonObject : public BoundObject
+	class KPythonDict : public BoundObject
 	{
 	public:
-		KPythonObject(PyObject *obj);
-		KPythonObject(PyObject *obj, bool read_only);
-		virtual ~KPythonObject();
+		KPythonDict(PyObject *obj);
+		virtual ~KPythonDict();
 
 		virtual void Set(const char *name, SharedValue value);
 		virtual SharedValue Get(const char *name);
 		virtual SharedStringList GetPropertyNames();
-		PyObject* ToPython();
+
+		PyObject* ToPython() { Py_INCREF(object); return object; }
 
 	private:
 		PyObject *object;
-		bool read_only;
-		SharedBoundObject delegate;
-		DISALLOW_EVIL_CONSTRUCTORS(KPythonObject);
+		DISALLOW_EVIL_CONSTRUCTORS(KPythonDict);
 	};
 }
 #endif

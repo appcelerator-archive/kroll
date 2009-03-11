@@ -7,9 +7,22 @@
 
 namespace kroll
 {
-	KPythonObject::KPythonObject(PyObject *obj) : object(obj)
+	KPythonObject::KPythonObject(PyObject *obj) :
+		object(obj),
+		read_only(false),
+		delegate(NULL)
 	{
 		Py_INCREF(this->object);
+		
+	}
+
+	KPythonObject::KPythonObject(PyObject *obj, bool read_only) :
+		object(obj),
+		read_only(read_only),
+		delegate(new StaticBoundObject())
+	{
+		Py_INCREF(this->object);
+		
 	}
 
 	KPythonObject::~KPythonObject()
@@ -18,57 +31,71 @@ namespace kroll
 		this->object = NULL;
 	}
 
+	PyObject* KPythonObject::ToPython()
+	{
+		Py_INCREF(object);
+		return this->object;
+	}
+
 	void KPythonObject::Set(const char *name, SharedValue value)
 	{
-		int result = PyObject_SetAttrString(this->object,(char*)name,PythonUtils::ToPyObject(value));
+		PyObject* py_value = PythonUtils::ToPyObject(value);
 
-		PyObject *exception = PyErr_Occurred();
-		if (result == -1 && exception != NULL)
+		if (read_only)
 		{
-			PythonUtils::ThrowException();
+			// This object is likely read-only, allow for binding
+			// layer-only properties, even though this isn't a great idea.
+			delegate->Set(name, value);
+		}
+		else
+		{
+			int result = PyObject_SetAttrString(this->object, (char*)name, py_value);
+			if (result == -1 && PyErr_Occurred() != NULL)
+			{
+				THROW_PYTHON_EXCEPTION
+			}
 		}
 	}
 
 	SharedValue KPythonObject::Get(const char *name)
 	{
-		// get should returned undefined if we don't have a property
-		// named "name" to mimic what happens in Javascript
-		if (0 == (PyObject_HasAttrString(this->object,(char*)name)))
+		if (0 == (PyObject_HasAttrString(this->object, (char*)name)))
 		{
-			return Value::Undefined;
+			if (this->read_only)
+			{
+				// Read-only objects can have binding layer properties
+				return delegate->Get(name);
+			}
+			else
+			{
+				return Value::Undefined;
+			}
 		}
 
-		PyObject *response = PyObject_GetAttrString(this->object,(char*)name);
-
-		PyObject *exception = PyErr_Occurred();
-		if (response == NULL && exception != NULL)
+		PyObject *value = PyObject_GetAttrString(this->object,(char*)name);
+		if (value == NULL && PyErr_Occurred())
 		{
-			Py_XDECREF(response);
-			PythonUtils::ThrowException();
+			THROW_PYTHON_EXCEPTION
 		}
 
-		SharedValue returnValue = PythonUtils::ToKrollValue(response,name);
-		Py_DECREF(response);
-		return returnValue;
+		SharedValue kroll_value = PythonUtils::ToKrollValue(value);
+		Py_DECREF(value);
+		return kroll_value;
 	}
 
 	SharedStringList KPythonObject::GetPropertyNames()
 	{
-		PyObject *props = PyObject_Dir(this->object);
-		SharedStringList property_names(new StringList());
 
+		SharedStringList property_names = new StringList();
+		PyObject *props = PyObject_Dir(this->object);
 		if (props == NULL)
-		{
-			Py_DECREF(props);
 			return property_names;
-		}
 
 		PyObject *iterator = PyObject_GetIter(props);
-		PyObject *item;
-
 		if (iterator == NULL)
 			return property_names;
 
+		PyObject *item;
 		while ((item = PyIter_Next(iterator))) {
 			property_names->push_back(new std::string(PythonUtils::ToString(item)));
 			Py_DECREF(item);

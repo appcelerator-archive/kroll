@@ -16,7 +16,6 @@ namespace kroll
 	public:
 		KPythonList(PyObject *obj);
 		virtual ~KPythonList();
-		PyObject* ToPython() const { Py_INCREF(object); return object; }
 
 		/**
 		 * Append a value to this list. Value should be heap-allocated as
@@ -66,9 +65,12 @@ namespace kroll
 		 */
 		SharedStringList GetPropertyNames();
 
+		PyObject* ToPython();
+
 	protected:
-		PyObject *object;
-        DISALLOW_EVIL_CONSTRUCTORS(KPythonList);
+		PyObject *list;
+		SharedPtr<KPythonObject> object;
+		DISALLOW_EVIL_CONSTRUCTORS(KPythonList);
 	};
 }
 #endif

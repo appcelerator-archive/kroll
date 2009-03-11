@@ -39,41 +39,19 @@ namespace kroll
 
 	void PythonModule::InitializeBinding()
 	{
+		SharedBoundObject global = this->host->GetGlobalObject();
+
 		SharedBoundObject binding = new StaticBoundObject();
-		this->host->GetGlobalObject()->Set("Python", Value::NewObject(binding));
+		global->Set("Python", Value::NewObject(binding));
 
 		SharedBoundMethod evaluator = new PythonEvaluator();
 		binding->Set("evaluate", Value::NewMethod(evaluator));
 
-		//PyObject* mod = PyImport_ImportModule("__builtin__");
-		//if (mod)
-		//{
-		//	// we bind the special module "api" to the global
-		//	// variable defined in PRODUCT_NAME to give the
-		//	// Python runtime access to it
-		//	SharedValue api = host->GetGlobalObject()->Get("API");
-		//	if (api->IsObject())
-		//	{
-		//		// we're going to clone the methods from api into our
-		//		// own python scoped object
-		//		SharedBoundObject hostobj = host->GetGlobalObject();
-		//		SharedBoundObject apiobj = api->ToObject();
-		//		scope = ScopeMethodDelegate::CreateDelegate(hostobj, apiobj);
-		//		scope->Set("evaluate", Value::NewMethod(evaluator));
-		//		PyObject *pyapi = PythonUtils::ToObject(NULL,NULL,hostobj);
-		//		printf("binding %s into Python __builtin__\n", PRODUCT_NAME);
-		//		PyObject_SetAttrString(mod,PRODUCT_NAME,pyapi);
-		//		// now bind our new scope to python module
-		//		SharedValue scopeRef = Value::NewObject(scope);
-		//		host->GetGlobalObject()->Set((const char*)"Python",scopeRef);
-		//		// don't release the scope
-		//	}
-		//	else
-		//	{
-		//		std::cerr << "! Couldn't find API module to bind Python module to" << std::endl;
-		//	}
-		//	Py_DECREF(mod);
-		//}
+		PyObject* main_module = PyImport_AddModule("__main__");
+		PyObject* main_dict = PyModule_GetDict(main_module);
+		PyObject* api = PythonUtils::KObjectToPyObject(global);
+		PyDict_SetItemString(main_dict, PRODUCT_NAME, api);
+		Py_DECREF(api);
 	}
 
 

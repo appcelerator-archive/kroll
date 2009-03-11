@@ -7,75 +7,67 @@
 
 namespace kroll
 {
-	KPythonMethod::KPythonMethod(PyObject *obj, const char *n) :
-		name(NULL), object(obj), delegate(new KPythonObject(obj))
+	KPythonMethod::KPythonMethod(PyObject *method) :
+		method(method),
+		object(new KPythonObject(method))
 	{
-		if (n)
-		{
-			name = strdup(n);
-		}
-		Py_INCREF(this->object);
+		Py_INCREF(this->method);
 	}
 
 	KPythonMethod::~KPythonMethod()
 	{
-		Py_DECREF(this->object);
-		this->object = NULL;
-
-		if (this->name)
-		{
-			free(this->name);
-			this->name = NULL;
-		}
+		Py_DECREF(this->method);
 	}
 
 	SharedValue KPythonMethod::Call(const ValueList& args)
 	{
 		PyObject *arglist = NULL;
-		if (args.size()>0)
+
+		if (args.size() > 0)
 		{
 			arglist = PyTuple_New(args.size());
-			for (int i = 0; i < (int) args.size(); i++)
+			for (size_t i = 0; i < args.size(); i++)
 			{
-				SharedValue v = args[i];
-				PyObject *pv = PythonUtils::ToPyObject(v);
+				PyObject *pv = PythonUtils::ToPyObject(args[i]);
 				PyTuple_SetItem(arglist, i, pv);
 			}
 		}
-		PyObject *response = PyObject_CallObject(this->object,arglist);
+
+		PyObject *response = PyObject_CallObject(this->method, arglist);
 		Py_XDECREF(arglist);
 
-		if (PyErr_Occurred() != NULL)
+		SharedValue value = Value::Undefined;
+		if (response == NULL && PyErr_Occurred() != NULL)
 		{
-			Py_XDECREF(response);
-			PythonUtils::ThrowException();
+			THROW_PYTHON_EXCEPTION
 		}
-		SharedValue value;
-		if (response!=NULL)
+		else if (response != NULL)
 		{
-			value = PythonUtils::ToKrollValue(response,NULL);
+			value = PythonUtils::ToKrollValue(response);
+			Py_DECREF(response);
 		}
-		else
-		{
-			value = Value::Undefined;
-		}
-		Py_XDECREF(response);
+
 		return value;
 	}
 
 	void KPythonMethod::Set(const char *name, SharedValue value)
 	{
-		this->delegate->Set(name,value);
+		this->object->Set(name, value);
 	}
 
 	SharedValue KPythonMethod::Get(const char *name)
 	{
-		return this->delegate->Get(name);
+		return this->object->Get(name);
 	}
 
 	SharedStringList KPythonMethod::GetPropertyNames()
 	{
-		return this->delegate->GetPropertyNames();
+		return this->object->GetPropertyNames();
+	}
+
+	PyObject* KPythonMethod::ToPython()
+	{
+		return this->object->ToPython();
 	}
 
 }

@@ -7,6 +7,104 @@
 
 namespace kroll
 {
+
+	static void PyKObject_dealloc(PyObject* );
+	static PyObject* PyKObject_getattr(PyObject*, char*);
+	static int PyKObject_setattr(PyObject*, char*, PyObject *);
+	static PyObject* PyKObject_str(PyObject*);
+	static Py_ssize_t PyKListLength(PyObject*);
+	static PyObject* PyKListConcat(PyObject*, PyObject*);
+	static PyObject* PyKListRepeat(PyObject*, Py_ssize_t);
+	static PyObject* PyKListGetItem(PyObject*, Py_ssize_t);
+	static int PyKListSetItem(PyObject*, Py_ssize_t, PyObject*);
+	static int PyKListContains(PyObject*, PyObject*);
+	static PyObject* PyKListInPlaceConcat(PyObject*, PyObject*);
+	static PyObject* PyKListInPlaceRepeat(PyObject*, Py_ssize_t);
+	static PyObject* PyKMethod_call(PyObject*, PyObject *, PyObject*);
+
+	typedef struct {
+		PyObject_HEAD
+		SharedBoundObject* object;
+	} PyKObject;
+
+	static PyTypeObject PyKObjectType =
+	{
+		PyObject_HEAD_INIT(NULL)
+		0,
+		"KObject",
+		sizeof(PyKObject),
+		0,
+		PyKObject_dealloc,          /*tp_dealloc*/
+		0,                          /*tp_print*/
+		PyKObject_getattr,          /*tp_getattr*/
+		PyKObject_setattr,          /*tp_setattr*/
+		0,                          /*tp_compare*/
+		0,                          /*tp_repr*/
+		0,                          /*tp_as_number*/
+		0,                          /*tp_as_sequence*/
+		0,                          /*tp_as_mapping*/
+		0,                          /*tp_hash */
+		0,                          /*tp_call */
+		PyKObject_str,              /*tp_str */
+		0,                          /*tp_getattro*/
+		0,                          /*tp_setattro*/
+		0,                          /*tp_as_buffer*/
+		0,                          /*tp_flags*/
+		0                           /*tp_doc*/
+	};
+
+	static PyTypeObject PyKMethodType =
+	{
+		PyObject_HEAD_INIT(NULL)
+		0,
+		"KMethod",
+		sizeof(PyKObject),
+		0,
+		PyKObject_dealloc,          /*tp_dealloc*/
+		0,                          /*tp_print*/
+		PyKObject_getattr,          /*tp_getattr*/
+		PyKObject_setattr,          /*tp_setattr*/
+		0,                          /*tp_compare*/
+		0,                          /*tp_repr*/
+		0,                          /*tp_as_number*/
+		0,                          /*tp_as_sequence*/
+		0,                          /*tp_as_mapping*/
+		0,                          /*tp_hash */
+		PyKMethod_call,             /*tp_call */
+		PyKObject_str,              /*tp_str */
+		0,                          /*tp_getattro*/
+		0,                          /*tp_setattro*/
+		0,                          /*tp_as_buffer*/
+		0,                          /*tp_flags*/
+		0                           /*tp_doc*/
+	};
+
+	static PyTypeObject PyKListType =
+	{
+		PyObject_HEAD_INIT(NULL)
+		0,
+		"KList",
+		sizeof(PyKObject),
+		0,
+		PyKObject_dealloc,          /*tp_dealloc*/
+		0,                          /*tp_print*/
+		PyKObject_getattr,          /*tp_getattr*/
+		PyKObject_setattr,          /*tp_setattr*/
+		0,                          /*tp_compare*/
+		0,                          /*tp_repr*/
+		0,                          /*tp_as_number*/
+		0,                          /*tp_as_sequence*/
+		0,                          /*tp_as_mapping*/
+		0,                          /*tp_hash */
+		0,                          /*tp_call */
+		PyKObject_str,              /*tp_str */
+		0,                          /*tp_getattro*/
+		0,                          /*tp_setattro*/
+		0,                          /*tp_as_buffer*/
+		0,                          /*tp_flags*/
+		0                           /*tp_doc*/
+	};
+
 	SharedBoundObject PythonUtils::scope;
 	PyObject* PythonUtils::ToPyObject(SharedValue value)
 	{
@@ -29,40 +127,56 @@ namespace kroll
 		}
 		if (value->IsMethod())
 		{
-			SharedBoundMethod obj = value->ToMethod();
-			if (typeid(obj.get()) == typeid(KPythonMethod*))
+			SharedBoundMethod meth = value->ToMethod();
+			SharedPtr<KPythonMethod> pymeth = meth.cast<KPythonMethod>();
+			if (!pymeth.isNull())
 			{
-				return (PyObject*)((KPythonMethod*)obj.get())->ToPython();
+				return pymeth->ToPython();
 			}
-			return PythonUtils::KMethodToPyObject(value->ToMethod());
+			else
+			{
+				return PythonUtils::KMethodToPyObject(meth);
+			}
 		}
 		if (value->IsList())
 		{
 			SharedBoundList list = value->ToList();
-			if (typeid(list.get()) == typeid(KPythonList*))
+			SharedPtr<KPythonList> pylist = list.cast<KPythonList>();
+			if (!pylist.isNull())
 			{
-				return ((KPythonList*)list.get())->ToPython();
+				return pylist->ToPython();
 			}
-			return PythonUtils::KObjectToPyObject(list);
+			else
+			{
+				return PythonUtils::KListToPyObject(list);
+			}
 		}
 		if (value->IsObject())
 		{
 			SharedBoundObject obj = value->ToObject();
-			if (typeid(obj.get()) == typeid(KPythonObject*))
+			SharedPtr<KPythonObject> pyobj = obj.cast<KPythonObject>();
+			SharedPtr<KPythonDict> pydict = obj.cast<KPythonDict>();
+			if (!pyobj.isNull())
 			{
-				return (PyObject*)((KPythonObject*)obj.get())->ToPython();
+				return pyobj->ToPython();
 			}
-			return PythonUtils::KObjectToPyObject(value->ToObject());
+			if (!pydict.isNull())
+			{
+				return pydict->ToPython();
+			}
+			else
+			{
+				return PythonUtils::KObjectToPyObject(obj);
+			}
 		}
 		if (value->IsString())
 		{
 			return PyString_FromString(value->ToString());
 		}
-		Py_INCREF(Py_None);
 		return Py_None;
 	}
 
-	const char * PythonUtils::ToString(PyObject* value)
+	const char* PythonUtils::ToString(PyObject* value)
 	{
 		if (PyString_Check(value))
 		{
@@ -101,115 +215,136 @@ namespace kroll
 		return 0.0;
 	}
 
-	// PyObject* ValueListToPythonArray(const ValueList& list)
-	// {
-	// 	int size = list.size();
-	//
-	// 	if (size == 0)
-	// 	{
-	// 		Py_INCREF(Py_None);
-	// 		return Py_None;
-	// 	}
-	//
-	// 	PyObject *array = PyTuple_New(size);
-	// 	for (int c=0;c<size;c++)
-	// 	{
-	// 		Value *value = list.at(c);
-	// 		PyTuple_SET_ITEM(array,c,ValueToKPythonObject(value));
-	// 	}
-	// 	return array;
-	// }
-	static void PyDeleteBoundMethod(void *p)
+	SharedValue PythonUtils::ToKrollValue(PyObject* value)
 	{
-		// std::cout << "PyDeleteBoundMethod being called for " << p << std::endl;
-		SharedBoundMethod* method = static_cast< SharedBoundMethod* >(p);
-		delete method;
-	}
 
-	static PyObject *BoundMethodDispatcher (PyObject *s, PyObject *args)
-	{
-		void *sp = PyCObject_AsVoidPtr(s);
-		SharedBoundMethod* method = static_cast<SharedBoundMethod*>(sp);
-		ValueList a;
-		// std::cout << "calling BoundMethodDispatcher for "  << sp << std::endl;
-		Py_INCREF(s);
-		try
+		/* These are built-in Python types */
+		if (Py_None==value)
 		{
-			for (int c=0;c<PyTuple_Size(args);c++)
-			{
-				PyObject *arg=PyTuple_GET_ITEM(args,c);
-				SharedValue argument = PythonUtils::ToKrollValue(arg,NULL);
-				a.push_back(argument);
-			}
-			SharedBoundMethod m = (*method);
-			SharedValue result = m->Call(a);
-			Py_DECREF(s);
-			return PythonUtils::ToPyObject(result);
+			return Value::Undefined;
 		}
-		catch (SharedValue ex)
+		else if (PyString_Check(value))
 		{
-			PyErr_SetObject(PyExc_Exception,PythonUtils::ToPyObject(ex));
-			Py_INCREF(Py_None);
-			Py_DECREF(s);
-			return Py_None;
+			std::string s = PythonUtils::ToString(value);
+			return Value::NewString(s);
 		}
+		else if (PyBool_Check(value))
+		{
+			return Value::NewBool(PythonBoolToBool(value));
+		}
+		else if (PyInt_Check(value))
+		{
+			return Value::NewInt(PythonFixnumToInt(value));
+		}
+		else if (PyFloat_Check(value))
+		{
+			return Value::NewDouble(PythonFloatToDouble(value));
+		}
+		else if (PyList_Check(value))
+		{
+			SharedBoundList l = new KPythonList(value);
+			SharedValue til = Value::NewList(l);
+			return til;
+		}
+
+		/* These are objects that originated in the binding layer.
+		 * We need to unwrap them when we pass them back to Kroll */
+		if (PyObject_TypeCheck(value, &PyKObjectType))
+		{
+			PyKObject *o = reinterpret_cast<PyKObject*>(value);
+			SharedValue tiv = Value::NewObject(*(o->object));
+			return tiv;
+		}
+		else if (PyObject_TypeCheck(value, &PyKMethodType))
+		{
+			PyKObject *o = reinterpret_cast<PyKObject*>(value);
+			SharedBoundMethod meth = o->object->cast<BoundMethod>();
+			SharedValue tiv = Value::NewMethod(meth);
+			return tiv;
+		}
+		else if (PyObject_TypeCheck(value, &PyKListType))
+		{
+			PyKObject *o = reinterpret_cast<PyKObject*>(value);
+			SharedBoundList list = o->object->cast<BoundList>();
+			SharedValue tiv = Value::NewList(list);
+			return tiv;
+		}
+		else if (PyInstance_Check(value))
+		{
+			SharedBoundObject v = new KPythonObject(value);
+			SharedValue tiv = Value::NewObject(v);
+			return tiv;
+		}
+		else if (PyMethod_Check(value))
+		{
+			SharedBoundMethod m = new KPythonMethod(value);
+			SharedValue tiv = Value::NewMethod(m);
+			return tiv;
+		}
+		else if (PyFunction_Check(value))
+		{
+			SharedBoundMethod m = new KPythonMethod(value);
+			SharedValue tiv = Value::NewMethod(m);
+			return tiv;
+		}
+		else if (PyCallable_Check(value))
+		{
+			SharedBoundMethod m = new KPythonMethod(value);
+			SharedValue tiv = Value::NewMethod(m);
+			return tiv;
+		}
+		else if (PyMapping_Check(value))
+		{
+			// While dicts are read-only we bind mappable
+			// objects as if gets/sets actually set the map keys
+			SharedBoundObject o = new KPythonDict(value);
+			SharedValue kv = Value::NewObject(o);
+			return kv;
+		}
+		else
+		{
+			// This is likely a new-style object instance
+			// and we can just map it like a KPythonObject
+			SharedBoundObject v = new KPythonObject(value);
+			SharedValue tiv = Value::NewObject(v);
+			return tiv;
+		}
+
 	}
 
-
-	static PyMethodDef BoundMethodDispatcherDef =
+	static void PyKObject_dealloc(PyObject* self)
 	{
-			"BoundMethodDispatcher",
-			&BoundMethodDispatcher,
-			METH_VARARGS,
-			"dispatcher for BoundMethod"
-	};
-
-	PyObject* PythonUtils::KMethodToPyObject(SharedBoundMethod method)
-	{
-		SharedBoundMethod *m = new SharedBoundMethod(method);
-		PyObject *self = PyCObject_FromVoidPtr(m,&PyDeleteBoundMethod);
-		return PyCFunction_New(&BoundMethodDispatcherDef, self);
-	}
-
-
-
-	typedef struct {
-		PyObject_HEAD
-		SharedBoundObject* object;
-	} PyBoundObject;
-
-	static void PyBoundObject_dealloc(PyObject* self)
-	{
-		PyBoundObject *boundSelf = reinterpret_cast<PyBoundObject*>(self);
+		PyKObject *boundSelf = reinterpret_cast<PyKObject*>(self);
 		delete boundSelf->object;
 		PyObject_Del(self);
 	}
 
-	static PyObject* PyBoundObject_getattr(PyObject *self, char *name)
+	static PyObject* PyKObject_getattr(PyObject *self, char *name)
 	{
-		PyBoundObject *boundSelf = reinterpret_cast<PyBoundObject*>(self);
-		Py_INCREF(boundSelf);
+		Py_INCREF(self);
+		PyKObject *boundSelf = reinterpret_cast<PyKObject*>(self);
 		SharedValue result = boundSelf->object->get()->Get(name);
-		Py_DECREF(boundSelf);
+		Py_DECREF(self);
 		return PythonUtils::ToPyObject(result);
 	}
 
-	static int PyBoundObject_setattr(PyObject *self, char *name, PyObject *value)
+	static int PyKObject_setattr(PyObject *self, char *name, PyObject *value)
 	{
-		PyBoundObject *boundSelf = reinterpret_cast<PyBoundObject*>(self);
+		PyKObject *boundSelf = reinterpret_cast<PyKObject*>(self);
 		Py_INCREF(boundSelf);
-		SharedValue tiValue = PythonUtils::ToKrollValue(value,name);
+		SharedValue tiValue = PythonUtils::ToKrollValue(value);
 		boundSelf->object->get()->Set(name, tiValue);
 		Py_DECREF(boundSelf);
 		return 0;
 	}
 
-	static PyObject* PyBoundObject_tostring(PyObject *self)
+	static PyObject* PyKObject_str(PyObject *self)
 	{
-		PyBoundObject *boundSelf = reinterpret_cast<PyBoundObject*>(self);
-		Py_INCREF(boundSelf);
-		SharedValue result = boundSelf->object->get()->Get("toString");
-		Py_DECREF(boundSelf);
+		Py_INCREF(self);
+		PyKObject *pyko = reinterpret_cast<PyKObject*>(self);
+		SharedValue result = pyko->object->get()->Get("toString");
+		Py_DECREF(self);
+
 		if (result->IsMethod())
 		{
 			SharedBoundMethod method = result->ToMethod();
@@ -220,155 +355,181 @@ namespace kroll
 				return PyString_FromString(toString->ToString());
 			}
 		}
+
 		char str[255];
-		sprintf(str,"<BoundObject %lx>",(unsigned long)self);
+		sprintf(str,"<KObject %lx>", (unsigned long) pyko->object->get());
 		return PyString_FromString(str);
 	}
 
-	static PyTypeObject PyBoundObjectType =
-	{
-	    PyObject_HEAD_INIT(NULL)
-	    0,
-	    "BoundObject",
-	    sizeof(PyBoundObject),
-	    0,
-	    PyBoundObject_dealloc, 		/*tp_dealloc*/
-	    0,          	 			/*tp_print*/
-	    PyBoundObject_getattr,    	/*tp_getattr*/
-	    PyBoundObject_setattr,    	/*tp_setattr*/
-	    0,          	 			/*tp_compare*/
-	    0,          	 			/*tp_repr*/
-	    0,          	 			/*tp_as_number*/
-	    0,    						/*tp_as_sequence*/
-	    0,     						/*tp_as_mapping*/
-	    0,           	 			/*tp_hash */
-		0,							/*tp_call */
-		PyBoundObject_tostring,		/*tp_str */
-		0,							/*tp_getattro*/
-		0,							/*tp_setattro*/
-		0,							/*tp_as_buffer*/
-		0,							/*tp_flags*/
-		0,							/*tp_doc*/
-	};
-
 	PyObject* PythonUtils::KObjectToPyObject(SharedBoundObject bo)
 	{
-		//CHECK bo
-		if (bo.isNull())
+		PyKObject* obj = PyObject_New(PyKObject, &PyKObjectType);
+		obj->object = new SharedBoundObject(bo);
+		return (PyObject*)obj;
+	}
+
+	static Py_ssize_t PyKListLength(PyObject* o)
+	{
+		PyKObject *pyko = reinterpret_cast<PyKObject*>(o);
+		BoundList* klist = reinterpret_cast<BoundList*>(pyko->object->get());
+		unsigned int size = klist->Size();
+		return (Py_ssize_t) size;
+	}
+
+	static PyObject* PyKListConcat(PyObject* a, PyObject* b)
+	{
+		PyObject* new_list = PyList_New(0);
+		PySequence_Concat(new_list, a);
+		PySequence_Concat(new_list, b);
+		return new_list;
+	}
+
+	static PyObject* PyKListRepeat(PyObject *o, Py_ssize_t count)
+	{
+		PyObject* new_list = PyList_New(0);
+		while (count > 0)
 		{
-			throw "BoundObject cannot be null";
+			PySequence_Concat(new_list, o);
+			count--;
 		}
-		SharedBoundList list = bo.cast<BoundList>();
-		if (!list.isNull())
+		return new_list;
+	}
+
+	static PyObject* PyKListGetItem(PyObject *o, Py_ssize_t i)
+	{
+		PyKObject *pyko = reinterpret_cast<PyKObject*>(o);
+		BoundList* klist = reinterpret_cast<BoundList*>(pyko->object->get());
+		if (i < (int) klist->Size())
 		{
-			// convert it into a list of wrapped Value objects
-			PyObject* newlist = PyList_New(list->Size());
-			for (unsigned int c = 0; c < list->Size(); c++)
-			{
-				SharedValue value = list->At(c);
-				PyObject *item = PythonUtils::ToPyObject(value);
-				PyList_SetItem(newlist,c,item);
-			}
-			return newlist;
+			return PythonUtils::ToPyObject(klist->At(i));
 		}
 		else
 		{
-			PyBoundObject* obj = PyObject_New(PyBoundObject, &PyBoundObjectType);
-			SharedBoundObject* bo_ptr = new SharedBoundObject(bo);
-			obj->object = bo_ptr;
-			return (PyObject*)obj;
+			return NULL;
 		}
 	}
 
-	void PythonUtils::ThrowException()
+	static int PyKListSetItem(PyObject *o, Py_ssize_t i, PyObject *v)
 	{
-		PyObject *ptype, *pvalue, *trace;
-		PyErr_Fetch(&ptype,&pvalue,&trace);
-		PyErr_Print();
-		const char *err = PythonUtils::ToString(pvalue);
-		ValueException ex = ValueException::FromString(err);
-		Py_XDECREF(ptype);
-		Py_XDECREF(pvalue);
-		Py_XDECREF(trace);
-		PyErr_Clear();
-		throw ex;
+		PyKObject *pyko = reinterpret_cast<PyKObject*>(o);
+		BoundList* klist = reinterpret_cast<BoundList*>(pyko->object->get());
+		SharedValue kv = PythonUtils::ToKrollValue(v);
+		klist->Set(BoundList::IntToChars(i), kv);
+		return 1;
 	}
 
-	SharedValue PythonUtils::ToKrollValue(PyObject* value, const char *name)
+	static int PyKListContains(PyObject *o, PyObject *value)
 	{
-		//FIXME - who is going to delete ref?
-
-
-		if (Py_None==value)
+		PyKObject *pyko = reinterpret_cast<PyKObject*>(o);
+		BoundList* klist = reinterpret_cast<BoundList*>(pyko->object->get());
+		SharedValue kv = PythonUtils::ToKrollValue(value);
+		for (unsigned int i = 0; i < klist->Size(); i++)
 		{
-			return Value::Undefined;
+			if (kv == klist->At(i))
+				return 1;
 		}
-		if (PyString_Check(value))
-		{
-			std::string s = PythonUtils::ToString(value);
-			return Value::NewString(s);
-		}
-		if (PyBool_Check(value))
-		{
-			return Value::NewBool(PythonBoolToBool(value));
-		}
-		if (PyInt_Check(value))
-		{
-			return Value::NewInt(PythonFixnumToInt(value));
-		}
-		if (PyFloat_Check(value))
-		{
-			return Value::NewDouble(PythonFloatToDouble(value));
-		}
-		if (PyList_Check(value))
-		{
-			SharedBoundList l = new KPythonList(value);
-			SharedValue til = Value::NewList(l);
-			return til;
-		}
-		if (PyClass_Check(value))
-		{
-			SharedBoundObject v = new KPythonObject(value);
-			SharedValue tiv = Value::NewObject(v);
-			return tiv;
-		}
-		if (PyInstance_Check(value))
-		{
-			SharedBoundObject v = new KPythonObject(value);
-			SharedValue tiv = Value::NewObject(v);
-			return tiv;
-		}
-		if (PyMethod_Check(value))
-		{
-			SharedBoundMethod m = new KPythonMethod(value,name);
-			SharedValue tiv = Value::NewMethod(m);
-			return tiv;
-		}
-		if (PyFunction_Check(value))
-		{
-			SharedBoundMethod m = new KPythonMethod(value,name);
-			SharedValue tiv = Value::NewMethod(m);
-			return tiv;
-		}
-		if (PyCallable_Check(value))
-		{
-			SharedBoundMethod m = new KPythonMethod(value,name);
-			SharedValue tiv = Value::NewMethod(m);
-			return tiv;
-		}
-		if (PyObject_TypeCheck(value,&PyBoundObjectType))
-		{
-			PyBoundObject *o = reinterpret_cast<PyBoundObject*>(value);
-			SharedValue tiv = Value::NewObject(*(o->object));
-			return tiv;
-		}
-
-		std::cerr << "KPythonObjectToKrollValue:nothing" << std::endl;
-		PyObject_Print(value,stdout,0);
-		printf("\n");
-
-		return new Value();
+		return 0;
 	}
+
+	static PyObject* PyKListInPlaceConcat(PyObject *o1, PyObject *o2)
+	{
+		PyKObject *pyko = reinterpret_cast<PyKObject*>(o1);
+		BoundList* klist = reinterpret_cast<BoundList*>(pyko->object->get());
+		int size = PySequence_Size(o2);
+		for (int i = 0; i < size; i++)
+		{
+			PyObject* v = PySequence_GetItem(o2, i);
+			SharedValue kv = PythonUtils::ToKrollValue(v);
+			klist->Append(kv);
+		}
+		return o1;
+	}
+
+	static PyObject* PyKListInPlaceRepeat(PyObject *o, Py_ssize_t count)
+	{
+		PyKObject *pyko = reinterpret_cast<PyKObject*>(o);
+		BoundList* klist = reinterpret_cast<BoundList*>(pyko->object->get());
+		unsigned int size = klist->Size();
+		while (count > 0)
+		{
+			for (unsigned int i = 0; i < size; i++)
+			{
+				klist->Append(klist->At(i));
+			}
+			count--;
+		}
+		return o;
+	}
+
+	PySequenceMethods KPySequenceMethods = {
+		0
+	};
+
+	PyObject* PythonUtils::KListToPyObject(SharedBoundObject bo)
+	{
+		if (KPySequenceMethods.sq_length == 0)
+		{
+			KPySequenceMethods.sq_length = &PyKListLength;
+			KPySequenceMethods.sq_concat = &PyKListConcat;
+			KPySequenceMethods.sq_repeat = &PyKListRepeat;
+			KPySequenceMethods.sq_item = &PyKListGetItem;
+			KPySequenceMethods.sq_ass_item = &PyKListSetItem;
+			KPySequenceMethods.sq_inplace_concat = &PyKListInPlaceConcat;
+			KPySequenceMethods.sq_contains = &PyKListContains;
+			KPySequenceMethods.sq_inplace_repeat = &PyKListInPlaceRepeat;
+		}
+		if (PyKListType.tp_as_sequence == 0)
+		{
+			PyKListType.tp_as_sequence = &KPySequenceMethods;
+			PyKListType.tp_flags = Py_TPFLAGS_HAVE_INPLACEOPS;
+		}
+
+		PyKObject* obj = PyObject_New(PyKObject, &PyKListType);
+		obj->object = new SharedBoundObject(bo);
+		return (PyObject*) obj;
+
+	}
+
+	static PyObject* PyKMethod_call(PyObject *o, PyObject *args, PyObject *kw)
+	{
+		Py_INCREF(o);
+		PyKObject *pyko = reinterpret_cast<PyKObject*>(o);
+		BoundMethod* kmeth = reinterpret_cast<BoundMethod*>(pyko->object->get());
+
+		ValueList a;
+		SharedValue result = Value::Undefined;
+		try
+		{
+			for (int c=0; c < PyTuple_Size(args); c++)
+			{
+				PyObject* arg = PyTuple_GetItem(args, c);
+				a.push_back(PythonUtils::ToKrollValue(arg));
+			}
+			result = kmeth->Call(a);
+		}
+		catch (ValueException& e)
+		{
+			PyObject* pye = PythonUtils::ToPyObject(e.GetValue());
+			PyObject* type = PyObject_Type(pye);
+			PyErr_SetObject(type, pye);
+			Py_DECREF(type);
+			Py_DECREF(pye);
+			return NULL;
+		}
+
+		Py_DECREF(o);
+		return PythonUtils::ToPyObject(result);
+	}
+
+	PyObject* PythonUtils::KMethodToPyObject(SharedBoundObject bo)
+	{
+		PyKObject* obj = PyObject_New(PyKObject, &PyKMethodType);
+		obj->object = new SharedBoundObject(bo);
+		return (PyObject*) obj;
+	}
+
+
+
 }
 
 

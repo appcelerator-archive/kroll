@@ -17,20 +17,11 @@ namespace kroll
 		virtual SharedStringList GetPropertyNames();
 
 		private:
-		static void ConvertLinefeeds(std::string &);
-	};
+		static void StripLeadingWhitespace(std::string &);
+		static void ConvertLineEndings(std::string &);
+		static void DictToKObjectProps(PyObject* map, SharedBoundObject o);
+		static void KObjectPropsToDict(SharedBoundObject o, PyObject* map);
 
-	class DecoratorFunction : public BoundMethod
-	{
-		public:
-		DecoratorFunction(SharedBoundObject);
-		virtual SharedValue Call(const ValueList& args);
-		virtual void Set(const char *, SharedValue);
-		virtual SharedValue Get(const char *);
-		virtual SharedStringList GetPropertyNames();
-
-		private:
-		SharedBoundObject window_global;
 	};
 }
 

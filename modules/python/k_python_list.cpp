@@ -7,22 +7,23 @@
 
 namespace kroll
 {
-	KPythonList::KPythonList(PyObject *obj) : object(obj)
+	KPythonList::KPythonList(PyObject *list) :
+		list(list),
+		object(new KPythonObject(list, true))
 	{
-		if (!PyList_Check(obj))
+		if (!PyList_Check(list))
 		{
 			std::string msg("Invalid PyObject passed. Should be a Py_List");
 			std::cerr << msg << std::endl;
 			throw msg;
 		}
 
-		Py_INCREF(this->object);
+		Py_INCREF(this->list);
 	}
 
 	KPythonList::~KPythonList()
 	{
-		Py_DECREF(this->object);
-		this->object = NULL;
+		Py_DECREF(this->list);
 	}
 
 	/**
@@ -33,8 +34,8 @@ namespace kroll
 	 */
 	void KPythonList::Append(SharedValue value)
 	{
-		PyList_Append(this->object,PythonUtils::ToPyObject(value));
-		//KR_DECREF(value);
+		PyObject* py_value = PythonUtils::ToPyObject(value);
+		PyList_Append(this->list, py_value);
 	}
 
 	/**
@@ -42,20 +43,19 @@ namespace kroll
 	 */
 	unsigned int KPythonList::Size()
 	{
-		return PyList_Size(this->object);
+		return PyList_Size(this->list);
 	}
-	
+
 	/**
 	 * remove the item and return true if removed
 	 */
 	bool KPythonList::Remove(unsigned int index)
 	{
 		PyObject* empty_list = PyList_New(0);
-		PyList_SetSlice(this->object, index, index + 1, empty_list);
+		PyList_SetSlice(this->list, index, index + 1, empty_list);
 		Py_DECREF(empty_list);
 		return true;
 	}
-	
 
 	/**
 	 * When an error occurs will throw an exception of type Value*.
@@ -65,13 +65,14 @@ namespace kroll
 	 */
 	SharedValue KPythonList::At(unsigned int index)
 	{
-		PyObject *p = PyList_GET_ITEM(this->object,index);
-		if (Py_None == p)
+		PyObject *p = PyList_GetItem(this->list, index);
+		if (p == NULL)
 		{
-			Py_DECREF(p);
+			PyErr_Clear();
 			return Value::Undefined;
 		}
-		SharedValue v = PythonUtils::ToKrollValue(p,NULL);
+
+		SharedValue v = PythonUtils::ToKrollValue(p);
 		Py_DECREF(p);
 		return v;
 	}
@@ -84,36 +85,24 @@ namespace kroll
 	 */
 	void KPythonList::Set(const char *name, SharedValue value)
 	{
-		// check for integer value as name
-		if (this->IsNumber(name))
+		// Check for integer value as name
+		if (BoundList::IsInt(name))
 		{
-			int val = atoi(name);
-			if (val >= (int) this->Size())
+			int index = atoi(name);
+			while (index >= (int) this->Size())
 			{
 				// now we need to create entries
 				// between current size and new size
-				// and make the entries null
-				for (int c = this->Size(); c <= val; c++)
-				{
-					this->Append(NULL);
-				}
+				// and make the entries undefined.
+				this->Append(Value::Undefined);
 			}
 
-			SharedValue current = this->At(val);
-			current->SetValue(value);
+			PyObject* py_value = PythonUtils::ToPyObject(value);
+			PyList_SetItem(this->list, index, py_value);
 		}
 		else
 		{
-			// set a named property
-			PyObject* py = PythonUtils::ToPyObject(value);
-			int result = PyObject_SetAttrString(this->object,(char*)name,py);
-			Py_DECREF(py);
-
-			PyObject *exception = PyErr_Occurred();
-			if (result == -1 && exception != NULL)
-			{
-				PythonUtils::ThrowException();
-			}
+			this->object->Set(name, value);
 		}
 	}
 
@@ -129,25 +118,15 @@ namespace kroll
 		{
 			return Value::NewInt(this->Size());
 		}
-		// get should returned undefined if we don't have a property
-		// named "name" to mimic what happens in Javascript
-		if (0 == (PyObject_HasAttrString(this->object,(char*)name)))
+		else if (BoundList::IsInt(name))
 		{
-			return Value::Undefined;
+			unsigned int index = (unsigned int) atoi(name);
+			return this->At(index);
 		}
-
-		PyObject *response = PyObject_GetAttrString(this->object,(char*)name);
-
-		PyObject *exception = PyErr_Occurred();
-		if (response == NULL && exception != NULL)
+		else
 		{
-			Py_XDECREF(response);
-			PythonUtils::ThrowException();
+			return object->Get(name);
 		}
-
-		SharedValue returnValue = PythonUtils::ToKrollValue(response,name);
-		Py_DECREF(response);
-		return returnValue;
 	}
 
 	/**
@@ -155,33 +134,19 @@ namespace kroll
 	 */
 	SharedStringList KPythonList::GetPropertyNames()
 	{
-		SharedStringList property_names(new StringList());
+		SharedStringList property_names = object->GetPropertyNames();
 		property_names->push_back(new std::string("length"));
-
-		PyObject *props = PyObject_Dir(this->object);
-
-		if (props == NULL)
+		for (size_t i = 0; i < this->Size(); i++)
 		{
-			Py_DECREF(props);
-			return property_names;
+			char* name = BoundList::IntToChars(i);
+			property_names->push_back(new std::string(name));
 		}
 
-		PyObject *iterator = PyObject_GetIter(props);
-		PyObject *item;
-
-		if (iterator == NULL)
-		{
-			return property_names;
-		}
-
-		while ((item = PyIter_Next(iterator)))
-		{
-			property_names->push_back(new std::string(PythonUtils::ToString(item)));
-			Py_DECREF(item);
-		}
-
-		Py_DECREF(iterator);
-		Py_DECREF(props);
 		return property_names;
+	}
+
+	PyObject* KPythonList::ToPython()
+	{
+		return this->object->ToPython();
 	}
 }

@@ -15,21 +15,19 @@ namespace kroll
 	class KPythonMethod : public BoundMethod
 	{
 	public:
-		KPythonMethod(PyObject *obj, const char *name);
+		KPythonMethod(PyObject *obj);
 		virtual ~KPythonMethod();
 
 		SharedValue Call(const ValueList& args);
 		virtual void Set(const char *name, SharedValue value);
 		virtual SharedValue Get(const char *name);
 		virtual SharedStringList GetPropertyNames();
-
-		const PyObject* ToPython() { Py_INCREF(object); return object; }
+		PyObject* ToPython();
 
 	private:
-		char* name;
-		PyObject* object;
-		SharedPtr<BoundObject> delegate;
-        DISALLOW_EVIL_CONSTRUCTORS(KPythonMethod);
+		PyObject* method;
+		SharedPtr<KPythonObject> object;
+		DISALLOW_EVIL_CONSTRUCTORS(KPythonMethod);
 	};
 }
 
