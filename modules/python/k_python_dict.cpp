@@ -54,7 +54,7 @@ namespace kroll
 		SharedStringList property_names = new StringList();
 
 		// Avoid compiler warnings
-		PyObject *items = PyObject_CallMethod(this->object, (char*) "items", __null);
+		PyObject *items = PyObject_CallMethod(this->object, (char*) "items", NULL);
 		if (items == NULL)
 			return property_names;
 
