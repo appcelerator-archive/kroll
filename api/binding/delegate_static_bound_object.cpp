@@ -11,24 +11,25 @@ namespace kroll
 {
 
 	DelegateStaticBoundObject::DelegateStaticBoundObject(SharedBoundObject delegate)
-		: StaticBoundObject(),
+		: base(new StaticBoundObject()),
 		  delegate(delegate)
 	{
 	}
 
+	DelegateStaticBoundObject::DelegateStaticBoundObject(SharedBoundObject base, SharedBoundObject delegate)
+		: base(base),
+		  delegate(delegate)
+	{
+	}
 	DelegateStaticBoundObject::~DelegateStaticBoundObject()
 	{
-		// The SharedPtr implementation should decrement
-		// all members of properties, when the properties
-		// map destructs
-//		KR_DUMP_LOCATION
 	}
 
 	SharedValue DelegateStaticBoundObject::Get(const char *name)
 	{
 		ScopedLock lock(&mutex);
 
-		SharedValue val = StaticBoundObject::Get(name);
+		SharedValue val = base->Get(name);
 		if (!val->IsUndefined())
 		{
 			return val;
@@ -40,7 +41,7 @@ namespace kroll
 	void DelegateStaticBoundObject::Set(const char *name, SharedValue value)
 	{
 		ScopedLock lock(&mutex);
-		StaticBoundObject::Set(name, value);
+		delegate->Set(name, value);
 	}
 
 	SharedStringList DelegateStaticBoundObject::GetPropertyNames()
@@ -48,7 +49,7 @@ namespace kroll
 		ScopedLock lock(&mutex);
 
 		SharedStringList delegate_list = delegate->GetPropertyNames();
-		SharedStringList list = StaticBoundObject::GetPropertyNames();
+		SharedStringList list = base->GetPropertyNames();
 
 		for (size_t i = 0; i < delegate_list->size(); i++)
 		{

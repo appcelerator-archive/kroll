@@ -6,6 +6,7 @@
 
 #include "../kroll.h"
 #include <sstream>
+#include <cmath>
 
 namespace kroll
 {
@@ -33,6 +34,29 @@ namespace kroll
 		}
 		return new std::string(oss.str());
 	}
+
+	char* BoundList::IntToChars(unsigned int value)
+	{
+		int digits = 1;
+		if (value > 0)
+			digits += floor(log10((double) value));
+
+		char *buf = new char[digits + 1];
+		sprintf(buf, "%d", value);
+		return buf;
+	}
+
+	bool BoundList::IsInt(const char* name)
+	{
+		for (size_t i = 0; i < strlen(name); i++)
+		{
+			if (!isdigit(name[i]))
+				return false;
+		}
+		return true;
+	}
+
+
 
 }
 

@@ -23,11 +23,11 @@ namespace kroll
 	JSValueRef call_as_function_cb(JSContextRef, JSObjectRef, JSObjectRef, size_t, const JSValueRef[], JSValueRef*);
 	void finalize_cb(JSObjectRef);
 
-	SharedValue KJSUtil::ToKrollValue(JSValueRef value,
-	                             JSContextRef ctx,
-	                             JSObjectRef this_obj)
+	SharedValue KJSUtil::ToKrollValue(
+		JSValueRef value,
+		JSContextRef ctx,
+		JSObjectRef this_obj)
 	{
-
 		SharedValue kr_val;
 		JSValueRef exception = NULL;
 
@@ -61,49 +61,34 @@ namespace kroll
 		}
 		else if (JSValueIsObject(ctx, value))
 		{
-
 			JSObjectRef o = JSValueToObject(ctx, value, &exception);
 			if (o != NULL)
 			{
-				void* data = (void*) JSObjectGetPrivate(o);
-				if (JSObjectIsFunction(ctx, o) && data == NULL)
+				SharedValue* value = static_cast<SharedValue*>(JSObjectGetPrivate(o));
+				if (value != NULL)
+				{
+					// This is a KJS-wrapped Kroll value: unwrap it
+					return *value;
+				}
+				else if (JSObjectIsFunction(ctx, o))
 				{
 					// this is a pure JS method: proxy it
 					SharedBoundMethod tibm = new KJSBoundMethod(ctx, o, this_obj);
 					kr_val = Value::NewMethod(tibm);
 				}
-				else if (JSObjectIsFunction(ctx, o))
-				{
-					// this is a BoundMethod: unwrap it
-					SharedBoundMethod *tibm = (SharedBoundMethod *) data;
-					kr_val = Value::NewMethod(*tibm);
-				}
-				else if (data == NULL && IsArrayLike(o, ctx))
+				else if (IsArrayLike(o, ctx))
 				{
 					// this is a pure JS array: proxy it
 					SharedBoundList tibl = new KJSBoundList(ctx, o);
 					kr_val = Value::NewList(tibl);
 				}
-				else if (IsArrayLike(o, ctx))
-				{
-					// this is a BoundList: unwrap it
-					SharedBoundList *tibl = (SharedBoundList*) data;
-					kr_val = Value::NewList(*tibl);
-				}
-				else if (data == NULL)
+				else
 				{
 					// this is a pure JS object: proxy it
 					SharedBoundObject tibo = new KJSBoundObject(ctx, o);
 					kr_val = Value::NewObject(tibo);
 				}
-				else
-				{
-					// this is a kroll::BoundObject: unwrap it
-					SharedBoundObject * tibo = (SharedBoundObject*) data;
-					kr_val = Value::NewObject(*tibo);
-				}
 			}
-
 		}
 		else if (JSValueIsNull(ctx, value))
 		{
@@ -186,7 +171,7 @@ namespace kroll
 			}
 			else
 			{
-				// this is a TiBoundMethod that needs to be proxied
+				// this is a BoundList that needs to be proxied
 				js_val = KJSUtil::ToJSValue(list, ctx);
 			}
 		}
@@ -220,7 +205,8 @@ namespace kroll
 			js_class_def.setProperty = set_property_cb;
 			tibo_class = JSClassCreate(&js_class_def);
 		}
-		return JSObjectMake (c, tibo_class, new SharedBoundObject(object));
+		//return JSObjectMake (c, tibo_class, new SharedBoundObject(object));
+		return JSObjectMake(c, tibo_class, new SharedValue(Value::NewObject(object)));
 	}
 
 	JSValueRef KJSUtil::ToJSValue(SharedBoundMethod method, JSContextRef c)
@@ -237,14 +223,16 @@ namespace kroll
 			js_class_def.callAsFunction = call_as_function_cb;
 			tibm_class = JSClassCreate(&js_class_def);
 		}
-		return JSObjectMake (c, tibm_class, new SharedBoundMethod(method));
+		//return JSObjectMake (c, tibm_class, new SharedBoundMethod(method));
+		return JSObjectMake(c, tibm_class, new SharedValue(Value::NewMethod(method)));
 	}
 
-	void inline CopyJSProperty(JSContextRef c,
-	                           JSObjectRef from_obj,
-	                           SharedBoundObject to_bo,
-	                           JSObjectRef to_obj,
-	                           const char *prop_name)
+	void inline CopyJSProperty(
+		JSContextRef c,
+		JSObjectRef from_obj,
+		SharedBoundObject to_bo,
+		JSObjectRef to_obj,
+		const char *prop_name)
 	{
 
 		JSStringRef prop_name_str = JSStringCreateWithUTF8CString(prop_name);
@@ -269,7 +257,8 @@ namespace kroll
 			tibl_class = JSClassCreate(&js_class_def);
 		}
 
-		JSObjectRef object = JSObjectMake(c, tibl_class, new SharedBoundList(list));
+		//JSObjectRef object = JSObjectMake(c, tibl_class, new SharedBoundList(list));
+		JSObjectRef object = JSObjectMake(c, tibl_class, new SharedValue(Value::NewList(list)));
 
 		JSValueRef args[1] = { JSValueMakeNumber(c, 3) };
 		JSObjectRef array = JSObjectMakeArray(c, 1, args, NULL);
@@ -320,20 +309,21 @@ namespace kroll
 
 	void finalize_cb(JSObjectRef js_object)
 	{
-		SharedBoundObject* object = (SharedBoundObject*) JSObjectGetPrivate (js_object);
-		delete object;
+		SharedValue* value = static_cast<SharedValue*>(JSObjectGetPrivate(js_object));
+		delete value;
 	}
 
-	void get_property_names_cb(JSContextRef js_context,
-	                            JSObjectRef js_object,
-	                            JSPropertyNameAccumulatorRef js_properties)
+	void get_property_names_cb(
+		JSContextRef js_context,
+		JSObjectRef js_object,
+		JSPropertyNameAccumulatorRef js_properties)
 	{
-		SharedBoundObject* object = (SharedBoundObject*) JSObjectGetPrivate(js_object);
-
-		if (object == NULL)
+		SharedValue* value = static_cast<SharedValue*>(JSObjectGetPrivate(js_object));
+		if (value == NULL)
 			return;
 
-		SharedStringList props = (*object)->GetPropertyNames();
+		SharedBoundObject object = (*value)->ToObject();
+		SharedStringList props = object->GetPropertyNames();
 		for (size_t i = 0; i < props->size(); i++)
 		{
 			JSStringRef name = JSStringCreateWithUTF8CString(props->at(i)->c_str());
@@ -342,19 +332,21 @@ namespace kroll
 		}
 	}
 
-	bool has_property_cb(JSContextRef js_context,
-	                      JSObjectRef  js_object,
-	                      JSStringRef  js_property)
+	bool has_property_cb(
+		JSContextRef js_context,
+		JSObjectRef js_object,
+		JSStringRef js_property)
 	{
-		SharedBoundObject* object = (SharedBoundObject*) JSObjectGetPrivate(js_object);
-		if (object == NULL)
+		SharedValue* value = static_cast<SharedValue*>(JSObjectGetPrivate(js_object));
+		if (value == NULL)
 			return false;
 
+		SharedBoundObject object = (*value)->ToObject();
 		char *name = KJSUtil::ToChars(js_property);
 		std::string str_name(name);
 		free(name);
 
-		SharedStringList names = (*object)->GetPropertyNames();
+		SharedStringList names = object->GetPropertyNames();
 		for (size_t i = 0; i < names->size(); i++)
 		{
 			if (str_name == *names->at(i)) {
@@ -365,20 +357,22 @@ namespace kroll
 		return false;
 	}
 
-	JSValueRef get_property_cb(JSContextRef js_context,
-	                            JSObjectRef  js_object,
-	                            JSStringRef  js_property,
-	                            JSValueRef*  js_exception)
+	JSValueRef get_property_cb(
+		JSContextRef js_context,
+		JSObjectRef js_object,
+		JSStringRef js_property,
+		JSValueRef* js_exception)
 	{
-		SharedBoundObject* object = (SharedBoundObject*) JSObjectGetPrivate(js_object);
-		if (object == NULL)
+		SharedValue* value = static_cast<SharedValue*>(JSObjectGetPrivate(js_object));
+		if (value == NULL)
 			return JSValueMakeUndefined(js_context);
 
+		SharedBoundObject object = (*value)->ToObject();
 		JSValueRef js_val = NULL;
 		char* name = KJSUtil::ToChars(js_property);
 		try
 		{
-			SharedValue ti_val = (*object)->Get(name);
+			SharedValue ti_val = object->Get(name);
 			js_val = KJSUtil::ToJSValue(ti_val, js_context);
 		}
 		catch (ValueException& exception)
@@ -387,39 +381,40 @@ namespace kroll
 		}
 		catch (std::exception &e)
 		{
-			SharedValue value = Value::NewString(e.what());
-			*js_exception = KJSUtil::ToJSValue(value, js_context);
+			SharedValue v = Value::NewString(e.what());
+			*js_exception = KJSUtil::ToJSValue(v, js_context);
 		}
 		catch (...)
 		{
 			std::cerr << "KJSUtil.cpp: Caught an unknown exception during get for "
 			          << name << std::endl;
-			SharedValue value = Value::NewString("unknown exception");
-			*js_exception = KJSUtil::ToJSValue(value, js_context);
+			SharedValue v = Value::NewString("unknown exception");
+			*js_exception = KJSUtil::ToJSValue(v, js_context);
 		}
 
 		free(name);
 		return js_val;
 	}
 
-	bool set_property_cb(JSContextRef js_context,
-	                      JSObjectRef  js_object,
-	                      JSStringRef  js_property,
-	                      JSValueRef   js_value,
-	                      JSValueRef*  js_exception)
+	bool set_property_cb(
+		JSContextRef js_context,
+		JSObjectRef js_object,
+		JSStringRef js_property,
+		JSValueRef js_value,
+		JSValueRef* js_exception)
 	{
-		SharedBoundObject* object = (SharedBoundObject*) JSObjectGetPrivate(js_object);
-		if (object == NULL)
+		SharedValue* value = static_cast<SharedValue*>(JSObjectGetPrivate(js_object));
+		if (value == NULL)
 			return false;
 
-		bool propertySet = false;
-
+		SharedBoundObject object = (*value)->ToObject();
+		bool success = false;
 		char* prop_name = KJSUtil::ToChars(js_property);
 		try
 		{
 			SharedValue ti_val = KJSUtil::ToKrollValue(js_value, js_context, js_object);
-			(*object)->Set(prop_name, ti_val);
-			propertySet = true;
+			object->Set(prop_name, ti_val);
+			success = true;
 		}
 		catch (ValueException& exception)
 		{
@@ -427,33 +422,34 @@ namespace kroll
 		}
 		catch (std::exception &e)
 		{
-			SharedValue value = Value::NewString(e.what());
-			*js_exception = KJSUtil::ToJSValue(value, js_context);
+			SharedValue v = Value::NewString(e.what());
+			*js_exception = KJSUtil::ToJSValue(v, js_context);
 		}
 		catch (...)
 		{
 			std::cerr << "KJSUtil.cpp: Caught an unknown exception during set for "
 			          << prop_name << std::endl;
-			SharedValue value = Value::NewString("unknown exception");
-			*js_exception = KJSUtil::ToJSValue(value, js_context);
+			SharedValue v = Value::NewString("unknown exception");
+			*js_exception = KJSUtil::ToJSValue(v, js_context);
 		}
 
 		free(prop_name);
-		return propertySet;
+		return success;
 	}
 
-	JSValueRef call_as_function_cb(JSContextRef     js_context,
-	                                JSObjectRef      js_function,
-	                                JSObjectRef      js_this,
-	                                size_t           num_args,
-	                                const JSValueRef js_args[],
-	                                JSValueRef*      js_exception)
+	JSValueRef call_as_function_cb(
+		JSContextRef js_context,
+		JSObjectRef js_function,
+		JSObjectRef js_this,
+		size_t num_args,
+		const JSValueRef js_args[],
+		JSValueRef* js_exception)
 	{
-
-		SharedBoundObject* method = (SharedBoundObject*) JSObjectGetPrivate(js_function);
-		if (method == NULL)
+		SharedValue* value = static_cast<SharedValue*>(JSObjectGetPrivate(js_function));
+		if (value == NULL)
 			return JSValueMakeUndefined(js_context);
 
+		SharedBoundMethod method = (*value)->ToMethod();
 		ValueList args;
 		for (size_t i = 0; i < num_args; i++) {
 			SharedValue arg_val = KJSUtil::ToKrollValue(js_args[i], js_context, js_this);
@@ -463,7 +459,7 @@ namespace kroll
 		JSValueRef js_val = NULL;
 		try
 		{
-			SharedValue ti_val = method->cast<BoundMethod>()->Call(args);
+			SharedValue ti_val = method->Call(args);
 			js_val = KJSUtil::ToJSValue(ti_val, js_context);
 		}
 		catch (ValueException& exception)
@@ -472,43 +468,46 @@ namespace kroll
 		}
 		catch (std::exception &e)
 		{
-			SharedValue value = Value::NewString(e.what());
-			*js_exception = KJSUtil::ToJSValue(value, js_context);
+			SharedValue v = Value::NewString(e.what());
+			*js_exception = KJSUtil::ToJSValue(v, js_context);
 		}
 		catch (...)
 		{
 			std::cerr << "KJSUtil.cpp: Caught an unknown exception during call()"
 			          << std::endl;
-			SharedValue value = Value::NewString("unknown exception");
-			*js_exception = KJSUtil::ToJSValue(value, js_context);
+			SharedValue v = Value::NewString("unknown exception");
+			*js_exception = KJSUtil::ToJSValue(v, js_context);
 		}
 
 		return js_val;
 	}
 
-	SharedPtr<KJSBoundObject> KJSUtil::ToBoundObject(JSContextRef context,
-	                                                 JSObjectRef object)
+	SharedPtr<KJSBoundObject> KJSUtil::ToBoundObject(
+		JSContextRef context,
+		JSObjectRef object)
 	{
 		return new KJSBoundObject(context, object);
 	}
 
-	SharedPtr<KJSBoundMethod> KJSUtil::ToBoundMethod(JSContextRef context,
-	                                                 JSObjectRef method,
-	                                                 JSObjectRef this_object)
+	SharedPtr<KJSBoundMethod> KJSUtil::ToBoundMethod(
+		JSContextRef context,
+		JSObjectRef method,
+		JSObjectRef this_object)
 	{
 		return new KJSBoundMethod(context, method, this_object);
 	}
 
-	SharedPtr<KJSBoundList> KJSUtil::ToBoundList(JSContextRef context,
-	                                             JSObjectRef list)
+	SharedPtr<KJSBoundList> KJSUtil::ToBoundList(
+		JSContextRef context,
+		JSObjectRef list)
 	{
 		return new KJSBoundList(context, list);
 	}
 
 	std::map<JSObjectRef, JSGlobalContextRef> context_map;
 	void KJSUtil::RegisterGlobalContext(
-	    JSObjectRef object,
-	    JSGlobalContextRef global_ctx)
+		JSObjectRef object,
+		JSGlobalContextRef global_ctx)
 	{
 		context_map[object] = global_ctx;
 	}

@@ -92,19 +92,8 @@ namespace kroll
 		 */
 		SharedString DisplayString(int levels=3);
 
-	protected:
-		bool IsNumber (const char *name)
-		{
-			std::string s(name);
-			for (int c=0;c<(int)s.length();c++)
-			{
-				if (!std::isdigit(s[c]))
-				{
-					return false;
-				}
-			}
-			return true;
-		}
+		static bool IsInt(const char *name);
+		static char* IntToChars(unsigned int value);
 
 	private:
 		DISALLOW_EVIL_CONSTRUCTORS(BoundList);

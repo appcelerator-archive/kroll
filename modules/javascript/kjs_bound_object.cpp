@@ -58,7 +58,8 @@ namespace kroll
 			throw ValueException(tv_exp);
 		}
 
-		return KJSUtil::ToKrollValue(js_value, this->context, this->object);
+		SharedValue kvalue = KJSUtil::ToKrollValue(js_value, this->context, this->object);
+		return kvalue;
 	}
 
 	void KJSBoundObject::Set(const char *name, SharedValue value)

@@ -42,14 +42,14 @@ namespace kroll
 		{
 			if (c == index)
 			{
-				char* name = StaticBoundList::IntToChars(c);
+				char* name = BoundList::IntToChars(c);
 				this->Set(name, Value::Undefined);
 				delete [] name;
 				found = true;
 			}
 			else
 			{
-				char* prop = StaticBoundList::IntToChars(x);
+				char* prop = BoundList::IntToChars(x);
 				this->Set(prop, this->At(c));
 				delete [] prop;
 				x++;
@@ -62,7 +62,7 @@ namespace kroll
 	void StaticBoundList::Append(SharedValue value)
 	{
 		int length = this->Size();
-		char* name = StaticBoundList::IntToChars(length);
+		char* name = BoundList::IntToChars(length);
 		this->object->Set(name, value);
 		delete [] name;
 
@@ -85,7 +85,7 @@ namespace kroll
 
 	SharedValue StaticBoundList::At(unsigned int index)
 	{
-		char* name = StaticBoundList::IntToChars(index);
+		char* name = BoundList::IntToChars(index);
 		SharedValue value = this->object->Get(name);
 		delete [] name;
 		return value;
@@ -93,7 +93,7 @@ namespace kroll
 
 	void StaticBoundList::Set(const char *name, SharedValue value)
 	{
-		if (BoundList::IsNumber(name))
+		if (BoundList::IsInt(name))
 		{
 			int val = atoi(name);
 			if (val > (int) this->Size())
@@ -115,17 +115,5 @@ namespace kroll
 	{
 		return this->object->GetPropertyNames();
 	}
-
-	char* StaticBoundList::IntToChars(unsigned int value)
-	{
-		int digits = 1;
-		if (value > 0)
-			digits += floor(log10((double) value));
-
-		char *buf = new char[digits + 1];
-		sprintf(buf, "%d", value);
-		return buf;
-	}
-
 }
 

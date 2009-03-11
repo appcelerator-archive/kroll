@@ -14,15 +14,16 @@
 namespace kroll
 {
 	/*
-		Class: StaticBoundObject
+		Class: DelegateStaticBoundObject
 	*/
-	class KROLL_API DelegateStaticBoundObject : public StaticBoundObject
+	class KROLL_API DelegateStaticBoundObject : public BoundObject
 	{
 	public:
 		/*
-			Constructor: StaticBoundObject
+			Constructor: DelegateStaticBoundObject
 		*/
 		DelegateStaticBoundObject(SharedBoundObject delegate);
+		DelegateStaticBoundObject(SharedBoundObject base, SharedBoundObject delegate);
 		virtual ~DelegateStaticBoundObject();
 
 		/*
@@ -52,8 +53,25 @@ namespace kroll
 		virtual void Set(const char *name, SharedValue value);
 
 	private:
+
+		/*
+		 * The base part of this delegate object. This object
+		 * is the first object searched for properties and also
+		 * the targets of property assignments.
+		 */
+		SharedBoundObject base;
+
+		/*
+		 * The delegate part of this delegate object. This object
+		 * is used to find properties if they are not found in the base.
+		 */
 		SharedBoundObject delegate;
+
 		DISALLOW_EVIL_CONSTRUCTORS(DelegateStaticBoundObject);
+
+	protected:
+		Mutex mutex;
+
 	};
 
 }
