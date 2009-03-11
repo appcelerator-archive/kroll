@@ -49,6 +49,9 @@ namespace kroll
 		                                  JSGlobalContextRef);
 		static JSGlobalContextRef GetGlobalContext(JSObjectRef);
 
+		static SharedValue Evaluate(JSContextRef context, char *script);
+		static SharedValue EvaluateFile(JSContextRef context, char *full_path);
+
 	};
 
 }

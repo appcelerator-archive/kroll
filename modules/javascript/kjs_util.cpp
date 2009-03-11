@@ -5,6 +5,7 @@
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
 #include "javascript_module.h"
+#include <Poco/FileStream.h>
 
 namespace kroll
 {
@@ -523,5 +524,54 @@ namespace kroll
 		{
 			return context_map[object];
 		}
+	}
+
+	SharedValue KJSUtil::Evaluate(JSContextRef context, char *script)
+	{
+		JSObjectRef global_object = JSContextGetGlobalObject(context);
+		JSStringRef script_contents = JSStringCreateWithUTF8CString(script);
+		JSStringRef url = JSStringCreateWithUTF8CString("<string>");
+		JSValueRef exception = NULL;
+
+		JSValueRef return_value = JSEvaluateScript(context, script_contents, global_object, url, 0, &exception);
+
+		JSStringRelease(url);
+		JSStringRelease(script_contents);
+
+		if (exception != NULL) {
+			throw KJSUtil::ToKrollValue(exception, context, NULL);
+		}
+
+		return ToKrollValue(return_value, context, global_object);
+	}
+
+	SharedValue KJSUtil::EvaluateFile(JSContextRef context, char *full_path)
+	{
+		JSObjectRef global_object = JSContextGetGlobalObject(context);
+		Poco::FileInputStream* script_stream = new Poco::FileInputStream(full_path, std::ios::in);
+		std::string script_contents;
+		while(!script_stream->eof())
+		{
+			std::string s;
+			std::getline(*script_stream, s);
+
+			script_contents.append(s + "\n");
+		}
+		script_stream->close();
+		std::cout << "evaluating file contents: " << script_contents << std::endl;
+
+		JSStringRef script = JSStringCreateWithUTF8CString(script_contents.c_str());
+		JSStringRef full_path_url = JSStringCreateWithUTF8CString(full_path);
+		JSValueRef exception = NULL;
+		JSValueRef return_value = JSEvaluateScript(context, script, global_object, full_path_url, 0, &exception);
+		JSStringRelease(script);
+		JSStringRelease(full_path_url);
+		delete script_stream;
+
+		if (exception != NULL) {
+			throw KJSUtil::ToKrollValue(exception, context, NULL);
+		}
+
+		return ToKrollValue(return_value, context, global_object);
 	}
 }

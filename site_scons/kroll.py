@@ -18,6 +18,7 @@ class Module(object):
 
 		resources = Glob(d + '/AppResources/all') \
 		           + Glob(d + '/AppResources/%s' % self.build.os) 
+
 		for r in resources:
 			r = path.abspath(str(r))
 			self.build.utils.CopyToDir(r, path.join(self.build_dir, 'AppResources'))

@@ -65,7 +65,7 @@ namespace kroll
 		// if you compile in debug, force debug here
 		this->debug = true;
 #else
-		// we also support setting debug from an environment 
+		// we also support setting debug from an environment
 		if (Environment::has(kr_debug_str))
 		{
 			std::string ti_debug = Environment::get(kr_debug_str);
@@ -190,7 +190,7 @@ namespace kroll
 				std::string ename = "KR_APP_INSTALL_FROM";
 				Environment::set(ename,  home);
 				return FileUtils::Trim(ai);
-			} 
+			}
 			PRINTD("Application needs installation but no app installer found");
 		}
 		return home;
@@ -325,15 +325,15 @@ namespace kroll
 	{
 		Poco::Path manifestPath(modulePath);
 		Poco::Path moduleTopDir = manifestPath.parent();
-		
+
 		manifestPath = Poco::Path(FileUtils::Join(moduleTopDir.toString().c_str(), "manifest", NULL));
-		
+
 		Poco::File manifestFile(manifestPath);
 		if (manifestFile.exists()) {
 			PRINTD("Reading manifest for module: " << manifestPath.toString());
-			
+
 			Poco::AutoPtr<Poco::Util::PropertyFileConfiguration> manifest = new Poco::Util::PropertyFileConfiguration(manifestFile.path());
-			
+
 			if (manifest->hasProperty("libpath")) {
 				PRINTD("libpath: " << modulePath);
 
@@ -347,23 +347,23 @@ namespace kroll
 				std::string libPathEnv = "LD_LIBRARY_PATH";
 	#endif
 				std::string newLibPath;
-				
+
 				if (Environment::has(libPathEnv)) {
 					newLibPath = Environment::get(libPathEnv);
 				}
-					
+
 				for (size_t i = 0; i < t.count(); i++) {
-					std::string lib = t[i];	
+					std::string lib = t[i];
 					newLibPath += KR_LIB_SEP;
 					newLibPath += FileUtils::Join(moduleTopDir.toString().c_str(), lib.c_str(), NULL);
 				}
-				
+
 				PRINTD(libPathEnv << "=" << newLibPath);
 				Environment::set(libPathEnv, newLibPath);
 			}
 		}
 	}
-	
+
 	SharedPtr<Module> Host::LoadModule(std::string& path, ModuleProvider *provider)
 	{
 		ScopedLock lock(&moduleMutex);
