@@ -64,8 +64,9 @@ namespace kroll
 
 		PyObject *item;
 		while ((item = PyIter_Next(iterator))) {
-			std::string* name = new std::string(PythonUtils::ToString(item));
-			property_names->push_back(name);
+			PyObject* k = PyTuple_GetItem(item, 0);
+			std::string sk = PythonUtils::ToString(k);
+			property_names->push_back(new std::string(sk));
 			Py_DECREF(item);
 		}
 
