@@ -27,7 +27,7 @@ namespace kroll
 		return ValueException(Value::NewString(s));
 	}
 
-	ValueException ValueException::FromObject(SharedBoundObject o)
+	ValueException ValueException::FromObject(SharedKObject o)
 	{
 		return ValueException(Value::NewObject(o));
 	}

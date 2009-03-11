@@ -63,7 +63,7 @@ namespace kroll
 		 * on the main UI thread and return a value (blocking until run)
 		 */
 		virtual SharedValue InvokeMethodOnMainThread(
-			SharedBoundMethod,
+			SharedKMethod,
 			const ValueList& args) = 0;
 
 		/*
@@ -310,7 +310,7 @@ namespace kroll
 	/**
 	 * method that invokes a bound method on the main host thread
 	 */
-	extern KROLL_API SharedValue InvokeMethodOnMainThread(SharedBoundMethod method, const ValueList& args);
+	extern KROLL_API SharedValue InvokeMethodOnMainThread(SharedKMethod method, const ValueList& args);
 }
 #endif
 

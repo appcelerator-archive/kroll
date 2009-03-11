@@ -21,7 +21,7 @@ namespace kroll
 		SharedValue v = this->RawGet(setter_name.c_str());
 		if (v->IsMethod())
 		{
-			SharedBoundMethod m = v->ToMethod();
+			SharedKMethod m = v->ToMethod();
 			ValueList args;
 			args.push_back(value);
 			m->Call(args);
@@ -38,7 +38,7 @@ namespace kroll
 		SharedValue v = this->RawGet(getter_name.c_str());
 		if (v->IsMethod())
 		{
-			SharedBoundMethod m = v->ToMethod();
+			SharedKMethod m = v->ToMethod();
 			return m->Call(ValueList());
 		}
 		else

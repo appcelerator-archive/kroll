@@ -9,12 +9,6 @@
 
 namespace kroll
 {
-
-	SharedBoundObject BoundObject::CreateEmptyBoundObject()
-	{
-		return new kroll::StaticBoundObject();
-	}
-
 	StaticBoundObject::StaticBoundObject()
 	{
 	}

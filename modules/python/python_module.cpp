@@ -21,7 +21,7 @@ namespace kroll
 		//Py_SetProgramName(); //TODO: maybe we need to setup path to script?
 		Py_Initialize();
 
-		PythonUtils::InitializeDefaultBindings(host);
+		this->InitializeBinding();
 
 		host->AddModuleProvider(this);
 	}
@@ -35,6 +35,23 @@ namespace kroll
 
 		// FIXME - unregister / unbind?
 		PythonModule::instance_ = NULL;
+	}
+
+	void PythonModule::InitializeBinding()
+	{
+		SharedBoundObject global = this->host->GetGlobalObject();
+
+		SharedBoundObject binding = new StaticBoundObject();
+		global->Set("Python", Value::NewObject(binding));
+
+		SharedBoundMethod evaluator = new PythonEvaluator();
+		binding->Set("evaluate", Value::NewMethod(evaluator));
+
+		PyObject* main_module = PyImport_AddModule("__main__");
+		PyObject* main_dict = PyModule_GetDict(main_module);
+		PyObject* api = PythonUtils::KObjectToPyObject(global);
+		PyDict_SetItemString(main_dict, PRODUCT_NAME, api);
+		Py_DECREF(api);
 	}
 
 

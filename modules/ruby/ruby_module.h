@@ -15,8 +15,9 @@
 #include <kroll/kroll.h>
 
 #include "ruby_api.h"
-#include "ruby_types.h"
+#include "ruby_utils.h"
 #include "ruby_unit_test_suite.h"
+#include "ruby_module_instance.h"
 
 namespace kroll
 {
@@ -45,10 +46,8 @@ namespace kroll
 
 	private:
 		static RubyModule *instance_;
-        DISALLOW_EVIL_CONSTRUCTORS(RubyModule);
+		DISALLOW_EVIL_CONSTRUCTORS(RubyModule);
 	};
 }
-
-#include "ruby_module_instance.h"
 
 #endif

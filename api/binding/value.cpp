@@ -94,14 +94,14 @@ namespace kroll
 		return v;
 	}
 
-	SharedValue Value::NewList(SharedBoundList value)
+	SharedValue Value::NewList(SharedKList value)
 	{
 		SharedValue v(new Value());
 		v->SetList(value);
 		return v;
 	}
 
-	SharedValue Value::NewMethod(SharedBoundMethod method)
+	SharedValue Value::NewMethod(SharedKMethod method)
 	{
 		SharedValue v(new Value());
 		v->SetMethod(method);
@@ -115,7 +115,7 @@ namespace kroll
 		return v;
 	}
 
-	SharedValue Value::NewObject(SharedBoundObject value)
+	SharedValue Value::NewObject(SharedKObject value)
 	{
 		SharedValue v(new Value());
 		v->SetObject(value);
@@ -157,10 +157,10 @@ namespace kroll
 	double Value::ToNumber() const { return numberValue; }
 	bool Value::ToBool() const { return boolValue; }
 	const char* Value::ToString() const { return stringValue; }
-	SharedBoundObject Value::ToObject() const { return objectValue; }
-	SharedBoundMethod Value::ToMethod() const { return objectValue.cast<BoundMethod>(); }
+	SharedKObject Value::ToObject() const { return objectValue; }
+	SharedKMethod Value::ToMethod() const { return objectValue.cast<KMethod>(); }
+	SharedKList Value::ToList() const { return objectValue.cast<KList>(); }
 	void* Value::ToVoidPtr() const { return voidPtrValue; }
-	SharedBoundList Value::ToList() const { return objectValue.cast<BoundList>(); }
 
 	void Value::SetValue(SharedValue other)
 	{
@@ -231,14 +231,14 @@ namespace kroll
 		type = STRING;
 	}
 
-	void Value::SetList(SharedBoundList value)
+	void Value::SetList(SharedKList value)
 	{
 		reset();
 		this->objectValue = value;
 		type = LIST;
 	}
 
-	void Value::SetObject(SharedBoundObject value)
+	void Value::SetObject(SharedKObject value)
 	{
 		reset();
 		this->objectValue = value;
@@ -252,7 +252,7 @@ namespace kroll
 		type = OBJECT;
 	}
 
-	void Value::SetMethod(SharedBoundMethod value)
+	void Value::SetMethod(SharedKMethod value)
 	{
 		reset();
 		this->objectValue = value;
@@ -301,8 +301,8 @@ namespace kroll
 
 		if (this->IsList() && i.IsList())
 		{
-			SharedBoundList tlist = this->ToList();
-			SharedBoundList olist = i.ToList();
+			SharedKList tlist = this->ToList();
+			SharedKList olist = i.ToList();
 
 			if (tlist->Size() != olist->Size())
 				return false;
@@ -347,20 +347,20 @@ namespace kroll
 		}
 		else if (this->IsList())
 		{
-			SharedBoundList list = this->ToList();
+			SharedKList list = this->ToList();
 			SharedString disp_string = list->DisplayString(levels-1);
 			oss << *disp_string;
 		}
 		else if (this->IsObject())
 		{
-			SharedBoundObject obj = this->ToObject();
+			SharedKObject obj = this->ToObject();
 			SharedString disp_string = obj->DisplayString(levels-1);
 			oss << *disp_string;
 		}
 		else if (this->IsMethod())
 		{
-			SharedBoundMethod method = this->ToMethod();
-			oss << "<BoundMethod at " << method.get() << ">";
+			SharedKMethod method = this->ToMethod();
+			oss << "<KMethod at " << method << ">";
 		}
 		else if (this->IsVoidPtr())
 		{

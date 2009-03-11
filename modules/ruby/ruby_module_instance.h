@@ -22,7 +22,7 @@ namespace kroll
 		void Destroy ();
 	private:
 		std::string path;
-        DISALLOW_EVIL_CONSTRUCTORS(RubyModuleInstance);
+		DISALLOW_EVIL_CONSTRUCTORS(RubyModuleInstance);
 	};
 }
 

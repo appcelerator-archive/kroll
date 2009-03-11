@@ -14,18 +14,17 @@ namespace kroll
 	class PythonUtils
 	{
 	public:
-		static SharedValue ToValue(PyObject* value, const char *name = NULL);
-		static PyObject* ToObject(SharedValue value);
-		static PyObject* ToObject(const ValueList& list);
-		static const char * ToString(PyObject* value);
-		static PyObject* ToObject(SharedPtr<BoundMethod> method);
-		static PyObject* ToObject(PyObject* self, PyObject* args, SharedPtr<BoundObject> bo);
-		static void ThrowException();
-		static void InitializeDefaultBindings(Host*);
+		static SharedValue ToKrollValue(PyObject* value);
+		static PyObject* ToPyObject(SharedValue value);
+		static PyObject* ToPyObject(const ValueList& list);
+		static const char* ToString(PyObject* value);
+		static PyObject* KObjectToPyObject(SharedBoundObject o);
+		static PyObject* KMethodToPyObject(SharedBoundObject o);
+		static PyObject* KListToPyObject(SharedBoundObject o);
+
 	private:
 		// retain scope for the lifetime of this class
 		static SharedBoundObject scope;
-		static SharedBoundMethod evaluator;
 		PythonUtils() {}
 		~PythonUtils () {}
 	};

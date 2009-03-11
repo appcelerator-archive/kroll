@@ -8,23 +8,23 @@
 #include <sstream>
 
 namespace kroll
-{	
-	void BoundObject::Set(SharedString name, SharedValue value)
+{
+	void KObject::Set(SharedString name, SharedValue value)
 	{
 		this->Set(name->c_str(), value);
 	}
 
-	SharedValue BoundObject::Get(SharedString name)
+	SharedValue KObject::Get(SharedString name)
 	{
 		return this->Get(name->c_str());
 	}
 
-	void BoundObject::SetNS(const char *name, SharedValue value)
+	void KObject::SetNS(const char *name, SharedValue value)
 	{
 		std::vector<std::string> tokens;
 		FileUtils::Tokenize(std::string(name), tokens, ".");
 
-		BoundObject *scope = this;
+		KObject *scope = this;
 		for (size_t i = 0; i < tokens.size() - 1; i++)
 		{
 			const char* token = tokens[i].c_str();
@@ -34,7 +34,7 @@ namespace kroll
 			if (next_val->IsUndefined())
 			{
 				next = new StaticBoundObject();
-				SharedBoundObject so = next;
+				SharedKObject so = next;
 				next_val = Value::NewObject(so);
 				scope->Set(token, next_val);
 				scope = next;
@@ -60,13 +60,13 @@ namespace kroll
 #endif
 	}
 
-	SharedValue BoundObject::GetNS(const char *name)
+	SharedValue KObject::GetNS(const char *name)
 	{
 		std::string s(name);
 		std::string::size_type last = 0;
 		std::string::size_type pos = s.find_first_of(".");
 		SharedValue current;
-		BoundObject* scope = this;
+		KObject* scope = this;
 		while (pos != std::string::npos)
 		{
 			std::string token = s.substr(last,pos-last);
@@ -91,14 +91,14 @@ namespace kroll
 		return current;
 	}
 
-	SharedValue BoundObject::CallNS(const char *name, SharedValue val1)
+	SharedValue KObject::CallNS(const char *name, SharedValue val1)
 	{
 		ValueList args;
 		args.push_back(val1);
 		return CallNS(name, args);
 	}
 
-	SharedValue BoundObject::CallNS(const char *name, SharedValue val1, SharedValue val2)
+	SharedValue KObject::CallNS(const char *name, SharedValue val1, SharedValue val2)
 	{
 		ValueList args;
 		args.push_back(val1);
@@ -106,7 +106,7 @@ namespace kroll
 		return CallNS(name, args);
 	}
 
-	SharedValue BoundObject::CallNS(const char *name, SharedValue val1, SharedValue val2, SharedValue val3)
+	SharedValue KObject::CallNS(const char *name, SharedValue val1, SharedValue val2, SharedValue val3)
 	{
 		ValueList args;
 		args.push_back(val1);
@@ -115,7 +115,7 @@ namespace kroll
 		return CallNS(name, args);
 	}
 
-	SharedValue BoundObject::CallNS(const char *name, const ValueList& args)
+	SharedValue KObject::CallNS(const char *name, const ValueList& args)
 	{
 		SharedValue callableValue = GetNS(name);
 		if (callableValue->IsUndefined()) {
@@ -129,13 +129,13 @@ namespace kroll
 		return callableValue->ToMethod()->Call(args);
 	}
 
-	SharedString BoundObject::DisplayString(int levels)
+	SharedString KObject::DisplayString(int levels)
 	{
 		std::ostringstream oss;
 
 		if (levels == 0)
 		{
-			oss << "<BoundObject at " << this << ">";
+			oss << "<KObject at " << this << ">";
 		}
 		else
 		{
@@ -157,7 +157,7 @@ namespace kroll
 		return new std::string(oss.str());
 	}
 
-	std::string BoundObject::GetString(const char * name, std::string defaultValue)
+	std::string KObject::GetString(const char * name, std::string defaultValue)
 	{
 		SharedValue prop = this->Get(name);
 		if(!prop->IsUndefined() && prop->IsString())
@@ -170,7 +170,7 @@ namespace kroll
 		}
 	}
 
-	bool BoundObject::GetBool(const char * name, bool defaultValue)
+	bool KObject::GetBool(const char * name, bool defaultValue)
 	{
 		SharedValue prop = this->Get(name);
 		if(!prop->IsUndefined())
@@ -183,12 +183,12 @@ namespace kroll
 		}
 	}
 
-	void BoundObject::GetStringList(const char *name, std::vector<std::string> &list)
+	void KObject::GetStringList(const char *name, std::vector<std::string> &list)
 	{
 		SharedValue prop = this->Get(name);
 		if(!prop->IsUndefined() && prop->IsList())
 		{
-			SharedBoundList values = prop->ToList();
+			SharedKList values = prop->ToList();
 			if (values->Size() > 0)
 			{
 				for (unsigned int c = 0; c < values->Size(); c++)

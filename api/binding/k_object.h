@@ -4,8 +4,8 @@
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
 
-#ifndef _KR_BOUND_OBJECT_H_
-#define _KR_BOUND_OBJECT_H_
+#ifndef _K_OBJECT_H_
+#define _K_OBJECT_H_
 
 #include <vector>
 #include <string>
@@ -14,18 +14,17 @@
 namespace kroll
 {
 	/*
-		Class: BoundObject
+		Class: KObject
 	*/
-	class KROLL_API BoundObject
+	class KROLL_API KObject
 	{
 	public:
 		/*
-			Constructor: BoundObject
+			Constructor: KObject
 		*/
-		BoundObject() { }
-		virtual ~BoundObject() { }
+		KObject() { }
+		virtual ~KObject() { }
 
-		static SharedBoundObject CreateEmptyBoundObject();
 	public:
 		/*
 			Function: Set
@@ -141,7 +140,7 @@ namespace kroll
 		void GetStringList(const char *name, std::vector<std::string> &list);
 
 	private:
-		DISALLOW_EVIL_CONSTRUCTORS(BoundObject);
+		DISALLOW_EVIL_CONSTRUCTORS(KObject);
 	};
 
 }

@@ -4,29 +4,28 @@
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
 
-#ifndef RUBY_BOUND_OBJECT_H_
-#define RUBY_BOUND_OBJECT_H_
+#ifndef _K_RUBY_METHOD_H_
+#define _K_RUBY_METHOD_H_
 
 #include "ruby_module.h"
 
 namespace kroll {
 
-class RubyBoundObject : public BoundObject {
+class KRubyMethod : public BoundMethod {
 public:
-	RubyBoundObject(VALUE object);
-	virtual ~RubyBoundObject();
-
+	KRubyMethod(VALUE method);
+	virtual ~KRubyMethod();
+	SharedValue Call(const ValueList& args);
 	virtual void Set(const char *name, SharedValue value);
 	virtual SharedValue Get(const char *name);
 	virtual SharedStringList GetPropertyNames();
 
-	const VALUE ToRuby() { return object; }
-
+	VALUE ToRuby() { return method; }
 private:
-	VALUE object;
-
+	VALUE method;
+	SharedBoundObject delegate;
 };
 
 }
 
-#endif /* RUBY_BOUND_OBJECT_H_ */
+#endif /* RUBY_BOUND_METHOD_H_ */

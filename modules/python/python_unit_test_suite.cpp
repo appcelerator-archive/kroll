@@ -10,40 +10,40 @@ namespace kroll
 	void PythonUnitTestSuite::Run(Host *host)
 	{
 		SharedValue tv1 = Value::NewInt(1);
-		PyObject* v1 = PythonUtils::ToObject(tv1);
+		PyObject* v1 = PythonUtils::ToPyObject(tv1);
 		KR_ASSERT(PyInt_Check(v1));
 		KR_ASSERT(PyInt_AsLong(v1)==1);
 
 		SharedValue tv2 = Value::NewDouble(1.0);
-		PyObject* v2 = PythonUtils::ToObject(tv2);
+		PyObject* v2 = PythonUtils::ToPyObject(tv2);
 		KR_ASSERT(PyFloat_Check(v2));
 		KR_ASSERT(PyFloat_AsDouble(v2)==1.0);
 
 		SharedValue tv3 = Value::NewString("abc");
-		PyObject* v3 = PythonUtils::ToObject(tv3);
+		PyObject* v3 = PythonUtils::ToPyObject(tv3);
 		KR_ASSERT(PyString_Check(v3));
 		KR_ASSERT_STR(PyString_AsString(v3),"abc");
 
 		std::string s1("abc");
 		SharedValue tv4 = Value::NewString(s1);
-		PyObject* v4 = PythonUtils::ToObject(tv4);
+		PyObject* v4 = PythonUtils::ToPyObject(tv4);
 		KR_ASSERT(PyString_Check(v4));
 		KR_ASSERT_STR(PyString_AsString(v4),"abc");
 
 		SharedValue tv5 = new Value();
-		PyObject* v5 = PythonUtils::ToObject(tv5);
+		PyObject* v5 = PythonUtils::ToPyObject(tv5);
 		KR_ASSERT(Py_None==v5);
 
 		SharedValue tv6 = Value::Undefined;
-		PyObject* v6 = PythonUtils::ToObject(tv6);
+		PyObject* v6 = PythonUtils::ToPyObject(tv6);
 		KR_ASSERT(Py_None==v6);
 
 		SharedValue tv7 = Value::Null;
-		PyObject* v7 = PythonUtils::ToObject(tv7);
+		PyObject* v7 = PythonUtils::ToPyObject(tv7);
 		KR_ASSERT(Py_None==v7);
 
 		SharedValue tv8 = Value::NewBool(true);
-		PyObject* v8 = PythonUtils::ToObject(tv8);
+		PyObject* v8 = PythonUtils::ToPyObject(tv8);
 		KR_ASSERT(PyBool_Check(v8));
 		KR_ASSERT(v8 == Py_True);
 
@@ -63,13 +63,13 @@ namespace kroll
 		PyObject* main_module = PyImport_AddModule("__main__");
 		PyObject* global_dict = PyModule_GetDict(main_module);
 		PyObject* expression = PyDict_GetItemString(global_dict, "Foo");
-		SharedValue cl1 = PythonUtils::ToValue(expression);
+		SharedValue cl1 = PythonUtils::ToKrollValue(expression);
 
 		SharedString dstring = cl1->DisplayString();
 		std::cout << *dstring << std::endl;
 
 		KR_ASSERT(cl1->IsObject());
-		SharedPtr<BoundObject> value = new PythonBoundObject(expression);
+		SharedPtr<BoundObject> value = new KPythonObject(expression);
 		//ScopedDereferencer sd1(value);
 		SharedValue p1 = value->Get("bar");
 		KR_ASSERT(p1->IsMethod());
@@ -77,10 +77,10 @@ namespace kroll
 		// TEST creating instance and invoking methods
 		PyRun_SimpleString("foopy = Foo()");
 		PyObject* foopy = PyDict_GetItemString(global_dict, "foopy");
-		SharedValue cl2 = PythonUtils::ToValue(foopy);
+		SharedValue cl2 = PythonUtils::ToKrollValue(foopy);
 		//ScopedDereferencer r(cl2);
 		KR_ASSERT(cl2->IsObject());
-		SharedPtr<BoundObject> value2 = new PythonBoundObject(foopy);
+		SharedPtr<BoundObject> value2 = new KPythonObject(foopy);
 		//ScopedDereferencer sd2(value2);
 
 		// TEST method
@@ -141,7 +141,7 @@ namespace kroll
 		PyRun_SimpleString("def foopyc(): return 'hello,world'");
 		PyObject* foopyc = PyDict_GetItemString(global_dict, "foopyc");
 		KR_ASSERT(foopyc);
-		SharedValue cl3 = PythonUtils::ToValue(foopyc);
+		SharedValue cl3 = PythonUtils::ToKrollValue(foopyc);
 		KR_ASSERT(cl3->IsMethod());
 		SharedBoundMethod m2 = cl3->ToMethod();
 		SharedValue mv2 = m2->Call(args);
@@ -149,33 +149,33 @@ namespace kroll
 		KR_ASSERT_STR(mv2->ToString(),"hello,world");
 
 		// TEST creating an anonymous method and calling through it
-		PyObject* anon1 = PythonUtils::ToObject(cl3->ToMethod());
+		PyObject* anon1 = PythonUtils::KMethodToPyObject(cl3->ToMethod());
 		KR_ASSERT(PyCallable_Check(anon1));
 
 		// TEST calling through a BoundObject from Python
 		SharedBoundObject tbo = cl1->ToObject();
-		PyObject* co1 = PythonUtils::ToObject(NULL,NULL,tbo);
+		PyObject* co1 = PythonUtils::KObjectToPyObject(tbo);
 		KR_ASSERT(co1);
 		PyObject* cop1 = PyObject_GetAttrString(co1, "bar");
 		KR_ASSERT(cop1);
 
-		SharedValue cl5 = PythonUtils::ToValue(foopyc);
+		SharedValue cl5 = PythonUtils::ToKrollValue(foopyc);
 		KR_ASSERT(cl5->IsMethod());
 		SharedBoundMethod m4 = cl5->ToMethod();
 		SharedValue mv6 = m4->Call(args);
 		KR_ASSERT_STR(mv6->ToString(),"hello,world");
 
-		PyObject *anon2 = PythonUtils::ToObject(m4);
+		PyObject *anon2 = PythonUtils::KMethodToPyObject(m4);
 		KR_ASSERT(PyCallable_Check(anon2));
-		SharedValue tiv1 = PythonUtils::ToValue(anon2);
+		SharedValue tiv1 = PythonUtils::ToKrollValue(anon2);
 		KR_ASSERT(tiv1->IsMethod());
 		BoundMethod *tibm1 = tiv1->ToMethod();
 		SharedValue tivr1 = tibm1->Call(args);
 		KR_ASSERT_STR(tivr1->ToString(),"hello,world");
 
 
-		PyObject* piv = PythonUtils::ToObject(tibm1);
-		SharedValue pivv = PythonUtils::ToValue(piv);
+		PyObject* piv = PythonUtils::KMethodToPyObject(tibm1);
+		SharedValue pivv = PythonUtils::ToKrollValue(piv);
 		BoundMethod *pivbm = pivv->ToMethod();
 		SharedValue pivbmv = pivbm->Call(args);
 		KR_ASSERT_STR(pivbmv->ToString(),"hello,world");
@@ -209,7 +209,7 @@ namespace kroll
 		//KR_DECREF(lista);
 
 		SharedValue listv = Value::NewList(list);
-		PyObject* apylist = PythonUtils::ToObject(listv);
+		PyObject* apylist = PythonUtils::ToPyObject(listv);
 		KR_ASSERT(apylist);
 		KR_ASSERT(listv->IsList());
 		KR_ASSERT(PyList_Check(apylist));
@@ -218,11 +218,11 @@ namespace kroll
 		PyObject *pitem = PyList_GetItem(apylist,0);
 		KR_ASSERT(pitem);
 		KR_ASSERT(pitem != Py_None);
-		SharedValue vitem = PythonUtils::ToValue(pitem);
+		SharedValue vitem = PythonUtils::ToKrollValue(pitem);
 		KR_ASSERT(vitem->IsInt());
 		KR_ASSERT(vitem->ToInt()==1);
 
-		SharedPtr<BoundList> plist = new PythonBoundList(apylist);
+		SharedPtr<BoundList> plist = new KPythonList(apylist);
 		KR_ASSERT(plist->Size()==1);
 		KR_ASSERT(plist->At(0)->ToInt()==1);
 		SharedValue vlist2 = Value::NewString("hello");

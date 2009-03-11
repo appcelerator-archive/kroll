@@ -4,20 +4,22 @@
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
 
-#include "ruby_bound_object.h"
+#include "k_ruby_object.h"
 
 namespace kroll {
 
-	RubyBoundObject::RubyBoundObject(VALUE object) : object(object) {
+	KRubyObject::KRubyObject(VALUE object) :
+		object(object)
+	{
 		rb_gc_register_address(&object);
-
 	}
 
-	RubyBoundObject::~RubyBoundObject() {
+	KRubyObject::~KRubyObject()
+	{
 		rb_gc_unregister_address(&object);
 	}
 
-	void RubyBoundObject::Set(const char *name, SharedValue value)
+	void KRubyObject::Set(const char *name, SharedValue value)
 	{
 		VALUE rubyValue = RubyUtils::ToRubyValue(value);
 		std::string instance_name = "@";
@@ -26,7 +28,7 @@ namespace kroll {
 		rb_iv_set(object, instance_name.c_str(), rubyValue);
 	}
 
-	SharedValue RubyBoundObject::Get(const char *name)
+	SharedValue KRubyObject::Get(const char *name)
 	{
 		std::string method_name = name;
 		std::string instance_name = "@" ;
@@ -51,7 +53,7 @@ namespace kroll {
 	}
 
 
-	SharedStringList RubyBoundObject::GetPropertyNames()
+	SharedStringList KRubyObject::GetPropertyNames()
 	{
 		VALUE instance_variables = rb_obj_instance_variables(rb_obj_class(object));
 		VALUE lengthValue = rb_funcall(instance_variables, rb_intern("length"), 0);

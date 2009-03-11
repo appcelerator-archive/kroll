@@ -42,9 +42,8 @@ namespace kroll
 		JSObjectRef object;
 		SharedPtr<KJSBoundObject> kjs_bound_object;
 
-		static char* IntToChars(int value);
 	private:
-                DISALLOW_EVIL_CONSTRUCTORS(KJSBoundList);
+		DISALLOW_EVIL_CONSTRUCTORS(KJSBoundList);
 
 	};
 }

@@ -6,16 +6,17 @@
 
 #include "../kroll.h"
 #include <sstream>
+#include <cmath>
 
 namespace kroll
 {
 
-	SharedString BoundList::DisplayString(int levels)
+	SharedString KList::DisplayString(int levels)
 	{
 		std::ostringstream oss;
 		if (levels == 0)
 		{
-			oss << "<BoundList at " << this << ">";
+			oss << "<KList at " << this << ">";
 		}
 		else
 		{
@@ -33,6 +34,29 @@ namespace kroll
 		}
 		return new std::string(oss.str());
 	}
+
+	char* KList::IntToChars(unsigned int value)
+	{
+		int digits = 1;
+		if (value > 0)
+			digits += floor(log10((double) value));
+
+		char *buf = new char[digits + 1];
+		sprintf(buf, "%d", value);
+		return buf;
+	}
+
+	bool KList::IsInt(const char* name)
+	{
+		for (size_t i = 0; i < strlen(name); i++)
+		{
+			if (!isdigit(name[i]))
+				return false;
+		}
+		return true;
+	}
+
+
 
 }
 

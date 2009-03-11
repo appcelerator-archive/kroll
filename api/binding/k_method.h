@@ -4,8 +4,8 @@
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
 
-#ifndef _KR_BOUND_METHOD_H_
-#define _KR_BOUND_METHOD_H_
+#ifndef _K_METHOD_H_
+#define _K_METHOD_H_
 #include <cstdarg>
 
 namespace kroll
@@ -13,17 +13,17 @@ namespace kroll
 	typedef Callback2<const ValueList&, SharedValue>::Type MethodCallback;
 
 	/*
-		Class: BoundMethod
+		Class: KMethod
 	*/
-	class KROLL_API BoundMethod : public BoundObject
+	class KROLL_API KMethod : public KObject
 	{
 
 	public:
 		/*
-			Constructor: BoundMethod
+			Constructor: KMethod
 		*/
-		BoundMethod() {}
-		virtual ~BoundMethod(){}
+		KMethod() {}
+		virtual ~KMethod(){}
 
 		/*
 			Function: Call
@@ -126,7 +126,7 @@ namespace kroll
 		}
 
 	private:
-		DISALLOW_EVIL_CONSTRUCTORS(BoundMethod);
+		DISALLOW_EVIL_CONSTRUCTORS(KMethod);
 	};
 }
 
