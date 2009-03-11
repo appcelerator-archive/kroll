@@ -549,7 +549,7 @@ namespace kroll
 		JSObjectRef global_object = JSContextGetGlobalObject(context);
 		Poco::FileInputStream* script_stream = new Poco::FileInputStream(full_path, std::ios::in);
 		std::string script_contents;
-		while(!script_stream->eof())
+		while (!script_stream->eof())
 		{
 			std::string s;
 			std::getline(*script_stream, s);
@@ -557,7 +557,6 @@ namespace kroll
 			script_contents.append(s + "\n");
 		}
 		script_stream->close();
-		std::cout << "evaluating file contents: " << script_contents << std::endl;
 
 		JSStringRef script = JSStringCreateWithUTF8CString(script_contents.c_str());
 		JSStringRef full_path_url = JSStringCreateWithUTF8CString(full_path);
@@ -568,9 +567,10 @@ namespace kroll
 		delete script_stream;
 
 		if (exception != NULL) {
-			throw KJSUtil::ToKrollValue(exception, context, NULL);
+			SharedValue v = KJSUtil::ToKrollValue(exception, context, NULL);
+			throw ValueException(v);
 		}
 
-		return ToKrollValue(return_value, context, global_object);
+		return KJSUtil::ToKrollValue(return_value, context, global_object);
 	}
 }
