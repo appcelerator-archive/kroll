@@ -40,7 +40,7 @@
 			NULL);
 
 		/* TODO: Logging */
-		if (return_value == NULL && PyErr_Occurred()) 
+		if (return_value == NULL && PyErr_Occurred())
 		{
 			std::cout << "An error occured while parsing Python on the page: " << std::endl;
 			PyErr_Print();
@@ -75,7 +75,7 @@
 	void PythonEvaluator::DictToKObjectProps(PyObject* dict, SharedBoundObject o)
 	{
 		// Avoid compiler warnings
-		PyObject *items = PyObject_CallMethod(dict, (char*) "items", __null);
+		PyObject *items = PyObject_CallMethod(dict, (char*) "items", NULL);
 		if (items == NULL)
 			return;
 
