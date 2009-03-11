@@ -10,8 +10,8 @@
 #include <algorithm>
 #include <cctype>
 
-#include "ruby_bound_object.h"
-#include "ruby_bound_method.h"
+#include "k_ruby_object.h"
+#include "k_ruby_method.h"
 #include "ruby_method_missing.h"
 
 namespace kroll
@@ -70,12 +70,12 @@ namespace kroll
 
 	SharedBoundMethod RubyUtils::ToMethod(VALUE value)
 	{
-		return new RubyBoundMethod(value);
+		return new KRubyMethod(value);
 	}
 
 	SharedBoundObject RubyUtils::ToObject(VALUE value)
 	{
-		return new RubyBoundObject(value);
+		return new KRubyObject(value);
 	}
 
 	SharedBoundMethod RubyUtils::CreateMethodMissing(VALUE object, std::string& method_name)
@@ -180,7 +180,7 @@ namespace kroll
 		return Qnil;
 	}
 
-	static void RubyBoundObjectFree(void *p)
+	static void KRubyObjectFree(void *p)
 	{
 		SharedPtr<BoundObject> *obj = static_cast< SharedPtr<BoundObject>* >(p);
 		//KR_DECREF(obj);
@@ -189,7 +189,7 @@ namespace kroll
 
 	VALUE RubyUtils::Create(SharedPtr<BoundObject> value)
 	{
-		VALUE wrapper = Data_Wrap_Struct(ruby_wrapper_class, 0, RubyBoundObjectFree, new SharedPtr<BoundObject>(value));
+		VALUE wrapper = Data_Wrap_Struct(ruby_wrapper_class, 0, KRubyObjectFree, new SharedPtr<BoundObject>(value));
 		rb_obj_call_init(wrapper, 0, 0);
 		//KR_ADDREF(value);
 		return wrapper;
@@ -256,7 +256,7 @@ namespace kroll
 		return StringValueCStr(method);
 	}
 
-	static VALUE RubyBoundObjectMethodDefined(int argc, VALUE *argv, VALUE self)
+	static VALUE KRubyObjectMethodDefined(int argc, VALUE *argv, VALUE self)
 	{
 		SharedPtr<BoundObject> *object = NULL;
 		Data_Get_Struct(self, SharedPtr<BoundObject>, object);
@@ -270,7 +270,7 @@ namespace kroll
 		return Qfalse;
 	}
 
-	static VALUE RubyBoundObjectMethodMissing(int argc, VALUE *argv, VALUE self)
+	static VALUE KRubyObjectMethodMissing(int argc, VALUE *argv, VALUE self)
 	{
 		SharedPtr<BoundObject> *object = NULL;
 		Data_Get_Struct(self, SharedPtr<BoundObject>, object);
@@ -365,17 +365,17 @@ namespace kroll
 	SharedBoundMethod RubyUtils::evaluator = SharedBoundMethod(new RubyEvaluator());
 	void RubyUtils::InitializeDefaultBindings(Host *host)
 	{
-		ruby_wrapper_class = rb_define_class("RubyBoundObject", rb_cObject);
+		ruby_wrapper_class = rb_define_class("KRubyObject", rb_cObject);
 
 		// overide the method_missing magic function that's called
 		// for any access to our object (essentially)
 		rb_define_method(ruby_wrapper_class, "method_missing",
-			RUBY_METHOD_FUNC(RubyBoundObjectMethodMissing), -1);
+			RUBY_METHOD_FUNC(KRubyObjectMethodMissing), -1);
 
 		// override method_defined? to support reflection of
 		// methods to determine if they are defined on an object
 		rb_define_method(ruby_wrapper_class, "method_defined?",
-			RUBY_METHOD_FUNC(RubyBoundObjectMethodDefined), -1);
+			RUBY_METHOD_FUNC(KRubyObjectMethodDefined), -1);
 
 		// we bind the special module "api" to the global
 		// variable defined in PRODUCT_NAME to give the

@@ -4,20 +4,22 @@
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
 
-#include "ruby_bound_method.h"
-#include "ruby_bound_object.h"
+#include "k_ruby_method.h"
+#include "k_ruby_object.h"
 
 namespace kroll {
-	RubyBoundMethod::RubyBoundMethod(VALUE method) : method(method), delegate(new RubyBoundObject(method))
+	KRubyMethod::KRubyMethod(VALUE method) :
+		method(method),
+		delegate(new KRubyObject(method))
 	{
 		rb_gc_register_address(&method);
 	}
 
-	RubyBoundMethod::~RubyBoundMethod() {
+	KRubyMethod::~KRubyMethod() {
 		rb_gc_unregister_address(&method);
 	}
 
-	SharedValue RubyBoundMethod::Call(const ValueList& args)
+	SharedValue KRubyMethod::Call(const ValueList& args)
 	{
 		VALUE* ruby_args = (VALUE*)malloc(sizeof(VALUE)*args.size()+1);
 		for (size_t i = 0; i < args.size(); i++) {
@@ -29,17 +31,17 @@ namespace kroll {
 		return RubyUtils::ToKrollValue(result);
 	}
 
-	void RubyBoundMethod::Set(const char *name, SharedValue value)
+	void KRubyMethod::Set(const char *name, SharedValue value)
 	{
 		delegate->Set(name, value);
 	}
 
-	SharedValue RubyBoundMethod::Get(const char *name)
+	SharedValue KRubyMethod::Get(const char *name)
 	{
 		return delegate->Get(name);
 	}
 
-	SharedStringList RubyBoundMethod::GetPropertyNames()
+	SharedStringList KRubyMethod::GetPropertyNames()
 	{
 		return delegate->GetPropertyNames();
 	}
