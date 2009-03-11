@@ -12,7 +12,7 @@ namespace kroll
 	/*
 		Class: StaticBoundList
 	*/
-	class KROLL_API StaticBoundList : public BoundList
+	class KROLL_API StaticBoundList : public KList
 	{
 	public:
 		/*

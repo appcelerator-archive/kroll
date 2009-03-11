@@ -26,8 +26,8 @@ namespace kroll
 			BOOL - Boolean
 			STRING - String
 			LIST - <ValueList>
-			OBJECT - <BoundObject>
-			METHOD - <BoundMethod>
+			OBJECT - <KObject>
+			METHOD - <KMethod>
 			VOIDP - void * (used for raw types internally)
 			NULLV - Null
 			UNDEFINED - Undefined
@@ -106,21 +106,21 @@ namespace kroll
 
 		  construct a <LIST> type
 		 */
-		static SharedValue NewList(SharedBoundList value);
+		static SharedValue NewList(SharedKList value);
 
 		/*
 			Constructor: Value
 
 		  construct an <OBJECT> type
 		 */
-		static SharedValue NewObject(SharedBoundObject value);
+		static SharedValue NewObject(SharedKObject value);
 
 		/*
 			Constructor: Value
 
 		  construct a <METHOD> type
 		 */
-		static SharedValue NewMethod(SharedBoundMethod value);
+		static SharedValue NewMethod(SharedKMethod value);
 
 		/*
 			Constructor: Value
@@ -273,23 +273,23 @@ namespace kroll
 		/*
 			Function: ToList
 
-		  return the value as a BoundList
+		  return the value as a KList
 		 */
-		SharedBoundList ToList() const;
+		SharedKList ToList() const;
 
 		/*
 			Function: ToObject
 
-		  return the value as a BoundObject*
+		  return the value as a KObject*
 		 */
-		SharedBoundObject ToObject() const;
+		SharedKObject ToObject() const;
 
 		/*
 			Function: ToMethod
 
-		  return the value as a BoundMethod*
+		  return the value as a KMethod*
 		 */
-		SharedBoundMethod ToMethod() const;
+		SharedKMethod ToMethod() const;
 
 		/*
 			Function: ToVoidPtr
@@ -373,7 +373,7 @@ namespace kroll
 
 		  change the internal value of this instance to value
 		 */
-		void SetList(SharedBoundList value);
+		void SetList(SharedKList value);
 
 		/*
 			Function: Set
@@ -387,14 +387,14 @@ namespace kroll
 
 		  change the internal value of this instance to value
 		 */
-		void SetObject(SharedBoundObject value);
+		void SetObject(SharedKObject value);
 
 		/**
 			Function: Set
 
 		  change the internal value of this instance to value
 		 */
-		void SetMethod(SharedBoundMethod value);
+		void SetMethod(SharedKMethod value);
 
 		/*
 			Function: Set
@@ -421,7 +421,7 @@ namespace kroll
 		double numberValue;
 		bool boolValue;
 		char* stringValue;
-		SharedBoundObject objectValue;
+		SharedKObject objectValue;
 		void *voidPtrValue;
 
 		void reset();

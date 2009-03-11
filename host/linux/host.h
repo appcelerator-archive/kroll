@@ -8,10 +8,7 @@
 
 #include <vector>
 #include <string>
-#include <api/module.h>
-#include <api/module_provider.h>
-#include <api/host.h>
-#include <api/binding/bound_object.h>
+#include <kroll/kroll.h>
 
 #include <Poco/ScopedLock.h>
 #include <Poco/Mutex.h>

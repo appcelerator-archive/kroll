@@ -12,7 +12,7 @@ namespace kroll
 	/*
 		Class: StaticBoundMethod
 	*/
-	class KROLL_API StaticBoundMethod : public BoundMethod
+	class KROLL_API StaticBoundMethod : public KMethod
 	{
 	public:
 		/*

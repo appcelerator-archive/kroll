@@ -30,14 +30,14 @@ namespace kroll {
 	 */
 
 
-	class KROLL_API ScopeMethodDelegate : public BoundMethod
+	class KROLL_API ScopeMethodDelegate : public KMethod
 	{
 	public:
 		/*
 			Constructor: ScopeMethodDelegate
 		*/
-		ScopeMethodDelegate(MethodDelegateType type, SharedBoundObject global,
-		                    SharedBoundObject scope, SharedBoundMethod delegate);
+		ScopeMethodDelegate(MethodDelegateType type, SharedKObject global,
+		                    SharedBoundObject scope, SharedKMethod delegate);
 		virtual ~ScopeMethodDelegate();
 
 		/*
@@ -78,17 +78,17 @@ namespace kroll {
 		/*
 		  Function: CreateDelegate
 
-		  create a delegate from a BoundObject to a wrapped
+		  create a delegate from a KObject to a wrapped
 		  StaticBoundObject and delegate set/get to the new
 		  static bound object
 		 */
-		static SharedPtr<StaticBoundObject> CreateDelegate(SharedBoundObject global, SharedBoundObject bo);
+		static SharedPtr<StaticBoundObject> CreateDelegate(SharedKObject global, SharedKObject bo);
 
 	private:
 		MethodDelegateType type;
-		SharedBoundObject global;
-		SharedBoundObject scope;
-		SharedBoundMethod delegate;
+		SharedKObject global;
+		SharedKObject scope;
+		SharedKMethod delegate;
 
 
 	private:

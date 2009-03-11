@@ -26,22 +26,31 @@ namespace kroll
 {
 	class ScopedDereferencer;
 	class Value;
-	class BoundObject;
+	class KObject;
+	class KMethod;
+	class KList;
+
 	class StaticBoundObject;
-	class BoundMethod;
 	class StaticBoundMethod;
-	class BoundList;
 	class StaticBoundList;
+
 	class DelegateStaticBoundObject;
 	class ScopeMethodDelegate;
 	class Blob;
 
 	class ValueReleasePolicy;
 
+	typedef KObject BoundObject;
+	typedef KMethod BoundMethod;
+	typedef KList BoundList;
+
 	typedef SharedPtr<Value, Poco::ReferenceCounter, ValueReleasePolicy> SharedValue;
-	typedef SharedPtr<BoundObject> SharedBoundObject;
-	typedef SharedPtr<BoundMethod> SharedBoundMethod;
-	typedef SharedPtr<BoundList> SharedBoundList;
+	typedef SharedPtr<KObject> SharedKObject;
+	typedef SharedPtr<KMethod> SharedKMethod;
+	typedef SharedPtr<KList> SharedKList;
+	typedef SharedPtr<KObject> SharedBoundObject;
+	typedef SharedPtr<KMethod> SharedBoundMethod;
+	typedef SharedPtr<KList> SharedBoundList;
 
 	typedef SharedPtr<std::string> SharedString;
 	typedef std::vector<SharedString> StringList;
@@ -52,7 +61,7 @@ namespace kroll
 	 *
 	 * This typdef is only used for argument lists. For
 	 * a list implementation to be used as a value in the
-	 * binding layer, take a look at BoundList and
+	 * binding layer, take a look at KList and
 	 * StaticBoundList.
 	 */
 	typedef std::vector<SharedValue> ValueList;

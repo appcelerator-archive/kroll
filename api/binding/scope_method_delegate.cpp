@@ -9,9 +9,9 @@
 using namespace kroll;
 
 ScopeMethodDelegate::ScopeMethodDelegate(MethodDelegateType type,
-                                         SharedBoundObject global,
-                                         SharedBoundObject scope,
-                                         SharedBoundMethod delegate) :
+                                         SharedKObject global,
+                                         SharedKObject scope,
+                                         SharedKMethod delegate) :
 	type(type), global(global), scope(scope), delegate(delegate)
 {
 }
@@ -73,13 +73,13 @@ SharedPtr<StaticBoundObject> ScopeMethodDelegate::CreateDelegate(SharedBoundObje
 
 		if (key == "set")
 		{
-			SharedBoundMethod d = new ScopeMethodDelegate(SET, global, scope, value->ToMethod());
+			SharedKMethod d = new ScopeMethodDelegate(SET, global, scope, value->ToMethod());
 			SharedValue v = Value::NewMethod(d);
 			scope->Set(key.c_str(), v);
 		}
 		else if (key == "get")
 		{
-			SharedBoundMethod d = new ScopeMethodDelegate(GET, global, scope, value->ToMethod());
+			SharedKMethod d = new ScopeMethodDelegate(GET, global, scope, value->ToMethod());
 			SharedValue v = Value::NewMethod(d);
 			scope->Set(key.c_str(), v);
 		}

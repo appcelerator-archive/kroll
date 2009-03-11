@@ -16,7 +16,7 @@ namespace kroll
 	/*
 		Class: StaticBoundObject
 	*/
-	class KROLL_API StaticBoundObject : public BoundObject
+	class KROLL_API StaticBoundObject : public KObject
 	{
 	public:
 		/*
@@ -71,7 +71,7 @@ namespace kroll
 		{
 			MethodCallback* callback = NewCallback<T, const ValueList&, SharedValue>(static_cast<T*>(this), method);
 
-			SharedBoundMethod bound_method = new StaticBoundMethod(callback);
+			SharedKMethod bound_method = new StaticBoundMethod(callback);
 			SharedValue method_value = Value::NewMethod(bound_method);
 			this->Set(name, method_value);
 		}

@@ -14,13 +14,13 @@
 namespace kroll
 {
 	/*
-		Class: BoundList
+		Class: KList
 	*/
-	class KROLL_API BoundList : public BoundObject
+	class KROLL_API KList : public KObject
 	{
 	public:
-		BoundList() {}
-		virtual ~BoundList(){}
+		KList() {}
+		virtual ~KList(){}
 
 		/*
 			Function: Append
@@ -96,7 +96,7 @@ namespace kroll
 		static char* IntToChars(unsigned int value);
 
 	private:
-		DISALLOW_EVIL_CONSTRUCTORS(BoundList);
+		DISALLOW_EVIL_CONSTRUCTORS(KList);
 	};
 }
 

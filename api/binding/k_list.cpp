@@ -11,12 +11,12 @@
 namespace kroll
 {
 
-	SharedString BoundList::DisplayString(int levels)
+	SharedString KList::DisplayString(int levels)
 	{
 		std::ostringstream oss;
 		if (levels == 0)
 		{
-			oss << "<BoundList at " << this << ">";
+			oss << "<KList at " << this << ">";
 		}
 		else
 		{
@@ -35,7 +35,7 @@ namespace kroll
 		return new std::string(oss.str());
 	}
 
-	char* BoundList::IntToChars(unsigned int value)
+	char* KList::IntToChars(unsigned int value)
 	{
 		int digits = 1;
 		if (value > 0)
@@ -46,7 +46,7 @@ namespace kroll
 		return buf;
 	}
 
-	bool BoundList::IsInt(const char* name)
+	bool KList::IsInt(const char* name)
 	{
 		for (size_t i = 0; i < strlen(name); i++)
 		{
