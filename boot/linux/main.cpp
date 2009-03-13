@@ -475,6 +475,9 @@ int prepare_environment(int argc, const char* argv[])
 		std::ostringstream ld_library_path;
 		ld_library_path << boot.rt_module->path << ":"
 		                 << module_list << ":" << prepath;
+#ifdef DEBUG
+		std::cout << "LD_LIBRARY_PATH=" << ld_library_path.str() << std::endl;
+#endif
 		setenv("LD_LIBRARY_PATH", ld_library_path.str().c_str(), 1);
 
 

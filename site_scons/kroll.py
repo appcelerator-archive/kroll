@@ -12,6 +12,9 @@ class Module(object):
 		self.version = version
 		self.build_dir = build_dir
 		self.build = build
+	
+	def __str__(self):
+		return self.build_dir
 
 	def copy_resources(self):
 		d = self.build.cwd(2)
@@ -73,7 +76,7 @@ class BuildConfig(object):
 		self.debug = False
 		self.os = None
 		self.arch = None # default x86 32-bit
-		self.modules = {}
+		self.modules = [] 
 		if not hasattr(os, 'uname') or self.matches('CYGWIN'):
 			self.os = 'win32'
 		elif self.matches('Darwin'):
@@ -184,10 +187,16 @@ class BuildConfig(object):
 	def is_osx(self): return self.os == 'osx'
 	def is_win32(self): return self.os == 'win32'
 
+	def get_module(self,name):
+		for module in self.modules:
+			if module.name == name:
+				return module
+		return None
+
 	def add_module(self, name, version):
 		build_dir = path.join(self.dir, 'modules', name)
 		m = Module(name, version, build_dir, self)
-		self.modules[name] = m
+		self.modules.append(m)
 		return m
 
 	def add_thirdparty(self, env, name, force_libs=False):
