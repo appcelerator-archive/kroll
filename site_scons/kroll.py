@@ -18,16 +18,14 @@ class Module(object):
 
 		resources = Glob(d + '/AppResources/all') \
 		           + Glob(d + '/AppResources/%s' % self.build.os) 
-
 		for r in resources:
 			r = path.abspath(str(r))
 			self.build.utils.CopyToDir(r, path.join(self.build_dir, 'AppResources'))
 
-		resources = Glob(d + '/Resources/all') \
-		           + Glob(d + '/Resources/%s' % self.build.os)
+		resources = Glob(d + '/Resources/all/*') \
+		           + Glob(d + '/Resources/%s/*' % self.build.os)
 		for r in resources:
-			r = path.abspath(str(r))
-			self.build.utils.CopyToDir(r, path.join(self.build_dir, 'Resources'))
+			self.build.utils.CopyToDir(path.abspath(str(r)), self.build_dir)
 
 class BuildUtils(object):
 	def __init__(self, env):
