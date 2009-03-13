@@ -47,7 +47,7 @@ namespace kroll
 		{
 			@try
 			{
-				NSEvent *event = [app nextEventMatchingMask:NSAnyEventMask untilDate:[NSDate distantPast] inMode:NSDefaultRunLoopMode dequeue:YES];
+				NSEvent *event = [app nextEventMatchingMask:NSAnyEventMask untilDate:[NSDate dateWithTimeIntervalSinceNow:10.0] inMode:NSDefaultRunLoopMode dequeue:YES];
 				if (event)
 				{
 					[app sendEvent:event];
