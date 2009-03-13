@@ -19,7 +19,7 @@ namespace kroll
 
 	SharedValue StaticBoundMethod::Call(const ValueList& args)
 	{
-		SharedValue tv = new Value();
+		SharedValue tv = Value::NewUndefined();
 		this->callback->Run(args, tv);
 		return tv;
 	}

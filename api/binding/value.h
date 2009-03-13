@@ -62,9 +62,9 @@ namespace kroll
 		/*
 			Constructor: Value
 
-		  construct an <UNDEFINED> type
+		  construct an UNDEFINED value object
 		 */
-		Value();
+		static SharedValue NewUndefined();
 
 		/*
 			Constructor: Value
@@ -128,17 +128,6 @@ namespace kroll
 			construct a <VOIDPTR> type
 		 */
 		static SharedValue NewVoidPtr(void *value);
-
-		/*
-			Constructor: Value
-		 */
-		Value(SharedValue value);
-		/*
-			Constructor: Value
-
-		  construct a copy constructor for an existing Value
-		 */
-		Value(const Value& value);
 
 		/**
 		 * destructor
@@ -425,6 +414,25 @@ namespace kroll
 		void *voidPtrValue;
 
 		void reset();
+
+		/*
+			Constructor: Value - is private so Value objects are always constructed with the factory methods
+
+		  construct an <UNDEFINED> type
+		 */
+		Value();
+
+		/*
+			Constructor: Value
+		 */
+		Value(SharedValue value);
+		/*
+			Constructor: Value
+
+		  construct a copy constructor for an existing Value
+		 */
+		Value(const Value& value);
+
 
 	};
 
