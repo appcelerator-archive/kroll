@@ -93,7 +93,7 @@ namespace kroll
 		SharedString DisplayString(int levels=3);
 
 		static bool IsInt(const char *name);
-		static char* IntToChars(unsigned int value);
+		static std::string IntToChars(unsigned int value);
 
 	private:
 		DISALLOW_EVIL_CONSTRUCTORS(KList);

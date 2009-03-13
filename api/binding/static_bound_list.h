@@ -84,7 +84,6 @@ namespace kroll
 		virtual SharedStringList GetPropertyNames();
 
 	protected:
-		static char* IntToChars(unsigned int value);
 		SharedPtr<StaticBoundObject> object;
 
 	private:

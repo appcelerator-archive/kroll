@@ -42,16 +42,14 @@ namespace kroll
 		{
 			if (c == index)
 			{
-				char* name = KList::IntToChars(c);
-				this->Set(name, Value::Undefined);
-				delete [] name;
+				std::string name = KList::IntToChars(c);
+				this->Set(name.c_str(), Value::Undefined);
 				found = true;
 			}
 			else
 			{
-				char* prop = KList::IntToChars(x);
-				this->Set(prop, this->At(c));
-				delete [] prop;
+				std::string prop = KList::IntToChars(x);
+				this->Set(prop.c_str(), this->At(c));
 				x++;
 			}
 		}
@@ -62,9 +60,8 @@ namespace kroll
 	void StaticBoundList::Append(SharedValue value)
 	{
 		int length = this->Size();
-		char* name = KList::IntToChars(length);
-		this->object->Set(name, value);
-		delete [] name;
+		std::string name = KList::IntToChars(length);
+		this->object->Set(name.c_str(), value);
 
 		SharedValue len = Value::NewInt(length+1);
 		this->object->Set("length", len);
@@ -85,9 +82,8 @@ namespace kroll
 
 	SharedValue StaticBoundList::At(unsigned int index)
 	{
-		char* name = KList::IntToChars(index);
-		SharedValue value = this->object->Get(name);
-		delete [] name;
+		std::string name = KList::IntToChars(index);
+		SharedValue value = this->object->Get(name.c_str());
 		return value;
 	}
 

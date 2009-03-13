@@ -35,15 +35,11 @@ namespace kroll
 		return new std::string(oss.str());
 	}
 
-	char* KList::IntToChars(unsigned int value)
+	std::string KList::IntToChars(unsigned int value)
 	{
-		int digits = 1;
-		if (value > 0)
-			digits += floor(log10((double) value));
-
-		char *buf = new char[digits + 1];
-		sprintf(buf, "%d", value);
-		return buf;
+		std::stringstream ss;
+		ss << value;
+		return ss.str();
 	}
 
 	bool KList::IsInt(const char* name)
