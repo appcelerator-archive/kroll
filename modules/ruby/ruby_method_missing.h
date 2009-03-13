@@ -9,7 +9,7 @@
 
 #include "ruby_module.h"
 
-class RubyMethodMissing : public BoundMethod {
+class RubyMethodMissing : public KMethod {
 public:
 	RubyMethodMissing(VALUE object, std::string& name);
 	virtual ~RubyMethodMissing();

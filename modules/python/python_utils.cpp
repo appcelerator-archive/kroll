@@ -414,7 +414,8 @@ namespace kroll
 		PyKObject *pyko = reinterpret_cast<PyKObject*>(o);
 		BoundList* klist = reinterpret_cast<BoundList*>(pyko->object->get());
 		SharedValue kv = PythonUtils::ToKrollValue(v);
-		klist->Set(BoundList::IntToChars(i), kv);
+		std::string name = KList::IntToChars(i);
+		klist->Set(name.c_str(), kv);
 		return 1;
 	}
 

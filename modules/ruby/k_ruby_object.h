@@ -11,7 +11,7 @@
 
 namespace kroll {
 
-class KRubyObject : public BoundObject {
+class KRubyObject : public KObject {
 public:
 	KRubyObject(VALUE object);
 	virtual ~KRubyObject();

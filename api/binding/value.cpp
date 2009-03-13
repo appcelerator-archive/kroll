@@ -59,6 +59,12 @@ namespace kroll
 		reset();
 	}
 
+	SharedValue Value::NewUndefined()
+	{
+		SharedValue v(new Value());
+		return v;
+	}
+
 	SharedValue Value::NewInt(int value)
 	{
 		SharedValue v(new Value());

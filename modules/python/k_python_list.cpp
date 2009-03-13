@@ -138,7 +138,7 @@ namespace kroll
 		property_names->push_back(new std::string("length"));
 		for (size_t i = 0; i < this->Size(); i++)
 		{
-			char* name = BoundList::IntToChars(i);
+			std::string name = BoundList::IntToChars(i);
 			property_names->push_back(new std::string(name));
 		}
 

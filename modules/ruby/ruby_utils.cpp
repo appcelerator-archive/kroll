@@ -29,15 +29,15 @@ namespace kroll
 
 	const char* RubyUtils::TypeToString (int type)
 	{
-	  switch (type) {
-	    case T_NIL: return "T_NIL";
-	    case T_STRING: return "T_STRING";
-	    case T_TRUE: return "T_TRUE";
-	    case T_FALSE: return "T_FALSE";
-	    case T_FIXNUM: return "T_FIXNUM";
-	    case T_FLOAT: return "T_FLOAT";
-	  }
-	  return "UNKNOWN??";
+		switch (type) {
+			case T_NIL: return "T_NIL";
+			case T_STRING: return "T_STRING";
+			case T_TRUE: return "T_TRUE";
+			case T_FALSE: return "T_FALSE";
+			case T_FIXNUM: return "T_FIXNUM";
+			case T_FLOAT: return "T_FLOAT";
+		}
+		return "UNKNOWN??";
 	}
 
 	const char * RubyUtils::ToString(VALUE value)
@@ -195,35 +195,14 @@ namespace kroll
 		return wrapper;
 	}
 
-	// adopted from http://metaeditor.sourceforge.net/embed/#id2841270
-	static void ThrowOnError(int error)
+	ValueException RubyUtils::GetException(int error)
 	{
-		printf("Ruby error[%d]\n", error);
+		if(error == 0)
+			return ValueException::FromString("Unknown");
 
-	    if(error == 0)
-	        return;
-
-	    VALUE lasterr = rb_gv_get("$!");
-
-	    // message
-	    VALUE message = rb_obj_as_string(lasterr);
-		const char *exception = RSTRING(message)->ptr;
-
-        std::ostringstream o;
-		o << "Exception: " << exception << "\n";
-	    // backtrace
-	    if(!NIL_P(ruby_errinfo)) {
-	        VALUE ary = rb_funcall(
-	            ruby_errinfo, rb_intern("backtrace"), 0);
-	        int c;
-	        for (c=0; c<RARRAY(ary)->len; c++) {
-	            o << "\tfrom " <<
-	                RSTRING(RARRAY(ary)->ptr[c])->ptr <<
-	                "\n";
-	        }
-			std::cerr << o.str() << std::endl;
-	    }
-	    throw ValueException::FromString(o.str());
+		VALUE e = rb_gv_get("$!");
+		SharedValue v = RubyUtils::ToKrollValue(e);
+		return ValueException(v);
 	}
 
 	static VALUE RubySafeFuncCall(VALUE args)
@@ -243,8 +222,8 @@ namespace kroll
 		VALUE result = rb_protect(RubySafeFuncCall, (VALUE)&args, &error);
 		if (error != 0)
 		{
-		    ThrowOnError(error);
-		    result = Qnil;
+			ValueException e = RubyUtils::GetException(error);
+			throw e;
 		}
 		return result;
 	}
@@ -333,36 +312,6 @@ namespace kroll
 		return Qnil;
 	}
 
-	class RubyEvaluator : public BoundMethod
-	{
-	public:
-		virtual SharedValue Call(const ValueList& args) {
-			if (args.size() == 3 && args[1]->IsString()) {
-
-				// strip the beginning so we have some sense of tab normalization
-				std::string code = args[1]->ToString();
-				SharedBoundObject context = args[2]->ToObject();
-				VALUE ruby_context = RubyUtils::ToRubyValue(args[2]);
-
-				rb_define_global_const("Window", ruby_context);
-
-				int state;
-				VALUE returnValue = rb_eval_string_protect(code.c_str(), &state);
-				if (returnValue == Qnil) {
-					ThrowOnError(state);
-					//FIXME - throw error message here
-					//throw Value::NewString("error evaluating ruby");
-				}
-			}
-			return Value::Null;
-		}
-
-		virtual void Set(const char *name, SharedValue value) {}
-		virtual SharedValue Get(const char *name) { return Value::Null; }
-		virtual SharedStringList GetPropertyNames() { return SharedStringList(); }
-	};
-
-	SharedBoundMethod RubyUtils::evaluator = SharedBoundMethod(new RubyEvaluator());
 	void RubyUtils::InitializeDefaultBindings(Host *host)
 	{
 		ruby_wrapper_class = rb_define_class("KRubyObject", rb_cObject);
@@ -377,35 +326,12 @@ namespace kroll
 		rb_define_method(ruby_wrapper_class, "method_defined?",
 			RUBY_METHOD_FUNC(KRubyObjectMethodDefined), -1);
 
-		// we bind the special module "api" to the global
-		// variable defined in PRODUCT_NAME to give the
-		// Python runtime access to it
-		SharedValue api = host->GetGlobalObject()->Get("API");
-		if (api->IsObject())
-		{
-			// we're going to clone the methods from api into our
-			// own python scoped object
-			//scope = ScopeMethodDelegate::CreateDelegate(host->GetGlobalObject(),api->ToObject());
-			scope = host->GetGlobalObject();
-
-			// convert our static global guy to a Ruby VALUE
-			// and then make it a global const
-			VALUE scope_value = Create(scope);
-
-			// Ruby global constants must be ALL UPPERCASE
-			rb_define_global_const(PRODUCT_NAME,scope_value);
-
-			// now bind our new scope to python module
-			SharedBoundObject rubyObject = new StaticBoundObject();
-			SharedValue scopeRef = Value::NewObject(rubyObject);
-			host->GetGlobalObject()->Set((const char*)"Ruby",scopeRef);
-			host->GetGlobalObject()->SetNS("Ruby.evaluate", Value::NewMethod(evaluator));
-			// don't release the scope
-		}
-		else
-		{
-			std::cerr << "! API module not bound, Ruby module will not work!" << std::endl;
-		}
+		//// now bind our new scope to python module
+		//SharedBoundObject rubyObject = new StaticBoundObject();
+		//SharedValue scopeRef = Value::NewObject(rubyObject);
+		//host->GetGlobalObject()->Set((const char*)"Ruby",scopeRef);
+		//host->GetGlobalObject()->SetNS("Ruby.evaluate", Value::NewMethod(evaluator));
+		//// don't release the scope
 	}
 }
 

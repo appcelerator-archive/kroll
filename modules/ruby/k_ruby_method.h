@@ -11,7 +11,7 @@
 
 namespace kroll {
 
-class KRubyMethod : public BoundMethod {
+class KRubyMethod : public KMethod {
 public:
 	KRubyMethod(VALUE method);
 	virtual ~KRubyMethod();
@@ -23,7 +23,7 @@ public:
 	VALUE ToRuby() { return method; }
 private:
 	VALUE method;
-	SharedBoundObject delegate;
+	SharedKObject delegate;
 };
 
 }

@@ -30,9 +30,10 @@ namespace kroll
 		static SharedBoundObject ToObject(VALUE value);
 		static SharedBoundMethod CreateMethodMissing(VALUE object, std::string& method_name);
 
+		static ValueException GetException(int);
+
 	private:
 		static SharedPtr<BoundObject> scope;
-		static SharedBoundMethod evaluator;
 
 		RubyUtils(){}
 		~RubyUtils(){}

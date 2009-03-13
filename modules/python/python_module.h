@@ -61,8 +61,9 @@ namespace kroll
 		}
 
 	private:
+		SharedKObject binding;
 		static PythonModule *instance_;
-        DISALLOW_EVIL_CONSTRUCTORS(PythonModule);
+		DISALLOW_EVIL_CONSTRUCTORS(PythonModule);
 	};
 }
 
