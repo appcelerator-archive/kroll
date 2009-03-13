@@ -72,30 +72,30 @@ namespace kroll
 
 	std::string RubyEvaluator::GetContextId(SharedKObject global)
 	{
-		int id = 0;
+		int theid = 0;
 		SharedValue idv = global->Get("__ruby_module_id__");
 		if (idv->IsUndefined())
 		{
-			id = this->next_id++;
-			global->Set("__ruby_module_id__", Value::NewInt(id));
+			theid = this->next_id++;
+			global->Set("__ruby_module_id__", Value::NewInt(theid));
 		}
 		else
 		{
-			id = idv->ToInt();
+			theid = idv->ToInt();
 		}
-		return std::string("$windowProc") + KList::IntToChars(id);
+		return std::string("$windowProc") + KList::IntToChars(theid);
 	}
 
 	VALUE RubyEvaluator::GetContext(SharedKObject global)
 	{
-		std::string id = this->GetContextId(global);
-		VALUE ctx = rb_gv_get(id.c_str());
+		std::string theid = this->GetContextId(global);
+		VALUE ctx = rb_gv_get(theid.c_str());
 		if (ctx == Qnil)
 		{
 			VALUE ctx_class = rb_define_class("KrollRubyContext", rb_cObject);
 			rb_define_method(ctx_class, "method_missing", VALUEFUNC(m_missing), -1); 
 			ctx = rb_obj_alloc(ctx_class);
-			rb_gv_set(id.c_str(), ctx);
+			rb_gv_set(theid.c_str(), ctx);
 		}
 		return ctx;
 	}
