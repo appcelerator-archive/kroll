@@ -14,13 +14,11 @@ namespace kroll
 
 	void PythonModule::Initialize()
 	{
-		KR_DUMP_LOCATION
-
 		PythonModule::instance_ = this;
 
-		//Py_SetProgramName(); //TODO: maybe we need to setup path to script?
+		//TODO: maybe we need to setup path to script?
 		Py_Initialize();
-
+		//Py_SetProgramName(); 
 		this->InitializeBinding();
 
 		host->AddModuleProvider(this);
@@ -28,24 +26,23 @@ namespace kroll
 
 	void PythonModule::Stop()
 	{
-		KR_DUMP_LOCATION
-
-		// clean up
-		Py_Finalize();
-
-		// FIXME - unregister / unbind?
+		SharedBoundObject global = this->host->GetGlobalObject();
+		global->Set("Python", Value::Undefined);
+		this->binding->Set("evaluate", Value::Undefined);
+		this->binding = NULL;
 		PythonModule::instance_ = NULL;
+
+		Py_Finalize();
 	}
 
 	void PythonModule::InitializeBinding()
 	{
 		SharedBoundObject global = this->host->GetGlobalObject();
-
-		SharedBoundObject binding = new StaticBoundObject();
-		global->Set("Python", Value::NewObject(binding));
+		this->binding = new StaticBoundObject();
+		global->Set("Python", Value::NewObject(this->binding));
 
 		SharedBoundMethod evaluator = new PythonEvaluator();
-		binding->Set("evaluate", Value::NewMethod(evaluator));
+		this->binding->Set("evaluate", Value::NewMethod(evaluator));
 
 		PyObject* main_module = PyImport_AddModule("__main__");
 		PyObject* main_dict = PyModule_GetDict(main_module);
