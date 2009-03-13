@@ -7,6 +7,6 @@ build.add_thirdparty(Env, 'poco')
 if build.is_osx():
 	Env.Append(LIBS=['kroll'])
 
-m = build.add_module('foo', '0.1')
+m = build.add_module('foo')
 Env.SharedLibrary(Env, m.build_dir + '/foomodule', Glob('*.cpp'))
 Env.SharedLibrary(Env, build.dir + '/foomodule', Glob('*.cpp'))

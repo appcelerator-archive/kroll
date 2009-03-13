@@ -1,5 +1,5 @@
 #!/usr/bin/env python
 Import('build')
 
-m = build.add_module('foojs', '0.1')
+m = build.add_module('foojs')
 build.utils.CopyTree(Glob('*.js'), m.build_dir)

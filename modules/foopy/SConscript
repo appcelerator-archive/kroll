@@ -3,5 +3,5 @@ import os, inspect, utils
 
 Import('build')
 
-m = build.add_module('foopy', '0.1')
+m = build.add_module('foopy')
 build.utils.CopyTree(Glob('*.py'), m.build_dir)

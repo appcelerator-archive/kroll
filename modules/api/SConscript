@@ -12,6 +12,6 @@ build.add_thirdparty(Env, 'poco')
 if build.is_osx() or build.is_win32():
 	Env.Append(LIBS=['kroll'])
 
-m = build.add_module('api', '0.1')
+m = build.add_module('api')
 Env.SharedLibrary(m.build_dir + '/apimodule', Glob('*.cpp'))
 Env.SharedLibrary(build.dir + '/apimodule', Glob('*.cpp'))

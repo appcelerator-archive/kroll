@@ -193,9 +193,10 @@ class BuildConfig(object):
 				return module
 		return None
 
-	def add_module(self, name, version):
-		build_dir = path.join(self.dir, 'modules', name)
-		m = Module(name, version, build_dir, self)
+	def add_module(self, name):
+		module_name = name.lower().replace('.','')
+		build_dir = path.join(self.dir, 'modules', module_name)
+		m = Module(module_name, self.version, build_dir, self)
 		self.modules.append(m)
 		return m
 
