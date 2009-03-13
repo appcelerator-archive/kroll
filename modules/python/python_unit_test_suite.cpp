@@ -30,7 +30,7 @@ namespace kroll
 		KR_ASSERT(PyString_Check(v4));
 		KR_ASSERT_STR(PyString_AsString(v4),"abc");
 
-		SharedValue tv5 = new Value();
+		SharedValue tv5 = Value::NewUndefined();
 		PyObject* v5 = PythonUtils::ToPyObject(tv5);
 		KR_ASSERT(Py_None==v5);
 
