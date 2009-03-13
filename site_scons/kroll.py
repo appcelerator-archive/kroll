@@ -13,8 +13,9 @@ class Module(object):
 	def __str__(self):
 		return self.build_dir
 
-	def copy_resources(self):
-		d = self.build.cwd(2)
+	def copy_resources(self, d=None):
+		if not d:
+			d = self.build.cwd(2)
 
 		resources = Glob(d + '/AppResources/all') \
 		           + Glob(d + '/AppResources/%s' % self.build.os) 
@@ -196,12 +197,19 @@ class BuildConfig(object):
 				return module
 		return None
 
-	def add_module(self, name, version=None):
-		if not version: version = self.version
+	def add_module(self, name, version=None, resources=True):
+		if not version:
+			version = self.version
+
 		name = name.lower().replace('.','')
 		build_dir = path.join(self.dir, 'modules', name)
 		m = Module(name, self.version, build_dir, self)
 		self.modules.append(m)
+
+		cwd = self.cwd(2)
+		if resources:
+			m.copy_resources(cwd)
+
 		return m
 
 	def generate_manifest(self, name, id, guid, excludes=None, includes=None):
