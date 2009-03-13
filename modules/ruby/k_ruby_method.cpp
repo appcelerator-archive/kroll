@@ -21,14 +21,25 @@ namespace kroll {
 
 	VALUE do_call(VALUE args)
 	{
-		VALUE method = rb_ary_shift(args);
-		VALUE rargs = rb_ary_shift(args);
-		return rb_apply(method, rb_intern("call"), rargs);
+		try
+		{
+			VALUE method = rb_ary_shift(args);
+			VALUE rargs = rb_ary_shift(args);
+			return rb_apply(method, rb_intern("call"), rargs);
+		}
+		catch (ValueException e)
+		{
+			SharedString ss = e.DisplayString();
+			std::cout << *ss << std::endl;
+			return RubyUtils::HideException(e);
+		}
 	}
 	VALUE handle_exception(VALUE args)
 	{
 		ValueException e = RubyUtils::GetException(1);
-		throw e;
+		SharedString ss = e.DisplayString();
+		std::cout << *ss << std::endl;
+		return RubyUtils::HideException(e);
 	}
 	SharedValue KRubyMethod::Call(const ValueList& args)
 	{
@@ -47,7 +58,14 @@ namespace kroll {
 		VALUE result = rb_rescue(
 			VALUEFUNC(do_call), do_call_args,
 			VALUEFUNC(handle_exception), do_call_args);
-		//VALUE result = rb_apply(method, rb_intern("call"), ruby_args);
+
+		SharedValue hidden_exception = RubyUtils::GetHiddenException(result);
+		if (!hidden_exception->IsUndefined())
+		{
+			ValueException e = ValueException(hidden_exception);
+			throw e;
+		}
+
 		return RubyUtils::ToKrollValue(result);
 	}
 

@@ -10,6 +10,7 @@
 #include <string>
 #import <Cocoa/Cocoa.h>
 #include "host.h"
+#include <signal.h>
 
 namespace kroll
 {
@@ -208,7 +209,6 @@ namespace kroll
 		return exception;
 	}
 }
-
 
 extern "C"
 {

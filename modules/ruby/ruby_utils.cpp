@@ -333,6 +333,23 @@ namespace kroll
 		//host->GetGlobalObject()->SetNS("Ruby.evaluate", Value::NewMethod(evaluator));
 		//// don't release the scope
 	}
+
+#define HIDDEN_EXCEPTION_ID rb_intern("@RBHIDDEN_EXCEPTION__")
+	VALUE RubyUtils::HideException(ValueException& e)
+	{
+		VALUE rex = RubyUtils::ToRubyValue(e.GetValue());
+		VALUE hidden_exception = rb_obj_alloc(rb_cObject);
+		rb_ivar_set(hidden_exception, HIDDEN_EXCEPTION_ID, rex);
+		return hidden_exception;
+	}
+
+	SharedValue RubyUtils::GetHiddenException(VALUE d)
+	{
+		if (TYPE(d) == T_DATA && rb_ivar_defined(d, HIDDEN_EXCEPTION_ID))
+		{
+			return RubyUtils::ToKrollValue(rb_ivar_get(d, HIDDEN_EXCEPTION_ID));
+		}
+		return Value::Undefined;
+	}
+
 }
-
-

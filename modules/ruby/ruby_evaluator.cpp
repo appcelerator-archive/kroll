@@ -24,29 +24,42 @@ namespace kroll
 	static SharedKObject global_object;
 	static VALUE m_missing(int argc, VALUE* argv, VALUE self)
 	{
+		bool assignment = false;
+
 		if (global_object.isNull())
 			return Qnil;
 
 		// store the method name and arguments in separate variables
 		VALUE method_name, args;
 		rb_scan_args(argc, argv, "1*", &method_name, &args);
+		char* name = strdup(rb_id2name(SYM2ID(method_name)));
 
-		const char* name = rb_id2name(SYM2ID(method_name));
-
-		// This is an assignment
+		// Check if this is an assignment
 		if (name[strlen(name) - 1] == '=')
 		{
-			char* chopped_name = strdup(name);
-			chopped_name[strlen(name) - 1] = '\0';
-			VALUE rval = rb_ary_entry(args, 0);
-			SharedValue val = RubyUtils::ToKrollValue(rval);
-			global_object->Set(chopped_name, val);
-			return rval;
+			name[strlen(name) - 1] = '\0';
+			assignment = true;
 		}
-
-		// This is an access
+		// If we can't find this property perhaps we should return
+		// the same property name except capitalized.
 		SharedValue v = global_object->Get(name);
-		if (v->IsMethod()) // It's a method, call it
+		if (v->IsUndefined())
+		{
+			name[0] = toupper(name[0]);
+			v = global_object->Get(name);
+		}
+		// Okay, maybe not
+		if (v->IsUndefined())
+			name[0] = tolower(name[0]);
+
+		VALUE rval;
+		if (assignment) // Assignment
+		{
+			rval = rb_ary_entry(args, 0);
+			SharedValue val = RubyUtils::ToKrollValue(rval);
+			global_object->Set(name, val);
+		}
+		if (v->IsMethod()) // Method call
 		{
 			try
 			{
@@ -58,16 +71,21 @@ namespace kroll
 					kargs.push_back(arg);
 				}
 				v = v->ToMethod()->Call(kargs);
+				rval = RubyUtils::ToRubyValue(v);
 			}
 			catch (ValueException& e)
 			{
+				free(name);
 				VALUE rex = RubyUtils::ToRubyValue(e.GetValue());
 				rb_raise(rex, "Kroll exception");
+				return Qnil;
 			}
 		}
-
-		VALUE rv = RubyUtils::ToRubyValue(v);
-		return rv;
+		else // Plain old access
+		{
+			rval = RubyUtils::ToRubyValue(v);
+		}
+		return rval;
 	}
 
 	std::string RubyEvaluator::GetContextId(SharedKObject global)
@@ -159,6 +177,7 @@ namespace kroll
 		if (global_object.isNull())
 			return;
 
+		printf("mapping emethods\n");
 		// Next copy all methods over -- they override variables
 		VALUE methods = rb_funcall(ctx, rb_intern("singleton_methods"), 0);
 		for (long i = 0; i < RARRAY(methods)->len; i++)

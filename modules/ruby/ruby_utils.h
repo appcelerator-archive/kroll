@@ -31,6 +31,8 @@ namespace kroll
 		static SharedBoundMethod CreateMethodMissing(VALUE object, std::string& method_name);
 
 		static ValueException GetException(int);
+		static VALUE HideException(ValueException&);
+		static SharedValue GetHiddenException(VALUE);
 
 	private:
 		static SharedPtr<BoundObject> scope;
