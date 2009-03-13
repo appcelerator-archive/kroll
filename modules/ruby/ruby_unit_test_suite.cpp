@@ -74,7 +74,7 @@ namespace kroll
 			SharedPtr<StaticBoundObject> value = new StaticBoundObject();
 			SharedValue blah = Value::NewString("bar");
 			value->Set("foo",blah);
-			SharedPtr<BoundObject> o = value;
+			SharedPtr<KObject> o = value;
 			VALUE rubyValue = RubyUtils::Create(o);
 			KR_ASSERT(rubyValue);
 
@@ -95,7 +95,7 @@ namespace kroll
 			KR_ASSERT_STR(RubyUtils::ToString(result),"blah");
 
 			// dynamically attach a new object with a method
-			SharedPtr<BoundObject> testClass = new TestClass;
+			SharedPtr<KObject> testClass = new TestClass;
 			SharedValue testValue = Value::NewObject(testClass);
 			value->Set("yoyo",testValue);
 
