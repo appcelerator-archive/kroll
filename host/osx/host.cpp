@@ -33,9 +33,9 @@ namespace kroll
 
 	bool OSXHost::Start()
 	{
-		Host::Start();
 		NSApplication *app = [NSApplication sharedApplication];
 		[app finishLaunching];
+		Host::Start();
 		return true;
 	}
 
@@ -57,15 +57,18 @@ namespace kroll
 			@catch(NSException *e)
 			{
 				std::cerr << "Caught NSException in main loop: " << [[e reason] UTF8String] << std::endl;
+				KrollDumpStackTraceFromException(e);
 			}
 		}
 		catch (std::exception &e)
 		{
 			std::cerr << "Caught exception in main loop: " << e.what() << std::endl;
+			KrollDumpStackTrace();
 		}
 		catch (...)
 		{
 			std::cerr << "Caught unhandled exception in main loop: " << std::endl;
+			KrollDumpStackTrace();
 		}
 		return true;
 	}

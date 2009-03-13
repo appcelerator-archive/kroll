@@ -113,6 +113,7 @@ class BuildConfig(object):
 			['_BOOT_UPDATESITE_ENVNAME', '${BOOT_UPDATESITE_ENVNAME}'],
 			['_BOOT_UPDATESITE_URL', '${BOOT_UPDATESITE_URL}']
 		])
+		self.version = kwargs['PRODUCT_VERSION']
 
 		self.dir = path.abspath(path.join(kwargs['BUILD_DIR'], self.os))
 		self.third_party = path.abspath(path.join(kwargs['THIRD_PARTY_DIR'],self.os))
@@ -149,12 +150,18 @@ class BuildConfig(object):
 			self.env.Append(CPPFLAGS=['-m64', '-Wall', '-Werror','-fno-common','-fvisibility=hidden'])
 			self.env.Append(LINKFLAGS=['-m64'])
 			self.env.Append(CPPDEFINES = ('OS_64', 1))
+			self.x64 = True
+			self.x32 = False
 		elif self.is_linux() or self.is_osx():
 			self.env.Append(CPPFLAGS=['-m32', '-Wall', '-fno-common','-fvisibility=hidden'])
 			self.env.Append(LINKFLAGS=['-m32'])
 			self.env.Append(CPPDEFINES = ('OS_32', 1))
+			self.x64 = False
+			self.x32 = True
 		else:
 			self.env.Append(CPPDEFINES = ('OS_32', 1))
+			self.x64 = False
+			self.x32 = True
 
 		if self.is_osx():
 			if ARGUMENTS.get('osx_10_4', 0):

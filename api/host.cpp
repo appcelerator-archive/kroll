@@ -391,14 +391,23 @@ namespace kroll
 			SharedString s = e.GetValue()->DisplayString();
 			std::cerr << "Error generated loading module ("
 			          << path << "): " << *s << std::endl;
+#ifdef OS_OSX
+			KrollDumpStackTrace();
+#endif
 		}
 		catch(std::exception &e)
 		{
 			std::cerr << "Error generated loading module (" << path <<"): " << e.what()<< std::endl;
+#ifdef OS_OSX
+			KrollDumpStackTrace();
+#endif
 		}
 		catch(...)
 		{
 			std::cerr << "Error generated loading module: " << path << std::endl;
+#ifdef OS_OSX
+			KrollDumpStackTrace();
+#endif
 		}
 
 		return module;

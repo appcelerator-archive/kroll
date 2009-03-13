@@ -546,6 +546,7 @@ namespace kroll
 
 	SharedValue KJSUtil::EvaluateFile(JSContextRef context, char *full_path)
 	{
+		PRINTD("Evaluating JS: " << full_path);
 		JSObjectRef global_object = JSContextGetGlobalObject(context);
 		Poco::FileInputStream* script_stream = new Poco::FileInputStream(full_path, std::ios::in);
 		std::string script_contents;
