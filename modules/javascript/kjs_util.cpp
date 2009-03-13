@@ -557,7 +557,7 @@ namespace kroll
 			script_contents.append(s + "\n");
 		}
 		script_stream->close();
-		std::cout << "evaluating file contents: " << script_contents << std::endl;
+		//std::cout << "evaluating file contents: " << script_contents << std::endl;
 
 		JSStringRef script = JSStringCreateWithUTF8CString(script_contents.c_str());
 		JSStringRef full_path_url = JSStringCreateWithUTF8CString(full_path);
