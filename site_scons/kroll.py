@@ -1,18 +1,15 @@
 import SCons.Variables
 import SCons.Environment
 from SCons.Script import *
-import os, os.path as path
-import re
-import utils
+import os, re, utils, types, os.path as path
 
 class Module(object):
-	script_exts = ['.js', '.rb', '.py']
 	def __init__(self, name, version, build_dir, build):
 		self.name = name
 		self.version = version
 		self.build_dir = build_dir
 		self.build = build
-	
+
 	def __str__(self):
 		return self.build_dir
 
@@ -57,19 +54,25 @@ class BuildUtils(object):
 		utils.SCopyToDir(self.env, *args, **kwargs)
 
 	def Copy(self, src, dest): 
-		self.env.Command(dest, src, Copy('$TARGET', '$SOURCE'))
+		return self.env.Command(dest, src, Copy('$TARGET', '$SOURCE'))
 
 	def Touch(self, file):
-		self.env.Command(file, [], Touch('$TARGET'))
+		return self.env.Command(file, [], Touch('$TARGET'))
 
 	def Delete(self, file):
-		self.env.Command(file, [], Delete('$TARGET'))
+		return self.env.Command(file, [], Delete('$TARGET'))
 
 	def Mkdir(self, file):
-		self.env.Command(file, [], Mkdir('$TARGET'))
+		return self.env.Command(file, [], Mkdir('$TARGET'))
 
 	def ReplaceVars(self, target, replacements):
 		self.env.AddPostAction(target, utils.ReplaceVarsAction(target, replacements))
+
+	def WriteStrings(self, target, strings):
+		if type(strings) != types.ListType:
+			strings = [str(strings)]
+		t = self.Touch(target)
+		self.env.AddPostAction(t, utils.WriteStringsAction(target, strings))
 
 class BuildConfig(object): 
 	def __init__(self, **kwargs):
@@ -181,28 +184,40 @@ class BuildConfig(object):
 			self.env.Append(LINKFLAGS=OSX_UNIV_LINKER)
 			self.env.Append(FRAMEWORKS=['Foundation'])
 			self.env.Append(CPPFLAGS=['-Wall', '-Werror','-fno-common','-fvisibility=hidden'])
-		
+
 	def matches(self, n): return bool(re.match(os.uname()[0], n))
 	def is_linux(self): return self.os == 'linux'
 	def is_osx(self): return self.os == 'osx'
 	def is_win32(self): return self.os == 'win32'
 
-	def get_module(self,name):
+	def get_module(self, name):
 		for module in self.modules:
 			if module.name == name:
 				return module
 		return None
 
-	def add_module(self, name):
-		module_name = name.lower().replace('.','')
-		build_dir = path.join(self.dir, 'modules', module_name)
-		m = Module(module_name, self.version, build_dir, self)
+	def add_module(self, name, version=None):
+		if not version: version = self.version
+		name = name.lower().replace('.','')
+		build_dir = path.join(self.dir, 'modules', name)
+		m = Module(name, self.version, build_dir, self)
 		self.modules.append(m)
 		return m
 
+	def generate_manifest(self, name, id, guid, excludes=None, includes=None):
+		manifest = "#appname: %s\n" % name
+		manifest += "#appid: %s\n" % id
+		manifest += "#guid: %s\n" % guid
+		manifest += "runtime: %s\n" % self.version
+		for m in self.modules:
+			if (includes and not(m.name in includes)) or \
+				(excludes and m.name in excludes):
+				continue
+			manifest += "%s:%s\n" % (m.name, m.version)
+		return manifest
+
 	def add_thirdparty(self, env, name, force_libs=False):
 		env.Append(CPPPATH=[self.thirdparty_libs[name][self.os]['cpp_path']])
-		#if force_libs or not self.is_linux():
 		env.Append(LIBPATH=[self.thirdparty_libs[name][self.os]['lib_path']])
 		env.Append(LIBS=[self.thirdparty_libs[name][self.os]['libs']])
 

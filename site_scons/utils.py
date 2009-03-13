@@ -133,3 +133,12 @@ def KReplaceVars(target, replacements):
 def KReplaceVarsStr(target, replacements):
     return 'KReplaceVars(%s, %s)' % (target, replacements)
 ReplaceVarsAction = SCons.Action.ActionFactory(KReplaceVars, KReplaceVarsStr)
+
+def KWriteStrings(target, strings):
+	out = open(target, 'w')
+	for part in strings: out.write(part)
+	out.close()
+
+def KWriteStringsStr(target, strings):
+    return 'KWriteStrings(%s, %s)' % (target, strings)
+WriteStringsAction = SCons.Action.ActionFactory(KWriteStrings, KWriteStringsStr)
