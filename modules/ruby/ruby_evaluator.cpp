@@ -72,18 +72,18 @@ namespace kroll
 
 	std::string RubyEvaluator::GetContextId(SharedKObject global)
 	{
-		int id = 0;
+		int cid = 0;
 		SharedValue idv = global->Get("__ruby_module_id__");
 		if (idv->IsUndefined())
 		{
-			id = this->next_id++;
-			global->Set("__ruby_module_id__", Value::NewInt(id));
+			cid = this->next_id++;
+			global->Set("__ruby_module_id__", Value::NewInt(cid));
 		}
 		else
 		{
-			id = idv->ToInt();
+			cid = idv->ToInt();
 		}
-		return std::string("$windowProc") + KList::IntToChars(id);
+		return std::string("$windowProc") + KList::IntToChars(cid);
 	}
 
 	VALUE RubyEvaluator::GetContext(SharedKObject global)
