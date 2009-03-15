@@ -1,41 +1,46 @@
+
 /**
  * Appcelerator Kroll - licensed under the Apache Public License 2
  * see LICENSE in the root folder for details on the license.
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
 
-#ifndef _K_PYTHON_LIST_H_
-#define _K_PYTHON_LIST_H_
+#ifndef _KR_BOUND_LIST_H_
+#define _KR_BOUND_LIST_H_
 
-#include "python_module.h"
+#include <string>
+#include <cctype>
 
 namespace kroll
 {
-	class KPythonList : public BoundList
+	/*
+		Class: KList
+	*/
+	class KROLL_API KList : public KObject
 	{
 	public:
-		KPythonList(PyObject *obj);
-		virtual ~KPythonList();
+		KList() {}
+		virtual ~KList() {}
 
 		/*
 		 * Function: Append
 		 *   Append a value to this list
 		 *   Errors will result in a thrown ValueException
 		 */
-		void Append(SharedValue value);
+		virtual void Append(SharedValue value) = 0;
 
 		/*
 		 * Function: Size
 		 *   Get the length of this list.
 		 */
-		unsigned int Size();
+		virtual unsigned int Size() = 0;
 
 		/*
 		 * Function: At
 		 *   Return the value at the given index.
 		 *   Errors will result in a thrown ValueException
 		 */
-		SharedValue At(unsigned int index);
+		virtual SharedValue At(unsigned int index) = 0;
 
 		/*
 		 * Function: SetAt
@@ -52,14 +57,14 @@ namespace kroll
 		 *   if found and removed. 
 		 *   Errors will result in a thrown ValueException
 		 */
-		bool Remove(unsigned int index);
+		virtual bool Remove(unsigned int index) = 0;
 
 		/*
 		 * Function: Set
 		 *   Set a property on this object to the given value
 		 *   Errors will result in a thrown ValueException
 		 */
-		void Set(const char *name, SharedValue value);
+		virtual void Set(const char *name, SharedValue value) = 0;
 
 		/*
 		 * Function: Get
@@ -67,21 +72,26 @@ namespace kroll
 		 *   if the property is not found.
 		 *   Errors will result in a thrown ValueException
 		 */
-		SharedValue Get(const char *name);
+		virtual SharedValue Get(const char *name) = 0;
 
 		/*
 		 * Function: GetPropertyNames
 		 * Returns: a list of this object's property names.
 		 */
-		SharedStringList GetPropertyNames();
+		virtual SharedStringList GetPropertyNames() = 0;
 
-		PyObject* ToPython();
+		/*
+		 * Function: DisplayString
+		 * Returns: a string representation of this object
+		 */
+		SharedString DisplayString(int levels=3);
 
-	protected:
-		PyObject *list;
-		SharedPtr<KPythonObject> object;
-		DISALLOW_EVIL_CONSTRUCTORS(KPythonList);
+		static bool IsInt(const char *name);
+		static std::string IntToChars(unsigned int value);
+
+	private:
+		DISALLOW_EVIL_CONSTRUCTORS(KList);
 	};
 }
-#endif
 
+#endif

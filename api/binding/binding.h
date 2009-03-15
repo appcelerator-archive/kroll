@@ -12,9 +12,9 @@
 #include "../kroll.h"
 
 #include "value.h"
-#include "k_object.h"
-#include "k_method.h"
-#include "k_list.h"
+#include "kobject.h"
+#include "kmethod.h"
+#include "klist.h"
 #include "static_bound_list.h"
 #include "static_bound_method.h"
 #include "static_bound_object.h"

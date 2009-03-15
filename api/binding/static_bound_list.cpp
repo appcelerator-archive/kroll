@@ -22,16 +22,26 @@ namespace kroll
 	{
 	}
 
-	SharedBoundList StaticBoundList::FromStringVector(std::vector<std::string>& values)
+	void StaticBoundList::Append(SharedValue value)
 	{
-		SharedKList l = new StaticBoundList();
-		std::vector<std::string>::iterator i = values.begin();
-		while (i != values.end())
+		int length = this->Size();
+		std::string name = KList::IntToChars(length);
+		this->object->Set(name.c_str(), value);
+
+		SharedValue len = Value::NewInt(length+1);
+		this->object->Set("length", len);
+	}
+
+	void SetAt(unsigned int index, SharedValue value)
+	{
+		while (index >= this->Size())
 		{
-			l->Append(Value::NewString(*i));
-			i++;
+			// now we need to create entries between current size
+			//  and new size and make the entries undefined.
+			this->Append(Value::Undefined);
 		}
-		return l;
+		std::string name = KList::IntToChars(index);
+		this->object->Set(name.c_str(), value);
 	}
 
 	bool StaticBoundList::Remove(unsigned int index)
@@ -57,15 +67,6 @@ namespace kroll
 		return found;
 	}
 
-	void StaticBoundList::Append(SharedValue value)
-	{
-		int length = this->Size();
-		std::string name = KList::IntToChars(length);
-		this->object->Set(name.c_str(), value);
-
-		SharedValue len = Value::NewInt(length+1);
-		this->object->Set("length", len);
-	}
 
 	unsigned int StaticBoundList::Size()
 	{
@@ -111,5 +112,18 @@ namespace kroll
 	{
 		return this->object->GetPropertyNames();
 	}
+
+	SharedBoundList StaticBoundList::FromStringVector(std::vector<std::string>& values)
+	{
+		SharedKList l = new StaticBoundList();
+		std::vector<std::string>::iterator i = values.begin();
+		while (i != values.end())
+		{
+			l->Append(Value::NewString(*i));
+			i++;
+		}
+		return l;
+	}
+
 }
 

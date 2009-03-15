@@ -11,6 +11,17 @@
 namespace kroll
 {
 
+	void SetAt(unsigned int index, SharedValue value)
+	{
+		while (index >= this->Size())
+		{
+			// now we need to create entries between current
+			// size and new size  and make the entries undefined.
+			this->Append(Value::Undefined);
+		}
+
+	}
+
 	SharedString KList::DisplayString(int levels)
 	{
 		std::ostringstream oss;

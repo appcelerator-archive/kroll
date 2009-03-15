@@ -23,52 +23,36 @@ namespace kroll
 			Constructor: KMethod
 		*/
 		KMethod() {}
-		virtual ~KMethod(){}
+		virtual ~KMethod() {}
 
 		/*
-			Function: Call
-
-		  invoke the bound method. the returned value is automatically
-		  reference counted and you must release the reference when finished
-		  with the return value (even for Undefined and Null types).
-		  When an error occurs will throw an exception of type Value*.
+		 * Function: Call
+		 *  Call this method with the given arguments.
+		 *  Errors will result in a thrown ValueException
 		 */
 		virtual SharedValue Call(const ValueList& args) = 0;
 
 		/*
-			Function: Set
-
-		  Set a property on this object to the given value. Value should be
-		  heap-allocated as implementors are allowed to keep a reference,
-		  if they increase the reference count.
-		  When an error occurs will throw an exception of type Value*.
+		 * Function: Set
+		 *   Set a property on this object to the given value
+		 *   Errors will result in a thrown ValueException
 		 */
 		virtual void Set(const char *name, SharedValue value) = 0;
 
 		/*
-			Function: Get
-
-		  return a named property. the returned value is automatically
-		  reference counted and you must release the reference when finished
-		  with the return value (even for Undefined and Null types).
-		  When an error occurs will throw an exception of type Value*.
+		 * Function: Get
+		 *   Return the property with the given name or Value::Undefined
+		 *   if the property is not found.
+		 *   Errors will result in a thrown ValueException
 		 */
 		virtual SharedValue Get(const char *name) = 0;
 
 		/*
-			Function: GetPropertyNames
-
-		  Return a list of this object's property names.
+		 * Function: GetPropertyNames
+		 * Returns: a list of this object's property names.
 		 */
 		virtual SharedStringList GetPropertyNames() = 0;
 
-
-		/*
-		* Function: Call
-		*
-		* Call the method with a variable list of Value* arguments
-		* When an error occurs will throw an exception of type Value*.
-		*/
 		SharedValue Call()
 		{
 			return this->Call(ValueList());

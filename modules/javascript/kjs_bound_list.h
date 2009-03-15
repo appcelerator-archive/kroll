@@ -26,6 +26,7 @@ namespace kroll
 		~KJSBoundList();
 
 		void Set(const char *name, SharedValue value);
+		void SetAt(unsigned int index, SharedValue value);
 		SharedValue Get(const char *name);
 		SharedStringList GetPropertyNames();
 		bool SameContextGroup(JSContextRef c);

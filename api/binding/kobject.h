@@ -22,80 +22,68 @@ namespace kroll
 		/*
 			Constructor: KObject
 		*/
-		KObject() { }
-		virtual ~KObject() { }
+		KObject() {}
+		virtual ~KObject() {}
 
 	public:
 		/*
-			Function: Set
-
-		  Set a property on this object to the given value. Value should be
-		  heap-allocated as implementors are allowed to keep a reference,
-		  if they increase the reference count.
-		  When an error occurs will throw an exception of type Value*.
+		 * Function: Set
+		 *   Set a property on this object to the given value
+		 *   Errors will result in a thrown ValueException
 		 */
 		virtual void Set(const char *name, SharedValue value) = 0;
 
 		/*
-			Function: Get
-
-		  Return an object's property. The returned value is automatically
-		  reference counted and must be released if the callee does not hold
-		  a reference (even for Undefined and Null types).
-		  When an error occurs will throw an exception of type Value*.
+		 * Function: Get
+		 *   Return the property with the given name or Value::Undefined
+		 *   if the property is not found.
+		 *   Errors will result in a thrown ValueException
 		 */
 		virtual SharedValue Get(const char *name) = 0;
 
 		/*
-			Function: GetPropertyNames
-
-		  Return a list of this object's property names.
+		 * Function: GetPropertyNames
+		 * Returns: a list of this object's property names.
 		 */
 		virtual SharedStringList GetPropertyNames() = 0;
 
+		/*
+		 * Function: DisplayString
+		 * Returns: a string representation of this object
+		 */
+		virtual SharedString DisplayString(int levels=3);
 
 		/* Function: Set
-
-			Helpful overload to Set which takes a SharedString
+		 *   Helpful overload to Set which takes a SharedString
 		 */
 		void Set(SharedString, SharedValue value);
 
 		/* Function: Get
-
-			Helpful overload to Get which takes a SharedString
+		 *   Helpful overload to Get which takes a SharedString
 		 */
 		SharedValue Get(SharedString);
 
 		/*
-			Function: SetNS
-
-			TODO: Document me
-		*/
+		 * Function: SetNS
+		 *   TODO: Document me
+		 */
 		void SetNS(const char *name, SharedValue value);
 
 		/*
-			Function: GetNS
-
-			TODO: Document me
-		*/
+		 * Function: GetNS
+		 *   TODO: Document me
+		 */
 		SharedValue GetNS(const char *name);
 
 		/*
-			Function: CallNS
-
-			invoke a fully qualified namespaced method passing arguments
+		 * Function: CallNS
+		 * Invoke a fully qualified namespaced method passing arguments
 		 */
 		SharedValue CallNS(const char *name, SharedValue val1);
 		SharedValue CallNS(const char *name, SharedValue val1, SharedValue val2);
 		SharedValue CallNS(const char *name, SharedValue val1, SharedValue val2, SharedValue val3);
 		SharedValue CallNS(const char *name, const ValueList& args);
 
-		/**
-		 * Function: DisplayString
-		 *
-		 * Return a string representation of this object
-		 */
-		virtual SharedString DisplayString(int levels=3);
 
 		/**
 		 * Function: GetString

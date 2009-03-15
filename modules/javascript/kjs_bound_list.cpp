@@ -42,41 +42,26 @@ namespace kroll
 		JSValueUnprotect(this->context, this->object);
 	}
 
-	SharedValue KJSBoundList::Get(const char *name)
+	unsigned int KJSBoundList::Size()
 	{
-		return kjs_bound_object->Get(name);
+		SharedValue length_val = this->kjs_bound_object->Get("length");
+		if (length_val->IsInt())
+			return (unsigned int) length_val->ToInt();
+		else
+			return 0;
 	}
 
-	void KJSBoundList::Set(const char *name, SharedValue value)
+	SharedValue KJSBoundList::At(unsigned int index)
 	{
-		return kjs_bound_object->Set(name, value);
-	}
-	
-	bool KJSBoundList::Remove(unsigned int index)
-	{
-		SharedValue value = this->At(index);
-		if (!value->IsUndefined())
-		{
-			SharedValue slice_method = this->kjs_bound_object->Get("slice");
-			slice_method->ToMethod()->Call(Value::NewInt(index),Value::NewInt(1));
-			return true;
-		}
-		return false;
+		std::string name = BoundList::IntToChars(index);
+		SharedValue value = this->kjs_bound_object->Get(name.c_str());
+		return value;
 	}
 
-	SharedStringList KJSBoundList::GetPropertyNames()
+	void KJSBoundList::SetAt(unsigned int index, SharedValue value)
 	{
-		 return kjs_bound_object->GetPropertyNames();
-	}
-
-	bool KJSBoundList::SameContextGroup(JSContextRef c)
-	{
-		return kjs_bound_object->SameContextGroup(c);
-	}
-
-	JSObjectRef KJSBoundList::GetJSObject()
-	{
-		return this->object;
+		std::string name = BoundList::IntToChars(index);
+		SharedValue value = this->kjs_bound_object->Set(name.c_str(), value);
 	}
 
 	void KJSBoundList::Append(SharedValue value)
@@ -95,24 +80,44 @@ namespace kroll
 		}
 	}
 
-	unsigned int KJSBoundList::Size()
+	bool KJSBoundList::Remove(unsigned int index)
 	{
-		SharedValue length_val = this->kjs_bound_object->Get("length");
-
-		if (length_val->IsInt())
+		SharedValue value = this->At(index);
+		if (!value->IsUndefined())
 		{
-			return (unsigned int) length_val->ToInt();
+			SharedValue slice_method = this->kjs_bound_object->Get("slice");
+			slice_method->ToMethod()->Call(Value::NewInt(index),Value::NewInt(1));
+			return true;
 		}
-		else
-		{
-			return 0;
-		}
+		return false;
 	}
 
-	SharedValue KJSBoundList::At(unsigned int index)
+
+	SharedValue KJSBoundList::Get(const char *name)
 	{
-		std::string name = BoundList::IntToChars(index);
-		SharedValue value = this->kjs_bound_object->Get(name.c_str());
-		return value;
+		return kjs_bound_object->Get(name);
 	}
+
+	void KJSBoundList::Set(const char *name, SharedValue value)
+	{
+		return kjs_bound_object->Set(name, value);
+	}
+
+	SharedStringList KJSBoundList::GetPropertyNames()
+	{
+		 return kjs_bound_object->GetPropertyNames();
+	}
+
+	bool KJSBoundList::SameContextGroup(JSContextRef c)
+	{
+		return kjs_bound_object->SameContextGroup(c);
+	}
+
+	JSObjectRef KJSBoundList::GetJSObject()
+	{
+		return this->object;
+	}
+
+
+
 }

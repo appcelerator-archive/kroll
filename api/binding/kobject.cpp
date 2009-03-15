@@ -131,30 +131,32 @@ namespace kroll
 
 	SharedString KObject::DisplayString(int levels)
 	{
-		std::ostringstream oss;
+		std::stringstream ss;
 
 		if (levels == 0)
 		{
-			oss << "<KObject at " << this << ">";
+			ss << "<KObject at " << this << ">";
 		}
 		else
 		{
 			SharedStringList props = this->GetPropertyNames();
-			oss << "{";
+			ss << "{";
 			for (size_t i = 0; i < props->size(); i++)
 			{
 				SharedValue prop = this->Get(props->at(i));
 				SharedString disp_string = prop->DisplayString(levels);
 
-				oss << " " << *(props->at(i))
+				ss << " " << *(props->at(i))
 				    << " : " << *disp_string << ",";
 			}
-			//int before_last_comma = oss.tellp() - 1;
-			//oss.seekp(before_last_comma);
-			oss << "}";
+
+			if (props->size() > 0) // Erase last comma
+				ss.seekp((int)ss.tellp() - 1);
+
+			ss << "}";
 		}
 
-		return new std::string(oss.str());
+		return new std::string(ss.str());
 	}
 
 	std::string KObject::GetString(const char * name, std::string defaultValue)
