@@ -61,7 +61,6 @@ namespace kroll {
 		ID get_ID = rb_intern(name);
 		ID mm_ID = rb_intern("method_missing");
 
-		//int error = 0;
 		VALUE ruby_value = Qnil;
 		if (rb_obj_respond_to(object, get_ID, Qtrue) == Qtrue)
 		{
