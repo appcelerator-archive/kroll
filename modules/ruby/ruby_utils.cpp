@@ -10,10 +10,6 @@
 #include <algorithm>
 #include <cctype>
 
-#include "k_ruby_object.h"
-#include "k_ruby_method.h"
-#include "ruby_method_missing.h"
-
 namespace kroll
 {
 	VALUE RubyUtils::kobj_class = Qnil;
@@ -140,27 +136,6 @@ namespace kroll
 		return Qnil;
 	}
 
-	// Override method_defined? to support reflection of
-	// methods to determine if they are defined on an object
-	static VALUE ruby_kobject_method_defined(int argc, VALUE *argv, VALUE self)
-	{
-		SharedValue* value = NULL;
-		Data_Get_Struct(self, SharedValue, value);
-		SharedKObject object = (*value)->ToObject();
-
-		// TODO: We should raise an exception instead
-		if (object.isNull() || argc < 1)
-		{
-			return Qfalse;
-		}
-		else
-		{
-			const char* method_name = rb_id2name(SYM2ID(argv[0]));
-			SharedValue methval = object->Get(method_name);
-			return methval->IsMethod() ? Qtrue : Qfalse;
-		}
-	}
-
 	static VALUE ruby_kobject_methods(VALUE self)
 	{
 		SharedValue* value = NULL;
@@ -271,8 +246,6 @@ namespace kroll
 			kobj_class = rb_define_class("RubyKObject", rb_cObject);
 			rb_define_method(kobj_class, "method_missing",
 				RUBY_METHOD_FUNC(ruby_kobject_method_missing), -1);
-			rb_define_method(kobj_class, "method_defined?",
-				RUBY_METHOD_FUNC(ruby_kobject_method_defined), -1);
 			rb_define_method(kobj_class, "methods",
 				RUBY_METHOD_FUNC(ruby_kobject_methods), 0);
 		}
@@ -290,8 +263,6 @@ namespace kroll
 			kmethod_class = rb_define_class("RubyKMethod", rb_cObject);
 			rb_define_method(kmethod_class, "method_missing",
 				RUBY_METHOD_FUNC(ruby_kobject_method_missing), -1);
-			rb_define_method(kmethod_class, "method_defined?",
-				RUBY_METHOD_FUNC(ruby_kobject_method_defined), -1);
 			rb_define_method(kmethod_class, "methods",
 				RUBY_METHOD_FUNC(ruby_kobject_methods), 0);
 			rb_define_method(kmethod_class, "call",
@@ -378,8 +349,6 @@ namespace kroll
 			klist_class = rb_define_class("RubyKMethod", rb_cObject);
 			rb_define_method(klist_class, "method_missing",
 				RUBY_METHOD_FUNC(ruby_kobject_method_missing), -1);
-			rb_define_method(klist_class, "method_defined?",
-				RUBY_METHOD_FUNC(ruby_kobject_method_defined), -1);
 			rb_define_method(klist_class, "methods",
 				RUBY_METHOD_FUNC(ruby_kobject_methods), 0);
 			rb_define_method(klist_class, "[]",
