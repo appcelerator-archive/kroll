@@ -26,7 +26,7 @@ namespace kroll
 
 	void RubyModule::Stop()
 	{
-		SharedBoundObject global = this->host->GetGlobalObject();
+		SharedKObject global = this->host->GetGlobalObject();
 		global->Set("Ruby", Value::Undefined);
 		this->binding->Set("evaluate", Value::Undefined);
 		this->binding = NULL;
@@ -37,20 +37,16 @@ namespace kroll
 
 	void RubyModule::InitializeBinding()
 	{
+		// Expose the Ruby evaluator into Kroll
 		SharedKObject global = this->host->GetGlobalObject();
 		this->binding = new StaticBoundObject();
 		global->Set("Ruby", Value::NewObject(binding));
 		SharedKMethod evaluator = new RubyEvaluator();
 		binding->Set("evaluate", Value::NewMethod(evaluator));
 
-		RubyUtils::InitializeDefaultBindings(host);
-
-		// Bind Titanium into namespace here
-		//PyObject* main_module = PyImport_AddModule("__main__");
-		//PyObject* main_dict = PyModule_GetDict(main_module);
-		//PyObject* api = PythonUtils::KObjectToPyObject(global);
-		//PyDict_SetItemString(main_dict, PRODUCT_NAME, api);
-		//Py_DECREF(api);
+		// Bind the API global constant
+		VALUE ruby_api_val = RubyUtils::KObjectToRubyValue(Value::NewObject(global));
+		rb_define_global_const(PRODUCT_NAME, ruby_api_val);
 	}
 
 

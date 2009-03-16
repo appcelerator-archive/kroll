@@ -328,14 +328,15 @@ namespace kroll
 		bool found_length = false;
 		for (size_t i = 0; i < props->size(); i++)
 		{
-			JSStringRef name = JSStringCreateWithUTF8CString(props->at(i)->c_str());
+			SharedString pn = props->at(i);
+			JSStringRef name = JSStringCreateWithUTF8CString(pn->c_str());
 			JSPropertyNameAccumulatorAddName(js_properties, name);
 			JSStringRelease(name);
-			if (strcmp(props->at(i)->c_str(), "length") == 0)
+			if (strcmp(pn->c_str(), "length") == 0)
 				found_length = true;
 		}
 
-		if (!found_length && value->IsList())
+		if (!found_length && (*value)->IsList())
 		{
 			JSStringRef name = JSStringCreateWithUTF8CString("length");
 			JSPropertyNameAccumulatorAddName(js_properties, name);
@@ -366,10 +367,9 @@ namespace kroll
 		}
 
 		// Fake the length property for lists
-		if (value->IsList() && strcmp(name, "length") == 0)
-		{
+		if ((*value)->IsList()
+			&& strcmp(name, "length") == 0)
 			return true;
-		}
 
 		return false;
 	}
@@ -395,7 +395,7 @@ namespace kroll
 			if ((*value)->IsList() &&
 				strcmp(name, "length") == 0 &&
 				ti_val->IsUndefined())
-				ti_val = Value::NewInt((*value)->IsList()->Size());
+				ti_val = Value::NewInt((*value)->ToList()->Size());
 
 			js_val = KJSUtil::ToJSValue(ti_val, js_context);
 		}

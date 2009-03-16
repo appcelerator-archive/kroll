@@ -26,7 +26,6 @@ namespace kroll
 		SharedValue Get(const char *name);
 		SharedStringList GetPropertyNames();
 		SharedString DisplayString(int);
-
 		VALUE ToRuby();
 
 	protected:

@@ -53,61 +53,26 @@ namespace kroll
 		 */
 		virtual SharedStringList GetPropertyNames() = 0;
 
-		SharedValue Call()
-		{
-			return this->Call(ValueList());
-		}
-		SharedValue Call(const char *one)
-		{
-			ValueList args;
-			args.push_back(Value::NewString(one));
-			return this->Call(args);
-		}
-		SharedValue Call(const char *one, SharedValue two)
-		{
-			ValueList args;
-			args.push_back(Value::NewString(one));
-			args.push_back(two);
-			return this->Call(args);
-		}
-		SharedValue Call(const char *one, SharedValue two, SharedValue three)
-		{
-			ValueList args;
-			args.push_back(Value::NewString(one));
-			args.push_back(two);
-			args.push_back(three);
-			return this->Call(args);
-		}
-		SharedValue Call(const char *one, SharedValue two, SharedValue three, SharedValue four)
-		{
-			ValueList args;
-			args.push_back(Value::NewString(one));
-			args.push_back(two);
-			args.push_back(three);
-			args.push_back(four);
-			return this->Call(args);
-		}
-		SharedValue Call(SharedValue one)
-		{
-			ValueList args;
-			args.push_back(one);
-			return this->Call(args);
-		}
-		SharedValue Call(SharedValue one, SharedValue two)
-		{
-			ValueList args;
-			args.push_back(one);
-			args.push_back(two);
-			return this->Call(args);
-		}
-		SharedValue Call(SharedValue one, SharedValue two, SharedValue three)
-		{
-			ValueList args;
-			args.push_back(one);
-			args.push_back(two);
-			args.push_back(three);
-			return this->Call(args);
-		}
+		/*
+		 * Function: DisplayString
+		 * Returns: a string representation of this object
+		 */
+		SharedString DisplayString(int levels);
+
+
+		/* Convenience methods below */
+		SharedValue Call(SharedValue one);
+		SharedValue Call(SharedValue one, SharedValue two);
+		SharedValue Call(SharedValue one, SharedValue two, SharedValue three);
+		SharedValue Call();
+		SharedValue Call(const char *one);
+		SharedValue Call(const char *one, SharedValue two);
+		SharedValue Call(const char *one, SharedValue two, SharedValue three);
+		SharedValue Call(
+			const char *one,
+			SharedValue two,
+			SharedValue three,
+			SharedValue four);
 
 	private:
 		DISALLOW_EVIL_CONSTRUCTORS(KMethod);

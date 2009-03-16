@@ -61,25 +61,7 @@ namespace kroll
 		}
 		if (v->IsMethod()) // Method call
 		{
-			try
-			{
-				ValueList kargs;
-				for (int i = 0; i < RARRAY(args)->len; i++)
-				{
-					VALUE rarg = rb_ary_entry(args, i);
-					SharedValue arg = RubyUtils::ToKrollValue(rarg);
-					kargs.push_back(arg);
-				}
-				v = v->ToMethod()->Call(kargs);
-				rval = RubyUtils::ToRubyValue(v);
-			}
-			catch (ValueException& e)
-			{
-				free(name);
-				VALUE rex = RubyUtils::ToRubyValue(e.GetValue());
-				rb_raise(rex, "Kroll exception");
-				return Qnil;
-			}
+			rval = RubyUtils::GenericKMethodCall(v->ToMethod(), args);
 		}
 		else // Plain old access
 		{
@@ -120,49 +102,36 @@ namespace kroll
 
 	VALUE reval_do_call(VALUE args)
 	{
+		// Don't use rb_obj_instance_eval here, as it will implicitly
+		// use any Ruby code block that was passed. See:
+		// http://banisterfiend.wordpress.com/2008/09/25/metaprogramming-in-the-ruby-c-api-part-one-blocks/
 		VALUE ctx = rb_ary_shift(args);
 		VALUE code = rb_ary_shift(args);
 		return rb_funcall(ctx, rb_intern("instance_eval"), 1, code);
 	}
-	VALUE reval_handle_exception(VALUE args)
-	{
-		ValueException e = RubyUtils::GetException(1);
-		SharedString ss = e.DisplayString();
-		std::cout << "An error occured while parsing "
-		          << "Ruby on the page: " << std::endl;
-		
-		std::cout << *ss << std::endl;
-		return Qnil;
-	}
+
 	SharedValue RubyEvaluator::Call(const ValueList& args)
 	{
-		try
+		if (args.size() != 3
+			|| !args.at(1)->IsString()
+			|| !args.at(2)->IsObject())
+			return Value::Undefined;
+		const char* code = args.at(1)->ToString();
+		global_object = args.at(2)->ToObject();
+		VALUE ctx = this->GetContext(global_object);
+
+		VALUE rargs = rb_ary_new();
+		rb_ary_push(rargs, ctx);
+		rb_ary_push(rargs, rb_str_new2(code));
+
+		int error;
+		VALUE result = rb_protect(reval_do_call, rargs, &error);
+		RubyEvaluator::ContextToGlobal(ctx, global_object);
+
+		if (error != 0)
 		{
-			if (args.size() != 3
-				|| !args.at(1)->IsString()
-				|| !args.at(2)->IsObject())
-				return Value::Undefined;
-			const char* code = args.at(1)->ToString();
-			global_object = args.at(2)->ToObject();
-			VALUE ctx = this->GetContext(global_object);
-
-			// Push new methods into the window global scope.
-			VALUE rargs = rb_ary_new();
-			rb_ary_push(rargs, ctx);
-			rb_ary_push(rargs, rb_str_new2(code));
-			VALUE ret_val = rb_rescue(
-				VALUEFUNC(reval_do_call), rargs,
-				VALUEFUNC(reval_handle_exception), rargs);
-
-			RubyEvaluator::ContextToGlobal(ctx, global_object);
-			return RubyUtils::ToKrollValue(ret_val);
-
-		}
-		catch (ValueException& e)
-		{
-			// While Ruby exceptions will be caputured by
-			// rb_rescue, exceptions from the Kroll layer
-			// will have to be caught here.
+			// TODO: Logging
+			ValueException e = RubyUtils::GetException();
 			SharedString ss = e.DisplayString();
 			std::cout << "An error occured while parsing "
 			          << "Ruby on the page: " << std::endl;
@@ -170,6 +139,8 @@ namespace kroll
 			std::cout << *ss << std::endl;
 			return Value::Undefined;
 		}
+
+		return RubyUtils::ToKrollValue(result);
 	}
 
 	void RubyEvaluator::ContextToGlobal(VALUE ctx, SharedKObject o)
@@ -177,7 +148,6 @@ namespace kroll
 		if (global_object.isNull())
 			return;
 
-		printf("mapping emethods\n");
 		// Next copy all methods over -- they override variables
 		VALUE methods = rb_funcall(ctx, rb_intern("singleton_methods"), 0);
 		for (long i = 0; i < RARRAY(methods)->len; i++)

@@ -7,8 +7,6 @@
 #ifndef _K_RUBY_OBJECT_H_
 #define _K_RUBY_OBJECT_H_
 
-#include "ruby_module.h"
-
 namespace kroll {
 
 class KRubyObject : public KObject {
@@ -19,8 +17,8 @@ public:
 	virtual void Set(const char *name, SharedValue value);
 	virtual SharedValue Get(const char *name);
 	virtual SharedStringList GetPropertyNames();
-
-	const VALUE ToRuby() { return object; }
+	virtual SharedString DisplayString(int);
+	VALUE ToRuby();
 
 private:
 	VALUE object;

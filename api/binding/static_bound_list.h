@@ -23,69 +23,66 @@ namespace kroll
 		static SharedBoundList FromStringVector(std::vector<std::string>&);
 
 		/*
-			Function: Append
-
-		  Append a value to this list. Value should be heap-allocated as
-		  implementors are allowed to keep a reference, if they increase the
-		  reference count.
-		  When an error occurs will throw an exception of type Value*.
+		 * Function: Append
+		 *   Append a value to this list
+		 *   Errors will result in a thrown ValueException
 		 */
 		virtual void Append(SharedValue value);
 
 		/*
-			Function: Size
-
-		  Get the length of this list.
+		 * Function: Size
+		 *   Get the length of this list.
 		 */
 		virtual unsigned int Size();
 
 		/*
-			Function: At
-
-		  When an error occurs will throw an exception of type Value*.
-		  Return the value at the given index. The value is automatically
-		  reference counted and must be released.
-		  When an error occurs will throw an exception of type Value*.
+		 * Function: At
+		 *   Return the value at the given index.
+		 *   Errors will result in a thrown ValueException
 		 */
 		virtual SharedValue At(unsigned int index);
 
 		/*
-			Function: Set
-
-		  Set a property on this object to the given value. Value should be
-		  heap-allocated as implementors are allowed to keep a reference,
-		  if they increase the reference count.
-		  When an error occurs will throw an exception of type Value*.
+		 * Function: Set
+		 *   Set a property on this object to the given value
+		 *   Errors will result in a thrown ValueException
 		 */
 		virtual void Set(const char *name, SharedValue value);
 
 		/*
-			Function: Get
-
-		  return a named property. the returned value is automatically
-		  reference counted and you must release the reference when finished
-		  with the return value (even for Undefined and Null types).
-		  When an error occurs will throw an exception of type Value*.
-		 */
-		virtual SharedValue Get(const char *name);
-
-		/*
-		    Function: Remove
-		    
-		    remove the entry at index and returns true if found and removed
+		 * Function: Remove
+		 *   Remove the list entry at the given index.
+		 *   Errors will result in a thrown ValueException
+		 * Returns: true if found and removed, false otherwise
 		 */
 		virtual bool Remove(unsigned int index);
 
 		/*
-			Function: GetPropertyNames
+		 * Function: SetAt
+		 *   Set the value at the given index. If the index is greater
+		 *   than the current list length, the list will be lengenthed
+		 *   by appending Value::Undefined;
+		 *   Errors will result in a thrown ValueException
+		 */
+		virtual void SetAt(unsigned int index, SharedValue value);
 
-		  Return a list of this object's property names.
+		/*
+		 * Function: Get
+		 *   Return the property with the given name or Value::Undefined
+		 *   if the property is not found.
+		 *   Errors will result in a thrown ValueException
+		 */
+		virtual SharedValue Get(const char *name);
+
+		/*
+		 * Function: GetPropertyNames
+		 * Returns: a list of this object's property names.
 		 */
 		virtual SharedStringList GetPropertyNames();
 
 	protected:
 		SharedPtr<StaticBoundObject> object;
-		int length;
+		unsigned int length;
 
 	private:
 		DISALLOW_EVIL_CONSTRUCTORS(StaticBoundList);

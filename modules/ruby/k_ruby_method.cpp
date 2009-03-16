@@ -4,13 +4,21 @@
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
 
-#include "k_ruby_method.h"
-#include "k_ruby_object.h"
+#include "ruby_module.h"
 
 namespace kroll {
 	KRubyMethod::KRubyMethod(VALUE method) :
 		method(method),
-		delegate(new KRubyObject(method))
+		arg(Qnil),
+		object(new KRubyObject(method))
+	{
+		rb_gc_register_address(&method);
+	}
+
+	KRubyMethod::KRubyMethod(VALUE method, VALUE arg) :
+		method(method),
+		arg(arg),
+		object(new KRubyObject(method))
 	{
 		rb_gc_register_address(&method);
 	}
@@ -21,48 +29,36 @@ namespace kroll {
 
 	VALUE do_call(VALUE args)
 	{
-		try
-		{
-			VALUE method = rb_ary_shift(args);
-			VALUE rargs = rb_ary_shift(args);
-			return rb_apply(method, rb_intern("call"), rargs);
-		}
-		catch (ValueException e)
-		{
-			SharedString ss = e.DisplayString();
-			std::cout << *ss << std::endl;
-			return RubyUtils::HideException(e);
-		}
+		VALUE method = rb_ary_shift(args);
+		VALUE rargs = rb_ary_shift(args);
+		return rb_apply(method, rb_intern("call"), rargs);
 	}
-	VALUE handle_exception(VALUE args)
-	{
-		ValueException e = RubyUtils::GetException(1);
-		SharedString ss = e.DisplayString();
-		std::cout << *ss << std::endl;
-		return RubyUtils::HideException(e);
-	}
+
 	SharedValue KRubyMethod::Call(const ValueList& args)
 	{
 		// Bloody hell, Ruby will segfault if we try to pass a number
 		// of args to a method that is greater than its arity
 		int arity = NUM2INT(rb_apply(method, rb_intern("arity"), rb_ary_new()));
 		VALUE ruby_args = rb_ary_new();
+
+		if (this->arg != Qnil)
+			rb_ary_push(ruby_args, this->arg);
+
 		for (size_t i = 0; i < args.size() && (int) i < arity; i++) {
 			rb_ary_push(ruby_args, RubyUtils::ToRubyValue(args[i]));
 		}
 
-		// TODO: Exception handling
+		int error;
 		VALUE do_call_args = rb_ary_new();
 		rb_ary_push(do_call_args, method);
 		rb_ary_push(do_call_args, ruby_args);
-		VALUE result = rb_rescue(
-			VALUEFUNC(do_call), do_call_args,
-			VALUEFUNC(handle_exception), do_call_args);
+		VALUE result = rb_protect(do_call, do_call_args, &error);
 
-		SharedValue hidden_exception = RubyUtils::GetHiddenException(result);
-		if (!hidden_exception->IsUndefined())
+		if (error != 0)
 		{
-			ValueException e = ValueException(hidden_exception);
+			ValueException e = RubyUtils::GetException();
+			SharedString ss = e.DisplayString();
+			std::cout << "Error: " << *ss << std::endl;
 			throw e;
 		}
 
@@ -71,16 +67,26 @@ namespace kroll {
 
 	void KRubyMethod::Set(const char *name, SharedValue value)
 	{
-		delegate->Set(name, value);
+		object->Set(name, value);
 	}
 
 	SharedValue KRubyMethod::Get(const char *name)
 	{
-		return delegate->Get(name);
+		return object->Get(name);
 	}
 
 	SharedStringList KRubyMethod::GetPropertyNames()
 	{
-		return delegate->GetPropertyNames();
+		return object->GetPropertyNames();
+	}
+
+	SharedString KRubyMethod::DisplayString(int levels)
+	{
+		return this->object->DisplayString(levels);
+	}
+
+	VALUE KRubyMethod::ToRuby()
+	{
+		return this->object->ToRuby();
 	}
 }

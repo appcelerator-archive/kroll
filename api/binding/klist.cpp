@@ -11,7 +11,7 @@
 namespace kroll
 {
 
-	void SetAt(unsigned int index, SharedValue value)
+	void KList::SetAt(unsigned int index, SharedValue value)
 	{
 		while (index >= this->Size())
 		{

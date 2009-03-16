@@ -55,7 +55,7 @@ namespace kroll
 		int index = -1; // Check for integer value as name
 		if (KList::IsInt(name) && ((index = atoi(name) >= 0)))
 		{
-			this->SetAt(index, name);
+			this->SetAt(index, value);
 		}
 		else
 		{
@@ -63,7 +63,7 @@ namespace kroll
 		}
 	}
 
-	void SetAt(unsigned int index, SharedValue value)
+	void KRubyList::SetAt(unsigned int index, SharedValue value)
 	{
 		VALUE rv = RubyUtils::ToRubyValue(value);
 

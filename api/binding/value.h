@@ -19,18 +19,17 @@ namespace kroll
 	public:
 
 		/*
-			Enum: Type
-
-			INT - Integer
-			DOUBLE - Double
-			BOOL - Boolean
-			STRING - String
-			LIST - <ValueList>
-			OBJECT - <KObject>
-			METHOD - <KMethod>
-			VOIDP - void * (used for raw types internally)
-			NULLV - Null
-			UNDEFINED - Undefined
+		 * Enum: Type
+		 * INT - Integer
+		 * DOUBLE - Double
+		 * BOOL - Boolean
+		 * STRING - String
+		 * LIST - <ValueList>
+		 * OBJECT - <KObject>
+		 * METHOD - <KMethod>
+		 * VOIDP - void * (used for raw types internally)
+		 * NULLV - Null
+		 * UNDEFINED - Undefined
 		 */
 		enum Type {
 			INT = 1,
@@ -46,85 +45,77 @@ namespace kroll
 		};
 
 		/*
-			Function: Undefined
-
-		  return a system-defined shared UNDEFINED type.
+		 * An undefined singleton
 		 */
 		static SharedValue Undefined;
 
 		/*
-			Function: Null
-
-		  return a system-defined shared NULL type.
+		 * A Null singleton
 		 */
 		static SharedValue Null;
 
 		/*
-			Constructor: Value
-
-		  construct an UNDEFINED value object
+		 * Function: NewUndefined
+		 * Create a new Value set to Undefined
 		 */
 		static SharedValue NewUndefined();
 
 		/*
-			Constructor: Value
+		 * Function: NewNull
+		 * Create a new Value set to Null
+		 */
+		static SharedValue NewNull();
 
-		  construct an <INT> type
+		/*
+		 * Constructor: Value
+		 * construct an <INT> type
 		 */
 		static SharedValue NewInt(int value);
 
 		/**
 			Constructor: Value
-
 		  construct a <DOUBLE> type
 		 */
 		static SharedValue NewDouble(double value);
 
 		/*
 			Constructor: Value
-
 		  construct a <BOOL> type
 		 */
 		static SharedValue NewBool(bool value);
 
 		/*
 			Constructor: Value
-
 		  construct a <STRING> type
 		 */
 		static SharedValue NewString(const char* value);
 
 		/*
 			Constructor: Value
-
 		  construct an <STRING> type
 		 */
 		static SharedValue NewString(std::string& value);
 
 		/*
 			Constructor: Value
-
 		  construct a <LIST> type
 		 */
 		static SharedValue NewList(SharedKList value);
 
 		/*
 			Constructor: Value
-
 		  construct an <OBJECT> type
 		 */
 		static SharedValue NewObject(SharedKObject value);
 
 		/*
 			Constructor: Value
-
 		  construct a <METHOD> type
 		 */
 		static SharedValue NewMethod(SharedKMethod value);
 
 		/*
 			Constructor: Value
-
 			construct a <VOIDPTR> type
 		 */
 		static SharedValue NewVoidPtr(void *value);
@@ -134,274 +125,222 @@ namespace kroll
 		 */
 		virtual ~Value();
 
-	protected:
-		static SharedValue CreateUndefined();
-		static SharedValue CreateNull();
-
 	public:
-
 		/*
-			Function: operator==
-		*/
+		 * Function: operator==
+		 */
 		bool operator== (Value);
 
 		/*
-			Function: IsInt
-
-		  return true if the internal value is an INT
+		 * Function: IsInt
+		 *   Return true if the internal value is an INT
 		 */
 		bool IsInt() const;
 
 		/*
-			Function: IsDouble
-
-		  return true if the internal value is a DOUBLE
+		 * Function: IsDouble
+		 *   Return true if the internal value is a DOUBLE
 		 */
 		bool IsDouble() const;
 
 		/*
-			Function: IsNumber
-
-		  return true if the internal value is an INT or a DOUBLE
+		 * Function: IsNumber
+		 *   Return true if the internal value is an INT or a DOUBLE
 		 */
 		bool IsNumber() const;
 
 		/*
-			Function: IsBool
-
-		  return true if the internal value is a BOOL
+		 * Function: IsBool
+		 *  Return true if the internal value is a BOOL
 		 */
 		bool IsBool() const;
 
 		/*
-			Function: IsString
-
-		  return true if the internal value is a STRING
+		 * Function: IsString
+		 *   Return true if the internal value is a STRING
 		 */
 		bool IsString() const;
 
 		/*
-			Function: IsList
-
-		  return true if the internal value is a LIST
+		 * Function: IsList
+		 *   Return true if the internal value is a LIST
 		 */
 		bool IsList() const;
 
 		/*
-			Function: IsObject
-
-		  return true if the internal value is a OBJECT
+		 * Function: IsObject
+		 *   Return true if the internal value is a OBJECT
 		 */
 		bool IsObject() const;
 
 		/*
-			Function: IsMethod
-
-		  return true if the internal value is a METHOD
+		 * Function: IsMethod
+		 *   Return true if the internal value is a METHOD
 		 */
 		bool IsMethod() const;
 
 		/*
-			Function: IsVoidPtr
-
-		  return true if the internal value is a VOIDPTR
+		 * Function: IsVoidPtr
+		 *   Return true if the internal value is a VOIDPTR
 		 */
 		bool IsVoidPtr() const;
 
 		/*
-			Function: IsNull
-
-		  return true if the internal value is a NULL
+		 * Function: IsNull
+		 *   Return true if the internal value is a NULL
 		 */
 		bool IsNull() const;
 
 		/*
-			Function: IsUndefined
-
-		  return true if the internal value is an UNDEFINED
+		 * Function: IsUndefined
+		 *   Return true if the internal value Undefined
 		 */
 		bool IsUndefined() const;
 
 		/*
-			Function: ToInt
-
-		  return the value as an int
+		 * Function: ToInt
+		 *   Return the value as an int
 		 */
 		int ToInt() const;
 
 		/*
-			Function: ToDouble
-
-		  return the value as a double
+		 * Function: ToDouble
+		 *   Return the value as a double
 		 */
 		double ToDouble() const;
 
 		/*
-			Function: ToNumber
-
-		  Return the value of a value as a double
-		  whether it is an int or a double.
+		 * Function: ToNumber
+		 *  Return the double value of a value when it is an int
+		 *  or a dobule.
 		 */
 		double ToNumber() const;
 
-
 		/*
-			Function: ToBool
-
-		  return the value as a bool
+		 * Function: ToBool
+		 *   Return the value as a bool
 		 */
 		bool ToBool() const;
 
 		/*
-			Function: ToString
-
-		  return the value as a const char*
+		 * Function: ToString
+		 *   Return the value as a const char*
 		 */
 		const char* ToString() const;
 
 		/*
-			Function: ToList
-
-		  return the value as a KList
+		 * Function: ToList
+		 *   Return the value as a SharedKList
 		 */
 		SharedKList ToList() const;
 
 		/*
-			Function: ToObject
-
-		  return the value as a KObject*
+		 * Function: ToObject
+		 *   Return the value as a SharedKObject
 		 */
 		SharedKObject ToObject() const;
 
 		/*
-			Function: ToMethod
-
-		  return the value as a KMethod*
+		 * Function: ToMethod
+		 *   Return the value as a SharedKMethod
 		 */
 		SharedKMethod ToMethod() const;
 
 		/*
-			Function: ToVoidPtr
-
-		  return the value as a void **
+		 * Function: ToVoidPtr
+		 *   Return the value as a void **
 		 */
 		void* ToVoidPtr() const;
 
 		/*
-			Function: ToTypeString
-
-		  return the type name of the internal value
+		 * Function: ToTypeString
+		 *   Create a string representation of this Value's type
 		 */
 		const char* ToTypeString();
 
 		/*
-			Function: StringRepr
-
-		  return a string representation of this value.
+		 * Function: DisplayString
+		 *   Create a string representation for this Value
 		*/
 		SharedString DisplayString(int levels=3);
 
 		/*
-			Function: Set
-
-		  changes the internal value of this instance.
-		  copy the internal value of other into this object.
-		  this instance will make a reference of the internal
-		  value of other but not other itself
+		 * Function: SetValue
+		 *   Change the internal value of this Value to match th
+		 *   one in the given Value, other.
 		 */
 		void SetValue(Value *other);
 
 		/*
-			Function: Set
-
-		  changes the internal value of this instance.
-		  copy the internal value of other into this object.
-		  this instance will make a reference of the internal
-		  value of other but not other itself
+		 * Function: SetValue
+		 *   Change the internal value of this Value to match th
+		 *   one in the given Value, other.
 		 */
 		void SetValue(SharedValue other);
 
 		/*
-			Function: Set
-
-		  change the internal value of this instance to value
+		 * Function: SetInt
+		 *   Change the internal value of this Value to the given int
 		 */
 		void SetInt(int value);
 
 		/*
-			Function: Set
-
-		  change the internal value of this instance to value
+		 * Function: SetDouble
+		 *   Change the internal value of this Value to the given double
 		 */
 		void SetDouble(double value);
 
 		/*
-			Function: Set
-
-		  change the internal value of this instance to value
+		 * Function: Set
+		 *   Change the internal value of this Value to the given bool
 		 */
 		void SetBool(bool value);
 
 		/*
-			Function: Set
-
-		  change the internal value of this instance to value
+		 * Function: Set
+		 *   Change the internal value of this Value to the given string
 		 */
 		void SetString(const char* value);
 
 		/*
-			Function: Set
-
-		  change the internal value of this instance to value
+		 * Function: Set
+		 *   Change the internal value of this Value to the given string
 		 */
-		void SetString(std::string& value) {
-			SetString(value.c_str());
-		}
-		/*
-			Function: Set
+		void SetString(std::string& value);
 
-		  change the internal value of this instance to value
+		/*
+		 * Function: Set
+		 *   Change the internal value of this Value to the given SharedKList
 		 */
 		void SetList(SharedKList value);
 
 		/*
-			Function: Set
-
-			change the internal value of this instance to value
-		 */
-		void SetStaticBoundObject(SharedPtr<StaticBoundObject> value);
-
-		/*
-			Function: Set
-
-		  change the internal value of this instance to value
+		 * Function: Set
+		 *   Change the internal value of this Value to the given SharedKObject
 		 */
 		void SetObject(SharedKObject value);
 
 		/**
-			Function: Set
-
-		  change the internal value of this instance to value
+		 * Function: Set
+		 *   Change the internal value of this Value to the given SharedKMethod
 		 */
 		void SetMethod(SharedKMethod value);
 
 		/*
-			Function: Set
-
-			change the internal value of this instance to value
+		 * Function: Set
+		 *   Change the internal value of this Value to the given void pointer
 		 */
 		void SetVoidPtr(void *value);
-		/*
-			Function: SetNull
 
-		  change the internal value of this instance to NULL
+		/*
+		 * Function: SetNull
+		 *   Change the internal value of this Value to Null
 		 */
 		void SetNull();
 
 		/*
-			Function: SetUndefined
-
-		  change the internal value of this instance to UNDEFINED
+		 * Function: SetUndefined
+		 *   Change the internal value of this Value to Undefined
 		 */
 		void SetUndefined();
 
@@ -416,24 +355,23 @@ namespace kroll
 		void reset();
 
 		/*
-			Constructor: Value - is private so Value objects are always constructed with the factory methods
-
-		  construct an <UNDEFINED> type
+		 * Constructor: Value
+		 *   the Value constructor is private to force the user of factory
+		 *   methods to create Values. The default state of a value is Undefined.
 		 */
 		Value();
 
 		/*
-			Constructor: Value
+		 * Constructor: Value
+		 *  Copy constructor
 		 */
 		Value(SharedValue value);
-		/*
-			Constructor: Value
 
-		  construct a copy constructor for an existing Value
+		/*
+		 * Constructor: Value
+		 *   Copy constructor
 		 */
 		Value(const Value& value);
-
-
 	};
 
 	class KROLL_API ValueReleasePolicy : public Poco::ReleasePolicy<Value> {

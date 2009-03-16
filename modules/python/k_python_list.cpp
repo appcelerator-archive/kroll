@@ -77,7 +77,7 @@ namespace kroll
 		}
 	}
 
-	void KPythonList::SetAt(unsigned long index, SharedValue value)
+	void KPythonList::SetAt(unsigned int index, SharedValue value)
 	{
 		while (index >= this->Size())
 		{

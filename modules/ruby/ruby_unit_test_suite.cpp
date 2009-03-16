@@ -28,7 +28,7 @@ namespace kroll
 			SharedValue value = Value::NewInt(1);
 			VALUE rubyValue = RubyUtils::ToRubyValue(value);
 			KR_ASSERT(rubyValue);
-			KR_ASSERT(1 == RubyUtils::ToInt(rubyValue));
+			KR_ASSERT(1 == NUM2INT(rubyValue));
 			//KR_DECREF(value);
 		}
 
@@ -37,7 +37,7 @@ namespace kroll
 			SharedValue value = Value::NewDouble(1.0);
 			VALUE rubyValue = RubyUtils::ToRubyValue(value);
 			KR_ASSERT(rubyValue);
-			KR_ASSERT(1.0 == RubyUtils::ToDouble(rubyValue));
+			KR_ASSERT(1.0 == NUM2DBL(rubyValue));
 			//KR_DECREF(value);
 		}
 
@@ -46,7 +46,7 @@ namespace kroll
 			SharedValue value = Value::NewBool(true);
 			VALUE rubyValue = RubyUtils::ToRubyValue(value);
 			KR_ASSERT(rubyValue);
-			KR_ASSERT(true == RubyUtils::ToBool(rubyValue));
+			KR_ASSERT(TYPE(rubyValue) == T_TRUE);
 			//KR_DECREF(value);
 		}
 
@@ -55,7 +55,7 @@ namespace kroll
 			SharedValue value = Value::NewBool(false);
 			VALUE rubyValue = RubyUtils::ToRubyValue(value);
 			KR_ASSERT(!rubyValue);
-			KR_ASSERT(false == RubyUtils::ToBool(rubyValue));
+			KR_ASSERT(TYPE(rubyValue) == T_FALSE);
 			//KR_DECREF(value);
 		}
 
@@ -74,8 +74,7 @@ namespace kroll
 			SharedPtr<StaticBoundObject> value = new StaticBoundObject();
 			SharedValue blah = Value::NewString("bar");
 			value->Set("foo",blah);
-			SharedPtr<KObject> o = value;
-			VALUE rubyValue = RubyUtils::Create(o);
+			VALUE rubyValue = RubyUtils::KObjectToRubyValue(Value::NewObject(value));
 			KR_ASSERT(rubyValue);
 
 			// simply define as global so we can use it
@@ -121,12 +120,12 @@ namespace kroll
 			// test to see if our method is defined
 			result = rb_eval_string("$jeff.yoyo.method_defined? :test");
 			KR_ASSERT(result);
-			KR_ASSERT(RubyUtils::ToBool(result));
+			KR_ASSERT(TYPE(result)==T_TRUE);
 
 			// test to see if a non-existant method is not defined
 			result = rb_eval_string("$jeff.yoyo.method_defined? :xbar");
 			KR_ASSERT(!result);
-			KR_ASSERT(!RubyUtils::ToBool(result));
+			KR_ASSERT(TYPE(result)==T_FALSE);
 
 			/*KR_DECREF(vr);
 			KR_DECREF(testValue);

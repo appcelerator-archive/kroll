@@ -14,29 +14,20 @@ namespace kroll
 	class RubyUtils
 	{
 	public:
-		static void InitializeDefaultBindings(Host *host);
-
-		static const char* TypeToString (int type);
-		static VALUE Create(SharedPtr<BoundObject> value);
-		static VALUE Create(SharedPtr<BoundList> list);
-		static const char * ToString(VALUE value);
-		static bool ToBool(VALUE value);
-		static int ToInt(VALUE value);
-		static double ToDouble(VALUE value);
 		static SharedValue ToKrollValue(VALUE value);
 		static VALUE ToRubyValue(SharedValue value);
-		static const char * ToUpper (const char *s);
-		static SharedBoundMethod ToMethod(VALUE value);
-		static SharedBoundObject ToObject(VALUE value);
-		static SharedBoundMethod CreateMethodMissing(VALUE object, std::string& method_name);
+		static VALUE KObjectToRubyValue(SharedValue value);
+		static VALUE KMethodToRubyValue(SharedValue value);
+		static VALUE KListToRubyValue(SharedValue value);
+		static const char* ToString(VALUE value);
 
-		static ValueException GetException(int);
-		static VALUE HideException(ValueException&);
-		static SharedValue GetHiddenException(VALUE);
+		static ValueException GetException();
+		static VALUE GenericKMethodCall(SharedKMethod method, VALUE args);
 
 	private:
-		static SharedPtr<BoundObject> scope;
-
+		static VALUE kobj_class;
+		static VALUE kmethod_class;
+		static VALUE klist_class;
 		RubyUtils(){}
 		~RubyUtils(){}
 	};

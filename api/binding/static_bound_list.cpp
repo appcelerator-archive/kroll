@@ -28,7 +28,7 @@ namespace kroll
 		this->length++;
 	}
 
-	void SetAt(unsigned int index, SharedValue value)
+	void StaticBoundList::SetAt(unsigned int index, SharedValue value)
 	{
 		std::string name = KList::IntToChars(index);
 		this->object->Set(name.c_str(), value);
@@ -41,8 +41,8 @@ namespace kroll
 		if (index < this->length)
 		{
 			std::string name = KList::IntToChars(index);
-			this->UnSet(name);
-			for (int i = index; i + 1 < this->length; i++)
+			this->object->UnSet(name.c_str());
+			for (unsigned int i = index; i + 1 < this->length; i++)
 				this->SetAt(i, this->At(i + 1));
 
 			this->length--;

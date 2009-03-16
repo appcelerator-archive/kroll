@@ -61,7 +61,7 @@ namespace kroll
 	void KJSBoundList::SetAt(unsigned int index, SharedValue value)
 	{
 		std::string name = BoundList::IntToChars(index);
-		SharedValue value = this->kjs_bound_object->Set(name.c_str(), value);
+		this->kjs_bound_object->Set(name.c_str(), value);
 	}
 
 	void KJSBoundList::Append(SharedValue value)

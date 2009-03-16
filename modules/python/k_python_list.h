@@ -44,7 +44,7 @@ namespace kroll
 		 *   by appending Value::Undefined;
 		 *   Errors will result in a thrown ValueException
 		 */
-		virtual void SetAt(unsigned int index, SharedValue value) = 0;
+		virtual void SetAt(unsigned int index, SharedValue value);
 
 		/*
 		 * Function: Remove

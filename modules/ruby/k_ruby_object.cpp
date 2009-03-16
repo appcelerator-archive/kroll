@@ -4,7 +4,7 @@
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
 
-#include "k_ruby_object.h"
+#include "ruby_module.h"
 
 namespace kroll {
 
@@ -19,54 +19,99 @@ namespace kroll {
 		rb_gc_unregister_address(&object);
 	}
 
+	VALUE kobj_do_method_missing_call(VALUE args)
+	{
+		VALUE object = rb_ary_shift(args);
+		return rb_apply(object, rb_intern("method_missing"), args);
+	}
+
 	void KRubyObject::Set(const char *name, SharedValue value)
 	{
-		VALUE rubyValue = RubyUtils::ToRubyValue(value);
-		std::string instance_name = "@";
-		instance_name += name;
+		VALUE ruby_value = RubyUtils::ToRubyValue(value);
+		std::string setter_name = std::string(name) + "=";
+		ID set_ID = rb_intern(setter_name.c_str());
 
-		rb_iv_set(object, instance_name.c_str(), rubyValue);
+		int error = 0;
+		if (rb_obj_respond_to(object, set_ID, Qtrue) == Qtrue)
+		{
+			rb_funcall(object, set_ID, 1, ruby_value);
+		}
+		else
+		{
+			// First try calling method missing
+			VALUE rargs = rb_ary_new();
+			rb_ary_push(rargs, object);
+			rb_ary_push(rargs, rb_str_new2(name));
+			rb_ary_push(rargs, ruby_value);
+			rb_protect(kobj_do_method_missing_call, rargs, &error);
+		}
+
+		// Last resort: set an instance variable
+		if (error != 0)
+		{
+			std::string iv_name = std::string("@") + name;
+			rb_iv_set(object, iv_name.c_str(), ruby_value);
+		}
 	}
 
 	SharedValue KRubyObject::Get(const char *name)
 	{
-		std::string method_name = name;
-		std::string instance_name = "@" ;
-		instance_name += method_name;
+		std::string iv_name = std::string("@") + name;
+		ID iv_ID = rb_intern(iv_name.c_str());
+		ID get_ID = rb_intern(name);
+		ID mm_ID = rb_intern("method_missing");
 
-		ID varID = rb_intern(instance_name.c_str());
-		ID methodID = rb_intern(name);
-
-		if (rb_ivar_defined(object, varID) == Qtrue) {
-			return RubyUtils::ToKrollValue(rb_iv_get(object, instance_name.c_str()));
-		}
-
-		if (rb_funcall(object, rb_intern("respond_to?"), 1, ID2SYM(methodID)) == Qtrue)
+		int error = 0;
+		VALUE ruby_value = Qnil;
+		if (rb_obj_respond_to(object, get_ID, Qtrue) == Qtrue)
 		{
-			VALUE method = rb_funcall(object, rb_intern("method"), 1, ID2SYM(methodID));
-			SharedBoundMethod bound_method = RubyUtils::ToMethod(method);
-			return Value::NewMethod(bound_method);
+			VALUE rmeth = rb_funcall(object, rb_intern("method"), 1, ID2SYM(get_ID));
+			ruby_value = rb_funcall(object, get_ID, 1, ruby_value);
+		}
+		else if (rb_ivar_defined(object, iv_ID))
+		{
+			ruby_value = rb_ivar_get(object, iv_ID);
+		}
+		else if (rb_obj_respond_to(object, mm_ID, Qtrue) == Qtrue)
+		{
+			// If this object has a method_missing, return that
+			VALUE rmeth = rb_funcall(object, mm_ID, 1, ID2SYM(get_ID));
+			return Value::NewMethod(new KRubyMethod(rmeth, get_ID));
 		}
 
-		SharedBoundMethod missing = RubyUtils::CreateMethodMissing(object, method_name);
-		return Value::NewMethod(missing);
+		return RubyUtils::ToKrollValue(ruby_value);
 	}
 
+	SharedString KRubyObject::DisplayString(int levels)
+	{
+		VALUE out = rb_obj_as_string(object);
+		return new std::string(RubyUtils::ToString(out));
+	}
 
 	SharedStringList KRubyObject::GetPropertyNames()
 	{
-		VALUE instance_variables = rb_obj_instance_variables(rb_obj_class(object));
-		VALUE lengthValue = rb_funcall(instance_variables, rb_intern("length"), 0);
-		int length = RubyUtils::ToInt(lengthValue);
-
-		SharedStringList property_names(new StringList());
-
-		for (int i = 0; i < length; i++)
+		SharedStringList names(new StringList());
+		VALUE vars = rb_obj_instance_variables(rb_obj_class(object));
+		for (int i = 0; i < RARRAY(vars)->len; i++)
 		{
-			VALUE property = rb_funcall(instance_variables, rb_intern("at"), 1, RubyUtils::ToInt(i));
-			property_names->push_back(new std::string(RubyUtils::ToString(property)));
+			VALUE prop_name = rb_ary_entry(vars, i);
+			std::string name = RubyUtils::ToString(prop_name);
+			names->push_back(new std::string(name));
 		}
 
-		return property_names;
+		VALUE methods = rb_funcall(object, rb_intern("methods"), 0);
+		for (int i = 0; i < RARRAY(vars)->len; i++)
+		{
+			VALUE meth_name = rb_ary_entry(methods, i);
+			std::string name = RubyUtils::ToString(meth_name);
+			names->push_back(new std::string(name));
+		}
+
+		return names;
+	}
+
+	VALUE KRubyObject::ToRuby()
+	{
+		return this->object;
 	}
 }

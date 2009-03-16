@@ -25,31 +25,30 @@ namespace kroll
 		this->voidPtrValue = NULL;
 	}
 
-	Value::Value()
-	 : type(UNDEFINED),
-	   numberValue(0),
-	   stringValue(NULL),
-	   objectValue(NULL),
-	   voidPtrValue(NULL)
+	Value::Value() :
+		type(UNDEFINED),
+		numberValue(0),
+		stringValue(NULL),
+		objectValue(NULL),
+		voidPtrValue(NULL)
 	{
 	}
 
-	Value::Value(SharedValue value)
-	 : type(UNDEFINED),
-	   numberValue(0),
-	   stringValue(NULL),
-	   objectValue(NULL),
-	   voidPtrValue(NULL)
+	Value::Value(SharedValue value) :
+		type(UNDEFINED),
+		numberValue(0),
+		stringValue(NULL),
+		objectValue(NULL),
+		voidPtrValue(NULL)
 	{
 		this->SetValue(value);
 	}
 
-	Value::Value(const Value& value)
-	 : type(UNDEFINED),
-	   numberValue(0),
-	   stringValue(NULL),
-	   objectValue(NULL),
-	   voidPtrValue(NULL)
+	Value::Value(const Value& value) : type(UNDEFINED),
+		numberValue(0),
+		stringValue(NULL),
+		objectValue(NULL),
+		voidPtrValue(NULL)
 	{
 		this->SetValue((Value*) &value);
 	}
@@ -62,6 +61,13 @@ namespace kroll
 	SharedValue Value::NewUndefined()
 	{
 		SharedValue v(new Value());
+		return v;
+	}
+
+	SharedValue Value::NewNull()
+	{
+		SharedValue v(new Value());
+		v->SetNull();
 		return v;
 	}
 
@@ -128,23 +134,8 @@ namespace kroll
 		return v;
 	}
 
-	SharedValue Value::Undefined = CreateUndefined();
-	SharedValue Value::Null = CreateNull();
-
-	SharedValue Value::CreateUndefined()
-	{
-		SharedValue v = new Value();
-		v->SetUndefined();
-		return v;
-	}
-
-	SharedValue Value::CreateNull()
-	{
-		SharedValue v = new Value();
-		v->SetNull();
-		return v;
-	}
-
+	SharedValue Value::Undefined = NewUndefined();
+	SharedValue Value::Null = NewNull();
 
 	bool Value::IsInt() const { return type == INT || (type == DOUBLE && ((int) numberValue) == numberValue); }
 	bool Value::IsDouble() const { return type == DOUBLE; }
@@ -237,6 +228,11 @@ namespace kroll
 		type = STRING;
 	}
 
+	void Value::SetString(std::string& value)
+	{
+		this->SetString(value.c_str());
+	}
+
 	void Value::SetList(SharedKList value)
 	{
 		reset();
@@ -249,13 +245,6 @@ namespace kroll
 		reset();
 		this->objectValue = value;
 		this->type = OBJECT;
-	}
-
-	void Value::SetStaticBoundObject(SharedPtr<StaticBoundObject> value)
-	{
-		reset();
-		this->objectValue = value;
-		type = OBJECT;
 	}
 
 	void Value::SetMethod(SharedKMethod value)
@@ -357,16 +346,17 @@ namespace kroll
 			SharedString disp_string = list->DisplayString(levels-1);
 			oss << *disp_string;
 		}
+		else if (this->IsMethod())
+		{
+			SharedKMethod meth = this->ToMethod();
+			SharedString disp_string = meth->DisplayString(levels-1);
+			oss << *disp_string;
+		}
 		else if (this->IsObject())
 		{
 			SharedKObject obj = this->ToObject();
 			SharedString disp_string = obj->DisplayString(levels-1);
 			oss << *disp_string;
-		}
-		else if (this->IsMethod())
-		{
-			SharedKMethod method = this->ToMethod();
-			oss << "<KMethod at " << method << ">";
 		}
 		else if (this->IsVoidPtr())
 		{
