@@ -325,9 +325,19 @@ namespace kroll
 
 		SharedBoundObject object = (*value)->ToObject();
 		SharedStringList props = object->GetPropertyNames();
+		bool found_length = false;
 		for (size_t i = 0; i < props->size(); i++)
 		{
 			JSStringRef name = JSStringCreateWithUTF8CString(props->at(i)->c_str());
+			JSPropertyNameAccumulatorAddName(js_properties, name);
+			JSStringRelease(name);
+			if (strcmp(props->at(i)->c_str(), "length") == 0)
+				found_length = true;
+		}
+
+		if (!found_length && value->IsList())
+		{
+			JSStringRef name = JSStringCreateWithUTF8CString("length");
 			JSPropertyNameAccumulatorAddName(js_properties, name);
 			JSStringRelease(name);
 		}
@@ -355,6 +365,12 @@ namespace kroll
 			}
 		}
 
+		// Fake the length property for lists
+		if (value->IsList() && strcmp(name, "length") == 0)
+		{
+			return true;
+		}
+
 		return false;
 	}
 
@@ -374,6 +390,13 @@ namespace kroll
 		try
 		{
 			SharedValue ti_val = object->Get(name);
+
+			// Fake the length property for lists
+			if ((*value)->IsList() &&
+				strcmp(name, "length") == 0 &&
+				ti_val->IsUndefined())
+				ti_val = Value::NewInt((*value)->IsList()->Size());
+
 			js_val = KJSUtil::ToJSValue(ti_val, js_context);
 		}
 		catch (ValueException& exception)

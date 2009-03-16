@@ -85,6 +85,7 @@ namespace kroll
 
 	protected:
 		SharedPtr<StaticBoundObject> object;
+		int length;
 
 	private:
 		DISALLOW_EVIL_CONSTRUCTORS(StaticBoundList);

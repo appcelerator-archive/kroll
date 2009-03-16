@@ -52,36 +52,28 @@ namespace kroll
 
 	void KRubyList::Set(const char *name, SharedValue value)
 	{
-		// Check for integer value as name
-		if (KList::IsInt(name))
+		int index = -1; // Check for integer value as name
+		if (KList::IsInt(name) && ((index = atoi(name) >= 0)))
 		{
-			int index = atoi(name);
-			if (index >= 0)
-				return this->SetAt(index, name);
+			this->SetAt(index, name);
 		}
-
-		this->object->Set(name, value);
+		else
+		{
+			this->object->Set(name, value);
+		}
 	}
 
 	void SetAt(unsigned int index, SharedValue value)
 	{
-		while (index >= this->Size())
-		{
-			// now we need to create entries between current size
-			//  and new size and make the entries undefined.
-			this->Append(Value::Undefined);
-		}
 		VALUE rv = RubyUtils::ToRubyValue(value);
+
+		// rb_ary_store will take care of sizing the list
+		// appropriately in the case that index > current list size
 		rb_ary_store(list, index, rv);
 	}
 
 	SharedValue KRubyList::Get(const char *name)
 	{
-		if (strcmp("length", name) == 0)
-		{
-			return Value::NewInt(this->Size());
-		}
-
 		if (KList::IsInt(name))
 		{
 			unsigned int index = (unsigned int) atoi(name);
@@ -95,7 +87,6 @@ namespace kroll
 	SharedStringList KRubyList::GetPropertyNames()
 	{
 		SharedStringList property_names = object->GetPropertyNames();
-		property_names->push_back(new std::string("length"));
 		for (size_t i = 0; i < this->Size(); i++)
 		{
 			std::string name = KList::IntToChars(i);

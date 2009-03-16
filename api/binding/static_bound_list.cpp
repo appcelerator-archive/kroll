@@ -11,11 +11,10 @@
 
 namespace kroll
 {
-	StaticBoundList::StaticBoundList()
-		: object(new StaticBoundObject())
+	StaticBoundList::StaticBoundList() :
+		object(new StaticBoundObject()),
+		length(0)
 	{
-		SharedValue len = Value::NewInt(0);
-		this->Set("length", len);
 	}
 
 	StaticBoundList::~StaticBoundList()
@@ -24,61 +23,40 @@ namespace kroll
 
 	void StaticBoundList::Append(SharedValue value)
 	{
-		int length = this->Size();
-		std::string name = KList::IntToChars(length);
+		std::string name = KList::IntToChars(this->length);
 		this->object->Set(name.c_str(), value);
-
-		SharedValue len = Value::NewInt(length+1);
-		this->object->Set("length", len);
+		this->length++;
 	}
 
 	void SetAt(unsigned int index, SharedValue value)
 	{
-		while (index >= this->Size())
-		{
-			// now we need to create entries between current size
-			//  and new size and make the entries undefined.
-			this->Append(Value::Undefined);
-		}
 		std::string name = KList::IntToChars(index);
 		this->object->Set(name.c_str(), value);
+		if (index >= this->length)
+			this->length = index + 1;
 	}
 
 	bool StaticBoundList::Remove(unsigned int index)
 	{
-		unsigned int x = 0;
-		bool found = false;
-		for (unsigned int c = 0; c < this->Size(); c++)
+		if (index < this->length)
 		{
-			if (c == index)
-			{
-				std::string name = KList::IntToChars(c);
-				this->Set(name.c_str(), Value::Undefined);
-				found = true;
-			}
-			else
-			{
-				std::string prop = KList::IntToChars(x);
-				this->Set(prop.c_str(), this->At(c));
-				x++;
-			}
-		}
-		this->object->Set("length", Value::NewInt(x));
-		return found;
-	}
+			std::string name = KList::IntToChars(index);
+			this->UnSet(name);
+			for (int i = index; i + 1 < this->length; i++)
+				this->SetAt(i, this->At(i + 1));
 
-
-	unsigned int StaticBoundList::Size()
-	{
-		SharedValue size_val = this->Get("length");
-		if (size_val->IsInt())
-		{
-			return (unsigned int) size_val->ToInt();
+			this->length--;
+			return true;
 		}
 		else
 		{
-			return 0;
+			return false;
 		}
+	}
+
+	unsigned int StaticBoundList::Size()
+	{
+		return this->length;
 	}
 
 	SharedValue StaticBoundList::At(unsigned int index)
@@ -90,17 +68,15 @@ namespace kroll
 
 	void StaticBoundList::Set(const char *name, SharedValue value)
 	{
-		if (KList::IsInt(name))
+		int index = -1;
+		if (KList::IsInt(name) && (index = atoi(name)) >= 0)
 		{
-			int val = atoi(name);
-			if (val > (int) this->Size())
-			{
-				SharedValue len = Value::NewInt(val);
-				this->object->Set("length", len);
-			}
+			this->SetAt(index, value);
 		}
-
-		this->object->Set(name, value);
+		else
+		{
+			this->object->Set(name, value);
+		}
 	}
 
 	SharedValue StaticBoundList::Get(const char *name)
