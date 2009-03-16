@@ -61,11 +61,12 @@ namespace kroll {
 		ID get_ID = rb_intern(name);
 		ID mm_ID = rb_intern("method_missing");
 
-		int error = 0;
+		//int error = 0;
 		VALUE ruby_value = Qnil;
 		if (rb_obj_respond_to(object, get_ID, Qtrue) == Qtrue)
 		{
-			VALUE rmeth = rb_funcall(object, rb_intern("method"), 1, ID2SYM(get_ID));
+			/*VALUE rmeth =*/
+			rb_funcall(object, rb_intern("method"), 1, ID2SYM(get_ID));
 			ruby_value = rb_funcall(object, get_ID, 1, ruby_value);
 		}
 		else if (rb_ivar_defined(object, iv_ID))
