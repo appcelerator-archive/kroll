@@ -108,7 +108,7 @@ namespace kroll
 		return create(this, dir.c_str());
 	}
 
-	SharedValue Win32Host::InvokeMethodOnMainThread(SharedBoundMethod method,
+	SharedValue Win32Host::InvokeMethodOnMainThread(SharedKMethod method,
                                                     const ValueList& args)
 	{
 		if (thread_id == GetCurrentThreadId()) {

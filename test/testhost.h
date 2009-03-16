@@ -17,7 +17,7 @@ namespace kroll
 		virtual ~TestHost();
 		void TestAll();
 		virtual Module* CreateModule(std::string& path);
-		SharedValue InvokeMethodOnMainThread(SharedBoundMethod method,
+		SharedValue InvokeMethodOnMainThread(SharedKMethod method,
 		                                     const ValueList& args);
 
 	protected:

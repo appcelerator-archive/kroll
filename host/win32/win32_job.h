@@ -14,7 +14,7 @@ namespace kroll
 	class Win32Job
 	{
 		public:
-			Win32Job(SharedBoundMethod method, const ValueList& args);
+			Win32Job(SharedKMethod method, const ValueList& args);
 			virtual ~Win32Job();
 			void Lock();
 			void Wait();
@@ -23,7 +23,7 @@ namespace kroll
 			ValueException GetException();
 	
 		private:
-			SharedBoundMethod method;
+			SharedKMethod method;
 			const ValueList& args;
 			SharedValue return_value;
 			ValueException exception;

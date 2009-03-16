@@ -4,48 +4,38 @@
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
 
-#ifndef _KJS_BOUND_LIST_H_
-#define _KJS_BOUND_LIST_H_
+#ifndef _KJS_KMETHOD_H_
+#define _KJS_KMETHOD_H_
 
 #include "javascript_module.h"
 
 #include <vector>
 #include <string>
 #include <map>
-#include <cmath>
 
 namespace kroll
 {
-	class KROLL_JAVASCRIPT_API KJSBoundList : public BoundList
+	class KROLL_JAVASCRIPT_API KJSKMethod : public KMethod
 	{
-
-	public:
-
-		KJSBoundList(JSContextRef context,
-		             JSObjectRef js_object);
-		~KJSBoundList();
+		public:
+		KJSKMethod(JSContextRef, JSObjectRef, JSObjectRef);
+		~KJSKMethod();
 
 		void Set(const char *name, SharedValue value);
-		void SetAt(unsigned int index, SharedValue value);
 		SharedValue Get(const char *name);
+		SharedValue Call(const ValueList& args);
 		SharedStringList GetPropertyNames();
 		bool SameContextGroup(JSContextRef c);
-
-		void Append(SharedValue value);
-		unsigned int Size();
-		SharedValue At(unsigned int index);
-		bool Remove(unsigned int index);
-
 		JSObjectRef GetJSObject();
 
-	protected:
+		protected:
 		JSContextRef context;
 		JSObjectRef object;
-		SharedPtr<KJSBoundObject> kjs_bound_object;
+		JSObjectRef this_obj;
+		SharedPtr<KJSKObject> kjs_bound_object;
 
-	private:
-		DISALLOW_EVIL_CONSTRUCTORS(KJSBoundList);
-
+		private:
+		DISALLOW_EVIL_CONSTRUCTORS(KJSKMethod);
 	};
 }
 

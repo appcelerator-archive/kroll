@@ -45,7 +45,7 @@ bool ScopeMethodDelegate::IsGlobalKey(std::string& key)
 SharedValue ScopeMethodDelegate::Call(const ValueList& args)
 {
 	std::string key = args.at(0)->ToString();
-	SharedBoundObject obj = IsGlobalKey(key) ? global : scope;
+	SharedKObject obj = IsGlobalKey(key) ? global : scope;
 	if (type == GET)
 	{
 		// not found, look inside scope
@@ -59,7 +59,7 @@ SharedValue ScopeMethodDelegate::Call(const ValueList& args)
 	}
 }
 
-SharedPtr<StaticBoundObject> ScopeMethodDelegate::CreateDelegate(SharedBoundObject global, SharedBoundObject bo)
+SharedPtr<StaticBoundObject> ScopeMethodDelegate::CreateDelegate(SharedKObject global, SharedKObject bo)
 {
 	SharedPtr<StaticBoundObject> scope = new StaticBoundObject();
 	SharedStringList keys = bo->GetPropertyNames();

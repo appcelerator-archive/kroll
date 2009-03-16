@@ -4,8 +4,8 @@
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
 
-#ifndef _KJS_BOUND_OBJECT_H_
-#define _KJS_BOUND_OBJECT_H_
+#ifndef _KJS_KOBJECT_H_
+#define _KJS_KOBJECT_H_
 
 #include "javascript_module.h"
 
@@ -15,12 +15,11 @@
 
 namespace kroll
 {
-	class KROLL_JAVASCRIPT_API KJSBoundObject : public BoundObject
+	class KROLL_JAVASCRIPT_API KJSKObject : public KObject
 	{
 	public:
-		KJSBoundObject(JSContextRef context,
-		               JSObjectRef js_object);
-		~KJSBoundObject();
+		KJSKObject(JSContextRef context, JSObjectRef js_object);
+		~KJSKObject();
 
 		void Set(const char *name, SharedValue value);
 		SharedValue Get(const char *name);
@@ -34,7 +33,7 @@ namespace kroll
 		JSObjectRef object;
 
 	private:
-		DISALLOW_EVIL_CONSTRUCTORS(KJSBoundObject);
+		DISALLOW_EVIL_CONSTRUCTORS(KJSKObject);
 
 	};
 }

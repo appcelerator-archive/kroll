@@ -91,7 +91,7 @@ namespace kroll
 	}
 
 	SharedValue LinuxHost::InvokeMethodOnMainThread(
-		SharedBoundMethod method,
+		SharedKMethod method,
 		const ValueList& args)
 	{
 		LinuxJob* job = new LinuxJob(method, args);

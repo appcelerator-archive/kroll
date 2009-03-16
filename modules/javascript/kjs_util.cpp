@@ -16,7 +16,7 @@ namespace kroll
 	                                        0, 0, 0, 0, 0, 0,
 	                                        0, 0, 0, 0, 0 };
 
-	/* callback for BoundObject proxying to KJS */
+	/* callback for KObject proxying to KJS */
 	void get_property_names_cb(JSContextRef, JSObjectRef, JSPropertyNameAccumulatorRef);
 	bool has_property_cb(JSContextRef, JSObjectRef, JSStringRef);
 	JSValueRef get_property_cb(JSContextRef, JSObjectRef, JSStringRef, JSValueRef*);
@@ -74,19 +74,19 @@ namespace kroll
 				else if (JSObjectIsFunction(ctx, o))
 				{
 					// this is a pure JS method: proxy it
-					SharedBoundMethod tibm = new KJSBoundMethod(ctx, o, this_obj);
+					SharedKMethod tibm = new KJSKMethod(ctx, o, this_obj);
 					kr_val = Value::NewMethod(tibm);
 				}
 				else if (IsArrayLike(o, ctx))
 				{
 					// this is a pure JS array: proxy it
-					SharedBoundList tibl = new KJSBoundList(ctx, o);
+					SharedKList tibl = new KJSKList(ctx, o);
 					kr_val = Value::NewList(tibl);
 				}
 				else
 				{
 					// this is a pure JS object: proxy it
-					SharedBoundObject tibo = new KJSBoundObject(ctx, o);
+					SharedKObject tibo = new KJSKObject(ctx, o);
 					kr_val = Value::NewObject(tibo);
 				}
 			}
@@ -133,8 +133,8 @@ namespace kroll
 		}
 		else if (value->IsObject())
 		{
-			SharedBoundObject obj = value->ToObject();
-			SharedPtr<KJSBoundObject> kobj = obj.cast<KJSBoundObject>();
+			SharedKObject obj = value->ToObject();
+			SharedPtr<KJSKObject> kobj = obj.cast<KJSKObject>();
 			if (!kobj.isNull() && kobj->SameContextGroup(ctx))
 			{
 				// this object is actually a pure JS object
@@ -142,14 +142,14 @@ namespace kroll
 			}
 			else
 			{
-				// this is a BoundObject that needs to be proxied
+				// this is a KObject that needs to be proxied
 				js_val = KJSUtil::KObjectToJSValue(value, ctx);
 			}
 		}
 		else if (value->IsMethod())
 		{
-			SharedBoundMethod meth = value->ToMethod();
-			SharedPtr<KJSBoundMethod> kmeth = meth.cast<KJSBoundMethod>();
+			SharedKMethod meth = value->ToMethod();
+			SharedPtr<KJSKMethod> kmeth = meth.cast<KJSKMethod>();
 			if (!kmeth.isNull() && kmeth->SameContextGroup(ctx))
 			{
 				// this object is actually a pure JS callable object
@@ -157,14 +157,14 @@ namespace kroll
 			}
 			else
 			{
-				// this is a TiBoundMethod that needs to be proxied
+				// this is a KMethod that needs to be proxied
 				js_val = KJSUtil::KMethodToJSValue(value, ctx);
 			}
 		}
 		else if (value->IsList())
 		{
-			SharedBoundList list = value->ToList();
-			SharedPtr<KJSBoundList> klist = list.cast<KJSBoundList>();
+			SharedKList list = value->ToList();
+			SharedPtr<KJSKList> klist = list.cast<KJSKList>();
 			if (!klist.isNull() && klist->SameContextGroup(ctx))
 			{
 				// this object is actually a pure JS array
@@ -172,7 +172,7 @@ namespace kroll
 			}
 			else
 			{
-				// this is a BoundList that needs to be proxied
+				// this is a KList that needs to be proxied
 				js_val = KJSUtil::KListToJSValue(value, ctx);
 			}
 		}
@@ -198,7 +198,7 @@ namespace kroll
 		if (tibo_class == NULL)
 		{
 			JSClassDefinition js_class_def = empty_class;
-			js_class_def.className = "KrollBoundObject";
+			js_class_def.className = "Object";
 			js_class_def.getPropertyNames = get_property_names_cb;
 			js_class_def.finalize = finalize_cb;
 			js_class_def.hasProperty = has_property_cb;
@@ -214,7 +214,7 @@ namespace kroll
 		if (tibm_class == NULL)
 		{
 			JSClassDefinition js_class_def = empty_class;
-			js_class_def.className = "KrollBoundMethod";
+			js_class_def.className = "KMethod";
 			js_class_def.getPropertyNames = get_property_names_cb;
 			js_class_def.finalize = finalize_cb;
 			js_class_def.hasProperty = has_property_cb;
@@ -229,7 +229,7 @@ namespace kroll
 	void inline CopyJSProperty(
 		JSContextRef c,
 		JSObjectRef from_obj,
-		SharedBoundObject to_bo,
+		SharedKObject to_bo,
 		JSObjectRef to_obj,
 		const char *prop_name)
 	{
@@ -247,7 +247,7 @@ namespace kroll
 		if (tibl_class == NULL)
 		{
 			JSClassDefinition js_class_def = empty_class;
-			js_class_def.className = "KrollBoundList";
+			js_class_def.className = "KList";
 			js_class_def.getPropertyNames = get_property_names_cb;
 			js_class_def.finalize = finalize_cb;
 			js_class_def.hasProperty = has_property_cb;
@@ -321,7 +321,7 @@ namespace kroll
 		if (value == NULL)
 			return;
 
-		SharedBoundObject object = (*value)->ToObject();
+		SharedKObject object = (*value)->ToObject();
 		SharedStringList props = object->GetPropertyNames();
 		bool found_length = false;
 		for (size_t i = 0; i < props->size(); i++)
@@ -351,7 +351,7 @@ namespace kroll
 		if (value == NULL)
 			return false;
 
-		SharedBoundObject object = (*value)->ToObject();
+		SharedKObject object = (*value)->ToObject();
 		char *name = KJSUtil::ToChars(js_property);
 		std::string str_name(name);
 		free(name);
@@ -382,7 +382,7 @@ namespace kroll
 		if (value == NULL)
 			return JSValueMakeUndefined(js_context);
 
-		SharedBoundObject object = (*value)->ToObject();
+		SharedKObject object = (*value)->ToObject();
 		char* name = KJSUtil::ToChars(js_property);
 		JSValueRef js_val = NULL;
 		try
@@ -429,7 +429,7 @@ namespace kroll
 		if (value == NULL)
 			return false;
 
-		SharedBoundObject object = (*value)->ToObject();
+		SharedKObject object = (*value)->ToObject();
 		bool success = false;
 		char* prop_name = KJSUtil::ToChars(js_property);
 		try
@@ -471,7 +471,7 @@ namespace kroll
 		if (value == NULL)
 			return JSValueMakeUndefined(js_context);
 
-		SharedBoundMethod method = (*value)->ToMethod();
+		SharedKMethod method = (*value)->ToMethod();
 		ValueList args;
 		for (size_t i = 0; i < num_args; i++) {
 			SharedValue arg_val = KJSUtil::ToKrollValue(js_args[i], js_context, js_this);
@@ -504,26 +504,26 @@ namespace kroll
 		return js_val;
 	}
 
-	SharedPtr<KJSBoundObject> KJSUtil::ToBoundObject(
+	SharedPtr<KJSKObject> KJSUtil::ToBoundObject(
 		JSContextRef context,
 		JSObjectRef object)
 	{
-		return new KJSBoundObject(context, object);
+		return new KJSKObject(context, object);
 	}
 
-	SharedPtr<KJSBoundMethod> KJSUtil::ToBoundMethod(
+	SharedPtr<KJSKMethod> KJSUtil::ToBoundMethod(
 		JSContextRef context,
 		JSObjectRef method,
 		JSObjectRef this_object)
 	{
-		return new KJSBoundMethod(context, method, this_object);
+		return new KJSKMethod(context, method, this_object);
 	}
 
-	SharedPtr<KJSBoundList> KJSUtil::ToBoundList(
+	SharedPtr<KJSKList> KJSUtil::ToBoundList(
 		JSContextRef context,
 		JSObjectRef list)
 	{
-		return new KJSBoundList(context, list);
+		return new KJSKList(context, list);
 	}
 
 	std::map<JSObjectRef, JSGlobalContextRef> context_map;

@@ -8,7 +8,7 @@
 
 namespace kroll
 {
-	class TestClass : public BoundMethod
+	class TestClass : public KMethod
 	{
 	public:
 		SharedValue Call(const ValueList& args)
@@ -54,7 +54,7 @@ namespace kroll
 	};
 
 
-	void APIUnitTestSuite::Run(Host *host, SharedBoundObject binding)
+	void APIUnitTestSuite::Run(Host *host, SharedKObject binding)
 	{
 		std::string msg("hello");
 		int severity = KR_LOG_DEBUG;
@@ -62,7 +62,7 @@ namespace kroll
 		SharedPtr<APIBinding> api = binding.cast<APIBinding>();
 
 		SharedValue logMethodValue = binding->Get("log");
-		SharedPtr<BoundMethod> logMethod = logMethodValue->ToMethod();
+		SharedKMethod logMethod = logMethodValue->ToMethod();
 		KR_ASSERT(!logMethod.isNull());
 
 		ValueList args;
@@ -89,7 +89,7 @@ namespace kroll
 		// TEST registering an event handler and then receiving it
 		// once it's fired
 		std::string event("kr.api.log");
-		SharedBoundMethod sTestObject = new TestClass();
+		SharedKMethod sTestObject = new TestClass();
 		TestClass* testObject = (TestClass*) sTestObject.get();
 
 		int ref = api->Register(event,sTestObject);
@@ -111,7 +111,7 @@ namespace kroll
 
 		// TEST basic list implementation
 		{
-			SharedBoundList l = new StaticBoundList();
+			SharedKList l = new StaticBoundList();
 			KR_ASSERT(l->Size()==0);
 			SharedValue i = Value::NewInt(1);
 			l->Append(i);

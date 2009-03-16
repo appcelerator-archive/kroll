@@ -18,14 +18,14 @@ using namespace kroll;
 
 /* KJS <-> Kroll bindings */
 namespace kroll {
-	class KJSBoundObject;
-	class KJSBoundMethod;
-	class KJSBoundList;
+	class KJSKObject;
+	class KJSKMethod;
+	class KJSKList;
 	class KJSUtil;
 }
-#include "kjs_bound_object.h"
-#include "kjs_bound_method.h"
-#include "kjs_bound_list.h"
+#include "kjs_kobject.h"
+#include "kjs_kmethod.h"
+#include "kjs_klist.h"
 #include "kjs_util.h"
 
 /* the KJS Javascript module provider */

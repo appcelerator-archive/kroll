@@ -9,7 +9,7 @@
 
 namespace kroll
 {
-	Win32Job::Win32Job(SharedBoundMethod method, const ValueList& args)
+	Win32Job::Win32Job(SharedKMethod method, const ValueList& args)
 	 : method(method),
 	   args(args),
 	   return_value(NULL),

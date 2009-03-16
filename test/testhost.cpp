@@ -83,7 +83,7 @@ namespace kroll
 		return create(this,path.c_str());
 	}
 
-	SharedValue TestHost::InvokeMethodOnMainThread(SharedBoundMethod method,
+	SharedValue TestHost::InvokeMethodOnMainThread(SharedKMethod method,
                                                   const ValueList& args)
 	{
 		//FIXME - implement for Win32 and Linux. Until then...we

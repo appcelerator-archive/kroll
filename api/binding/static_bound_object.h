@@ -83,7 +83,7 @@ namespace kroll
 		  heap-allocated as implementors are allowed to keep a reference.
 		  When an error occurs will throw an exception of type Value*.
 		*/
-		void SetObject(const char *name, SharedBoundObject object);
+		void SetObject(const char *name, SharedKObject object);
 
 	protected:
 		std::map<std::string, SharedValue> properties;

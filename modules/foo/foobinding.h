@@ -12,7 +12,7 @@
 
 namespace kroll
 {
-	class FooBinding : public StaticBoundObject
+	class FooBinding : public StaticKObject
 	{
 	public:
 		FooBinding();
