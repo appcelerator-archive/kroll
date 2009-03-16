@@ -12,7 +12,7 @@
 namespace kroll
 {
 	class KPythonObject;
-	class KPythonMethod : public BoundMethod
+	class KPythonMethod : public KMethod
 	{
 	public:
 		KPythonMethod(PyObject *obj);

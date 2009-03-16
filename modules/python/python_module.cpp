@@ -26,7 +26,7 @@ namespace kroll
 
 	void PythonModule::Stop()
 	{
-		SharedBoundObject global = this->host->GetGlobalObject();
+		SharedKObject global = this->host->GetGlobalObject();
 		global->Set("Python", Value::Undefined);
 		this->binding->Set("evaluate", Value::Undefined);
 		this->binding = NULL;
@@ -37,16 +37,16 @@ namespace kroll
 
 	void PythonModule::InitializeBinding()
 	{
-		SharedBoundObject global = this->host->GetGlobalObject();
+		SharedKObject global = this->host->GetGlobalObject();
 		this->binding = new StaticBoundObject();
 		global->Set("Python", Value::NewObject(this->binding));
 
-		SharedBoundMethod evaluator = new PythonEvaluator();
+		SharedKMethod evaluator = new PythonEvaluator();
 		this->binding->Set("evaluate", Value::NewMethod(evaluator));
 
 		PyObject* main_module = PyImport_AddModule("__main__");
 		PyObject* main_dict = PyModule_GetDict(main_module);
-		PyObject* api = PythonUtils::KObjectToPyObject(global);
+		PyObject* api = PythonUtils::KObjectToPyObject(Value::NewObject(global));
 		PyDict_SetItemString(main_dict, PRODUCT_NAME, api);
 		Py_DECREF(api);
 	}

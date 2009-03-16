@@ -18,13 +18,11 @@ namespace kroll
 		static PyObject* ToPyObject(SharedValue value);
 		static PyObject* ToPyObject(const ValueList& list);
 		static const char* ToString(PyObject* value);
-		static PyObject* KObjectToPyObject(SharedBoundObject o);
-		static PyObject* KMethodToPyObject(SharedBoundObject o);
-		static PyObject* KListToPyObject(SharedBoundObject o);
+		static PyObject* KObjectToPyObject(SharedValue o);
+		static PyObject* KMethodToPyObject(SharedValue o);
+		static PyObject* KListToPyObject(SharedValue o);
 
 	private:
-		// retain scope for the lifetime of this class
-		static SharedBoundObject scope;
 		PythonUtils() {}
 		~PythonUtils () {}
 	};

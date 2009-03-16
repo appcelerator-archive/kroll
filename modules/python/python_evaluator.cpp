@@ -24,7 +24,7 @@
 		// Copy __main__'s globals() and insert all window global
 		// properties into it, so that we don't pollute Python's
 		// __main__ globals()
-		SharedBoundObject window_global = args.at(2)->ToObject();
+		SharedKObject window_global = args.at(2)->ToObject();
 		PyObject* main_module = PyImport_AddModule("__main__");
 		PyObject* main_dict = PyModule_GetDict(main_module);
 		PyObject* my_globals = PyDict_Copy(main_dict);
@@ -59,7 +59,7 @@
 		return Value::Undefined;
 	}
 
-	void PythonEvaluator::KObjectPropsToDict(SharedBoundObject o, PyObject* map)
+	void PythonEvaluator::KObjectPropsToDict(SharedKObject o, PyObject* map)
 	{
 		SharedStringList props = o->GetPropertyNames();
 		for (size_t i = 0; i < props->size(); i++)
@@ -72,7 +72,7 @@
 		}
 	}
 
-	void PythonEvaluator::DictToKObjectProps(PyObject* dict, SharedBoundObject o)
+	void PythonEvaluator::DictToKObjectProps(PyObject* dict, SharedKObject o)
 	{
 		// Avoid compiler warnings
 		PyObject *items = PyObject_CallMethod(dict, (char*) "items", NULL);

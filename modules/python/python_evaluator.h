@@ -8,7 +8,7 @@
 
 namespace kroll
 {
-	class PythonEvaluator : public BoundMethod
+	class PythonEvaluator : public KMethod
 	{
 		public:
 		virtual SharedValue Call(const ValueList& args);
@@ -19,8 +19,8 @@ namespace kroll
 		private:
 		static void StripLeadingWhitespace(std::string &);
 		static void ConvertLineEndings(std::string &);
-		static void DictToKObjectProps(PyObject* map, SharedBoundObject o);
-		static void KObjectPropsToDict(SharedBoundObject o, PyObject* map);
+		static void DictToKObjectProps(PyObject* map, SharedKObject o);
+		static void KObjectPropsToDict(SharedKObject o, PyObject* map);
 
 	};
 }

@@ -11,7 +11,7 @@
 
 namespace kroll
 {
-	class KPythonObject : public BoundObject
+	class KPythonObject : public KObject
 	{
 	public:
 		KPythonObject(PyObject *obj);
@@ -26,7 +26,7 @@ namespace kroll
 	private:
 		PyObject *object;
 		bool read_only;
-		SharedBoundObject delegate;
+		SharedKObject delegate;
 		DISALLOW_EVIL_CONSTRUCTORS(KPythonObject);
 	};
 }

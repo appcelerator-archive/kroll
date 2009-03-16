@@ -67,7 +67,7 @@ namespace kroll
 	{
 		// Check for integer value as name
 		int index = -1;
-		if (BoundList::IsInt(name) && ((index = atoi(name)) >= 0))
+		if (KList::IsInt(name) && ((index = atoi(name)) >= 0))
 		{
 			this->SetAt((unsigned int) index, value);
 		}
@@ -106,7 +106,7 @@ namespace kroll
 		SharedStringList property_names = object->GetPropertyNames();
 		for (size_t i = 0; i < this->Size(); i++)
 		{
-			std::string name = BoundList::IntToChars(i);
+			std::string name = KList::IntToChars(i);
 			property_names->push_back(new std::string(name));
 		}
 

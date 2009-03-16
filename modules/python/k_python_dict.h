@@ -11,7 +11,7 @@
 
 namespace kroll
 {
-	class KPythonDict : public BoundObject
+	class KPythonDict : public KObject
 	{
 	public:
 		KPythonDict(PyObject *obj);

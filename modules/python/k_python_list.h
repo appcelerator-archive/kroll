@@ -11,7 +11,7 @@
 
 namespace kroll
 {
-	class KPythonList : public BoundList
+	class KPythonList : public KList
 	{
 	public:
 		KPythonList(PyObject *obj);
