@@ -143,7 +143,7 @@ namespace kroll
 			else
 			{
 				// this is a BoundObject that needs to be proxied
-				js_val = KJSUtil::ToJSValue(obj, ctx);
+				js_val = KJSUtil::KObjectToJSValue(value, ctx);
 			}
 		}
 		else if (value->IsMethod())
@@ -158,7 +158,7 @@ namespace kroll
 			else
 			{
 				// this is a TiBoundMethod that needs to be proxied
-				js_val = KJSUtil::ToJSValue(meth, ctx);
+				js_val = KJSUtil::KMethodToJSValue(value, ctx);
 			}
 		}
 		else if (value->IsList())
@@ -173,7 +173,7 @@ namespace kroll
 			else
 			{
 				// this is a BoundList that needs to be proxied
-				js_val = KJSUtil::ToJSValue(list, ctx);
+				js_val = KJSUtil::KListToJSValue(value, ctx);
 			}
 		}
 		else if (value->IsNull())
@@ -193,7 +193,7 @@ namespace kroll
 
 	}
 
-	JSValueRef KJSUtil::ToJSValue(SharedBoundObject object, JSContextRef c)
+	JSValueRef KJSUtil::KObjectToJSValue(SharedValue obj_val, JSContextRef c)
 	{
 		if (tibo_class == NULL)
 		{
@@ -206,11 +206,10 @@ namespace kroll
 			js_class_def.setProperty = set_property_cb;
 			tibo_class = JSClassCreate(&js_class_def);
 		}
-		//return JSObjectMake (c, tibo_class, new SharedBoundObject(object));
-		return JSObjectMake(c, tibo_class, new SharedValue(Value::NewObject(object)));
+		return JSObjectMake(c, tibo_class, new SharedValue(obj_val));
 	}
 
-	JSValueRef KJSUtil::ToJSValue(SharedBoundMethod method, JSContextRef c)
+	JSValueRef KJSUtil::KMethodToJSValue(SharedValue meth_val, JSContextRef c)
 	{
 		if (tibm_class == NULL)
 		{
@@ -224,8 +223,7 @@ namespace kroll
 			js_class_def.callAsFunction = call_as_function_cb;
 			tibm_class = JSClassCreate(&js_class_def);
 		}
-		//return JSObjectMake (c, tibm_class, new SharedBoundMethod(method));
-		return JSObjectMake(c, tibm_class, new SharedValue(Value::NewMethod(method)));
+		return JSObjectMake(c, tibm_class, new SharedValue(meth_val));
 	}
 
 	void inline CopyJSProperty(
@@ -243,7 +241,7 @@ namespace kroll
 		to_bo->Set(prop_name, prop_val);
 	}
 
-	JSValueRef KJSUtil::ToJSValue(SharedBoundList list, JSContextRef c)
+	JSValueRef KJSUtil::KListToJSValue(SharedValue list_val, JSContextRef c)
 	{
 
 		if (tibl_class == NULL)
@@ -258,8 +256,7 @@ namespace kroll
 			tibl_class = JSClassCreate(&js_class_def);
 		}
 
-		//JSObjectRef object = JSObjectMake(c, tibl_class, new SharedBoundList(list));
-		JSObjectRef object = JSObjectMake(c, tibl_class, new SharedValue(Value::NewList(list)));
+		JSObjectRef object = JSObjectMake(c, tibl_class, new SharedValue(list_val));
 
 		JSValueRef args[1] = { JSValueMakeNumber(c, 3) };
 		JSObjectRef array = JSObjectMakeArray(c, 1, args, NULL);
@@ -268,6 +265,7 @@ namespace kroll
 		   propblems trying to set an object's prototype to array */
 
 		// move some array methods
+		SharedKList list = list_val->ToList();
 		CopyJSProperty(c, array, list, object, "push");
 		CopyJSProperty(c, array, list, object, "pop");
 		CopyJSProperty(c, array, list, object, "shift");
@@ -367,8 +365,7 @@ namespace kroll
 		}
 
 		// Fake the length property for lists
-		if ((*value)->IsList()
-			&& strcmp(name, "length") == 0)
+		if ((*value)->IsList() && str_name == std::string("length"))
 			return true;
 
 		return false;
@@ -380,13 +377,14 @@ namespace kroll
 		JSStringRef js_property,
 		JSValueRef* js_exception)
 	{
+
 		SharedValue* value = static_cast<SharedValue*>(JSObjectGetPrivate(js_object));
 		if (value == NULL)
 			return JSValueMakeUndefined(js_context);
 
 		SharedBoundObject object = (*value)->ToObject();
-		JSValueRef js_val = NULL;
 		char* name = KJSUtil::ToChars(js_property);
+		JSValueRef js_val = NULL;
 		try
 		{
 			SharedValue ti_val = object->Get(name);

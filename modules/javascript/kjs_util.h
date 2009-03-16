@@ -14,39 +14,17 @@ namespace kroll
 	{
 
 	public:
-		static SharedValue ToKrollValue(JSValueRef value,
-		                           JSContextRef context,
-		                           JSObjectRef thisObject);
-
-		static JSValueRef ToJSValue(SharedValue value,
-		                            JSContextRef context);
-
-		static JSValueRef ToJSValue(SharedBoundObject object,
-		                            JSContextRef context);
-
-		static JSValueRef ToJSValue(SharedBoundMethod method,
-		                            JSContextRef context);
-
-		static JSValueRef ToJSValue(SharedBoundList list,
-		                            JSContextRef context);
-
-		static char* ToChars(JSStringRef js_string);
-
-		static bool IsArrayLike(JSObjectRef object,
-		                        JSContextRef context);
-
-		static SharedPtr<KJSBoundObject> ToBoundObject(JSContextRef context,
-		                                               JSObjectRef object);
-
-		static SharedPtr<KJSBoundMethod> ToBoundMethod(JSContextRef context,
-		                                               JSObjectRef method,
-		                                               JSObjectRef this_object);
-
-		static SharedPtr<KJSBoundList> ToBoundList(JSContextRef context,
-		                                           JSObjectRef list);
-
-		static void RegisterGlobalContext(JSObjectRef,
-		                                  JSGlobalContextRef);
+		static SharedValue ToKrollValue(JSValueRef, JSContextRef, JSObjectRef);
+		static JSValueRef ToJSValue(SharedValue, JSContextRef);
+		static JSValueRef KObjectToJSValue(SharedValue, JSContextRef);
+		static JSValueRef KMethodToJSValue(SharedValue, JSContextRef);
+		static JSValueRef KListToJSValue(SharedValue, JSContextRef);
+		static char* ToChars(JSStringRef);
+		static bool IsArrayLike(JSObjectRef, JSContextRef);
+		static SharedPtr<KJSBoundObject> ToBoundObject(JSContextRef, JSObjectRef);
+		static SharedPtr<KJSBoundMethod> ToBoundMethod(JSContextRef, JSObjectRef, JSObjectRef);
+		static SharedPtr<KJSBoundList> ToBoundList(JSContextRef, JSObjectRef);
+		static void RegisterGlobalContext(JSObjectRef, JSGlobalContextRef);
 		static JSGlobalContextRef GetGlobalContext(JSObjectRef);
 
 		static SharedValue Evaluate(JSContextRef context, char *script);

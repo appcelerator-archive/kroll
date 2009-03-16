@@ -21,7 +21,7 @@ namespace kroll
 		bound->Set("foo",value);
 		//KR_DECREF(value);
 
-		JSValueRef boundRef = KJSUtil::ToJSValue(bound, context);
+		JSValueRef boundRef = KJSUtil::KObjectToJSValue(Value::NewObject(bound), context);
 		KR_ASSERT(boundRef);
 
 		JSObjectRef boundRefObject = JSValueToObject(context, boundRef, NULL);
