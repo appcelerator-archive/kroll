@@ -21,17 +21,12 @@
 #  define VALUEFUNC(f) RUBY_METHOD_FUNC(f)
 #  define VOIDFUNC(f) ((RUBY_DATA_FUNC) f)
 #else
-#  ifdef __cplusplus
-#    if defined(_WIN32) && defined(_MSC_VER)
-#      define VALUEFUNC(f) ((VALUE (*)())f)
-#      define VOIDFUNC(f) ((void (*)(void *))f)
-#    else
-#      define VALUEFUNC(f) ((VALUE (*)(...))f)
-#      define VOIDFUNC(f) ((void (*)(...))f)
-#    endif
+#  if defined(OS_WIN32)
+#    define VALUEFUNC(f) ((VALUE (*) (...))f)
+#    define VOIDFUNC(f) ((void (*)(void *))f)
 #  else
-#   define VALUEFUNC(f) (f)
-#   define VOIDFUNC(f) (f)
+#    define VALUEFUNC(f) ((VALUE (*)(...))f)
+#    define VOIDFUNC(f) ((void (*)(...))f)
 #  endif
 #endif
 
