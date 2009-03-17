@@ -29,7 +29,7 @@ namespace kroll
 		JSObjectRef GetJSObject();
 
 		protected:
-		JSContextRef context;
+		JSGlobalContextRef context;
 		JSObjectRef object;
 		JSObjectRef this_obj;
 		SharedPtr<KJSKObject> kjs_bound_object;
