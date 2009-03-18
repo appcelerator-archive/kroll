@@ -14,7 +14,7 @@ namespace kroll
 	class KROLL_API_API APIUnitTestSuite
 	{
 	public:
-		void Run(Host*,SharedBoundObject);
+		void Run(Host*, SharedKObject);
 	};
 }
 

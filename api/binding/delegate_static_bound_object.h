@@ -22,8 +22,8 @@ namespace kroll
 		/*
 			Constructor: DelegateStaticBoundObject
 		*/
-		DelegateStaticBoundObject(SharedBoundObject delegate);
-		DelegateStaticBoundObject(SharedBoundObject base, SharedBoundObject delegate);
+		DelegateStaticBoundObject(SharedKObject delegate);
+		DelegateStaticBoundObject(SharedKObject base, SharedKObject delegate);
 		virtual ~DelegateStaticBoundObject();
 
 		/*
@@ -59,13 +59,13 @@ namespace kroll
 		 * is the first object searched for properties and also
 		 * the targets of property assignments.
 		 */
-		SharedBoundObject base;
+		SharedKObject base;
 
 		/*
 		 * The delegate part of this delegate object. This object
 		 * is used to find properties if they are not found in the base.
 		 */
-		SharedBoundObject delegate;
+		SharedKObject delegate;
 
 		DISALLOW_EVIL_CONSTRUCTORS(DelegateStaticBoundObject);
 

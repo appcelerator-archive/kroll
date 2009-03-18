@@ -16,7 +16,7 @@ namespace kroll
 		this->Set("number", number);
 		this->SetMethod("bar", &FooBinding::Bar);
 
-		SharedPtr<BoundList> arr = new StaticBoundList();
+		SharedKList arr = new StaticBoundList();
 		arr->Append(Value::NewString("one"));
 		arr->Append(Value::NewString("42"));
 		arr->Append(Value::NewString("false"));

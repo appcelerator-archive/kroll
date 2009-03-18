@@ -16,11 +16,13 @@ namespace kroll
 	{
 		PythonModule::instance_ = this;
 
-		//TODO: maybe we need to setup path to script?
 		Py_Initialize();
-		//Py_SetProgramName(); 
-		this->InitializeBinding();
+		PyEval_InitThreads();
 
+		//TODO: maybe we need to setup path to script?
+		//Py_SetProgramName(); 
+
+		this->InitializeBinding();
 		host->AddModuleProvider(this);
 	}
 

@@ -47,13 +47,22 @@ namespace kroll
 		virtual void Initialize() {};
 
 		/*
-		 *Function: Start
+		 * Function: Start
 		 *
 		 * Called once all modules have been loaded. Use this to
 		 * perform initialization that depends on the existence of
 		 * other modules.
 		 */
 		virtual void Start() {};
+		
+		/**
+		 * Function: Exit
+		 *
+		 * Called by the host when an exit has been requested to 
+		 * give modules a hook to perform certain pre-stop capabilities
+		 *
+		 */
+		virtual void Exiting(int exitcode) {} 
 
 		/*
 		 * Function: Stop

@@ -7,12 +7,10 @@
 
 namespace kroll
 {
-	KJSBoundMethod::KJSBoundMethod(JSContextRef context,
-	                               JSObjectRef js_object,
-	                               JSObjectRef this_obj)
-		: context(context),
-		  object(js_object),
-		  this_obj(this_obj)
+	KJSKMethod::KJSKMethod(JSContextRef context, JSObjectRef js_object, JSObjectRef this_obj) :
+		context(NULL),
+		object(js_object),
+		this_obj(this_obj)
 	{
 
 		/* KJS methods run in the global context that they originated from
@@ -21,61 +19,58 @@ namespace kroll
 		 * that use a KJS context. */
 		JSObjectRef global_object = JSContextGetGlobalObject(context);
 		JSGlobalContextRef global_context = KJSUtil::GetGlobalContext(global_object);
-		if (global_context != NULL)
-		{
-			this->context = global_context;
-		}
-		else
-		{
-			// This context hasn't been registered. Something has gone pretty
-			// terribly wrong and Kroll will likely crash soon. Nonetheless, keep
-			// the user up-to-date to keep their hopes up.
+
+		// This context hasn't been registered. Something has gone pretty
+		// terribly wrong and Kroll will likely crash soon. Nonetheless, keep
+		// the user up-to-date to keep their hopes up.
+		if (global_context == NULL)
 			std::cerr << "Could not locate global context for a KJS method."  <<
 			             " One of the modules is misbehaving." << std::endl;
-		}
+
+		this->context = global_context;
+		JSGlobalContextRetain(global_context);
 
 		JSValueProtect(this->context, js_object);
 		if (this_obj != NULL)
 			JSValueProtect(this->context, this_obj);
 
-		this->kjs_bound_object = new KJSBoundObject(this->context, js_object);
+		this->kjs_bound_object = new KJSKObject(this->context, js_object);
 	}
 
-	KJSBoundMethod::~KJSBoundMethod()
+	KJSKMethod::~KJSKMethod()
 	{
-		this->kjs_bound_object = NULL;
 		JSValueUnprotect(this->context, this->object);
-
 		if (this->this_obj != NULL)
 			JSValueUnprotect(this->context, this->this_obj);
+		JSGlobalContextRelease(this->context);
 	}
 
-	SharedValue KJSBoundMethod::Get(const char *name)
+	SharedValue KJSKMethod::Get(const char *name)
 	{
 		return kjs_bound_object->Get(name);
 	}
 
-	void KJSBoundMethod::Set(const char *name, SharedValue value)
+	void KJSKMethod::Set(const char *name, SharedValue value)
 	{
 		return kjs_bound_object->Set(name, value);
 	}
 
-	SharedStringList KJSBoundMethod::GetPropertyNames()
+	SharedStringList KJSKMethod::GetPropertyNames()
 	{
 		return kjs_bound_object->GetPropertyNames();
 	}
 
-	bool KJSBoundMethod::SameContextGroup(JSContextRef c)
+	bool KJSKMethod::SameContextGroup(JSContextRef c)
 	{
 		return kjs_bound_object->SameContextGroup(c);
 	}
 
-	JSObjectRef KJSBoundMethod::GetJSObject()
+	JSObjectRef KJSKMethod::GetJSObject()
 	{
 		return this->object;
 	}
 
-	SharedValue KJSBoundMethod::Call(const ValueList& args)
+	SharedValue KJSKMethod::Call(const ValueList& args)
 	{
 		JSValueRef* js_args = new JSValueRef[args.size()];
 		for (int i = 0; i < (int) args.size(); i++)

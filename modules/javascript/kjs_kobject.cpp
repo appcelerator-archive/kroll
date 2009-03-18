@@ -7,10 +7,9 @@
 
 namespace kroll
 {
-	KJSBoundObject::KJSBoundObject(JSContextRef context,
-	                               JSObjectRef js_object)
-		: context(context),
-		  object(js_object)
+	KJSKObject::KJSKObject(JSContextRef context, JSObjectRef js_object) :
+		context(NULL),
+		 object(js_object)
 	{
 		/* KJS methods run in the global context that they originated from
 		* this seems to prevent nasty crashes from trying to access invalid
@@ -18,33 +17,32 @@ namespace kroll
 		* that use a KJS context. */
 		JSObjectRef global_object = JSContextGetGlobalObject(context);
 		JSGlobalContextRef global_context = KJSUtil::GetGlobalContext(global_object);
-		if (global_context != NULL)
-		{
-			this->context = global_context;
-		}
-		else
-		{
-			// This context hasn't been registered. Something has gone pretty
-			// terribly wrong and Kroll will likely crash soon. Nonetheless, keep
-			// the user up-to-date to keep their hopes up.
+
+		// This context hasn't been registered. Something has gone pretty
+		// terribly wrong and Kroll will likely crash soon. Nonetheless, keep
+		// the user up-to-date to keep their hopes up.
+		if (global_context == NULL)
 			std::cerr << "Could not locate global context for a KJS method."  <<
 			             " One of the modules is misbehaving." << std::endl;
-		}
+
+		this->context = global_context;
+		JSGlobalContextRetain(global_context);
 
 		JSValueProtect(this->context, js_object);
 	}
 
-	KJSBoundObject::~KJSBoundObject()
+	KJSKObject::~KJSKObject()
 	{
 		JSValueUnprotect(this->context, this->object);
+		JSGlobalContextRelease(this->context);
 	}
 
-	JSObjectRef KJSBoundObject::GetJSObject()
+	JSObjectRef KJSKObject::GetJSObject()
 	{
 		return this->object;
 	}
 
-	SharedValue KJSBoundObject::Get(const char *name)
+	SharedValue KJSKObject::Get(const char *name)
 	{
 		JSStringRef s = JSStringCreateWithUTF8CString(name);
 		JSValueRef exception = NULL;
@@ -62,7 +60,7 @@ namespace kroll
 		return kvalue;
 	}
 
-	void KJSBoundObject::Set(const char *name, SharedValue value)
+	void KJSKObject::Set(const char *name, SharedValue value)
 	{
 		JSValueRef js_value = KJSUtil::ToJSValue(value, this->context);
 		JSStringRef s = JSStringCreateWithUTF8CString(name);
@@ -83,7 +81,7 @@ namespace kroll
 		}
 	}
 
-	SharedStringList KJSBoundObject::GetPropertyNames()
+	SharedStringList KJSKObject::GetPropertyNames()
 	{
 		SharedStringList list(new StringList());
 
@@ -104,7 +102,7 @@ namespace kroll
 		return list;
 	}
 
-	bool KJSBoundObject::SameContextGroup(JSContextRef c)
+	bool KJSKObject::SameContextGroup(JSContextRef c)
 	{
 		JSContextGroupRef context_group_a = JSContextGetGroup(this->context);
 		JSContextGroupRef context_group_b = JSContextGetGroup(c);

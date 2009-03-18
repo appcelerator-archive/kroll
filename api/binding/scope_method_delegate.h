@@ -37,7 +37,7 @@ namespace kroll {
 			Constructor: ScopeMethodDelegate
 		*/
 		ScopeMethodDelegate(MethodDelegateType type, SharedKObject global,
-		                    SharedBoundObject scope, SharedKMethod delegate);
+		                    SharedKObject scope, SharedKMethod delegate);
 		virtual ~ScopeMethodDelegate();
 
 		/*

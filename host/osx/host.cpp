@@ -98,19 +98,19 @@ namespace kroll
 
 @interface KrollMainThreadCaller : NSObject
 {
-	kroll::BoundMethod *method;
+	kroll::KMethod *method;
 	SharedPtr<kroll::Value> *result;
 	const ValueList* args;
 	SharedPtr<kroll::Value> *exception;
 }
-- (id)initWithBoundMethod:(SharedPtr<kroll::BoundMethod>)method args:(const ValueList*)args;
+- (id)initWithKMethod:(SharedPtr<kroll::KMethod>)method args:(const ValueList*)args;
 - (void)call;
 - (SharedPtr<kroll::Value>)getResult;
 - (SharedPtr<kroll::Value>)getException;
 @end
 
 @implementation KrollMainThreadCaller
-- (id)initWithBoundMethod:(SharedPtr<kroll::BoundMethod>)m args:(const ValueList*)a
+- (id)initWithKMethod:(SharedPtr<kroll::KMethod>)m args:(const ValueList*)a
 {
 	self = [super init];
 	if (self)
@@ -176,7 +176,7 @@ namespace kroll
 
 namespace kroll
 {
-	SharedValue OSXHost::InvokeMethodOnMainThread(SharedBoundMethod method,
+	SharedValue OSXHost::InvokeMethodOnMainThread(SharedKMethod method,
 	                                              const ValueList& args)
 	{
 		// make sure to just invoke if we're already on the
@@ -196,7 +196,7 @@ namespace kroll
 			return method->Call(args);
 		}
 		NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-		KrollMainThreadCaller *caller = [[[KrollMainThreadCaller alloc] initWithBoundMethod:method args:&args] autorelease];
+		KrollMainThreadCaller *caller = [[[KrollMainThreadCaller alloc] initWithKMethod:method args:&args] autorelease];
 		[caller performSelectorOnMainThread:@selector(call) withObject:nil waitUntilDone:YES];
 		SharedValue exception = [caller getException];
 		if (exception.isNull())

@@ -8,7 +8,7 @@
 
 namespace kroll
 {
-	APIBinding::APIBinding(SharedBoundObject global) : record(0), global(global)
+	APIBinding::APIBinding(SharedKObject global) : record(0), global(global)
 	{
 		this->SetMethod("set", &APIBinding::_Set);
 		this->SetMethod("get", &APIBinding::_Get);
@@ -166,7 +166,7 @@ namespace kroll
 	void APIBinding::_Register(const ValueList& args, SharedValue result)
 	{
 		std::string event = args.at(0)->ToString();
-		BoundMethod* method = args.at(1)->ToMethod();
+		SharedKMethod method = args.at(1)->ToMethod();
 
 		int id = this->Register(event, method);
 		result->SetInt(id);
@@ -213,7 +213,7 @@ namespace kroll
 		std::cout << "[" << type << "] " << message << std::endl;
 	}
 
-	int APIBinding::Register(std::string& event, SharedBoundMethod callback)
+	int APIBinding::Register(std::string& event, SharedKMethod callback)
 	{
 		ScopedLock lock(&mutex);
 		int record = GetNextRecord();
@@ -222,7 +222,7 @@ namespace kroll
 		 * implementation will insert it into the map */
 		std::string en(event);
 		EventRecords records = this->registrations[en];
-		records.push_back(SharedBoundMethod(callback));
+		records.push_back(callback);
 
 		BoundEventEntry e;
 		e.method = callback;
@@ -250,7 +250,7 @@ namespace kroll
 		EventRecords::iterator fi = records.begin();
 		while (fi != records.end())
 		{
-			SharedBoundMethod callback = (*fi);
+			SharedKMethod callback = (*fi);
 			if (callback.get() == entry.method.get())
 			{
 				records.erase(fi);
@@ -283,7 +283,7 @@ namespace kroll
 			EventRecords::iterator i = records.begin();
 			while (i != records.end())
 			{
-				SharedBoundMethod method = (*i++);
+				SharedKMethod method = (*i++);
 				method->Call(event,value);
 			}
 		}

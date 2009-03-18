@@ -35,7 +35,7 @@ namespace kroll
 		virtual Module* CreateModule(std::string& path);
 
 		HINSTANCE GetInstanceHandle() { return instance_handle; }
-		SharedValue InvokeMethodOnMainThread(SharedBoundMethod method,
+		SharedValue InvokeMethodOnMainThread(SharedKMethod method,
 		                                     const ValueList& args);
 		const char* GetPlatform();
 		const char* GetModuleSuffix();

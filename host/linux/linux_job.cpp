@@ -9,7 +9,7 @@
 
 namespace kroll
 {
-	LinuxJob::LinuxJob(SharedBoundMethod method, const ValueList& args)
+	LinuxJob::LinuxJob(SharedKMethod method, const ValueList& args)
 	 : method(method),
 	   args(args),
 	   return_value(NULL),

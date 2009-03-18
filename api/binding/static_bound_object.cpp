@@ -69,7 +69,7 @@ namespace kroll
 		return list;
 	}
 
-	void StaticBoundObject::SetObject(const char *name, SharedBoundObject object)
+	void StaticBoundObject::SetObject(const char *name, SharedKObject object)
 	{
 		SharedValue obj_val = Value::NewObject(object);
 		this->Set(name, obj_val);

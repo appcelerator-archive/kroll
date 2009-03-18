@@ -15,7 +15,7 @@ namespace kroll
 	class LinuxJob
 	{
 		public:
-			LinuxJob(SharedBoundMethod method, const ValueList& args);
+			LinuxJob(SharedKMethod method, const ValueList& args);
 			void Lock();
 			void Wait();
 			void Execute();
@@ -23,7 +23,7 @@ namespace kroll
 			ValueException GetException();
 	
 		private:
-			SharedBoundMethod method;
+			SharedKMethod method;
 			const ValueList& args;
 			SharedValue return_value;
 			ValueException exception;
