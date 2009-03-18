@@ -8,7 +8,7 @@
 namespace kroll
 {
 	KJSKMethod::KJSKMethod(JSContextRef context, JSObjectRef js_object, JSObjectRef this_obj) :
-		context(context),
+		context(NULL),
 		object(js_object),
 		this_obj(this_obj)
 	{
@@ -19,18 +19,16 @@ namespace kroll
 		 * that use a KJS context. */
 		JSObjectRef global_object = JSContextGetGlobalObject(context);
 		JSGlobalContextRef global_context = KJSUtil::GetGlobalContext(global_object);
-		if (global_context != NULL)
-		{
-			this->context = global_context;
-		}
-		else
-		{
-			// This context hasn't been registered. Something has gone pretty
-			// terribly wrong and Kroll will likely crash soon. Nonetheless, keep
-			// the user up-to-date to keep their hopes up.
+
+		// This context hasn't been registered. Something has gone pretty
+		// terribly wrong and Kroll will likely crash soon. Nonetheless, keep
+		// the user up-to-date to keep their hopes up.
+		if (global_context == NULL)
 			std::cerr << "Could not locate global context for a KJS method."  <<
 			             " One of the modules is misbehaving." << std::endl;
-		}
+
+		this->context = global_context;
+		JSGlobalContextRetain(global_context);
 
 		JSValueProtect(this->context, js_object);
 		if (this_obj != NULL)
@@ -41,11 +39,10 @@ namespace kroll
 
 	KJSKMethod::~KJSKMethod()
 	{
-		this->kjs_bound_object = NULL;
 		JSValueUnprotect(this->context, this->object);
-
 		if (this->this_obj != NULL)
 			JSValueUnprotect(this->context, this->this_obj);
+		JSGlobalContextRelease(this->context);
 	}
 
 	SharedValue KJSKMethod::Get(const char *name)

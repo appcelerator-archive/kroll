@@ -8,7 +8,7 @@
 namespace kroll
 {
 	KJSKObject::KJSKObject(JSContextRef context, JSObjectRef js_object) :
-		context(context),
+		context(NULL),
 		 object(js_object)
 	{
 		/* KJS methods run in the global context that they originated from
@@ -17,18 +17,16 @@ namespace kroll
 		* that use a KJS context. */
 		JSObjectRef global_object = JSContextGetGlobalObject(context);
 		JSGlobalContextRef global_context = KJSUtil::GetGlobalContext(global_object);
-		if (global_context != NULL)
-		{
-			this->context = global_context;
-		}
-		else
-		{
-			// This context hasn't been registered. Something has gone pretty
-			// terribly wrong and Kroll will likely crash soon. Nonetheless, keep
-			// the user up-to-date to keep their hopes up.
+
+		// This context hasn't been registered. Something has gone pretty
+		// terribly wrong and Kroll will likely crash soon. Nonetheless, keep
+		// the user up-to-date to keep their hopes up.
+		if (global_context == NULL)
 			std::cerr << "Could not locate global context for a KJS method."  <<
 			             " One of the modules is misbehaving." << std::endl;
-		}
+
+		this->context = global_context;
+		JSGlobalContextRetain(global_context);
 
 		JSValueProtect(this->context, js_object);
 	}
@@ -36,6 +34,7 @@ namespace kroll
 	KJSKObject::~KJSKObject()
 	{
 		JSValueUnprotect(this->context, this->object);
+		JSGlobalContextRelease(this->context);
 	}
 
 	JSObjectRef KJSKObject::GetJSObject()

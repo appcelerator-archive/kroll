@@ -576,10 +576,11 @@ namespace kroll
 			std::string s;
 			std::getline(*script_stream, s);
 
-			script_contents.append(s + "\n");
+			script_contents.append(s);
+			script_contents.append("\n");
 		}
 		script_stream->close();
-
+		
 		JSStringRef script = JSStringCreateWithUTF8CString(script_contents.c_str());
 		JSStringRef full_path_url = JSStringCreateWithUTF8CString(full_path);
 		JSValueRef exception = NULL;

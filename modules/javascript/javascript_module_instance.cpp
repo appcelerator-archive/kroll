@@ -42,7 +42,8 @@ namespace kroll
 		while (!js_file.eof() )
 		{
 			std::getline(js_file, line);
-			this->code += line;
+			this->code.append(line);
+			this->code.append("\n");
 		}
 		js_file.close();
 	}
