@@ -654,5 +654,14 @@ namespace kroll
 		ScopedLock lock(&moduleMutex);
 		running = false;
 		this->exitCode = exitcode;
+
+		// give our modules a hook for exit
+		ModuleMap::iterator i = this->modules.begin();
+		while (i != this->modules.end())
+		{
+			SharedPtr<Module> module = i->second;
+			module->Exiting(exitcode);
+			i++;
+		}
 	}
 }

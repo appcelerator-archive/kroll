@@ -511,121 +511,23 @@ namespace kroll
 	}
 	std::string FileUtils::GetMachineId()
 	{
-#ifdef OS_OSX
-		kern_return_t kernResult;
-		mach_port_t machPort;
-		char serialNumber[256];
-
-		kernResult = IOMasterPort( MACH_PORT_NULL, &machPort );
-
-		serialNumber[0] = 0;
-
-		// if we got the master port
-		if ( kernResult == KERN_SUCCESS )
+		std::string path = FileUtils::Join(FileUtils::GetRuntimeBaseDirectory().c_str(),".titanium",NULL);
+		if (FileUtils::IsFile(path))
 		{
-			// create a dictionary matching IOPlatformExpertDevice
-			CFMutableDictionaryRef classesToMatch = IOServiceMatching("IOPlatformExpertDevice" );
-
-			// if we are successful
-			if (classesToMatch)
+			std::ifstream file(path.c_str());
+			if (file.bad() || file.fail())
 			{
-				// get the matching services iterator
-				io_iterator_t iterator;
-				kernResult = IOServiceGetMatchingServices( machPort,
-				classesToMatch, &iterator );
-
-				// if we succeeded
-				if ( (kernResult == KERN_SUCCESS) && iterator )
-				{
-					io_object_t serviceObj;
-					bool done = false;
-					do {
-						// get the next item out of the dictionary
-						serviceObj = IOIteratorNext( iterator );
-
-						// if it is not NULL
-						if (serviceObj)
-						{
-							CFDataRef data = (CFDataRef) IORegistryEntryCreateCFProperty( serviceObj, CFSTR("serial-number"), kCFAllocatorDefault, 0 );
-
-							if (data != NULL)
-							{
-								CFIndex datalen = CFDataGetLength(data);
-								const UInt8* rawdata = CFDataGetBytePtr(data);
-								char dataBuffer[256];
-								memcpy(dataBuffer, rawdata, datalen);
-								sprintf(serialNumber, "%s%s", dataBuffer+13,dataBuffer);
-								CFRelease(data);
-								done = true;
-							}
-						}
-
-					} while (done == false);
-
-					IOObjectRelease(serviceObj);
-				}
-
-				IOObjectRelease(iterator);
+				return "";
+			}
+			while (!file.eof())
+			{
+				std::string line;
+				std::getline(file,line);
+				FileUtils::Trim(line);
+				return line;
 			}
 		}
-		return std::string(serialNumber);
-#elif defined(OS_WIN32)
-		IP_ADAPTER_INFO adapter;
-		DWORD dwBufLen = sizeof(adapter);
-		DWORD dwStatus = GetAdaptersInfo(&adapter,&dwBufLen);
-		if (dwStatus != ERROR_SUCCESS) return std::string();
-		BYTE *MACData = adapter.Address;
-		char buf[MAX_PATH];
-		sprintf_s(buf,MAX_PATH,"%02X-%02X-%02X-%02X-%02X-%02X", MACData[0], MACData[1], MACData[2], MACData[3], MACData[4], MACData[5]);
-		return std::string(buf);
-#elif defined(OS_LINUX)
-		//Based on code from:
-		//http://adywicaksono.wordpress.com/2007/11/08/detecting-mac-address-using-c-application/
-		std::string fail = "00:00:00:00:00:00";
-		struct ifreq ifr;
-		struct ifconf ifc;
-		char buf[1024];
-		u_char addr[6] = {'\0','\0','\0','\0','\0','\0'};
-		int s, i;
-
-		s = socket(AF_INET, SOCK_DGRAM, 0);
-		if (s == -1)
-			return fail;
-
-		ifc.ifc_len = sizeof(buf);
-		ifc.ifc_buf = buf;
-		ioctl(s, SIOCGIFCONF, &ifc);
-		struct ifreq* IFR = ifc.ifc_req;
-		bool success = false;
-		for (i = ifc.ifc_len / sizeof(struct ifreq); --i >= 0; IFR++) {
-			strcpy(ifr.ifr_name, IFR->ifr_name);
-			if (ioctl(s, SIOCGIFFLAGS, &ifr) == 0
-				 && (!(ifr.ifr_flags & IFF_LOOPBACK))
-				 && (ioctl(s, SIOCGIFHWADDR, &ifr) == 0))
-			{
-				success = true;
-				bcopy(ifr.ifr_hwaddr.sa_data, addr, 6);
-				break;
-			}
-		}
-		close(s);
-
-		if (success)
-		{
-			char mac_buf[36];
-			std::ostringstream mac;
-			snprintf(mac_buf, 36,
-				"%2.2x:%2.2x:%2.2x:%2.2x:%2.2x:%2.2x",
-				addr[0], addr[1],
-				addr[2], addr[3],
-				addr[4], addr[5]);
-			return std::string(mac_buf);
-		}
-		else
-		{
-			return fail;
-		}
-#endif
+		return "";
 	}
 	void FileUtils::Tokenize(const std::string& str, std::vector<std::string>& tokens, const std::string &delimeters)
 	{
