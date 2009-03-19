@@ -42,7 +42,6 @@ namespace kroll
 		JSValueUnprotect(this->context, this->object);
 		if (this->this_obj != NULL)
 			JSValueUnprotect(this->context, this->this_obj);
-		JSGlobalContextRelease(this->context);
 	}
 
 	SharedValue KJSKMethod::Get(const char *name)

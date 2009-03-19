@@ -34,7 +34,6 @@ namespace kroll
 	KJSKObject::~KJSKObject()
 	{
 		JSValueUnprotect(this->context, this->object);
-		JSGlobalContextRelease(this->context);
 	}
 
 	JSObjectRef KJSKObject::GetJSObject()
