@@ -21,11 +21,13 @@ namespace kroll
 			void Execute();
 			SharedValue GetResult();
 			ValueException GetException();
+			bool IsWaitingForCompletion();
+			void PrintException();
 	
 		private:
 			SharedKMethod method;
 			const ValueList& args;
-			bool wait;
+			bool waitForCompletion;
 			SharedValue return_value;
 			ValueException exception;
 			Poco::Semaphore semaphore;

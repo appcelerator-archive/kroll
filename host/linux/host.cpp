@@ -103,17 +103,17 @@ namespace kroll
 		}
 		else
 		{
-			{
-				Poco::ScopedLock<Poco::Mutex> s(this->GetJobQueueMutex());
-				this->jobs.push_back(job); // Enqueue job
-			}
-			if (!waitForCompletion)
-			{
-				// job will delete itself when complete
-				return Value::Null;
-			}
-			job->Wait(); // Wait for processing
+			Poco::ScopedLock<Poco::Mutex> s(this->GetJobQueueMutex());
+			this->jobs.push_back(job); // Enqueue job
 		}
+
+		if (!waitForCompletion)
+			return Value::Undefined; // Handler will cleanup
+
+		// If this isn't the main thread we 
+		// need to wait for our job to finish
+		if (!this->IsMainThread())
+			job->Wait(); 
 
 		SharedValue r = job->GetResult();
 		ValueException e = job->GetException();
@@ -132,17 +132,23 @@ namespace kroll
 		Poco::ScopedLock<Poco::Mutex> s(host->GetJobQueueMutex());
 
 		std::vector<LinuxJob*>& jobs = host->GetJobs();
-		std::vector<LinuxJob*>::iterator j;
-
 		if (jobs.size() == 0)
 			return TRUE;
 
-		for (j = jobs.begin(); j != jobs.end(); j++)
+		std::vector<LinuxJob*>::iterator j = jobs.begin();
+		while (j != jobs.end())
 		{
-			(*j)->Execute();
+			LinuxJob* job = *j;
+			j = jobs.erase(j);
+
+			job->Execute();
+			if (!job->IsWaitingForCompletion())
+			{
+				job->PrintException();
+				delete job;
+			}
 		}
 
-		jobs.clear();
 		return TRUE;
 	}
 }

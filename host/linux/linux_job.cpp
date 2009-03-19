@@ -12,7 +12,7 @@ namespace kroll
 	LinuxJob::LinuxJob(SharedKMethod method, const ValueList& args, bool wait)
 	 : method(method),
 	   args(args),
-	   wait(wait),
+	   waitForCompletion(wait),
 	   return_value(NULL),
 	   exception(ValueException(NULL)),
 	   semaphore(0, 1)
@@ -40,7 +40,7 @@ namespace kroll
 		}
 		catch (Poco::SystemException& e)
 		{
-			std::cout << "caught poco exception " << e.displayText() << std::endl;
+			this->exception = ValueException::FromString(e.displayText());
 		}
 		catch (...)
 		{
@@ -48,11 +48,6 @@ namespace kroll
 			  ValueException::FromString("Unknown Exception from job queue");
 		}
 		this->semaphore.set();
-		
-		if (!this->wait)
-		{
-			delete this;
-		}
 	}
 
 	SharedValue LinuxJob::GetResult()
@@ -63,6 +58,20 @@ namespace kroll
 	ValueException LinuxJob::GetException()
 	{
 		return this->exception;
+	}
+
+	bool LinuxJob::IsWaitingForCompletion()
+	{
+		return this->waitForCompletion;
+	}
+
+	void LinuxJob::PrintException()
+	{
+		if (this->return_value.isNull())
+		{
+			SharedString ss = this->exception.GetValue()->DisplayString();
+			std::cout << "Exception in job queue: " << *ss << std::endl;
+		}
 	}
 }
 
