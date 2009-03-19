@@ -38,7 +38,6 @@ namespace kroll
 	KJSKList::~KJSKList()
 	{
 		JSValueUnprotect(this->context, this->object);
-		JSGlobalContextRelease(this->context);
 	}
 
 	unsigned int KJSKList::Size()

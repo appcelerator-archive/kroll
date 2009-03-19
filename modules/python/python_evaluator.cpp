@@ -8,7 +8,6 @@
 
 	SharedValue PythonEvaluator::Call(const ValueList& args)
 	{
-
 		if (args.size() != 3
 			|| !args.at(1)->IsString()
 			|| !args.at(2)->IsObject())
@@ -21,25 +20,32 @@
 		PythonEvaluator::StripLeadingWhitespace(code);
 		PythonEvaluator::ConvertLineEndings(code);
 
-		// Copy __main__'s globals() and insert all window global
-		// properties into it, so that we don't pollute Python's
-		// __main__ globals()
+		// Each script has it's own sub-interpreter
+		PyThreadState* previous_state = PyThreadState_Get();
+		PyThreadState* ts = Py_NewInterpreter();
+		PyThreadState_Swap(ts);
+
+		// Insert all the global properties into __builtins__
 		SharedKObject window_global = args.at(2)->ToObject();
 		PyObject* main_module = PyImport_AddModule("__main__");
-		PyObject* main_dict = PyModule_GetDict(main_module);
-		PyObject* my_globals = PyDict_Copy(main_dict);
-		KObjectPropsToDict(window_global, my_globals);
+		PyObject* globals = PyModule_GetDict(main_module);
+		PyObject* builtins = PyDict_GetItemString(globals, "__builtins__");
+		KObjectPropsToDict(window_global, builtins);
 
-		// Execute the script using a blank dictionary as locals()
-		PyObject* my_locals = PyDict_New();
-		PyObject *return_value = PyRun_StringFlags(
+		// Run the script and retrieve the locals()
+		PyObject *return_value = PyRun_String(
 			code.c_str(),
 			Py_file_input,
-			my_globals,
-			my_locals,
-			NULL);
+			globals,
+			globals);
+		PyObject* locals = PyRun_String("locals()", Py_eval_input, globals, globals);
+
+		// Move all the new variables in locals() to  the
+		// window context. These are things that are now defined.
+		DictToKObjectProps(locals, window_global);
 
 		/* TODO: Logging */
+		SharedValue kv = Value::Undefined;
 		if (return_value == NULL && PyErr_Occurred())
 		{
 			std::cout << "An error occured while parsing Python on the page: " << std::endl;
@@ -47,19 +53,17 @@
 		}
 		else
 		{
+			SharedValue kv = PythonUtils::ToKrollValue(return_value);
 			Py_DECREF(return_value);
 		}
 
-		// Move all the new variables in locals() (my_locals) to
-		// the window context. These are things that are now defined.
-		DictToKObjectProps(my_locals, window_global);
-		Py_DECREF(my_locals);
-		Py_DECREF(my_globals);
+		// Switch back to the global thread state
+		PyThreadState_Swap(previous_state);
 
-		return Value::Undefined;
+		return kv;
 	}
 
-	void PythonEvaluator::KObjectPropsToDict(SharedKObject o, PyObject* map)
+	void PythonEvaluator::KObjectPropsToDict(SharedKObject o, PyObject* pyobj)
 	{
 		SharedStringList props = o->GetPropertyNames();
 		for (size_t i = 0; i < props->size(); i++)
@@ -67,7 +71,7 @@
 			const char* k = props->at(i)->c_str();
 			SharedValue v = o->Get(k);
 			PyObject* pv = PythonUtils::ToPyObject(v);
-			PyDict_SetItemString(map, k, pv);
+			PyObject_SetAttrString(pyobj, k, pv);
 			Py_DECREF(pv);
 		}
 	}

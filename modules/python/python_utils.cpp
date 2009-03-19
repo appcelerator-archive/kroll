@@ -155,21 +155,19 @@ namespace kroll
 		if (value->IsObject())
 		{
 			SharedKObject obj = value->ToObject();
+
 			SharedPtr<KPythonObject> pyobj = obj.cast<KPythonObject>();
-			SharedPtr<KPythonDict> pydict = obj.cast<KPythonDict>();
 			if (!pyobj.isNull())
-			{
 				return pyobj->ToPython();
-			}
+
+			SharedPtr<KPythonDict> pydict = obj.cast<KPythonDict>();
 			if (!pydict.isNull())
-			{
 				return pydict->ToPython();
-			}
-			else
-			{
-				return PythonUtils::KObjectToPyObject(value);
-			}
+
+			return PythonUtils::KObjectToPyObject(value);
 		}
+
+		Py_INCREF(Py_None);
 		return Py_None;
 	}
 
@@ -245,6 +243,12 @@ namespace kroll
 		{
 			SharedKMethod m = new KPythonMethod(value);
 			SharedValue tiv = Value::NewMethod(m);
+			return tiv;
+		}
+		else if (PyModule_Check(value))
+		{
+			SharedKObject v = new KPythonObject(value);
+			SharedValue tiv = Value::NewObject(v);
 			return tiv;
 		}
 		else if (PyFunction_Check(value))

@@ -117,16 +117,16 @@ namespace kroll
 
 	SharedValue KObject::CallNS(const char *name, const ValueList& args)
 	{
-		SharedValue callableValue = GetNS(name);
-		if (callableValue->IsUndefined()) {
-			return callableValue;
+		SharedValue callable_value = GetNS(name);
+		if (callable_value->IsUndefined()) {
+			return callable_value;
 		}
 
-		if (!callableValue->IsMethod()) {
+		if (!callable_value->IsMethod()) {
 			return Value::Undefined;
 		}
 
-		return callableValue->ToMethod()->Call(args);
+		return callable_value->ToMethod()->Call(args);
 	}
 
 	SharedString KObject::DisplayString(int levels)

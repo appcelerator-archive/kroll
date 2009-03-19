@@ -34,7 +34,9 @@ namespace kroll
 {
 	SharedPtr<Host> Host::instance_;
 
-	Host::Host(int argc, const char *argv[]) : debug(false)
+	Host::Host(int argc, const char *argv[]) :
+		debug(false),
+		wait_for_debugger(false)
 	{
 		instance_ = this;
 
@@ -120,12 +122,18 @@ namespace kroll
 			this->args.push_back(std::string(argv[i]));
 			PRINTD("ARGUMENT[" << i << "] => " << argv[i]);
 
-			if (strcmp(argv[i],"--debug")==0)
+			if (strcmp(argv[i], "--debug") == 0)
 			{
 				std::cout << "DEBUGGING DETECTED!" << std::endl;
 				this->debug = true;
 			}
+
+			if (strcmp(argv[i], "--attach-debugger") == 0)
+			{
+				this->wait_for_debugger = true;
+			}
 		}
+
 	}
 
 	Host::~Host()
@@ -438,9 +446,8 @@ namespace kroll
 			this->FindBasicModules((*iter++));
 		}
 
-		/* All modules are now loaded,
-		 * so start them all */
-		this->StartModules(this->loaded_modules);
+		/* All modules are now loaded, so start them all */
+			this->StartModules(this->loaded_modules);
 
 		/* Try to load files that weren't modules
 		 * using newly available module providers */
@@ -606,20 +613,24 @@ namespace kroll
 
 	int Host::Run()
 	{
-		if (args.size() > 1) {
-			if (args.at(1) == "--attach-debugger") {
-				printf("Waiting for debugger (Press Any Key to Continue)...\n");
-				do {
-					int c = getc(stdin);
-					if (c > 0) break;
-				} while (true);
-			}
+
+		if (this->wait_for_debugger)
+		{
+			printf("Waiting for debugger (Press Any Key to Continue)...\n");
+			getchar();
 		}
 
+		try
 		{
 			ScopedLock lock(&moduleMutex);
 			this->AddModuleProvider(this);
 			this->LoadModules();
+		}
+		catch (ValueException e)
+		{
+			SharedString ss = e.GetValue()->DisplayString();
+			PRINTD(*ss);
+			return 1;
 		}
 
 		// allow start to immediately end

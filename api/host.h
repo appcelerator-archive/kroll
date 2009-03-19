@@ -304,6 +304,7 @@ namespace kroll
 		bool running;
 		int exitCode;
 		bool debug;
+		bool wait_for_debugger;
 
 		static SharedPtr<Host> instance_;
 		DISALLOW_EVIL_CONSTRUCTORS(Host);
