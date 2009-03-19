@@ -84,11 +84,9 @@ namespace kroll
 	}
 
 	SharedValue TestHost::InvokeMethodOnMainThread(SharedKMethod method,
-                                                  const ValueList& args)
+                                                  const ValueList& args,
+												bool waitForCompletion)
 	{
-		//FIXME - implement for Win32 and Linux. Until then...we
-		//will just forward on same thread
-		std::cerr << "WARNING: Invoking method on non-main Thread!" << std::endl;
 		SharedValue result = method->Call(args);
 		return result;
 	}

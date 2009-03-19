@@ -9,9 +9,10 @@
 
 namespace kroll
 {
-	Win32Job::Win32Job(SharedKMethod method, const ValueList& args)
+	Win32Job::Win32Job(SharedKMethod method, const ValueList& args, bool wait)
 	 : method(method),
 	   args(args),
+	   wait(wait),
 	   return_value(NULL),
 	   exception(ValueException(NULL)),
 	   semaphore(0, 1)
@@ -50,6 +51,10 @@ namespace kroll
 			this->exception = ValueException::FromString("Unknown Exception from job queue");
 		}
 		this->semaphore.set();		
+		if (!this->wait)
+		{
+			delete this;
+		}
 	}
 
 	SharedValue Win32Job::GetResult()

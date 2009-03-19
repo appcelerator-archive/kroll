@@ -109,19 +109,26 @@ namespace kroll
 	}
 
 	SharedValue Win32Host::InvokeMethodOnMainThread(SharedKMethod method,
-                                                    const ValueList& args)
+                                                    const ValueList& args,
+												    bool waitForCompletion)
 	{
 		if (thread_id == GetCurrentThreadId()) {
 			return method->Call(args);
 		}
 
-		Win32Job* job = new Win32Job(method, args);
+		Win32Job* job = new Win32Job(method, args, waitForCompletion);
 		{
 			Poco::ScopedLock<Poco::Mutex> s(this->GetJobQueueMutex());
 			this->jobs.push_back(job); // Enqueue job
 		}
 		// send a message to tickle the windows message queue
 		PostThreadMessage(thread_id, WM_JOB_TICKLE_REQUEST, 0, 0);
+		
+		if (!waitForCompletion)
+		{
+			// job will delete itself
+			return;
+		}
 		job->Wait(); // Wait for processing
 
 		SharedValue r = job->GetResult();

@@ -18,7 +18,8 @@ namespace kroll
 		virtual Module* CreateModule(std::string& path);
 
 		SharedValue InvokeMethodOnMainThread(SharedKMethod method,
-		                                     const ValueList& args);
+		                                     const ValueList& args,
+		                                     bool waitForCompletion=true);
 		const char* GetPlatform();
 		const char* GetModuleSuffix();
 

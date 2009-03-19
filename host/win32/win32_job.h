@@ -14,7 +14,7 @@ namespace kroll
 	class Win32Job
 	{
 		public:
-			Win32Job(SharedKMethod method, const ValueList& args);
+			Win32Job(SharedKMethod method, const ValueList& args, bool wait);
 			virtual ~Win32Job();
 			void Lock();
 			void Wait();
@@ -25,6 +25,7 @@ namespace kroll
 		private:
 			SharedKMethod method;
 			const ValueList& args;
+			bool wait;
 			SharedValue return_value;
 			ValueException exception;
 			Poco::Semaphore semaphore;

@@ -92,9 +92,10 @@ namespace kroll
 
 	SharedValue LinuxHost::InvokeMethodOnMainThread(
 		SharedKMethod method,
-		const ValueList& args)
+		const ValueList& args,
+		bool waitForCompletion)
 	{
-		LinuxJob* job = new LinuxJob(method, args);
+		LinuxJob* job = new LinuxJob(method, args, waitForCompletion);
 
 		if (this->IsMainThread())
 		{
@@ -105,6 +106,11 @@ namespace kroll
 			{
 				Poco::ScopedLock<Poco::Mutex> s(this->GetJobQueueMutex());
 				this->jobs.push_back(job); // Enqueue job
+			}
+			if (!waitForCompletion)
+			{
+				// job will delete itself when complete
+				return Value::Null;
 			}
 			job->Wait(); // Wait for processing
 		}

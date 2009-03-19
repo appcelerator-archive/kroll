@@ -122,7 +122,7 @@ namespace kroll
 		/*
 			Function: ReadManifest
 		*/
-		static bool ReadManifest(std::string& path, std::string &runtimePath, std::vector< std::pair< std::pair<std::string,std::string>,bool> >& modules, std::vector<std::string> &moduleDirs, std::string &appname, std::string &appid, std::string &runtimeOverride);
+		static bool ReadManifest(std::string& path, std::string &runtimePath, std::vector< std::pair< std::pair<std::string,std::string>,bool> >& modules, std::vector<std::string> &moduleDirs, std::string &appname, std::string &appid, std::string &runtimeOverride, std::string &guid);
 
 		/*
 			Function: ListDir

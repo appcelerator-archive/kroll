@@ -18,7 +18,8 @@ namespace kroll
 		void TestAll();
 		virtual Module* CreateModule(std::string& path);
 		SharedValue InvokeMethodOnMainThread(SharedKMethod method,
-		                                     const ValueList& args);
+		                                     const ValueList& args,
+											 bool waitForCompletion);
 
 	protected:
 		virtual bool RunLoop();

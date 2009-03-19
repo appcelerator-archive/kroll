@@ -563,7 +563,7 @@ namespace kroll
 		}
 		return c;
 	}
-	bool FileUtils::ReadManifest(std::string& path, std::string &runtimePath, std::vector< std::pair< std::pair<std::string,std::string>, bool> >& modules, std::vector<std::string> &moduleDirs, std::string &appname, std::string &appid, std::string &runtimeOverride)
+	bool FileUtils::ReadManifest(std::string& path, std::string &runtimePath, std::vector< std::pair< std::pair<std::string,std::string>, bool> >& modules, std::vector<std::string> &moduleDirs, std::string &appname, std::string &appid, std::string &runtimeOverride, std::string &guid)
 	{
 		std::ifstream file(path.c_str());
 		if (file.bad() || file.fail())
@@ -597,6 +597,11 @@ namespace kroll
 				else if (key == "#appid")
 				{
 					appid = value;
+					continue;
+				}
+				else if (key == "#guid")
+				{
+					guid = value;
 					continue;
 				}
 				else if (key.c_str()[0]=='#')

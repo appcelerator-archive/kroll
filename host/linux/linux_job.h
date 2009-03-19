@@ -15,7 +15,7 @@ namespace kroll
 	class LinuxJob
 	{
 		public:
-			LinuxJob(SharedKMethod method, const ValueList& args);
+			LinuxJob(SharedKMethod method, const ValueList& args, bool wait);
 			void Lock();
 			void Wait();
 			void Execute();
@@ -25,6 +25,7 @@ namespace kroll
 		private:
 			SharedKMethod method;
 			const ValueList& args;
+			bool wait;
 			SharedValue return_value;
 			ValueException exception;
 			Poco::Semaphore semaphore;

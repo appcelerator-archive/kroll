@@ -100,23 +100,25 @@ namespace kroll
 {
 	kroll::KMethod *method;
 	SharedPtr<kroll::Value> *result;
-	const ValueList* args;
 	SharedPtr<kroll::Value> *exception;
+	const ValueList *args;
+	bool wait;
 }
-- (id)initWithKMethod:(SharedPtr<kroll::KMethod>)method args:(const ValueList*)args;
+- (id)initWithKMethod:(SharedPtr<kroll::KMethod>)method args:(const ValueList*)args wait:(bool)wait;
 - (void)call;
 - (SharedPtr<kroll::Value>)getResult;
 - (SharedPtr<kroll::Value>)getException;
 @end
 
 @implementation KrollMainThreadCaller
-- (id)initWithKMethod:(SharedPtr<kroll::KMethod>)m args:(const ValueList*)a
+- (id)initWithKMethod:(SharedPtr<kroll::KMethod>)m args:(const ValueList*)a wait:(bool)w
 {
 	self = [super init];
 	if (self)
 	{
 		method = m.get();
 		args = a;
+		wait = w;
 		result = new SharedPtr<kroll::Value>();
 		exception = new SharedPtr<kroll::Value>();
 	}
@@ -154,6 +156,10 @@ namespace kroll
 	{
 		exception->assign(Value::NewString("unhandled exception"));
 	}
+	if (!wait)
+	{
+//		[self release];
+	}
 }
 @end
 
@@ -177,18 +183,23 @@ namespace kroll
 namespace kroll
 {
 	SharedValue OSXHost::InvokeMethodOnMainThread(SharedKMethod method,
-	                                              const ValueList& args)
+	                                              const ValueList& args,
+												  bool waitForCompletion)
 	{
 		// make sure to just invoke if we're already on the
 		// main thread
 		bool isMainThread;
-		if ([NSThread respondsToSelector:@selector(isMainThread)]) {
+		if ([NSThread respondsToSelector:@selector(isMainThread)]) 
+		{
 			isMainThread = [NSThread isMainThread];
-		} else {
+		} 
+		else 
+		{
 			NSMutableData * mainThreadData= [[NSMutableData alloc] initWithLength:sizeof(NSThread *)];
 			[NSThread performSelectorOnMainThread:@selector(TiLegacyGetCurrentThread:) withObject:mainThreadData waitUntilDone:YES];
 			NSThread * mainThread = *((id *)[mainThreadData bytes]);
 			isMainThread = mainThread == [NSThread currentThread];
+			[mainThreadData release];
 		}
 
 		if (isMainThread)
@@ -196,15 +207,23 @@ namespace kroll
 			return method->Call(args);
 		}
 		NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-		KrollMainThreadCaller *caller = [[[KrollMainThreadCaller alloc] initWithKMethod:method args:&args] autorelease];
+		KrollMainThreadCaller *caller = [[KrollMainThreadCaller alloc] initWithKMethod:method args:&args wait:waitForCompletion];
+//		[caller performSelectorOnMainThread:@selector(call) withObject:nil waitUntilDone:waitForCompletion];
 		[caller performSelectorOnMainThread:@selector(call) withObject:nil waitUntilDone:YES];
+		if (!waitForCompletion)
+		{
+			[pool release];
+			return Value::Null;
+		}
 		SharedValue exception = [caller getException];
 		if (exception.isNull())
 		{
 			SharedValue result = [caller getResult];
+			[caller release];
 			[pool release];
 			return result;
 		}
+		[caller release];
 		[pool release];
 		return exception;
 	}

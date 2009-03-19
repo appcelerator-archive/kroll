@@ -128,7 +128,8 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 							 std::vector<std::string> &moduleDirs,
 							 std::string &appname,
 							 std::string &appid,
-							 std::string &runtimeOverride)
+							 std::string &runtimeOverride,
+							 std::string &guid)
 {
 	bool result = true;
 	std::vector< std::pair<std::string,std::string> > missing;
@@ -189,7 +190,7 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 		{
 			std::string sid = kroll::FileUtils::GetMachineId();
 			std::string os = OS_NAME;
-			std::string qs("?os="+os+"&sid="+sid+"&aid="+appid);
+			std::string qs("?os="+os+"&sid="+sid+"&aid="+appid+"&guid="+guid);
 			std::vector< std::pair<std::string,std::string> >::iterator iter = missing.begin();
 			int missingCount = 0;
 			while (iter!=missing.end())
@@ -250,7 +251,7 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 					
 					modules.clear();
 					moduleDirs.clear();
-					bool success = kroll::FileUtils::ReadManifest(manifest,runtimePath,modules,moduleDirs,appname,appid,runtimeOverride);
+					bool success = kroll::FileUtils::ReadManifest(manifest,runtimePath,modules,moduleDirs,appname,appid,runtimeOverride,guid);
 					if (!success || modules.size()!=moduleDirs.size())
 					{
 						// must have failed
@@ -321,7 +322,8 @@ int main(int argc, char *argv[])
 	std::string appname;
 	std::string appid;
 	std::string runtimeOverride = homedir;
-	bool success = kroll::FileUtils::ReadManifest(manifest,runtimePath,modules,moduleDirs,appname,appid,runtimeOverride);
+	std::string guid;
+	bool success = kroll::FileUtils::ReadManifest(manifest,runtimePath,modules,moduleDirs,appname,appid,runtimeOverride,guid);
 	if (!success)
 	{
 		[pool release];
@@ -329,7 +331,7 @@ int main(int argc, char *argv[])
 	}
 	// run the app installer if any missing modules/runtime or
 	// version specs not met
-	if (!RunAppInstallerIfNeeded(homedir,runtimePath,manifest,modules,moduleDirs,appname,appid,runtimeOverride))
+	if (!RunAppInstallerIfNeeded(homedir,runtimePath,manifest,modules,moduleDirs,appname,appid,runtimeOverride,guid))
 	{
 		[pool release];
 		return __LINE__;
@@ -381,6 +383,7 @@ int main(int argc, char *argv[])
 		[environment setObject:[NSString stringWithCString:runtimePath.c_str()] forKey:@"KR_RUNTIME"];
 		[environment setObject:[NSString stringWithCString:moduleList.str().c_str()] forKey:@"KR_MODULES"];
 		[environment setObject:[NSString stringWithCString:runtimeBasedir.c_str()] forKey:@"KR_RUNTIME_HOME"];
+		[environment setObject:[NSString stringWithCString:guid.c_str()] forKey:@"KR_APP_GUID"];
 
 		NSMutableArray *arguments = [NSMutableArray arrayWithObjects:executablePath, nil];
 		while (*++argv)

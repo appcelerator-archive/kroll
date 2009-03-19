@@ -124,6 +124,7 @@ class Boot
 	std::string rt_path;
 	std::string app_name;
 	std::string app_id;
+	std::string guid;
 	std::string installer_path;
 
 	/* Potential paths for installed modules and runtime */
@@ -253,6 +254,11 @@ class Boot
 			else if (key == "#appid")
 			{
 				this->app_id = value;
+				continue;
+			}
+			else if (key == "#guid")
+			{
+				this->guid = value;
 				continue;
 			}
 			else if (key.c_str()[0] == '#')
@@ -389,7 +395,7 @@ class Boot
 		std::string temp_dir = kroll::FileUtils::GetTempDirectory();
 		std::string sid = kroll::FileUtils::GetMachineId();
 		std::string os = OS_NAME;
-		std::string qs("?os="+os+"&sid="+sid+"&aid="+this->app_id);
+		std::string qs("?os="+os+"&sid="+sid+"&aid="+this->app_id+"&guid="+this->guid);
 
 		// Install to default runtime directory. At some point
 		// net_installer will decide where to install (for Loonix)
@@ -468,6 +474,7 @@ int prepare_environment(int argc, const char* argv[])
 		setenv("KR_RUNTIME", boot.rt_module->path.c_str(), 1);
 		setenv("KR_MODULES", module_list.c_str(), 1);
 		setenv("KR_RUNTIME_HOME", boot.rt_path.c_str(), 1);
+		setenv("KR_APP_GUID",boot.guid.c_str(),1);
 
 		const char* prepath = getenv("LD_LIBRARY_PATH");
 		if (prepath == NULL) prepath = "";

@@ -60,11 +60,13 @@ namespace kroll
 		 * Function: InvokeMethodOnMainThread
 		 *
 		 * Call with a method and arguments to invoke the method
-		 * on the main UI thread and return a value (blocking until run)
+		 * on the main UI thread and return a value (blocking until run if
+		 * waitForCompletion is set to true which is the default)
 		 */
 		virtual SharedValue InvokeMethodOnMainThread(
 			SharedKMethod,
-			const ValueList& args) = 0;
+			const ValueList& args,
+			bool waitForCompletion=true) = 0;
 
 		/*
 		 * Function: AddModuleProvider
@@ -310,7 +312,7 @@ namespace kroll
 	/**
 	 * method that invokes a bound method on the main host thread
 	 */
-	extern KROLL_API SharedValue InvokeMethodOnMainThread(SharedKMethod method, const ValueList& args);
+	extern KROLL_API SharedValue InvokeMethodOnMainThread(SharedKMethod method, const ValueList& args, bool waitForCompletion=true);
 }
 #endif
 
