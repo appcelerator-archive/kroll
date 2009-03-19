@@ -95,7 +95,6 @@
 
 			if (sk.find("__") != 0)
 			{
-				std::cout << "looking at: " << sk << std::endl;
 				SharedValue kv = PythonUtils::ToKrollValue(v);
 				o->Set(sk.c_str(), kv);
 			}
