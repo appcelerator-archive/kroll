@@ -24,11 +24,19 @@ namespace kroll
 		static SharedPtr<KJSKObject> ToBoundObject(JSContextRef, JSObjectRef);
 		static SharedPtr<KJSKMethod> ToBoundMethod(JSContextRef, JSObjectRef, JSObjectRef);
 		static SharedPtr<KJSKList> ToBoundList(JSContextRef, JSObjectRef);
+
 		static void RegisterGlobalContext(JSObjectRef, JSGlobalContextRef);
 		static JSGlobalContextRef GetGlobalContext(JSObjectRef);
 
+		static void ProtectGlobalContext(JSGlobalContextRef);
+		static void UnprotectGlobalContext(JSGlobalContextRef);
+
 		static SharedValue Evaluate(JSContextRef context, char *script);
 		static SharedValue EvaluateFile(JSContextRef context, char *full_path);
+
+	private:
+		static std::map<JSObjectRef, JSGlobalContextRef> contextMap;
+		static std::map<JSGlobalContextRef, int> contextRefCounts;
 
 	};
 

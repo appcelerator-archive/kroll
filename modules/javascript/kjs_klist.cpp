@@ -26,18 +26,18 @@ namespace kroll
 		if (global_context == NULL)
 			std::cerr << "Could not locate global context for a KJS method."  <<
 			             " One of the modules is misbehaving." << std::endl;
-
 		this->context = global_context;
-		JSGlobalContextRetain(global_context);
 
-		JSValueProtect(this->context, js_object);
+		KJSUtil::ProtectGlobalContext(this->context);
+		JSValueProtect(this->context, this->object);
 
-		this->kjs_bound_object = new KJSKObject(this->context, js_object);
+		this->kjs_bound_object = new KJSKObject(this->context, this->object);
 	}
 
 	KJSKList::~KJSKList()
 	{
 		JSValueUnprotect(this->context, this->object);
+		KJSUtil::UnprotectGlobalContext(this->context);
 	}
 
 	unsigned int KJSKList::Size()

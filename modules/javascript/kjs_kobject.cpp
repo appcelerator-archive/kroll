@@ -9,7 +9,7 @@ namespace kroll
 {
 	KJSKObject::KJSKObject(JSContextRef context, JSObjectRef js_object) :
 		context(NULL),
-		 object(js_object)
+		object(js_object)
 	{
 		/* KJS methods run in the global context that they originated from
 		* this seems to prevent nasty crashes from trying to access invalid
@@ -26,14 +26,15 @@ namespace kroll
 			             " One of the modules is misbehaving." << std::endl;
 
 		this->context = global_context;
-		JSGlobalContextRetain(global_context);
 
-		JSValueProtect(this->context, js_object);
+		KJSUtil::ProtectGlobalContext(this->context);
+		JSValueProtect(this->context, this->object);
 	}
 
 	KJSKObject::~KJSKObject()
 	{
 		JSValueUnprotect(this->context, this->object);
+		KJSUtil::UnprotectGlobalContext(this->context);
 	}
 
 	JSObjectRef KJSKObject::GetJSObject()

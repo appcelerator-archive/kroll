@@ -28,8 +28,8 @@ namespace kroll
 			             " One of the modules is misbehaving." << std::endl;
 
 		this->context = global_context;
-		JSGlobalContextRetain(global_context);
 
+		KJSUtil::ProtectGlobalContext(this->context);
 		JSValueProtect(this->context, js_object);
 		if (this_obj != NULL)
 			JSValueProtect(this->context, this_obj);
@@ -42,6 +42,7 @@ namespace kroll
 		JSValueUnprotect(this->context, this->object);
 		if (this->this_obj != NULL)
 			JSValueUnprotect(this->context, this->this_obj);
+		KJSUtil::UnprotectGlobalContext(this->context);
 	}
 
 	SharedValue KJSKMethod::Get(const char *name)

@@ -504,45 +504,58 @@ namespace kroll
 		return js_val;
 	}
 
-	SharedPtr<KJSKObject> KJSUtil::ToBoundObject(
-		JSContextRef context,
-		JSObjectRef object)
-	{
-		return new KJSKObject(context, object);
-	}
-
-	SharedPtr<KJSKMethod> KJSUtil::ToBoundMethod(
-		JSContextRef context,
-		JSObjectRef method,
-		JSObjectRef this_object)
-	{
-		return new KJSKMethod(context, method, this_object);
-	}
-
-	SharedPtr<KJSKList> KJSUtil::ToBoundList(
-		JSContextRef context,
-		JSObjectRef list)
-	{
-		return new KJSKList(context, list);
-	}
-
-	std::map<JSObjectRef, JSGlobalContextRef> context_map;
+	std::map<JSObjectRef, JSGlobalContextRef> KJSUtil::contextMap;
 	void KJSUtil::RegisterGlobalContext(
 		JSObjectRef object,
-		JSGlobalContextRef global_ctx)
+		JSGlobalContextRef globalContext)
 	{
-		context_map[object] = global_ctx;
+		contextMap[object] = globalContext;
 	}
 
 	JSGlobalContextRef KJSUtil::GetGlobalContext(JSObjectRef object)
 	{
-		if (context_map.find(object) == context_map.end())
+		if (contextMap.find(object) == contextMap.end())
 		{
 			return NULL;
 		}
 		else
 		{
-			return context_map[object];
+			return contextMap[object];
+		}
+	}
+
+	std::map<JSGlobalContextRef, int> KJSUtil::contextRefCounts;
+	void KJSUtil::ProtectGlobalContext(JSGlobalContextRef globalContext)
+	{
+		if (contextRefCounts.find(globalContext) == contextRefCounts.end())
+		{
+			JSGlobalContextRetain(globalContext);
+			contextRefCounts[globalContext] = 1;
+		}
+		else
+		{
+			contextRefCounts[globalContext]++;
+		}
+	}
+
+	void KJSUtil::UnprotectGlobalContext(JSGlobalContextRef globalContext)
+	{
+		std::map<JSGlobalContextRef, int>::iterator i
+			= contextRefCounts.find(globalContext);
+
+		if (i == contextRefCounts.end())
+		{
+			std::cerr << 
+				"Tried to unprotect an unprotected global context!" << std::endl;
+		}
+		else if (i->second == 1)
+		{
+			JSGlobalContextRelease(globalContext);
+			contextRefCounts.erase(i);
+		}
+		else
+		{
+			contextRefCounts[globalContext]--;
 		}
 	}
 
