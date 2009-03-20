@@ -1,6 +1,6 @@
-/**
+/*
  * Appcelerator Kroll - licensed under the Apache Public License 2
- * see LICENSE in the root folder for details on the license. 
+ * see LICENSE in the root folder for details on the license.
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
 #ifndef _KR_MUTEX_H_
@@ -21,7 +21,7 @@ namespace kroll
 	/*
 		Class: Mutex
 
-	  OS-independent mutex lock. this mutex can be recursively locked, 
+	  OS-independent mutex lock. this mutex can be recursively locked,
 	  however, make sure that for every call to Lock(), a corresponding
 	  Unlock() is called.
 	 */
@@ -36,14 +36,14 @@ namespace kroll
 
 		/*
 			Function: Lock
-			
+
 			TODO: Document me
 		*/
 		void Lock();
 
 		/*
 			Function: Unlock
-			
+
 			TODO: Document me
 		*/
 		void Unlock();

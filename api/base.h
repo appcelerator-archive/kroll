@@ -1,6 +1,6 @@
-/**
+/*
  * Appcelerator Kroll - licensed under the Apache Public License 2
- * see LICENSE in the root folder for details on the license. 
+ * see LICENSE in the root folder for details on the license.
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
 #ifndef _KR_BASE_H_
@@ -94,7 +94,7 @@
 		const char *myfunc = KR_FUNC; \
 		if (o->ReferenceCount()<1) std::cerr << "!!!! Invalid Object. Reference Count < 1: " <<__FILE__<< ":" <<__LINE__ <<std::endl; \
 		o->AddReference(__FILE__,__LINE__,myfunc); \
-	} 
+	}
 	#define KR_DECREF(o) \
 	if (o!=NULL) \
 	{ \
@@ -109,7 +109,7 @@
 	{ \
 		if (o->ReferenceCount()<1) std::cerr << "!!!! Invalid Object. Reference Count < 1: " <<__FILE__<< ":" <<__LINE__ <<std::endl; \
 		o->AddReference(); \
-	} 
+	}
 	#define KR_DECREF(o) \
 	if (o!=NULL) \
 	{ \
@@ -121,10 +121,10 @@
 #ifdef DEBUG
 #define KR_DUMP_LOCATION std::cout << "[" << KR_FUNC << "::" << __LINE__ << "]" << std::endl;
 #else
-#define KR_DUMP_LOCATION 
+#define KR_DUMP_LOCATION
 #endif
-	
-#define KR_UNUSED(o) if (o) {} 
+
+#define KR_UNUSED(o) if (o) {}
 
 // this was borrowed from Google Gears
 // A macro to disallow the evil copy constructor and operator= functions.

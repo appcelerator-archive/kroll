@@ -1,4 +1,4 @@
-/**
+/*
  * Appcelerator Kroll - licensed under the Apache Public License 2
  * see LICENSE in the root folder for details on the license.
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
@@ -138,34 +138,34 @@ namespace kroll
 			Function: IsFile
 		*/
 		static bool IsFile(std::string &file);
-		
+
 		/*
 			Function: CreateDirectory
 		*/
 		static bool CreateDirectory(std::string &dir);
-		
-		/* 
+
+		/*
 			Function: DeleteDirectory
 		*/
 		static bool DeleteDirectory(std::string &dir);
-		
+
 		/*
 		 	Function: Join
-			
-			This function joins paths together in an OS specific way 
+
+			This function joins paths together in an OS specific way
 		 */
 		static std::string Join(const char*, ...);
-		
+
 		/*
 		    Function: GetMachineId
-		 
+
 		    This function returns a unique machine identifier
 		 */
 		static std::string GetMachineId();
-		
+
 		/*
 		 	Function: GetTempDirectory
-		
+
 		    This function returns temporary directory for application
 		 */
 		static std::string GetTempDirectory();
@@ -177,11 +177,11 @@ namespace kroll
 			Returns: the directory for the application files
 		*/
 		static std::string GetApplicationDirectory();
-		
+
 		/*
 			Function: GetApplicationDataDirectory
 			  This returns the applications data directory
-		
+
 		 */
 		static std::string GetApplicationDataDirectory(std::string &appid);
 
@@ -241,7 +241,7 @@ namespace kroll
 			Function: GetUsername
 		*/
 		static std::string GetUsername();
-	
+
 	private:
 		FileUtils() {}
 		~FileUtils() {}

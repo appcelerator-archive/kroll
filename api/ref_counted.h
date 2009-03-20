@@ -1,6 +1,6 @@
-/**
+/*
  * Appcelerator Kroll - licensed under the Apache Public License 2
- * see LICENSE in the root folder for details on the license. 
+ * see LICENSE in the root folder for details on the license.
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
 #ifndef _KR_REF_COUNTED_H_
@@ -20,54 +20,43 @@
 		__FILE__ << "(" << __myfunc << "::" << __LINE__ << ") => "<< (void*)this << "]" << \
 		std::endl ;
 #else
-	#define KR_CALL_STACK_DEFINE 
-	#define KR_CALL_STACK_INFO  
-	#define KR_CALL_STACK_DEBUG 
+	#define KR_CALL_STACK_DEFINE
+	#define KR_CALL_STACK_INFO
+	#define KR_CALL_STACK_DEBUG
 #endif
 
 
 namespace kroll
 {
-	/*
-		Class: RefCounted
-
-	  reference counted base class. this object should be created
-	  (reference count is initialized to 1 on construction) and never
-	  directly deleted.  to delete the object, call ReleaseReference()
-	  to release your reference.  once all references have been released
-	  (reference count = 0), the object will be automatically deleted.
-	  the methods on this object are thread-safe.
+	/**
+	 * reference counted base class. this object should be created
+	 * (reference count is initialized to 1 on construction) and never
+	 * directly deleted.  to delete the object, call ReleaseReference()
+	 * to release your reference.  once all references have been released
+	 * (reference count = 0), the object will be automatically deleted.
+	 * the methods on this object are thread-safe.
 	 */
-	class KROLL_API RefCounted 
+	class KROLL_API RefCounted
 	{
 	public:
-		/*
-			Constructor: RefCounted
-		*/
 		RefCounted(KR_CALL_STACK_DEFINE);
 	protected:
 		virtual ~RefCounted();
 	public:
 
-		/*
-			Function: AddReference
-
-			TODO: Document me
-		*/
+		/**
+		 * TODO: Document me
+		 */
 		RefCounted* AddReference(KR_CALL_STACK_DEFINE);
 
-		/*
-			Function: ReleaseReference
-
-			TODO: Document me
-		*/
+		/**
+		 * TODO: Document me
+		 */
 		void ReleaseReference(KR_CALL_STACK_DEFINE);
 
-		/*
-			Function: ReferenceCount
-
-			TODO: Document me
-		*/
+		/**
+		 * TODO: Document me
+		 */
 		const int ReferenceCount();
 	private:
 #ifdef DEBUG_REFCOUNT
@@ -76,20 +65,16 @@ namespace kroll
 		const char *func;
 #endif
 
-		/*
-			Variable: count
-
-			TODO: Document me
-		*/
+		/**
+		 * TODO: Document me
+		 */
 		int count;
 
-		/*
-			Variable: mutex
-
-			TODO: Document me
-		*/
+		/**
+		 * TODO: Document me
+		 */
 		Mutex mutex;
-		DISALLOW_EVIL_CONSTRUCTORS(RefCounted);	
+		DISALLOW_EVIL_CONSTRUCTORS(RefCounted);
 	};
 }
 
