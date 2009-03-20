@@ -9,16 +9,16 @@
 
 namespace kroll
 {
-	Win32Job::Win32Job(SharedKMethod method, const ValueList& args, bool wait)
-	 : method(method),
-	   args(args),
-	   wait(wait),
-	   return_value(NULL),
-	   exception(ValueException(NULL)),
-	   semaphore(0, 1)
+	Win32Job::Win32Job(SharedKMethod method, const ValueList& args, bool wait) :
+		method(method),
+		args(args),
+		wait(wait),
+		return_value(NULL),
+		exception(ValueException(NULL)),
+		semaphore(0, 1)
 	{
 		// The semaphore starts at 0, meaning that the calling
-		// thread can wait for the value to become 0 using wait()
+		// thread can wait for the value to become >0 using wait()
 		// and the main thread can call set() after job execution
 		// which meets this condition.
 	}
@@ -29,7 +29,8 @@ namespace kroll
 
 	void Win32Job::Wait()
 	{
-		this->semaphore.wait();
+		if (this->wait())
+			this->semaphore.wait();
 	}
 
 	void Win32Job::Execute()
@@ -37,6 +38,8 @@ namespace kroll
 		try
 		{
 			this->return_value = this->method->Call(this->args);
+			if (this->wait)
+				this->semaphore.set();
 		}
 		catch (ValueException& e)
 		{
@@ -46,14 +49,13 @@ namespace kroll
 		{
 			this->exception = ValueException::FromString(e.displayText());
 		}
+		catch (std::exception& e)
+		{
+			this->exception = ValueException::FromString(e.what());
+		}
 		catch (...)
 		{
 			this->exception = ValueException::FromString("Unknown Exception from job queue");
-		}
-		this->semaphore.set();		
-		if (!this->wait)
-		{
-			delete this;
 		}
 	}
 
@@ -65,6 +67,15 @@ namespace kroll
 	ValueException Win32Job::GetException()
 	{
 		return this->exception;
+	}
+
+	void Win32Job::PrintException()
+	{
+		if (this->return_value.isNull())
+		{
+			SharedString ss = this->exception.GetValue()->DisplayString();
+			std::cout << "Exception in job queue: " << *ss << std::endl;
+		}
 	}
 }
 

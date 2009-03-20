@@ -108,55 +108,71 @@ namespace kroll
 		return create(this, dir.c_str());
 	}
 
-	SharedValue Win32Host::InvokeMethodOnMainThread(SharedKMethod method,
-                                                    const ValueList& args,
-												    bool waitForCompletion)
+	SharedValue Win32Host::InvokeMethodOnMainThread(
+		SharedKMethod method,
+		const ValueList& args,
+		bool synchronous)
 	{
+		Win32Job* job = new Win32Job(method, args, synchronous);
 		if (thread_id == GetCurrentThreadId()) {
-			return method->Call(args);
+			job->Execute();
 		}
-
-		Win32Job* job = new Win32Job(method, args, waitForCompletion);
+		else
 		{
 			Poco::ScopedLock<Poco::Mutex> s(this->GetJobQueueMutex());
 			this->jobs.push_back(job); // Enqueue job
 		}
+
 		// send a message to tickle the windows message queue
 		PostThreadMessage(thread_id, WM_JOB_TICKLE_REQUEST, 0, 0);
-		
-		if (!waitForCompletion)
+
+		if (!synchronous)
 		{
-			// job will delete itself
-			return;
+			return Value::Undefined; // Handler will cleanup
 		}
-		job->Wait(); // Wait for processing
-
-		SharedValue r = job->GetResult();
-		ValueException e = job->GetException();
-		delete job;
-
-		if (!r.isNull())
-			return r;
 		else
-			throw e;
+		{
+			// If this is the main thread, Wait() will fall
+			// through because we've already called Execute() above.
+			job->Wait(); // Wait for processing
+
+			SharedValue r = job->GetResult();
+			ValueException e = job->GetException();
+			delete job;
+
+			if (!r.isNull())
+				return r;
+			else
+				throw e;
+		}
 	}
 
 	void Win32Host::InvokeMethods()
 	{
 		// Prevent other threads trying to queue jobs.
 		Poco::ScopedLock<Poco::Mutex> s(this->GetJobQueueMutex());
-		std::vector<Win32Job*>& jobs = this->GetJobs();
 
+		std::vector<Win32Job*>& jobs = this->GetJobs();
 		if (jobs.size() == 0)
 			return;
 
-		std::vector<Win32Job*>::iterator j;
-		for (j = jobs.begin(); j != jobs.end(); j++)
+		std::vector<Win32Job*>::iterator j = jobs.begin();
+		while (j != jobs.end())
 		{
-			(*j)->Execute();
+			Win32Job* job = *j;
+			j = jobs.erase(j);
+
+			// Job might be freed soon after Execute()
+			bool asynchronous = !job->IsSynchronous();
+			job->Execute();
+
+			if (asynchronous)
+			{
+				job->PrintException();
+				delete job;
+			}
 		}
 
-		jobs.clear();
 	}
 }
 
