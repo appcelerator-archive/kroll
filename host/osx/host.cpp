@@ -98,10 +98,10 @@ namespace kroll
 
 @interface KrollMainThreadCaller : NSObject
 {
-	kroll::KMethod *method;
+	SharedPtr<kroll::KMethod> *method;
 	SharedPtr<kroll::Value> *result;
 	SharedPtr<kroll::Value> *exception;
-	const ValueList *args;
+	ValueList *args;
 	bool wait;
 }
 - (id)initWithKMethod:(SharedPtr<kroll::KMethod>)method args:(const ValueList*)args wait:(bool)wait;
@@ -116,8 +116,12 @@ namespace kroll
 	self = [super init];
 	if (self)
 	{
-		method = m.get();
-		args = a;
+		method = new SharedPtr<kroll::KMethod>(m);
+		args = new ValueList();
+		for (size_t c=0;c<a->size();c++)
+		{
+			args->push_back(a->at(c));
+		}
 		wait = w;
 		result = new SharedPtr<kroll::Value>();
 		exception = new SharedPtr<kroll::Value>();
@@ -128,6 +132,8 @@ namespace kroll
 {
 	delete result;
 	delete exception;
+	delete method;
+	delete args;
 	[super dealloc];
 }
 - (SharedPtr<kroll::Value>)getResult
@@ -142,7 +148,7 @@ namespace kroll
 {
 	try
 	{
-		result->assign(method->Call(*args));
+		result->assign((*method)->Call(*args));
 	}
 	catch (ValueException &e)
 	{
@@ -158,7 +164,8 @@ namespace kroll
 	}
 	if (!wait)
 	{
-//		[self release];
+		// on non-blocking we own ourselves and need to release
+		[self release];
 	}
 }
 @end
@@ -208,8 +215,7 @@ namespace kroll
 		}
 		NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 		KrollMainThreadCaller *caller = [[KrollMainThreadCaller alloc] initWithKMethod:method args:&args wait:waitForCompletion];
-//		[caller performSelectorOnMainThread:@selector(call) withObject:nil waitUntilDone:waitForCompletion];
-		[caller performSelectorOnMainThread:@selector(call) withObject:nil waitUntilDone:YES];
+		[caller performSelectorOnMainThread:@selector(call) withObject:nil waitUntilDone:waitForCompletion];
 		if (!waitForCompletion)
 		{
 			[pool release];
