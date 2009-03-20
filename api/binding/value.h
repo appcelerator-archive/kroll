@@ -1,4 +1,4 @@
-/**
+/*
  * Appcelerator Kroll - licensed under the Apache Public License 2
  * see LICENSE in the root folder for details on the license.
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
@@ -7,340 +7,295 @@
 #ifndef _KR_VALUE_H_
 #define _KR_VALUE_H_
 
+/**
+ * The toplevel kroll namespace.
+ */
 namespace kroll
 {
-	/*
-		Class: Value
-	  Value is a container object which internally contains
-	  a value which can be boxed/unboxed based on the type.
+	/**
+	 * A container for various types.
+	 * Value instances contain a primitive or object value which can be boxed/unboxed based on the type.
 	 */
 	class KROLL_API Value
 	{
 	public:
 
-		/*
-		 * Enum: Type
-		 * INT - Integer
-		 * DOUBLE - Double
-		 * BOOL - Boolean
-		 * STRING - String
-		 * LIST - <ValueList>
-		 * OBJECT - <KObject>
-		 * METHOD - <KMethod>
-		 * VOIDP - void * (used for raw types internally)
-		 * NULLV - Null
-		 * UNDEFINED - Undefined
+		/**
+		 * Type enum.
+		 * This enum represents the underlying value type.
 		 */
 		enum Type {
-			INT = 1,
-			DOUBLE = 2,
-			BOOL = 3,
-			STRING = 4,
-			LIST = 5,
-			OBJECT = 6,
-			METHOD = 7,
-			VOIDPTR = 8,
-			NULLV = 0,
-			UNDEFINED = -1
+			INT = 1, /**< int */
+			DOUBLE = 2, /**< double */
+			BOOL = 3, /**< boolean */
+			STRING = 4, /**< const char* */
+			LIST = 5, /**< SharedKList */
+			OBJECT = 6, /**< SharedKObject */
+			METHOD = 7, /**< SharedKMethod */
+			VOIDPTR = 8, /**< void* */
+			NULLV = 0, /**< NULL */
+			UNDEFINED = -1 /**< undefined */
 		};
 
-		/*
-		 * An undefined singleton
+		/**
+		 * A static, reusable instance who's value is Value::Type::UNDEFINED.
 		 */
 		static SharedValue Undefined;
 
-		/*
-		 * A Null singleton
+		/**
+		 * A static, reusable instance who's value is Value::Type::NULL
 		 */
 		static SharedValue Null;
 
-		/*
-		 * Function: NewUndefined
-		 * Create a new Value set to Undefined
-		 */
 		static SharedValue NewUndefined();
-
-		/*
-		 * Function: NewNull
-		 * Create a new Value set to Null
-		 */
 		static SharedValue NewNull();
 
-		/*
-		 * Constructor: Value
-		 * construct an <INT> type
+		/**
+		 * Construct a new \link #Value::Type::INT integer\endlink value.
+		 * @param value The integer value
 		 */
 		static SharedValue NewInt(int value);
 
 		/**
-			Constructor: Value
-		  construct a <DOUBLE> type
+		 * Construct a new \link #Value::Type::DOUBLE double\endlink value.
+		 * @param value The double value
 		 */
 		static SharedValue NewDouble(double value);
 
-		/*
-			Constructor: Value
-		  construct a <BOOL> type
+		/**
+		 * Construct a new \link #Value::Type::BOOL boolean\endlink value.
+		 * @param value The boolean value
 		 */
 		static SharedValue NewBool(bool value);
 
-		/*
-			Constructor: Value
-		  construct a <STRING> type
+		/**
+		 * Construct a new \link #Value::Type::STRING string\endlink value.
+		 * @param value The string value
 		 */
 		static SharedValue NewString(const char* value);
 
-		/*
-			Constructor: Value
-		  construct an <STRING> type
+		/**
+		 * Construct a new \link #Value::Type::STRING string\endlink value.
+		 * @param value The string value
 		 */
 		static SharedValue NewString(std::string& value);
 
-		/*
-			Constructor: Value
-		  construct a <LIST> type
+		/**
+		 * Construct a new \link #Value::Type::LIST list\endlink value.
+		 * @param value The list value
 		 */
 		static SharedValue NewList(SharedKList value);
 
-		/*
-			Constructor: Value
-		  construct an <OBJECT> type
+		/**
+		 * Construct a new \link #Value::Type::OBJECT object\endlink value.
+		 * @param value The object value
 		 */
 		static SharedValue NewObject(SharedKObject value);
 
-		/*
-			Constructor: Value
-		  construct a <METHOD> type
+		/**
+		 * Construct a new \link #Value::Type::METHOD method\endlink value.
+		 * @param value The method value
 		 */
 		static SharedValue NewMethod(SharedKMethod value);
 
-		/*
-			Constructor: Value
-			construct a <VOIDPTR> type
+		/**
+		 * Construct a new \link #Value::Type::VOIDPTR void*\endlink value.
+		 * @param value The void* value
 		 */
 		static SharedValue NewVoidPtr(void *value);
 
-		/**
-		 * destructor
-		 */
 		virtual ~Value();
 
 	public:
-		/*
-		 * Function: operator==
+		/**
+		 * Test underlying value's equality to another Value
 		 */
 		bool operator== (Value);
 
-		/*
-		 * Function: IsInt
-		 *   Return true if the internal value is an INT
+		/**
+		 * @return true if the internal value is an \link #Value::Type::INT integer\endlink
 		 */
 		bool IsInt() const;
 
-		/*
-		 * Function: IsDouble
-		 *   Return true if the internal value is a DOUBLE
+		/**
+		 * @return true if the internal value is a \link #Value::Type::DOUBLE double\endlink
 		 */
 		bool IsDouble() const;
 
-		/*
-		 * Function: IsNumber
-		 *   Return true if the internal value is an INT or a DOUBLE
+		/**
+		 * @return true if the internal value is an \link #Value::Type::INT integer\endlink or \link #Value::Type::DOUBE double\endlink
 		 */
 		bool IsNumber() const;
 
-		/*
-		 * Function: IsBool
-		 *  Return true if the internal value is a BOOL
+		/**
+		 * @return true if the internal value is a \link #Value::Type::BOOL boolean\endlink
 		 */
 		bool IsBool() const;
 
-		/*
-		 * Function: IsString
-		 *   Return true if the internal value is a STRING
+		/**
+		 * @return true if the internal value is a \link #Value::Type::STRING string\endlink
 		 */
 		bool IsString() const;
 
-		/*
-		 * Function: IsList
-		 *   Return true if the internal value is a LIST
+		/**
+		 * @return true if the internal value is a \link #Value::Type::LIST list\endlink
 		 */
 		bool IsList() const;
 
-		/*
-		 * Function: IsObject
-		 *   Return true if the internal value is a OBJECT
+		/**
+		 * @return true if the internal value is an \link #Value::Type::OBJECT object\endlink
 		 */
 		bool IsObject() const;
 
-		/*
-		 * Function: IsMethod
-		 *   Return true if the internal value is a METHOD
+		/**
+		 * @return true if the internal value is a \link #Value::Type::METHOD method\endlink
 		 */
 		bool IsMethod() const;
 
-		/*
-		 * Function: IsVoidPtr
-		 *   Return true if the internal value is a VOIDPTR
+		/**
+		 * @return true if the internal value is a \link #Value::Type::VOIDPTR void*\endlink
 		 */
 		bool IsVoidPtr() const;
 
-		/*
-		 * Function: IsNull
-		 *   Return true if the internal value is a NULL
+		/**
+		 * @return true if the internal value is \link #Value::Type::NULL NULL\endlink
 		 */
 		bool IsNull() const;
 
-		/*
-		 * Function: IsUndefined
-		 *   Return true if the internal value Undefined
+		/**
+		 * @return true if the internal value is \link #Value::Type::UNDEFINED undefined\endlink
 		 */
 		bool IsUndefined() const;
 
-		/*
-		 * Function: ToInt
-		 *   Return the value as an int
+		/**
+		 * @return the value as an \link #Value::Type::INT integer\endlink
 		 */
 		int ToInt() const;
 
-		/*
-		 * Function: ToDouble
-		 *   Return the value as a double
+		/**
+		 * @return the value as a \link #Value::Type::DOUBLE double\endlink
 		 */
 		double ToDouble() const;
 
-		/*
-		 * Function: ToNumber
-		 *  Return the double value of a value when it is an int
-		 *  or a dobule.
+		/**
+		 * @return the double value when this value is an \link #Value::Type::INT integer\endlink or a \link #Value::Type::DOUBLE double\endlink.
 		 */
 		double ToNumber() const;
 
-		/*
-		 * Function: ToBool
-		 *   Return the value as a bool
+		/**
+		 * @return the value as a \link #Value::Type::BOOL boolean\endlink
 		 */
 		bool ToBool() const;
 
-		/*
-		 * Function: ToString
-		 *   Return the value as a const char*
+		/**
+		 * @return the value as a \link #Value::Type::STRING string (const char *)\endlink
 		 */
 		const char* ToString() const;
 
-		/*
-		 * Function: ToList
-		 *   Return the value as a SharedKList
+		/**
+		 * @return the value as a \link #Value::Type::LIST SharedKList\endlink
 		 */
 		SharedKList ToList() const;
 
-		/*
-		 * Function: ToObject
-		 *   Return the value as a SharedKObject
+		/**
+		 * @return the value as a \link #Value::Type::OBJECT SharedKObject\endlink
 		 */
 		SharedKObject ToObject() const;
 
-		/*
-		 * Function: ToMethod
-		 *   Return the value as a SharedKMethod
+		/**
+		 * @return the value as a \link #Value::Type::METHOD SharedKMethod\endlink
 		 */
 		SharedKMethod ToMethod() const;
 
-		/*
-		 * Function: ToVoidPtr
-		 *   Return the value as a void **
+		/**
+		 * @return the value as a \link #Value::Type::VOIDPTR void*\endlink
 		 */
 		void* ToVoidPtr() const;
 
-		/*
-		 * Function: ToTypeString
-		 *   Create a string representation of this Value's type
+		/**
+		 * @return a string representation of this Value's type
 		 */
 		const char* ToTypeString();
 
-		/*
-		 * Function: DisplayString
-		 *   Create a string representation for this Value
+		/**
+		 * @param levels the number of nested objects to include in this representation (default: 3)
+		 * @return a string representation for this Value
 		*/
 		SharedString DisplayString(int levels=3);
 
-		/*
-		 * Function: SetValue
-		 *   Change the internal value of this Value to match th
-		 *   one in the given Value, other.
+		/**
+		 * Change the internal value of this Value from another Value object.
+		 * @param other another Value
 		 */
 		void SetValue(Value *other);
 
-		/*
-		 * Function: SetValue
-		 *   Change the internal value of this Value to match th
-		 *   one in the given Value, other.
+		/**
+		 * Change the internal value of this Value from another Value object.
+		 * @param other another Value
 		 */
 		void SetValue(SharedValue other);
 
-		/*
-		 * Function: SetInt
-		 *   Change the internal value of this Value to the given int
+		/**
+		 * Change the internal value of this Value to an \link #Value::Type::INT integer\endlink
+		 * @param value the integer value
 		 */
 		void SetInt(int value);
 
-		/*
-		 * Function: SetDouble
-		 *   Change the internal value of this Value to the given double
+		/**
+		 * Change the internal value of this Value to an \link #Value::Type::DOUBLE double\endlink
+		 * @param value the double value
 		 */
 		void SetDouble(double value);
 
-		/*
-		 * Function: Set
-		 *   Change the internal value of this Value to the given bool
+		/**
+		 * Change the internal value of this Value to an \link #Value::Type::BOOL boolean\endlink
+		 * @param value the boolean value
 		 */
 		void SetBool(bool value);
 
-		/*
-		 * Function: Set
-		 *   Change the internal value of this Value to the given string
+		/**
+		 * Change the internal value of this Value to a \link #Value::Type::STRING string\endlink
+		 * @param value the string value value
 		 */
 		void SetString(const char* value);
 
-		/*
-		 * Function: Set
-		 *   Change the internal value of this Value to the given string
+		/**
+		 * Change the internal value of this Value to an \link #Value::Type::STRING string\endlink
+		 * @param value the string value
 		 */
 		void SetString(std::string& value);
 
-		/*
-		 * Function: Set
-		 *   Change the internal value of this Value to the given SharedKList
+		/**
+		 * Change the internal value of this Value to an \link #Value::Type::LIST list\endlink
+		 * @param value the list value
 		 */
 		void SetList(SharedKList value);
 
-		/*
-		 * Function: Set
-		 *   Change the internal value of this Value to the given SharedKObject
+		/**
+		 * Change the internal value of this Value to an \link #Value::Type::OBJECT object\endlink
+		 * @param value the object value
 		 */
 		void SetObject(SharedKObject value);
 
 		/**
-		 * Function: Set
-		 *   Change the internal value of this Value to the given SharedKMethod
+		 * Change the internal value of this Value to an \link #Value::Type::METHOD method\endlink
+		 * @param value the method value
 		 */
 		void SetMethod(SharedKMethod value);
 
-		/*
-		 * Function: Set
-		 *   Change the internal value of this Value to the given void pointer
+		/**
+		 * Change the internal value of this Value to an \link #Value::Type::VOIDPTR void*\endlink
+		 * @param value the void* value
 		 */
 		void SetVoidPtr(void *value);
 
-		/*
-		 * Function: SetNull
-		 *   Change the internal value of this Value to Null
+		/**
+		 * Change the internal value of this Value to \link #Value::Type::NULL NULL\endlink
 		 */
 		void SetNull();
 
-		/*
-		 * Function: SetUndefined
-		 *   Change the internal value of this Value to Undefined
+		/**
+		 * Change the internal value of this Value to \link #Value::Type::Undefined undefined\endlink
 		 */
 		void SetUndefined();
 
@@ -354,23 +309,8 @@ namespace kroll
 
 		void reset();
 
-		/*
-		 * Constructor: Value
-		 *   the Value constructor is private to force the user of factory
-		 *   methods to create Values. The default state of a value is Undefined.
-		 */
 		Value();
-
-		/*
-		 * Constructor: Value
-		 *  Copy constructor
-		 */
 		Value(SharedValue value);
-
-		/*
-		 * Constructor: Value
-		 *   Copy constructor
-		 */
 		Value(const Value& value);
 	};
 

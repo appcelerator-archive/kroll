@@ -1,5 +1,4 @@
-
-/**
+/*
  * Appcelerator Kroll - licensed under the Apache Public License 2
  * see LICENSE in the root folder for details on the license.
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
@@ -54,7 +53,7 @@ namespace kroll
 		/*
 		 * Function: Remove
 		 *   Remove the list entry at the given index. Return true
-		 *   if found and removed. 
+		 *   if found and removed.
 		 *   Errors will result in a thrown ValueException
 		 */
 		virtual bool Remove(unsigned int index) = 0;

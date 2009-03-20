@@ -1,4 +1,4 @@
-/**
+/*
  * Appcelerator Kroll - licensed under the Apache Public License 2
  * see LICENSE in the root folder for details on the license.
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
@@ -25,7 +25,7 @@ namespace kroll
 		 * Constructor: Module
 		 */
 		Module(Host *host, std::string path)
-			 : host(host), path(path) {} 
+			 : host(host), path(path) {}
 		virtual ~Module() {}
 
 	public:
@@ -54,15 +54,15 @@ namespace kroll
 		 * other modules.
 		 */
 		virtual void Start() {};
-		
+
 		/**
 		 * Function: Exit
 		 *
-		 * Called by the host when an exit has been requested to 
+		 * Called by the host when an exit has been requested to
 		 * give modules a hook to perform certain pre-stop capabilities
 		 *
 		 */
-		virtual void Exiting(int exitcode) {} 
+		virtual void Exiting(int exitcode) {}
 
 		/*
 		 * Function: Stop
@@ -84,7 +84,7 @@ namespace kroll
 
 		/*
 		 * Function: GetProvider
-		 * 
+		 *
 		 * Return the provider that created the module
 		 */
 		const ModuleProvider* GetProvider()
@@ -92,7 +92,7 @@ namespace kroll
 			return provider;
 		}
 
-		
+
 		/*
 		 * Function: GetPath
 		 *

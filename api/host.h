@@ -1,4 +1,4 @@
-/**
+/*
  * Appcelerator Kroll - licensed under the Apache Public License 2
  * see LICENSE in the root folder for details on the license.
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
@@ -234,7 +234,7 @@ namespace kroll
 		void CopyModuleAppResources(std::string& modulePath);
 		/*
 			Function: ReadModuleManifest
-			
+
 			Read / process a module's manifest file
 		*/
 		void ReadModuleManifest(std::string& modulePath);
