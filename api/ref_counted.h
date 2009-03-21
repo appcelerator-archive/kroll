@@ -29,7 +29,7 @@
 namespace kroll
 {
 	/**
-	 * reference counted base class. this object should be created
+	 * A reference counted base class. this object should be created
 	 * (reference count is initialized to 1 on construction) and never
 	 * directly deleted.  to delete the object, call ReleaseReference()
 	 * to release your reference.  once all references have been released
@@ -45,17 +45,17 @@ namespace kroll
 	public:
 
 		/**
-		 * TODO: Document me
+		 * Add a reference to this object
 		 */
 		RefCounted* AddReference(KR_CALL_STACK_DEFINE);
 
 		/**
-		 * TODO: Document me
+		 * Release a reference to this object
 		 */
 		void ReleaseReference(KR_CALL_STACK_DEFINE);
 
 		/**
-		 * TODO: Document me
+		 * @return the reference count of this object
 		 */
 		const int ReferenceCount();
 	private:
@@ -65,13 +65,11 @@ namespace kroll
 		const char *func;
 #endif
 
-		/**
-		 * TODO: Document me
-		 */
+
 		int count;
 
 		/**
-		 * TODO: Document me
+		 * This object's mutex
 		 */
 		Mutex mutex;
 		DISALLOW_EVIL_CONSTRUCTORS(RefCounted);

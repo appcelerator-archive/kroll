@@ -15,41 +15,42 @@ namespace kroll
 
 	typedef Module* ModuleCreator(const Host *host, const char *path);
 
-	/*
-		Class: ModuleProvider
-
-	  Module Provider implementations are resposible for determining if files
-	  are supportable modules and responsible for constructing them if they
-	  determine that a file is supported.
+	/**
+	 * Module Provider implementations are responsible for determining if a file
+	 * contains a supportable module, and for constructing them if they
+	 * determine that the file is supported.
+	 *
+	 * In general, module providers will be a part of the system, but they are meant
+	 * as a way to provide extension points to 3rd party languages such as Python, Ruby, etc.
+	 *
+	 * Currently any language supported by Kroll includes it's own ModuleProvider
 	 */
 	class EXPORT ModuleProvider
 	{
 	public:
-		/*
-			Constructor: ModuleProvider
-		*/
+
 		ModuleProvider() {}
 		virtual ~ModuleProvider() {};
 
-		/*
-			Function: GetDescription
-
-			TODO: Document me
-		*/
+		/**
+		 * @return The description of this module provider
+		 */
 		virtual const char * GetDescription() = 0;
 
-		/*
-			Function: IsModule
-
-			TODO: Document me
-		*/
+		/**
+		 * @param filename an absolute path to a file in the filesystem
+		 * @return if the passed-in absolute file path is a supported module or not
+		 */
 		virtual bool IsModule(std::string& filename) = 0;
 
-		/*
-			Function: CreateModule
-
-			TODO: Document me
-		*/
+		/**
+		 * Create a module based on a path that was signified as "supported" by
+		 * ModuleProvider::IsModule. Most implementations will load this file into
+		 * their interpreter, or dynamically load it's contents in some way.
+		 *
+		 * @param path an absolute path to a module file in the filesystem
+		 * @return The module that represents this path.
+		 */
 		virtual Module* CreateModule(std::string& path) = 0;
 	};
 }
