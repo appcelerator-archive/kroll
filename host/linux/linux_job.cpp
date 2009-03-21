@@ -67,7 +67,7 @@ namespace kroll
 
 	bool LinuxJob::IsSynchronous()
 	{
-		return this->wait;
+		return this->synchronous;
 	}
 
 	void LinuxJob::PrintException()
