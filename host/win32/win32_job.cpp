@@ -1,6 +1,6 @@
 /**
  * Appcelerator Kroll - licensed under the Apache Public License 2
- * see LICENSE in the root folder for details on the license. 
+ * see LICENSE in the root folder for details on the license.
  * Copyright (c) 2009 Appcelerator, Inc. All Rights Reserved.
  */
 
@@ -22,14 +22,14 @@ namespace kroll
 		// and the main thread can call set() after job execution
 		// which meets this condition.
 	}
-	
+
 	Win32Job::~Win32Job()
 	{
 	}
 
 	void Win32Job::Wait()
 	{
-		if (this->wait())
+		if (this->wait)
 			this->semaphore.wait();
 	}
 
@@ -62,6 +62,11 @@ namespace kroll
 	SharedValue Win32Job::GetResult()
 	{
 		return this->return_value;
+	}
+
+	bool Win32Job::IsSynchronous()
+	{
+		return this->wait;
 	}
 
 	ValueException Win32Job::GetException()
