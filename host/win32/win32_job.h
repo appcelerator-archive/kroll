@@ -21,10 +21,12 @@ namespace kroll
 			void Execute();
 			SharedValue GetResult();
 			ValueException GetException();
+			bool IsSynchronous();
+			void PrintException();
 	
 		private:
 			SharedKMethod method;
-			const ValueList& args;
+			const ValueList args;
 			bool wait;
 			SharedValue return_value;
 			ValueException exception;

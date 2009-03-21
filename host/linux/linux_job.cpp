@@ -9,23 +9,24 @@
 
 namespace kroll
 {
-	LinuxJob::LinuxJob(SharedKMethod method, const ValueList& args, bool wait)
-	 : method(method),
-	   args(args),
-	   waitForCompletion(wait),
-	   return_value(NULL),
-	   exception(ValueException(NULL)),
-	   semaphore(0, 1)
+	LinuxJob::LinuxJob(SharedKMethod method, const ValueList& args, bool synchronous) :
+		method(method),
+		args(args),
+		synchronous(synchronous),
+		return_value(NULL),
+		exception(ValueException(NULL)),
+		semaphore(0, 1)
 	{
 		// The semaphore starts at 0, meaning that the calling
-		// thread can wait for the value to become 0 using wait()
+		// thread can wait for the value to become >0 using wait()
 		// and the main thread can call set() after job execution
 		// which meets this condition.
 	}
 
 	void LinuxJob::Wait()
 	{
-		this->semaphore.wait();
+		if (this->synchronous)
+			this->semaphore.wait();
 	}
 
 	void LinuxJob::Execute()
@@ -33,6 +34,8 @@ namespace kroll
 		try
 		{
 			this->return_value = this->method->Call(this->args);
+			if (this->synchronous)
+				this->semaphore.set();
 		}
 		catch (ValueException& e)
 		{
@@ -42,12 +45,14 @@ namespace kroll
 		{
 			this->exception = ValueException::FromString(e.displayText());
 		}
+		catch (std::exception& e)
+		{
+			this->exception = ValueException::FromString(e.what());
+		}
 		catch (...)
 		{
-			this->exception =
-			  ValueException::FromString("Unknown Exception from job queue");
+			this->exception = ValueException::FromString("Unknown Exception from job queue");
 		}
-		this->semaphore.set();
 	}
 
 	SharedValue LinuxJob::GetResult()
@@ -60,9 +65,9 @@ namespace kroll
 		return this->exception;
 	}
 
-	bool LinuxJob::IsWaitingForCompletion()
+	bool LinuxJob::IsSynchronous()
 	{
-		return this->waitForCompletion;
+		return this->synchronous;
 	}
 
 	void LinuxJob::PrintException()

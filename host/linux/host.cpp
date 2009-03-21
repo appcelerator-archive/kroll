@@ -93,11 +93,10 @@ namespace kroll
 	SharedValue LinuxHost::InvokeMethodOnMainThread(
 		SharedKMethod method,
 		const ValueList& args,
-		bool waitForCompletion)
+		bool synchronous)
 	{
-		LinuxJob* job = new LinuxJob(method, args, waitForCompletion);
-
-		if (this->IsMainThread())
+		LinuxJob* job = new LinuxJob(method, args, synchronous);
+		if (this->IsMainThread() && synchronous)
 		{
 			job->Execute();
 		}
@@ -107,28 +106,31 @@ namespace kroll
 			this->jobs.push_back(job); // Enqueue job
 		}
 
-		if (!waitForCompletion)
+		if (!synchronous)
+		{
 			return Value::Undefined; // Handler will cleanup
-
-		// If this isn't the main thread we 
-		// need to wait for our job to finish
-		if (!this->IsMainThread())
+		}
+		else
+		{
+			// If this is the main thread, Wait() will fall
+			// through because we've already called Execute() above.
 			job->Wait(); 
 
-		SharedValue r = job->GetResult();
-		ValueException e = job->GetException();
-		delete job;
+			SharedValue r = job->GetResult();
+			ValueException e = job->GetException();
+			delete job;
 
-		if (!r.isNull())
-			return r;
-		else
-			throw e;
+			if (!r.isNull())
+				return r;
+			else
+				throw e;
+		}
 	}
 
 	gboolean main_thread_job_handler(gpointer data)
 	{
-		LinuxHost *host = (LinuxHost*) data;
 		// Prevent other threads trying to queue jobs.
+		LinuxHost *host = (LinuxHost*) data;
 		Poco::ScopedLock<Poco::Mutex> s(host->GetJobQueueMutex());
 
 		std::vector<LinuxJob*>& jobs = host->GetJobs();
@@ -141,8 +143,11 @@ namespace kroll
 			LinuxJob* job = *j;
 			j = jobs.erase(j);
 
+			// Job might be freed soon after Execute()
+			bool asynchronous = !job->IsSynchronous();
 			job->Execute();
-			if (!job->IsWaitingForCompletion())
+
+			if (asynchronous)
 			{
 				job->PrintException();
 				delete job;

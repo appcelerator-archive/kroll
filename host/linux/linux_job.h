@@ -15,19 +15,19 @@ namespace kroll
 	class LinuxJob
 	{
 		public:
-			LinuxJob(SharedKMethod method, const ValueList& args, bool wait);
+			LinuxJob(SharedKMethod method, const ValueList& args, bool synchronous);
 			void Lock();
 			void Wait();
 			void Execute();
 			SharedValue GetResult();
 			ValueException GetException();
-			bool IsWaitingForCompletion();
+			bool IsSynchronous();
 			void PrintException();
-	
+
 		private:
 			SharedKMethod method;
-			const ValueList& args;
-			bool waitForCompletion;
+			const ValueList args;
+			bool synchronous;
 			SharedValue return_value;
 			ValueException exception;
 			Poco::Semaphore semaphore;
