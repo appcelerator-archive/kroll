@@ -2,8 +2,6 @@
  * Appcelerator Kroll - licensed under the Apache Public License 2
  * see LICENSE in the root folder for details on the license.
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
- *
- * a host container interface that end-os environments implement
  */
 #ifndef _KR_HOST_H_
 #define _KR_HOST_H_
@@ -15,25 +13,29 @@ namespace kroll
 	typedef std::map<std::string, SharedPtr<Module> > ModuleMap;
 	typedef std::vector<SharedPtr<Module> > ModuleList;
 
-	/*
-		Class: Host
-
-	  Class that is implemented by the OS to handle OS-specific
-	  loading and unloading of Kroll.
+	/**
+	 * Class that is implemented by the OS to handle OS-specific
+	 * loading and unloading of Kroll.
 	 */
 	class KROLL_API Host : public ModuleProvider
 	{
 		friend class Poco::ReleasePolicy<Host>;
 	public:
 
+		/**
+		 * The Titanium platform as a string
+		 */
 		static const char * Platform;
-		/*
-			Constructor: Host
 
-			TODO: Document me
-		*/
+		/**
+		 * @param argc argument count
+		 * @param argv command line arguments
+		 */
 		Host(int argc, const char **argv);
 
+		/**
+		 * Get the static host instance§§
+		 */
 		static SharedPtr<Host> GetInstance() { return instance_; }
 
 	protected:
@@ -41,149 +43,124 @@ namespace kroll
 
 	public:
 
-
-		/*
-		 * Function: Run
-		 *
+		/**
 		 * called to run the host
 		 */
 		int Run();
 
 		/**
-		 * Function: Exit
-		 *
 		 * called to exit the host and terminate the process
 		 */
 		virtual void Exit(int exitcode);
 
-		/*
-		 * Function: InvokeMethodOnMainThread
-		 *
+		/**
 		 * Call with a method and arguments to invoke the method
-		 * on the main UI thread and return a value (blocking until run if
-		 * waitForCompletion is set to true which is the default)
+		 * on the main UI thread.
+		 *
+		 * @param method method to execute on the main thread
+		 * @param args method arguments
+		 * @param waitForCompletion block until method is finished (default: true)
+		 *
+		 * @return the method's return value§
 		 */
 		virtual SharedValue InvokeMethodOnMainThread(
-			SharedKMethod,
+			SharedKMethod method,
 			const ValueList& args,
 			bool waitForCompletion=true) = 0;
 
-		/*
-		 * Function: AddModuleProvider
-		 *
-		 * TODO: Document me
+		/**
+		 * Add a module provider to the host
 		 */
 		void AddModuleProvider(ModuleProvider *provider);
 
-		/*
-		 * Function: RemoveModuleProvider
-		 *
-		 * TODO: Document me
+		/**
+		 * Remove a module provider
 		 */
 		void RemoveModuleProvider(ModuleProvider *provider);
 
-		/*
-		 * Function: UnegisterModule
-		 *
+		/**
 		 * Call the Destroy() lifecycle event on this a module and
 		 * remove it from our map of modules.
 		 *
-		 * Parameters:
-		 *    module - The module to remove.
+		 * @module The module to remove.
 		 */
 		void UnregisterModule(Module* module);
 
-		/*
-		 * Function: GetModule
-		 *
+		/**
 		 * Get a module given the module path.
+		 *@param path The path of the module to get
 		 *
-		 * Parameters:
-		 *    path - The path of the module to get
-		 *
-		 * Returns: A reference to the module.
+		 * @return A reference to the module.
 		 */
 		SharedPtr<Module> GetModule(std::string& path);
 
-		/*
-			Function: HasModule
-
-			TODO: Document me
+		/**
+		 * @return whether or not a module with the path exists
+		 * @param name the full path to the module
 		*/
 		bool HasModule(std::string name);
 
-		/*
-			Function: GetGlobalObject
-
-			TODO: Document me
-		*/
+		/**
+		 * @return the Global context object. In most languages this is known as "Titanium"
+		 */
 		SharedPtr<StaticBoundObject> GetGlobalObject();
 
-		/*
-			Function: GetApplicationHome
-
-			TODO: Document me
+		/**
+		 * @return The home directory for this application
 		*/
 		const std::string& GetApplicationHome() const { return appDirectory; }
 
-		/*
-			Function: GetRuntimeHome
-
-			TODO: Document me
+		/**
+		 * @return THe home directory of the current runtime§
 		*/
 		const std::string& GetRuntimeHome() const { return runtimeDirectory; }
 
-		/*
-		 * Function: GetCommandLineArgCount
-		 *
-		 * TODO: Document me
+		/**
+		 * @return the number of command line arguments passed to this application
 		 */
 		const int GetCommandLineArgCount();
 
 		/*
-		 * Function: GetCommandLineArg
-		 *
-		 * TODO: Document me
+		 * @param index the argument index
+		 * @return The command line argument at the given index
 		*/
 		const char* GetCommandLineArg(int index);
 
 		/**
-		 * Function: IsDebugMode
-		 *
-		 * returns true if the host is in debug mode, specified
+		 * @return true if the host is in debug mode, specified
 		 * by the command line switch --debug
 		 */
 		bool IsDebugMode();
 
-		/*
-		 * Function: IsModule
-		 *
-		 * TODO: Document me
+		/**
+		 * @param path The filesystem path of a module
+		 * @return true if the file is a native module (.dll / .dylib / .so)
 		 */
 		virtual bool IsModule(std::string& path);
 
-		/*
-		 * Function: GetDescription
-		 *
-		 * TODO: Document me
+		/**
+		 * @return description for native modules
 		*/
 		virtual const char* GetDescription() { return "Native module"; }
 
-		/*
-		 * Function: GetPlatform
-		 *
-		 * Get this host implementation's platform description.
+		/**
+		 * @return this host implementation's platform description.
 		*/
 		virtual const char* GetPlatform() { return "Base"; }
 
-		/*
-		 * Function: GetModuleSuffix
-		 *
-		 * Get this host implementation's module suffix.
+		/**
+		 * @return this host implementation's module suffix.
 		*/
 		virtual const char* GetModuleSuffix() { return "unimplemented"; }
 
+		/**
+		 * @return whether or not this application runs the UI loop
+		 */
 		bool RunUILoop() { return runUILoop; }
+
+		/**
+		 * Set whether or not this application should run the UI loop
+		 */
 		void SetRunUILoop(bool runUILoop) { this->runUILoop = runUILoop; }
 
 	protected:
@@ -208,53 +185,39 @@ namespace kroll
 		// can re-query them without initiating a filesystem search
 		std::vector<std::string> invalid_module_files;
 
-		/*
-		 * Function: FindModuleProvider
-		 *
+		/**
 		 * Find the module provider for a given filename or return
 		 * NULL if no module provider can be found.
 		*/
 		ModuleProvider* FindModuleProvider(std::string& filename);
 
-		/*
-		 * Function: ScanInvalidModuleFiles
-		 *
+		/**
 		 * Load modules from all paths in invalid_module_files
 		 * that can be loaded by module providers found in
 		 * module_providers.
-		 *
 		*/
 		void ScanInvalidModuleFiles();
 
-		/*
-		 * Function: CopyModuleAppResources
-		 *
+		/**
 		 * Copy a module's application-specific resources into the currently running app
 		 */
 		void CopyModuleAppResources(std::string& modulePath);
-		/*
-			Function: ReadModuleManifest
-
-			Read / process a module's manifest file
+		/**
+		 * Read / process a module's manifest file
 		*/
 		void ReadModuleManifest(std::string& modulePath);
 
-		/*
-		 * Function: LoadModule
-		 *
+		/**
 		 * Load a modules from a path given a module provider.
 		 *
-		 * Parameters:
-		 *  path - Path to the module to attempt to load.
-		 *  provider - The provider to attempt to load with.
+		 * @param path Path to the module to attempt to load.
+		 * @param provider The provider to attempt to load with.
 		 *
-		 * Returns: The module that was loaded or NULL on failure.
+		 * @return The module that was loaded or NULL on failure.
 		*/
 		SharedPtr<Module> LoadModule(std::string& path, ModuleProvider *provider);
 
-		/*
-		 * Function: LoadModules
-		 *
+		/**
 		 * Do the initial round of module loading. First load all modules
 		 * that can be loaded by the main Host module provider (shared
 		 * libraries) and then load all modules which can be loaded by
@@ -266,24 +229,18 @@ namespace kroll
 
 		void UnloadModuleProviders();
 
-		/*
-		 * Function: FindBasicModules
-		 *
+		/**
 		 * Scan a directory (no-recursion) for basic (shared library) modules
 		 * and, if any are found, load them.
 		 *
-		 * Parameters:
-		 *  dir - The directory to scan.
+		 * @param dir The directory to scan.
 		*/
 		void FindBasicModules(std::string& dir);
 
-		/*
-		 * Function: StartModules
-		 *
+		/**
 		 * Call the Start() lifecycle event on a vector of modules.
 		 *
-		 * Parameters:
-		 *  to_init - A vector of modules to initialize.
+		 * @param to_init A vector of modules to initialize.
 		*/
 		void StartModules(std::vector<SharedPtr<Module> > modules);
 

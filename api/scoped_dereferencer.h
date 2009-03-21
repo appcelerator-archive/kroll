@@ -1,6 +1,6 @@
-/**
+/*
  * Appcelerator Kroll - licensed under the Apache Public License 2
- * see LICENSE in the root folder for details on the license. 
+ * see LICENSE in the root folder for details on the license.
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
 
@@ -12,20 +12,16 @@
 
 namespace kroll
 {
-	/*
-		Class: ScopedDereferencer
-
-	  utility class for handling calling ReleaseReference() on the contained
-	  RefCounted object.  However, the constructor of this class *does not*
-	  call AddReference(). It is commonly used to release a reference once
-	  the object is destructed.  
+	/**
+	 * utility class for handling calling ReleaseReference() on the contained
+	 * RefCounted object.  However, the constructor of this class *does not*
+	 * call AddReference(). It is commonly used to release a reference once
+	 * the object is destructed.
 	 */
 	class KROLL_API ScopedDereferencer
 	{
 	public:
-		/*
-			Constructor: ScopedDereferencer
-		*/
+
 		ScopedDereferencer(RefCounted *p);
 		~ScopedDereferencer();
 	protected:

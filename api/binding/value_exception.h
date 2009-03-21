@@ -18,15 +18,10 @@ namespace kroll
 	#pragma GCC visibility push(default)
 #endif
 
-	/*
-		Class: ValueException
-	*/
 	class KROLL_API ValueException : public std::exception
 	{
 	public:
-		/*
-			Constructor: ValueException
-		*/
+
 		ValueException(SharedValue v);
 		~ValueException() throw ();
 

@@ -14,22 +14,17 @@
 namespace kroll
 {
 
-	/*
-		Class: ArgUtils
-	*/
 	class KROLL_API ArgUtils
 	{
 
 	public:
 		/**
-		 * Function: VerifyArgs
-		 *   Verify an argument list given a collection of argument
-		 *   string formats. Note that VerifyArgs is not intended for
-		 *   use in performance sensitive methods.
+		 * Verify an argument list given a collection of argument
+		 * string formats. Note that VerifyArgs is not intended for
+		 * use in performance sensitive methods.
 		 *
-		 * Params:
-		 *   args - The argument list
-		 *   sig - A string containing argument characters separated by
+		 * @param args The argument list
+		 * @param sig A string containing argument characters separated by
 		 *        commas. Some examples include "s" for a string, "so"
 		 *        for a string or an object, or "?so" for an optional string
 		 *        or object and "s,?so,l,m" for a complete signature string.
@@ -44,8 +39,8 @@ namespace kroll
 		 *           m: method
 		 *           l: list
 		 *           0: null
-		 * Returns:
-		 *   True if the argument list is valid, false otherwise
+		 *
+		 * @return true if the argument list is valid, false otherwise
 		 */
 		static bool VerifyArgs(const ValueList& args, const char* sig);
 		static void VerifyArgsException(const char *name, const ValueList& args, const char* sig);

@@ -1,4 +1,4 @@
-/**
+/*
  * Appcelerator Kroll - licensed under the Apache Public License 2
  * see LICENSE in the root folder for details on the license.
  * Copyright (c) 2009 Appcelerator, Inc. All Rights Reserved.
@@ -8,7 +8,7 @@
 #define _KR_DEFINES_H_
 
 //
-// a set of simple convenience defines around bindings and values 
+// a set of simple convenience defines around bindings and values
 //
 
 #define DECLAREBOUNDMETHOD(name) void name(const ValueList& args, SharedValue result);

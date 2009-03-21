@@ -15,19 +15,25 @@
 
 namespace kroll
 {
-	/*
-		Class: Blob
-	*/
+	/**
+	 * An object that represents an arbitrary amount of binary data§
+	 */
 	class KROLL_API Blob : public StaticBoundObject
 	{
 	public:
-		/*
-			Constructor: Blob
-		*/
+
+
 		Blob(char *buffer, int size);
 		virtual ~Blob();
 
+		/**
+		 * @return The buffer as a const char *
+		 */
 		const char* Get() { return buffer; }
+
+		/**
+		 * @return the length of the underlying buffer§
+		 */
 		const int Length () { return length; }
 
 	private:

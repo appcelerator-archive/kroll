@@ -3,6 +3,13 @@
  * see LICENSE in the root folder for details on the license.
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
+/**
+ * This file is the easiest way to gain access to the full Kroll API
+ * To use it, just do the following:
+ * \code
+ * #include <kroll/kroll.h>
+ * \endcode
+ */
 
 #ifndef _KROLL_H_
 #define _KROLL_H_
@@ -56,10 +63,8 @@ namespace kroll
 	typedef std::vector<SharedString> StringList;
 	typedef SharedPtr<StringList> SharedStringList;
 
-	/*
-	 * Type: ValueList
-	 *
-	 * This typdef is only used for argument lists. For
+	/**
+	 * This tyepdef is only used for argument lists. For
 	 * a list implementation to be used as a value in the
 	 * binding layer, take a look at KList and
 	 * StaticBoundList.

@@ -1,6 +1,6 @@
-/**
+/*
  * Appcelerator Kroll - licensed under the Apache Public License 2
- * see LICENSE in the root folder for details on the license. 
+ * see LICENSE in the root folder for details on the license.
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
 
@@ -12,14 +12,12 @@
 
 namespace kroll
 {
-	/*
-		Class: ScopedRefCounted
-
-	  utility class for incrementing and decrementing the reference
-	  count of the contained RefCounted object. this class is usually
-	  constructed as a stack variable and ensures that the held reference
-	  is available for the entire scope of the function call stack.  once
-	  the stack is deleted, the reference is released.
+	/**
+	 * utility class for incrementing and decrementing the reference
+	 * count of the contained RefCounted object. this class is usually
+	 * constructed as a stack variable and ensures that the held reference
+	 * is available for the entire scope of the function call stack.  once
+	 * the stack is deleted, the reference is released.
 	 */
 	class KROLL_API ScopedRefCounted
 	{
