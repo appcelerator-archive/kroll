@@ -13,59 +13,52 @@
 
 namespace kroll
 {
-	/*
-		Class: StaticBoundObject
-	*/
+	/**
+	 * Extending this class is the easiest way to get started with your own
+	 * KObject implementation. In your sub-class' constructor, you can bind
+	 * properties and methods, i.e:
+	 * \code
+	 * MyObject::MyObject() {
+	 *   this->Set("x", Value::NewInt(100));
+	 *   this->Set("description", Value::NewString("my object"));
+	 *   this->SetMethod("add", &MyObject::Add);
+	 * }
+	 *
+	 * void MyObject::Add(const ValueList& args, SharedValue result) {
+	 *   result->SetInt(args[0]->ToInt() + args[1]->ToInt());
+	 * }
+	 * \endcode
+	 *
+	 * And a supported language would access your object ala:
+	 * \code
+	 * var myObject = //..
+	 * alert(myObject.x); // 100
+	 * alert(myObject.description); // "my object"
+	 * alert(myObject.add(10, 15)); // 25
+	 * \endcode
+	 */
 	class KROLL_API StaticBoundObject : public KObject
 	{
 	public:
-		/*
-			Constructor: StaticBoundObject
-		*/
 		StaticBoundObject();
 		virtual ~StaticBoundObject();
 
-		/*
-		  Function: Get
-
-		  Return an object's property. The returned value is automatically
-		  reference counted and must be released if the callee does not hold
-		  a reference (even for Undefined and Null types).
-		  When an error occurs will throw an exception of type Value*.
-		 */
 		virtual SharedValue Get(const char *name);
-
-		/*
-		  Function: GetPropertyNames
-
-		  Return a list of this object's property names.
-		 */
 		virtual SharedStringList GetPropertyNames();
-
-		/*
-		  Function: Set
-
-		  Set a property on this object to the given value. Value should be
-		  heap-allocated as implementors are allowed to keep a reference.
-		  When an error occurs will throw an exception of type Value*.
-		 */
 		virtual void Set(const char *name, SharedValue value);
 
 
-		/*
-		  Function: Unset
-
-		  Unset the named property
+		/**
+		 * Unset or remove a property from the internal mapping of this object
+		 * @param name The property to unset
 		 */
 		virtual void UnSet(const char *name);
 
 
-		/*
-		  Function: SetMethod
-
-		  Set a property on this object to the given method. When an error
-		  occurs will throw an exception of type Value*.
-		*/
+		/**
+		 * Set a property on this object to the given method. When an error
+		 * occurs will throw an exception of type ValueException.
+		 */
 		template <typename T>
 		void SetMethod(const char *name, void (T::*method)(const ValueList&, SharedValue))
 		{
@@ -76,13 +69,11 @@ namespace kroll
 			this->Set(name, method_value);
 		}
 
-		/*
-		  Function: SetObject
-
-		  Set a property on this object to the given object. Value should be
-		  heap-allocated as implementors are allowed to keep a reference.
-		  When an error occurs will throw an exception of type Value*.
-		*/
+		/**
+		 * Set a property on this object to the given object. Value should be
+		 * heap-allocated as implementors are allowed to keep a reference.
+		 * When an error occurs will throw an exception of type ValueException.
+		 */
 		void SetObject(const char *name, SharedKObject object);
 
 	protected:

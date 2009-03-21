@@ -9,15 +9,18 @@
 
 namespace kroll
 {
-	/*
-		Class: AccessorBoundObject
-	*/
+	/**
+	 * AccessorBoundObjects automatically expose any property as a getter or setter
+	 * For example, if you expose a property "length" via:
+	 * <code>
+	 * this->Set("length", lengthValue);
+	 * </code>
+	 *
+	 * A caller could then call "getLength" or "setLength", as well as accessing the property directly.
+	 */
 	class KROLL_API AccessorBoundObject : public StaticBoundObject
 	{
 	public:
-		/*
-			Constructor: AccessorBoundObject
-		*/
 		AccessorBoundObject();
 
 		/*

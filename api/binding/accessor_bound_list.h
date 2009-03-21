@@ -9,9 +9,10 @@
 
 namespace kroll
 {
-	/*
-		Class: AccessorBoundList
-	*/
+	/**
+	 * The AccesorBoundList allows you to expose a list with properties that automatically expose getters and setters
+	 * @see AccessorBoundObject
+	 */
 	class KROLL_API AccessorBoundList : public StaticBoundList
 	{
 	public:
