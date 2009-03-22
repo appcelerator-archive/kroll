@@ -19,6 +19,7 @@ elif build.is_linux():
 		'/usr/lib/ruby/1.8/i486-linux',
       '/usr/lib/ruby/1.8/i686-linux',
 		'/usr/lib/ruby/1.8/x86_64-linux',
+      '/usr/lib/ruby/1.8/powerpc-linux',
 		build.kroll_include_dir])
 	if os.path.exists('/usr/lib/libruby1.8.so'):
 		Env.Append(LIBS=['ruby1.8'])
