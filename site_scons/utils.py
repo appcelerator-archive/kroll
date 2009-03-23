@@ -134,7 +134,15 @@ def KZipDir(target, source, env):
 		dir = str(s)
 		def zipcb(f):
 			arcname = f.replace(dir + os.sep, "")
-			zip.write(f, arcname)
+			if os.path.islink(f):
+				dest = os.readlink(f)
+				attr = zipfile.ZipInfo()
+				attr.filename = arcname 
+				attr.create_system = 3
+				attr.external_attr = 2716663808L
+				zip.writestr(attr, dest)
+			else:
+				zip.write(f, arcname)
 		walk_dir(dir, zipcb, include, exclude)
 	zip.close()
 
