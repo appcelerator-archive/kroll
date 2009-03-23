@@ -210,7 +210,11 @@ namespace kroll
 				break;
 		}
 
+#if(DEBUG && OS_OSX)
+		NSLog(@"[%s] %s",type,message.c_str());
+#else
 		std::cout << "[" << type << "] " << message << std::endl;
+#endif
 	}
 
 	int APIBinding::Register(std::string& event, SharedKMethod callback)
