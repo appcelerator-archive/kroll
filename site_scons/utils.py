@@ -131,7 +131,7 @@ def KZipDir(target, source, env):
 	if 'include' in opts.keys(): include = opts['include']
 
 	dest_file = str(target[0])
-	zip = zipfile.ZipFile(dest_file, 'w')
+	zip = zipfile.ZipFile(dest_file, 'w', zipfile.ZIP_DEFLATED)
 	for s in source:
 		dir = str(s)
 		def zipcb(f):
@@ -142,9 +142,10 @@ def KZipDir(target, source, env):
 				attr.filename = arcname 
 				attr.create_system = 3
 				attr.external_attr = 2716663808L
+				attr.compress_type = zipfile.ZIP_DEFLATED
 				zip.writestr(attr, dest)
 			else:
-				zip.write(f, arcname)
+				zip.write(f, arcname, zipfile.ZIP_DEFLATED)
 		walk_dir(dir, zipcb, include, exclude)
 	zip.close()
 
