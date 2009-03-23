@@ -566,7 +566,7 @@ namespace kroll
 			std::ifstream file(path.c_str());
 			if (file.bad() || file.fail())
 			{
-				return "";
+				return "-";
 			}
 			while (!file.eof())
 			{
@@ -576,7 +576,7 @@ namespace kroll
 				return line;
 			}
 		}
-		return "";
+		return "-";
 	}
 	std::string FileUtils::GetOSVersion()
 	{
@@ -591,7 +591,6 @@ namespace kroll
 		str << ")";
 		return str.str();
 #elif OS_OSX
-		// TODO - verify this
 		struct utsname uts;
 		uname(&uts);
 		return uts.release;
