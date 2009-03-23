@@ -135,6 +135,16 @@ namespace kroll
 		static std::string GetOSVersion();
 
 		/**
+		 * Encodes a URI value
+		 */
+		static std::string FileUtils::EncodeURIComponent(std::string value);
+
+		/**
+		 * Encodes a URI value
+		 */
+		static std::string FileUtils::DecodeURIComponent(std::string value);
+
+		/**
 		 * This function returns temporary directory for application
 		 */
 		static std::string GetTempDirectory();
