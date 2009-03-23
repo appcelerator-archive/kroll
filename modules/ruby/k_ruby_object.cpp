@@ -72,9 +72,8 @@ namespace kroll {
 		}
 		else if (rb_obj_respond_to(object, mm_ID, Qtrue) == Qtrue)
 		{
-			// If this object has a method_missing, return that
-			VALUE rmeth = rb_funcall(object, mm_ID, 1, ID2SYM(get_ID));
-			return Value::NewMethod(new KRubyMethod(rmeth, get_ID));
+			// If this object has a method_missing, call that and return the result
+			ruby_value = rb_funcall(object, mm_ID, 1, ID2SYM(get_ID));
 		}
 
 		return RubyUtils::ToKrollValue(ruby_value);
