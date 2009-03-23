@@ -11,6 +11,7 @@
 #include <IOKit/network/IOEthernetInterface.h>
 #include <IOKit/network/IONetworkInterface.h>
 #include <IOKit/network/IOEthernetController.h>
+#include <sys/utsname.h>
 #elif defined(OS_WIN32)
 #include <windows.h>
 #include <shlobj.h>
@@ -19,7 +20,6 @@
 #elif defined(OS_LINUX)
 #include <cstdarg>
 #include <unistd.h>
-
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/socket.h>
