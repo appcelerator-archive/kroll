@@ -276,6 +276,9 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 				// paranoia check
 				if (kroll::FileUtils::IsFile(exec))
 				{
+					// ensure temp directory exists
+					kroll::FileUtils::CreateDirectory(sourceTemp);
+
 					// run and wait for it to exit..
 					kroll::FileUtils::RunAndWait(exec,args);
 
