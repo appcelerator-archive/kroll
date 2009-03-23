@@ -198,7 +198,7 @@ namespace kroll
 		if (tibo_class == NULL)
 		{
 			JSClassDefinition js_class_def = empty_class;
-			js_class_def.className = "KObject";
+			js_class_def.className = "Object";
 			js_class_def.getPropertyNames = get_property_names_cb;
 			js_class_def.finalize = finalize_cb;
 			js_class_def.hasProperty = has_property_cb;
@@ -214,7 +214,7 @@ namespace kroll
 		if (tibm_class == NULL)
 		{
 			JSClassDefinition js_class_def = empty_class;
-			js_class_def.className = "KMethod";
+			js_class_def.className = "Function";
 			js_class_def.getPropertyNames = get_property_names_cb;
 			js_class_def.finalize = finalize_cb;
 			js_class_def.hasProperty = has_property_cb;
@@ -250,7 +250,7 @@ namespace kroll
 		if (tibl_class == NULL)
 		{
 			JSClassDefinition js_class_def = empty_class;
-			js_class_def.className = "KList";
+			js_class_def.className = "Array";
 			js_class_def.getPropertyNames = get_property_names_cb;
 			js_class_def.finalize = finalize_cb;
 			js_class_def.hasProperty = has_property_cb;
