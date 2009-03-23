@@ -203,7 +203,10 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 		{
 			std::string mid = kroll::FileUtils::GetMachineId();
 			std::string os = OS_NAME;
-			std::string qs("?os="+os+"&mid="+mid+"&aid="+appid+"&guid="+guid);
+			std::string osver = kroll::FileUtils::EncodeURIComponent(kroll::FileUtils::GetOSVersion());
+			char tiver[10];
+			sprintf(tiver, "%.1f", PRODUCT_VERSION);
+			std::string qs("?os="+os+"&osver="+osver+"&tiver="+tiver+"&mid="+mid+"&aid="+appid+"&guid="+guid);
 			std::vector< std::pair<std::string,std::string> >::iterator iter = missing.begin();
 			int missingCount = 0;
 			while (iter!=missing.end())
