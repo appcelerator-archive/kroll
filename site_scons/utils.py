@@ -62,14 +62,17 @@ def SCopyToDirImpl(e, src, dest, include=[], exclude=[], filter=None, recurse=Tr
 	"""
 
 	def copy_item(src, dest):
-		#print "copy item %s %s" % (src, dest)
-		if not filter_file(src, include, exclude, filter):
-			return
-		if os.path.islink(src):
-			e.KCopySymlink(dest, src)
-		elif os.path.isdir(src):
+		# Test for a symlink first, because a symlink can
+		# also return turn for isdir
+		if os.path.islink(src) and filter_file(src, include, exclude, filter):
+			e.KCopySymlink(dest, src) 
+
+		# It doesn't really make sense for includes to
+		# apply to folders, so we don't use them here
+		elif os.path.isdir(src) and filter_file(src, [], exclude, filter):
 			copy_items(src, dest)
-		else:
+
+		elif filter_file(src, [], exclude, filter):
 			e.Command(dest, src, Copy('$TARGET', '$SOURCE'))
 
 	def copy_items(src, dest):
