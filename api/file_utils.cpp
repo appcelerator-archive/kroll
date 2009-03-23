@@ -529,6 +529,30 @@ namespace kroll
 		}
 		return "";
 	}
+	std::string FileUtils::GetOSVersion()
+	{
+#ifdef OS_WIN32
+		OSVERSIONINFO vi;
+		vi.dwOSVersionInfoSize = sizeof(vi);
+		if (GetVersionEx(&vi) == 0) return "?";
+
+		std::ostringstream str;
+		str << vi.dwMajorVersion << "." << vi.dwMinorVersion << " (Build " << (vi.dwBuildNumber & 0xFFFF);
+		if (vi.szCSDVersion[0]) str << ": " << vi.szCSDVersion;
+		str << ")";
+		return str.str();
+#elif OS_OSX
+		// TODO - verify this
+		struct utsname uts;
+		uname(&uts);
+		return uts.release;
+#elif OS_LINUX
+		// TODO - verify this
+		struct utsname uts;
+		uname(&uts);
+		return uts.release;
+#endif
+	}
 	void FileUtils::Tokenize(const std::string& str, std::vector<std::string>& tokens, const std::string &delimeters)
 	{
 		std::string::size_type lastPos = str.find_first_not_of(delimeters,0);
