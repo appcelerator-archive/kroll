@@ -188,7 +188,7 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 		std::string url;
 		if (size == 0)
 		{
-			const char *us = BOOT_UPDATESITE_URL;
+			const char *us = DISTRIBUTION_URL;
 			if (strlen(us)>0)
 			{
 				url = std::string(us);
@@ -198,12 +198,12 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 		{
 			url = std::string(updatesite);
 		}
-		
+
 		if (!url.empty())
 		{
 			std::string mid = kroll::FileUtils::GetMachineId();
 			std::string os = OS_NAME;
-			std::string qs("?os="+os+"&mid="+sid+"&aid="+appid+"&guid="+guid);
+			std::string qs("?os="+os+"&mid="+mid+"&aid="+appid+"&guid="+guid);
 			std::vector< std::pair<std::string,std::string> >::iterator iter = missing.begin();
 			int missingCount = 0;
 			while (iter!=missing.end())
@@ -299,7 +299,7 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 			result = false;
 			KR_FATAL_ERROR("Missing installer and application has additional modules that are needed. Not updatesite has been configured.");
 		}
-		
+
 		// unlink the temporary directory
 		kroll::FileUtils::DeleteDirectory(sourceTemp);
 	}
@@ -324,7 +324,7 @@ int getEnv(std::string key, std::string &result)
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR command_line, int)
 #else
 int main(int _argc, const char* _argv[])
-#endif 
+#endif
 {
 #if !defined(WIN32_CONSOLE)
 	int argc = __argc;
@@ -396,9 +396,9 @@ int main(int _argc, const char* _argv[])
 			path+=";";
 			path+=buf;
 		}
-		
+
 		std::cout << "\n\n\n**** SETTING PATH = " << path << "\n\n\n";
-		
+
 		SetEnvironmentVariable("KR_FORK","YES");
 		SetEnvironmentVariable("KR_HOME",homedir.c_str());
 		SetEnvironmentVariable("KR_RUNTIME",runtimePath.c_str());
@@ -406,7 +406,7 @@ int main(int _argc, const char* _argv[])
 		SetEnvironmentVariable("KR_RUNTIME_HOME",runtimeBasedir.c_str());
 		SetEnvironmentVariable("PATH",path.c_str());
 		SetEnvironmentVariable("KR_APP_GUID",guid.c_str());
-		
+
 		_execvp(argv[0],argv);
 	}
 	else
@@ -414,7 +414,7 @@ int main(int _argc, const char* _argv[])
 		SetEnvironmentVariable("KR_FORK",NULL);
 		getEnv("KR_RUNTIME",buf);
 		std::string runtimePath = buf;
-		
+
 		// now we need to load the host and get 'er booted
 		std::string khost = FileUtils::Join(runtimePath.c_str(),"khost.dll",NULL);
 
