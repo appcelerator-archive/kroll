@@ -10,17 +10,18 @@
 namespace kroll
 {
 
-	DelegateStaticBoundObject::DelegateStaticBoundObject(SharedKObject delegate)
-		: base(new StaticBoundObject()),
-		  delegate(delegate)
+	DelegateStaticBoundObject::DelegateStaticBoundObject(SharedKObject base) :
+		base(base),
+		delegate(new StaticBoundObject())
 	{
 	}
 
-	DelegateStaticBoundObject::DelegateStaticBoundObject(SharedKObject base, SharedKObject delegate)
-		: base(base),
-		  delegate(delegate)
+	DelegateStaticBoundObject::DelegateStaticBoundObject(SharedKObject base, SharedKObject delegate) :
+		base(base),
+		delegate(delegate)
 	{
 	}
+
 	DelegateStaticBoundObject::~DelegateStaticBoundObject()
 	{
 	}

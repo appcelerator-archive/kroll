@@ -18,7 +18,7 @@ namespace kroll
 	{
 	public:
 
-		DelegateStaticBoundObject(SharedKObject delegate);
+		DelegateStaticBoundObject(SharedKObject base);
 		DelegateStaticBoundObject(SharedKObject base, SharedKObject delegate);
 		virtual ~DelegateStaticBoundObject();
 
