@@ -1,4 +1,4 @@
-import os.path, shutil, types, tarfile
+import os.path, shutil, types, tarfile, zipfile
 from SCons.Script import *
 
 # Adapted from: http://www.scons.org/wiki/AccumulateBuilder
@@ -99,17 +99,34 @@ def KCopySymlink(target, source, env):
 	os.symlink(linkto, dest_file)
 
 def KTarGzDir(target, source, env):
-	tar_dir = str(source[0])
 	dest_file = str(target[0])
-
 	tar = tarfile.open(dest_file, 'w:gz')
-	files = os.walk(tar_dir)
-	for walk in files:
-		for file in walk[2]:
-			file = os.path.join(walk[0], file)
-			arcname = file.replace(tar_dir + os.sep, "")
-			tar.add(file, arcname)
+
+	for dir in source:
+		tar_dir = str(source[0])
+
+		files = os.walk(tar_dir)
+		for walk in files:
+			for file in walk[2]:
+				file = os.path.join(walk[0], file)
+				arcname = file.replace(tar_dir + os.sep, "")
+				tar.add(file, arcname)
 	tar.close()
+
+def KZipDir(target, source, env):
+	dest_file = str(target[0])
+	zip = zipfile.ZipFile(dest_file, 'w')
+
+	for dir in source:
+		zip_dir = str(source[0])
+
+		files = os.walk(zip_dir)
+		for walk in files:
+			for file in walk[2]:
+				file = os.path.join(walk[0], file)
+				arcname = file.replace(zip_dir + os.sep, "")
+				zip.write(file, arcname)
+	zip.close()
 
 def KConcat(target, source, env):
 	dest_file = str(target[0])

@@ -41,7 +41,12 @@ class BuildUtils(object):
 			action=utils.KTarGzDir,
 			source_factory=SCons.Node.FS.default_fs.Entry,
 			target_factory=SCons.Node.FS.default_fs.Entry,
-			multi=0)
+			multi=1)
+		env['BUILDERS']['KZipDir'] = env.Builder(
+			action=utils.KZipDir,
+			source_factory=SCons.Node.FS.default_fs.Entry,
+			target_factory=SCons.Node.FS.default_fs.Entry,
+			multi=1)
 		env['BUILDERS']['KConcat'] = env.Builder(
 			action=utils.KConcat,
 			source_factory=SCons.Node.FS.default_fs.Entry,
