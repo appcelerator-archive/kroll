@@ -30,13 +30,13 @@ namespace kroll
 	{
 		ScopedLock lock(&mutex);
 
-		SharedValue val = base->Get(name);
+		SharedValue val = delegate->Get(name);
 		if (!val->IsUndefined())
 		{
 			return val;
 		}
 
-		return this->delegate->Get(name);
+		return this->base->Get(name);
 	}
 
 	void DelegateStaticBoundObject::Set(const char *name, SharedValue value)
