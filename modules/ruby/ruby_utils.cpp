@@ -62,6 +62,11 @@ namespace kroll
 			SharedKObject kobj = new KRubyObject(value);
 			kvalue = Value::NewObject(kobj);
 		}
+		else if (T_HASH == t)
+		{
+			SharedKObject kobj = new KRubyHash(value);
+			kvalue = Value::NewObject(kobj);
+		}
 		else if (T_ARRAY == t)
 		{
 			SharedKList klist = new KRubyList(value);
@@ -123,15 +128,31 @@ namespace kroll
 		}
 		else if (value->IsObject())
 		{
+			SharedPtr<KRubyObject> ro = value->ToObject().cast<KRubyObject>();
+			if (!ro.isNull())
+				return ro->ToRuby();
+
+			SharedPtr<KRubyHash> rh = value->ToObject().cast<KRubyHash>();
+			if (!rh.isNull())
+				return rh->ToRuby();
+
 			return RubyUtils::KObjectToRubyValue(value);
 		}
 		else if (value->IsMethod())
 		{
-			return RubyUtils::KMethodToRubyValue(value);
+			SharedPtr<KRubyMethod> rm = value->ToMethod().cast<KRubyMethod>();
+			if (!rm.isNull())
+				return rm->ToRuby();
+			else
+				return RubyUtils::KMethodToRubyValue(value);
 		}
 		else if (value->IsList())
 		{
-			return RubyUtils::KListToRubyValue(value);
+			SharedPtr<KRubyList> rl = value->ToList().cast<KRubyList>();
+			if (!rl.isNull())
+				return rl->ToRuby();
+			else
+				return RubyUtils::KListToRubyValue(value);
 		}
 		return Qnil;
 	}
@@ -174,8 +195,7 @@ namespace kroll
 			// TODO: Eventually wrap these up in a special exception
 			// class so that we can unwrap them into ValueExceptions again
 			SharedString ss = e.DisplayString();
-			VALUE rex = rb_str_new2(ss->c_str());
-			rb_raise(rex, "KrollException");
+			rb_raise(rb_eStandardError, ss->c_str());
 			return Qnil;
 		}
 	}

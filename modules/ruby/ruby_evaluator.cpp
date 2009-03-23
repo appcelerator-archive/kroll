@@ -24,7 +24,6 @@ namespace kroll
 	static SharedKObject global_object;
 	static VALUE m_missing(int argc, VALUE* argv, VALUE self)
 	{
-		printf("method missing called\n");
 		bool assignment = false;
 
 		if (global_object.isNull())
