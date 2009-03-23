@@ -66,7 +66,7 @@ namespace kroll {
 		{
 			/*VALUE rmeth =*/
 			rb_funcall(object, rb_intern("method"), 1, ID2SYM(get_ID));
-			ruby_value = rb_funcall(object, get_ID, 1, ruby_value);
+			ruby_value = rb_funcall(object, get_ID, 0);
 		}
 		else if (rb_ivar_defined(object, iv_ID))
 		{
