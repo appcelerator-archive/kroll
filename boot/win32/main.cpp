@@ -64,7 +64,6 @@ using namespace kroll;
 #define MAX_PATH 512
 #endif
 
-
 #define KR_FATAL_ERROR(msg) \
 { \
 	std::cerr << "Error: " << msg << std::endl; \
@@ -331,6 +330,17 @@ int getEnv(std::string key, std::string &result)
 	return size;
 }
 
+int PerformUnzip(char *from, char *to)
+{
+	std::string source(from);
+	std::string destination(to);
+
+	std::cout << "Performing Unzip " << source << " >>> " << destination << std::endl;
+	kroll::FileUtils::Unzip(source, destination);
+
+	return 0;
+}
+
 #if defined(OS_WIN32) && !defined(WIN32_CONSOLE)
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR command_line, int)
 #else
@@ -344,6 +354,18 @@ int main(int _argc, const char* _argv[])
 	int argc = _argc;
 	char **argv = (char **)_argv;
 #endif
+
+	if (argc > 1 && strcmp(argv[1],"--tiunzip")==0)
+	{
+		if(argc != 4)
+		{
+			KR_FATAL_ERROR("Unable to perform unzip request.  3 arguments are expected --tiunzip <from> <to>");
+			return __LINE__;
+		}
+
+		return PerformUnzip(argv[2], argv[3]);
+	}
+
 	std::string buf;
 	int fork_flag = getEnv("KR_FORK",buf);
 	int rc = 0;
