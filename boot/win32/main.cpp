@@ -37,10 +37,6 @@ using namespace kroll;
   #define _BOOT_UPDATESITE_ENVNAME UPDATESITE
 #endif
 
-#ifndef _BOOT_UPDATESITE_URL
-  #error "Define _BOOT_UPDATESITE_URL"
-#endif
-
 #ifndef BOOT_RUNTIME_FLAG
   #define BOOT_RUNTIME_FLAG STRING(_BOOT_RUNTIME_FLAG)
 #endif
@@ -53,9 +49,14 @@ using namespace kroll;
   #define BOOT_UPDATESITE_ENVNAME STRING(_BOOT_UPDATESITE_ENVNAME)
 #endif
 
-#ifndef BOOT_UPDATESITE_URL
-  #define BOOT_UPDATESITE_URL STRING(_BOOT_UPDATESITE_URL)
-#endif
+
+//
+// these UUIDs should never change and uniquely identify a package type
+//
+#define DISTRIBUTION_URL "http://download.titaniumapp.com"
+#define DISTRIBUTION_UUID "7F7FA377-E695-4280-9F1F-96126F3D2C2A"
+#define RUNTIME_UUID "A2AC5CB5-8C52-456C-9525-601A5B0725DA"
+#define MODULE_UUID "1ACE5D3A-2B52-43FB-A136-007BD166CFD0"
 
 #define OS_NAME "win32"
 
@@ -200,20 +201,21 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 		
 		if (!url.empty())
 		{
-			std::string sid = kroll::FileUtils::GetMachineId();
+			std::string mid = kroll::FileUtils::GetMachineId();
 			std::string os = OS_NAME;
-			std::string qs("?os="+os+"&sid="+sid+"&aid="+appid+"&guid="+guid);
+			std::string qs("?os="+os+"&mid="+sid+"&aid="+appid+"&guid="+guid);
 			std::vector< std::pair<std::string,std::string> >::iterator iter = missing.begin();
 			int missingCount = 0;
 			while (iter!=missing.end())
 			{
 				std::pair<std::string,std::string> p = (*iter++);
-				std::string name;
+				std::string uuid;
+				std::string name = p.first;
+				std::string version = p.second;
 				std::string path;
 				bool found = false;
 				if (p.first == "runtime")
 				{
-					name = "runtime-" + os + "-" + p.second;
 					// see if we have a private runtime installed and we can link to that
 					path = kroll::FileUtils::Join(installerDir.c_str(),"runtime",NULL);
 					if (kroll::FileUtils::IsDirectory(path))
@@ -221,15 +223,22 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 							found = true;
 							runtimePath = path;
 					}
+					else
+					{
+						uuid = RUNTIME_UUID;
+					}
 				}
 				else
 				{
-					name = "module-" + p.first + "-" + p.second;
 					// see if we have a private module installed and we can link to that
 					path = kroll::FileUtils::Join(installerDir.c_str(),"modules",p.first.c_str(),NULL);
 					if (kroll::FileUtils::IsDirectory(path))
 					{
 						found = true;
+					}
+					else
+					{
+						uuid = MODULE_UUID;
 					}
 				}
 				if (found)
@@ -239,10 +248,16 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 				else
 				{
 					std::string u(url);
-					u+="/";
-					u+=name;
-					u+=".zip";
 					u+=qs;
+					u+="&name=";
+					u+=name;
+					u+="&version=";
+					u+=version;
+					u+="&uuid=";
+					u+=uuid;
+#ifdef DEBUG
+					std::cout << "Adding URL: " << u << std::endl;
+#endif
 					args.push_back(u);
 					missingCount++;
 				}

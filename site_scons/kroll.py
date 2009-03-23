@@ -101,7 +101,6 @@ class BuildConfig(object):
 		vars.Add('BOOT_RUNTIME_FLAG','The name of the Kroll runtime command line flag', kwargs['BOOT_RUNTIME_FLAG'])
 		vars.Add('BOOT_HOME_FLAG','The name of the Kroll home command line file', kwargs['BOOT_HOME_FLAG'])
 		vars.Add('BOOT_UPDATESITE_ENVNAME','The name of the Kroll update site environment variable', kwargs['BOOT_UPDATESITE_ENVNAME'])
-		vars.Add('BOOT_UPDATESITE_URL','The URL of the Kroll update site', kwargs['BOOT_UPDATESITE_URL'])
 
 		self.env = SCons.Environment.Environment(variables = vars)
 		self.utils = BuildUtils(self.env)
@@ -115,8 +114,7 @@ class BuildConfig(object):
 			['_CONFIG_FILENAME' , '${CONFIG_FILENAME}'],
 			['_BOOT_RUNTIME_FLAG', '${BOOT_RUNTIME_FLAG}'],
 			['_BOOT_HOME_FLAG', '${BOOT_HOME_FLAG}'],
-			['_BOOT_UPDATESITE_ENVNAME', '${BOOT_UPDATESITE_ENVNAME}'],
-			['_BOOT_UPDATESITE_URL', '${BOOT_UPDATESITE_URL}']
+			['_BOOT_UPDATESITE_ENVNAME', '${BOOT_UPDATESITE_ENVNAME}']
 		])
 		self.version = kwargs['PRODUCT_VERSION']
 

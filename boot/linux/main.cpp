@@ -31,17 +31,17 @@ using namespace kroll;
   #define _BOOT_UPDATESITE_ENVNAME UPDATESITE
 #endif
 
-#ifndef _BOOT_UPDATESITE_URL
-  #error "Define _BOOT_UPDATESITE_URL"
-#endif
-
 #ifndef BOOT_UPDATESITE_ENVNAME
   #define BOOT_UPDATESITE_ENVNAME STRING(_BOOT_UPDATESITE_ENVNAME)
 #endif
 
-#ifndef BOOT_UPDATESITE_URL
-  #define BOOT_UPDATESITE_URL STRING(_BOOT_UPDATESITE_URL)
-#endif
+//
+// these UUIDs should never change and uniquely identify a package type
+//
+#define DISTRIBUTION_URL "http://download.titaniumapp.com"
+#define DISTRIBUTION_UUID "7F7FA377-E695-4280-9F1F-96126F3D2C2A"
+#define RUNTIME_UUID "A2AC5CB5-8C52-456C-9525-601A5B0725DA"
+#define MODULE_UUID "1ACE5D3A-2B52-43FB-A136-007BD166CFD0"
 
 #define OS_NAME "linux"
 
@@ -55,6 +55,7 @@ struct Module
 	std::string name;
 	std::string version;
 	std::string path;
+	std::string uuid;
 	int op;
 	std::vector<std::string> libs;
 
@@ -66,6 +67,15 @@ struct Module
 		std::cout << "Component: " << this->name << ":" << this->version
 		          << ", operation: " << this->op << std::endl;
 #endif
+
+		if (name == "runtime")
+		{
+			this->uuid = RUNTIME_UUID;
+		}
+		else
+		{
+			this->uuid = MODULE_UUID;
+		}
 	}
 
 	void Prep()
@@ -393,9 +403,9 @@ class Boot
 		}
 
 		std::string temp_dir = kroll::FileUtils::GetTempDirectory();
-		std::string sid = kroll::FileUtils::GetMachineId();
+		std::string mid = kroll::FileUtils::GetMachineId();
 		std::string os = OS_NAME;
-		std::string qs("?os="+os+"&sid="+sid+"&aid="+this->app_id+"&guid="+this->guid);
+		std::string qs("?os="+os+"&mid="+mid+"&aid="+this->app_id+"&guid="+this->guid);
 
 		// Install to default runtime directory. At some point
 		// net_installer will decide where to install (for Loonix)
@@ -404,12 +414,12 @@ class Boot
 
 		// Figure out the update site URL
 		std::string url;
-		if (strlen(BOOT_UPDATESITE_URL))
-			url = std::string(BOOT_UPDATESITE_URL);
 		char* env_site = getenv(BOOT_UPDATESITE_ENVNAME);
 		if (env_site != NULL)
 			url = std::string(env_site);
-
+		else
+			url = std::string(DISTRIBUTION_URL);
+			
 		if (url.empty())
 		{
 			kroll::FileUtils::DeleteDirectory(temp_dir); // Clean up
@@ -429,11 +439,18 @@ class Boot
 		while (mi != missing.end())
 		{
 			Module* mod = *mi++;
+			std::string u(url);
+			u+=qs;
+			u+="&name=";
+			u+=mod->name;
+			u+="&version=";
+			u+=mod->version;
+			u+="&uuid=";
+			u+=mod->uuid;
 #ifdef DEBUG
-			std::cout << "Trying to install: " << mod->name << "/" << mod->version <<std::endl;
+			std::cout << "Need to install: " << url <<std::endl;
 #endif
-			std::string mod_url = url + "/" + mod->name + ".zip" + qs;
-			args.push_back(mod_url);
+			args.push_back(u);
 		}
 
 		kroll::FileUtils::RunAndWait(installer, args);
