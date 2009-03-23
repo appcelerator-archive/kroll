@@ -59,7 +59,7 @@ namespace kroll
 			SharedValue val = RubyUtils::ToKrollValue(rval);
 			global_object->Set(name, val);
 		}
-		if (v->IsMethod()) // Method call
+		else if (v->IsMethod()) // Method call
 		{
 			rval = RubyUtils::GenericKMethodCall(v->ToMethod(), args);
 		}

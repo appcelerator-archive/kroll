@@ -62,6 +62,11 @@ namespace kroll
 			SharedKObject kobj = new KRubyObject(value);
 			kvalue = Value::NewObject(kobj);
 		}
+		else if (T_HASH == t)
+		{
+			SharedKObject kobj = new KRubyHash(value);
+			kvalue = Value::NewObject(kobj);
+		}
 		else if (T_ARRAY == t)
 		{
 			SharedKList klist = new KRubyList(value);
@@ -123,15 +128,31 @@ namespace kroll
 		}
 		else if (value->IsObject())
 		{
+			SharedPtr<KRubyObject> ro = value->ToObject().cast<KRubyObject>();
+			if (!ro.isNull())
+				return ro->ToRuby();
+
+			SharedPtr<KRubyHash> rh = value->ToObject().cast<KRubyHash>();
+			if (!rh.isNull())
+				return rh->ToRuby();
+
 			return RubyUtils::KObjectToRubyValue(value);
 		}
 		else if (value->IsMethod())
 		{
-			return RubyUtils::KMethodToRubyValue(value);
+			SharedPtr<KRubyMethod> rm = value->ToMethod().cast<KRubyMethod>();
+			if (!rm.isNull())
+				return rm->ToRuby();
+			else
+				return RubyUtils::KMethodToRubyValue(value);
 		}
 		else if (value->IsList())
 		{
-			return RubyUtils::KListToRubyValue(value);
+			SharedPtr<KRubyList> rl = value->ToList().cast<KRubyList>();
+			if (!rl.isNull())
+				return rl->ToRuby();
+			else
+				return RubyUtils::KListToRubyValue(value);
 		}
 		return Qnil;
 	}
@@ -174,14 +195,38 @@ namespace kroll
 			// TODO: Eventually wrap these up in a special exception
 			// class so that we can unwrap them into ValueExceptions again
 			SharedString ss = e.DisplayString();
-			VALUE rex = rb_str_new2(ss->c_str());
-			rb_raise(rex, "KrollException");
+			rb_raise(rb_eStandardError, ss->c_str());
 			return Qnil;
 		}
 	}
 
-	// A method_missing magic function that's called
-	// for any access to our object (essentially)
+	// A :method method for pulling methods off of KObjects in Ruby
+	static VALUE ruby_kobject_method(int argc, VALUE *argv, VALUE self)
+	{
+		SharedValue* dval = NULL;
+		Data_Get_Struct(self, SharedValue, dval);
+		SharedKObject object = (*dval)->ToObject();
+
+		// TODO: We should raise an exception instead
+		if (object.isNull())
+			return Qnil;
+		if (argc < 1)
+			return Qnil;
+
+		VALUE meth_name = argv[0];
+		const char* name = rb_id2name(SYM2ID(meth_name));
+		SharedValue v = object->Get(name);
+		if (v->IsMethod())
+		{
+			return RubyUtils::ToRubyValue(v);
+		}
+		else
+		{
+			return Qnil;
+		}
+	}
+
+	// A :method_missing method for finding KObject properties in Ruby
 	static VALUE ruby_kobject_method_missing(int argc, VALUE *argv, VALUE self)
 	{
 		SharedValue* dval = NULL;
@@ -246,6 +291,8 @@ namespace kroll
 			kobj_class = rb_define_class("RubyKObject", rb_cObject);
 			rb_define_method(kobj_class, "method_missing",
 				RUBY_METHOD_FUNC(ruby_kobject_method_missing), -1);
+			rb_define_method(kobj_class, "method",
+				RUBY_METHOD_FUNC(ruby_kobject_method), -1);
 			rb_define_method(kobj_class, "methods",
 				RUBY_METHOD_FUNC(ruby_kobject_methods), 0);
 		}
@@ -263,6 +310,8 @@ namespace kroll
 			kmethod_class = rb_define_class("RubyKMethod", rb_cObject);
 			rb_define_method(kmethod_class, "method_missing",
 				RUBY_METHOD_FUNC(ruby_kobject_method_missing), -1);
+			rb_define_method(kobj_class, "method",
+				RUBY_METHOD_FUNC(ruby_kobject_method), -1);
 			rb_define_method(kmethod_class, "methods",
 				RUBY_METHOD_FUNC(ruby_kobject_methods), 0);
 			rb_define_method(kmethod_class, "call",
@@ -349,6 +398,8 @@ namespace kroll
 			klist_class = rb_define_class("RubyKMethod", rb_cObject);
 			rb_define_method(klist_class, "method_missing",
 				RUBY_METHOD_FUNC(ruby_kobject_method_missing), -1);
+			rb_define_method(kobj_class, "method",
+				RUBY_METHOD_FUNC(ruby_kobject_method), -1);
 			rb_define_method(klist_class, "methods",
 				RUBY_METHOD_FUNC(ruby_kobject_methods), 0);
 			rb_define_method(klist_class, "[]",

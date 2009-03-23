@@ -3,7 +3,6 @@
  * see LICENSE in the root folder for details on the license.
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
-
 #include "ruby_module.h"
 
 namespace kroll {
@@ -64,7 +63,6 @@ namespace kroll {
 		VALUE ruby_value = Qnil;
 		if (rb_obj_respond_to(object, get_ID, Qtrue) == Qtrue)
 		{
-			/*VALUE rmeth =*/
 			rb_funcall(object, rb_intern("method"), 1, ID2SYM(get_ID));
 			ruby_value = rb_funcall(object, get_ID, 0);
 		}
@@ -74,9 +72,8 @@ namespace kroll {
 		}
 		else if (rb_obj_respond_to(object, mm_ID, Qtrue) == Qtrue)
 		{
-			// If this object has a method_missing, return that
-			VALUE rmeth = rb_funcall(object, mm_ID, 1, ID2SYM(get_ID));
-			return Value::NewMethod(new KRubyMethod(rmeth, get_ID));
+			// If this object has a method_missing, call that and return the result
+			ruby_value = rb_funcall(object, mm_ID, 1, ID2SYM(get_ID));
 		}
 
 		return RubyUtils::ToKrollValue(ruby_value);
@@ -91,7 +88,7 @@ namespace kroll {
 	SharedStringList KRubyObject::GetPropertyNames()
 	{
 		SharedStringList names(new StringList());
-		VALUE vars = rb_obj_instance_variables(rb_obj_class(object));
+		VALUE vars = rb_obj_instance_variables(object);
 		for (int i = 0; i < RARRAY(vars)->len; i++)
 		{
 			VALUE prop_name = rb_ary_entry(vars, i);
@@ -100,7 +97,7 @@ namespace kroll {
 		}
 
 		VALUE methods = rb_funcall(object, rb_intern("methods"), 0);
-		for (int i = 0; i < RARRAY(vars)->len; i++)
+		for (int i = 0; i < RARRAY(methods)->len; i++)
 		{
 			VALUE meth_name = rb_ary_entry(methods, i);
 			std::string name = RubyUtils::ToString(meth_name);

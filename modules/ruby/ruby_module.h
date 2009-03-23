@@ -40,6 +40,7 @@
 
 #include <kroll/kroll.h>
 #include "k_ruby_object.h"
+#include "k_ruby_hash.h"
 #include "k_ruby_method.h"
 #include "k_ruby_list.h"
 #include "ruby_utils.h"
