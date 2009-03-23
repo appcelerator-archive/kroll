@@ -406,9 +406,14 @@ class Boot
 		std::string mid = kroll::FileUtils::GetMachineId();
 		std::string os = OS_NAME;
 		std::string osver = kroll::FileUtils::EncodeURIComponent(kroll::FileUtils::GetOSVersion());
+#ifdef OS_32
+		std::string ostype = "32bit";
+#else
+		std::string ostype = "64bit";
+#endif
 		char tiver[10];
 		sprintf(tiver, "%.1f", PRODUCT_VERSION);
-		std::string qs("?os="+os+"&osver="+osver+"&tiver="+tiver+"&mid="+mid+"&aid="+this->app_id+"&guid="+this->guid);
+		std::string qs("?os="+os+"&osver="+osver+"&tiver="+tiver+"&mid="+mid+"&aid="+this->app_id+"&guid="+this->guid+"&ostype="+ostype);
 
 		// Install to default runtime directory. At some point
 		// net_installer will decide where to install (for Loonix)
