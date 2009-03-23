@@ -137,12 +137,12 @@ namespace kroll
 		/**
 		 * Encodes a URI value
 		 */
-		static std::string FileUtils::EncodeURIComponent(std::string value);
+		static std::string EncodeURIComponent(std::string value);
 
 		/**
 		 * Encodes a URI value
 		 */
-		static std::string FileUtils::DecodeURIComponent(std::string value);
+		static std::string DecodeURIComponent(std::string value);
 
 		/**
 		 * This function returns temporary directory for application

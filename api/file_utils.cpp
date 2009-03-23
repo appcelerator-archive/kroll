@@ -25,6 +25,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <linux/if.h>
+#include <sys/utsname.h>
 #endif
 
 #include <iostream>
