@@ -42,11 +42,13 @@ class BuildUtils(object):
 			source_factory=SCons.Node.FS.default_fs.Entry,
 			target_factory=SCons.Node.FS.default_fs.Entry,
 			multi=1)
+		env.SetDefault(TARGZOPTS={})
 		env['BUILDERS']['KZipDir'] = env.Builder(
 			action=utils.KZipDir,
 			source_factory=SCons.Node.FS.default_fs.Entry,
 			target_factory=SCons.Node.FS.default_fs.Entry,
 			multi=1)
+		env.SetDefault(ZIPOPTS={})
 		env['BUILDERS']['KConcat'] = env.Builder(
 			action=utils.KConcat,
 			source_factory=SCons.Node.FS.default_fs.Entry,
@@ -79,6 +81,12 @@ class BuildUtils(object):
 			strings = [str(strings)]
 		t = self.Touch(target)
 		self.env.AddPostAction(t, utils.WriteStringsAction(target, strings))
+
+	def Zip(self, source, target, **kwargs):
+		self.env.KZipDir(target, source, ZIPOPTS=kwargs)
+
+	def TarGz(self, source, target, **kwargs):
+		self.env.KTarGzDir(target, source, TARGZOPTS=kwargs)
 
 class BuildConfig(object): 
 	def __init__(self, **kwargs):
@@ -125,6 +133,9 @@ class BuildConfig(object):
 
 		self.dir = path.abspath(path.join(kwargs['BUILD_DIR'], self.os))
 		self.third_party = path.abspath(path.join(kwargs['THIRD_PARTY_DIR'],self.os))
+		self.dist_dir = path.join(self.dir, 'dist')
+		self.runtime_build_dir = path.join(self.dir, 'runtime')
+
 		if (self.arch):
 			self.third_party += self.arch
 
@@ -215,14 +226,27 @@ class BuildConfig(object):
 
 		return m
 
-	def generate_manifest(self, name, id, guid, excludes=None, includes=None):
+	def build_dist_files(self):
+		excludes = ['.dll.manifest', '.dll.pdb', '.exp', '.ilk']
+
+		f = path.join(self.dist_dir, 'runtime-%s.zip' % self.version)
+		if os.path.exists(f): os.remove(f)
+
+		self.utils.Zip(self.runtime_build_dir, f, exclude=excludes)
+
+		for m in self.modules:
+			f = path.join(self.dist_dir, '%s-module-%s.zip' % (m.name, m.version))
+			if os.path.exists(f): os.remove(f)
+			self.utils.Zip(m.build_dir, f, exclude=excludes)
+
+	def generate_manifest(self, name, id, guid, exclude=None, include=None):
 		manifest = "#appname: %s\n" % name
 		manifest += "#appid: %s\n" % id
 		manifest += "#guid: %s\n" % guid
 		manifest += "runtime: %s\n" % self.version
 		for m in self.modules:
-			if (includes and not(m.name in includes)) or \
-				(excludes and m.name in excludes):
+			if (include and not(m.name in include)) or \
+				(exclude and m.name in exclude):
 				continue
 			manifest += "%s:%s\n" % (m.name, m.version)
 		return manifest

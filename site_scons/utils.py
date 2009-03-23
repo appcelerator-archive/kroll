@@ -1,6 +1,19 @@
 import os.path, shutil, types, tarfile, zipfile
 from SCons.Script import *
 
+def filter_file(file, include=[], exclude=[], filter=None):
+	for suffix in include:
+		if file.endswith(suffix):
+			return True
+	if len(include) > 0:
+		return False
+	for suffix in exclude:
+		if file.endswith(suffix):
+			return False
+	if filter:
+		return filter(file)
+	return True
+
 # Adapted from: http://www.scons.org/wiki/AccumulateBuilder
 def SCopyTree(*args, **kwargs):
 	if (type(args[1]) == types.ListType):
@@ -47,27 +60,14 @@ def SCopyToDirImpl(e, src, dest, include=[], exclude=[], filter=None, recurse=Tr
 	to exclude. Filter is a function which given the full path to a file,
 	will exclude is returns False or include if returns True.
 	"""
-	def filter_file(file):
-		for suffix in include:
-			if file.endswith(suffix):
-				return True
-		if len(include) > 0:
-			return False
-		for suffix in exclude:
-			if file.endswith(suffix):
-				return False
-		if filter:
-			return filter(file)
-
-		return True
 
 	def copy_item(src, dest):
 		#print "copy item %s %s" % (src, dest)
-		if os.path.islink(src) and filter_file(src):
+		if os.path.islink(src) and filter_file(src, include, exclude, filter):
 			e.KCopySymlink(dest, src)
 		elif os.path.isdir(src):
 			copy_items(src, dest)
-		elif filter_file(src):
+		elif filter_file(src, include, exclude, filter):
 			e.Command(dest, src, Copy('$TARGET', '$SOURCE'))
 
 	def copy_items(src, dest):
@@ -98,34 +98,44 @@ def KCopySymlink(target, source, env):
 		pass
 	os.symlink(linkto, dest_file)
 
+def walk_dir(dir, callback, include=[], exclude=[]):
+	files = os.walk(dir)
+	for walk in files:
+		for file in walk[2]:
+			file = os.path.join(walk[0], file)
+			if filter_file(file, include, exclude):
+				callback(file)
+
 def KTarGzDir(target, source, env):
+	exclude = include = []
+	opts = env['TARGZOPTS']
+	if 'exclude' in opts.keys(): exclude = opts['exclude']
+	if 'include' in opts.keys(): include = opts['include']
+
 	dest_file = str(target[0])
 	tar = tarfile.open(dest_file, 'w:gz')
-
-	for dir in source:
-		tar_dir = str(source[0])
-
-		files = os.walk(tar_dir)
-		for walk in files:
-			for file in walk[2]:
-				file = os.path.join(walk[0], file)
-				arcname = file.replace(tar_dir + os.sep, "")
-				tar.add(file, arcname)
+	for s in source:
+		dir = str(s)
+		def tarcb(f):
+			arcname = f.replace(dir + os.sep, "")
+			tar.add(f, arcname)
+		walk_dir(dir, tarcb, include, exclude)
 	tar.close()
 
 def KZipDir(target, source, env):
+	exclude = include = []
+	opts = env['ZIPOPTS']
+	if 'exclude' in opts.keys(): exclude = opts['exclude']
+	if 'include' in opts.keys(): include = opts['include']
+
 	dest_file = str(target[0])
 	zip = zipfile.ZipFile(dest_file, 'w')
-
-	for dir in source:
-		zip_dir = str(source[0])
-
-		files = os.walk(zip_dir)
-		for walk in files:
-			for file in walk[2]:
-				file = os.path.join(walk[0], file)
-				arcname = file.replace(zip_dir + os.sep, "")
-				zip.write(file, arcname)
+	for s in source:
+		dir = str(s)
+		def zipcb(f):
+			arcname = f.replace(dir + os.sep, "")
+			zip.write(f, arcname)
+		walk_dir(dir, zipcb, include, exclude)
 	zip.close()
 
 def KConcat(target, source, env):
