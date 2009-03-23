@@ -191,7 +191,15 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 			std::string osver = kroll::FileUtils::EncodeURIComponent(kroll::FileUtils::GetOSVersion());
 			char tiver[10];
 			sprintf(tiver, "%.1f", PRODUCT_VERSION);
-			std::string qs("?os="+os+"&osver="+osver+"&tiver="+tiver+"&mid="+mid+"&aid="+appid+"&guid="+guid);
+//NOTE: for now we determine this at compile time -- in the future
+//we might want to actually programmatically determine if running on
+//64-bit processor or not...
+#ifdef OS_32
+			std::string ostype = "32bit";
+#else
+			std::string ostype = "64bit";
+#endif
+			std::string qs("?os="+os+"&osver="+osver+"&tiver="+tiver+"&mid="+mid+"&aid="+appid+"&guid="+guid+"&ostype="+ostype);
 			std::vector< std::pair<std::string,std::string> >::iterator iter = missing.begin();
 			int missingCount = 0;
 			while (iter!=missing.end())

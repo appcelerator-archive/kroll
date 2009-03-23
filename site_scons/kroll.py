@@ -235,7 +235,7 @@ class BuildConfig(object):
 		self.utils.Zip(self.runtime_build_dir, f, exclude=excludes)
 
 		for m in self.modules:
-			f = path.join(self.dist_dir, '%s-module-%s.zip' % (m.name, m.version))
+			f = path.join(self.dist_dir, 'module-%s-%s.zip' % (m.name, m.version))
 			if os.path.exists(f): os.remove(f)
 			self.utils.Zip(m.build_dir, f, exclude=excludes)
 

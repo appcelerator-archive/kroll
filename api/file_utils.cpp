@@ -199,30 +199,25 @@ namespace kroll
 		s << (double)rand();
 		return s.str();
 #else
-		char t[] = "kXXXXXX";
-		char* tempdir = mkdtemp(t);
-		printf("Tempdir: %s\n", tempdir);
-
 		std::ostringstream dir;
 		const char* tmp = getenv("TMPDIR");
+		const char* tmp2 = getenv("TEMP");
 		if (tmp)
-		{
 			dir << std::string(tmp);
-		}
+		else if (tmp2)
+			dir << std::string(tmp2);
 		else
-		{
-			const char *tmp2 = getenv("TEMP");
-			if (tmp2)
-			{
-				dir << std::string(tmp2);
-			}
-			else
-			{
-				dir << std::string("/tmp");
-			}
-		}
-		dir << "/k" << (double)rand();
-		return dir.str();
+			dir << std::string("/tmp");
+
+		std::string tmp_str = dir.str();
+		if (tmp_str.at(tmp_str.length()-1) != '/')
+			dir << "/";
+		dir << "kXXXXXX";
+		char* tempdir = strdup(dir.str().c_str());
+		tempdir = mkdtemp(tempdir);
+		tmp_str = std::string(tempdir);
+		free(tempdir);
+		return tmp_str;
 #endif
 	}
 	std::string FileUtils::GetResourcesDirectory()
@@ -566,7 +561,7 @@ namespace kroll
 			std::ifstream file(path.c_str());
 			if (file.bad() || file.fail())
 			{
-				return "";
+				return "-";
 			}
 			while (!file.eof())
 			{
@@ -576,7 +571,7 @@ namespace kroll
 				return line;
 			}
 		}
-		return "";
+		return "-";
 	}
 	std::string FileUtils::GetOSVersion()
 	{
@@ -591,7 +586,6 @@ namespace kroll
 		str << ")";
 		return str.str();
 #elif OS_OSX
-		// TODO - verify this
 		struct utsname uts;
 		uname(&uts);
 		return uts.release;
