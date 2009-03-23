@@ -52,6 +52,7 @@ using namespace kroll;
 
 //
 // these UUIDs should never change and uniquely identify a package type
+// these UUIDs are also used in installation/net_installer/win32/Form.cs - update as needed
 //
 #define DISTRIBUTION_URL "http://download.titaniumapp.com"
 #define DISTRIBUTION_UUID "7F7FA377-E695-4280-9F1F-96126F3D2C2A"
