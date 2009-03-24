@@ -423,8 +423,10 @@ int main(int _argc, const char* _argv[])
 		std::string dypath = localRuntime;
 		dypath+=";";
 		dypath+=runtimePath;
+		dypath+=";";
 		std::string path;
 		path+=dypath;
+		path+=";";
 		path += moduleList.str();
 		if (getEnv("PATH",buf) > 0)
 		{
