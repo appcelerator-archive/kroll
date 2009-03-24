@@ -135,6 +135,11 @@ namespace kroll
 		static std::string GetOSVersion();
 
 		/**
+		 * This function returns the Operating system architecture
+		 */
+		static std::string GetOSArchitecture();
+
+		/**
 		 * Encodes a URI value
 		 */
 		static std::string EncodeURIComponent(std::string value);

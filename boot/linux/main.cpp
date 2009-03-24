@@ -64,7 +64,7 @@ struct Module
 	{
 		FileUtils::ExtractVersion(value, &this->op, this->version);
 #ifdef DEBUG
-		std::cout << "Component: " << this->name << ":" << this->version
+		std::cout << "Component: " << this->name << " : " << this->version
 		          << ", operation: " << this->op << std::endl;
 #endif
 
@@ -206,21 +206,18 @@ class Boot
 			          << rt_path << "), but charging ahead anyhow."
 			          << std::endl;
 		}
-		else
-		{
-			// Later this will be a list of usual locations that
-			// modules might be installed. For now it is the default
-			// runtime location.
-			const char* crt_path = this->rt_path.c_str();
-			std::string rt_module_path =
-				 FileUtils::Join(crt_path, MODULE_DIR, "linux", NULL);
-			this->module_paths.push_back(rt_module_path);
 
-			std::string rt_rt_path =
-				 FileUtils::Join(crt_path, RUNTIME_DIR, "linux", NULL);
-			this->rt_paths.push_back(rt_rt_path);
+		// Later this will be a list of usual locations that
+		// modules might be installed. For now it is the default
+		// runtime location.
+		const char* crt_path = this->rt_path.c_str();
+		std::string rt_module_path =
+			 FileUtils::Join(crt_path, MODULE_DIR, "linux", NULL);
+		this->module_paths.push_back(rt_module_path);
 
-		}
+		std::string rt_rt_path =
+			 FileUtils::Join(crt_path, RUNTIME_DIR, "linux", NULL);
+		this->rt_paths.push_back(rt_rt_path);
 
 		this->bundled_module_path = FileUtils::Join(capp_path, MODULE_DIR, NULL);
 		this->bundled_rt_path = FileUtils::Join(capp_path, RUNTIME_DIR, NULL);
@@ -406,6 +403,7 @@ class Boot
 		std::string mid = kroll::FileUtils::GetMachineId();
 		std::string os = OS_NAME;
 		std::string osver = kroll::FileUtils::EncodeURIComponent(kroll::FileUtils::GetOSVersion());
+		std::string osarch = kroll::FileUtils::GetOSArchitecture();
 #ifdef OS_32
 		std::string ostype = "32bit";
 #else
@@ -413,7 +411,7 @@ class Boot
 #endif
 		char tiver[10];
 		sprintf(tiver, "%.1f", PRODUCT_VERSION);
-		std::string qs("?os="+os+"&osver="+osver+"&tiver="+tiver+"&mid="+mid+"&aid="+this->app_id+"&guid="+this->guid+"&ostype="+ostype);
+		std::string qs("?os="+os+"&osver="+osver+"&tiver="+tiver+"&mid="+mid+"&aid="+this->app_id+"&guid="+this->guid+"&ostype="+ostype+"&osarch="+osarch);
 
 		// Install to default runtime directory. At some point
 		// net_installer will decide where to install (for Loonix)
@@ -448,16 +446,13 @@ class Boot
 		{
 			Module* mod = *mi++;
 			std::string u(url);
-			u+=qs;
-			u+="&name=";
-			u+=mod->name;
-			u+="&version=";
-			u+=mod->version;
-			u+="&uuid=";
-			u+=mod->uuid;
-#ifdef DEBUG
-			std::cout << "Need to install: " << url <<std::endl;
-#endif
+			u.append(qs);
+			u.append("&name=");
+			u.append(mod->name);
+			u.append("&version=");
+			u.append(mod->version);
+			u.append("&uuid=");
+			u.append(mod->uuid);
 			args.push_back(u);
 		}
 
@@ -484,6 +479,14 @@ int prepare_environment(int argc, const char* argv[])
 
 		if (missing.size() > 0)
 		{
+#ifdef DEBUG
+		std::vector<Module*>::iterator dmi = missing.begin();
+		while (dmi != missing.end())
+		{
+			Module* m = *dmi++;
+			std::cout << "StillMissing!: " << m->name << std::endl;
+		}
+#endif
 			// Don't throw an error here, because the module installer
 			// would have thrown an exception on an error, so the user
 			// must have cancelled.

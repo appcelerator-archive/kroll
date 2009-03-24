@@ -492,6 +492,7 @@ namespace kroll
 	}
 	std::string FileUtils::FindVersioned(std::string& path, int op, std::string& version)
 	{
+		printf("\n1a: %s\n", path.c_str());
 		std::vector<std::string> files;
 		std::vector<std::string> found;
 		ListDir(path,files);
@@ -503,6 +504,7 @@ namespace kroll
 			std::string fullpath = std::string(path);
 			fullpath.append(KR_PATH_SEP);
 			fullpath.append(str);
+			printf("2: %s\n", fullpath.c_str());
 			if (IsDirectory(fullpath))
 			{
 				int theVersion = MakeVersion(str);
@@ -585,15 +587,20 @@ namespace kroll
 		if (vi.szCSDVersion[0]) str << ": " << vi.szCSDVersion;
 		str << ")";
 		return str.str();
-#elif OS_OSX
+#elif OS_OSX || OS_LINUX
 		struct utsname uts;
 		uname(&uts);
 		return uts.release;
-#elif OS_LINUX
-		// TODO - verify this
+#endif
+	}
+	std::string FileUtils::GetOSArchitecture()
+	{
+#ifdef OS_WIN32
+		return std::string("win32");
+#elif OS_OSX || OS_LINUX
 		struct utsname uts;
 		uname(&uts);
-		return uts.release;
+		return uts.machine;
 #endif
 	}
 	std::string FileUtils::EncodeURIComponent(std::string src)
