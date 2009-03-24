@@ -202,6 +202,7 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 		if (!url.empty())
 		{
 			std::string mid = kroll::FileUtils::GetMachineId();
+			std::string osarch = kroll::FileUtils::GetOSArchitecture();
 			std::string os = OS_NAME;
 			std::string osver = kroll::FileUtils::EncodeURIComponent(kroll::FileUtils::GetOSVersion());
 			char tiver[10];
@@ -211,7 +212,7 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 #else
 			std::string ostype = "64bit";
 #endif
-			std::string qs("?os="+os+"&osver="+osver+"&tiver="+tiver+"&mid="+mid+"&aid="+appid+"&guid="+guid+"&ostype="+ostype);
+			std::string qs("?os="+os+"&osver="+osver+"&tiver="+tiver+"&mid="+mid+"&aid="+appid+"&guid="+guid+"&ostype="+ostype+"&osarch="+osarch);
 			std::vector< std::pair<std::string,std::string> >::iterator iter = missing.begin();
 			int missingCount = 0;
 			while (iter!=missing.end())
