@@ -492,7 +492,6 @@ namespace kroll
 	}
 	std::string FileUtils::FindVersioned(std::string& path, int op, std::string& version)
 	{
-		printf("\n1a: %s\n", path.c_str());
 		std::vector<std::string> files;
 		std::vector<std::string> found;
 		ListDir(path,files);
@@ -504,7 +503,6 @@ namespace kroll
 			std::string fullpath = std::string(path);
 			fullpath.append(KR_PATH_SEP);
 			fullpath.append(str);
-			printf("2: %s\n", fullpath.c_str());
 			if (IsDirectory(fullpath))
 			{
 				int theVersion = MakeVersion(str);
