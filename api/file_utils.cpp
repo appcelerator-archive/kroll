@@ -783,14 +783,8 @@ namespace kroll
 						}
 					}
 					runtimePath = FindRuntime(op,version);
-					if (runtimePath == "")
-					{
-						modules.push_back(std::pair< std::pair<std::string,std::string>, bool>(p,false));
-					}
-					else
-					{
-						foundRuntime = true;
-					}
+					modules.push_back(std::pair< std::pair<std::string,std::string>, bool>(p,false));
+					foundRuntime = true; // so we don't add again
 				}
 				else
 				{
@@ -832,7 +826,7 @@ namespace kroll
 		// we gotta always have a runtime
 		if (!foundRuntime)
 		{
-			std::pair<std::string,std::string> p("runtime","0.2"); //TODO: huh, what do we use?
+			std::pair<std::string,std::string> p("runtime",STRING(PRODUCT_VERSION)); //TODO: huh, what do we use?
 			modules.push_back(std::pair< std::pair<std::string,std::string>, bool>(p,false));
 		}
 		file.close();
