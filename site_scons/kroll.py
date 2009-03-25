@@ -1,7 +1,7 @@
 import SCons.Variables
 import SCons.Environment
 from SCons.Script import *
-import os, re, utils, types, os.path as path
+import os, glob, re, utils, futils, types, os.path as path
 
 class Module(object):
 	def __init__(self, name, version, build_dir, build):
@@ -17,16 +17,19 @@ class Module(object):
 		if not d:
 			d = self.build.cwd(2)
 
-		resources = Glob(d + '/AppResources/all') \
-		           + Glob(d + '/AppResources/%s' % self.build.os) 
+		print "Copying %s resources..." % self.name,
+		resources = glob.glob(path.join(d, 'AppResources', 'all')) \
+		           + glob.glob(path.join(d, 'AppResources', self.build.os))
 		for r in resources:
-			r = path.abspath(str(r))
-			self.build.utils.CopyToDir(r, path.join(self.build_dir, 'AppResources'))
+			r = path.abspath(r)
+			futils.CopyToDir(r, path.join(self.build_dir, 'AppResources'))
 
-		resources = Glob(d + '/Resources/all/*') \
-		           + Glob(d + '/Resources/%s/*' % self.build.os)
+		resources = glob.glob(path.join(d, 'Resources', 'all', '*')) \
+		           + glob.glob(path.join(d, 'Resources', '%s', self.build.os))
 		for r in resources:
-			self.build.utils.CopyToDir(path.abspath(str(r)), self.build_dir)
+			r = path.abspath(r)
+			futils.CopyToDir(r, self.build_dir)
+		print "done"
 
 class BuildUtils(object):
 	def __init__(self, env):
