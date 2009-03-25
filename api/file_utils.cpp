@@ -785,7 +785,10 @@ namespace kroll
 						}
 					}
 					runtimePath = FindRuntime(op,version);
-					modules.push_back(std::pair< std::pair<std::string,std::string>, bool>(p,false));
+					if (runtimePath == "") {
+						modules.push_back(std::pair< std::pair<std::string,std::string>, bool>(p,false));
+					}
+
 					foundRuntime = true; // so we don't add again
 				}
 				else
