@@ -232,6 +232,26 @@ class BuildConfig(object):
 		f = path.join(self.dist_dir, 'runtime-%s.zip' % self.version)
 		if os.path.exists(f): os.remove(f)
 
+		# Copy appinstaller tool to runtime dir
+		if hasattr(self, 'titanium_source_dir'):
+			appinstaller = path.join(self.titanium_source_dir, "installation", "app_installer")
+			appinstaller_target = path.join(self.runtime_build_dir, 'appinstaller')
+			self.utils.CopyTree(appinstaller, appinstaller_target)
+			jsfiles = path.join(self.titanium_source_dir, 'installation', 'common', 'js')
+			jstarget = path.join(appinstaller_target, 'Resources', 'js')
+			self.utils.CopyTree(jsfiles, jstarget)
+
+
+		if self.is_osx() and hasattr(self, 'titanium_source_dir'):
+			menu_nib = path.join(self.dir, 'modules', 'tiui', 'MainMenu.nib')
+			icns = path.join(self.titanium_support_dir, 'titanium.icns')
+			self.utils.CopyToDir(menu_nib, path.join(self.runtime_build_dir, 'template'))
+			self.utils.CopyToDir(icns, path.join(self.runtime_build_dir, 'template'))
+
+		kboot = path.join(self.dir, 'kboot')
+		if self.is_win32(): kboot += ".exe"
+		self.utils.CopyToDir(kboot, path.join(self.runtime_build_dir, 'template'))
+
 		self.utils.Zip(self.runtime_build_dir, f, exclude=excludes)
 
 		for m in self.modules:
