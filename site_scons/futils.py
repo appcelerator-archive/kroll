@@ -81,7 +81,10 @@ def CopyToDirImpl(src, dest, include=[], exclude=[], filter=None, recurse=True):
 		elif filter_file(src, [], exclude, filter):
 			if path.exists(dest):
 				os.remove(dest)
-			os.link(src, dest)
+			if hasattr(os, 'link'):
+				os.link(src, dest)
+			else:
+				shutil.copy2(src, dest)
 
 	def copy_items(src, dest):
 		#print "copy items %s %s" % (src, dest)
