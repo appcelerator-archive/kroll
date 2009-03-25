@@ -201,10 +201,11 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 
 		if (!url.empty())
 		{
-			std::string mid = kroll::FileUtils::GetMachineId();
-			std::string osarch = kroll::FileUtils::GetOSArchitecture();
-			std::string os = OS_NAME;
+			std::string mid = kroll::FileUtils::EncodeURIComponent(kroll::FileUtils::GetMachineId());
+			std::string osarch = kroll::FileUtils::EncodeURIComponent(kroll::FileUtils::GetOSArchitecture());
+			std::string os = kroll::FileUtils::EncodeURIComponent(OS_NAME);
 			std::string osver = kroll::FileUtils::EncodeURIComponent(kroll::FileUtils::GetOSVersion());
+			guid = kroll::FileUtils::EncodeURIComponent(guid);
 			char tiver[10];
 			sprintf(tiver, "%.1f", PRODUCT_VERSION);
 #ifdef OS_32
@@ -212,7 +213,9 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 #else
 			std::string ostype = "64bit";
 #endif
-			std::string qs("?os="+os+"&osver="+osver+"&tiver="+tiver+"&mid="+mid+"&aid="+appid+"&guid="+guid+"&ostype="+ostype+"&osarch="+osarch);
+			std::string ti_ver = kroll::FileUtils::EncodeURIComponent(tiver);
+			std::string aid = kroll::FileUtils::EncodeURIComponent(appid);
+			std::string qs("?os="+os+"&osver="+osver+"&tiver="+ti_ver+"&mid="+mid+"&aid="+aid+"&guid="+guid+"&ostype="+ostype+"&osarch="+osarch);
 			std::vector< std::pair<std::string,std::string> >::iterator iter = missing.begin();
 			int missingCount = 0;
 			while (iter!=missing.end())
@@ -259,11 +262,11 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 					std::string u(url);
 					u+=qs;
 					u+="&name=";
-					u+=name;
+					u+=kroll::FileUtils::EncodeURIComponent(name);
 					u+="&version=";
-					u+=version;
+					u+=kroll::FileUtils::EncodeURIComponent(version);
 					u+="&uuid=";
-					u+=uuid;
+					u+=kroll::FileUtils::EncodeURIComponent(uuid);
 #ifdef DEBUG
 					std::cout << "Adding URL: " << u << std::endl;
 #endif
