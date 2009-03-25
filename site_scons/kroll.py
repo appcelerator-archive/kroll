@@ -25,7 +25,7 @@ class Module(object):
 			futils.CopyToDir(r, path.join(self.build_dir, 'AppResources'))
 
 		resources = glob.glob(path.join(d, 'Resources', 'all', '*')) \
-		           + glob.glob(path.join(d, 'Resources', '%s', self.build.os))
+		           + glob.glob(path.join(d, 'Resources', self.build.os))
 		for r in resources:
 			r = path.abspath(r)
 			futils.CopyToDir(r, self.build_dir)
