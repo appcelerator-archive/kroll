@@ -22,6 +22,7 @@
 #endif
 
 using namespace kroll;
+using kroll::FileUtils;
 
 //
 // these flags are compiled in to allow them
@@ -48,6 +49,12 @@ using namespace kroll;
 #define MANIFEST_FILE "manifest"
 #define MODULE_DIR "modules"
 #define RUNTIME_DIR "runtime"
+
+#ifdef OS_32
+  #define OSTYPE "32bit"
+#else
+  #define OSTYPE "64bit"
+#endif
 
 typedef int Executor(int argc, const char **argv);
 struct Module
@@ -225,7 +232,7 @@ class Boot
 		// The installer directory contains the package installer and bundled
 		// runtime / modules may also reside there. These locations have a lower
 		// priority than all other locations.
-		this->installer_path = kroll::FileUtils::Join(capp_path, "installer", NULL);
+		this->installer_path = FileUtils::Join(capp_path, "installer", NULL);
 		this->bundled_installer_module_path = FileUtils::Join(installer_path.c_str(), MODULE_DIR, NULL);
 		this->bundled_installer_rt_path = FileUtils::Join(installer_path.c_str(), RUNTIME_DIR, NULL);
 	}
@@ -393,25 +400,27 @@ class Boot
 
 		// If we don't have an installer directory, just bail...
 		const char* ci_path = this->installer_path.c_str();
-		std::string installer = kroll::FileUtils::Join(ci_path, "installer", NULL);
+		std::string installer = FileUtils::Join(ci_path, "installer", NULL);
 		if (!FileUtils::IsDirectory(this->installer_path) || !FileUtils::IsFile(installer))
 		{
 			throw std::string("Missing installer and application has additional modules that are needed.");
 		}
 
-		std::string temp_dir = kroll::FileUtils::GetTempDirectory();
-		std::string mid = kroll::FileUtils::GetMachineId();
+		std::string temp_dir = FileUtils::GetTempDirectory();
+		std::string mid = FileUtils::GetMachineId();
 		std::string os = OS_NAME;
-		std::string osver = kroll::FileUtils::EncodeURIComponent(kroll::FileUtils::GetOSVersion());
-		std::string osarch = kroll::FileUtils::GetOSArchitecture();
-#ifdef OS_32
-		std::string ostype = "32bit";
-#else
-		std::string ostype = "64bit";
-#endif
-		char tiver[10];
-		sprintf(tiver, "%.1f", PRODUCT_VERSION);
-		std::string qs("?os="+os+"&osver="+osver+"&tiver="+tiver+"&mid="+mid+"&aid="+this->app_id+"&guid="+this->guid+"&ostype="+ostype+"&osarch="+osarch);
+		std::string osver = FileUtils::GetOSVersion();
+		std::string osarch = FileUtils::GetOSArchitecture();
+
+		std::string qs;
+		qs += "?os=" + FileUtils::EncodeURIComponent(os);
+		qs += "&osver=" + FileUtils::EncodeURIComponent(osver);
+		qs += "&tiver=" + FileUtils::EncodeURIComponent("PRODUCT_VERSION");
+		qs += "&mid=" + FileUtils::EncodeURIComponent(mid);
+		qs += "&aid=" + FileUtils::EncodeURIComponent(this->app_id);
+		qs += "&guid=" + FileUtils::EncodeURIComponent(guid);
+		qs += "&ostype=" + FileUtils::EncodeURIComponent(OSTYPE);
+		qs += "&osarch=" + FileUtils::EncodeURIComponent(osarch);
 
 		// Install to default runtime directory. At some point
 		// net_installer will decide where to install (for Loonix)
