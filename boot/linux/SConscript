@@ -11,3 +11,4 @@ o = Env.Object(target = fo, source = path.join(build.kroll_source_dir,'api','fil
 
 sources = ['main.cpp', fo]
 p = Env.Program(build.dir + '/kboot', sources)
+build.require(p)

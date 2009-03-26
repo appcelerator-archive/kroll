@@ -14,3 +14,4 @@ Env.Append(LIBS=['dl'])
 
 o = Env.Object(target = fo, source = path.join(build.kroll_source_dir,'api','file_utils.cpp'))
 p = Env.Program(build.dir + '/kboot', sources)
+build.require(p)

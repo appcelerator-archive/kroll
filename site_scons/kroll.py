@@ -49,10 +49,10 @@ class BuildUtils(object):
 			multi=1)
 
 	def CopyTree(self, *args, **kwargs):
-		utils.SCopyTree(self.env, *args, **kwargs)
+		return utils.SCopyTree(self.env, *args, **kwargs)
 
 	def CopyToDir(self, *args, **kwargs):
-		utils.SCopyToDir(self.env, *args, **kwargs)
+		return utils.SCopyToDir(self.env, *args, **kwargs)
 
 	def Copy(self, src, dest): 
 		return self.env.Command(dest, src, Copy('$TARGET', '$SOURCE'))
@@ -127,7 +127,7 @@ class BuildConfig(object):
 
 		self.init_thirdparty_libs()
 		self.init_os_arch()
-
+		self.targets []  # targets needed before packaging & distribution can occur
 
 	def init_thirdparty_libs(self):
 		self.thirdparty_libs = {
