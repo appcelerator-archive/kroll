@@ -29,6 +29,11 @@ class Module(object):
 		for r in resources:
 			r = path.abspath(r)
 			futils.CopyToDir(r, self.build_dir)
+
+		manifest = path.join(d, 'manifest')
+		if path.exists(manifest):
+			futils.CopyToDir(manifest, self.build_dir)
+
 		print "done"
 
 class BuildUtils(object):
