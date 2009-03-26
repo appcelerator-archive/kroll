@@ -130,6 +130,26 @@ namespace kroll
 		static std::string GetMachineId();
 
 		/**
+		 * This function returns the Operating system version
+		 */
+		static std::string GetOSVersion();
+
+		/**
+		 * This function returns the Operating system architecture
+		 */
+		static std::string GetOSArchitecture();
+
+		/**
+		 * Encodes a URI value
+		 */
+		static std::string EncodeURIComponent(std::string value);
+
+		/**
+		 * Encodes a URI value
+		 */
+		static std::string DecodeURIComponent(std::string value);
+
+		/**
 		 * This function returns temporary directory for application
 		 */
 		static std::string GetTempDirectory();

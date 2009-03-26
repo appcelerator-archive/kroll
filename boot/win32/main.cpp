@@ -37,10 +37,6 @@ using namespace kroll;
   #define _BOOT_UPDATESITE_ENVNAME UPDATESITE
 #endif
 
-#ifndef _BOOT_UPDATESITE_URL
-  #error "Define _BOOT_UPDATESITE_URL"
-#endif
-
 #ifndef BOOT_RUNTIME_FLAG
   #define BOOT_RUNTIME_FLAG STRING(_BOOT_RUNTIME_FLAG)
 #endif
@@ -53,16 +49,21 @@ using namespace kroll;
   #define BOOT_UPDATESITE_ENVNAME STRING(_BOOT_UPDATESITE_ENVNAME)
 #endif
 
-#ifndef BOOT_UPDATESITE_URL
-  #define BOOT_UPDATESITE_URL STRING(_BOOT_UPDATESITE_URL)
-#endif
+
+//
+// these UUIDs should never change and uniquely identify a package type
+// these UUIDs are also used in installation/net_installer/win32/Form.cs - update as needed
+//
+#define DISTRIBUTION_URL "http://download.titaniumapp.com"
+#define DISTRIBUTION_UUID "7F7FA377-E695-4280-9F1F-96126F3D2C2A"
+#define RUNTIME_UUID "A2AC5CB5-8C52-456C-9525-601A5B0725DA"
+#define MODULE_UUID "1ACE5D3A-2B52-43FB-A136-007BD166CFD0"
 
 #define OS_NAME "win32"
 
 #ifndef MAX_PATH
 #define MAX_PATH 512
 #endif
-
 
 #define KR_FATAL_ERROR(msg) \
 { \
@@ -187,7 +188,7 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 		std::string url;
 		if (size == 0)
 		{
-			const char *us = BOOT_UPDATESITE_URL;
+			const char *us = DISTRIBUTION_URL;
 			if (strlen(us)>0)
 			{
 				url = std::string(us);
@@ -197,23 +198,36 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 		{
 			url = std::string(updatesite);
 		}
-		
+
 		if (!url.empty())
 		{
-			std::string sid = kroll::FileUtils::GetMachineId();
-			std::string os = OS_NAME;
-			std::string qs("?os="+os+"&sid="+sid+"&aid="+appid+"&guid="+guid);
+			std::string mid = kroll::FileUtils::EncodeURIComponent(kroll::FileUtils::GetMachineId());
+			std::string osarch = kroll::FileUtils::EncodeURIComponent(kroll::FileUtils::GetOSArchitecture());
+			std::string os = kroll::FileUtils::EncodeURIComponent(OS_NAME);
+			std::string osver = kroll::FileUtils::EncodeURIComponent(kroll::FileUtils::GetOSVersion());
+			guid = kroll::FileUtils::EncodeURIComponent(guid);
+			char tiver[10];
+			sprintf(tiver, "%.1f", PRODUCT_VERSION);
+#ifdef OS_32
+			std::string ostype = "32bit";
+#else
+			std::string ostype = "64bit";
+#endif
+			std::string ti_ver = kroll::FileUtils::EncodeURIComponent(tiver);
+			std::string aid = kroll::FileUtils::EncodeURIComponent(appid);
+			std::string qs("?os="+os+"&osver="+osver+"&tiver="+ti_ver+"&mid="+mid+"&aid="+aid+"&guid="+guid+"&ostype="+ostype+"&osarch="+osarch);
 			std::vector< std::pair<std::string,std::string> >::iterator iter = missing.begin();
 			int missingCount = 0;
 			while (iter!=missing.end())
 			{
 				std::pair<std::string,std::string> p = (*iter++);
-				std::string name;
+				std::string uuid;
+				std::string name = p.first;
+				std::string version = p.second;
 				std::string path;
 				bool found = false;
 				if (p.first == "runtime")
 				{
-					name = "runtime-" + os + "-" + p.second;
 					// see if we have a private runtime installed and we can link to that
 					path = kroll::FileUtils::Join(installerDir.c_str(),"runtime",NULL);
 					if (kroll::FileUtils::IsDirectory(path))
@@ -221,15 +235,22 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 							found = true;
 							runtimePath = path;
 					}
+					else
+					{
+						uuid = RUNTIME_UUID;
+					}
 				}
 				else
 				{
-					name = "module-" + p.first + "-" + p.second;
 					// see if we have a private module installed and we can link to that
 					path = kroll::FileUtils::Join(installerDir.c_str(),"modules",p.first.c_str(),NULL);
 					if (kroll::FileUtils::IsDirectory(path))
 					{
 						found = true;
+					}
+					else
+					{
+						uuid = MODULE_UUID;
 					}
 				}
 				if (found)
@@ -239,10 +260,16 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 				else
 				{
 					std::string u(url);
-					u+="/";
-					u+=name;
-					u+=".zip";
 					u+=qs;
+					u+="&name=";
+					u+=kroll::FileUtils::EncodeURIComponent(name);
+					u+="&version=";
+					u+=kroll::FileUtils::EncodeURIComponent(version);
+					u+="&uuid=";
+					u+=kroll::FileUtils::EncodeURIComponent(uuid);
+#ifdef DEBUG
+					std::cout << "Adding URL: " << u << std::endl;
+#endif
 					args.push_back(u);
 					missingCount++;
 				}
@@ -258,6 +285,9 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 				// paranoia check
 				if (kroll::FileUtils::IsFile(exec))
 				{
+					// ensure temp directory exists
+					kroll::FileUtils::CreateDirectory(sourceTemp);
+
 					// run and wait for it to exit..
 					kroll::FileUtils::RunAndWait(exec,args);
 
@@ -284,7 +314,7 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 			result = false;
 			KR_FATAL_ERROR("Missing installer and application has additional modules that are needed. Not updatesite has been configured.");
 		}
-		
+
 		// unlink the temporary directory
 		kroll::FileUtils::DeleteDirectory(sourceTemp);
 	}
@@ -305,11 +335,22 @@ int getEnv(std::string key, std::string &result)
 	return size;
 }
 
+int PerformUnzip(char *from, char *to)
+{
+	std::string source(from);
+	std::string destination(to);
+
+	std::cout << "Performing Unzip " << source << " >>> " << destination << std::endl;
+	kroll::FileUtils::Unzip(source, destination);
+
+	return 0;
+}
+
 #if defined(OS_WIN32) && !defined(WIN32_CONSOLE)
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR command_line, int)
 #else
 int main(int _argc, const char* _argv[])
-#endif 
+#endif
 {
 #if !defined(WIN32_CONSOLE)
 	int argc = __argc;
@@ -318,6 +359,18 @@ int main(int _argc, const char* _argv[])
 	int argc = _argc;
 	char **argv = (char **)_argv;
 #endif
+
+	if (argc > 1 && strcmp(argv[1],"--tiunzip")==0)
+	{
+		if(argc != 4)
+		{
+			KR_FATAL_ERROR("Unable to perform unzip request.  3 arguments are expected --tiunzip <from> <to>");
+			return __LINE__;
+		}
+
+		return PerformUnzip(argv[2], argv[3]);
+	}
+
 	std::string buf;
 	int fork_flag = getEnv("KR_FORK",buf);
 	int rc = 0;
@@ -353,6 +406,16 @@ int main(int _argc, const char* _argv[])
 		{
 			return __LINE__;
 		}
+		
+		// hack copy the WebKit.dll into the app installer's dir
+		std::string webkit_dll = kroll::FileUtils::Join(runtimePath.c_str(), "WebKit.dll", NULL);
+		std::string local_webkit_dll = kroll::FileUtils::Join(GetExecutableDir().c_str(), "runtime", "WebKit.dll", NULL);
+		std::string runtime_dir = kroll::FileUtils::Join(GetExecutableDir().c_str(), "runtime", NULL);
+
+		if (!kroll::FileUtils::IsFile(local_webkit_dll)) {
+			kroll::FileUtils::CreateDirectory(runtime_dir);
+			CopyFileA(webkit_dll.c_str(), local_webkit_dll.c_str(), FALSE);
+		}
 
 		std::string localRuntime = FileUtils::Join(homedir.c_str(),"runtime",NULL);
 		std::string runtimeBasedir = FileUtils::GetRuntimeBaseDirectory();
@@ -373,17 +436,19 @@ int main(int _argc, const char* _argv[])
 		std::string dypath = localRuntime;
 		dypath+=";";
 		dypath+=runtimePath;
+		dypath+=";";
 		std::string path;
 		path+=dypath;
+		path+=";";
 		path += moduleList.str();
 		if (getEnv("PATH",buf) > 0)
 		{
 			path+=";";
 			path+=buf;
 		}
-		
+
 		std::cout << "\n\n\n**** SETTING PATH = " << path << "\n\n\n";
-		
+
 		SetEnvironmentVariable("KR_FORK","YES");
 		SetEnvironmentVariable("KR_HOME",homedir.c_str());
 		SetEnvironmentVariable("KR_RUNTIME",runtimePath.c_str());
@@ -391,7 +456,7 @@ int main(int _argc, const char* _argv[])
 		SetEnvironmentVariable("KR_RUNTIME_HOME",runtimeBasedir.c_str());
 		SetEnvironmentVariable("PATH",path.c_str());
 		SetEnvironmentVariable("KR_APP_GUID",guid.c_str());
-		
+
 		_execvp(argv[0],argv);
 	}
 	else
@@ -399,7 +464,7 @@ int main(int _argc, const char* _argv[])
 		SetEnvironmentVariable("KR_FORK",NULL);
 		getEnv("KR_RUNTIME",buf);
 		std::string runtimePath = buf;
-		
+
 		// now we need to load the host and get 'er booted
 		std::string khost = FileUtils::Join(runtimePath.c_str(),"khost.dll",NULL);
 

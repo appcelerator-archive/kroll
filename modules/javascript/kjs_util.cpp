@@ -1,9 +1,9 @@
-
 /**
  * Appcelerator Kroll - licensed under the Apache Public License 2
  * see LICENSE in the root folder for details on the license.
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
+
 #include "javascript_module.h"
 #include <Poco/FileStream.h>
 
@@ -214,7 +214,7 @@ namespace kroll
 		if (tibm_class == NULL)
 		{
 			JSClassDefinition js_class_def = empty_class;
-			js_class_def.className = "KMethod";
+			js_class_def.className = "Function";
 			js_class_def.getPropertyNames = get_property_names_cb;
 			js_class_def.finalize = finalize_cb;
 			js_class_def.hasProperty = has_property_cb;
@@ -223,7 +223,10 @@ namespace kroll
 			js_class_def.callAsFunction = call_as_function_cb;
 			tibm_class = JSClassCreate(&js_class_def);
 		}
-		return JSObjectMake(c, tibm_class, new SharedValue(meth_val));
+		JSObjectRef ref = JSObjectMake(c, tibm_class, new SharedValue(meth_val));
+		JSValueRef fnProtoValue = GetFunctionPrototype(c, NULL);
+		JSObjectSetPrototype(c, ref, fnProtoValue);
+		return ref;
 	}
 
 	void inline CopyJSProperty(
@@ -247,7 +250,7 @@ namespace kroll
 		if (tibl_class == NULL)
 		{
 			JSClassDefinition js_class_def = empty_class;
-			js_class_def.className = "KList";
+			js_class_def.className = "Array";
 			js_class_def.getPropertyNames = get_property_names_cb;
 			js_class_def.finalize = finalize_cb;
 			js_class_def.hasProperty = has_property_cb;
@@ -256,27 +259,10 @@ namespace kroll
 			tibl_class = JSClassCreate(&js_class_def);
 		}
 
-		JSObjectRef object = JSObjectMake(c, tibl_class, new SharedValue(list_val));
-
-		JSValueRef args[1] = { JSValueMakeNumber(c, 3) };
-		JSObjectRef array = JSObjectMakeArray(c, 1, args, NULL);
-
-		/* we are doing this manually because there have been
-		   propblems trying to set an object's prototype to array */
-
-		// move some array methods
-		SharedKList list = list_val->ToList();
-		CopyJSProperty(c, array, list, object, "push");
-		CopyJSProperty(c, array, list, object, "pop");
-		CopyJSProperty(c, array, list, object, "shift");
-		CopyJSProperty(c, array, list, object, "unshift");
-		CopyJSProperty(c, array, list, object, "reverse");
-		CopyJSProperty(c, array, list, object, "splice");
-		CopyJSProperty(c, array, list, object, "join");
-		CopyJSProperty(c, array, list, object, "slice");
-		CopyJSProperty(c, array, list, object, "concat");
-
-		return object;
+		JSObjectRef ref = JSObjectMake(c, tibl_class, new SharedValue(list_val));
+		JSValueRef aProtoValue = GetArrayPrototype(c, NULL);
+		JSObjectSetPrototype(c, ref, aProtoValue);
+		return ref;
 	}
 
 	char* KJSUtil::ToChars(JSStringRef js_string)
@@ -609,4 +595,91 @@ namespace kroll
 
 		return KJSUtil::ToKrollValue(return_value, context, global_object);
 	}
+
+	//===========================================================================//
+	// METHODS BORROWED ARE TAKEN FROM GWT - modifications under same license
+	//===========================================================================//
+	/*
+	 * Copyright 2008 Google Inc.
+	 * 
+	 * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+	 * use this file except in compliance with the License. You may obtain a copy of
+	 * the License at
+	 * 
+	 * http://www.apache.org/licenses/LICENSE-2.0
+	 * 
+	 * Unless required by applicable law or agreed to in writing, software
+	 * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+	 * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+	 * License for the specific language governing permissions and limitations under
+	 * the License.
+	 */
+	
+	/*
+	 * The following takes the prototype from the Function constructor, this allows
+	 * us to easily support call and apply on our objects that support CallAsFunction.
+	 *
+	 * NOTE: The return value is not protected.
+	 */
+	JSValueRef KJSUtil::GetFunctionPrototype(JSContextRef jsContext, JSValueRef* exception) 
+	{
+	  JSObjectRef globalObject = JSContextGetGlobalObject(jsContext);
+	  JSStringRef fnPropName= JSStringCreateWithUTF8CString("Function");
+	  JSValueRef fnCtorValue = JSObjectGetProperty(jsContext, globalObject,
+	      fnPropName, exception);
+	  JSStringRelease(fnPropName);
+	  if (!fnCtorValue) {
+	    return JSValueMakeUndefined(jsContext);
+	  }
+
+	  JSObjectRef fnCtorObject = JSValueToObject(jsContext, fnCtorValue, exception);
+	  if (!fnCtorObject) {
+	    return JSValueMakeUndefined(jsContext);
+	  }
+
+	  JSStringRef protoPropName = JSStringCreateWithUTF8CString("prototype");
+	  JSValueRef fnPrototype = JSObjectGetProperty(jsContext, fnCtorObject,
+	      protoPropName, exception);
+	  JSStringRelease(protoPropName);
+	  if (!fnPrototype) {
+	    return JSValueMakeUndefined(jsContext);
+	  }
+
+	  return fnPrototype;
+	}	
+	/*
+	 * The following takes the prototype from the Array constructor, this allows
+	 * us to easily support array like functions
+	 *
+	 * NOTE: The return value is not protected.
+	 */
+	JSValueRef KJSUtil::GetArrayPrototype(JSContextRef jsContext, JSValueRef* exception) 
+	{
+	  JSObjectRef globalObject = JSContextGetGlobalObject(jsContext);
+	  JSStringRef fnPropName= JSStringCreateWithUTF8CString("Array");
+	  JSValueRef fnCtorValue = JSObjectGetProperty(jsContext, globalObject,
+	      fnPropName, exception);
+	  JSStringRelease(fnPropName);
+	  if (!fnCtorValue) 
+	  {
+	    return JSValueMakeUndefined(jsContext);
+	  }
+
+	  JSObjectRef fnCtorObject = JSValueToObject(jsContext, fnCtorValue, exception);
+	  if (!fnCtorObject) 
+	  {
+	    return JSValueMakeUndefined(jsContext);
+	  }
+
+	  JSStringRef protoPropName = JSStringCreateWithUTF8CString("prototype");
+	  JSValueRef fnPrototype = JSObjectGetProperty(jsContext, fnCtorObject,
+	      protoPropName, exception);
+	  JSStringRelease(protoPropName);
+	  if (!fnPrototype) 
+	  {
+	    return JSValueMakeUndefined(jsContext);
+	  }
+
+	  return fnPrototype;
+	}	
 }

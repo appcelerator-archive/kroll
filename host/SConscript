@@ -2,4 +2,3 @@
 Import('build')
 
 SConscript(build.os + '/SConscript', build_dir=build.dir + '/host', duplicate=0)
-built.targets.append(t)

@@ -1,7 +1,7 @@
 import SCons.Variables
 import SCons.Environment
 from SCons.Script import *
-import os, re, utils, types, os.path as path
+import os, glob, re, utils, futils, types, os.path as path
 
 class Module(object):
 	def __init__(self, name, version, build_dir, build):
@@ -17,16 +17,19 @@ class Module(object):
 		if not d:
 			d = self.build.cwd(2)
 
-		resources = Glob(d + '/AppResources/all') \
-		           + Glob(d + '/AppResources/%s' % self.build.os) 
+		print "Copying %s resources..." % self.name,
+		resources = glob.glob(path.join(d, 'AppResources', 'all', '*')) \
+		           + glob.glob(path.join(d, 'AppResources', self.build.os, '*'))
 		for r in resources:
-			r = path.abspath(str(r))
-			self.build.utils.CopyToDir(r, path.join(self.build_dir, 'AppResources'))
+			r = path.abspath(r)
+			futils.CopyToDir(r, path.join(self.build_dir, 'AppResources'))
 
-		resources = Glob(d + '/Resources/all/*') \
-		           + Glob(d + '/Resources/%s/*' % self.build.os)
+		resources = glob.glob(path.join(d, 'Resources', 'all', '*')) \
+		           + glob.glob(path.join(d, 'Resources', self.build.os, '*'))
 		for r in resources:
-			self.build.utils.CopyToDir(path.abspath(str(r)), self.build_dir)
+			r = path.abspath(r)
+			futils.CopyToDir(r, self.build_dir)
+		print "done"
 
 class BuildUtils(object):
 	def __init__(self, env):
@@ -41,7 +44,14 @@ class BuildUtils(object):
 			action=utils.KTarGzDir,
 			source_factory=SCons.Node.FS.default_fs.Entry,
 			target_factory=SCons.Node.FS.default_fs.Entry,
-			multi=0)
+			multi=1)
+		env.SetDefault(TARGZOPTS={})
+		env['BUILDERS']['KZipDir'] = env.Builder(
+			action=utils.KZipDir,
+			source_factory=SCons.Node.FS.default_fs.Entry,
+			target_factory=SCons.Node.FS.default_fs.Entry,
+			multi=1)
+		env.SetDefault(ZIPOPTS={})
 		env['BUILDERS']['KConcat'] = env.Builder(
 			action=utils.KConcat,
 			source_factory=SCons.Node.FS.default_fs.Entry,
@@ -75,6 +85,12 @@ class BuildUtils(object):
 		t = self.Touch(target)
 		self.env.AddPostAction(t, utils.WriteStringsAction(target, strings))
 
+	def Zip(self, source, target, **kwargs):
+		self.env.KZipDir(target, source, ZIPOPTS=kwargs)
+
+	def TarGz(self, source, target, **kwargs):
+		self.env.KTarGzDir(target, source, TARGZOPTS=kwargs)
+
 class BuildConfig(object): 
 	def __init__(self, **kwargs):
 		self.debug = False
@@ -101,7 +117,6 @@ class BuildConfig(object):
 		vars.Add('BOOT_RUNTIME_FLAG','The name of the Kroll runtime command line flag', kwargs['BOOT_RUNTIME_FLAG'])
 		vars.Add('BOOT_HOME_FLAG','The name of the Kroll home command line file', kwargs['BOOT_HOME_FLAG'])
 		vars.Add('BOOT_UPDATESITE_ENVNAME','The name of the Kroll update site environment variable', kwargs['BOOT_UPDATESITE_ENVNAME'])
-		vars.Add('BOOT_UPDATESITE_URL','The URL of the Kroll update site', kwargs['BOOT_UPDATESITE_URL'])
 
 		self.env = SCons.Environment.Environment(variables = vars)
 		self.utils = BuildUtils(self.env)
@@ -115,19 +130,21 @@ class BuildConfig(object):
 			['_CONFIG_FILENAME' , '${CONFIG_FILENAME}'],
 			['_BOOT_RUNTIME_FLAG', '${BOOT_RUNTIME_FLAG}'],
 			['_BOOT_HOME_FLAG', '${BOOT_HOME_FLAG}'],
-			['_BOOT_UPDATESITE_ENVNAME', '${BOOT_UPDATESITE_ENVNAME}'],
-			['_BOOT_UPDATESITE_URL', '${BOOT_UPDATESITE_URL}']
+			['_BOOT_UPDATESITE_ENVNAME', '${BOOT_UPDATESITE_ENVNAME}']
 		])
 		self.version = kwargs['PRODUCT_VERSION']
 
 		self.dir = path.abspath(path.join(kwargs['BUILD_DIR'], self.os))
 		self.third_party = path.abspath(path.join(kwargs['THIRD_PARTY_DIR'],self.os))
+		self.dist_dir = path.join(self.dir, 'dist')
+		self.runtime_build_dir = path.join(self.dir, 'runtime')
+
 		if (self.arch):
 			self.third_party += self.arch
 
 		self.init_thirdparty_libs()
 		self.init_os_arch()
-		self.targets []  # targets needed before packaging & distribution can occur
+		self.targets = []  # targets needed before packaging & distribution can occur
 
 	def init_thirdparty_libs(self):
 		self.thirdparty_libs = {
@@ -212,14 +229,47 @@ class BuildConfig(object):
 
 		return m
 
-	def generate_manifest(self, name, id, guid, excludes=None, includes=None):
+	def build_dist_files(self):
+		excludes = ['.dll.manifest', '.dll.pdb', '.exp', '.ilk']
+
+		f = path.join(self.dist_dir, 'runtime-%s.zip' % self.version)
+		if os.path.exists(f): os.remove(f)
+
+		# Copy appinstaller tool to runtime dir
+		if hasattr(self, 'titanium_source_dir'):
+			appinstaller = path.join(self.titanium_source_dir, "installation", "app_installer")
+			appinstaller_target = path.join(self.runtime_build_dir, 'appinstaller')
+			self.utils.CopyTree(appinstaller, appinstaller_target)
+			jsfiles = path.join(self.titanium_source_dir, 'installation', 'common', 'js')
+			jstarget = path.join(appinstaller_target, 'Resources', 'js')
+			self.utils.CopyTree(jsfiles, jstarget)
+
+
+		if self.is_osx() and hasattr(self, 'titanium_source_dir'):
+			menu_nib = path.join(self.dir, 'modules', 'tiui', 'MainMenu.nib')
+			icns = path.join(self.titanium_support_dir, 'titanium.icns')
+			self.utils.CopyToDir(menu_nib, path.join(self.runtime_build_dir, 'template'))
+			self.utils.CopyToDir(icns, path.join(self.runtime_build_dir, 'template'))
+
+		kboot = path.join(self.dir, 'kboot')
+		if self.is_win32(): kboot += ".exe"
+		self.utils.CopyToDir(kboot, path.join(self.runtime_build_dir, 'template'))
+
+		self.utils.Zip(self.runtime_build_dir, f, exclude=excludes)
+
+		for m in self.modules:
+			f = path.join(self.dist_dir, 'module-%s-%s.zip' % (m.name, m.version))
+			if os.path.exists(f): os.remove(f)
+			self.utils.Zip(m.build_dir, f, exclude=excludes)
+
+	def generate_manifest(self, name, id, guid, exclude=None, include=None):
 		manifest = "#appname: %s\n" % name
 		manifest += "#appid: %s\n" % id
 		manifest += "#guid: %s\n" % guid
 		manifest += "runtime: %s\n" % self.version
 		for m in self.modules:
-			if (includes and not(m.name in includes)) or \
-				(excludes and m.name in excludes):
+			if (include and not(m.name in include)) or \
+				(exclude and m.name in exclude):
 				continue
 			manifest += "%s:%s\n" % (m.name, m.version)
 		return manifest
@@ -231,3 +281,12 @@ class BuildConfig(object):
 
 	def cwd(self, depth=1):
 		return path.dirname(sys._getframe(depth).f_code.co_filename)
+
+	def require(self, t):
+		if not t:
+			return
+		if type(t) == types.ListType:
+			for x in t: self.require(t)
+		else:
+			self.targets.append(t)
+			

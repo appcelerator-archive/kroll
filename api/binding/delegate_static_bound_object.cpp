@@ -10,17 +10,18 @@
 namespace kroll
 {
 
-	DelegateStaticBoundObject::DelegateStaticBoundObject(SharedKObject delegate)
-		: base(new StaticBoundObject()),
-		  delegate(delegate)
+	DelegateStaticBoundObject::DelegateStaticBoundObject(SharedKObject base) :
+		base(base),
+		delegate(new StaticBoundObject())
 	{
 	}
 
-	DelegateStaticBoundObject::DelegateStaticBoundObject(SharedKObject base, SharedKObject delegate)
-		: base(base),
-		  delegate(delegate)
+	DelegateStaticBoundObject::DelegateStaticBoundObject(SharedKObject base, SharedKObject delegate) :
+		base(base),
+		delegate(delegate)
 	{
 	}
+
 	DelegateStaticBoundObject::~DelegateStaticBoundObject()
 	{
 	}
@@ -29,13 +30,13 @@ namespace kroll
 	{
 		ScopedLock lock(&mutex);
 
-		SharedValue val = base->Get(name);
+		SharedValue val = delegate->Get(name);
 		if (!val->IsUndefined())
 		{
 			return val;
 		}
 
-		return this->delegate->Get(name);
+		return this->base->Get(name);
 	}
 
 	void DelegateStaticBoundObject::Set(const char *name, SharedValue value)

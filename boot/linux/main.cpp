@@ -22,6 +22,7 @@
 #endif
 
 using namespace kroll;
+using kroll::FileUtils;
 
 //
 // these flags are compiled in to allow them
@@ -31,17 +32,17 @@ using namespace kroll;
   #define _BOOT_UPDATESITE_ENVNAME UPDATESITE
 #endif
 
-#ifndef _BOOT_UPDATESITE_URL
-  #error "Define _BOOT_UPDATESITE_URL"
-#endif
-
 #ifndef BOOT_UPDATESITE_ENVNAME
   #define BOOT_UPDATESITE_ENVNAME STRING(_BOOT_UPDATESITE_ENVNAME)
 #endif
 
-#ifndef BOOT_UPDATESITE_URL
-  #define BOOT_UPDATESITE_URL STRING(_BOOT_UPDATESITE_URL)
-#endif
+//
+// these UUIDs should never change and uniquely identify a package type
+//
+#define DISTRIBUTION_URL "http://download.titaniumapp.com"
+#define DISTRIBUTION_UUID "7F7FA377-E695-4280-9F1F-96126F3D2C2A"
+#define RUNTIME_UUID "A2AC5CB5-8C52-456C-9525-601A5B0725DA"
+#define MODULE_UUID "1ACE5D3A-2B52-43FB-A136-007BD166CFD0"
 
 #define OS_NAME "linux"
 
@@ -49,12 +50,19 @@ using namespace kroll;
 #define MODULE_DIR "modules"
 #define RUNTIME_DIR "runtime"
 
+#ifdef OS_32
+  #define OSTYPE "32bit"
+#else
+  #define OSTYPE "64bit"
+#endif
+
 typedef int Executor(int argc, const char **argv);
 struct Module
 {
 	std::string name;
 	std::string version;
 	std::string path;
+	std::string uuid;
 	int op;
 	std::vector<std::string> libs;
 
@@ -63,9 +71,18 @@ struct Module
 	{
 		FileUtils::ExtractVersion(value, &this->op, this->version);
 #ifdef DEBUG
-		std::cout << "Component: " << this->name << ":" << this->version
+		std::cout << "Component: " << this->name << " : " << this->version
 		          << ", operation: " << this->op << std::endl;
 #endif
+
+		if (name == "runtime")
+		{
+			this->uuid = RUNTIME_UUID;
+		}
+		else
+		{
+			this->uuid = MODULE_UUID;
+		}
 	}
 
 	void Prep()
@@ -196,21 +213,18 @@ class Boot
 			          << rt_path << "), but charging ahead anyhow."
 			          << std::endl;
 		}
-		else
-		{
-			// Later this will be a list of usual locations that
-			// modules might be installed. For now it is the default
-			// runtime location.
-			const char* crt_path = this->rt_path.c_str();
-			std::string rt_module_path =
-				 FileUtils::Join(crt_path, MODULE_DIR, "linux", NULL);
-			this->module_paths.push_back(rt_module_path);
 
-			std::string rt_rt_path =
-				 FileUtils::Join(crt_path, RUNTIME_DIR, "linux", NULL);
-			this->rt_paths.push_back(rt_rt_path);
+		// Later this will be a list of usual locations that
+		// modules might be installed. For now it is the default
+		// runtime location.
+		const char* crt_path = this->rt_path.c_str();
+		std::string rt_module_path =
+			 FileUtils::Join(crt_path, MODULE_DIR, "linux", NULL);
+		this->module_paths.push_back(rt_module_path);
 
-		}
+		std::string rt_rt_path =
+			 FileUtils::Join(crt_path, RUNTIME_DIR, "linux", NULL);
+		this->rt_paths.push_back(rt_rt_path);
 
 		this->bundled_module_path = FileUtils::Join(capp_path, MODULE_DIR, NULL);
 		this->bundled_rt_path = FileUtils::Join(capp_path, RUNTIME_DIR, NULL);
@@ -218,7 +232,7 @@ class Boot
 		// The installer directory contains the package installer and bundled
 		// runtime / modules may also reside there. These locations have a lower
 		// priority than all other locations.
-		this->installer_path = kroll::FileUtils::Join(capp_path, "installer", NULL);
+		this->installer_path = FileUtils::Join(capp_path, "installer", NULL);
 		this->bundled_installer_module_path = FileUtils::Join(installer_path.c_str(), MODULE_DIR, NULL);
 		this->bundled_installer_rt_path = FileUtils::Join(installer_path.c_str(), RUNTIME_DIR, NULL);
 	}
@@ -386,16 +400,27 @@ class Boot
 
 		// If we don't have an installer directory, just bail...
 		const char* ci_path = this->installer_path.c_str();
-		std::string installer = kroll::FileUtils::Join(ci_path, "installer", NULL);
+		std::string installer = FileUtils::Join(ci_path, "installer", NULL);
 		if (!FileUtils::IsDirectory(this->installer_path) || !FileUtils::IsFile(installer))
 		{
 			throw std::string("Missing installer and application has additional modules that are needed.");
 		}
 
-		std::string temp_dir = kroll::FileUtils::GetTempDirectory();
-		std::string sid = kroll::FileUtils::GetMachineId();
+		std::string temp_dir = FileUtils::GetTempDirectory();
+		std::string mid = FileUtils::GetMachineId();
 		std::string os = OS_NAME;
-		std::string qs("?os="+os+"&sid="+sid+"&aid="+this->app_id+"&guid="+this->guid);
+		std::string osver = FileUtils::GetOSVersion();
+		std::string osarch = FileUtils::GetOSArchitecture();
+
+		std::string qs;
+		qs += "?os=" + FileUtils::EncodeURIComponent(os);
+		qs += "&osver=" + FileUtils::EncodeURIComponent(osver);
+		qs += "&tiver=" + FileUtils::EncodeURIComponent("PRODUCT_VERSION");
+		qs += "&mid=" + FileUtils::EncodeURIComponent(mid);
+		qs += "&aid=" + FileUtils::EncodeURIComponent(this->app_id);
+		qs += "&guid=" + FileUtils::EncodeURIComponent(guid);
+		qs += "&ostype=" + FileUtils::EncodeURIComponent(OSTYPE);
+		qs += "&osarch=" + FileUtils::EncodeURIComponent(osarch);
 
 		// Install to default runtime directory. At some point
 		// net_installer will decide where to install (for Loonix)
@@ -404,11 +429,11 @@ class Boot
 
 		// Figure out the update site URL
 		std::string url;
-		if (strlen(BOOT_UPDATESITE_URL))
-			url = std::string(BOOT_UPDATESITE_URL);
 		char* env_site = getenv(BOOT_UPDATESITE_ENVNAME);
 		if (env_site != NULL)
 			url = std::string(env_site);
+		else
+			url = std::string(DISTRIBUTION_URL);
 
 		if (url.empty())
 		{
@@ -429,11 +454,15 @@ class Boot
 		while (mi != missing.end())
 		{
 			Module* mod = *mi++;
-#ifdef DEBUG
-			std::cout << "Trying to install: " << mod->name << "/" << mod->version <<std::endl;
-#endif
-			std::string mod_url = url + "/" + mod->name + ".zip" + qs;
-			args.push_back(mod_url);
+			std::string u(url);
+			u.append(qs);
+			u.append("&name=");
+			u.append(mod->name);
+			u.append("&version=");
+			u.append(mod->version);
+			u.append("&uuid=");
+			u.append(mod->uuid);
+			args.push_back(u);
 		}
 
 		kroll::FileUtils::RunAndWait(installer, args);
@@ -459,6 +488,14 @@ int prepare_environment(int argc, const char* argv[])
 
 		if (missing.size() > 0)
 		{
+#ifdef DEBUG
+		std::vector<Module*>::iterator dmi = missing.begin();
+		while (dmi != missing.end())
+		{
+			Module* m = *dmi++;
+			std::cout << "StillMissing!: " << m->name << std::endl;
+		}
+#endif
 			// Don't throw an error here, because the module installer
 			// would have thrown an exception on an error, so the user
 			// must have cancelled.

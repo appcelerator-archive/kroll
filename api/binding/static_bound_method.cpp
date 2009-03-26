@@ -13,6 +13,7 @@ namespace kroll
 	{
 		this->object = new StaticBoundObject();
 	}
+
 	StaticBoundMethod::~StaticBoundMethod()
 	{
 	}

@@ -1,5 +1,18 @@
-import os.path, shutil, types, tarfile
+import os.path, shutil, types, tarfile, zipfile
 from SCons.Script import *
+
+def filter_file(file, include=[], exclude=[], filter=None):
+	for suffix in include:
+		if file.endswith(suffix):
+			return True
+	if len(include) > 0:
+		return False
+	for suffix in exclude:
+		if file.endswith(suffix):
+			return False
+	if filter:
+		return filter(file)
+	return True
 
 # Adapted from: http://www.scons.org/wiki/AccumulateBuilder
 def SCopyTree(*args, **kwargs):
@@ -23,11 +36,14 @@ def SCopyTreeImpl(e, src, dest, **kwargs):
 	dest = os.path.abspath(str(dest))
 	src = os.path.abspath(str(src))
 
+	targets = []
 	if os.path.isdir(src):
 		for item in os.listdir(src):
 			src_item = os.path.abspath(os.path.join(src, item))
-			#print "copy tree u %s %s" % (src_item, dest)
-			return SCopyToDir(e, src_item, dest, **kwargs)
+			print "copy tree u %s %s" % (src_item, dest)
+			t = SCopyToDir(e, src_item, dest, **kwargs)
+			targets.append(t)
+		return targets
 	else:
 		return SCopyToDir(e, src, dest, **kwargs)
 
@@ -47,27 +63,19 @@ def SCopyToDirImpl(e, src, dest, include=[], exclude=[], filter=None, recurse=Tr
 	to exclude. Filter is a function which given the full path to a file,
 	will exclude is returns False or include if returns True.
 	"""
-	def filter_file(file):
-		for suffix in include:
-			if file.endswith(suffix):
-				return True
-		if len(include) > 0:
-			return False
-		for suffix in exclude:
-			if file.endswith(suffix):
-				return False
-		if filter:
-			return filter(file)
-
-		return True
 
 	def copy_item(src, dest):
-		#print "copy item %s %s" % (src, dest)
-		if os.path.islink(src) and filter_file(src):
-			return e.KCopySymlink(dest, src)
-		elif os.path.isdir(src):
+		# Test for a symlink first, because a symlink can
+		# also return turn for isdir
+		if os.path.islink(src) and filter_file(src, include, exclude, filter):
+			return e.KCopySymlink(dest, src) 
+
+		# It doesn't really make sense for includes to
+		# apply to folders, so we don't use them here
+		elif os.path.isdir(src) and filter_file(src, [], exclude, filter):
 			return copy_items(src, dest)
-		elif filter_file(src):
+
+		elif filter_file(src, [], exclude, filter):
 			return e.Command(dest, src, Copy('$TARGET', '$SOURCE'))
 
 	def copy_items(src, dest):
@@ -100,18 +108,54 @@ def KCopySymlink(target, source, env):
 		pass
 	os.symlink(linkto, dest_file)
 
-def KTarGzDir(target, source, env):
-	tar_dir = str(source[0])
-	dest_file = str(target[0])
-
-	tar = tarfile.open(dest_file, 'w:gz')
-	files = os.walk(tar_dir)
+def walk_dir(dir, callback, include=[], exclude=[]):
+	files = os.walk(dir)
 	for walk in files:
 		for file in walk[2]:
 			file = os.path.join(walk[0], file)
-			arcname = file.replace(tar_dir + os.sep, "")
-			tar.add(file, arcname)
+			if filter_file(file, include, exclude):
+				callback(file)
+
+def KTarGzDir(target, source, env):
+	exclude = include = []
+	opts = env['TARGZOPTS']
+	if 'exclude' in opts.keys(): exclude = opts['exclude']
+	if 'include' in opts.keys(): include = opts['include']
+
+	dest_file = str(target[0])
+	tar = tarfile.open(dest_file, 'w:gz')
+	for s in source:
+		dir = str(s)
+		def tarcb(f):
+			arcname = f.replace(dir + os.sep, "")
+			tar.add(f, arcname)
+		walk_dir(dir, tarcb, include, exclude)
 	tar.close()
+
+def KZipDir(target, source, env):
+	exclude = include = []
+	opts = env['ZIPOPTS']
+	if 'exclude' in opts.keys(): exclude = opts['exclude']
+	if 'include' in opts.keys(): include = opts['include']
+
+	dest_file = str(target[0])
+	zip = zipfile.ZipFile(dest_file, 'w', zipfile.ZIP_DEFLATED)
+	for s in source:
+		dir = str(s)
+		def zipcb(f):
+			arcname = f.replace(dir + os.sep, "")
+			if os.path.islink(f):
+				dest = os.readlink(f)
+				attr = zipfile.ZipInfo()
+				attr.filename = arcname 
+				attr.create_system = 3
+				attr.external_attr = 2716663808L
+				attr.compress_type = zipfile.ZIP_DEFLATED
+				zip.writestr(attr, dest)
+			else:
+				zip.write(f, arcname, zipfile.ZIP_DEFLATED)
+		walk_dir(dir, zipcb, include, exclude)
+	zip.close()
 
 def KConcat(target, source, env):
 	dest_file = str(target[0])
