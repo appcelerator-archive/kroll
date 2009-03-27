@@ -18,17 +18,18 @@ class Module(object):
 			d = self.build.cwd(2)
 
 		print "Copying %s resources..." % self.name,
+		excludes = ['.h']
 		resources = glob.glob(path.join(d, 'AppResources', 'all', '*')) \
 		           + glob.glob(path.join(d, 'AppResources', self.build.os, '*'))
 		for r in resources:
 			r = path.abspath(r)
-			futils.CopyToDir(r, path.join(self.build_dir, 'AppResources'))
+			futils.CopyToDir(r, path.join(self.build_dir, 'AppResources'), exclude=excludes)
 
 		resources = glob.glob(path.join(d, 'Resources', 'all', '*')) \
 		           + glob.glob(path.join(d, 'Resources', self.build.os, '*'))
 		for r in resources:
 			r = path.abspath(r)
-			futils.CopyToDir(r, self.build_dir)
+			futils.CopyToDir(r, self.build_dir, exclude=excludes)
 		print "done"
 
 class BuildUtils(object):
@@ -145,6 +146,7 @@ class BuildConfig(object):
 		self.init_thirdparty_libs()
 		self.init_os_arch()
 		self.targets = []  # targets needed before packaging & distribution can occur
+		self.dist_targets = [] # targets that *are* packaging & distribution
 
 	def init_thirdparty_libs(self):
 		self.thirdparty_libs = {
@@ -244,7 +246,6 @@ class BuildConfig(object):
 			jstarget = path.join(appinstaller_target, 'Resources', 'js')
 			self.utils.CopyTree(jsfiles, jstarget)
 
-
 		if self.is_osx() and hasattr(self, 'titanium_source_dir'):
 			menu_nib = path.join(self.dir, 'modules', 'tiui', 'MainMenu.nib')
 			icns = path.join(self.titanium_support_dir, 'titanium.icns')
@@ -274,7 +275,7 @@ class BuildConfig(object):
 			manifest += "%s:%s\n" % (m.name, m.version)
 		return manifest
 
-	def add_thirdparty(self, env, name, force_libs=False):
+	def add_thirdparty(self, env, name):
 		env.Append(CPPPATH=[self.thirdparty_libs[name][self.os]['cpp_path']])
 		env.Append(LIBPATH=[self.thirdparty_libs[name][self.os]['lib_path']])
 		env.Append(LIBS=[self.thirdparty_libs[name][self.os]['libs']])
@@ -283,10 +284,24 @@ class BuildConfig(object):
 		return path.dirname(sys._getframe(depth).f_code.co_filename)
 
 	def require(self, t):
-		if not t:
-			return
+		if not t: return
 		if type(t) == types.ListType:
-			for x in t: self.require(t)
+			for x in t:
+				self.require(t)
 		else:
+			Default(t)
 			self.targets.append(t)
-			
+
+	def require_for_dist(self, t):
+		if not t: return
+		if type(t) == types.ListType:
+			for x in t:
+				self.require_for_dist(t)
+		else:
+			self.dist_targets.append(t)
+			Alias('dist', self.dist_targets)
+			AlwaysBuild(t)
+
+	def depends_on_build(self, t):
+		Alias('#ALLBUID', self.targets)
+		Depends(t, '#ALLBUILD')

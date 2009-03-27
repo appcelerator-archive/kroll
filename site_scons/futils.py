@@ -81,10 +81,7 @@ def CopyToDirImpl(src, dest, include=[], exclude=[], filter=None, recurse=True):
 		elif filter_file(src, [], exclude, filter):
 			if path.exists(dest):
 				os.remove(dest)
-			if hasattr(os, 'link'):
-				os.link(src, dest)
-			else:
-				shutil.copy2(src, dest)
+			shutil.copy2(src, dest)
 
 	def copy_items(src, dest):
 		#print "copy items %s %s" % (src, dest)
@@ -107,7 +104,7 @@ def Copy(src, dest):
 		os.makedirs(dest_dir)
 
 	if not path.isdir(src):
-		shutil.copyfile(src, dest)
+		shutil.copy2(src, dest)
 	else:
 		CopyTree(src, dest)
 	

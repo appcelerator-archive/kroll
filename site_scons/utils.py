@@ -40,7 +40,7 @@ def SCopyTreeImpl(e, src, dest, **kwargs):
 	if os.path.isdir(src):
 		for item in os.listdir(src):
 			src_item = os.path.abspath(os.path.join(src, item))
-			print "copy tree u %s %s" % (src_item, dest)
+			#print "copy tree u %s %s" % (src_item, dest)
 			t = SCopyToDir(e, src_item, dest, **kwargs)
 			targets.append(t)
 		return targets
