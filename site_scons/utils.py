@@ -18,9 +18,9 @@ def filter_file(file, include=[], exclude=[], filter=None):
 def SCopyTree(*args, **kwargs):
 	if (type(args[1]) == types.ListType):
 		for src in args[1]:
-			SCopyTreeImpl(args[0], src, args[2], **kwargs)
+			return SCopyTreeImpl(args[0], src, args[2], **kwargs)
 	else:
-		SCopyTreeImpl(args[0], args[1], args[2], **kwargs)
+		return SCopyTreeImpl(args[0], args[1], args[2], **kwargs)
 
 def SCopyTreeImpl(e, src, dest, **kwargs):
 	"""Copy a directory recursivley in a sconsy way. If the first
@@ -36,20 +36,23 @@ def SCopyTreeImpl(e, src, dest, **kwargs):
 	dest = os.path.abspath(str(dest))
 	src = os.path.abspath(str(src))
 
+	targets = []
 	if os.path.isdir(src):
 		for item in os.listdir(src):
 			src_item = os.path.abspath(os.path.join(src, item))
 			#print "copy tree u %s %s" % (src_item, dest)
-			SCopyToDir(e, src_item, dest, **kwargs)
+			t = SCopyToDir(e, src_item, dest, **kwargs)
+			targets.append(t)
+		return targets
 	else:
-		SCopyToDir(e, src, dest, **kwargs)
+		return SCopyToDir(e, src, dest, **kwargs)
 
 def SCopyToDir(*args, **kwargs):
 	if (type(args[1]) == types.ListType):
 		for src in args[1]:
-			SCopyToDirImpl(args[0], src, args[2], **kwargs)
+			return SCopyToDirImpl(args[0], src, args[2], **kwargs)
 	else:
-		SCopyToDirImpl(args[0], args[1], args[2], **kwargs)
+		return SCopyToDirImpl(args[0], args[1], args[2], **kwargs)
 
 def SCopyToDirImpl(e, src, dest, include=[], exclude=[], filter=None, recurse=True):
 	"""Copy a path into a destination directory in a sconsy way.
@@ -65,22 +68,24 @@ def SCopyToDirImpl(e, src, dest, include=[], exclude=[], filter=None, recurse=Tr
 		# Test for a symlink first, because a symlink can
 		# also return turn for isdir
 		if os.path.islink(src) and filter_file(src, include, exclude, filter):
-			e.KCopySymlink(dest, src) 
+			return e.KCopySymlink(dest, src) 
 
 		# It doesn't really make sense for includes to
 		# apply to folders, so we don't use them here
 		elif os.path.isdir(src) and filter_file(src, [], exclude, filter):
-			copy_items(src, dest)
+			return copy_items(src, dest)
 
 		elif filter_file(src, [], exclude, filter):
-			e.Command(dest, src, Copy('$TARGET', '$SOURCE'))
+			return e.Command(dest, src, Copy('$TARGET', '$SOURCE'))
 
 	def copy_items(src, dest):
-		#print "copy items %s %s" % (src, dest)
+		targets = [] # result targets
 		for item in os.listdir(src):
 			src_item = os.path.abspath(os.path.join(src, item))
 			dest_item = os.path.join(dest, item)
-			copy_item(src_item, dest_item)
+			t = copy_item(src_item, dest_item)
+			targets.append(t)
+		return targets
 
 	src = os.path.abspath(str(src))
 	bname = os.path.basename(src)
@@ -88,7 +93,7 @@ def SCopyToDirImpl(e, src, dest, include=[], exclude=[], filter=None, recurse=Tr
 
 	dest = os.path.join(dest, bname)
 	#print "copy %s %s" % (src, dest)
-	copy_item(src, dest)
+	return copy_item(src, dest)
 
 def KCopySymlink(target, source, env):
 	link_file = str(source[0])

@@ -81,10 +81,7 @@ def CopyToDirImpl(src, dest, include=[], exclude=[], filter=None, recurse=True):
 		elif filter_file(src, [], exclude, filter):
 			if path.exists(dest):
 				os.remove(dest)
-			if hasattr(os, 'link'):
-				os.link(src, dest)
-			else:
-				shutil.copy2(src, dest)
+			shutil.copy2(src, dest)
 
 	def copy_items(src, dest):
 		#print "copy items %s %s" % (src, dest)
@@ -100,6 +97,17 @@ def CopyToDirImpl(src, dest, include=[], exclude=[], filter=None, recurse=True):
 	dest = os.path.join(dest, bname)
 	#print "copy %s %s" % (src, dest)
 	copy_item(src, dest)
+
+def Copy(src, dest):
+	dest_dir = path.dirname(dest)
+	if not(path.exists(dest_dir)):
+		os.makedirs(dest_dir)
+
+	if not path.isdir(src):
+		shutil.copy2(src, dest)
+	else:
+		CopyTree(src, dest)
+	
 
 def CopySymlink(link, new_link):
 	linkto = os.readlink(link)
@@ -158,6 +166,10 @@ def Concat(source, dest_file, nofiles=False):
 		else:
 			out.write(file)
 
+	out.close()
+
+def Touch(dest):
+	out = open(dest, 'w')
 	out.close()
 
 def ReplaceVars(file, replacements):
