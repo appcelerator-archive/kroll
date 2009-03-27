@@ -229,7 +229,13 @@ class BuildConfig(object):
 		self.modules.append(m)
 
 		cwd = self.cwd(2)
-		if resources:
+		targets = COMMAND_LINE_TARGETS
+		dist = 'dist' in targets or ARGUMENTS.get('dist', 0)
+		testapp = 'testapp' in targets or ARGUMENTS.get('testapp', 0)
+		testsuite = 'testsuite' in targets or ARGUMENTS.get('testsuite', 0)
+		package = 'package' in targets or ARGUMENTS.get('package', 0)
+
+		if resources and (dist or testapp or testsuite or package):
 			m.copy_resources(cwd)
 
 		return m
