@@ -130,6 +130,7 @@ def walk_dir(dir, callback, include=[], exclude=[]):
 
 def TarGzDir(source, dest_file, include=[], exclude=[]):
 	tar = tarfile.open(dest_file, 'w:gz')
+	if (type(source) != types.ListType): source = [source]
 	for dir in source:
 		def tarcb(f):
 			arcname = f.replace(dir + os.sep, "")
@@ -139,6 +140,7 @@ def TarGzDir(source, dest_file, include=[], exclude=[]):
 
 def ZipDir(source, dest_file, include=[], exclude=[]):
 	zip = zipfile.ZipFile(dest_file, 'w', zipfile.ZIP_DEFLATED)
+	if (type(source) != types.ListType): source = [source]
 	for dir in source:
 		def zipcb(f):
 			arcname = f.replace(dir + os.sep, "")
@@ -159,7 +161,7 @@ def Concat(source, dest_file, nofiles=False):
 	out = open(dest_file, 'wb')
 
 	for file in source:
-		if not(notfiles) and os.path.exists(file):
+		if not nofiles and os.path.exists(file):
 			inf = open(file, 'rb')
 			out.write(inf.read())
 			inf.close()

@@ -11,6 +11,9 @@ class App:
 		self.guid = guid
 		self.modules = None # all modules
 
+	def status(self, msg):
+		print '    -> %s' % msg
+
 	def set_modules(self, modules):
 		self.modules = modules
 
@@ -33,26 +36,37 @@ class App:
 			self.exe = p.join(self.contents, 'MacOS', self.shortname)
 			self.kboot = p.join(self.build.dir, 'kboot')
 
-			self.runtime = p.join(self.contents, 'runtime');
-			self.resources = p.join(self.contents, 'Resources');
+		self.runtime = p.join(self.contents, 'runtime');
+		self.resources = p.join(self.contents, 'Resources');
 
-			excludes = ['.dll.manifest', '.dll.pdb', '.exp', '.ilk']
-			futils.CopyToDir(src_runtime, self.contents, exclude=excludes)
-			futils.CopyToDir(src_modules, self.contents, exclude=excludes)
-			futils.Copy(self.kboot, self.exe)
+		excludes = ['.dll.manifest', '.dll.pdb', '.exp', '.ilk']
 
-			# Copy appinstaller from runtime to contents
-			#futils.CopyToDir(src_runtime, self.contents, exclude=excludes)
+		self.status('copying runtime to %s' % self.contents)
+		futils.CopyToDir(src_runtime, self.contents, exclude=excludes)
 
-			if src_contents:
-				futils.CopyTree(src_contents, self.contents)
-			if src_resources:
-				futils.CopyTree(src_resources, self.resources)
+		self.status('copying modules to %s' % self.contents)
+		futils.CopyToDir(src_modules, self.contents, exclude=excludes)
+
+		self.status('copying kboot to %s' % self.exe)
+		futils.Copy(self.kboot, self.exe)
+
+		# Copy appinstaller from runtime to contents
+		#futils.CopyToDir(src_runtime, self.contents, exclude=excludes)
+
+		if src_contents:
+			self.status('copying %s to %s' % (src_contents, self.exe))
+			futils.CopyTree(src_contents, self.contents)
+
+		if src_resources:
+			self.status('copying %s to %s' % (src_resources, self.exe))
+			futils.CopyTree(src_resources, self.resources)
 
 	def stage(self, build_dir, src_contents=None, src_resources=None):
+		print('Staging %s' % self.shortname)
 		self.prestage(build_dir, src_contents=src_contents, src_resources=src_resources)
 
 		if self.build.is_osx():
+			self.status('copying mac resources to %s' % (self.contents))
 			lproj = p.join(self.resources, 'English.lproj')
 
 			# Copy MainMenu.nib to Contents/Resources/English.lproj
@@ -78,13 +92,43 @@ class App:
 
 		# Copy CRT to root
 		if self.build.is_win32():
+			self.status('copying ms c runtime to %s' % (self.contents))
 			mscrt = p.join(self.build.third_party, 'microsoft', 'Microsoft.VC80.CRT')
 			self.build.utils.CopyToDir(mscrt, self.contents)
 
+		self.status('writing manifest to %s' % p.join(self.contents, 'manifest'))
 		manifest = self.build.generate_manifest(self.fullname, self.id, self.guid)
 		m_file = open(p.join(self.contents, 'manifest'), 'w')
 		m_file.write(manifest)
 		m_file.close()
+
+	def package(self, **kwargs):
+		print('Packaging %s' % self.shortname)
+		if self.build.is_osx():
+			self.package_dmg(**kwargs)
+		elif self.build.is_linux():
+			self.package_self_extractor(**kwargs)
+
+	def package_self_extractor(self, out_dir=None, se_archive_name=None, **kwargs):
+		if not se_archive_name:
+			se_archive_name = p.basename(self.dir)
+		if not out_dir: out_dir = p.basename(self.dir)
+		if not p.isdir(out_dir): os.makedirs(out_dir)
+
+		archive = p.join(out_dir, se_archive_name) + '.tgz'
+		bin_file = p.join(out_dir, se_archive_name) + '.bin'
+		if p.exists(archive): os.remove(archive)
+		if p.exists(bin_file): os.remove(bin_file)
+
+		extractor = p.join(self.build.titanium_support_dir, 'extractor.sh')
+		source = open(extractor).read()
+		source = source.replace('APPNAME', p.basename(self.exe))
+
+		self.status('writing tgz file to %s' % (archive))
+		futils.TarGzDir(self.dir, archive)
+
+		self.status('creating self-extractor at %s' % (bin_file))
+		futils.Concat([source, archive], bin_file)
 
 	def package_dmg(self,
 		app_name=None,
@@ -93,7 +137,8 @@ class App:
 		out_dir=None,
 		icns_file=None,
 		ds_store_file=None,
-		ds_store_extras=[]):
+		ds_store_extras=[],
+		**kwargs):
 
 		def invoke(cmd):
 			print cmd
