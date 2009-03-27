@@ -965,6 +965,35 @@ namespace kroll
 		return rc;
 #endif
 	}
+	
+	#if defined(OS_WIN32)
+	// TODO: implement this for other platforms
+	void FileUtils::CopyRecursive(std::string &dir, std::string &dest)
+	{
+		WIN32_FIND_DATA findFileData;
+		std::string q(dir+"\\*");
+		HANDLE hFind = FindFirstFile(q.c_str(), &findFileData);
+		if (hFind != INVALID_HANDLE_VALUE)
+		{
+			do
+			{
+				std::string filename = findFileData.cFileName;
+
+				if (IsDirectory(filename)) {
+					FileUtils::CreateDirectory(dest + "\\" + filename);
+					CopyRecursive(filename, dest + "\\" + filename);
+				}
+				else {
+					CopyFileA((dir + "\\" + filename).c_str(), (dest + "\\" + filename).c_str(), FALSE);
+				}
+			} while (FindNextFile(hFind, &findFileData));
+			FindClose(hFind);
+		}
+	}
+
+#endif
+
+	
 	std::string FileUtils::GetUsername()
 	{
 #ifdef OS_OSX

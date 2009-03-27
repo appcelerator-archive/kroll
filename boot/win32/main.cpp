@@ -407,18 +407,14 @@ int main(int _argc, const char* _argv[])
 			return __LINE__;
 		}
 		
-		// hack copy the WebKit.dll into the app installer's dir
-		std::string webkit_dll = kroll::FileUtils::Join(runtimePath.c_str(), "WebKit.dll", NULL);
-		std::string local_webkit_dll = kroll::FileUtils::Join(GetExecutableDir().c_str(), "runtime", "WebKit.dll", NULL);
-		std::string runtime_dir = kroll::FileUtils::Join(GetExecutableDir().c_str(), "runtime", NULL);
-
-		if (!kroll::FileUtils::IsFile(local_webkit_dll)) {
-			kroll::FileUtils::CreateDirectory(runtime_dir);
-			CopyFileA(webkit_dll.c_str(), local_webkit_dll.c_str(), FALSE);
-		}
-
 		std::string localRuntime = FileUtils::Join(homedir.c_str(),"runtime",NULL);
 		std::string runtimeBasedir = FileUtils::GetRuntimeBaseDirectory();
+		std::string localWebkitDll = FileUtils::Join(localRuntime.c_str(), "WebKit.dll", NULL);
+		
+		if (!kroll::FileUtils::IsFile(localWebkitDll)) {
+			kroll::FileUtils::CopyRecursive(runtimeBasedir, localRuntime);
+		}
+
 		std::string moduleLocalDir = FindModuleDir();
 		std::string moduleBasedir = FileUtils::Join(runtimeBasedir.c_str(),"modules","win32",NULL);
 		std::ostringstream moduleList;
