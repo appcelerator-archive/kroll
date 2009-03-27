@@ -1,7 +1,8 @@
 import SCons.Variables
 import SCons.Environment
 from SCons.Script import *
-import os, glob, re, utils, futils, types, os.path as path
+import os, glob, re, utils, futils, types
+import os.path as path
 
 class Module(object):
 	def __init__(self, name, version, build_dir, build):
