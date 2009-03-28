@@ -412,7 +412,7 @@ int main(int _argc, const char* _argv[])
 		std::string localWebkitDll = FileUtils::Join(localRuntime.c_str(), "WebKit.dll", NULL);
 		
 		if (!kroll::FileUtils::IsFile(localWebkitDll)) {
-			kroll::FileUtils::CopyRecursive(runtimeBasedir, localRuntime);
+			kroll::FileUtils::CopyRecursive(runtimePath, localRuntime);
 		}
 
 		std::string moduleLocalDir = FindModuleDir();

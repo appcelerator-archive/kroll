@@ -970,6 +970,11 @@ namespace kroll
 	// TODO: implement this for other platforms
 	void FileUtils::CopyRecursive(std::string &dir, std::string &dest)
 	{
+		if (!IsDirectory(dest)) {
+			CreateDirectory(dest);
+		}
+		
+		std::cout << "\n>Recursive copy " << dir << " to " << dest << std::endl;
 		WIN32_FIND_DATA findFileData;
 		std::string q(dir+"\\*");
 		HANDLE hFind = FindFirstFile(q.c_str(), &findFileData);
@@ -978,13 +983,19 @@ namespace kroll
 			do
 			{
 				std::string filename = findFileData.cFileName;
-
-				if (IsDirectory(filename)) {
-					FileUtils::CreateDirectory(dest + "\\" + filename);
-					CopyRecursive(filename, dest + "\\" + filename);
+				if (filename == "." || filename == "..") continue;
+				
+				std::string srcName = dir + "\\" + filename;
+				std::string destName = dest + "\\" + filename;
+				
+				if (IsDirectory(srcName)) {
+					std::cout << "create dir: " << destName << std::endl;
+					FileUtils::CreateDirectory(destName);
+					CopyRecursive(srcName, destName);
 				}
 				else {
-					CopyFileA((dir + "\\" + filename).c_str(), (dest + "\\" + filename).c_str(), FALSE);
+					//std::cout << "> copy file " << srcName << " to " << destName << std::endl;
+					CopyFileA(srcName.c_str(), destName.c_str(), FALSE);
 				}
 			} while (FindNextFile(hFind, &findFileData));
 			FindClose(hFind);
