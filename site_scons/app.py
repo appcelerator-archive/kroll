@@ -25,19 +25,20 @@ class App:
 		if self.build.is_linux():
 			self.contents = build_dir
 			self.exe = p.join(self.contents, self.shortname)
-			self.kboot = p.join(self.build.dir, 'kboot')
+			self.kboot = p.join(self.build.dir, 'runtime', 'template', 'kboot')
 		elif self.build.is_win32():
 			self.contents = build_dir
 			self.exe = p.join(self.contents, self.shortname+'.exe')
-			self.kboot = p.join(self.build.dir, 'kboot.exe')
+			self.kboot = p.join(self.build.dir, 'runtime', 'template' 'kboot.exe')
 		elif self.build.is_osx():
 			if not self.dir.endswith('.app'): self.dir += '.app'
 			self.contents = p.join(self.dir, 'Contents')
 			self.exe = p.join(self.contents, 'MacOS', self.shortname)
-			self.kboot = p.join(self.build.dir, 'kboot')
+			self.kboot = p.join(self.build.dir, 'runtime', 'template', 'kboot')
 
 		self.runtime = p.join(self.contents, 'runtime');
 		self.resources = p.join(self.contents, 'Resources');
+		self.net_installer = p.join(self.build.runtime_build_dir, 'installer')
 
 		excludes = ['.dll.manifest', '.dll.pdb', '.exp', '.ilk']
 
@@ -50,8 +51,8 @@ class App:
 		self.status('copying kboot to %s' % self.exe)
 		futils.Copy(self.kboot, self.exe)
 
-		# Copy appinstaller from runtime to contents
-		#futils.CopyToDir(src_runtime, self.contents, exclude=excludes)
+		self.status('copying netinstaller (%s) to %s' % (self.net_installer, self.dir))
+		futils.CopyToDir(self.net_installer, self.dir)
 
 		if src_contents:
 			self.status('copying %s to %s' % (src_contents, self.exe))
@@ -108,6 +109,27 @@ class App:
 			self.package_dmg(**kwargs)
 		elif self.build.is_linux():
 			self.package_self_extractor(**kwargs)
+
+	def package_self_extractor_exe(self, out_dir, se_archive=None, **kwargs):
+		if not se_archive_name:
+			se_archive_name = p.basename(self.dir)
+		if not out_dir: out_dir = p.basename(self.dir)
+		if not p.isdir(out_dir): os.makedirs(out_dir)
+
+		exe_out = path.join(path.dirname(self.exe), 'installer.exe')
+		futils.Copy(self.exe, exe_out)
+
+		self_extractor = p.join(build.dir, 'self_extractor.exe')
+		se_file = p.join(out_dir, se_archive_name) + '.exe'
+		futils.Copy(self_extractor, se_file)
+
+		zf = zipfile.ZipFile(se_file, 'a', zipfile.ZIP_DEFLATED)
+		for walk in os.walk(self.dir):
+			for file in walk[2]:
+				file = p.join(walk[0], file)
+				arcname = file.replace(self.dir + '\\', "")
+				zf.write(file, arcname)
+		zf.close()
 
 	def package_self_extractor(self, out_dir=None, se_archive_name=None, **kwargs):
 		if not se_archive_name:

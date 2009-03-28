@@ -13,5 +13,6 @@ Env.Append(FRAMEWORKS=['Cocoa','IOKit'])
 Env.Append(LIBS=['dl'])
 
 o = Env.Object(target = fo, source = path.join(build.kroll_source_dir,'api','file_utils.cpp'))
-p = Env.Program(build.dir + '/kboot', sources)
+kboot_out = path.join(build.dir, 'runtime', 'template', 'kboot')
+p = Env.Program(kboot_out, sources)
 build.require(p)

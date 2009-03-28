@@ -4,7 +4,6 @@ Import('build')
 Env = build.env.Clone()
 build.add_thirdparty(Env, 'poco')
 
-Env.SharedLibrary(Env, build.dir + '/foomodule', Glob('*.cpp'))
 m = build.add_module('foo')
 t = Env.SharedLibrary(Env, m.build_dir + '/foomodule', Glob('*.cpp'))
 build.require(t)

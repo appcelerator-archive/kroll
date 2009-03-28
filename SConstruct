@@ -23,9 +23,9 @@ build.kroll_include_dir = path.join(build.dir, 'include')
 # scripts in the kroll build directory. All resources
 # should instead be built to build.dir
 build.kroll_build_dir = path.join(build.kroll_source_dir, 'build')
-
-build.env.Append(CPPPATH=[build.kroll_source_dir, build.kroll_include_dir])
-build.env.Append(LIBPATH=[build.dir])
+build.env.Append(CPPPATH=[
+	build.kroll_source_dir, 
+	build.kroll_include_dir])
 
 # debug build flags
 if ARGUMENTS.get('debug', 0):

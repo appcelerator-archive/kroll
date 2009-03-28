@@ -16,9 +16,12 @@ def filter_file(file, include=[], exclude=[], filter=None):
 
 # Adapted from: http://www.scons.org/wiki/AccumulateBuilder
 def SCopyTree(*args, **kwargs):
+	targets = []
 	if (type(args[1]) == types.ListType):
 		for src in args[1]:
-			return SCopyTreeImpl(args[0], src, args[2], **kwargs)
+			t = SCopyTreeImpl(args[0], src, args[2], **kwargs)
+			targets.append(t)
+		return targets
 	else:
 		return SCopyTreeImpl(args[0], args[1], args[2], **kwargs)
 
@@ -48,9 +51,12 @@ def SCopyTreeImpl(e, src, dest, **kwargs):
 		return SCopyToDir(e, src, dest, **kwargs)
 
 def SCopyToDir(*args, **kwargs):
+	targets = []
 	if (type(args[1]) == types.ListType):
 		for src in args[1]:
-			return SCopyToDirImpl(args[0], src, args[2], **kwargs)
+			t = SCopyToDirImpl(args[0], src, args[2], **kwargs)
+			targets.append(t)
+		return targets
 	else:
 		return SCopyToDirImpl(args[0], args[1], args[2], **kwargs)
 

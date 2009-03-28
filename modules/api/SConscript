@@ -8,8 +8,6 @@ Env.Append(CPPPATH = ['#.'])
 Env.Append(CPPDEFINES=('KROLL_API_API_EXPORT', 1))
 build.add_thirdparty(Env, 'poco')
 
-Env.SharedLibrary(build.dir + '/apimodule', Glob('*.cpp'))
-
 m = build.add_module('api')
 t = Env.SharedLibrary(m.build_dir + '/apimodule', Glob('*.cpp'))
 build.require(t)
