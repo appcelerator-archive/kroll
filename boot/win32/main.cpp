@@ -170,7 +170,7 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 		args.push_back("Additional application files required");
 		// message
 		//I18N: localize these
-		args.push_back("There are additional application files that are required for this application. These will be downloaded from the network. Please press Continue to download these files now to complete the installation of the application.");
+		args.push_back("There are additional application files that are required for this application. These will be downloaded from the network. Press OK to download these files now to complete the installation of the application.");
 		// extract directory
 		args.push_back(sourceTemp);
 		// runtime base
@@ -406,11 +406,11 @@ int main(int _argc, const char* _argv[])
 		{
 			return __LINE__;
 		}
-		
+
 		std::string localRuntime = FileUtils::Join(homedir.c_str(),"runtime",NULL);
 		std::string runtimeBasedir = FileUtils::GetRuntimeBaseDirectory();
 		std::string localWebkitDll = FileUtils::Join(localRuntime.c_str(), "WebKit.dll", NULL);
-		
+
 		if (!kroll::FileUtils::IsFile(localWebkitDll)) {
 			kroll::FileUtils::CopyRecursive(runtimeBasedir, localRuntime);
 		}
