@@ -170,7 +170,7 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 		args.push_back("Additional application files required");
 		// message
 		//I18N: localize these
-		args.push_back("There are additional application files that are required for this application. These will be downloaded from the network. Please press Continue to download these files now to complete the installation of the application.");
+		args.push_back("There are additional application files that are required for this application. These will be downloaded from the network. Press OK to download these files now to complete the installation of the application.");
 		// extract directory
 		args.push_back(sourceTemp);
 		// runtime base
@@ -406,19 +406,15 @@ int main(int _argc, const char* _argv[])
 		{
 			return __LINE__;
 		}
-		
-		// hack copy the WebKit.dll into the app installer's dir
-		std::string webkit_dll = kroll::FileUtils::Join(runtimePath.c_str(), "WebKit.dll", NULL);
-		std::string local_webkit_dll = kroll::FileUtils::Join(GetExecutableDir().c_str(), "runtime", "WebKit.dll", NULL);
-		std::string runtime_dir = kroll::FileUtils::Join(GetExecutableDir().c_str(), "runtime", NULL);
-
-		if (!kroll::FileUtils::IsFile(local_webkit_dll)) {
-			kroll::FileUtils::CreateDirectory(runtime_dir);
-			CopyFileA(webkit_dll.c_str(), local_webkit_dll.c_str(), FALSE);
-		}
 
 		std::string localRuntime = FileUtils::Join(homedir.c_str(),"runtime",NULL);
 		std::string runtimeBasedir = FileUtils::GetRuntimeBaseDirectory();
+		std::string localWebkitDll = FileUtils::Join(localRuntime.c_str(), "WebKit.dll", NULL);
+
+		if (!kroll::FileUtils::IsFile(localWebkitDll)) {
+			kroll::FileUtils::CopyRecursive(runtimePath, localRuntime);
+		}
+
 		std::string moduleLocalDir = FindModuleDir();
 		std::string moduleBasedir = FileUtils::Join(runtimeBasedir.c_str(),"modules","win32",NULL);
 		std::ostringstream moduleList;

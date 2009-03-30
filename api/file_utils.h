@@ -113,7 +113,10 @@ namespace kroll
 		 *
 		 */
 		static bool CreateDirectory(std::string &dir);
-
+#if defined(OS_WIN32)
+		// TODO: implement this for other platforms
+		static void CopyRecursive(std::string &dir, std::string &dest);
+#endif
 		/**
 		 *
 		 */
