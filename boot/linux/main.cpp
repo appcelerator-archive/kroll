@@ -415,7 +415,7 @@ class Boot
 		std::string qs;
 		qs += "?os=" + FileUtils::EncodeURIComponent(os);
 		qs += "&osver=" + FileUtils::EncodeURIComponent(osver);
-		qs += "&tiver=" + FileUtils::EncodeURIComponent("PRODUCT_VERSION");
+		qs += "&tiver=" + FileUtils::EncodeURIComponent(STRING(_PRODUCT_VERSION));
 		qs += "&mid=" + FileUtils::EncodeURIComponent(mid);
 		qs += "&aid=" + FileUtils::EncodeURIComponent(this->app_id);
 		qs += "&guid=" + FileUtils::EncodeURIComponent(guid);

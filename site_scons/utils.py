@@ -1,4 +1,4 @@
-import os.path, shutil, types, tarfile, zipfile
+import os.path as path, shutil, types, tarfile, zipfile
 from SCons.Script import *
 
 def filter_file(file, include=[], exclude=[], filter=None):
@@ -16,11 +16,14 @@ def filter_file(file, include=[], exclude=[], filter=None):
 
 # Adapted from: http://www.scons.org/wiki/AccumulateBuilder
 def SCopyTree(*args, **kwargs):
+	targets = []
 	if (type(args[1]) == types.ListType):
 		for src in args[1]:
-			SCopyTreeImpl(args[0], src, args[2], **kwargs)
+			t = SCopyTreeImpl(args[0], src, args[2], **kwargs)
+			targets.append(t)
+		return targets
 	else:
-		SCopyTreeImpl(args[0], args[1], args[2], **kwargs)
+		return SCopyTreeImpl(args[0], args[1], args[2], **kwargs)
 
 def SCopyTreeImpl(e, src, dest, **kwargs):
 	"""Copy a directory recursivley in a sconsy way. If the first
@@ -33,23 +36,29 @@ def SCopyTreeImpl(e, src, dest, **kwargs):
 	to exclude. Filter is a function which given the full path to a file,
 	will exclude is returns False or include if returns True.
 	"""
-	dest = os.path.abspath(str(dest))
-	src = os.path.abspath(str(src))
+	dest = path.abspath(str(dest))
+	src = path.abspath(str(src))
 
-	if os.path.isdir(src):
+	targets = []
+	if path.isdir(src):
 		for item in os.listdir(src):
-			src_item = os.path.abspath(os.path.join(src, item))
+			src_item = path.abspath(path.join(src, item))
 			#print "copy tree u %s %s" % (src_item, dest)
-			SCopyToDir(e, src_item, dest, **kwargs)
+			t = SCopyToDir(e, src_item, dest, **kwargs)
+			targets.append(t)
+		return targets
 	else:
-		SCopyToDir(e, src, dest, **kwargs)
+		return SCopyToDir(e, src, dest, **kwargs)
 
 def SCopyToDir(*args, **kwargs):
+	targets = []
 	if (type(args[1]) == types.ListType):
 		for src in args[1]:
-			SCopyToDirImpl(args[0], src, args[2], **kwargs)
+			t = SCopyToDirImpl(args[0], src, args[2], **kwargs)
+			targets.append(t)
+		return targets
 	else:
-		SCopyToDirImpl(args[0], args[1], args[2], **kwargs)
+		return SCopyToDirImpl(args[0], args[1], args[2], **kwargs)
 
 def SCopyToDirImpl(e, src, dest, include=[], exclude=[], filter=None, recurse=True):
 	"""Copy a path into a destination directory in a sconsy way.
@@ -64,31 +73,33 @@ def SCopyToDirImpl(e, src, dest, include=[], exclude=[], filter=None, recurse=Tr
 	def copy_item(src, dest):
 		# Test for a symlink first, because a symlink can
 		# also return turn for isdir
-		if os.path.islink(src) and filter_file(src, include, exclude, filter):
-			e.KCopySymlink(dest, src) 
+		if path.islink(src) and filter_file(src, include, exclude, filter):
+			return e.KCopySymlink(dest, src) 
 
 		# It doesn't really make sense for includes to
 		# apply to folders, so we don't use them here
-		elif os.path.isdir(src) and filter_file(src, [], exclude, filter):
-			copy_items(src, dest)
+		elif path.isdir(src) and filter_file(src, [], exclude, filter):
+			return copy_items(src, dest)
 
 		elif filter_file(src, [], exclude, filter):
-			e.Command(dest, src, Copy('$TARGET', '$SOURCE'))
+			return e.Command(dest, src, Copy('$TARGET', '$SOURCE'))
 
 	def copy_items(src, dest):
-		#print "copy items %s %s" % (src, dest)
+		targets = [] # result targets
 		for item in os.listdir(src):
-			src_item = os.path.abspath(os.path.join(src, item))
-			dest_item = os.path.join(dest, item)
-			copy_item(src_item, dest_item)
+			src_item = path.abspath(path.join(src, item))
+			dest_item = path.join(dest, item)
+			t = copy_item(src_item, dest_item)
+			targets.append(t)
+		return targets
 
-	src = os.path.abspath(str(src))
-	bname = os.path.basename(src)
-	dest = os.path.abspath(str(dest))
+	src = path.abspath(str(src))
+	bname = path.basename(src)
+	dest = path.abspath(str(dest))
 
-	dest = os.path.join(dest, bname)
+	dest = path.join(dest, bname)
 	#print "copy %s %s" % (src, dest)
-	copy_item(src, dest)
+	return copy_item(src, dest)
 
 def KCopySymlink(target, source, env):
 	link_file = str(source[0])
@@ -107,7 +118,7 @@ def walk_dir(dir, callback, include=[], exclude=[]):
 	files = os.walk(dir)
 	for walk in files:
 		for file in walk[2]:
-			file = os.path.join(walk[0], file)
+			file = path.join(walk[0], file)
 			if filter_file(file, include, exclude):
 				callback(file)
 
@@ -118,6 +129,10 @@ def KTarGzDir(target, source, env):
 	if 'include' in opts.keys(): include = opts['include']
 
 	dest_file = str(target[0])
+
+	if not path.isdir(path.dirname(dest_file)):
+		os.makedirs(path.dirname(dest_file))
+
 	tar = tarfile.open(dest_file, 'w:gz')
 	for s in source:
 		dir = str(s)
@@ -134,12 +149,16 @@ def KZipDir(target, source, env):
 	if 'include' in opts.keys(): include = opts['include']
 
 	dest_file = str(target[0])
+
+	if not path.isdir(path.dirname(dest_file)):
+		os.makedirs(path.dirname(dest_file))
+
 	zip = zipfile.ZipFile(dest_file, 'w', zipfile.ZIP_DEFLATED)
 	for s in source:
 		dir = str(s)
 		def zipcb(f):
 			arcname = f.replace(dir + os.sep, "")
-			if os.path.islink(f):
+			if path.islink(f):
 				dest = os.readlink(f)
 				attr = zipfile.ZipInfo()
 				attr.filename = arcname 

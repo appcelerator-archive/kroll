@@ -10,4 +10,6 @@ fo = os.path.join(build.dir,'file_utils_boot.o')
 o = Env.Object(target = fo, source = path.join(build.kroll_source_dir,'api','file_utils.cpp'))
 
 sources = ['main.cpp', fo]
-p = Env.Program(build.dir + '/kboot', sources)
+kboot_out = path.join(build.dir, 'runtime', 'template', 'kboot')
+p = Env.Program(kboot_out, sources)
+build.mark_build_target(p)
