@@ -6,4 +6,4 @@ build.add_thirdparty(Env, 'poco')
 
 m = build.add_module('foo')
 t = Env.SharedLibrary(Env, m.build_dir + '/foomodule', Glob('*.cpp'))
-build.require(t)
+build.mark_build_target(t)

@@ -10,4 +10,4 @@ build.add_thirdparty(Env, 'poco')
 
 m = build.add_module('api')
 t = Env.SharedLibrary(m.build_dir + '/apimodule', Glob('*.cpp'))
-build.require(t)
+build.mark_build_target(t)

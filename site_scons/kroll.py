@@ -18,25 +18,25 @@ class Module(object):
 		if not d:
 			d = self.build.cwd(2)
 
-		print "Copying %s resources..." % self.name,
 		excludes = ['.h']
 		resources = glob.glob(path.join(d, 'AppResources', 'all', '*')) \
 		           + glob.glob(path.join(d, 'AppResources', self.build.os, '*'))
 		for r in resources:
 			r = path.abspath(r)
-			futils.CopyToDir(r, path.join(self.build_dir, 'AppResources'), exclude=excludes)
+			t = self.build.utils.CopyToDir(r, path.join(self.build_dir, 'AppResources'), exclude=excludes)
+			self.build.mark_stage_target(t)
 
 		resources = glob.glob(path.join(d, 'Resources', 'all', '*')) \
 		           + glob.glob(path.join(d, 'Resources', self.build.os, '*'))
 		for r in resources:
 			r = path.abspath(r)
-			futils.CopyToDir(r, self.build_dir, exclude=excludes)
+			t = self.build.utils.CopyToDir(r, self.build_dir, exclude=excludes)
+			self.build.mark_stage_target(t)
 
 		manifest = path.join(d, 'manifest')
 		if path.exists(manifest):
-			futils.CopyToDir(manifest, self.build_dir)
-
-		print "done"
+			t = self.build.utils.CopyToDir(manifest, self.build_dir)
+			self.build.mark_stage_target(t)
 
 class BuildUtils(object):
 	def __init__(self, env):
@@ -91,12 +91,13 @@ class BuildUtils(object):
 			strings = [str(strings)]
 		t = self.Touch(target)
 		self.env.AddPostAction(t, utils.WriteStringsAction(target, strings))
+		return t
 
 	def Zip(self, source, target, **kwargs):
-		self.env.KZipDir(target, source, ZIPOPTS=kwargs)
+		return self.env.KZipDir(target, source, ZIPOPTS=kwargs)
 
 	def TarGz(self, source, target, **kwargs):
-		self.env.KTarGzDir(target, source, TARGZOPTS=kwargs)
+		return self.env.KTarGzDir(target, source, TARGZOPTS=kwargs)
 
 class BuildConfig(object): 
 	def __init__(self, **kwargs):
@@ -154,8 +155,12 @@ class BuildConfig(object):
 
 		self.init_thirdparty_libs()
 		self.init_os_arch()
-		self.targets = []  # targets needed before packaging & distribution can occur
+		self.build_targets = []  # targets needed before packaging & distribution can occur
+		self.staging_targets = []  # staging the module and sdk directories
 		self.dist_targets = [] # targets that *are* packaging & distribution
+		Alias('build', [])
+		Alias('stage', [])
+		Alias('dist', [])
 
 	def init_thirdparty_libs(self):
 		self.thirdparty_libs = {
@@ -273,25 +278,30 @@ class BuildConfig(object):
 	def cwd(self, depth=1):
 		return path.dirname(sys._getframe(depth).f_code.co_filename)
 
-	def require(self, t):
+	def unpack_targets(self, t, f):
 		if not t: return
 		if type(t) == types.ListType:
-			for x in t:
-				self.require(x)
+			for x in t: self.unpack_targets(x, f)
 		else:
-			Default(t)
-			self.targets.append(t)
+			f(t)
 
-	def require_for_dist(self, t):
-		if not t: return
-		if type(t) == types.ListType:
-			for x in t:
-				self.require_for_dist(t)
-		else:
-			self.dist_targets.append(t)
-			Alias('dist', self.dist_targets)
-			AlwaysBuild(t)
+	def mark_build_target(self, t):
+		self.unpack_targets(t, self.mark_build_target_impl)
+	def mark_build_target_impl(self, t):
+		Default(t)
+		self.build_targets.append(t)
+		Alias('build', self.build_targets)
 
-	def depends_on_build(self, t):
-		Alias('#ALLBUID', self.targets)
-		Depends(t, '#ALLBUILD')
+	def mark_stage_target(self, t):
+		self.unpack_targets(t, self.mark_stage_target_impl)
+	def mark_stage_target_impl(self, t):
+		self.staging_targets.append(t)
+		Depends(t, 'build')
+		Alias('stage', self.staging_targets)
+
+	def mark_dist_target(self, t):
+		self.unpack_targets(t, self.mark_dist_target_impl)
+	def mark_dist_target_impl(self, t):
+		self.dist_targets.append(t)
+		Depends(t, 'stage')
+		Alias('dist', self.dist_targets)

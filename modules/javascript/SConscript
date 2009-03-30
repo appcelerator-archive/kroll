@@ -38,5 +38,5 @@ elif build.is_win32():
 
 m = build.add_module('javascript')
 t = Env.SharedLibrary(m.build_dir + '/javascriptmodule', Glob('*.cpp'))
-build.require(t)
+build.mark_build_target(t)
 

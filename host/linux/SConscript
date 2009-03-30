@@ -10,4 +10,4 @@ Env.ParseConfig('pkg-config --cflags --libs gtk+-2.0 gdk-2.0 glib-2.0 gthread-2.
 build.add_thirdparty(Env, 'poco')
 
 t = Env.SharedLibrary(build.dir + '/runtime/khost', Glob('*.cpp'))
-build.require(t);
+build.mark_build_target(t);

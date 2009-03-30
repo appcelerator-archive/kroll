@@ -9,5 +9,5 @@ Env.Append(FRAMEWORKS=['Cocoa'])
 build.add_thirdparty(Env, 'poco')
 
 t = Env.SharedLibrary(build.dir + '/runtime/khost', ['host.cpp'])
-build.require(t)
+build.mark_build_target(t)
 

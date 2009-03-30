@@ -27,4 +27,4 @@ elif build.is_win32():
 
 m = build.add_module('python')
 t = Env.SharedLibrary(m.build_dir + '/pythonmodule', Glob('*.cpp'))
-build.require(t)
+build.mark_build_target(t)
