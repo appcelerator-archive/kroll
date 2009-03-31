@@ -18,25 +18,35 @@ class Module(object):
 		if not d:
 			d = self.build.cwd(2)
 
-		excludes = ['.h']
-		resources = glob.glob(path.join(d, 'AppResources', 'all', '*')) \
-		           + glob.glob(path.join(d, 'AppResources', self.build.os, '*'))
-		for r in resources:
-			r = path.abspath(r)
-			t = self.build.utils.CopyToDir(r, path.join(self.build_dir, 'AppResources'), exclude=excludes)
-			self.build.mark_stage_target(t)
+		lw_copy = self.build.env.LightWeightCopyTree
 
-		resources = glob.glob(path.join(d, 'Resources', 'all', '*')) \
-		           + glob.glob(path.join(d, 'Resources', self.build.os, '*'))
-		for r in resources:
-			r = path.abspath(r)
-			t = self.build.utils.CopyToDir(r, self.build_dir, exclude=excludes)
-			self.build.mark_stage_target(t)
+		out_dir = path.join(self.build_dir, 'AppResources'), 
+		all_arsc = path.join(d, 'AppResources', 'all')
+		t = lw_copy('#cpar-%s' % self.name, [], OUTDIR=out_dir, IN=all_arsc, EXCLUDE=['.h'])
+		self.build.mark_stage_target(t)
+		AlwaysBuild(t)
+
+		os_arsc = path.join(d, 'AppResources', self.build.os)
+		t = lw_copy('#cpar2-%s' % self.name, [], OUTDIR=out_dir, IN=os_arsc, EXCLUDE=['.h'])
+		self.build.mark_stage_target(t)
+		AlwaysBuild(t)
+
+		out_dir = self.build_dir
+		all_rsc = path.join(d, 'Resources', 'all')
+		t = lw_copy('#cpr-%s' % self.name, [], OUTDIR=out_dir, IN=all_rsc, EXCLUDE=['.h'])
+		self.build.mark_stage_target(t)
+		AlwaysBuild(t)
+
+		os_rsc = path.join(d, 'Resources', self.build.os)
+		t = lw_copy('#cpr2-%s' % self.name, [], OUTDIR=out_dir, IN=os_rsc, EXCLUDE=['.h'])
+		self.build.mark_stage_target(t)
+		AlwaysBuild(t)
 
 		manifest = path.join(d, 'manifest')
 		if path.exists(manifest):
 			t = self.build.utils.CopyToDir(manifest, self.build_dir)
 			self.build.mark_stage_target(t)
+			AlwaysBuild(t)
 
 class BuildUtils(object):
 	def __init__(self, env):
@@ -64,6 +74,7 @@ class BuildUtils(object):
 			source_factory=SCons.Node.FS.default_fs.Entry,
 			target_factory=SCons.Node.FS.default_fs.Entry,
 			multi=1)
+		env['BUILDERS']['LightWeightCopyTree'] = env.Builder(action=utils.LightWeightCopyTree)
 
 	def CopyTree(self, *args, **kwargs):
 		return utils.SCopyTree(self.env, *args, **kwargs)
@@ -239,15 +250,7 @@ class BuildConfig(object):
 		m = Module(name, self.version, build_dir, self)
 		self.modules.append(m)
 
-		cwd = self.cwd(2)
-		targets = COMMAND_LINE_TARGETS
-		dist = 'dist' in targets or ARGUMENTS.get('dist', 0)
-		testapp = 'testapp' in targets or ARGUMENTS.get('testapp', 0)
-		testsuite = 'testsuite' in targets or ARGUMENTS.get('testsuite', 0)
-		package = 'package' in targets or ARGUMENTS.get('package', 0)
-
-		if resources and (dist or testapp or testsuite or package):
-			m.copy_resources(cwd)
+		m.copy_resources(self.cwd(2))
 
 		return m
 
@@ -311,3 +314,4 @@ class BuildConfig(object):
 		self.dist_targets.append(t)
 		Depends(t, 'stage')
 		Alias('dist', self.dist_targets)
+

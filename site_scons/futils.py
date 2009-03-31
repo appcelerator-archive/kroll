@@ -16,9 +16,9 @@ def filter_file(file, include=[], exclude=[], filter=None):
 
 # Adapted from: http://www.scons.org/wiki/AccumulateBuilder
 def CopyTree(*args, **kwargs):
-	if (type(args[1]) == types.ListType):
-		for src in args[1]:
-			CopyTreeImpl(args[0], src, **kwargs)
+	if (type(args[0]) == types.ListType):
+		for src in args[0]:
+			CopyTreeImpl(src, args[1], **kwargs)
 	else:
 		CopyTreeImpl(*args, **kwargs)
 
@@ -45,9 +45,9 @@ def CopyTreeImpl(src, dest, **kwargs):
 		CopyToDir(src, dest, **kwargs)
 
 def CopyToDir(*args, **kwargs):
-	if (type(args[1]) == types.ListType):
-		for src in args[1]:
-			CopyToDirImpl(args[0], src, **kwargs)
+	if (type(args[0]) == types.ListType):
+		for src in args[0]:
+			CopyToDirImpl(src, args[1], **kwargs)
 	else:
 		CopyToDirImpl(*args, **kwargs)
 

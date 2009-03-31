@@ -29,7 +29,7 @@ class App:
 		elif self.build.is_win32():
 			self.contents = build_dir
 			self.exe = p.join(self.contents, self.shortname+'.exe')
-			self.kboot = p.join(self.build.dir, 'runtime', 'template' 'kboot.exe')
+			self.kboot = p.join(self.build.dir, 'runtime', 'template', 'kboot.exe')
 		elif self.build.is_osx():
 			if not self.dir.endswith('.app'): self.dir += '.app'
 			self.contents = p.join(self.dir, 'Contents')
@@ -40,7 +40,7 @@ class App:
 		self.resources = p.join(self.contents, 'Resources');
 		self.net_installer = p.join(self.build.runtime_build_dir, 'installer')
 
-		excludes = ['.dll.manifest', '.dll.pdb', '.exp', '.ilk']
+		excludes = ['.dll.manifest', '.dll.pdb', '.exp', '.ilk', '.lib']
 
 		self.status('copying runtime to %s' % self.contents)
 		futils.CopyToDir(src_runtime, self.contents, exclude=excludes)
