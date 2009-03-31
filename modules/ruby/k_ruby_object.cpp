@@ -63,8 +63,7 @@ namespace kroll {
 		VALUE ruby_value = Qnil;
 		if (rb_obj_respond_to(object, get_ID, Qtrue) == Qtrue)
 		{
-			rb_funcall(object, rb_intern("method"), 1, ID2SYM(get_ID));
-			ruby_value = rb_funcall(object, get_ID, 0);
+			ruby_value = rb_funcall(object, rb_intern("method"), 1, ID2SYM(get_ID));
 		}
 		else if (rb_ivar_defined(object, iv_ID))
 		{
