@@ -15,6 +15,7 @@ class App:
 		print '    -> %s' % msg
 
 	def set_modules(self, modules):
+		print modules
 		self.modules = modules
 
 	def prestage(self, build_dir, src_contents=None, src_resources=None):
@@ -51,8 +52,8 @@ class App:
 		self.status('copying kboot to %s' % self.exe)
 		futils.Copy(self.kboot, self.exe)
 
-		self.status('copying netinstaller (%s) to %s' % (self.net_installer, self.dir))
-		futils.CopyToDir(self.net_installer, self.dir)
+		self.status('copying netinstaller (%s) to %s' % (self.net_installer, self.contents))
+		futils.CopyToDir(self.net_installer, self.contents)
 
 		if src_contents:
 			self.status('copying %s to %s' % (src_contents, self.exe))
@@ -98,7 +99,7 @@ class App:
 			self.build.utils.CopyToDir(mscrt, self.contents)
 
 		self.status('writing manifest to %s' % p.join(self.contents, 'manifest'))
-		manifest = self.build.generate_manifest(self.fullname, self.id, self.guid)
+		manifest = self.build.generate_manifest(self.fullname, self.id, self.guid, include=self.modules)
 		m_file = open(p.join(self.contents, 'manifest'), 'w')
 		m_file.write(manifest)
 		m_file.close()

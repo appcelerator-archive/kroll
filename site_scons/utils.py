@@ -71,6 +71,10 @@ def SCopyToDirImpl(e, src, dest, include=[], exclude=[], filter=None, recurse=Tr
 	"""
 
 	def copy_item(src, dest):
+		dest_dir = path.dirname(dest)
+		if not path.exists(dest_dir):
+			os.makedirs(dest_dir)
+
 		#print "copy u %s %s" % (src, dest)
 		# Test for a symlink first, because a symlink can
 		# also return turn for isdir
@@ -82,11 +86,13 @@ def SCopyToDirImpl(e, src, dest, include=[], exclude=[], filter=None, recurse=Tr
 		elif path.isdir(src) and filter_file(src, [], exclude, filter):
 			return copy_items(src, dest)
 
-		elif filter_file(src, [], exclude, filter):
+		elif filter_file(src, include, exclude, filter):
 			return e.Command(dest, src, Copy('$TARGET', '$SOURCE'))
 
 	def copy_items(src, dest):
 		targets = [] # result targets
+		if not os.path.exists(dest):
+			os.makedirs(dest)
 		for item in os.listdir(src):
 			src_item = path.abspath(path.join(src, item))
 			dest_item = path.join(dest, item)

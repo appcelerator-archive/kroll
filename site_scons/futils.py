@@ -78,13 +78,16 @@ def CopyToDirImpl(src, dest, include=[], exclude=[], filter=None, recurse=True):
 			copy_items(src, dest)
 			return
 
-		elif filter_file(src, [], exclude, filter):
+		elif filter_file(src, include, exclude, filter):
 			if path.exists(dest):
 				os.remove(dest)
 			shutil.copy2(src, dest)
 
 	def copy_items(src, dest):
 		#print "copy items %s %s" % (src, dest)
+		if not path.exists(dest):
+			os.makedirs(dest)
+
 		for item in os.listdir(src):
 			src_item = os.path.abspath(os.path.join(src, item))
 			dest_item = os.path.join(dest, item)

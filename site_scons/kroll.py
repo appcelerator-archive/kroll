@@ -20,12 +20,13 @@ class Module(object):
 
 		lw_copy = self.build.env.LightWeightCopyTree
 
-		out_dir = path.join(self.build_dir, 'AppResources'), 
+		out_dir = path.join(self.build_dir, 'AppResources', 'all'), 
 		all_arsc = path.join(d, 'AppResources', 'all')
 		t = lw_copy('#cpar-%s' % self.name, [], OUTDIR=out_dir, IN=all_arsc, EXCLUDE=['.h'])
 		self.build.mark_stage_target(t)
 		AlwaysBuild(t)
 
+		out_dir = path.join(self.build_dir, 'AppResources', self.build.os), 
 		os_arsc = path.join(d, 'AppResources', self.build.os)
 		t = lw_copy('#cpar2-%s' % self.name, [], OUTDIR=out_dir, IN=os_arsc, EXCLUDE=['.h'])
 		self.build.mark_stage_target(t)
@@ -228,7 +229,7 @@ class BuildConfig(object):
 			self.env.Append(CPPFLAGS=['-arch','ppc'])
 			self.env.Append(LINKFLAGS=OSX_UNIV_LINKER)
 			self.env.Append(FRAMEWORKS=['Foundation'])
-			self.env.Append(CPPFLAGS=['-Wall', '-Werror','-fno-common','-fvisibility=hidden'])
+			self.env.Append(CPPFLAGS=['-Wall', '-fno-common','-fvisibility=hidden'])
 
 	def matches(self, n): return bool(re.match(os.uname()[0], n))
 	def is_linux(self): return self.os == 'linux'
@@ -273,10 +274,11 @@ class BuildConfig(object):
 		manifest += "#guid: %s\n" % guid
 		manifest += "runtime: %s\n" % self.version
 		for m in self.modules:
-			if (include and not(m.name in include)) or \
-				(exclude and m.name in exclude):
+			if (include and not (m.name in include)) \
+			  or (exclude and (m.name in exclude)):
 				continue
-			manifest += "%s:%s\n" % (m.name, m.version)
+			else:
+				manifest += "%s:%s\n" % (m.name, m.version)
 		return manifest
 
 	def add_thirdparty(self, env, name):

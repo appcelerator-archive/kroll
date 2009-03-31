@@ -291,7 +291,8 @@ namespace kroll
 
 		std::string appDir = FileUtils::GetApplicationDirectory();
 
-		try {
+		try
+		{
 			Poco::Path moduleDir(modulePath);
 			moduleDir = moduleDir.parent();
 			std::string mds(moduleDir.toString());
@@ -304,7 +305,8 @@ namespace kroll
 			Poco::File allAppResourcesDir(all_resources_dir);
 
 			if (platformAppResourcesDir.exists()
-				&& platformAppResourcesDir.isDirectory()) {
+				&& platformAppResourcesDir.isDirectory())
+			{
 
 				std::vector<Poco::File> files;
 				platformAppResourcesDir.list(files);
@@ -324,7 +326,9 @@ namespace kroll
 					files.at(i).copyTo(appDir);
 				}
 			}
-		} catch (Poco::Exception &exc) {
+		}
+		catch (Poco::Exception &exc)
+		{
 			// Handle..
 		}
 	}
