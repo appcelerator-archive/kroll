@@ -44,6 +44,12 @@ namespace kroll
 		global->Set("Python", Value::NewObject(this->binding));
 
 		SharedKMethod evaluator = new PythonEvaluator();
+		/**
+		 * @tiapi(method=True,name=Python.evaluate,since=0.2) evaluate a python script
+		 * @tiarg(for=Python.evaluate,name=code,type=string) python script code
+		 * @tiarg(for=Python.evaluate,name=scope,type=object) global variable scope
+		 * @tiresult(for=Python.evaluate,type=object) result
+		 */
 		this->binding->Set("evaluate", Value::NewMethod(evaluator));
 
 		PyObject* main_module = PyImport_AddModule("__main__");
