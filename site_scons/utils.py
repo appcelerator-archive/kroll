@@ -219,13 +219,13 @@ def NeedsUpdate(source, target, exclude):
 
 				out_file = target + os.sep + file.replace(source, '')
 				if not path.exists(out_file):
-					print ' %s does not exist' % out_file
+					print '    -> %s does not exist' % out_file
 					return True
 				else:
 					tstamp_o = os.stat(file)[stat.ST_MTIME]
 					tstamp_d = os.stat(out_file)[stat.ST_MTIME]
 					if tstamp_o > tstamp_d:
-						print '%s is out of date' % out_file
+						print '    -> %s is out of date' % out_file
 						return True
 	return False
 
@@ -234,10 +234,10 @@ def LightWeightCopyTreeImpl(source, target, exclude):
 		return
 	
 	if NeedsUpdate(source, target, exclude):
-		print "Copying %s ==> %s" % (source, target)
+		print "    -> Copying %s ==> %s" % (source, target)
 		futils.CopyTree(source, target, exclude=exclude)
 	else:
-		print "Already up to date: %s ==> %s" % (source, target)
+		print "    -> Already up to date: %s"  % target
 
 def LightWeightCopyTree(target, source, env):
 	if not 'EXCLUDE' in env:

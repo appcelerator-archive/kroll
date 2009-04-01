@@ -18,30 +18,26 @@ class Module(object):
 		if not d:
 			d = self.build.cwd(2)
 
-		lw_copy = self.build.env.LightWeightCopyTree
+		def light_weight_copy(name, indir, outdir):
+			if os.path.exists(indir):
+				t = self.build.env.LightWeightCopyTree(name, [], OUTDIR=outdir, IN=indir, EXCLUDE=['.h'])
+				self.build.mark_stage_target(t)
+				AlwaysBuild(t)
 
-		out_dir = path.join(self.build_dir, 'AppResources', 'all'), 
-		all_arsc = path.join(d, 'AppResources', 'all')
-		t = lw_copy('#cpar-%s' % self.name, [], OUTDIR=out_dir, IN=all_arsc, EXCLUDE=['.h'])
-		self.build.mark_stage_target(t)
-		AlwaysBuild(t)
+		indir = path.join(d, 'AppResources', 'all')
+		outdir = path.join(self.build_dir, 'AppResources', 'all'), 
+		light_weight_copy('#' + self.name + '-AllAppResources', indir, outdir)
 
-		out_dir = path.join(self.build_dir, 'AppResources', self.build.os), 
-		os_arsc = path.join(d, 'AppResources', self.build.os)
-		t = lw_copy('#cpar2-%s' % self.name, [], OUTDIR=out_dir, IN=os_arsc, EXCLUDE=['.h'])
-		self.build.mark_stage_target(t)
-		AlwaysBuild(t)
+		indir = path.join(d, 'AppResources', self.build.os)
+		outdir = path.join(self.build_dir, 'AppResources', self.build.os), 
+		light_weight_copy('#' + self.name + '-OSAppResources', indir, outdir)
 
-		out_dir = self.build_dir
-		all_rsc = path.join(d, 'Resources', 'all')
-		t = lw_copy('#cpr-%s' % self.name, [], OUTDIR=out_dir, IN=all_rsc, EXCLUDE=['.h'])
-		self.build.mark_stage_target(t)
-		AlwaysBuild(t)
+		outdir = self.build_dir
+		indir = path.join(d, 'Resources', 'all')
+		light_weight_copy('#' + self.name + '-AllResources', indir, outdir)
 
-		os_rsc = path.join(d, 'Resources', self.build.os)
-		t = lw_copy('#cpr2-%s' % self.name, [], OUTDIR=out_dir, IN=os_rsc, EXCLUDE=['.h'])
-		self.build.mark_stage_target(t)
-		AlwaysBuild(t)
+		indir = path.join(d, 'Resources', self.build.os)
+		light_weight_copy('#' + self.name + '-OSResources', indir, outdir)
 
 		manifest = path.join(d, 'manifest')
 		if path.exists(manifest):
