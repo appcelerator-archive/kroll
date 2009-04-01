@@ -78,7 +78,13 @@ namespace kroll
 		 * Construct a new \link #Value::Type::STRING string\endlink value.
 		 * @param value The string value
 		 */
-		static SharedValue NewString(std::string& value);
+		static SharedValue NewString(std::string value);
+
+		/**
+		 * Construct a new \link #Value::Type::STRING string\endlink value.
+		 * @param value The string value
+		 */
+		static SharedValue NewString(SharedString value);
 
 		/**
 		 * Construct a new \link #Value::Type::LIST list\endlink value.
@@ -263,7 +269,13 @@ namespace kroll
 		 * Change the internal value of this Value to an \link #Value::Type::STRING string\endlink
 		 * @param value the string value
 		 */
-		void SetString(std::string& value);
+		void SetString(std::string value);
+
+		/**
+		 * Change the internal value of this Value to an \link #Value::Type::STRING string\endlink
+		 * @param value the string value
+		 */
+		void SetString(SharedString value);
 
 		/**
 		 * Change the internal value of this Value to an \link #Value::Type::LIST list\endlink

@@ -99,10 +99,17 @@ namespace kroll
 		return v;
 	}
 
-	SharedValue Value::NewString(std::string& value)
+	SharedValue Value::NewString(std::string value)
 	{
 		SharedValue v(new Value());
 		v->SetString(value.c_str());
+		return v;
+	}
+
+	SharedValue Value::NewString(SharedString value)
+	{
+		SharedValue v(new Value());
+		v->SetString(value.get()->c_str());
 		return v;
 	}
 
@@ -228,9 +235,14 @@ namespace kroll
 		type = STRING;
 	}
 
-	void Value::SetString(std::string& value)
+	void Value::SetString(std::string value)
 	{
 		this->SetString(value.c_str());
+	}
+
+	void Value::SetString(SharedString value)
+	{
+		this->SetString(value.get()->c_str());
 	}
 
 	void Value::SetList(SharedKList value)
