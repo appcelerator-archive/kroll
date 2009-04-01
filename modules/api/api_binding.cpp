@@ -279,7 +279,8 @@ namespace kroll
 		ScopedLock lock(&mutex);
 		
 		// optimize even the lookup
-		if (this->registrations.size() == 0) return;
+		if (this->registrations.size() == 0)
+			return;
 
 		EventRecords records = this->registrations[event];
 		if (records.size() > 0)

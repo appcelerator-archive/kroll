@@ -96,6 +96,7 @@ namespace kroll
 			char* name = KJSUtil::ToChars(js_name);
 			SharedString name_str(new std::string(name));
 			list->push_back(name_str);
+			free(name);
 		}
 
 		JSPropertyNameArrayRelease(names);
