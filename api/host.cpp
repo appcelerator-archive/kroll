@@ -35,13 +35,18 @@ namespace kroll
 	SharedPtr<Host> Host::instance_;
 
 	Host::Host(int argc, const char *argv[]) :
+		autoScan(false),
+		running(false),
+		exitCode(0),
 		debug(false),
-		wait_for_debugger(false)
+		waitForDebugger(false),
+		runUILoop(true)
 	{
 		instance_ = this;
 
 		std::string kr_home_str = "KR_HOME";
 		std::string kr_runtime_str = "KR_RUNTIME";
+		std::string kr_runtime_home_str = "KR_RUNTIME_HOME";
 		std::string kr_modules_str = "KR_MODULES";
 		std::string kr_debug_str = "KR_DEBUG";
 
@@ -57,105 +62,96 @@ namespace kroll
 			exit(1);
 		}
 
+		if (!Environment::has(kr_runtime_home_str))
+		{
+			std::cerr << kr_runtime_home_str << " not defined, aborting." << std::endl;
+			exit(1);
+		}
+
 		if (!Environment::has(kr_modules_str))
 		{
 			std::cerr << kr_modules_str << " not defined, aborting." << std::endl;
 			exit(1);
 		}
 
-#ifdef DEBUG
-		// if you compile in debug, force debug here
-		this->debug = true;
-#else
-		// we also support setting debug from an environment
 		if (Environment::has(kr_debug_str))
 		{
 			std::string ti_debug = Environment::get(kr_debug_str);
 			this->debug = (ti_debug == "true" || ti_debug == "yes" || ti_debug == "1");
 		}
+
+#ifdef DEBUG
+		this->debug = true; // if you compile in debug, force debug here
 #endif
 
-		std::string ti_home = Environment::get(kr_home_str);
-		std::string ti_runtime = Environment::get(kr_runtime_str);
+		this->appHomePath = Environment::get(kr_home_str);
+		this->runtimePath = Environment::get(kr_runtime_str);
+		this->runtimeHomePath = Environment::get(kr_runtime_home_str);
+
 		std::string paths = Environment::get(kr_modules_str);
-		PRINTD(">>> " << kr_home_str << "=" << ti_home);
-		PRINTD(">>> " << kr_runtime_str << "=" << ti_runtime);
+		FileUtils::Tokenize(paths, this->module_paths, KR_LIB_SEP);
+
+		// If the appinstaller is needed it can override the appHomePath
+		SetupAppInstallerIfRequired();
+		ParseCommandLineArguments(argc, argv);
+
+		PRINTD(">>> " << kr_home_str << "=" << this->appHomePath);
+		PRINTD(">>> " << kr_runtime_str << "=" << this->runtimePath);
+		PRINTD(">>> " << kr_runtime_home_str << "=" << this->runtimeHomePath);
 		PRINTD(">>> " << kr_modules_str << "=" << paths);
 
-		FileUtils::Tokenize(paths, this->module_paths, KR_LIB_SEP);
-		// check to see if we have to install the app
-		std::string home = SetupAppInstallerIfRequired(ti_home);
-
-		// check to see if we have a different starting point
-		std::string start_page = SetupStartPageOverrideIfRequired(argc,argv);
-		if (!start_page.empty())
-		{
-			// will return non-empty if have a non-default home
-			home = start_page;
-		}
-
-		// change the KR_HOME environment if changed
-		if (home != ti_home)
-		{
-			Environment::set(kr_home_str, home);
-		}
-
-
-		this->running = false;
-		this->exitCode = 0;
-
-		this->appDirectory = std::string(home);
-		this->runtimeDirectory = std::string(ti_runtime);
-		this->global_object = new StaticBoundObject();
-
 		// link the name of our global variable to ourself so
-		//  we can reference from global scope directly to get it
+		// we can reference from global scope directly to get it
+		this->global_object = new StaticBoundObject();
 		this->global_object->SetObject(GLOBAL_NS_VARNAME, this->global_object);
-
-		this->autoScan = false;
-		this->runUILoop = true;
-
-		// Sometimes libraries parsing argc and argv will
-		// modify them, so we want to keep our own copy here
-		for (int i = 0; i < argc; i++)
-		{
-			this->args.push_back(std::string(argv[i]));
-			PRINTD("ARGUMENT[" << i << "] => " << argv[i]);
-
-			if (strcmp(argv[i], "--debug") == 0)
-			{
-				std::cout << "DEBUGGING DETECTED!" << std::endl;
-				this->debug = true;
-			}
-
-			if (strcmp(argv[i], "--attach-debugger") == 0)
-			{
-				this->wait_for_debugger = true;
-			}
-		}
-
 	}
 
 	Host::~Host()
 	{
 	}
 
-	std::string Host::SetupStartPageOverrideIfRequired(int argc, const char**argv)
+	void Host::ParseCommandLineArguments(int argc, const char** argv)
 	{
-		if (argc > 1)
+		// Sometimes libraries parsing argc and argv will
+		// modify them, so we want to keep our own copy here
+		for (int i = 0; i < argc; i++)
 		{
-			for (int c=1;c<argc;c++)
+			std::string arg = argv[i];
+			this->args.push_back(arg);
+			PRINTD("ARGUMENT[" << i << "] => " << argv[i]);
+
+			// Some Kroll specific command-line arguments
+			if (arg == "--debug")
 			{
-				std::string arg(argv[c]);
-				size_t i = arg.find("--start=");
-				if (i!=std::string::npos)
-				{
-					size_t i = arg.find("=");
-					return arg.substr(i+1);
-				}
+				std::cout << "DEBUGGING DETECTED!" << std::endl;
+				this->debug = true;
+			}
+			else if (arg == "--attach-debugger")
+			{
+				this->waitForDebugger = true;
+			}
+			else if (arg.find(STRING(BOOT_HOME_FLAG)) == 0)
+			{
+				std::string new_home = arg.substr(arg.find("=") + 1);
+				this->appHomePath = new_home;
+				Environment::set("KR_HOME", new_home);
 			}
 		}
-		return std::string();
+	}
+
+	const std::string& Host::GetApplicationHomePath()
+	{
+		return appHomePath;
+	}
+
+	const std::string& Host::GetRuntimeHomePath()
+	{
+		return runtimeHomePath;
+	}
+
+	const std::string& Host::GetRuntimePath()
+	{
+		return runtimeHomePath;
 	}
 
 	std::string Host::FindAppInstaller(std::string home)
@@ -164,44 +160,38 @@ namespace kroll
 		if (FileUtils::IsDirectory(appinstaller))
 		{
 			PRINTD("Found app installer at: " << appinstaller);
-			return appinstaller.c_str();
+			return FileUtils::Trim(appinstaller);
 		}
 
-		std::string ename = "KR_RUNTIME";
-		if (Environment::has(ename))
+		appinstaller = FileUtils::Join(this->runtimePath.c_str(), "appinstaller", NULL);
+		if (FileUtils::IsDirectory(appinstaller))
 		{
-			std::string runtime = Environment::get(ename);
-			appinstaller = FileUtils::Join(runtime.c_str(), "appinstaller", NULL);
-			if (FileUtils::IsDirectory(appinstaller))
-			{
-				PRINTD("Found app installer at: " << appinstaller);
-				return appinstaller.c_str();
-			}
+			PRINTD("Found app installer at: " << appinstaller);
+			return FileUtils::Trim(appinstaller);
 		}
 
 		PRINTD("Couldn't find app installer");
 		return std::string();
 	}
 
-	std::string Host::SetupAppInstallerIfRequired(std::string home)
+	void Host::SetupAppInstallerIfRequired()
 	{
-		std::string marker = FileUtils::Join(home.c_str(), ".installed", NULL);
+		std::string marker = FileUtils::Join(this->appHomePath.c_str(), ".installed", NULL);
 		if (!FileUtils::IsFile(marker))
 		{
 			// not yet installed, look for the app installer
-			std::string ai = FindAppInstaller(home);
+			std::string ai = FindAppInstaller(this->appHomePath);
 			if (!ai.empty())
 			{
 				// make the app installer our new home so that the
 				// app installer will run and set the environment var
 				// to the special setting with the old home
-				std::string ename = "KR_APP_INSTALL_FROM";
-				Environment::set(ename,  home);
-				return FileUtils::Trim(ai);
+				Environment::set(std::string("KR_APP_INSTALL_FROM"), this->appHomePath);
+				this->appHomePath = ai;
+				Environment::set("KR_HOME", ai);
 			}
 			PRINTD("Application needs installation but no app installer found");
 		}
-		return home;
 	}
 
 	bool Host::IsDebugMode()
@@ -289,8 +279,6 @@ namespace kroll
 	{
 		std::cout << "CopyModuleAppResources: " << modulePath << std::endl;
 
-		std::string appDir = FileUtils::GetApplicationDirectory();
-
 		try
 		{
 			Poco::Path moduleDir(modulePath);
@@ -311,8 +299,8 @@ namespace kroll
 				std::vector<Poco::File> files;
 				platformAppResourcesDir.list(files);
 				for (size_t i = 0; i < files.size(); i++) {
-					std::cout << "Copying " << files.at(i).path() << " to " << appDir << std::endl;
-					files.at(i).copyTo(appDir);
+					std::cout << "Copying " << files.at(i).path() << " to " << this->appHomePath << std::endl;
+					files.at(i).copyTo(this->appHomePath);
 				}
 			}
 
@@ -322,8 +310,8 @@ namespace kroll
 				std::vector<Poco::File> files;
 				allAppResourcesDir.list(files);
 				for (size_t i = 0; i < files.size(); i++) {
-					std::cout << "Copying " << files.at(i).path() << " to " << appDir << std::endl;
-					files.at(i).copyTo(appDir);
+					std::cout << "Copying " << files.at(i).path() << " to " << this->appHomePath << std::endl;
+					files.at(i).copyTo(this->appHomePath);
 				}
 			}
 		}
@@ -618,7 +606,7 @@ namespace kroll
 	int Host::Run()
 	{
 
-		if (this->wait_for_debugger)
+		if (this->waitForDebugger)
 		{
 			printf("Waiting for debugger (Press Any Key to Continue)...\n");
 			getchar();

@@ -62,97 +62,52 @@ struct Module
 	std::string name;
 	std::string version;
 	std::string path;
-	std::string uuid;
+	std::string typeuuid;
 	int op;
 	std::vector<std::string> libs;
 
 	Module(std::string key, std::string value)
 		: name(key)
 	{
+		if (name == "runtime")
+			this->typeuuid = RUNTIME_UUID;
+		else
+			this->typeuuid = MODULE_UUID;
+
 		FileUtils::ExtractVersion(value, &this->op, this->version);
 #ifdef DEBUG
 		std::cout << "Component: " << this->name << " : " << this->version
 		          << ", operation: " << this->op << std::endl;
 #endif
-
-		if (name == "runtime")
-		{
-			this->uuid = RUNTIME_UUID;
-		}
-		else
-		{
-			this->uuid = MODULE_UUID;
-		}
-	}
-
-	void Prep()
-	{
-		//this->ReadManifest();
-		//this->LoadLibraries();
-	}
-
-	void ReadManifest()
-	{
-		std::string fn = FileUtils::Join(this->path.c_str(), "manifest", NULL);
-		if (!FileUtils::IsFile(fn))
-			return;
-
-		std::ifstream file(fn.c_str());
-		if (file.bad() || file.fail())
-			throw std::string("Could not read module manifest: ") + fn;
-
-		while (!file.eof())
-		{
-			std::string line;
-			std::getline(file,line);
-			if (line.empty() || line.find(" ") == 0 || line.find("#") == 0)
-				continue;
-
-			std::string libname(FileUtils::Trim(line));
-			if (libname.empty())
-				continue;
-
-			std::string path = FileUtils::Join(this->path.c_str(), libname.c_str(), NULL);
-			this->libs.push_back(path);
-		}
-	}
-
-	void LoadLibraries()
-	{
-		std::vector<std::string>::iterator i = this->libs.begin();
-		while (i != this->libs.end())
-		{
-			std::string lib = *i++;
-#ifdef DEBUG
-			std::cout << "Attempting to load: " << lib << std::endl;
-#endif
-			void* r = dlopen(lib.c_str(), RTLD_LAZY | RTLD_GLOBAL);
-			if (r == NULL)
-				throw std::string("Couldn't load required library: ") + lib;
-		}
 	}
 };
+
+typedef struct InstallLocation
+{
+	std::string runtimeHome;
+	std::string runtime;
+	std::string modules;
+} InstallLocation;
 
 class Boot
 {
 	public:
 	std::string app_path;
 	std::string manifest_path;
-	std::string rt_path;
 	std::string app_name;
 	std::string app_id;
 	std::string guid;
 	std::string installer_path;
 
+	/* Default runtime base path or, if a runtime is found, that runtimeHomePath */
+	std::string defaultRuntimeHome;
+
 	/* Potential paths for installed modules and runtime */
-	std::vector<std::string> module_paths;
-	std::vector<std::string> rt_paths;
+	std::vector<InstallLocation*> installLocations;
 
 	/* Paths for bundled modules and runtime */
-	std::string bundled_module_path;
-	std::string bundled_rt_path;
-	std::string bundled_installer_module_path;
-	std::string bundled_installer_rt_path;
+	std::string bundledModulePath;
+	std::string bundledRuntimePath;
 
 	/* Modules requested by the manifest */
 	std::vector<Module*> modules;
@@ -175,18 +130,26 @@ class Boot
 			delete m;
 		}
 		this->modules.clear();
+
+		std::vector<InstallLocation*>::iterator li = this->installLocations.begin();
+		while (li != this->installLocations.end())
+		{
+			InstallLocation* l = *li;
+			li = this->installLocations.erase(li);
+			delete l;
+		}
 	}
 
-	void ParseManifest(const char* argv0)
+	void ParseManifest(const char* argv)
 	{
-		this->SetupPaths(argv0);
+		this->SetupPaths(argv);
 		this->ReadApplicationManifest();
 	}
 
-	void SetupPaths(const char* argv0)
+	void SetupPaths(const char* argv)
 	{
 		char* buffer = (char*) alloca(sizeof(char) * PATH_MAX);
-		char* real_path = realpath(argv0, buffer);
+		char* real_path = realpath(argv, buffer);
 		if (real_path == NULL)
 		{
 			this->app_path = FileUtils::GetApplicationDirectory();
@@ -204,37 +167,45 @@ class Boot
 		const char* capp_path = app_path.c_str();
 		this->manifest_path = FileUtils::Join(capp_path, MANIFEST_FILE, NULL);
 		if (!FileUtils::IsFile(this->manifest_path))
-			throw std::string("Could not find manifest!");
-
-		this->rt_path = FileUtils::GetRuntimeBaseDirectory();
-		if (!FileUtils::IsDirectory(this->rt_path))
 		{
-			std::cerr << "Could not find runtime directory ("
-			          << rt_path << "), but charging ahead anyhow."
-			          << std::endl;
+			throw std::string("Could not find manifest!");
 		}
 
-		// Later this will be a list of usual locations that
-		// modules might be installed. For now it is the default
-		// runtime location.
-		const char* crt_path = this->rt_path.c_str();
-		std::string rt_module_path =
-			 FileUtils::Join(crt_path, MODULE_DIR, "linux", NULL);
-		this->module_paths.push_back(rt_module_path);
+		std::string pname = PRODUCT_NAME;
+		std::transform(pname.begin(), pname.end(), pname.begin(), tolower);
 
-		std::string rt_rt_path =
-			 FileUtils::Join(crt_path, RUNTIME_DIR, "linux", NULL);
-		this->rt_paths.push_back(rt_rt_path);
+		// Kroll runtime and modules will located by searching the following paths in order:
+		// 1. ~/.PRODUCT_NAME (eg. ~/.titanium)
+		// 2. /opt/PRODUCT_NAME (default runtime base path for system-wide installation)
+		// 3. /usr/local/lib/PRODUCT_NAME
+		// 4. /usr/lib/PRODUCT_NAME
+		std::string dotLocation = std::string(".") + pname;
+		std::string homePath = getenv("HOME");
+		homePath = FileUtils::Join(homePath.c_str(), dotLocation.c_str(), NULL);
+		std::cout << homePath << std::endl;
+		this->AddInstallLocation(homePath);
 
-		this->bundled_module_path = FileUtils::Join(capp_path, MODULE_DIR, NULL);
-		this->bundled_rt_path = FileUtils::Join(capp_path, RUNTIME_DIR, NULL);
+		std::string optLocation = std::string("/opt/") + pname;
+		this->defaultRuntimeHome = optLocation;
+		this->AddInstallLocation(optLocation);
 
-		// The installer directory contains the package installer and bundled
-		// runtime / modules may also reside there. These locations have a lower
-		// priority than all other locations.
-		this->installer_path = FileUtils::Join(capp_path, "installer", NULL);
-		this->bundled_installer_module_path = FileUtils::Join(installer_path.c_str(), MODULE_DIR, NULL);
-		this->bundled_installer_rt_path = FileUtils::Join(installer_path.c_str(), RUNTIME_DIR, NULL);
+		this->AddInstallLocation(std::string("/usr/local/lib") + pname);
+		this->AddInstallLocation(std::string("/usr/lib/") + pname);
+
+		this->bundledModulePath = FileUtils::Join(capp_path, MODULE_DIR, NULL);
+		this->bundledRuntimePath = FileUtils::Join(capp_path, RUNTIME_DIR, NULL);
+
+		// The installer directory could previously contain bundled runtime / modules.
+		// This location is no longer supported for Linux.
+	}
+
+	void AddInstallLocation(std::string path)
+	{
+		InstallLocation* location = new InstallLocation;
+		location->runtimeHome = path;
+		location->runtime = FileUtils::Join(path.c_str(), RUNTIME_DIR, "linux", NULL);
+		location->modules = FileUtils::Join(path.c_str(), MODULE_DIR, "linux", NULL);
+		this->installLocations.push_back(location);
 	}
 
 	void ReadApplicationManifest()
@@ -295,8 +266,7 @@ class Boot
 		std::vector<Module*> unresolved;
 
 		// Find the runtime module
-		this->rt_module->path = this->FindRuntime(this->rt_module);
-		if (this->rt_module->path.empty())
+		if (!this->FindRuntime(this->rt_module))
 		{
 			unresolved.push_back(this->rt_module);
 		}
@@ -306,71 +276,86 @@ class Boot
 		while (i != modules.end())
 		{
 			Module* m = *i++;
-			m->path = this->FindModule(m);
-			if (m->path.empty())
+			if (!this->FindModule(m))
 			{
 				unresolved.push_back(m);
 			}
 		}
 
+		if (unresolved.size() > 0)
+		{
+			std::vector<Module*>::iterator dmi = unresolved.begin();
+			while (dmi != unresolved.end())
+			{
+				Module* m = *dmi++;
+				std::cout << "Unresolved: " << m->name << std::endl;
+			}
+			std::cout << "---" << std::endl;
+		}
+
 		return unresolved;
 	}
 
-	std::string FindModule(Module *m)
+	bool FindModule(Module *m)
 	{
 		// Try to find the bundled version of this module.
-		std::string path = FileUtils::Join(this->bundled_module_path.c_str(), m->name.c_str(), NULL);
+		std::string path = FileUtils::Join(this->bundledModulePath.c_str(), m->name.c_str(), NULL);
 		if (FileUtils::IsDirectory(path))
-			return path;
-
-		// Search all possible installed paths.
-		std::vector<std::string>::iterator i = module_paths.begin();
-		while (i != module_paths.end())
 		{
-			std::string p = *i++;
-			p = FileUtils::Join(p.c_str(), m->name.c_str(), NULL);
-			std::string result = FileUtils::FindVersioned(p, m->op, m->version);
-			if (!result.empty())
-				return result;
+			m->path = path;
+			return true;
 		}
 
-		// Try to find this module bundled with the installer
-		path = FileUtils::Join(this->bundled_installer_module_path.c_str(), m->name.c_str(), NULL);
-		if (FileUtils::IsDirectory(path))
-			return path;
+		// Search all possible installed paths.
+		std::vector<InstallLocation*>::iterator i = installLocations.begin();
+		while (i != installLocations.end())
+		{
+			InstallLocation* l = *i++;
+			std::string p = FileUtils::Join(l->modules.c_str(), m->name.c_str(), NULL);
+			std::string result = FileUtils::FindVersioned(p, m->op, m->version);
+			if (!result.empty())
+			{
+				m->path = result;
+				return true;
+			}
+		}
 
-		return std::string(); // We couldn't resolve this module!
+		return false; // We couldn't resolve this module!
 	}
 
-	std::string FindRuntime(Module *m)
+	bool FindRuntime(Module *m)
 	{
 		// Try to find the bundled version of this module.
-		if (FileUtils::IsDirectory(this->bundled_rt_path))
-			return this->bundled_rt_path;
-
-		// Search all possible installed paths.
-		std::vector<std::string>::iterator i = this->rt_paths.begin();
-		while (i != this->rt_paths.end())
+		if (FileUtils::IsDirectory(this->bundledRuntimePath))
 		{
-			std::string p = *i++;
-			std::string result = FileUtils::FindVersioned(p, m->op, m->version);
-			if (!result.empty())
-				return result;
+			this->rt_module->path = this->bundledRuntimePath;
+			return true;
 		}
 
-		// Try to find this module bundled with the installer
-		if (FileUtils::IsDirectory(this->bundled_installer_module_path))
-			return this->bundled_installer_module_path;
+		// Search all possible installed paths.
+		std::vector<InstallLocation*>::iterator i = this->installLocations.begin();
+		while (i != this->installLocations.end())
+		{
+			InstallLocation* l = *i++;
+			std::string result = FileUtils::FindVersioned(l->runtime, m->op, m->version);
 
-		return std::string(); // We couldn't resolve this module!
+			// If we find a runtime in an installed location, make that the
+			// default location for module installation.
+			if (!result.empty())
+			{
+				this->defaultRuntimeHome = l->runtimeHome;
+				this->rt_module->path = result;
+				return true;
+			}
+		}
+
+		return false; // We couldn't resolve this module!
 	}
 
-	std::string PrepModules()
+	std::string GetModuleList()
 	{
 		if (this->rt_module == NULL || this->rt_module->path.empty())
 			throw std::string("Could not locate an appropriate runtime.");
-
-		this->rt_module->Prep();
 
 		std::ostringstream moduleList;
 		std::vector<Module*>::iterator i = this->modules.begin();
@@ -380,7 +365,6 @@ class Boot
 			if (m->path.empty())
 				throw std::string("Could not find module: ") + m->name;
 
-			m->Prep();
 			moduleList << m->path << ":";
 		}
 
@@ -389,14 +373,6 @@ class Boot
 
 	void RunAppInstaller(std::vector<Module*> missing)
     {
-#ifdef DEBUG
-		std::vector<Module*>::iterator dmi = missing.begin();
-		while (dmi != missing.end())
-		{
-			Module* m = *dmi++;
-			std::cout << "Missing: " << m->name << std::endl;
-		}
-#endif
 
 		// If we don't have an installer directory, just bail...
 		const char* ci_path = this->installer_path.c_str();
@@ -422,11 +398,6 @@ class Boot
 		qs += "&ostype=" + FileUtils::EncodeURIComponent(OSTYPE);
 		qs += "&osarch=" + FileUtils::EncodeURIComponent(osarch);
 
-		// Install to default runtime directory. At some point
-		// net_installer will decide where to install (for Loonix)
-		std::string install_to = this->rt_path;
-		kroll::FileUtils::CreateDirectory(install_to);
-
 		// Figure out the update site URL
 		std::string url;
 		char* env_site = getenv(BOOT_UPDATESITE_ENVNAME);
@@ -447,7 +418,7 @@ class Boot
 		args.push_back("Additional application files required"); // title
 		args.push_back("There are additional application files that are required for this application. These will be downloaded from the network. Please press Continue to download these files now to complete the installation of the application."); // intro
 		args.push_back(temp_dir); // temp dir
-		args.push_back(install_to); // where to install
+		args.push_back(this->defaultRuntimeHome); // Default runtime location
 		args.push_back("unused"); // unused unzip var
 
 		std::vector<Module*>::iterator mi = missing.begin();
@@ -461,7 +432,7 @@ class Boot
 			u.append("&version=");
 			u.append(mod->version);
 			u.append("&uuid=");
-			u.append(mod->uuid);
+			u.append(mod->typeuuid);
 			args.push_back(u);
 		}
 
@@ -488,29 +459,21 @@ int prepare_environment(int argc, const char* argv[])
 
 		if (missing.size() > 0)
 		{
-#ifdef DEBUG
-		std::vector<Module*>::iterator dmi = missing.begin();
-		while (dmi != missing.end())
-		{
-			Module* m = *dmi++;
-			std::cout << "StillMissing!: " << m->name << std::endl;
-		}
-#endif
 			// Don't throw an error here, because the module installer
 			// would have thrown an exception on an error, so the user
 			// must have cancelled.
 			return __LINE__;
 		}
 
-		// PropModules also ensure all modules have been found
-		std::string module_list = boot.PrepModules();
+		// GetModulList also ensures all modules have been found
+		std::string module_list = boot.GetModuleList();
 
 		// This is the signal that we are ready to boot
 		setenv("KR_BOOT_READY", "1", 1);
 		setenv("KR_HOME", boot.app_path.c_str(), 1);
 		setenv("KR_RUNTIME", boot.rt_module->path.c_str(), 1);
 		setenv("KR_MODULES", module_list.c_str(), 1);
-		setenv("KR_RUNTIME_HOME", boot.rt_path.c_str(), 1);
+		setenv("KR_RUNTIME_HOME", boot.defaultRuntimeHome.c_str(), 1);
 		setenv("KR_APP_GUID",boot.guid.c_str(),1);
 
 		const char* prepath = getenv("LD_LIBRARY_PATH");
@@ -519,12 +482,7 @@ int prepare_environment(int argc, const char* argv[])
 		std::ostringstream ld_library_path;
 		ld_library_path << boot.rt_module->path << ":"
 		                 << module_list << ":" << prepath;
-#ifdef DEBUG
-		std::cout << "LD_LIBRARY_PATH=" << ld_library_path.str() << std::endl;
-#endif
 		setenv("LD_LIBRARY_PATH", ld_library_path.str().c_str(), 1);
-
-
 		execv(argv[0], (char* const*) argv);
 	}
 	catch (std::string& e)

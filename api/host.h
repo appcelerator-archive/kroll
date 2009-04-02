@@ -25,13 +25,13 @@ namespace kroll
 		/**
 		 * The Titanium platform as a string
 		 */
-		static const char * Platform;
+		static const char* Platform;
 
 		/**
 		 * @param argc argument count
 		 * @param argv command line arguments
 		 */
-		Host(int argc, const char **argv);
+		Host(int argc, const char** argv);
 
 		/**
 		 * Get the static host instance§§
@@ -44,12 +44,12 @@ namespace kroll
 	public:
 
 		/**
-		 * called to run the host
+		 * Called to run the host
 		 */
 		int Run();
 
 		/**
-		 * called to exit the host and terminate the process
+		 * Called to exit the host and terminate the process
 		 */
 		virtual void Exit(int exitcode);
 
@@ -88,7 +88,7 @@ namespace kroll
 
 		/**
 		 * Get a module given the module path.
-		 *@param path The path of the module to get
+		 * @param path The path of the module to get
 		 *
 		 * @return A reference to the module.
 		 */
@@ -108,12 +108,17 @@ namespace kroll
 		/**
 		 * @return The home directory for this application
 		*/
-		const std::string& GetApplicationHome() const { return appDirectory; }
+		const std::string& GetApplicationHomePath();
 
 		/**
-		 * @return THe home directory of the current runtime§
+		 * @return The home directory of the current runtime§
 		*/
-		const std::string& GetRuntimeHome() const { return runtimeDirectory; }
+		const std::string& GetRuntimeHomePath();
+
+		/**
+		 * @return The directory of the current runtime§
+		*/
+		const std::string& GetRuntimePath();
 
 		/**
 		 * @return the number of command line arguments passed to this application
@@ -172,6 +177,16 @@ namespace kroll
 		std::vector<std::string> module_paths;
 		SharedPtr<StaticBoundObject> global_object;
 		std::vector<std::string> args;
+
+		std::string appHomePath;
+		std::string runtimePath;
+		std::string runtimeHomePath;
+		std::string appConfigPath;
+		bool autoScan;
+		bool running;
+		int exitCode;
+		bool debug;
+		bool waitForDebugger;
 		bool runUILoop;
 
 		/* This is the module suffix for this module provider. Since
@@ -249,20 +264,11 @@ namespace kroll
 		virtual void Stop ();
 
 		void AddInvalidModuleFile(std::string path);
-		std::string SetupAppInstallerIfRequired(std::string home);
-		std::string SetupStartPageOverrideIfRequired(int argc, const char**argv);
+		void SetupAppInstallerIfRequired();
 		std::string FindAppInstaller(std::string home);
+		void ParseCommandLineArguments(int, const char**);
 
 	private:
-		std::string appDirectory;
-		std::string runtimeDirectory;
-		std::string appConfigPath;
-		bool autoScan;
-		bool running;
-		int exitCode;
-		bool debug;
-		bool wait_for_debugger;
-
 		static SharedPtr<Host> instance_;
 		DISALLOW_EVIL_CONSTRUCTORS(Host);
 	};

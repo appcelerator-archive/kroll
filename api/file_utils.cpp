@@ -338,7 +338,8 @@ namespace kroll
 		while (true)
 		{
 			const char *i = va_arg(ap,const char*);
-			if (i == NULL) break;
+			if (i == NULL)
+				break;
 			parts.push_back(Trim(i));
 		}
 		va_end(ap);
@@ -347,10 +348,13 @@ namespace kroll
 		while (iter!=parts.end())
 		{
 			std::string p = (*iter++);
-			filepath+=p;
-			if (filepath.length() != 0 && iter!=parts.end())
+			filepath += p;
+
+			if (filepath.length() != 0
+				&& iter != parts.end()
+				&& filepath[filepath.length()] != KR_PATH_SEP[0])
 			{
-				filepath+=KR_PATH_SEP;
+				filepath += KR_PATH_SEP;
 			}
 		}
 #ifdef OS_OSX
