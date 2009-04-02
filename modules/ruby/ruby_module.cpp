@@ -42,6 +42,12 @@ namespace kroll
 		this->binding = new StaticBoundObject();
 		global->Set("Ruby", Value::NewObject(binding));
 		SharedKMethod evaluator = new RubyEvaluator();
+		/**
+		 * @tiapi(method=True,name=Ruby.evaluate,since=0.2) evaluate a ruby script
+		 * @tiarg(for=Ruby.evaluate,name=code,type=string) ruby script code
+		 * @tiarg(for=Ruby.evaluate,name=scope,type=object) global variable scope
+		 * @tiresult(for=Ruby.evaluate,type=object) result
+		 */
 		binding->Set("evaluate", Value::NewMethod(evaluator));
 
 		// Bind the API global constant
