@@ -452,6 +452,7 @@ int main(int _argc, const char* _argv[])
 		SetEnvironmentVariable("KR_RUNTIME_HOME",runtimeBasedir.c_str());
 		SetEnvironmentVariable("PATH",path.c_str());
 		SetEnvironmentVariable("KR_APP_GUID",guid.c_str());
+		SetEnvironmentVariable("KR_APP_ID",appid.c_str());
 
 		_execvp(argv[0],argv);
 	}

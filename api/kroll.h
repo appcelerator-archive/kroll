@@ -47,6 +47,8 @@ namespace kroll
 
 	class ValueReleasePolicy;
 
+	class Logger;
+
 	typedef KObject BoundObject;
 	typedef KMethod BoundMethod;
 	typedef KList BoundList;
@@ -78,6 +80,7 @@ namespace kroll
 	#pragma GCC visibility pop
 #endif
 
+#include "logger.h"
 #include "ref_counted.h"
 #include "file_utils.h"
 #include "scoped_ref_counted.h"

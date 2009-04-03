@@ -29,6 +29,8 @@
 #include <Poco/StringTokenizer.h>
 
 #define HOME_ENV "KR_HOME"
+#define APPID_ENV "KR_APP_ID"
+#define APPGUID_ENV "KR_APP_GUID"
 #define RUNTIME_ENV "KR_RUNTIME"
 #define RUNTIME_HOME_ENV "KR_RUNTIME_HOME"
 #define MODULES_ENV "KR_MODULES"
@@ -50,29 +52,12 @@ namespace kroll
 	{
 		instance_ = this;
 
-		if (!Environment::has(HOME_ENV))
-		{
-			std::cerr << HOME_ENV << " not defined, aborting." << std::endl;
-			exit(1);
-		}
-
-		if (!Environment::has(RUNTIME_ENV))
-		{
-			std::cerr << RUNTIME_ENV << " not defined, aborting." << std::endl;
-			exit(1);
-		}
-
-		if (!Environment::has(RUNTIME_HOME_ENV))
-		{
-			std::cerr << RUNTIME_HOME_ENV << " not defined, aborting." << std::endl;
-			exit(1);
-		}
-
-		if (!Environment::has(MODULES_ENV))
-		{
-			std::cerr << MODULES_ENV << " not defined, aborting." << std::endl;
-			exit(1);
-		}
+		AssertEnvironmentVariable(HOME_ENV);
+		AssertEnvironmentVariable(APPID_ENV);
+		AssertEnvironmentVariable(APPGUID_ENV);
+		AssertEnvironmentVariable(RUNTIME_ENV);
+		AssertEnvironmentVariable(RUNTIME_HOME_ENV);
+		AssertEnvironmentVariable(MODULES_ENV);
 
 		if (Environment::has(DEBUG_ENV))
 		{
@@ -85,6 +70,8 @@ namespace kroll
 #endif
 
 		this->appHomePath = Environment::get(HOME_ENV);
+		this->appID = Environment::get(APPID_ENV);
+		this->appGUID = Environment::get(APPGUID_ENV);
 		this->runtimePath = Environment::get(RUNTIME_ENV);
 		this->runtimeHomePath = Environment::get(RUNTIME_HOME_ENV);
 
@@ -96,6 +83,8 @@ namespace kroll
 		ParseCommandLineArguments(argc, argv);
 
 		PRINTD(">>> " << HOME_ENV << "=" << this->appHomePath);
+		PRINTD(">>> " << APPID_ENV << "=" << this->appID);
+		PRINTD(">>> " << APPGUID_ENV << "=" << this->appGUID);
 		PRINTD(">>> " << RUNTIME_ENV << "=" << this->runtimePath);
 		PRINTD(">>> " << RUNTIME_HOME_ENV << "=" << this->runtimeHomePath);
 		PRINTD(">>> " << MODULES_ENV << "=" << paths);
@@ -104,10 +93,24 @@ namespace kroll
 		//  we can reference from global scope directly to get it
 		this->global_object = new StaticBoundObject();
 		this->global_object->SetObject(GLOBAL_NS_VARNAME, this->global_object);
+
+		if (this->debug)
+			Logger::Initialize(true, true, Poco::Message::PRIO_TRACE, this->appID);
+		else
+			Logger::Initialize(true, true, Poco::Message::PRIO_DEBUG, this->appID);
 	}
 
 	Host::~Host()
 	{
+	}
+
+	void Host::AssertEnvironmentVariable(std::string variable)
+	{
+		if (!Environment::has(variable))
+		{
+			std::cerr << variable << " not defined, aborting." << std::endl;
+			exit(1);
+		}
 	}
 
 	void Host::ParseCommandLineArguments(int argc, const char** argv)
@@ -155,6 +158,16 @@ namespace kroll
 	const std::string& Host::GetRuntimeHomePath()
 	{
 		return this->runtimeHomePath;
+	}
+
+	const std::string& Host::GetApplicationID()
+	{
+		return this->appID;
+	}
+
+	const std::string& Host::GetApplicationGUID()
+	{
+		return this->appGUID;
 	}
 
 	std::string Host::FindAppInstaller()
@@ -444,7 +457,7 @@ namespace kroll
 		}
 
 		/* All modules are now loaded, so start them all */
-			this->StartModules(this->loaded_modules);
+		this->StartModules(this->loaded_modules);
 
 		/* Try to load files that weren't modules
 		 * using newly available module providers */

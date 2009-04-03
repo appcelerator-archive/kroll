@@ -121,6 +121,16 @@ namespace kroll
 		const std::string& GetRuntimeHomePath();
 
 		/**
+		 * @return The id of the current application
+		*/
+		const std::string& GetApplicationID();
+
+		/**
+		 * @return The id of the current application
+		*/
+		const std::string& GetApplicationGUID();
+
+		/**
 		 * @return the number of command line arguments passed to this application
 		 */
 		const int GetCommandLineArgCount();
@@ -182,6 +192,8 @@ namespace kroll
 		std::string runtimePath;
 		std::string runtimeHomePath;
 		std::string appConfigPath;
+		std::string appID;
+		std::string appGUID;
 		bool running;
 		int exitCode;
 		bool debug;
@@ -266,6 +278,7 @@ namespace kroll
 		void AddInvalidModuleFile(std::string path);
 		void SetupAppInstallerIfRequired();
 		void ParseCommandLineArguments(int argc, const char** argv);
+		static void AssertEnvironmentVariable(std::string);
 		std::string FindAppInstaller();
 
 	private:

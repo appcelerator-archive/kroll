@@ -57,7 +57,7 @@ namespace kroll
 	void APIUnitTestSuite::Run(Host *host, SharedKObject binding)
 	{
 		std::string msg("hello");
-		int severity = KR_LOG_DEBUG;
+		int severity = Logger::LDEBUG;
 
 		SharedPtr<APIBinding> api = binding.cast<APIBinding>();
 
