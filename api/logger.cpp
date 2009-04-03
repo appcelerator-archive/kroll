@@ -5,6 +5,10 @@
  */
 #include "kroll.h"
 
+#include <cstdarg>
+#include <cstdio>
+#include <Poco/Mutex.h>
+#include <Poco/ScopedLock.h>
 #include <Poco/Logger.h>
 #include <Poco/PatternFormatter.h>
 #include <Poco/FormattingChannel.h>
@@ -12,6 +16,8 @@
 #include <Poco/ConsoleChannel.h>
 #include <Poco/FileChannel.h>
 #include <Poco/Path.h>
+
+#define LOGGER_MAX_ENTRY_SIZE 512
 
 using Poco::PatternFormatter;
 using Poco::FormattingChannel;
@@ -23,6 +29,8 @@ using Poco::Path;
 namespace kroll
 {
 	std::map<std::string, Logger> Logger::loggers;
+	char Logger::buffer[LOGGER_MAX_ENTRY_SIZE];
+	Poco::Mutex Logger::mutex;
 
 	Logger& Logger::Get(std::string name)
 	{
@@ -106,10 +114,48 @@ namespace kroll
 		loggerImpl.log(m);
 	}
 
+	std::string Logger::Format(const char* format, va_list args)
+	{
+		// Protect the buffer
+		Poco::Mutex::ScopedLock lock(this->mutex);
+
+		vsnprintf(Logger::buffer, LOGGER_MAX_ENTRY_SIZE - 1, format, args);
+		Logger::buffer[LOGGER_MAX_ENTRY_SIZE - 1] = '\0';
+		std::string text = buffer;
+		return text;
+	}
+
+	void Logger::Log(Level level, const char* format, va_list args)
+	{
+		Poco::Logger& loggerImpl = Poco::Logger::get(name);
+
+		// Don't do formatting when this logger filters the message.
+		// This prevents unecessary string manipulation.
+		if (level >= (Level) loggerImpl.getLevel())
+		{
+			std::string messageText = Logger::Format(format, args);
+			this->Log(level, messageText);
+		}
+	}
+
+	void Logger::Log(Level level, const char* format, ...)
+	{
+		va_list args;
+		va_start(args, format);
+		this->Log(level, format, args);
+	}
+
 	void Logger::Trace(std::string message)
 	{
 		Poco::Logger& loggerImpl = Poco::Logger::get(name);
 		loggerImpl.trace(message);
+	}
+
+	void Logger::Trace(const char* format, ...)
+	{
+		va_list args;
+		va_start(args, format);
+		this->Log(LTRACE, format, args);
 	}
 
 	void Logger::Debug(std::string message)
@@ -118,10 +164,24 @@ namespace kroll
 		loggerImpl.debug(message);
 	}
 
-	void Logger::Information(std::string message)
+	void Logger::Debug(const char* format, ...)
+	{
+		va_list args;
+		va_start(args, format);
+		this->Log(LDEBUG, format, args);
+	}
+
+	void Logger::Info(std::string message)
 	{
 		Poco::Logger& loggerImpl = Poco::Logger::get(name);
 		loggerImpl.information(message);
+	}
+
+	void Logger::Info(const char* format, ...)
+	{
+		va_list args;
+		va_start(args, format);
+		this->Log(LINFO, format, args);
 	}
 
 	void Logger::Notice(std::string message)
@@ -130,10 +190,24 @@ namespace kroll
 		loggerImpl.notice(message);
 	}
 
-	void Logger::Warning(std::string message)
+	void Logger::Notice(const char* format, ...)
+	{
+		va_list args;
+		va_start(args, format);
+		this->Log(LNOTICE, format, args);
+	}
+
+	void Logger::Warn(std::string message)
 	{
 		Poco::Logger& loggerImpl = Poco::Logger::get(name);
 		loggerImpl.warning(message);
+	}
+
+	void Logger::Warn(const char* format, ...)
+	{
+		va_list args;
+		va_start(args, format);
+		this->Log(LWARN, format, args);
 	}
 
 	void Logger::Error(std::string message)
@@ -142,15 +216,36 @@ namespace kroll
 		loggerImpl.error(message);
 	}
 
+	void Logger::Error(const char* format, ...)
+	{
+		va_list args;
+		va_start(args, format);
+		this->Log(LERROR, format, args);
+	}
+
 	void Logger::Critical(std::string message)
 	{
 		Poco::Logger& loggerImpl = Poco::Logger::get(name);
 		loggerImpl.critical(message);
 	}
 
+	void Logger::Critical(const char* format, ...)
+	{
+		va_list args;
+		va_start(args, format);
+		this->Log(LCRITICAL, format, args);
+	}
+
 	void Logger::Fatal(std::string message)
 	{
 		Poco::Logger& loggerImpl = Poco::Logger::get(name);
 		loggerImpl.fatal(message);
+	}
+
+	void Logger::Fatal(const char* format, ...)
+	{
+		va_list args;
+		va_start(args, format);
+		this->Log(LFATAL, format, args);
 	}
 }

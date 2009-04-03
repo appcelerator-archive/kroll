@@ -95,9 +95,9 @@ namespace kroll
 		this->global_object->SetObject(GLOBAL_NS_VARNAME, this->global_object);
 
 		if (this->debug)
-			Logger::Initialize(true, true, Poco::Message::PRIO_TRACE, this->appID);
-		else
 			Logger::Initialize(true, true, Poco::Message::PRIO_DEBUG, this->appID);
+		else
+			Logger::Initialize(true, true, Poco::Message::PRIO_INFORMATION, this->appID);
 	}
 
 	Host::~Host()
