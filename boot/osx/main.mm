@@ -414,6 +414,7 @@ int main(int argc, char *argv[])
 		[environment setObject:[NSString stringWithCString:moduleList.str().c_str()] forKey:@"KR_MODULES"];
 		[environment setObject:[NSString stringWithCString:runtimeBasedir.c_str()] forKey:@"KR_RUNTIME_HOME"];
 		[environment setObject:[NSString stringWithCString:guid.c_str()] forKey:@"KR_APP_GUID"];
+		[environment setObject:[NSString stringWithCString:appid.c_str()] forKey:@"KR_APP_ID"];
 
 		NSMutableArray *arguments = [NSMutableArray arrayWithObjects:executablePath, nil];
 		while (*++argv)

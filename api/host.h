@@ -111,14 +111,24 @@ namespace kroll
 		const std::string& GetApplicationHomePath();
 
 		/**
+		 * @return The directory of the current runtime§
+		*/
+		const std::string& GetRuntimePath();
+
+		/**
 		 * @return The home directory of the current runtime§
 		*/
 		const std::string& GetRuntimeHomePath();
 
 		/**
-		 * @return The directory of the current runtime§
+		 * @return The id of the current application
 		*/
-		const std::string& GetRuntimePath();
+		const std::string& GetApplicationID();
+
+		/**
+		 * @return The id of the current application
+		*/
+		const std::string& GetApplicationGUID();
 
 		/**
 		 * @return the number of command line arguments passed to this application
@@ -182,11 +192,13 @@ namespace kroll
 		std::string runtimePath;
 		std::string runtimeHomePath;
 		std::string appConfigPath;
-		bool autoScan;
+		std::string appID;
+		std::string appGUID;
 		bool running;
 		int exitCode;
 		bool debug;
 		bool waitForDebugger;
+		bool autoScan;
 		bool runUILoop;
 
 		/* This is the module suffix for this module provider. Since
@@ -265,8 +277,9 @@ namespace kroll
 
 		void AddInvalidModuleFile(std::string path);
 		void SetupAppInstallerIfRequired();
-		std::string FindAppInstaller(std::string home);
-		void ParseCommandLineArguments(int, const char**);
+		void ParseCommandLineArguments(int argc, const char** argv);
+		static void AssertEnvironmentVariable(std::string);
+		std::string FindAppInstaller();
 
 	private:
 		static SharedPtr<Host> instance_;

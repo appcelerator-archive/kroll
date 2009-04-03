@@ -22,21 +22,13 @@ namespace kroll
 		std::string event;
 	};
 
-	enum LogSeverity
-	{
-		KR_LOG_DEBUG = 1,
-		KR_LOG_INFO = 2,
-		KR_LOG_ERROR = 3,
-		KR_LOG_WARN = 4
-	};
-
 	class APIBinding : public StaticBoundObject
 	{
 	public:
 		APIBinding(SharedKObject global);
 		virtual ~APIBinding();
 
-		void Log(int& severity, std::string& message);
+		void Log(int severity, std::string& message);
 		int Register(std::string& event, SharedKMethod callback);
 		void Unregister(int ref);
 		void Fire(const char* event, SharedValue data);
@@ -44,14 +36,19 @@ namespace kroll
 	private:
 		void _Set(const ValueList& args, SharedValue result);
 		void _Get(const ValueList& args, SharedValue result);
-		void _Log(const ValueList& args, SharedValue result);
-		void _LogDebug(const ValueList& args, SharedValue result);
-		void _LogInfo(const ValueList& args, SharedValue result);
-		void _LogWarn(const ValueList& args, SharedValue result);
-		void _LogError(const ValueList& args, SharedValue result);
 		void _Register(const ValueList& args, SharedValue result);
 		void _Unregister(const ValueList& args, SharedValue result);
 		void _Fire(const ValueList& args, SharedValue result);
+
+		void _Log(const ValueList& args, SharedValue result);
+		void _LogTrace(const ValueList& args, SharedValue result);
+		void _LogDebug(const ValueList& args, SharedValue result);
+		void _LogInfo(const ValueList& args, SharedValue result);
+		void _LogNotice(const ValueList& args, SharedValue result);
+		void _LogWarn(const ValueList& args, SharedValue result);
+		void _LogError(const ValueList& args, SharedValue result);
+		void _LogCritical(const ValueList& args, SharedValue result);
+		void _LogFatal(const ValueList& args, SharedValue result);
 
 		std::map<std::string, EventRecords> registrations;
 		std::map<int, BoundEventEntry> registrationsById;

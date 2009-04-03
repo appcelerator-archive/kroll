@@ -474,7 +474,8 @@ int prepare_environment(int argc, const char* argv[])
 		setenv("KR_RUNTIME", boot.rt_module->path.c_str(), 1);
 		setenv("KR_MODULES", module_list.c_str(), 1);
 		setenv("KR_RUNTIME_HOME", boot.defaultRuntimeHome.c_str(), 1);
-		setenv("KR_APP_GUID",boot.guid.c_str(),1);
+		setenv("KR_APP_GUID", boot.guid.c_str(),1);
+		setenv("KR_APP_ID", boot.app_id.c_str(), 1);
 
 		const char* prepath = getenv("LD_LIBRARY_PATH");
 		if (prepath == NULL) prepath = "";

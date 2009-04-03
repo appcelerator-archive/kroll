@@ -18,23 +18,27 @@ namespace kroll
 		this->SetMethod("fire", &APIBinding::_Fire);
 
 		// these are properties for log severity levels
-		this->Set("DEBUG",Value::NewInt(KR_LOG_DEBUG));
-		this->Set("INFO",Value::NewInt(KR_LOG_INFO));
-		this->Set("ERROR",Value::NewInt(KR_LOG_ERROR));
-		this->Set("WARN",Value::NewInt(KR_LOG_WARN));
+		this->Set("TRACE", Value::NewInt(Logger::LTRACE));
+		this->Set("DEBUG", Value::NewInt(Logger::LDEBUG));
+		this->Set("INFO", Value::NewInt(Logger::LINFO));
+		this->Set("NOTICE", Value::NewInt(Logger::LNOTICE));
+		this->Set("WARN", Value::NewInt(Logger::LWARN));
+		this->Set("ERROR", Value::NewInt(Logger::LERROR));
+		this->Set("CRITICAL", Value::NewInt(Logger::LCRITICAL));
+		this->Set("FATAL", Value::NewInt(Logger::LFATAL));
 
 		// these are convenience methods so you can do:
-		//
 		// Titanium.API.debug("hello")
-		//
 		// or
-		//
 		// Titanium.API.log(Titanium.API.DEBUG,"hello")
-		//
+		this->SetMethod("trace", &APIBinding::_LogTrace);
 		this->SetMethod("debug", &APIBinding::_LogDebug);
 		this->SetMethod("info", &APIBinding::_LogInfo);
-		this->SetMethod("error", &APIBinding::_LogError);
+		this->SetMethod("notice", &APIBinding::_LogNotice);
 		this->SetMethod("warn", &APIBinding::_LogWarn);
+		this->SetMethod("error", &APIBinding::_LogError);
+		this->SetMethod("critical", &APIBinding::_LogCritical);
+		this->SetMethod("fatal", &APIBinding::_LogFatal);
 	}
 
 	APIBinding::~APIBinding()
@@ -91,75 +95,103 @@ namespace kroll
 		}
 		result->SetValue(r);
 	}
-	void APIBinding::_LogInfo(const ValueList& args, SharedValue result)
+
+	void APIBinding::_LogTrace(const ValueList& args, SharedValue result)
 	{
 		SharedValue arg1 = args.at(0);
 		std::string msg = arg1->ToString();
-		int severity = KR_LOG_INFO;
-		this->Log(severity,msg);
+		this->Log(Logger::LTRACE, msg);
 	}
 	void APIBinding::_LogDebug(const ValueList& args, SharedValue result)
 	{
 		SharedValue arg1 = args.at(0);
-		SharedString msg = arg1->DisplayString();
-		int severity = KR_LOG_DEBUG;
-		this->Log(severity, *msg);
+		std::string msg = arg1->ToString();
+		this->Log(Logger::LDEBUG, msg);
+	}
+	void APIBinding::_LogInfo(const ValueList& args, SharedValue result)
+	{
+		SharedValue arg1 = args.at(0);
+		std::string msg = arg1->ToString();
+		this->Log(Logger::LINFO, msg);
+	}
+	void APIBinding::_LogNotice(const ValueList& args, SharedValue result)
+	{
+		SharedValue arg1 = args.at(0);
+		std::string msg = arg1->ToString();
+		this->Log(Logger::LNOTICE, msg);
 	}
 	void APIBinding::_LogWarn(const ValueList& args, SharedValue result)
 	{
 		SharedValue arg1 = args.at(0);
-		SharedString msg = arg1->DisplayString();
-		int severity = KR_LOG_WARN;
-		this->Log(severity, *msg);
+		std::string msg = arg1->ToString();
+		this->Log(Logger::LWARN, msg);
 	}
 	void APIBinding::_LogError(const ValueList& args, SharedValue result)
 	{
 		SharedValue arg1 = args.at(0);
-		SharedString msg = arg1->DisplayString();
-		int severity = KR_LOG_ERROR;
-		this->Log(severity, *msg);
+		std::string msg = arg1->ToString();
+		this->Log(Logger::LERROR, msg);
 	}
+	void APIBinding::_LogCritical(const ValueList& args, SharedValue result)
+	{
+		SharedValue arg1 = args.at(0);
+		std::string msg = arg1->ToString();
+		this->Log(Logger::LCRITICAL, msg);
+	}
+	void APIBinding::_LogFatal(const ValueList& args, SharedValue result)
+	{
+		SharedValue arg1 = args.at(0);
+		std::string msg = arg1->ToString();
+		this->Log(Logger::LFATAL, msg);
+	}
+
 	void APIBinding::_Log(const ValueList& args, SharedValue result)
 	{
-		if (args.size()==1)
+		if (args.size() ==1)
 		{
-			SharedValue arg1 = args.at(0);
-			SharedString msg = arg1->DisplayString();
-			int severity = KR_LOG_INFO;
-			this->Log(severity, *msg);
+			SharedValue v = args.at(0);
+			SharedString msg = v->DisplayString();
+			this->Log(Logger::LINFO, *msg);
 		}
 		else if (args.size()==2)
 		{
-			int severity = KR_LOG_INFO;
+			int severity = Logger::LINFO;
 
 			SharedValue arg1 = args.at(0);
 			if (arg1->IsString())
 			{
 				std::string type = arg1->ToString();
-				if (type == "DEBUG")
-				{
-					severity = KR_LOG_DEBUG;
-				}
+				if (type == "TRACE")
+					severity = Logger::LTRACE;
+
+				else if (type == "DEBUG")
+					severity = Logger::LDEBUG;
+
 				else if (type == "INFO")
-				{
-					severity = KR_LOG_INFO;
-				}
+					severity = Logger::LINFO;
+
+				else if (type == "NOTICE")
+					severity = Logger::LNOTICE;
+
 				else if (type == "WARN")
-				{
-					severity = KR_LOG_WARN;
-				}
+					severity = Logger::LWARN;
+
 				else if (type == "ERROR")
-				{
-					severity = KR_LOG_ERROR;
-				}
+					severity = Logger::LERROR;
+
+				else if (type == "CRITICAL")
+					severity = Logger::LCRITICAL;
+
+				else if (type == "FATAL")
+					severity = Logger::LFATAL;
 			}
 			else if (arg1->IsInt())
 			{
 				severity = arg1->ToInt();
 			}
-			SharedValue arg2 = args.at(1);
-			SharedString message = arg2->DisplayString();
-			this->Log(severity, *message);
+			SharedValue v = args.at(1);
+			SharedString msg = v->DisplayString();
+			this->Log(severity, *msg);
 		}
 	}
 
@@ -186,35 +218,10 @@ namespace kroll
 
 	//---------------- IMPLEMENTATION METHODS
 
-	void APIBinding::Log(int& severity, std::string& message)
+	void APIBinding::Log(int severity, std::string& message)
 	{
-		//FIXME: this is temporary implementation
-		const char *type;
-
-		switch (severity)
-		{
-			case KR_LOG_DEBUG:
-				type = "DEBUG";
-				break;
-			case KR_LOG_INFO:
-				type = "INFO";
-				break;
-			case KR_LOG_ERROR:
-				type = "ERROR";
-				break;
-			case KR_LOG_WARN:
-				type = "WARN";
-				break;
-			default:
-				type = "CUSTOM";
-				break;
-		}
-
-#if(DEBUG && OS_OSX)
-		NSLog(@"[%s] %s",type,message.c_str());
-#else
-		std::cout << "[" << type << "] " << message << std::endl;
-#endif
+		Logger& l = Logger::Get("API");
+		l.Log((Logger::Level) severity, message);
 	}
 
 	int APIBinding::Register(std::string& event, SharedKMethod callback)

@@ -28,6 +28,14 @@
 #include <Poco/Util/PropertyFileConfiguration.h>
 #include <Poco/StringTokenizer.h>
 
+#define HOME_ENV "KR_HOME"
+#define APPID_ENV "KR_APP_ID"
+#define APPGUID_ENV "KR_APP_GUID"
+#define RUNTIME_ENV "KR_RUNTIME"
+#define RUNTIME_HOME_ENV "KR_RUNTIME_HOME"
+#define MODULES_ENV "KR_MODULES"
+#define DEBUG_ENV "KR_DEBUG"
+
 using Poco::Environment;
 
 namespace kroll
@@ -35,79 +43,74 @@ namespace kroll
 	SharedPtr<Host> Host::instance_;
 
 	Host::Host(int argc, const char *argv[]) :
-		autoScan(false),
 		running(false),
 		exitCode(0),
 		debug(false),
 		waitForDebugger(false),
+		autoScan(false),
 		runUILoop(true)
 	{
 		instance_ = this;
 
-		std::string kr_home_str = "KR_HOME";
-		std::string kr_runtime_str = "KR_RUNTIME";
-		std::string kr_runtime_home_str = "KR_RUNTIME_HOME";
-		std::string kr_modules_str = "KR_MODULES";
-		std::string kr_debug_str = "KR_DEBUG";
+		AssertEnvironmentVariable(HOME_ENV);
+		AssertEnvironmentVariable(APPID_ENV);
+		AssertEnvironmentVariable(APPGUID_ENV);
+		AssertEnvironmentVariable(RUNTIME_ENV);
+		AssertEnvironmentVariable(RUNTIME_HOME_ENV);
+		AssertEnvironmentVariable(MODULES_ENV);
 
-		if (!Environment::has(kr_home_str))
+		if (Environment::has(DEBUG_ENV))
 		{
-			std::cerr << kr_home_str << " not defined, aborting." << std::endl;
-			exit(1);
-		}
-
-		if (!Environment::has(kr_runtime_str))
-		{
-			std::cerr << kr_runtime_str << " not defined, aborting." << std::endl;
-			exit(1);
-		}
-
-		if (!Environment::has(kr_runtime_home_str))
-		{
-			std::cerr << kr_runtime_home_str << " not defined, aborting." << std::endl;
-			exit(1);
-		}
-
-		if (!Environment::has(kr_modules_str))
-		{
-			std::cerr << kr_modules_str << " not defined, aborting." << std::endl;
-			exit(1);
-		}
-
-		if (Environment::has(kr_debug_str))
-		{
-			std::string ti_debug = Environment::get(kr_debug_str);
-			this->debug = (ti_debug == "true" || ti_debug == "yes" || ti_debug == "1");
+			std::string debug_val = Environment::get(DEBUG_ENV);
+			this->debug = (debug_val == "true" || debug_val == "yes" || debug_val == "1");
 		}
 
 #ifdef DEBUG
 		this->debug = true; // if you compile in debug, force debug here
 #endif
 
-		this->appHomePath = Environment::get(kr_home_str);
-		this->runtimePath = Environment::get(kr_runtime_str);
-		this->runtimeHomePath = Environment::get(kr_runtime_home_str);
+		this->appHomePath = Environment::get(HOME_ENV);
+		this->appID = Environment::get(APPID_ENV);
+		this->appGUID = Environment::get(APPGUID_ENV);
+		this->runtimePath = Environment::get(RUNTIME_ENV);
+		this->runtimeHomePath = Environment::get(RUNTIME_HOME_ENV);
 
-		std::string paths = Environment::get(kr_modules_str);
+		std::string paths = Environment::get(MODULES_ENV);
 		FileUtils::Tokenize(paths, this->module_paths, KR_LIB_SEP);
 
-		// If the appinstaller is needed it can override the appHomePath
+		// check to see if we have to install the app
 		SetupAppInstallerIfRequired();
 		ParseCommandLineArguments(argc, argv);
 
-		PRINTD(">>> " << kr_home_str << "=" << this->appHomePath);
-		PRINTD(">>> " << kr_runtime_str << "=" << this->runtimePath);
-		PRINTD(">>> " << kr_runtime_home_str << "=" << this->runtimeHomePath);
-		PRINTD(">>> " << kr_modules_str << "=" << paths);
+		PRINTD(">>> " << HOME_ENV << "=" << this->appHomePath);
+		PRINTD(">>> " << APPID_ENV << "=" << this->appID);
+		PRINTD(">>> " << APPGUID_ENV << "=" << this->appGUID);
+		PRINTD(">>> " << RUNTIME_ENV << "=" << this->runtimePath);
+		PRINTD(">>> " << RUNTIME_HOME_ENV << "=" << this->runtimeHomePath);
+		PRINTD(">>> " << MODULES_ENV << "=" << paths);
 
 		// link the name of our global variable to ourself so
-		// we can reference from global scope directly to get it
+		//  we can reference from global scope directly to get it
 		this->global_object = new StaticBoundObject();
 		this->global_object->SetObject(GLOBAL_NS_VARNAME, this->global_object);
+
+		if (this->debug)
+			Logger::Initialize(true, true, Poco::Message::PRIO_TRACE, this->appID);
+		else
+			Logger::Initialize(true, true, Poco::Message::PRIO_DEBUG, this->appID);
 	}
 
 	Host::~Host()
 	{
+	}
+
+	void Host::AssertEnvironmentVariable(std::string variable)
+	{
+		if (!Environment::has(variable))
+		{
+			std::cerr << variable << " not defined, aborting." << std::endl;
+			exit(1);
+		}
 	}
 
 	void Host::ParseCommandLineArguments(int argc, const char** argv)
@@ -120,7 +123,6 @@ namespace kroll
 			this->args.push_back(arg);
 			PRINTD("ARGUMENT[" << i << "] => " << argv[i]);
 
-			// Some Kroll specific command-line arguments
 			if (arg == "--debug")
 			{
 				std::cout << "DEBUGGING DETECTED!" << std::endl;
@@ -130,33 +132,47 @@ namespace kroll
 			{
 				this->waitForDebugger = true;
 			}
-			else if (arg.find(STRING(BOOT_HOME_FLAG)) == 0)
+			else if (arg.find(STRING(_BOOT_HOME_FLAG)))
 			{
-				std::string new_home = arg.substr(arg.find("=") + 1);
-				this->appHomePath = new_home;
-				Environment::set("KR_HOME", new_home);
+				size_t i = arg.find("=");
+				if (i != std::string::npos)
+				{
+					std::string newHome = arg.substr(i + 1);
+					Environment::set(HOME_ENV, newHome);
+					this->appHomePath = newHome;
+				}
 			}
 		}
 	}
 
 	const std::string& Host::GetApplicationHomePath()
 	{
-		return appHomePath;
-	}
-
-	const std::string& Host::GetRuntimeHomePath()
-	{
-		return runtimeHomePath;
+		return this->appHomePath;
 	}
 
 	const std::string& Host::GetRuntimePath()
 	{
-		return runtimeHomePath;
+		return this->runtimePath;
 	}
 
-	std::string Host::FindAppInstaller(std::string home)
+	const std::string& Host::GetRuntimeHomePath()
 	{
-		std::string appinstaller = FileUtils::Join(home.c_str(), "appinstaller", NULL);
+		return this->runtimeHomePath;
+	}
+
+	const std::string& Host::GetApplicationID()
+	{
+		return this->appID;
+	}
+
+	const std::string& Host::GetApplicationGUID()
+	{
+		return this->appGUID;
+	}
+
+	std::string Host::FindAppInstaller()
+	{
+		std::string appinstaller = FileUtils::Join(this->appHomePath.c_str(), "appinstaller", NULL);
 		if (FileUtils::IsDirectory(appinstaller))
 		{
 			PRINTD("Found app installer at: " << appinstaller);
@@ -169,6 +185,7 @@ namespace kroll
 			PRINTD("Found app installer at: " << appinstaller);
 			return FileUtils::Trim(appinstaller);
 		}
+		
 
 		PRINTD("Couldn't find app installer");
 		return std::string();
@@ -180,15 +197,15 @@ namespace kroll
 		if (!FileUtils::IsFile(marker))
 		{
 			// not yet installed, look for the app installer
-			std::string ai = FindAppInstaller(this->appHomePath);
+			std::string ai = FindAppInstaller();
 			if (!ai.empty())
 			{
 				// make the app installer our new home so that the
 				// app installer will run and set the environment var
 				// to the special setting with the old home
-				Environment::set(std::string("KR_APP_INSTALL_FROM"), this->appHomePath);
+				Environment::set("KR_APP_INSTALL_FROM",  this->appHomePath);
 				this->appHomePath = ai;
-				Environment::set("KR_HOME", ai);
+				Environment::set(HOME_ENV, ai);
 			}
 			PRINTD("Application needs installation but no app installer found");
 		}
@@ -278,6 +295,7 @@ namespace kroll
 	void Host::CopyModuleAppResources(std::string& modulePath)
 	{
 		std::cout << "CopyModuleAppResources: " << modulePath << std::endl;
+		std::string appDir = this->appHomePath;
 
 		try
 		{
@@ -299,8 +317,8 @@ namespace kroll
 				std::vector<Poco::File> files;
 				platformAppResourcesDir.list(files);
 				for (size_t i = 0; i < files.size(); i++) {
-					std::cout << "Copying " << files.at(i).path() << " to " << this->appHomePath << std::endl;
-					files.at(i).copyTo(this->appHomePath);
+					std::cout << "Copying " << files.at(i).path() << " to " << appDir << std::endl;
+					files.at(i).copyTo(appDir);
 				}
 			}
 
@@ -310,8 +328,8 @@ namespace kroll
 				std::vector<Poco::File> files;
 				allAppResourcesDir.list(files);
 				for (size_t i = 0; i < files.size(); i++) {
-					std::cout << "Copying " << files.at(i).path() << " to " << this->appHomePath << std::endl;
-					files.at(i).copyTo(this->appHomePath);
+					std::cout << "Copying " << files.at(i).path() << " to " << appDir << std::endl;
+					files.at(i).copyTo(appDir);
 				}
 			}
 		}
@@ -439,7 +457,7 @@ namespace kroll
 		}
 
 		/* All modules are now loaded, so start them all */
-			this->StartModules(this->loaded_modules);
+		this->StartModules(this->loaded_modules);
 
 		/* Try to load files that weren't modules
 		 * using newly available module providers */
