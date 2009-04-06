@@ -153,17 +153,31 @@ namespace kroll
 		int size = GetEnvironmentVariable("KR_RUNTIME_HOME",(char*)path,MAX_PATH);
 		path[size]='\0';
 		std::string dir = path;
-#else
+#elif defined(OS_OSX)
 		std::string dir = getenv("KR_RUNTIME_HOME");
+#elif defined(OS_LINUX)
+		std::string dir;
+		if (getenv("HOME") != NULL)
+		{
+			dir = getenv("HOME");
+		}
+		else
+		{
+			dir = "/home";
+			dir.append(FileUtils::GetUsername());
+		}
+		dir.append(KR_PATH_SEP);
+		dir.append(".titanium");
+		
 #endif
-		dir+=KR_PATH_SEP;
-		dir+="appdata";
+		dir.append(KR_PATH_SEP);
+		dir.append("appdata");
 		if (!IsDirectory(dir))
 		{
 			CreateDirectory(dir);
 		}
-		dir+=KR_PATH_SEP;
-		dir+=appid;
+		dir.append(KR_PATH_SEP);
+		dir.append(appid);
 		if (!IsDirectory(dir))
 		{
 			CreateDirectory(dir);
@@ -916,7 +930,8 @@ namespace kroll
 #ifdef DEBUG
 		std::cout << "running: " << p << std::endl;
 #endif
-		return system(p.c_str());
+		int status = system(p.c_str());
+		return WEXITSTATUS(status);
 #elif defined(OS_WIN32)
 		std::ostringstream ostr;
 		ostr << path.c_str();
