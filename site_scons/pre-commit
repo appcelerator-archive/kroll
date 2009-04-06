@@ -11,7 +11,6 @@
 # Lines you introduce should not have trailing whitespace.
 # Also check for an indentation that has SP before a TAB.
 
-echo `pwd`/site_scons/pre-commit.py
 if git-rev-parse --verify HEAD 2>/dev/null
 then
 	git-diff-index -p -M --cached HEAD --
