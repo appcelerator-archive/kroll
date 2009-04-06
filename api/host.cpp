@@ -41,7 +41,7 @@ using Poco::Environment;
 namespace kroll
 {
 	SharedPtr<Host> Host::instance_;
-
+	
 	Host::Host(int argc, const char *argv[]) :
 		running(false),
 		exitCode(0),
@@ -76,7 +76,8 @@ namespace kroll
 		this->runtimeHomePath = Environment::get(RUNTIME_HOME_ENV);
 
 		std::string paths = Environment::get(MODULES_ENV);
-		FileUtils::Tokenize(paths, this->module_paths, KR_LIB_SEP);
+		//TI-180 make sure there is only one module specified
+		FileUtils::Tokenize(paths, this->module_paths, KR_LIB_SEP, true);
 
 		// check to see if we have to install the app
 		SetupAppInstallerIfRequired();
@@ -186,7 +187,6 @@ namespace kroll
 			return FileUtils::Trim(appinstaller);
 		}
 		
-
 		PRINTD("Couldn't find app installer");
 		return std::string();
 	}
@@ -255,7 +255,8 @@ namespace kroll
 		     iter++)
 		{
 			ModuleProvider *provider = (*iter);
-			if (provider != NULL && provider->IsModule(filename)) {
+			if (provider != NULL && provider->IsModule(filename)) 
+			{
 				return provider;
 			}
 		}
@@ -269,7 +270,8 @@ namespace kroll
 		std::vector<ModuleProvider*>::iterator iter =
 		    std::find(module_providers.begin(),
 		              module_providers.end(), provider);
-		if (iter != module_providers.end()) {
+		if (iter != module_providers.end()) 
+		{
 			module_providers.erase(iter);
 		}
 
@@ -316,8 +318,9 @@ namespace kroll
 
 				std::vector<Poco::File> files;
 				platformAppResourcesDir.list(files);
-				for (size_t i = 0; i < files.size(); i++) {
-					std::cout << "Copying " << files.at(i).path() << " to " << appDir << std::endl;
+				for (size_t i = 0; i < files.size(); i++) 
+				{
+					PRINTD("Copying " << files.at(i).path() << " to " << appDir);
 					files.at(i).copyTo(appDir);
 				}
 			}
@@ -327,8 +330,9 @@ namespace kroll
 			{
 				std::vector<Poco::File> files;
 				allAppResourcesDir.list(files);
-				for (size_t i = 0; i < files.size(); i++) {
-					std::cout << "Copying " << files.at(i).path() << " to " << appDir << std::endl;
+				for (size_t i = 0; i < files.size(); i++) 
+				{
+					PRINTD("Copying " << files.at(i).path() << " to " << appDir);
 					files.at(i).copyTo(appDir);
 				}
 			}
@@ -347,12 +351,14 @@ namespace kroll
 		manifestPath = Poco::Path(FileUtils::Join(moduleTopDir.toString().c_str(), "manifest", NULL));
 
 		Poco::File manifestFile(manifestPath);
-		if (manifestFile.exists()) {
+		if (manifestFile.exists()) 
+		{
 			PRINTD("Reading manifest for module: " << manifestPath.toString());
 
 			Poco::AutoPtr<Poco::Util::PropertyFileConfiguration> manifest = new Poco::Util::PropertyFileConfiguration(manifestFile.path());
 
-			if (manifest->hasProperty("libpath")) {
+			if (manifest->hasProperty("libpath")) 
+			{
 				PRINTD("libpath: " << modulePath);
 
 				std::string libPath = manifest->getString("libpath");
@@ -366,11 +372,13 @@ namespace kroll
 	#endif
 				std::string newLibPath;
 
-				if (Environment::has(libPathEnv)) {
+				if (Environment::has(libPathEnv)) 
+				{
 					newLibPath = Environment::get(libPathEnv);
 				}
 
-				for (size_t i = 0; i < t.count(); i++) {
+				for (size_t i = 0; i < t.count(); i++) 
+				{
 					std::string lib = t[i];
 					newLibPath += KR_LIB_SEP;
 					newLibPath += FileUtils::Join(moduleTopDir.toString().c_str(), lib.c_str(), NULL);
@@ -561,7 +569,8 @@ namespace kroll
 	{
 		ScopedLock lock(&moduleMutex);
 		ModuleMap::iterator iter = this->modules.find(name);
-		if (this->modules.end() == iter) {
+		if (this->modules.end() == iter) 
+		{
 			return SharedPtr<Module>(NULL);
 		}
 
@@ -586,7 +595,9 @@ namespace kroll
 		while (i != this->modules.end())
 		{
 			if (module == (i->second).get())
+			{
 				break;
+			}
 			i++;
 		}
 
@@ -595,20 +606,27 @@ namespace kroll
 		while (j != this->loaded_modules.end())
 		{
 			if (module == (*j).get())
+			{
 				break;
+			}
 			j++;
 		}
 
 		module->Stop(); // Call Stop() lifecycle event
 
 		if (i != this->modules.end())
+		{
 			this->modules.erase(i);
+		}
 
 		if (j != this->loaded_modules.end())
+		{
 			this->loaded_modules.erase(j);
+		}
 	}
 
-	SharedPtr<StaticBoundObject> Host::GetGlobalObject() {
+	SharedPtr<StaticBoundObject> Host::GetGlobalObject() 
+	{
 		return this->global_object;
 	}
 
@@ -645,7 +663,8 @@ namespace kroll
 
 		// allow start to immediately end
 		this->running = this->Start();
-		if (this->runUILoop) {
+		if (this->runUILoop) 
+		{
 			while (this->running)
 			{
 				ScopedLock lock(&moduleMutex);

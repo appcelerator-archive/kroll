@@ -673,13 +673,31 @@ namespace kroll
 
 		return sResult;
 	}
-	void FileUtils::Tokenize(const std::string& str, std::vector<std::string>& tokens, const std::string &delimeters)
+	void FileUtils::Tokenize(const std::string& str, std::vector<std::string>& tokens, const std::string &delimeters, bool skip_if_found)
 	{
 		std::string::size_type lastPos = str.find_first_not_of(delimeters,0);
 		std::string::size_type pos = str.find_first_of(delimeters,lastPos);
 		while (std::string::npos!=pos || std::string::npos!=lastPos)
 		{
-			tokens.push_back(str.substr(lastPos,pos-lastPos));
+			std::string token = str.substr(lastPos,pos-lastPos);
+			bool found = false;
+			if (skip_if_found)
+			{
+				std::vector<std::string>::iterator i = tokens.begin();
+				while(i!=tokens.end())
+				{
+					std::string entry = (*i++);
+					if (entry == token)
+					{
+						found = true;
+						break;
+					}
+				}
+			}
+			if (!found)
+			{
+				tokens.push_back(token);
+			}
 			lastPos = str.find_first_not_of(delimeters,pos);
 			pos = str.find_first_of(delimeters,lastPos);
 		}

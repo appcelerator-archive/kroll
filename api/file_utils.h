@@ -15,6 +15,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <list>
 #include <algorithm>
 
 #ifdef OS_WIN32
@@ -75,14 +76,14 @@ namespace kroll
 		static int MakeVersion(std::string& version);
 
 		/**
-		 *
+		 * find a versioned for a given root path and a version spec in op
 		 */
 		static std::string FindVersioned(std::string& path, int op, std::string& version);
 
 		/**
-		 *
+		 * tokenize a string by delimeter into parts and place in vector tokens
 		 */
-		static void Tokenize(const std::string& str, std::vector<std::string>& tokens, const std::string &delimeters);
+		static void Tokenize(const std::string& str, std::vector<std::string>& tokens, const std::string &delimeters, bool skip_if_found=false);
 
 		/**
 		 * @param str The string to trim
