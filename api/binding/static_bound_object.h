@@ -79,6 +79,16 @@ namespace kroll
 	protected:
 		std::map<std::string, SharedValue> properties;
 		Mutex mutex;
+		
+		/**
+		 * called to allow a subclass to be notified when a property is bound
+		 */
+		virtual void Bound(const char *name, SharedValue value) {}
+		
+		/**
+		 * called to allow a subclass to be notified when a property is unbound
+		 */
+		virtual void Unbound(const char *name) {}
 
 	private:
 		DISALLOW_EVIL_CONSTRUCTORS(StaticBoundObject);

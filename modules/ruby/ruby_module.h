@@ -37,6 +37,7 @@
 
 #undef sleep
 #undef close
+#undef shutdown
 
 #include <kroll/kroll.h>
 #include "k_ruby_object.h"

@@ -38,6 +38,7 @@ namespace kroll
 
 		this->UnSet(name);
 		this->properties[std::string(name)] = value;
+		this->Bound(name,value);
 	}
 
 	void StaticBoundObject::UnSet(const char *name)
@@ -49,6 +50,7 @@ namespace kroll
 		if (this->properties.end() != iter)
 		{
 			this->properties.erase(iter);
+			this->Unbound(name);
 		}
 	}
 

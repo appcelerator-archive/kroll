@@ -2,6 +2,15 @@
 import os, re, sys, inspect, os.path as path
 from kroll import BuildConfig
 
+debug = False
+Import('*')
+
+# this will ensure that you're using the right version of scons
+EnsureSConsVersion(1,2,0)
+# this will ensure that you're using the right version of python
+EnsurePythonVersion(2,5)
+
+
 build = BuildConfig(
 	PRODUCT_VERSION = '0.1',
 	PRODUCT_NAME = 'Kroll',
@@ -28,7 +37,7 @@ build.env.Append(CPPPATH=[
 	build.kroll_include_dir])
 
 # debug build flags
-if ARGUMENTS.get('debug', 0):
+if ARGUMENTS.get('debug', 0) or debug:
 	build.env.Append(CPPDEFINES = ('DEBUG', 1))
 	build.debug = True
 	debug = 1
