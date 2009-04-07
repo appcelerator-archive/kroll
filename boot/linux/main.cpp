@@ -99,7 +99,7 @@ class Boot
 	std::string guid;
 	std::string installer_path;
 
-	/* Default runtime base path or, if a runtime is found, that runtimeHomePath */
+	/* Default runtime base path or, if a runtime is found, that runtime home path */
 	std::string systemRuntimeHome;
 	std::string userRuntimeHome;
 	std::string activeRuntimeHome;
@@ -187,10 +187,25 @@ class Boot
 		this->userRuntimeHome = FileUtils::Join(homePath.c_str(), dotLocation.c_str(), NULL);
 		this->AddInstallLocation(this->userRuntimeHome);
 
+		// /opt/PRODUCT_NAME is the default runtime location, but if
+		// one is specified via an environment variable, it must be
+		// searched first.
 		std::string optLocation = std::string("/opt/") + pname;
-		this->activeRuntimeHome = this->systemRuntimeHome = optLocation;
-		this->AddInstallLocation(optLocation);
 
+		std::string envVarName = PRODUCT_NAME;
+		std::transform(envVarName.begin(), envVarName.end(), envVarName.begin(), toupper);
+		envVarName += "_HOME";
+		if (EnvironmentUtils::Has(envVarName))
+		{
+			this->activeRuntimeHome = this->systemRuntimeHome = EnvironmentUtils::Get(envVarName);
+			this->AddInstallLocation(this->activeRuntimeHome);
+		}
+		else
+		{
+			this->activeRuntimeHome = this->systemRuntimeHome = optLocation;
+		}
+
+		this->AddInstallLocation(optLocation);
 		this->AddInstallLocation(std::string("/usr/local/lib") + pname);
 		this->AddInstallLocation(std::string("/usr/lib/") + pname);
 
