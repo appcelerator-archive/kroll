@@ -109,7 +109,7 @@ class App:
 		if self.build.is_osx():
 			self.package_dmg(**kwargs)
 		elif self.build.is_linux():
-			self.package_self_extractor(**kwargs)
+			self.package_tgz(**kwargs)
 
 	def package_self_extractor_exe(self, out_dir, se_archive=None, **kwargs):
 		if not se_archive_name:
@@ -132,26 +132,26 @@ class App:
 				zf.write(file, arcname)
 		zf.close()
 
-	def package_self_extractor(self, out_dir=None, se_archive_name=None, **kwargs):
+	def package_tgz(self, out_dir=None, se_archive_name=None, **kwargs):
 		if not se_archive_name:
 			se_archive_name = p.basename(self.dir)
 		if not out_dir: out_dir = p.basename(self.dir)
 		if not p.isdir(out_dir): os.makedirs(out_dir)
 
 		archive = p.join(out_dir, se_archive_name) + '.tgz'
-		bin_file = p.join(out_dir, se_archive_name) + '.bin'
 		if p.exists(archive): os.remove(archive)
-		if p.exists(bin_file): os.remove(bin_file)
 
-		extractor = p.join(self.build.titanium_support_dir, 'extractor.sh')
-		source = open(extractor).read()
-		source = source.replace('APPNAME', p.basename(self.exe))
+		#bin_file = p.join(out_dir, se_archive_name) + '.bin'
+		#if p.exists(bin_file): os.remove(bin_file)
+		#extractor = p.join(self.build.titanium_support_dir, 'extractor.sh')
+		#source = open(extractor).read()
+		#source = source.replace('APPNAME', p.basename(self.exe))
 
 		self.status('writing tgz file to %s' % (archive))
 		futils.TarGzDir(self.dir, archive)
 
-		self.status('creating self-extractor at %s' % (bin_file))
-		futils.Concat([source, archive], bin_file)
+		#self.status('creating self-extractor at %s' % (bin_file))
+		#futils.Concat([source, archive], bin_file)
 
 	def package_dmg(self,
 		app_name=None,
