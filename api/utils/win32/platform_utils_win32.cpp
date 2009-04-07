@@ -29,7 +29,7 @@
 // ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 #include "../utils.h"
-#include "../poco/UnWindows.h"
+#include "../poco/KUnWindows.h"
 
 namespace kroll
 {

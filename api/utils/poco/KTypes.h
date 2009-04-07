@@ -1,3 +1,8 @@
+/**
+ * Appcelerator Kroll - licensed under the Apache Public License 2
+ * see LICENSE in the root folder for details on the license.
+ * Copyright (c) 2009 Appcelerator, Inc. All Rights Reserved.
+ */
 //
 // Types.h
 //
@@ -36,55 +41,49 @@
 //
 
 
-#ifndef Foundation_Types_INCLUDED
-#define Foundation_Types_INCLUDED
-
-
-#include "Poco/Foundation.h"
-
-
+#ifndef KPOCO_Foundation_Types_INCLUDED
+#define KPOCO_Foundation_Types_INCLUDED
+#include "KFoundation.h"
 namespace KPoco {
-
-
 #if defined(OS_WIN32)
-	typedef signed char            Int8;
-	typedef unsigned char          UInt8;
-	typedef signed short           Int16;
-	typedef unsigned short         UInt16;
-	typedef signed int             Int32;
-	typedef unsigned int           UInt32;
-	typedef signed __int64         Int64;
-	typedef unsigned __int64       UInt64;
-	#if defined(_WIN64)
+	typedef signed char            KInt8;
+	typedef unsigned char          KUInt8;
+	typedef signed short           KInt16;
+	typedef unsigned short         KUInt16;
+	typedef signed int             KInt32;
+	typedef unsigned int           KUInt32;
+	typedef signed __int64         KInt64;
+	typedef unsigned __int64       KUInt64;
+	#if defined(OS_64)
 		#define POCO_PTR_IS_64_BIT 1
-		typedef signed __int64     IntPtr;
-		typedef unsigned __int64   UIntPtr;
+		typedef signed __int64     KIntPtr;
+		typedef unsigned __int64   KUIntPtr;
 	#else
-		typedef signed long        IntPtr;
-		typedef unsigned long      UIntPtr;
+		typedef signed long        KIntPtr;
+		typedef unsigned long      KUIntPtr;
 	#endif
 	#define POCO_HAVE_INT64 1
 #elif defined(OS_LINUX) || defined(OS_OSX)
-	typedef signed char            Int8;
-	typedef unsigned char          UInt8;
-	typedef signed short           Int16;
-	typedef unsigned short         UInt16;
-	typedef signed int             Int32;
-	typedef unsigned int           UInt32;
-	typedef signed long            IntPtr;
-	typedef unsigned long          UIntPtr;
-	#if defined(__LP64__)
+	typedef signed char            KInt8;
+	typedef unsigned char          KUInt8;
+	typedef signed short           KInt16;
+	typedef unsigned short         KUInt16;
+	typedef signed int             KInt32;
+	typedef unsigned int           KUInt32;
+	typedef signed long            KIntPtr;
+	typedef unsigned long          KUIntPtr;
+	#if defined(OS_64)
 		#define POCO_PTR_IS_64_BIT 1
 		#define POCO_LONG_IS_64_BIT 1
-		typedef signed long        Int64;
-		typedef unsigned long      UInt64;
+		typedef signed long        KInt64;
+		typedef unsigned long      KUInt64;
 	#else
-		typedef signed long long   Int64;
-		typedef unsigned long long UInt64;
+		typedef signed long long   KInt64;
+		typedef unsigned long long KUInt64;
 	#endif
 	#define POCO_HAVE_INT64 1
 #endif
-} // namespace Poco
+} // namespace KPoco
 
 
-#endif // Foundation_Types_INCLUDED
+#endif 

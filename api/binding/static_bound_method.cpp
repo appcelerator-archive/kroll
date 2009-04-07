@@ -5,8 +5,6 @@
  */
 
 #include "binding.h"
-#include <Poco/Stopwatch.h>
-#include <Poco/Timestamp.h>
 
 namespace kroll
 {
@@ -23,21 +21,10 @@ namespace kroll
 	SharedValue StaticBoundMethod::Call(const ValueList& args)
 	{
 		SharedValue tv = Value::NewUndefined();
-		// if (KObject::track_bindings)
-		// {
-		// 	Poco::Stopwatch w;
-		// 	w.start(); 
-		// 	this->callback->Run(args, tv);
-		// 	w.stop();
-		// 	Poco::Timestamp::TimeDiff diff = w.elapsed();
-		// 	KObject::TrackBinding(CallType,this,NULL,&diff);
-		// }
-		// else
-		// {
-		// }
 		this->callback->Run(args, tv);
 		return tv;
 	}
+
 	void StaticBoundMethod::Set(const char *name, SharedValue value)
 	{
 		this->object->Set(name, value);

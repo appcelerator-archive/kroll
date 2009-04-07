@@ -1,3 +1,8 @@
+/**
+ * Appcelerator Kroll - licensed under the Apache Public License 2
+ * see LICENSE in the root folder for details on the license.
+ * Copyright (c) 2009 Appcelerator, Inc. All Rights Reserved.
+ */
 //
 // MD5Engine.cpp
 //
@@ -57,7 +62,7 @@
 //
 
 
-#include "MD5Engine.h"
+#include "KMD5Engine.h"
 #include <cstring>
 
 
@@ -86,9 +91,9 @@ void MD5Engine::updateImpl(const void* input_, unsigned inputLen)
 	index = (unsigned int)((_context.count[0] >> 3) & 0x3F);
 
 	/* Update number of bits */
-	if ((_context.count[0] += ((UInt32) inputLen << 3)) < ((UInt32) inputLen << 3))
+	if ((_context.count[0] += ((KUInt32) inputLen << 3)) < ((KUInt32) inputLen << 3))
 		_context.count[1]++;
-	_context.count[1] += ((UInt32) inputLen >> 29);
+	_context.count[1] += ((KUInt32) inputLen >> 29);
 
 	partLen = 64 - index;
 
@@ -195,30 +200,30 @@ const DigestEngine::Digest& MD5Engine::digest()
 /* FF, GG, HH, and II transformations for rounds 1, 2, 3, and 4.
    Rotation is separate from addition to prevent recomputation. */
 #define FF(a, b, c, d, x, s, ac) { \
- (a) += F ((b), (c), (d)) + (x) + (UInt32)(ac); \
+ (a) += F ((b), (c), (d)) + (x) + (KUInt32)(ac); \
  (a) = ROTATE_LEFT ((a), (s)); \
  (a) += (b); \
   }
 #define GG(a, b, c, d, x, s, ac) { \
- (a) += G ((b), (c), (d)) + (x) + (UInt32)(ac); \
+ (a) += G ((b), (c), (d)) + (x) + (KUInt32)(ac); \
  (a) = ROTATE_LEFT ((a), (s)); \
  (a) += (b); \
   }
 #define HH(a, b, c, d, x, s, ac) { \
- (a) += H ((b), (c), (d)) + (x) + (UInt32)(ac); \
+ (a) += H ((b), (c), (d)) + (x) + (KUInt32)(ac); \
  (a) = ROTATE_LEFT ((a), (s)); \
  (a) += (b); \
   }
 #define II(a, b, c, d, x, s, ac) { \
- (a) += I ((b), (c), (d)) + (x) + (UInt32)(ac); \
+ (a) += I ((b), (c), (d)) + (x) + (KUInt32)(ac); \
  (a) = ROTATE_LEFT ((a), (s)); \
  (a) += (b); \
   }
 
 
-void MD5Engine::transform (UInt32 state[4], const unsigned char block[64])
+void MD5Engine::transform (KUInt32 state[4], const unsigned char block[64])
 {
-	UInt32 a = state[0], b = state[1], c = state[2], d = state[3], x[16];
+	KUInt32 a = state[0], b = state[1], c = state[2], d = state[3], x[16];
 
 	decode(x, block, 64);
 
@@ -304,7 +309,7 @@ void MD5Engine::transform (UInt32 state[4], const unsigned char block[64])
 }
 
 
-void MD5Engine::encode(unsigned char* output, const UInt32* input, unsigned int len)
+void MD5Engine::encode(unsigned char* output, const KUInt32* input, unsigned int len)
 {
 	unsigned int i, j;
 
@@ -318,13 +323,13 @@ void MD5Engine::encode(unsigned char* output, const UInt32* input, unsigned int 
 }
 
 
-void MD5Engine::decode(UInt32* output, const unsigned char* input, unsigned int len)
+void MD5Engine::decode(KUInt32* output, const unsigned char* input, unsigned int len)
 {
 	unsigned int i, j;
 
 	for (i = 0, j = 0; j < len; i++, j += 4)
-		output[i] = ((UInt32)input[j]) | (((UInt32)input[j+1]) << 8) |
-		            (((UInt32)input[j+2]) << 16) | (((UInt32)input[j+3]) << 24);
+		output[i] = ((KUInt32)input[j]) | (((KUInt32)input[j+1]) << 8) |
+		            (((KUInt32)input[j+2]) << 16) | (((KUInt32)input[j+3]) << 24);
 }
 
 

@@ -1,3 +1,8 @@
+/**
+ * Appcelerator Kroll - licensed under the Apache Public License 2
+ * see LICENSE in the root folder for details on the license.
+ * Copyright (c) 2009 Appcelerator, Inc. All Rights Reserved.
+ */
 //
 // DigestEngine.h
 //
@@ -36,18 +41,14 @@
 //
 
 
-#ifndef Foundation_DigestEngine_INCLUDED
-#define Foundation_DigestEngine_INCLUDED
-
-
-#include "Foundation.h"
+#ifndef KPOCO_Foundation_DigestEngine_INCLUDED
+#define KPOCO_Foundation_DigestEngine_INCLUDED
+#include "../utils.h"
+#include "KFoundation.h"
 #include <vector>
 
-
 namespace KPoco {
-
-
-class Foundation_API DigestEngine
+class KROLL_API DigestEngine
 	/// This class is an abstract base class
 	/// for all classes implementing a message
 	/// digest algorithm, like MD5Engine

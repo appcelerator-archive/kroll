@@ -3,9 +3,9 @@
  * see LICENSE in the root folder for details on the license.
  * Copyright (c) 2009 Appcelerator, Inc. All Rights Reserved.
  */
-#include "poco/DigestEngine.h"
-#include "poco/MD5Engine.h"
 #include "utils.h"
+#include "poco/KDigestEngine.h"
+#include "poco/KMD5Engine.h"
 
 using KPoco::DigestEngine;
 using KPoco::MD5Engine;

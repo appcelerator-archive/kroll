@@ -22,6 +22,7 @@ sources=Glob('*.cpp')
 sources.extend(Glob('config/*.cpp'))
 sources.extend(Glob('binding/*.cpp'))
 sources.extend(Glob('utils/*.cpp'))
+sources.extend(Glob('utils/poco/*.cpp'))
 sources.extend(Glob('utils/%s/*.cpp' % build.os))
 
 if build.is_win32():

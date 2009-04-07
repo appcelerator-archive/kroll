@@ -1,3 +1,8 @@
+/**
+ * Appcelerator Kroll - licensed under the Apache Public License 2
+ * see LICENSE in the root folder for details on the license.
+ * Copyright (c) 2009 Appcelerator, Inc. All Rights Reserved.
+ */
 //
 // MD5Engine.h
 //
@@ -59,18 +64,16 @@
 //
 
 
-#ifndef Foundation_MD5Engine_INCLUDED
-#define Foundation_MD5Engine_INCLUDED
+#ifndef KPOCO_Foundation_MD5Engine_INCLUDED
+#define KPOCO_Foundation_MD5Engine_INCLUDED
 
-
-#include "Foundation.h"
-#include "DigestEngine.h"
+#include "../utils.h"
+#include "KFoundation.h"
+#include "KDigestEngine.h"
 
 
 namespace KPoco {
-
-
-class Foundation_API MD5Engine: public DigestEngine
+class KROLL_API MD5Engine: public DigestEngine
 	/// This class implementes the MD5 message digest algorithm,
 	/// described in RFC 1321.
 {
@@ -92,14 +95,14 @@ protected:
 	void updateImpl(const void* data, unsigned length);
 
 private:
-	static void transform(UInt32 state[4], const unsigned char block[64]);
-	static void encode(unsigned char* output, const UInt32* input, unsigned int len);
-	static void decode(UInt32* output, const unsigned char* input, unsigned int len);
+	static void transform(KUInt32 state[4], const unsigned char block[64]);
+	static void encode(unsigned char* output, const KUInt32* input, unsigned int len);
+	static void decode(KUInt32* output, const unsigned char* input, unsigned int len);
 
 	struct Context
 	{
-		UInt32 state[4];          // state (ABCD)
-		UInt32 count[2];          // number of bits, modulo 2^64 (lsb first)
+		KUInt32 state[4];          // state (ABCD)
+		KUInt32 count[2];          // number of bits, modulo 2^64 (lsb first)
 		unsigned char buffer[64]; // input buffer
 	};
 

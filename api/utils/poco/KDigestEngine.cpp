@@ -1,15 +1,16 @@
+/**
+ * Appcelerator Kroll - licensed under the Apache Public License 2
+ * see LICENSE in the root folder for details on the license.
+ * Copyright (c) 2009 Appcelerator, Inc. All Rights Reserved.
+ */
 //
-// Foundation.h
+// DigestEngine.cpp
 //
-// $Id: //poco/1.3/Foundation/include/Poco/Foundation.h#3 $
+// $Id: //poco/1.3/Foundation/src/DigestEngine.cpp#1 $
 //
 // Library: Foundation
-// Package: Core
-// Module:  Foundation
-//
-// Basic definitions for the POCO Foundation library.
-// This file must be the first file included by every other Foundation
-// header file.
+// Package: Crypt
+// Module:  DigestEngine
 //
 // Copyright (c) 2004-2006, Applied Informatics Software Engineering GmbH.
 // and Contributors.
@@ -38,37 +39,35 @@
 //
 
 
-#ifndef Foundation_Foundation_INCLUDED
-#define Foundation_Foundation_INCLUDED
+#include "KDigestEngine.h"
 
 
-//
-// Include library configuration
-//
+namespace KPoco {
 
-#if !defined(Foundation_API)
-	#define Foundation_API
-#endif
 
-//
-// Include platform-specific definitions
-//
-#include "Platform.h"
-#include "Types.h"
+DigestEngine::DigestEngine()
+{
+}
 
-#include <string>
 
-//
-// POCO_JOIN
-//
-// The following piece of macro magic joins the two
-// arguments together, even when one of the arguments is
-// itself a macro (see 16.3.1 in C++ standard).  The key
-// is that macro expansion of macro arguments does not
-// occur in POCO_DO_JOIN2 but does in POCO_DO_JOIN.
-//
-#define POCO_JOIN(X, Y) POCO_DO_JOIN(X, Y)
-#define POCO_DO_JOIN(X, Y) POCO_DO_JOIN2(X, Y)
-#define POCO_DO_JOIN2(X, Y) X##Y
+DigestEngine::~DigestEngine()
+{
+}
 
-#endif // Foundation_Foundation_INCLUDED
+
+std::string DigestEngine::digestToHex(const Digest& bytes)
+{
+	static const char digits[] = "0123456789abcdef";
+	std::string result;
+	result.reserve(bytes.size()*2);
+	for (Digest::const_iterator it = bytes.begin(); it != bytes.end(); ++it)
+	{
+		unsigned char c = *it;
+		result += digits[(c >> 4) & 0xF];
+		result += digits[c & 0xF];
+	}
+	return result;
+}
+
+
+} // namespace KPoco
