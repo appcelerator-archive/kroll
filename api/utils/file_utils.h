@@ -10,7 +10,6 @@
 # include <windows.h>
 #endif
 
-#include "base.h"
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -127,6 +126,11 @@ namespace kroll
 		 * This function joins paths together in an OS specific way
 		 */
 		static std::string Join(const char*, ...);
+
+		/**
+		 * This function returns a unique machine identifier in the old style 
+		 */
+		static std::string GetOldMachineId();
 
 		/**
 		 * This function returns a unique machine identifier

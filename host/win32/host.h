@@ -6,7 +6,6 @@
 #ifndef _WIN32_HOST_H
 #define _WIN32_HOST_H
 
-#include <api/base.h>
 #include <api/kroll.h>
 #include <string>
 #include <vector>

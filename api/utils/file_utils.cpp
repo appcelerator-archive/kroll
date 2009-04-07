@@ -3,7 +3,7 @@
  * see LICENSE in the root folder for details on the license.
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
-#include "file_utils.h"
+#include "utils.h"
 
 #ifdef OS_OSX
 #include <Cocoa/Cocoa.h>
@@ -571,25 +571,34 @@ namespace kroll
 		}
 		return std::string();
 	}
-	std::string FileUtils::GetMachineId()
+	std::string FileUtils::GetOldMachineId()
 	{
-		std::string path = FileUtils::Join(FileUtils::GetRuntimeBaseDirectory().c_str(),".titanium",NULL);
+		std::string path = FileUtils::Join(FileUtils::GetRuntimeBaseDirectory().c_str(),".titanium", NULL);
 		if (FileUtils::IsFile(path))
 		{
 			std::ifstream file(path.c_str());
-			if (file.bad() || file.fail())
-			{
-				return "-";
-			}
-			while (!file.eof())
+			if (!file.bad() && !file.fail() && ! file.eof())
 			{
 				std::string line;
-				std::getline(file,line);
+				std::getline(file, line);
 				FileUtils::Trim(line);
 				return line;
 			}
 		}
-		return "-";
+		return std::string();
+	}
+	std::string FileUtils::GetMachineId()
+	{
+		std::string id = GetOldMachineId();
+		if (!id.empty())
+		{
+			return id;
+		}
+		else
+		{
+			std::string MACAddress = PlatformUtils::GetFirstMACAddress();
+			return DataUtils::HexMD5(MACAddress);
+		}
 	}
 	std::string FileUtils::GetOSVersion()
 	{

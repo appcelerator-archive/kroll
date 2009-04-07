@@ -80,9 +80,9 @@ namespace kroll
 	#pragma GCC visibility pop
 #endif
 
+#include "utils/utils.h"
 #include "logger.h"
 #include "ref_counted.h"
-#include "file_utils.h"
 #include "scoped_ref_counted.h"
 #include "scoped_dereferencer.h"
 #include "mutex.h"

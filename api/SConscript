@@ -4,6 +4,7 @@ Import('build')
 
 Env = build.env.Clone()
 Env.Append(CPPDEFINES=('KROLL_API_EXPORT', 1))
+Env.Append(CPPPATH=[build.kroll_utils_dir])
 build.add_thirdparty(Env, 'poco')
 
 if build.is_win32():
@@ -20,6 +21,8 @@ if build.is_osx():
 sources=Glob('*.cpp')
 sources.extend(Glob('config/*.cpp'))
 sources.extend(Glob('binding/*.cpp'))
+sources.extend(Glob('utils/*.cpp'))
+sources.extend(Glob('utils/%s/*.cpp' % build.os))
 
 if build.is_win32():
 	sources.extend(Glob('unzip/*.cpp'))

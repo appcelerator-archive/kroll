@@ -7,7 +7,6 @@ import os.path as path
 Import('build')
 Import('debug')
 
-
 SConscript('thirdparty/SConscript', duplicate=0)
 SConscript('boot/SConscript')
 

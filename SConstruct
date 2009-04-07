@@ -24,9 +24,7 @@ build = BuildConfig(
 	BOOT_UPDATESITE_ENVNAME = 'KR_UPDATESITE',
 	BOOT_UPDATESITE_URL = 'nosite'
 )
-
-build.kroll_source_dir = path.abspath('.')
-build.kroll_include_dir = path.join(build.dir, 'include')
+build.set_kroll_source_dir(path.abspath('.'))
 
 # This should only be used for accessing various
 # scripts in the kroll build directory. All resources

@@ -11,6 +11,7 @@
 #include <gtk/gtk.h>
 #include <gdk/gdk.h>
 #include <api/kroll.h>
+
 #include "host.h"
 #include "linux_job.h"
 

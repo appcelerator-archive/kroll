@@ -3,13 +3,13 @@ Import('build')
 import os, os.path as path
 
 Env = build.env.Clone()
-Env.Append(CPPPATH=[path.join(build.kroll_source_dir,'api')])
 Env.Append(LIBS=['dl'])
 
-fo = os.path.join(build.dir,'file_utils_boot.o')
-o = Env.Object(target = fo, source = path.join(build.kroll_source_dir,'api','file_utils.cpp'))
+sources = ['main.cpp']
 
-sources = ['main.cpp', fo]
+Env.Append(CPPPATH=[build.kroll_utils_dir])
+sources += build.get_kroll_utils(path.join(build.dir, 'objs', 'boot'))
+
 kboot_out = path.join(build.dir, 'runtime', 'template', 'kboot')
 p = Env.Program(kboot_out, sources)
 build.mark_build_target(p)

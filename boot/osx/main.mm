@@ -11,7 +11,7 @@
 #import <cstdlib>
 #import <dlfcn.h>
 #import "stdlib.h"
-#import "file_utils.h"
+#import <utils.h>
 
 // ensure that Kroll API is never included to create
 // an artificial dependency on kroll shared library
