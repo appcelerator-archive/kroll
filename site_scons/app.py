@@ -2,7 +2,7 @@
 import os.path as p, os, types, glob, futils, shutil
 
 class App:
-	def __init__(self, build, shortname="", fullname="", id="", version="0.1", guid="fakeguid"):
+	def __init__(self, build, shortname="", fullname="", id="", version="0.1", guid="fakeguid", image=None, publisher=None, url=None):
 		self.build = build
 		self.shortname = shortname
 		self.fullname = fullname
@@ -10,6 +10,9 @@ class App:
 		self.version = version
 		self.guid = guid
 		self.modules = None # all modules
+		self.image = image
+		self.publisher = publisher
+		self.url = url
 
 	def status(self, msg):
 		print '    -> %s' % msg
@@ -99,7 +102,14 @@ class App:
 			self.build.utils.CopyToDir(mscrt, self.contents)
 
 		self.status('writing manifest to %s' % p.join(self.contents, 'manifest'))
-		manifest = self.build.generate_manifest(self.fullname, self.id, self.guid, include=self.modules)
+		manifest = self.build.generate_manifest(
+			self.fullname,
+			self.id,
+			self.guid,
+			include=self.modules,
+			image=self.image,
+			publisher=self.publisher,
+			url=self.url)
 		m_file = open(p.join(self.contents, 'manifest'), 'w')
 		m_file.write(manifest)
 		m_file.close()

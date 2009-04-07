@@ -169,7 +169,7 @@ class BuildConfig(object):
 		Alias('dist', [])
 
 	def set_kroll_source_dir(self, dir):
-		self.kroll_source_dir = path.abspath('kroll')
+		self.kroll_source_dir = path.abspath(dir)
 		self.kroll_third_party = self.third_party
 		self.kroll_include_dir = path.join(self.dir, 'include')
 		self.kroll_utils_dir = path.join(self.kroll_source_dir, 'api', 'utils');
@@ -276,10 +276,15 @@ class BuildConfig(object):
 			if os.path.exists(f): os.remove(f)
 			self.utils.Zip(m.build_dir, f, exclude=excludes)
 
-	def generate_manifest(self, name, id, guid, exclude=None, include=None):
+	def generate_manifest(self, name, id, guid, exclude=None, include=None, image=None, publisher=None, url=None):
 		manifest = "#appname: %s\n" % name
 		manifest += "#appid: %s\n" % id
 		manifest += "#guid: %s\n" % guid
+
+		if image: manifest += "#image: %s\n" % image
+		if publisher: manifest += "#publisher: %s\n" % publisher
+		if url: manifest += "#url: %s\n" % url
+
 		manifest += "runtime: %s\n" % self.version
 		for m in self.modules:
 			if (include and not (m.name in include)) \
