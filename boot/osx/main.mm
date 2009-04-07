@@ -120,7 +120,7 @@ std::string FindModuleDir()
 	{
 		return modules;
 	}
-	std::string runtime = FileUtils::GetRuntimeHomeDirectory();
+	std::string runtime = FileUtils::GetDefaultRuntimeHomeDirectory();
 	return FileUtils::Join(runtime.c_str(),"modules","osx",NULL);
 }
 bool RunAppInstallerIfNeeded(std::string &homedir,
@@ -148,7 +148,7 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 		}
 	}
 	// this is where kroll should be installed
-	std::string runtimeBase = kroll::FileUtils::GetRuntimeHomeDirectory();
+	std::string runtimeBase = kroll::FileUtils::GetDefaultRuntimeHomeDirectory();
 	
 	if (missing.size()>0)
 	{
