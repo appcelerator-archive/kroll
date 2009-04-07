@@ -21,12 +21,14 @@
 #include <sys/types.h>
 
 #include "kroll.h"
+#include "binding/profiled_bound_object.h"
 #include <Poco/DirectoryIterator.h>
 #include <Poco/File.h>
 #include <Poco/Environment.h>
 #include <Poco/AutoPtr.h>
 #include <Poco/Util/PropertyFileConfiguration.h>
 #include <Poco/StringTokenizer.h>
+#include <Poco/Timespan.h>
 
 #define HOME_ENV "KR_HOME"
 #define APPID_ENV "KR_APP_ID"
@@ -41,6 +43,7 @@ using Poco::Environment;
 namespace kroll
 {
 	SharedPtr<Host> Host::instance_;
+	Poco::Timestamp Host::started_;
 	
 	Host::Host(int argc, const char *argv[]) :
 		running(false),
@@ -48,7 +51,9 @@ namespace kroll
 		debug(false),
 		waitForDebugger(false),
 		autoScan(false),
-		runUILoop(true)
+		runUILoop(true),
+		profile(false),
+		profileStream(NULL)
 	{
 		instance_ = this;
 
@@ -89,20 +94,60 @@ namespace kroll
 		PRINTD(">>> " << RUNTIME_ENV << "=" << this->runtimePath);
 		PRINTD(">>> " << RUNTIME_HOME_ENV << "=" << this->runtimeHomePath);
 		PRINTD(">>> " << MODULES_ENV << "=" << paths);
+		
+		// start profiling if turned on
+		StartProfiling();
 
 		// link the name of our global variable to ourself so
-		//  we can reference from global scope directly to get it
-		this->global_object = new StaticBoundObject();
-		this->global_object->SetObject(GLOBAL_NS_VARNAME, this->global_object);
+		// we can reference from global scope directly to get it
+		if (this->profile)
+		{
+			// in the case of profiling, we wrap our top level global object
+			// to use the profiled bound object which will profile all methods
+			// going through this object and it's attached children
+			this->global_object = new ProfiledBoundObject(GLOBAL_NS_VARNAME,new StaticBoundObject(),this->profileStream);
+		}
+		else
+		{
+			this->global_object = new StaticBoundObject();
+		}
+		this->global_object->SetObject(GLOBAL_NS_VARNAME,this->global_object);
 
 		if (this->debug)
+		{
 			Logger::Initialize(true, true, Poco::Message::PRIO_DEBUG, this->appID);
+		}
 		else
+		{
 			Logger::Initialize(true, true, Poco::Message::PRIO_INFORMATION, this->appID);
+		}
 	}
 
 	Host::~Host()
 	{
+	}
+	
+	void Host::StartProfiling()
+	{
+		if (this->profile)
+		{
+			Logger& logger = Logger::GetRootLogger();
+			logger.Info("Starting Profiler. Logging going to %s",this->profilePath.c_str());
+			this->profileStream = new Poco::FileOutputStream(this->profilePath);
+		}
+	}
+	
+	void Host::StopProfiling()
+	{
+		if (this->profile)
+		{
+			Logger& logger = Logger::GetRootLogger();
+			logger.Info("Stopping Profiler");
+			profileStream->flush();
+			profileStream->close();
+			profileStream = NULL;
+			this->profile = false;
+		}
 	}
 
 	void Host::AssertEnvironmentVariable(std::string variable)
@@ -132,6 +177,16 @@ namespace kroll
 			else if (arg == "--attach-debugger")
 			{
 				this->waitForDebugger = true;
+			}
+			else if (arg.find("--profile=")==0)
+			{
+				std::string pp = arg.substr(10);
+				if (pp.find("\"")==0)
+				{
+					pp = pp.substr(1,pp.length()-1);
+				}
+				this->profilePath = pp;
+				this->profile = true;
 			}
 			else if (arg.find(STRING(_BOOT_HOME_FLAG)))
 			{
@@ -242,7 +297,6 @@ namespace kroll
 		{
 			this->ScanInvalidModuleFiles();
 		}
-
 	}
 
 	ModuleProvider* Host::FindModuleProvider(std::string& filename)
@@ -296,7 +350,8 @@ namespace kroll
 
 	void Host::CopyModuleAppResources(std::string& modulePath)
 	{
-		std::cout << "CopyModuleAppResources: " << modulePath << std::endl;
+		PRINTD("CopyModuleAppResources: " << modulePath);
+		
 		std::string appDir = this->appHomePath;
 
 		try
@@ -402,8 +457,8 @@ namespace kroll
 			module = provider->CreateModule(path);
 			module->SetProvider(provider); // set the provider
 
-			std::cout << "Loaded " << module->GetName()
-			          << " (" << path << ")" <<std::endl;
+			PRINTD("Loaded " << module->GetName()
+			          << " (" << path << ")");
 
 			// Call module Load lifecycle event
 			module->Initialize();
@@ -588,7 +643,7 @@ namespace kroll
 	{
 		ScopedLock lock(&moduleMutex);
 
-		std::cout << "Unregistering: " << module->GetName() << std::endl;
+		PRINTD("Unregistering: " << module->GetName());
 
 		// Remove from the module map
 		ModuleMap::iterator i = this->modules.begin();
@@ -625,7 +680,7 @@ namespace kroll
 		}
 	}
 
-	SharedPtr<StaticBoundObject> Host::GetGlobalObject() 
+	SharedPtr<KObject> Host::GetGlobalObject() 
 	{
 		return this->global_object;
 	}
@@ -684,6 +739,9 @@ namespace kroll
 		// that the memory will be cleared
 		this->global_object->Set(GLOBAL_NS_VARNAME, Value::Undefined);
 		this->global_object = NULL;
+
+		// stop the profiling
+		StopProfiling();
 
 		PRINTD("EXITING WITH EXITCODE = " << exitCode);
 		return this->exitCode;

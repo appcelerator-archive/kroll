@@ -10,6 +10,7 @@
 #include <vector>
 #include <string>
 #include <map>
+#include "callback.h"
 
 namespace kroll
 {
@@ -31,6 +32,7 @@ namespace kroll
 		virtual ~KObject() {}
 
 	public:
+
 		/**
 		 * Set a property on this object to the given value. Value should be
 		 * heap-allocated as implementors are allowed to keep a reference.
@@ -161,6 +163,13 @@ namespace kroll
 		 * @param list the vector where the list of strings is appended to
 		 */
 		void GetStringList(const char *name, std::vector<std::string> &list);
+
+		/**
+		 * Set a property on this object to the given object. Value should be
+		 * heap-allocated as implementors are allowed to keep a reference.
+		 * When an error occurs will throw an exception of type ValueException.
+		 */
+		void SetObject(const char *name, SharedKObject object);
 
 	private:
 		DISALLOW_EVIL_CONSTRUCTORS(KObject);

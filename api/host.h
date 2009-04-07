@@ -6,6 +6,8 @@
 #ifndef _KR_HOST_H_
 #define _KR_HOST_H_
 #include <Poco/Thread.h>
+#include <Poco/FileStream.h>
+#include <Poco/Timestamp.h>
 
 namespace kroll
 {
@@ -103,7 +105,7 @@ namespace kroll
 		/**
 		 * @return the Global context object. In most languages this is known as "Titanium"
 		 */
-		SharedPtr<StaticBoundObject> GetGlobalObject();
+		SharedPtr<KObject> GetGlobalObject();
 
 		/**
 		 * @return The home directory for this application
@@ -177,6 +179,14 @@ namespace kroll
 		 * Set whether or not this application should run the UI loop
 		 */
 		void SetRunUILoop(bool runUILoop) { this->runUILoop = runUILoop; }
+		
+		/**
+		 * return the elapsed time as microseconds since the host booted
+		 */
+		static Poco::Timestamp::TimeDiff GetElapsedTime()
+		{
+			return started_.elapsed();
+		}
 
 	protected:
 		ModuleMap modules;
@@ -185,7 +195,7 @@ namespace kroll
 		Mutex moduleMutex;
 		std::vector<ModuleProvider *> module_providers;
 		std::vector<std::string> module_paths;
-		SharedPtr<StaticBoundObject> global_object;
+		SharedPtr<KObject> global_object;
 		std::vector<std::string> args;
 
 		std::string appHomePath;
@@ -200,6 +210,10 @@ namespace kroll
 		bool waitForDebugger;
 		bool autoScan;
 		bool runUILoop;
+		bool profile;
+		std::string profilePath;
+		Poco::FileOutputStream *profileStream;
+		
 
 		/* This is the module suffix for this module provider. Since
 		 * this is the basic provider the suffix is "module.(dll|dylib|so)"
@@ -283,7 +297,12 @@ namespace kroll
 
 	private:
 		static SharedPtr<Host> instance_;
+		static Poco::Timestamp started_;
+		
 		DISALLOW_EVIL_CONSTRUCTORS(Host);
+		
+		void StartProfiling();
+		void StopProfiling();
 	};
 
 	/**

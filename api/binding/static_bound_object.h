@@ -69,12 +69,6 @@ namespace kroll
 			this->Set(name, method_value);
 		}
 
-		/**
-		 * Set a property on this object to the given object. Value should be
-		 * heap-allocated as implementors are allowed to keep a reference.
-		 * When an error occurs will throw an exception of type ValueException.
-		 */
-		void SetObject(const char *name, SharedKObject object);
 
 	protected:
 		std::map<std::string, SharedValue> properties;

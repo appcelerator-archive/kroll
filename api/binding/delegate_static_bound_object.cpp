@@ -25,7 +25,7 @@ namespace kroll
 	DelegateStaticBoundObject::~DelegateStaticBoundObject()
 	{
 	}
-
+	
 	SharedValue DelegateStaticBoundObject::Get(const char *name)
 	{
 		ScopedLock lock(&mutex);
