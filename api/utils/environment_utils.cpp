@@ -26,17 +26,19 @@ namespace kroll
 	std::string EnvironmentUtils::Get(std::string name)
 	{
 #ifdef OS_WIN32
-		if (len == 0)
+		int MAX_LENGTH = 1024;
+		char* buffer = new char[MAX_LENGTH];
+		DWORD len = GetEnvironmentVariableA(name.c_str(), buffer, MAX_LENGTH - 1);
+		if(len > 0)
 		{
-			return std::string();
-		}
-		else
-		{
-			char* buffer = new char[len];
-			GetEnvironmentVariableA(name.c_str(), buffer, len);
 			std::string result(buffer);
 			delete [] buffer;
 			return result;
+		}
+		else
+		{
+			delete [] buffer;
+			return std::string();
 		}
 #else
 		const char* val = getenv(name.c_str());
