@@ -36,6 +36,7 @@ namespace kroll
 		 * @see KObject::GetPropertyNames
 		 */
 		virtual SharedStringList GetPropertyNames();
+		
 
 	protected:
 		SharedPtr<MethodCallback> callback;

@@ -1,7 +1,7 @@
 /**
  * Appcelerator Kroll - licensed under the Apache Public License 2
  * see LICENSE in the root folder for details on the license.
- * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
+ * Copyright (c) 2009 Appcelerator, Inc. All Rights Reserved.
  */
 #include "kroll.h"
 
@@ -131,7 +131,7 @@ namespace kroll
 
 		// Don't do formatting when this logger filters the message.
 		// This prevents unecessary string manipulation.
-		if (level >= (Level) loggerImpl.getLevel())
+		if (level <= (Level) loggerImpl.getLevel())
 		{
 			std::string messageText = Logger::Format(format, args);
 			this->Log(level, messageText);
@@ -143,6 +143,7 @@ namespace kroll
 		va_list args;
 		va_start(args, format);
 		this->Log(level, format, args);
+		va_end(args);
 	}
 
 	void Logger::Trace(std::string message)
@@ -156,6 +157,7 @@ namespace kroll
 		va_list args;
 		va_start(args, format);
 		this->Log(LTRACE, format, args);
+		va_end(args);
 	}
 
 	void Logger::Debug(std::string message)
@@ -169,6 +171,7 @@ namespace kroll
 		va_list args;
 		va_start(args, format);
 		this->Log(LDEBUG, format, args);
+		va_end(args);
 	}
 
 	void Logger::Info(std::string message)
@@ -182,6 +185,7 @@ namespace kroll
 		va_list args;
 		va_start(args, format);
 		this->Log(LINFO, format, args);
+		va_end(args);
 	}
 
 	void Logger::Notice(std::string message)
@@ -195,6 +199,7 @@ namespace kroll
 		va_list args;
 		va_start(args, format);
 		this->Log(LNOTICE, format, args);
+		va_end(args);
 	}
 
 	void Logger::Warn(std::string message)
@@ -208,6 +213,7 @@ namespace kroll
 		va_list args;
 		va_start(args, format);
 		this->Log(LWARN, format, args);
+		va_end(args);
 	}
 
 	void Logger::Error(std::string message)
@@ -221,6 +227,7 @@ namespace kroll
 		va_list args;
 		va_start(args, format);
 		this->Log(LERROR, format, args);
+		va_end(args);
 	}
 
 	void Logger::Critical(std::string message)
@@ -234,6 +241,7 @@ namespace kroll
 		va_list args;
 		va_start(args, format);
 		this->Log(LCRITICAL, format, args);
+		va_end(args);
 	}
 
 	void Logger::Fatal(std::string message)
@@ -247,5 +255,6 @@ namespace kroll
 		va_list args;
 		va_start(args, format);
 		this->Log(LFATAL, format, args);
+		va_end(args);
 	}
 }

@@ -22,43 +22,54 @@ namespace kroll
 
 	SharedValue StaticBoundObject::Get(const char *name)
 	{
-		ScopedLock lock(&mutex);
-
-		std::map<std::string, SharedValue>::iterator iter;
-		iter = properties.find(std::string(name));
-		if (iter != properties.end()) {
-			return iter->second;
+		SharedValue result = Value::Undefined;
+		{
+			ScopedLock lock(&mutex);
+			std::map<std::string, SharedValue>::iterator iter;
+			iter = properties.find(std::string(name));
+			if (iter != properties.end()) 
+			{
+				result = iter->second;
+			}
 		}
-		return Value::Undefined;
+		return result;
 	}
 
 	void StaticBoundObject::Set(const char *name, SharedValue value)
 	{
-		ScopedLock lock(&mutex);
-
-		this->UnSet(name);
-		this->properties[std::string(name)] = value;
+		{
+			ScopedLock lock(&mutex);
+			this->UnSet(name);
+			this->properties[std::string(name)] = value;
+		}
 		this->Bound(name,value);
 	}
 
 	void StaticBoundObject::UnSet(const char *name)
 	{
-		ScopedLock lock(&mutex);
-		
-		std::map<std::string, SharedValue>::iterator iter;
-		iter = this->properties.find(std::string(name));
-		if (this->properties.end() != iter)
+		bool found = false;
 		{
-			this->properties.erase(iter);
+			ScopedLock lock(&mutex);
+			std::map<std::string, SharedValue>::iterator iter;
+			iter = this->properties.find(std::string(name));
+			if (this->properties.end() != iter)
+			{
+				this->properties.erase(iter);
+				found = true;
+			}
+		}
+		
+		if (found)
+		{
 			this->Unbound(name);
 		}
 	}
 
 	SharedStringList StaticBoundObject::GetPropertyNames()
 	{
-		ScopedLock lock(&mutex);
 		SharedStringList list(new StringList());
 
+		ScopedLock lock(&mutex);
 		std::map<std::string, SharedValue>::iterator iter;
 		iter = properties.begin();
 		while (iter != properties.end())
@@ -71,10 +82,5 @@ namespace kroll
 		return list;
 	}
 
-	void StaticBoundObject::SetObject(const char *name, SharedKObject object)
-	{
-		SharedValue obj_val = Value::NewObject(object);
-		this->Set(name, obj_val);
-	}
 }
 

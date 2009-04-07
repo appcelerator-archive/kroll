@@ -9,6 +9,7 @@
 
 namespace kroll
 {
+
 	void KObject::Set(SharedString name, SharedValue value)
 	{
 		this->Set(name->c_str(), value);
@@ -206,5 +207,10 @@ namespace kroll
 		}
 	}
 
+	void KObject::SetObject(const char *name, SharedKObject object)
+	{
+		SharedValue obj_val = Value::NewObject(object);
+		this->Set(name, obj_val);
+	}
 }
 

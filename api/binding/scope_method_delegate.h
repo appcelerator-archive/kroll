@@ -45,6 +45,7 @@ namespace kroll {
 		 */
 		static SharedPtr<StaticBoundObject> CreateDelegate(SharedKObject global, SharedKObject bo);
 
+
 	private:
 		MethodDelegateType type;
 		SharedKObject global;
