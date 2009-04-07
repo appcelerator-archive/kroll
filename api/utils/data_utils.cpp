@@ -12,10 +12,10 @@ using KPoco::MD5Engine;
 
 namespace kroll
 {
-	std::string DataUtils::HexMD5(std::string)
+	std::string DataUtils::HexMD5(std::string data)
 	{
 		MD5Engine engine;
-		engine.update("");
+		engine.update(data);
 		return DigestEngine::digestToHex(engine.digest());
 	}
 

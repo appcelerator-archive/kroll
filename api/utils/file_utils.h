@@ -128,16 +128,6 @@ namespace kroll
 		static std::string Join(const char*, ...);
 
 		/**
-		 * This function returns a unique machine identifier in the old style
-		 */
-		static std::string GetOldMachineId();
-
-		/**
-		 * This function returns a unique machine identifier
-		 */
-		static std::string GetMachineId();
-
-		/**
 		 * This function returns the Operating system version
 		 */
 		static std::string GetOSVersion();
