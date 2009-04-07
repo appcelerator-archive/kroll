@@ -26,6 +26,15 @@ namespace kroll
 		 * @returns the first MAC address in standard dotted format
 		 */
 		static void GetNodeId(NodeId&);
+
+		/**
+		 * Get the machine ID of this machine, based on the MAC address
+		 * or the .PRODUCT_NAME file (for backwards-compatibility)
+		 */
+		static std::string GetMachineId();
+
+		private:
+		static std::string GetOldStyleMachineId();
 	};
 }
 #endif

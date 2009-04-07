@@ -200,9 +200,12 @@ namespace kroll
 		static std::string FindModule(std::string& name, int op, std::string& version);
 
 		/**
-		 *
+		 * Get the default runtime home directory. For Linux, this just
+		 * gets the old-style runtime home directory and, in general, should
+		 * not be used. Instead either read the value of KR_RUNTIME_HOME or
+		 * Host::GetRuntimeHomePath for the runtime that is currently in use.
 		 */
-		static std::string GetRuntimeBaseDirectory();
+		static std::string GetDefaultRuntimeHomeDirectory();
 
 		/**
 		 *

@@ -120,7 +120,7 @@ std::string FindModuleDir()
 	{
 		return modules;
 	}
-	std::string runtime = FileUtils::GetRuntimeBaseDirectory();
+	std::string runtime = FileUtils::GetRuntimeHomeDirectory();
 	return FileUtils::Join(runtime.c_str(),"modules","osx",NULL);
 }
 bool RunAppInstallerIfNeeded(std::string &homedir,
@@ -148,7 +148,7 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 		}
 	}
 	// this is where kroll should be installed
-	std::string runtimeBase = kroll::FileUtils::GetRuntimeBaseDirectory();
+	std::string runtimeBase = kroll::FileUtils::GetRuntimeHomeDirectory();
 	
 	if (missing.size()>0)
 	{
@@ -186,7 +186,7 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 		
 		if (!url.empty())
 		{
-			std::string mid = kroll::FileUtils::EncodeURIComponent(kroll::FileUtils::GetMachineId());
+			std::string mid = kroll::FileUtils::EncodeURIComponent(kroll::PlatformUtils::GetMachineId());
 			std::string osarch = kroll::FileUtils::EncodeURIComponent(kroll::FileUtils::GetOSArchitecture());
 			std::string os = kroll::FileUtils::EncodeURIComponent(OS_NAME);
 			std::string osver = kroll::FileUtils::EncodeURIComponent(kroll::FileUtils::GetOSVersion());
@@ -369,7 +369,7 @@ int main(int argc, char *argv[])
 	
 	int rc = 0;
 	std::string localRuntime = FileUtils::Join(homedir.c_str(),"runtime",NULL);
-	std::string runtimeBasedir = FileUtils::GetRuntimeBaseDirectory();
+	std::string runtimeBasedir = FileUtils::GetDefaultRuntimeHomeDirectory();
 	std::string moduleLocalDir = FindModuleDir();
 	std::string moduleBasedir = FileUtils::Join(runtimeBasedir.c_str(),"modules","osx",NULL);
 	std::ostringstream moduleList;

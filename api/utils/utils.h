@@ -10,4 +10,5 @@
 #include "file_utils.h"
 #include "data_utils.h"
 #include "platform_utils.h"
+#include "environment_utils.h"
 #endif

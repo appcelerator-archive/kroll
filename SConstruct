@@ -14,7 +14,6 @@ EnsurePythonVersion(2,5)
 build = BuildConfig(
 	PRODUCT_VERSION = '0.1',
 	PRODUCT_NAME = 'Kroll',
-	INSTALL_PREFIX = '/usr/local',
 	GLOBAL_NS_VARNAME = 'kroll',
 	CONFIG_FILENAME = 'tiapp.xml',
 	BUILD_DIR = path.abspath('build'),

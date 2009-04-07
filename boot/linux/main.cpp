@@ -390,7 +390,7 @@ class Boot
 		}
 
 		std::string temp_dir = FileUtils::GetTempDirectory();
-		std::string mid = FileUtils::GetMachineId();
+		std::string mid = PlatformUtils::GetMachineId();
 		std::string os = OS_NAME;
 		std::string osver = FileUtils::GetOSVersion();
 		std::string osarch = FileUtils::GetOSArchitecture();

@@ -126,7 +126,7 @@ std::string FindModuleDir()
 	{
 		return modules;
 	}
-	std::string runtime = FileUtils::GetRuntimeBaseDirectory();
+	std::string runtime = FileUtils::GetDefaultRuntimeHomeDirectory();
 	return FileUtils::Join(runtime.c_str(),"modules","win32",NULL);
 }
 bool RunAppInstallerIfNeeded(std::string &homedir,
@@ -154,7 +154,7 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 		}
 	}
 	// this is where kroll should be installed
-	std::string runtimeBase = kroll::FileUtils::GetRuntimeBaseDirectory();
+	std::string runtimeBase = kroll::FileUtils::GetDefaultRuntimeHomeDirectory();
 
 	if (missing.size()>0)
 	{
@@ -201,7 +201,7 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 
 		if (!url.empty())
 		{
-			std::string mid = kroll::FileUtils::EncodeURIComponent(kroll::FileUtils::GetMachineId());
+			std::string mid = kroll::FileUtils::EncodeURIComponent(kroll::PlatformUtils::GetMachineId());
 			std::string osarch = kroll::FileUtils::EncodeURIComponent(kroll::FileUtils::GetOSArchitecture());
 			std::string os = kroll::FileUtils::EncodeURIComponent(OS_NAME);
 			std::string osver = kroll::FileUtils::EncodeURIComponent(kroll::FileUtils::GetOSVersion());
@@ -408,7 +408,7 @@ int main(int _argc, const char* _argv[])
 		}
 
 		std::string localRuntime = FileUtils::Join(homedir.c_str(),"runtime",NULL);
-		std::string runtimeBasedir = FileUtils::GetRuntimeBaseDirectory();
+		std::string runtimeBasedir = FileUtils::GetDefaultRuntimeHomeDirectory();
 		std::string localWebkitDll = FileUtils::Join(localRuntime.c_str(), "WebKit.dll", NULL);
 
 		if (!kroll::FileUtils::IsFile(localWebkitDll)) {

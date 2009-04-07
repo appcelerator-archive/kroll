@@ -399,13 +399,14 @@ namespace kroll
 		return (file.size() > 0 && file.at(0) == '.');
 #endif
 	}
+
 	bool FileUtils::IsRuntimeInstalled()
 	{
-		std::string dir = GetRuntimeBaseDirectory();
+		std::string dir = GetDefaultRuntimeHomeDirectory();
 		return IsDirectory(dir);
 	}
 
-	std::string FileUtils::GetRuntimeBaseDirectory()
+	std::string FileUtils::GetDefaultRuntimeHomeDirectory()
 	{
 #ifdef OS_WIN32
 		char path[MAX_PATH];
@@ -442,17 +443,7 @@ namespace kroll
 		// if not, we fall back to installing into user directory
 		return std::string([localDir UTF8String]);
 #elif OS_LINUX
-
-		std::string uid = std::string(getenv("USER"));
-		std::string p(INSTALL_PREFIX);
-		p.append("/");
-		p.append(PRODUCT_NAME);
-		bool writable = (access(p.c_str(),W_OK)) == 0;
-		if (uid.find("root")!=std::string::npos || writable)
-		{
-			return p;
-		}
-		passwd *user = getpwnam(uid.c_str());
+		passwd *user = getpwuid(getuid());
 		std::string dir = std::string(user->pw_dir) + "/" + PRODUCT_NAME + "App";
 		return dir;
 #endif
@@ -570,35 +561,6 @@ namespace kroll
 			return f;
 		}
 		return std::string();
-	}
-	std::string FileUtils::GetOldMachineId()
-	{
-		std::string path = FileUtils::Join(FileUtils::GetRuntimeBaseDirectory().c_str(),".titanium", NULL);
-		if (FileUtils::IsFile(path))
-		{
-			std::ifstream file(path.c_str());
-			if (!file.bad() && !file.fail() && ! file.eof())
-			{
-				std::string line;
-				std::getline(file, line);
-				FileUtils::Trim(line);
-				return line;
-			}
-		}
-		return std::string();
-	}
-	std::string FileUtils::GetMachineId()
-	{
-		std::string id = GetOldMachineId();
-		if (!id.empty())
-		{
-			return id;
-		}
-		else
-		{
-			std::string MACAddress = PlatformUtils::GetFirstMACAddress();
-			return DataUtils::HexMD5(MACAddress);
-		}
 	}
 	std::string FileUtils::GetOSVersion()
 	{
@@ -882,7 +844,7 @@ namespace kroll
 	}
 	std::string FileUtils::FindRuntime(int op, std::string& version)
 	{
-		std::string runtime = GetRuntimeBaseDirectory();
+		std::string runtime = GetDefaultRuntimeHomeDirectory();
 		std::string path(runtime);
 #ifdef OS_WIN32
 		path += "\\runtime\\win32";
@@ -895,7 +857,7 @@ namespace kroll
 	}
 	std::string FileUtils::FindModule(std::string& name, int op, std::string& version)
 	{
-		std::string runtime = GetRuntimeBaseDirectory();
+		std::string runtime = GetDefaultRuntimeHomeDirectory();
 		std::string path(runtime);
 #ifdef OS_WIN32
 		path += "\\modules\\win32\\";

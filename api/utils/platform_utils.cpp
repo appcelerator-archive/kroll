@@ -57,4 +57,42 @@ namespace kroll
 			id[5]);
 		return std::string(result);
 	}
+
+	std::string PlatformUtils::GetMachineId()
+	{
+		std::string id = GetOldStyleMachineId();
+		if (!id.empty())
+		{
+			return id;
+		}
+		else
+		{
+			std::string MACAddress = PlatformUtils::GetFirstMACAddress();
+			return DataUtils::HexMD5(MACAddress);
+		}
+	}
+
+	std::string PlatformUtils::GetOldStyleMachineId()
+	{
+		std::string runtimeHome = FileUtils::GetDefaultRuntimeHomeDirectory();
+		if (EnvironmentUtils::Has("KR_RUNTIME_HOME"))
+			runtimeHome = EnvironmentUtils::Get("KR_RUNTIME_HOME");
+
+		std::string product = std::string(".") + PRODUCT_NAME;
+		std::transform(product.begin(), product.end(), product.begin(), tolower);
+		std::string path = FileUtils::Join(runtimeHome.c_str(), product.c_str(), NULL);
+
+		if (FileUtils::IsFile(path))
+		{
+			std::ifstream file(path.c_str());
+			if (!file.bad() && !file.fail() && ! file.eof())
+			{
+				std::string line;
+				std::getline(file, line);
+				FileUtils::Trim(line);
+				return line;
+			}
+		}
+		return std::string();
+	}
 }
