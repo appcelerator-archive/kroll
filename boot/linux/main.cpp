@@ -100,7 +100,9 @@ class Boot
 	std::string installer_path;
 
 	/* Default runtime base path or, if a runtime is found, that runtimeHomePath */
-	std::string defaultRuntimeHome;
+	std::string systemRuntimeHome;
+	std::string userRuntimeHome;
+	std::string activeRuntimeHome;
 
 	/* Potential paths for installed modules and runtime */
 	std::vector<InstallLocation*> installLocations;
@@ -170,6 +172,7 @@ class Boot
 		{
 			throw std::string("Could not find manifest!");
 		}
+		this->installer_path = FileUtils::Join(capp_path, "installer", NULL);
 
 		std::string pname = PRODUCT_NAME;
 		std::transform(pname.begin(), pname.end(), pname.begin(), tolower);
@@ -181,12 +184,11 @@ class Boot
 		// 4. /usr/lib/PRODUCT_NAME
 		std::string dotLocation = std::string(".") + pname;
 		std::string homePath = getenv("HOME");
-		homePath = FileUtils::Join(homePath.c_str(), dotLocation.c_str(), NULL);
-		std::cout << homePath << std::endl;
-		this->AddInstallLocation(homePath);
+		this->userRuntimeHome = FileUtils::Join(homePath.c_str(), dotLocation.c_str(), NULL);
+		this->AddInstallLocation(this->userRuntimeHome);
 
 		std::string optLocation = std::string("/opt/") + pname;
-		this->defaultRuntimeHome = optLocation;
+		this->activeRuntimeHome = this->systemRuntimeHome = optLocation;
 		this->AddInstallLocation(optLocation);
 
 		this->AddInstallLocation(std::string("/usr/local/lib") + pname);
@@ -343,7 +345,11 @@ class Boot
 			// default location for module installation.
 			if (!result.empty())
 			{
-				this->defaultRuntimeHome = l->runtimeHome;
+				// Don't ever use the user's runtime home as the system runtime home
+				if (l->runtimeHome != this->userRuntimeHome)
+					this->systemRuntimeHome = l->runtimeHome;
+				this->activeRuntimeHome = l->runtimeHome;
+
 				this->rt_module->path = result;
 				return true;
 			}
@@ -377,6 +383,7 @@ class Boot
 		// If we don't have an installer directory, just bail...
 		const char* ci_path = this->installer_path.c_str();
 		std::string installer = FileUtils::Join(ci_path, "installer", NULL);
+		printf("%s\n", installer.c_str());
 		if (!FileUtils::IsDirectory(this->installer_path) || !FileUtils::IsFile(installer))
 		{
 			throw std::string("Missing installer and application has additional modules that are needed.");
@@ -414,12 +421,11 @@ class Boot
 
 		//I18N: localize here
 		std::vector<std::string> args;
+		args.push_back("--initial"); // Ask the user for the install type
+		args.push_back(this->systemRuntimeHome); // Default system runtime location
+		args.push_back(this->userRuntimeHome); // Default user runtime location
 		args.push_back(this->app_name); // appname
-		args.push_back("Additional application files required"); // title
-		args.push_back("There are additional application files that are required for this application. These will be downloaded from the network. Please press Continue to download these files now to complete the installation of the application."); // intro
 		args.push_back(temp_dir); // temp dir
-		args.push_back(this->defaultRuntimeHome); // Default runtime location
-		args.push_back("unused"); // unused unzip var
 
 		std::vector<Module*>::iterator mi = missing.begin();
 		while (mi != missing.end())
@@ -473,7 +479,7 @@ int prepare_environment(int argc, const char* argv[])
 		setenv("KR_HOME", boot.app_path.c_str(), 1);
 		setenv("KR_RUNTIME", boot.rt_module->path.c_str(), 1);
 		setenv("KR_MODULES", module_list.c_str(), 1);
-		setenv("KR_RUNTIME_HOME", boot.defaultRuntimeHome.c_str(), 1);
+		setenv("KR_RUNTIME_HOME", boot.activeRuntimeHome.c_str(), 1);
 		setenv("KR_APP_GUID", boot.guid.c_str(),1);
 		setenv("KR_APP_ID", boot.app_id.c_str(), 1);
 
