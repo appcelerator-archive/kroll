@@ -22,7 +22,7 @@
 #define KR_PATH_SEP_OTHER "/"
 #define KR_LIB_SEP ";"
 #ifndef NO_UNZIP
-#include "unzip/unzip.h"
+#include "../unzip/unzip.h"
 #endif
 #else
 #define KR_PATH_SEP "/"
@@ -128,7 +128,7 @@ namespace kroll
 		static std::string Join(const char*, ...);
 
 		/**
-		 * This function returns a unique machine identifier in the old style 
+		 * This function returns a unique machine identifier in the old style
 		 */
 		static std::string GetOldMachineId();
 
