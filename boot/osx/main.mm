@@ -250,12 +250,10 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 					// Attempt to find a bundled module/runtime for
 					// installation purposes -- if found use that path
 					// as the URL.
-					std::string u = BootUtils::FindBundledModuleZip(
-						mod->name,
-						mod->version,
-						homedir);
+					std::string u = BootUtils::FindBundledModuleZip(name, version, homedir);
 
 					if (u.empty())
+					{
 						// this is information that will allow us to 
 						// determine which module/runtime to give you from
 						// the network distribution site
@@ -392,6 +390,7 @@ int main(int argc, char *argv[])
 		moduleList << moduleDir << ":";
 	}
 
+	// we now need to resolve and load each module and dependencies
 	char *fork_flag = getenv("KR_FORK");
 	if (!fork_flag)
 	{
