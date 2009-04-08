@@ -247,20 +247,28 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 				}
 				else
 				{
-					// this is information that will allow us to 
-					// determine which module/runtime to give you from
-					// the network distribution site
-					std::string u(url);
-					u+=qs;
-					u+="&name=";
-					u+=kroll::FileUtils::EncodeURIComponent(name);
-					u+="&version=";
-					u+=kroll::FileUtils::EncodeURIComponent(version);
-					u+="&uuid=";
-					u+=kroll::FileUtils::EncodeURIComponent(uuid);
-#ifdef DEBUG
-					std::cout << "Adding URL: " << u << std::endl;
-#endif
+					// Attempt to find a bundled module/runtime for
+					// installation purposes -- if found use that path
+					// as the URL.
+					std::string u = BootUtils::FindBundledModuleZip(
+						mod->name,
+						mod->version,
+						homedir);
+
+					if (u.empty())
+						// this is information that will allow us to 
+						// determine which module/runtime to give you from
+						// the network distribution site
+						u = url;
+						u+=qs;
+						u+="&name=";
+						u+=kroll::FileUtils::EncodeURIComponent(name);
+						u+="&version=";
+						u+=kroll::FileUtils::EncodeURIComponent(version);
+						u+="&uuid=";
+						u+=kroll::FileUtils::EncodeURIComponent(uuid);
+					}
+
 					args.push_back(u);
 					missingCount++;
 				}

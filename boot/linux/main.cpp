@@ -446,15 +446,19 @@ class Boot
 		while (mi != missing.end())
 		{
 			Module* mod = *mi++;
-			std::string u(url);
-			u.append(qs);
-			u.append("&name=");
-			u.append(mod->name);
-			u.append("&version=");
-			u.append(mod->version);
-			u.append("&uuid=");
-			u.append(mod->typeuuid);
-			args.push_back(u);
+			std::string moduleURL = BootUtils::FindBundledModuleZip(mod->name, mod->version, this->app_path);
+			if (moduleURL.empty())
+			{
+				moduleURL = url;
+				moduleURL.append(qs);
+				moduleURL.append("&name=");
+				moduleURL.append(mod->name);
+				moduleURL.append("&version=");
+				moduleURL.append(mod->version);
+				moduleURL.append("&uuid=");
+				moduleURL.append(mod->typeuuid);
+			}
+			args.push_back(moduleURL);
 		}
 
 		kroll::FileUtils::RunAndWait(installer, args);

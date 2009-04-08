@@ -11,4 +11,5 @@
 #include "data_utils.h"
 #include "platform_utils.h"
 #include "environment_utils.h"
+#include "boot_utils.h"
 #endif
