@@ -69,10 +69,13 @@
 		for (size_t i = 0; i < props->size(); i++)
 		{
 			const char* k = props->at(i)->c_str();
-			SharedValue v = o->Get(k);
-			PyObject* pv = PythonUtils::ToPyObject(v);
-			PyObject_SetAttrString(pyobj, k, pv);
-			Py_DECREF(pv);
+			if (!PyObject_HasAttrString(pyobj, k))
+			{
+				SharedValue v = o->Get(k);
+				PyObject* pv = PythonUtils::ToPyObject(v);
+				PyObject_SetAttrString(pyobj, k, pv);
+				Py_DECREF(pv);
+			}
 		}
 	}
 
