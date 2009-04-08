@@ -262,7 +262,10 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 					// Attempt to find a bundled module/runtime for
 					// installation purposes -- if found use that path
 					// as the URL.
-					std::string u = BootUtils::FindBundledModuleZip(name, version, homedir);
+					std::string u = BootUtils::FindBundledModuleZip(
+						name,
+						version,
+						homedir);
 					if (u.empty())
 					{
 						u = url;
