@@ -6,8 +6,6 @@
 
 #ifndef _KR_PROFILED_BOUND_OBJECT_H_
 #define _KR_PROFILED_BOUND_OBJECT_H_
-
-#include "binding.h"
 #include <Poco/FileStream.h>
 
 namespace kroll

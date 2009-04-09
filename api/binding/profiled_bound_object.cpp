@@ -4,10 +4,7 @@
  * Copyright (c) 2009 Appcelerator, Inc. All Rights Reserved.
  */
 
-#include "binding.h"
-#include "profiled_bound_object.h"
-#include "profiled_bound_list.h"
-#include "profiled_bound_method.h"
+#include "../kroll.h"
 #include <cstdio>
 #include <cstring>
 #include <Poco/Stopwatch.h>
