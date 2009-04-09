@@ -75,7 +75,7 @@ namespace kroll
 
 		void AsyncJob::SetProgress(double progress, bool callbacks)
 		{
-			if (progress == NAN || progress < 0.0)
+			if (progress < 0.0)
 				progress = 0.0;
 			if (progress > 1.0)
 				progress = 1.0;
