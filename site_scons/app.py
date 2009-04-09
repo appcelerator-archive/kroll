@@ -68,7 +68,7 @@ class App:
 
 	def stage(self, build_dir, src_contents=None, src_resources=None, bundle=True):
 		print('Staging %s' % self.shortname)
-		self.prestage(build_dir, src_contents=src_contents, src_resources=src_resources, bundle)
+		self.prestage(build_dir, src_contents=src_contents, src_resources=src_resources, bundle=bundle)
 
 		if self.build.is_osx():
 			self.status('copying mac resources to %s' % (self.contents))
