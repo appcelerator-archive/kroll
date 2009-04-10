@@ -21,7 +21,8 @@ build = BuildConfig(
 	BOOT_RUNTIME_FLAG = '--runtime',
 	BOOT_HOME_FLAG = '--start',
 	BOOT_UPDATESITE_ENVNAME = 'KR_UPDATESITE',
-	BOOT_UPDATESITE_URL = 'nosite'
+	BOOT_UPDATESITE_URL = 'nosite',
+	CRASH_REPORT_URL = 'nosite',
 )
 build.set_kroll_source_dir(path.abspath('.'))
 

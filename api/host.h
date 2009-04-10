@@ -298,11 +298,11 @@ namespace kroll
 	private:
 		static SharedPtr<Host> instance_;
 		static Poco::Timestamp started_;
-		
-		DISALLOW_EVIL_CONSTRUCTORS(Host);
-		
 		void StartProfiling();
 		void StopProfiling();
+
+		DISALLOW_EVIL_CONSTRUCTORS(Host);
+		
 	};
 
 	/**

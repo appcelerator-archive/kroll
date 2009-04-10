@@ -91,8 +91,8 @@ namespace kroll
 #include "binding/binding.h"
 #include "module_provider.h"
 #include "module.h"
-#include "host.h"
 #include "async_job.h"
+#include "host.h"
 
 #ifdef OS_OSX
 #include "osx.h"

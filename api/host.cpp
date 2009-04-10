@@ -126,7 +126,7 @@ namespace kroll
 	Host::~Host()
 	{
 	}
-	
+
 	void Host::StartProfiling()
 	{
 		if (this->profile)
@@ -136,7 +136,7 @@ namespace kroll
 			this->profileStream = new Poco::FileOutputStream(this->profilePath);
 		}
 	}
-	
+
 	void Host::StopProfiling()
 	{
 		if (this->profile)

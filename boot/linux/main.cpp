@@ -11,9 +11,9 @@
 #include <dlfcn.h>
 #include <libgen.h>
 #include <limits.h>
-
-
 #include <utils.h>
+#include "client/linux/handler/exception_handler.h"
+#include "common/linux/http_upload.h"
 
 // ensure that Kroll API is never included to create
 // an artificial dependency on kroll shared library
@@ -55,6 +55,81 @@ using kroll::FileUtils;
 #else
   #define OSTYPE "64bit"
 #endif
+
+#define CRASH_REPORT_OPT "--crash_report"
+static std::string myself;
+static google_breakpad::ExceptionHandler* breakpad;
+bool breakpad_callback(
+	const char* dump_path,
+	const char* id,
+	void* context,
+	bool succeeded)
+{
+	if (succeeded)
+	{
+		std::string file = std::string(id) + ".dmp";
+		file = FileUtils::Join(dump_path, file.c_str(), NULL);
+		std::string exec_path = myself;
+		exec_path.append(" ");
+		exec_path.append(CRASH_REPORT_OPT);
+		exec_path.append(" ");
+		exec_path.append(file);
+		exec_path.append("&");
+		printf("Executing: %s\n", exec_path.c_str());
+		fflush(stdout);
+		//system(exec_path.c_str());
+	}
+	return succeeded;
+}
+
+std::map<std::string, std::string> get_parameters(int argc, const char* argv[])
+{
+	std::map<std::string, std::string> params;
+	for (int i = 2; argc > i+1; i++)
+	{
+		std::string key = argv[i];
+		std::string value = argv[i+1];
+		params[key] = value;
+	}
+	return params;
+}
+
+void send_crash_report(int argc, const char* argv[])
+{
+	std::string url = STRING(CRASH_REPORT_URL);
+	const std::map<std::string, std::string> parameters = get_parameters(argc, argv);
+	std::string upload_file = argv[2];
+	std::string file_part_name = "dump";
+	std::string proxy;
+	std::string proxy_user_pwd;
+	std::string response_body;
+	std::string error_description;
+
+	/*bool success =*/ google_breakpad::HTTPUpload::SendRequest(
+		url,
+		parameters,
+		upload_file,
+		file_part_name,
+		proxy,
+		proxy_user_pwd,
+		&response_body,
+		&error_description
+	);
+
+	/* Wait until there is a standard GUI for crash reports */
+	//if (!success)
+	//{
+	//	GtkWidget* dialog = gtk_message_dialog_new(
+	//		NULL,
+	//		GTK_DIALOG_DESTROY_WITH_PARENT,
+	//		GTK_MESSAGE_ERROR,
+	//		GTK_BUTTONS_CLOSE,
+	//		"Error uploading crash dump: %s",
+	//		response_body.c_str());
+	//	gtk_dialog_run(GTK_DIALOG(dialog));
+	//	gtk_widget_destroy(dialog);
+	//}
+}
 
 typedef int Executor(int argc, const char **argv);
 struct Module
@@ -560,7 +635,20 @@ int start_host(int argc, const char* argv[])
 
 int main(int argc, const char* argv[])
 {
-	if (!getenv("KR_BOOT_READY"))
+	myself = argv[0];
+	std::string dump_path = "/tmp";
+	breakpad = new google_breakpad::ExceptionHandler(
+		dump_path,
+		NULL,
+		breakpad_callback,
+		NULL,
+		true);
+
+	if (argc > 2 && !strcmp(CRASH_REPORT_OPT, argv[1]))
+	{
+		send_crash_report(argc, argv);
+	}
+	else if (!getenv("KR_BOOT_READY"))
 	{
 		return prepare_environment(argc, argv);
 	}
