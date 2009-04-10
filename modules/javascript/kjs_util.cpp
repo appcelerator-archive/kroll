@@ -74,19 +74,19 @@ namespace kroll
 				else if (JSObjectIsFunction(ctx, o))
 				{
 					// this is a pure JS method: proxy it
-					SharedKMethod tibm = new KJSKMethod(ctx, o, this_obj);
+					SharedKMethod tibm = new KKJSMethod(ctx, o, this_obj);
 					kr_val = Value::NewMethod(tibm);
 				}
 				else if (IsArrayLike(o, ctx))
 				{
 					// this is a pure JS array: proxy it
-					SharedKList tibl = new KJSKList(ctx, o);
+					SharedKList tibl = new KKJSList(ctx, o);
 					kr_val = Value::NewList(tibl);
 				}
 				else
 				{
 					// this is a pure JS object: proxy it
-					SharedKObject tibo = new KJSKObject(ctx, o);
+					SharedKObject tibo = new KKJSObject(ctx, o);
 					kr_val = Value::NewObject(tibo);
 				}
 			}
@@ -134,7 +134,7 @@ namespace kroll
 		else if (value->IsObject())
 		{
 			SharedKObject obj = value->ToObject();
-			SharedPtr<KJSKObject> kobj = obj.cast<KJSKObject>();
+			SharedPtr<KKJSObject> kobj = obj.cast<KKJSObject>();
 			if (!kobj.isNull() && kobj->SameContextGroup(ctx))
 			{
 				// this object is actually a pure JS object
@@ -149,7 +149,7 @@ namespace kroll
 		else if (value->IsMethod())
 		{
 			SharedKMethod meth = value->ToMethod();
-			SharedPtr<KJSKMethod> kmeth = meth.cast<KJSKMethod>();
+			SharedPtr<KKJSMethod> kmeth = meth.cast<KKJSMethod>();
 			if (!kmeth.isNull() && kmeth->SameContextGroup(ctx))
 			{
 				// this object is actually a pure JS callable object
@@ -164,7 +164,7 @@ namespace kroll
 		else if (value->IsList())
 		{
 			SharedKList list = value->ToList();
-			SharedPtr<KJSKList> klist = list.cast<KJSKList>();
+			SharedPtr<KKJSList> klist = list.cast<KKJSList>();
 			if (!klist.isNull() && klist->SameContextGroup(ctx))
 			{
 				// this object is actually a pure JS array

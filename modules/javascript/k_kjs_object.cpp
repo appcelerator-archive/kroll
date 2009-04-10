@@ -7,7 +7,7 @@
 
 namespace kroll
 {
-	KJSKObject::KJSKObject(JSContextRef context, JSObjectRef js_object) :
+	KKJSObject::KKJSObject(JSContextRef context, JSObjectRef js_object) :
 		context(NULL),
 		object(js_object)
 	{
@@ -31,18 +31,18 @@ namespace kroll
 		JSValueProtect(this->context, this->object);
 	}
 
-	KJSKObject::~KJSKObject()
+	KKJSObject::~KKJSObject()
 	{
 		JSValueUnprotect(this->context, this->object);
 		KJSUtil::UnprotectGlobalContext(this->context);
 	}
 
-	JSObjectRef KJSKObject::GetJSObject()
+	JSObjectRef KKJSObject::GetJSObject()
 	{
 		return this->object;
 	}
 
-	SharedValue KJSKObject::Get(const char *name)
+	SharedValue KKJSObject::Get(const char *name)
 	{
 		JSStringRef s = JSStringCreateWithUTF8CString(name);
 		JSValueRef exception = NULL;
@@ -60,18 +60,19 @@ namespace kroll
 		return kvalue;
 	}
 
-	void KJSKObject::Set(const char *name, SharedValue value)
+	void KKJSObject::Set(const char *name, SharedValue value)
 	{
 		JSValueRef js_value = KJSUtil::ToJSValue(value, this->context);
 		JSStringRef s = JSStringCreateWithUTF8CString(name);
 
 		JSValueRef exception = NULL;
-		JSObjectSetProperty(this->context,
-		                    this->object,
-		                    s,
-		                    js_value,
-		                    NULL, // attributes
-		                    &exception);
+		JSObjectSetProperty(
+			this->context,
+			this->object,
+			s,
+			js_value,
+			NULL, // attributes
+			&exception);
 		JSStringRelease(s);
 
 		if (exception != NULL) //exception thrown
@@ -81,7 +82,20 @@ namespace kroll
 		}
 	}
 
-	SharedStringList KJSKObject::GetPropertyNames()
+	bool KKJSObject::Equals(SharedKObject other)
+	{
+		SharedPtr<KKJSObject> kjsOther = other.cast<KKJSObject>();
+		if (kjsOther.isNull())
+			return false;
+
+		if (!kjsOther->SameContextGroup(this->context))
+			return false;
+
+		return JSValueIsStrictEqual(
+			this->context, this->object, kjsOther->GetJSObject());
+	}
+
+	SharedStringList KKJSObject::GetPropertyNames()
 	{
 		SharedStringList list(new StringList());
 
@@ -103,7 +117,7 @@ namespace kroll
 		return list;
 	}
 
-	bool KJSKObject::SameContextGroup(JSContextRef c)
+	bool KKJSObject::SameContextGroup(JSContextRef c)
 	{
 		JSContextGroupRef context_group_a = JSContextGetGroup(this->context);
 		JSContextGroupRef context_group_b = JSContextGetGroup(c);

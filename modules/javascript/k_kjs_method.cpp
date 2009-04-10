@@ -7,7 +7,7 @@
 
 namespace kroll
 {
-	KJSKMethod::KJSKMethod(JSContextRef context, JSObjectRef js_object, JSObjectRef this_obj) :
+	KKJSMethod::KKJSMethod(JSContextRef context, JSObjectRef js_object, JSObjectRef this_obj) :
 		context(NULL),
 		object(js_object),
 		this_obj(this_obj)
@@ -34,10 +34,10 @@ namespace kroll
 		if (this_obj != NULL)
 			JSValueProtect(this->context, this_obj);
 
-		this->kjs_bound_object = new KJSKObject(this->context, js_object);
+		this->kjs_bound_object = new KKJSObject(this->context, js_object);
 	}
 
-	KJSKMethod::~KJSKMethod()
+	KKJSMethod::~KKJSMethod()
 	{
 		JSValueUnprotect(this->context, this->object);
 		if (this->this_obj != NULL)
@@ -45,32 +45,43 @@ namespace kroll
 		KJSUtil::UnprotectGlobalContext(this->context);
 	}
 
-	SharedValue KJSKMethod::Get(const char *name)
+	SharedValue KKJSMethod::Get(const char *name)
 	{
 		return kjs_bound_object->Get(name);
 	}
 
-	void KJSKMethod::Set(const char *name, SharedValue value)
+	void KKJSMethod::Set(const char *name, SharedValue value)
 	{
 		return kjs_bound_object->Set(name, value);
 	}
 
-	SharedStringList KJSKMethod::GetPropertyNames()
+	bool KKJSMethod::Equals(SharedKObject other)
+	{
+		SharedPtr<KKJSMethod> kjsOther = other.cast<KKJSMethod>();
+		if (kjsOther.isNull())
+			return false;
+		if (!kjsOther->SameContextGroup(this->context))
+			return false;
+		return JSValueIsStrictEqual(
+			this->context, this->object, kjsOther->GetJSObject());
+	}
+
+	SharedStringList KKJSMethod::GetPropertyNames()
 	{
 		return kjs_bound_object->GetPropertyNames();
 	}
 
-	bool KJSKMethod::SameContextGroup(JSContextRef c)
+	bool KKJSMethod::SameContextGroup(JSContextRef c)
 	{
 		return kjs_bound_object->SameContextGroup(c);
 	}
 
-	JSObjectRef KJSKMethod::GetJSObject()
+	JSObjectRef KKJSMethod::GetJSObject()
 	{
 		return this->object;
 	}
 
-	SharedValue KJSKMethod::Call(const ValueList& args)
+	SharedValue KKJSMethod::Call(const ValueList& args)
 	{
 		JSValueRef* js_args = new JSValueRef[args.size()];
 		for (int i = 0; i < (int) args.size(); i++)
@@ -80,13 +91,14 @@ namespace kroll
 		}
 
 		JSValueRef exception = NULL;
-		JSValueRef js_value = JSObjectCallAsFunction(this->context,
-		                                             this->object,
-		                                             this->this_obj,
-		                                             args.size(),
-		                                             js_args,
-		                                             &exception);
-		
+		JSValueRef js_value = JSObjectCallAsFunction(
+			this->context,
+			this->object,
+			this->this_obj,
+			args.size(),
+			js_args,
+			&exception);
+
 		delete [] js_args; // clean up args
 
 		if (js_value == NULL && exception != NULL) //exception thrown

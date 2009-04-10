@@ -15,11 +15,11 @@
 
 namespace kroll
 {
-	class KROLL_JAVASCRIPT_API KJSKMethod : public KMethod
+	class KROLL_JAVASCRIPT_API KKJSMethod : public KMethod
 	{
 		public:
-		KJSKMethod(JSContextRef, JSObjectRef, JSObjectRef);
-		~KJSKMethod();
+		KKJSMethod(JSContextRef, JSObjectRef, JSObjectRef);
+		~KKJSMethod();
 
 		void Set(const char *name, SharedValue value);
 		SharedValue Get(const char *name);
@@ -28,14 +28,22 @@ namespace kroll
 		bool SameContextGroup(JSContextRef c);
 		JSObjectRef GetJSObject();
 
+		/*
+		 * Determine if the given KJS object equals this one
+		 * by comparing these objects via strict equality (===)
+		 *  @param other the object to test
+		 *  @returns true if objects have strit equality, false otherwise
+		 */
+		virtual bool Equals(SharedKObject);
+
 		protected:
 		JSGlobalContextRef context;
 		JSObjectRef object;
 		JSObjectRef this_obj;
-		SharedPtr<KJSKObject> kjs_bound_object;
+		SharedPtr<KKJSObject> kjs_bound_object;
 
 		private:
-		DISALLOW_EVIL_CONSTRUCTORS(KJSKMethod);
+		DISALLOW_EVIL_CONSTRUCTORS(KKJSMethod);
 	};
 }
 

@@ -19,9 +19,10 @@ namespace kroll
 
 		virtual void Set(const char *name, SharedValue value);
 		virtual SharedValue Get(const char *name);
+		virtual bool Equals(SharedKObject);
 		virtual SharedStringList GetPropertyNames();
 
-		PyObject* ToPython() { Py_INCREF(object); return object; }
+		PyObject* ToPython();
 
 	private:
 		PyObject *object;

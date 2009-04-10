@@ -10,6 +10,11 @@
 namespace kroll
 {
 
+	bool KObject::Equals(SharedKObject other)
+	{
+		return other.get() == this;
+	}
+
 	SharedString KObject::DisplayString(int levels)
 	{
 		std::stringstream ss;
