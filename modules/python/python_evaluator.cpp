@@ -39,10 +39,8 @@
 			globals);
 		PyObject* locals = PyRun_String("locals()", Py_eval_input, globals, globals);
 
-		// Move all the new variables in locals() to the  window context.
-		// These are things that are now defined globally in JS.
-		DictToKObjectProps(locals, window_global);
-
+		/* Clear the error indicator before doing anything else. It might cause a
+		 * a false positive for errors in other bits of Python */
 		/* TODO: Logging */
 		SharedValue kv = Value::Undefined;
 		if (return_value == NULL && PyErr_Occurred())
@@ -55,6 +53,10 @@
 			SharedValue kv = PythonUtils::ToKrollValue(return_value);
 			Py_DECREF(return_value);
 		}
+
+		// Move all the new variables in locals() to the  window context.
+		// These are things that are now defined globally in JS.
+		DictToKObjectProps(locals, window_global);
 
 		// Switch back to the global thread state
 		PyThreadState_Swap(previous_state);

@@ -22,6 +22,10 @@ namespace kroll
 	static PyObject* PyKListInPlaceRepeat(PyObject*, Py_ssize_t);
 	static PyObject* PyKMethod_call(PyObject*, PyObject *, PyObject*);
 
+	static bool initializedPyKList = false;
+	static bool initializedPyKMethod = false;
+	static bool initializedPyKObject = false;
+
 	typedef struct {
 		PyObject_HEAD
 		SharedValue* value;
@@ -50,7 +54,17 @@ namespace kroll
 		0,                          /*tp_setattro*/
 		0,                          /*tp_as_buffer*/
 		0,                          /*tp_flags*/
-		0                           /*tp_doc*/
+		0,                          /*tp_doc*/
+		0,                          /* tp_traverse */
+		0,                          /* tp_clear */
+		0,                          /* tp_richcompare */
+		0,                          /* tp_weaklistoffset */
+		0,                          /* tp_iter */
+		0,                          /* tp_iternext */
+		0,                          /* tp_methods */
+		0,                          /* tp_members */
+		0,                          /* tp_getset */
+		0                           /* tp_base */
 	};
 
 	static PyTypeObject PyKMethodType =
@@ -76,7 +90,17 @@ namespace kroll
 		0,                          /*tp_setattro*/
 		0,                          /*tp_as_buffer*/
 		0,                          /*tp_flags*/
-		0                           /*tp_doc*/
+		0,                          /*tp_doc*/
+		0,                          /* tp_traverse */
+		0,                          /* tp_clear */
+		0,                          /* tp_richcompare */
+		0,                          /* tp_weaklistoffset */
+		0,                          /* tp_iter */
+		0,                          /* tp_iternext */
+		0,                          /* tp_methods */
+		0,                          /* tp_members */
+		0,                          /* tp_getset */
+		0                           /* tp_base */
 	};
 
 	static PyTypeObject PyKListType =
@@ -102,7 +126,17 @@ namespace kroll
 		0,                          /*tp_setattro*/
 		0,                          /*tp_as_buffer*/
 		0,                          /*tp_flags*/
-		0                           /*tp_doc*/
+		0,                          /*tp_doc*/
+		0,                          /* tp_traverse */
+		0,                          /* tp_clear */
+		0,                          /* tp_richcompare */
+		0,                          /* tp_weaklistoffset */
+		0,                          /* tp_iter */
+		0,                          /* tp_iternext */
+		0,                          /* tp_methods */
+		0,                          /* tp_members */
+		0,                          /* tp_getset */
+		0                           /* tp_base */
 	};
 
 	PyObject* PythonUtils::ToPyObject(SharedValue value)
@@ -321,6 +355,13 @@ namespace kroll
 
 	PyObject* PythonUtils::KObjectToPyObject(SharedValue v)
 	{
+		if (!initializedPyKObject)
+		{
+			initializedPyKObject = true;
+			if (PyType_Ready(&PyKObjectType) < 0)
+				throw ValueException::FromString("Could not initialize PyKObjectType!");
+		}
+
 		PyKObject* obj = PyObject_New(PyKObject, &PyKObjectType);
 		obj->value = new SharedValue(v);
 		return (PyObject*) obj;
@@ -424,8 +465,10 @@ namespace kroll
 
 	PyObject* PythonUtils::KListToPyObject(SharedValue v)
 	{
-		if (KPySequenceMethods.sq_length == 0)
+		if (!initializedPyKList)
 		{
+			initializedPyKList = true;
+
 			KPySequenceMethods.sq_length = &PyKListLength;
 			KPySequenceMethods.sq_concat = &PyKListConcat;
 			KPySequenceMethods.sq_repeat = &PyKListRepeat;
@@ -434,11 +477,12 @@ namespace kroll
 			KPySequenceMethods.sq_inplace_concat = &PyKListInPlaceConcat;
 			KPySequenceMethods.sq_contains = &PyKListContains;
 			KPySequenceMethods.sq_inplace_repeat = &PyKListInPlaceRepeat;
-		}
-		if (PyKListType.tp_as_sequence == 0)
-		{
+
 			PyKListType.tp_as_sequence = &KPySequenceMethods;
 			PyKListType.tp_flags = Py_TPFLAGS_HAVE_INPLACEOPS;
+
+			if (PyType_Ready(&PyKListType) < 0)
+				throw ValueException::FromString("Could not initialize PyKListType!");
 		}
 
 		PyKObject* obj = PyObject_New(PyKObject, &PyKListType);
@@ -466,6 +510,7 @@ namespace kroll
 		}
 		catch (ValueException& e)
 		{
+			printf("threw exception on method\n");
 			PyObject* pye = PythonUtils::ToPyObject(e.GetValue());
 			PyObject* type = PyObject_Type(pye);
 			PyErr_SetObject(type, pye);
@@ -481,6 +526,13 @@ namespace kroll
 
 	PyObject* PythonUtils::KMethodToPyObject(SharedValue v)
 	{
+		if (!initializedPyKMethod)
+		{
+			initializedPyKMethod = true;
+			if (PyType_Ready(&PyKMethodType) < 0)
+				throw ValueException::FromString("Could not initialize PyKMethodType!");
+		}
+
 		PyKObject* obj = PyObject_New(PyKObject, &PyKMethodType);
 		obj->value = new SharedValue(v);
 		return (PyObject*) obj;
