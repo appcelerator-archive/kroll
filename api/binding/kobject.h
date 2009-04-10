@@ -34,8 +34,7 @@ namespace kroll
 	public:
 
 		/**
-		 * Set a property on this object to the given value. Value should be
-		 * heap-allocated as implementors are allowed to keep a reference.
+		 * Set a property on this object to the given value. 
 		 * When an error occurs will throw an exception of type ValueException.
 		 * @param name The property name
 		 * @param value The new property value
@@ -45,7 +44,7 @@ namespace kroll
 		/**
 		 * @param name The property name
 		 * @return the value of the property with the given name or Value::Undefined
-		 * if the property is not found.
+		 *         if the property is not found.
 		 * Errors will result in a thrown ValueException
 		 */
 		virtual SharedValue Get(const char *name) = 0;
@@ -74,6 +73,151 @@ namespace kroll
 		 * Helpful overload to Get which takes a SharedString
 		 */
 		SharedValue Get(SharedString name);
+
+		/**
+		 * Get an int property from this object.
+		 *
+		 * @param name The name of the property to get
+		 * @param defaultValue A value to return on failure
+		 *
+		 * @return Value of given property name, or the default value if
+		 * if it does not exist or is not an int.
+		 */
+		int GetInt(const char *name, int defaultValue=0);
+
+		/**
+		 * Get a double property from this object.
+		 *
+		 * @param name The name of the property to get
+		 * @param defaultValue A value to return on failure
+		 *
+		 * @return Value of given property name, or the default value if
+		 * if it does not exist or is not a double.
+		 */
+		double GetDouble(const char *name, double defaultValue=0.0);
+
+		/**
+		 * Get a number property from this object.
+		 *
+		 * @param name The name of the property to get
+		 * @param defaultValue A value to return on failure
+		 *
+		 * @return Value of given property name, or the default value if
+		 * if it does not exist or is not a number.
+		 */
+		double GetNumber(const char *name, double defaultValue=0.0);
+
+		/**
+		 * Get a boolean property from this object.
+		 *
+		 * @param name The name of the property to get
+		 * @param defaultValue A value to return on failure
+		 *
+		 * @return Value of given property name, or the default value if
+		 * if it does not exist or is not a Bool.
+		 */
+		bool GetBool(const char *name, bool defaultValue=false);
+
+		/**
+		 * Get a string property from this object.
+		 *
+		 * @param name The name of the property to get
+		 * @param defaultValue A value to return on failure
+		 *
+		 * @return Value of given property name, or the default value if
+		 * if it does not exist or is not a string.
+		 */
+		std::string GetString(const char *name, std::string defaultValue="");
+
+		/**
+		 * Get an object property from this object.
+		 *
+		 * @param name The name of the property to get
+		 * @param defaultValue A value to return on failure
+		 *
+		 * @return Value of given property name, or the default value if
+		 * if it does not exist or is not an object.
+		 */
+		SharedKObject GetObject(const char *name, SharedKObject defaultValue=NULL);
+
+		/**
+		 * Get a method property from this object.
+		 *
+		 * @param name The name of the property to get
+		 * @param defaultValue A value to return on failure
+		 *
+		 * @return Value of given property name, or the default value if
+		 * if it does not exist or is not a method.
+		 */
+		SharedKMethod GetMethod(const char *name, SharedKMethod defaultValue=NULL);
+
+		/**
+		 * Get a list property from this object.
+		 *
+		 * @param name The name of the property to get
+		 * @param defaultValue A value to return on failure
+		 *
+		 * @return Value of given property name, or the default value if
+		 * if it does not exist or is not a list.
+		 */
+		SharedKList GetList(const char *name, SharedKList defaultValue=NULL);
+
+		/**
+		 * Set an int property on this object
+		 * When an error occurs will throw an exception of type ValueException.
+		 */
+		void SetInt(const char *name, int);
+
+		/**
+		 * Set a double property on this object
+		 * When an error occurs will throw an exception of type ValueException.
+		 */
+		void SetDouble(const char *name, double);
+
+		/**
+		 * Set a number property on this object
+		 * When an error occurs will throw an exception of type ValueException.
+		 */
+		void SetNumber(const char *name, double);
+
+		/**
+		 * Set a bool property on this object
+		 * When an error occurs will throw an exception of type ValueException.
+		 */
+		void SetBool(const char *name, bool);
+
+		/**
+		 * Set a string property on this object
+		 * When an error occurs will throw an exception of type ValueException.
+		 */
+		void SetString(const char *name, std::string);
+
+		/**
+		 * Set an object property on this object
+		 * When an error occurs will throw an exception of type ValueException.
+		 */
+		void SetObject(const char *name, SharedKObject);
+
+		/**
+		 * Set a method property on this object
+		 * When an error occurs will throw an exception of type ValueException.
+		 */
+		void SetMethod(const char *name, SharedKMethod);
+
+		/**
+		 * Set a list property on this object
+		 * When an error occurs will throw an exception of type ValueException.
+		 */
+		void SetList(const char *name, SharedKList);
+
+		/**
+		 * Get a list of strings for the given property of this object. The list
+		 * is appended to the end of the passed-in list.
+		 *
+		 * @param name the name of the property
+		 * @param list the vector where the list of strings is appended to
+		 */
+		void GetStringList(const char *name, std::vector<std::string> &list);
 
 		/**
 		 * Set the value of a child of this object using a simple object notation
@@ -131,45 +275,6 @@ namespace kroll
 		 * @see KObject::CallNS(const char *name, SharedValue val1);
 		 */
 		SharedValue CallNS(const char *name, const ValueList& args);
-
-
-		/**
-		 * Get a string property from this object.
-		 *
-		 * @param name The name of the property to get
-		 * @param defaultValue A value to return on failure
-		 *
-		 * @return Value of given property name, or the default value if
-		 * if it does not exist or is not a string.
-		 */
-		std::string GetString(const char *name, std::string defaultValue);
-
-		/**
-		 * Get a boolean property from this object.
-		 *
-		 * @param name The name of the property to get
-		 * @param defaultValue A value to return on failure
-		 *
-		 * @return Value of given property name, or the default value if
-		 * if it does not exist or is not a Bool.
-		 */
-		bool GetBool(const char *name, bool defaultValue);
-
-		/**
-		 * Gets a list of strings for the given property of this object. The list
-		 * is appended to the end of the passed-in list.
-		 *
-		 * @param name the name of the property
-		 * @param list the vector where the list of strings is appended to
-		 */
-		void GetStringList(const char *name, std::vector<std::string> &list);
-
-		/**
-		 * Set a property on this object to the given object. Value should be
-		 * heap-allocated as implementors are allowed to keep a reference.
-		 * When an error occurs will throw an exception of type ValueException.
-		 */
-		void SetObject(const char *name, SharedKObject object);
 
 	private:
 		DISALLOW_EVIL_CONSTRUCTORS(KObject);
