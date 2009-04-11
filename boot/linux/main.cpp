@@ -77,7 +77,7 @@ bool breakpad_callback(
 		exec_path.append("&");
 		printf("Executing: %s\n", exec_path.c_str());
 		fflush(stdout);
-		//system(exec_path.c_str());
+		system(exec_path.c_str());
 	}
 	return succeeded;
 }
