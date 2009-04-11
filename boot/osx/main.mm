@@ -105,7 +105,9 @@ std::string FindManifest()
 {
 	std::string currentDir = GetExecutablePath();
 	std::string manifest = FileUtils::Join(currentDir.c_str(),"manifest",NULL);
+#ifdef DEBUG
 	std::cout << "manifest = " << manifest << std::endl;
+#endif
 	if (FileUtils::IsFile(manifest))
 	{
 		return manifest;
@@ -164,7 +166,10 @@ bool RunAppInstallerIfNeeded(std::string &homedir,
 		args.push_back("Additional application files required");
 		// message
 		//I18N: localize these
-		args.push_back("There are additional application files that are required for this application. These will be downloaded from the network. Please press Continue to download these files now to complete the installation of the application.");
+		std::string msg = "There are additional files that are required to complete the installation. These will be downloaded from the Internet. Please press Continue to complete the installation of the ";
+		msg+=appname;
+		msg+=".";
+		args.push_back(msg);
 		// extract directory
 		args.push_back(sourceTemp);
 		// runtime base

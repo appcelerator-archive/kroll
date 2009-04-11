@@ -375,8 +375,16 @@ namespace kroll
 				platformAppResourcesDir.list(files);
 				for (size_t i = 0; i < files.size(); i++) 
 				{
-					PRINTD("Copying " << files.at(i).path() << " to " << appDir);
-					files.at(i).copyTo(appDir);
+					Poco::File f = files.at(i);
+					if (!f.exists())
+					{
+						PRINTD("Copying " << f.path() << " to " << appDir);
+						f.copyTo(appDir);
+					}
+					else
+					{
+						PRINTD("SKIP Copying " << f.path() << " to " << appDir);
+					}
 				}
 			}
 
@@ -387,8 +395,16 @@ namespace kroll
 				allAppResourcesDir.list(files);
 				for (size_t i = 0; i < files.size(); i++) 
 				{
-					PRINTD("Copying " << files.at(i).path() << " to " << appDir);
-					files.at(i).copyTo(appDir);
+					Poco::File f = files.at(i);
+					if (!f.exists())
+					{
+						PRINTD("Copying " << f.path() << " to " << appDir);
+						f.copyTo(appDir);
+					}
+					else
+					{
+						PRINTD("SKIP Copying " << f.path() << " to " << appDir);
+					}
 				}
 			}
 		}
