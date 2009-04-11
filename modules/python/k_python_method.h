@@ -21,6 +21,7 @@ namespace kroll
 		SharedValue Call(const ValueList& args);
 		virtual void Set(const char *name, SharedValue value);
 		virtual SharedValue Get(const char *name);
+		virtual bool Equals(SharedKObject);
 		virtual SharedStringList GetPropertyNames();
 		PyObject* ToPython();
 

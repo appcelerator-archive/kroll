@@ -78,6 +78,15 @@ namespace kroll {
 		return RubyUtils::ToKrollValue(ruby_value);
 	}
 
+	bool KRubyObject::Equals(SharedKObject other)
+	{
+		SharedPtr<KRubyObject> rubyOther = other.cast<KRubyObject>();
+		if (rubyOther.isNull())
+			return false;
+
+		return this->ToRuby() == rubyOther->ToRuby();
+	}
+
 	SharedString KRubyObject::DisplayString(int levels)
 	{
 		VALUE out = rb_obj_as_string(object);

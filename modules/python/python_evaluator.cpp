@@ -25,12 +25,11 @@
 		PyThreadState* ts = Py_NewInterpreter();
 		PyThreadState_Swap(ts);
 
-		// Insert all the global properties into __builtins__
+		// Insert all the js global properties into globals()
 		SharedKObject window_global = args.at(2)->ToObject();
 		PyObject* main_module = PyImport_AddModule("__main__");
 		PyObject* globals = PyModule_GetDict(main_module);
-		PyObject* builtins = PyDict_GetItemString(globals, "__builtins__");
-		KObjectPropsToDict(window_global, builtins);
+		KObjectPropsToDict(window_global, globals);
 
 		// Run the script and retrieve the locals()
 		PyObject *return_value = PyRun_String(
@@ -40,10 +39,8 @@
 			globals);
 		PyObject* locals = PyRun_String("locals()", Py_eval_input, globals, globals);
 
-		// Move all the new variables in locals() to  the
-		// window context. These are things that are now defined.
-		DictToKObjectProps(locals, window_global);
-
+		/* Clear the error indicator before doing anything else. It might cause a
+		 * a false positive for errors in other bits of Python */
 		/* TODO: Logging */
 		SharedValue kv = Value::Undefined;
 		if (return_value == NULL && PyErr_Occurred())
@@ -57,6 +54,10 @@
 			Py_DECREF(return_value);
 		}
 
+		// Move all the new variables in locals() to the  window context.
+		// These are things that are now defined globally in JS.
+		DictToKObjectProps(locals, window_global);
+
 		// Switch back to the global thread state
 		PyThreadState_Swap(previous_state);
 
@@ -69,11 +70,11 @@
 		for (size_t i = 0; i < props->size(); i++)
 		{
 			const char* k = props->at(i)->c_str();
-			if (!PyObject_HasAttrString(pyobj, k))
+			if (!PyDict_GetItemString(pyobj, k))
 			{
 				SharedValue v = o->Get(k);
 				PyObject* pv = PythonUtils::ToPyObject(v);
-				PyObject_SetAttrString(pyobj, k, pv);
+				PyDict_SetItemString(pyobj, k, pv);
 				Py_DECREF(pv);
 			}
 		}
@@ -98,8 +99,10 @@
 
 			if (sk.find("__") != 0)
 			{
-				SharedValue kv = PythonUtils::ToKrollValue(v);
-				o->Set(sk.c_str(), kv);
+				SharedValue newValue = PythonUtils::ToKrollValue(v);
+				SharedValue existingValue = o->Get(sk.c_str());
+				if (!newValue->Equals(existingValue))
+					o->Set(sk.c_str(), newValue);
 			}
 			Py_DECREF(item);
 		}

@@ -285,46 +285,38 @@ namespace kroll
 		type = UNDEFINED;
 	}
 
-	bool Value::operator== (Value i)
+	bool Value::Equals(SharedValue i)
 	{
-		if (this->IsInt() && i.IsInt() && this->ToInt() == i.ToInt())
-			return true;
-		if (this->IsDouble() && i.IsDouble() && this->ToDouble() == i.ToDouble())
-			return true;
-		if (this->IsBool() && i.IsBool() && this->ToBool() == i.ToBool())
-			return true;
-		if (this->IsString() && i.IsString() && this->ToString() == i.ToString())
-			return true;
-		if (this->IsObject() && i.IsObject() && this->ToObject() == i.ToObject())
-			return true;
-		if (this->IsMethod() && i.IsMethod() && this->ToMethod() == i.ToMethod())
-			return true;
-		if (this->IsVoidPtr() && i.IsVoidPtr() && this->ToVoidPtr() == i.ToVoidPtr())
-			return true;
-		if (this->IsNull() && i.IsNull())
-			return true;
-		if (this->IsUndefined() && i.IsUndefined())
+		if (this->IsInt() && i->IsInt()
+			&& this->ToInt() == i->ToInt())
 			return true;
 
-		if (this->IsList() && i.IsList())
-		{
-			SharedKList tlist = this->ToList();
-			SharedKList olist = i.ToList();
-
-			if (tlist->Size() != olist->Size())
-				return false;
-
-			for (int i = 0; i < (int) tlist->Size(); i++)
-			{
-				SharedValue a = tlist->At(i);
-				SharedValue b = olist->At(i);
-
-				if (a != b)
-					return false;
-			}
-
+		if (this->IsDouble() && i->IsDouble()
+			&& this->ToDouble() == i->ToDouble())
 			return true;
-		}
+
+		if (this->IsBool() && i->IsBool()
+			&& this->ToBool() == i->ToBool())
+			return true;
+
+		if (this->IsString() && i->IsString()
+			&& this->ToString() == i->ToString())
+			return true;
+
+		if (this->IsVoidPtr() && i->IsVoidPtr()
+			&& this->ToVoidPtr() == i->ToVoidPtr())
+			return true;
+
+		if (this->IsNull() && i->IsNull())
+			return true;
+
+		if (this->IsUndefined() && i->IsUndefined())
+			return true;
+
+		if ((this->IsList() && i->IsList())
+			|| (this->IsMethod() && i->IsMethod())
+			|| (this->IsObject() && i->IsObject()))
+			return this->ToObject()->Equals(i->ToObject());
 
 		return false;
 	}

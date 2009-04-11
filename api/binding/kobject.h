@@ -50,6 +50,13 @@ namespace kroll
 		virtual SharedValue Get(const char *name) = 0;
 
 		/**
+		 * Determine if two objects have *reference* equality
+		 * @param other The object to compare to
+		 * @return true if these two objects are equal, false otherwise.
+		 */
+		virtual bool Equals(SharedKObject other);
+
+		/**
 		 * @return a list of this object's property names.
 		 */
 		virtual SharedStringList GetPropertyNames() = 0;

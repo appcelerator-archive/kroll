@@ -9,7 +9,7 @@
 namespace kroll
 {
 
-	KJSKList::KJSKList(JSContextRef context, JSObjectRef js_object) :
+	KKJSList::KKJSList(JSContextRef context, JSObjectRef js_object) :
 		context(NULL),
 		object(js_object)
 	{
@@ -31,16 +31,16 @@ namespace kroll
 		KJSUtil::ProtectGlobalContext(this->context);
 		JSValueProtect(this->context, this->object);
 
-		this->kjs_bound_object = new KJSKObject(this->context, this->object);
+		this->kjs_bound_object = new KKJSObject(this->context, this->object);
 	}
 
-	KJSKList::~KJSKList()
+	KKJSList::~KKJSList()
 	{
 		JSValueUnprotect(this->context, this->object);
 		KJSUtil::UnprotectGlobalContext(this->context);
 	}
 
-	unsigned int KJSKList::Size()
+	unsigned int KKJSList::Size()
 	{
 		SharedValue length_val = this->kjs_bound_object->Get("length");
 		if (length_val->IsInt())
@@ -49,20 +49,20 @@ namespace kroll
 			return 0;
 	}
 
-	SharedValue KJSKList::At(unsigned int index)
+	SharedValue KKJSList::At(unsigned int index)
 	{
 		std::string name = KList::IntToChars(index);
 		SharedValue value = this->kjs_bound_object->Get(name.c_str());
 		return value;
 	}
 
-	void KJSKList::SetAt(unsigned int index, SharedValue value)
+	void KKJSList::SetAt(unsigned int index, SharedValue value)
 	{
 		std::string name = KList::IntToChars(index);
 		this->kjs_bound_object->Set(name.c_str(), value);
 	}
 
-	void KJSKList::Append(SharedValue value)
+	void KKJSList::Append(SharedValue value)
 	{
 		SharedValue push_method = this->kjs_bound_object->Get("push");
 
@@ -78,7 +78,7 @@ namespace kroll
 		}
 	}
 
-	bool KJSKList::Remove(unsigned int index)
+	bool KKJSList::Remove(unsigned int index)
 	{
 		SharedValue value = this->At(index);
 		if (!value->IsUndefined())
@@ -91,27 +91,38 @@ namespace kroll
 	}
 
 
-	SharedValue KJSKList::Get(const char *name)
+	SharedValue KKJSList::Get(const char *name)
 	{
 		return kjs_bound_object->Get(name);
 	}
 
-	void KJSKList::Set(const char *name, SharedValue value)
+	void KKJSList::Set(const char *name, SharedValue value)
 	{
 		return kjs_bound_object->Set(name, value);
 	}
 
-	SharedStringList KJSKList::GetPropertyNames()
+	bool KKJSList::Equals(SharedKObject other)
+	{
+		SharedPtr<KKJSList> kjsOther = other.cast<KKJSList>();
+		if (kjsOther.isNull())
+			return false;
+		if (!kjsOther->SameContextGroup(this->context))
+			return false;
+		return JSValueIsStrictEqual(
+			this->context, this->object, kjsOther->GetJSObject());
+	}
+
+	SharedStringList KKJSList::GetPropertyNames()
 	{
 		 return kjs_bound_object->GetPropertyNames();
 	}
 
-	bool KJSKList::SameContextGroup(JSContextRef c)
+	bool KKJSList::SameContextGroup(JSContextRef c)
 	{
 		return kjs_bound_object->SameContextGroup(c);
 	}
 
-	JSObjectRef KJSKList::GetJSObject()
+	JSObjectRef KKJSList::GetJSObject()
 	{
 		return this->object;
 	}

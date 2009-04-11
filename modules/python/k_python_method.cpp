@@ -70,4 +70,15 @@ namespace kroll
 		return this->object->ToPython();
 	}
 
+	bool KPythonMethod::Equals(SharedKObject other)
+	{
+		SharedPtr<KPythonMethod> pyOther = other.cast<KPythonMethod>();
+
+		// This is not a Python object
+		if (pyOther.isNull())
+			return false;
+
+		return pyOther->ToPython() == this->ToPython();
+	}
+
 }

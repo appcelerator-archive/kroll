@@ -49,6 +49,17 @@ namespace kroll
 		}
 	}
 
+	bool KPythonDict::Equals(SharedKObject other)
+	{
+		SharedPtr<KPythonDict> pyOther = other.cast<KPythonDict>();
+
+		// This is not a Python object
+		if (pyOther.isNull())
+			return false;
+
+		return pyOther->ToPython() == this->ToPython();
+	}
+
 	SharedStringList KPythonDict::GetPropertyNames()
 	{
 		SharedStringList property_names = new StringList();
@@ -73,6 +84,12 @@ namespace kroll
 		Py_DECREF(iterator);
 		Py_DECREF(items);
 		return property_names;
+	}
+
+	PyObject* KPythonDict::ToPython()
+	{
+		Py_INCREF(object);
+		return this->object;
 	}
 }
 
