@@ -79,9 +79,4 @@ namespace kroll
 		return new PythonModuleInstance(host, path);
 	}
 
-	void PythonModule::Test()
-	{
-		PythonUnitTestSuite suite;
-		suite.Run(host);
-	}
 }
