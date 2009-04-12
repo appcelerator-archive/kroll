@@ -1,9 +1,0 @@
-#!/usr/bin/env python
-Import('build')
-
-Env = build.env.Clone()
-build.add_thirdparty(Env, 'poco')
-
-m = build.add_module('foo')
-t = Env.SharedLibrary(Env, m.build_dir + '/foomodule', Glob('*.cpp'))
-build.mark_build_target(t)

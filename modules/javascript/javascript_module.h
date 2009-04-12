@@ -32,10 +32,8 @@ namespace kroll {
 namespace kroll {
 	class JavascriptModule;
 	class JavascriptModuleInstance;
-	class JavascriptUnitTestSuite;
 }
 #include "javascript_module_instance.h"
-#include "javascript_unit_test_suite.h"
 
 namespace kroll
 {
@@ -58,8 +56,6 @@ namespace kroll
 			return instance;
 		}
 
-		// this is called by the ktest runner for unit testing the module
-		void Test();
 
 	private:
 		static JavascriptModule *instance;

@@ -19,7 +19,6 @@
 #include "k_python_list.h"
 #include "k_python_dict.h"
 #include "python_evaluator.h"
-#include "python_unit_test_suite.h"
 
 #define THROW_PYTHON_EXCEPTION \
 PyObject *_ptype, *_pvalue, *_trace; \
@@ -45,7 +44,6 @@ namespace kroll
 		virtual bool IsModule(std::string& path);
 		virtual Module* CreateModule(std::string& path);
 		void InitializeBinding();
-		void Test();
 
 		virtual const char * GetDescription() 
 		{

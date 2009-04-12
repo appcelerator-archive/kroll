@@ -75,9 +75,4 @@ namespace kroll
 		return new RubyModuleInstance(host, path);
 	}
 
-	void RubyModule::Test()
-	{
-		RubyUnitTestSuite suite;
-		suite.Run(host);
-	}
 }

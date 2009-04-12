@@ -78,38 +78,6 @@
 #define KR_FUNC __FILE__
 #endif
 
-#ifdef DEBUG_REFCOUNT
-	#define KR_ADDREF_RETURNING(t,o) (o!=NULL) ? (t)o->AddReference(__FILE__,__LINE__,KR_FUNC) : NULL
-	#define KR_ADDREF(o) \
-	if (o!=NULL) \
-	{ \
-		const char *myfunc = KR_FUNC; \
-		if (o->ReferenceCount()<1) std::cerr << "!!!! Invalid Object. Reference Count < 1: " <<__FILE__<< ":" <<__LINE__ <<std::endl; \
-		o->AddReference(__FILE__,__LINE__,myfunc); \
-	}
-	#define KR_DECREF(o) \
-	if (o!=NULL) \
-	{ \
-		const char *myfunc = KR_FUNC; \
-		o->ReleaseReference(__FILE__,__LINE__,myfunc); \
-		o = NULL; \
-	}
-#else
-	#define KR_ADDREF_RETURNING(t,o) (o!=NULL) ? (t)o->AddReference() : NULL
-	#define KR_ADDREF(o) \
-	if (o!=NULL) \
-	{ \
-		if (o->ReferenceCount()<1) std::cerr << "!!!! Invalid Object. Reference Count < 1: " <<__FILE__<< ":" <<__LINE__ <<std::endl; \
-		o->AddReference(); \
-	}
-	#define KR_DECREF(o) \
-	if (o!=NULL) \
-	{ \
-		o->ReleaseReference(); \
-		o = NULL; \
-	}
-#endif
-
 #ifdef DEBUG
 #define KR_DUMP_LOCATION std::cout << "[" << KR_FUNC << "::" << __LINE__ << "]" << std::endl;
 #else
@@ -145,7 +113,8 @@
 #endif
 
 #ifdef DEBUG
-#define PRINTD(x) std::cout << x << std::endl;
+#include <sstream>
+#define PRINTD(x) { std::ostringstream ostr; ostr << x; kroll::Logger logger = kroll::Logger::GetRootLogger(); logger.Debug(ostr.str()); };
 #else
 #define PRINTD(x)
 #endif

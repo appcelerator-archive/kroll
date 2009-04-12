@@ -47,7 +47,6 @@
 #include "ruby_utils.h"
 #include "ruby_evaluator.h"
 #include "ruby_module_instance.h"
-#include "ruby_unit_test_suite.h"
 
 namespace kroll
 {
@@ -73,7 +72,6 @@ namespace kroll
 			return "Ruby Module Loader";
 		}
 
-		void Test();
 
 	private:
 		SharedKObject binding;

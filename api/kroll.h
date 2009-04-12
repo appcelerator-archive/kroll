@@ -16,7 +16,6 @@
 
 #include <Poco/SharedPtr.h>
 #include <vector>
-#include "base.h"
 
 using Poco::SharedPtr;
 
@@ -31,7 +30,6 @@ using Poco::SharedPtr;
 
 namespace kroll
 {
-	class ScopedDereferencer;
 	class Value;
 	class KObject;
 	class KMethod;
@@ -82,9 +80,6 @@ namespace kroll
 
 #include "utils/utils.h"
 #include "logger.h"
-#include "ref_counted.h"
-#include "scoped_ref_counted.h"
-#include "scoped_dereferencer.h"
 #include "mutex.h"
 #include "scoped_lock.h"
 
@@ -97,5 +92,7 @@ namespace kroll
 #ifdef OS_OSX
 #include "osx.h"
 #endif
+
+#include "base.h"
 
 #endif

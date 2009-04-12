@@ -6,7 +6,6 @@
 #ifndef _KR_PLUGIN_H_
 #define _KR_PLUGIN_H_
 
-#include "ref_counted.h"
 #include "module_provider.h"
 
 namespace kroll
@@ -108,12 +107,6 @@ namespace kroll
 			return path.c_str();
 		}
 
-		/**
-		 * Entry point for unit testing the module.
-		 * Module implementations should override.
-		 */
-		virtual void Test() {}
-
 	protected:
 		Host *host;
 		ModuleProvider *provider;
@@ -171,9 +164,6 @@ KROLL_MODULE_DESTRUCTOR(s)\
 \
 KROLL_MODULE_FACTORY_DEFINE(s)\
 
-
-#define KR_ASSERT(a) printf("[%s:%d] %s\n",__FILE__,__LINE__,(a?"PASS":"FAIL"))
-#define KR_ASSERT_STR(a,b) KR_ASSERT(a && b && strcmp(a,b)==0)
 
 
 #endif
