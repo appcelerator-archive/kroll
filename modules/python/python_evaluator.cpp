@@ -20,24 +20,28 @@
 		PythonEvaluator::StripLeadingWhitespace(code);
 		PythonEvaluator::ConvertLineEndings(code);
 
-		// Each script has it's own sub-interpreter
-		PyThreadState* previous_state = PyThreadState_Get();
-		PyThreadState* ts = Py_NewInterpreter();
-		PyThreadState_Swap(ts);
-
-		// Insert all the js global properties into globals()
+		// Insert all the js global properties into a copy globals()
 		SharedKObject window_global = args.at(2)->ToObject();
 		PyObject* main_module = PyImport_AddModule("__main__");
-		PyObject* globals = PyModule_GetDict(main_module);
+		PyObject* globals = PyDict_Copy(PyModule_GetDict(main_module));
+		PyObject* locals = PyDict_New();
 		KObjectPropsToDict(window_global, globals);
 
-		// Run the script and retrieve the locals()
-		PyObject *return_value = PyRun_String(
-			code.c_str(),
-			Py_file_input,
-			globals,
-			globals);
-		PyObject* locals = PyRun_String("locals()", Py_eval_input, globals, globals);
+		// Another way to do this is to use a Python sub-interpreter,
+		// but that seems to put us into a restricted execution mode
+		// sometimes. So we're going to try to isolate the variables
+		// in this script by compiling it and supplying our own copy
+		// of the globals.
+		PyObject* compiled = Py_CompileStringFlags(code.c_str(), "<onthepage>", Py_file_input, NULL);
+		if (compiled == NULL)
+		{
+			std::cout << "An error occured while parsing Python on the page: " << std::endl;
+			PyErr_Print();
+			Py_DECREF(globals);
+			return Value::Undefined;
+		}
+
+		PyObject *return_value = PyEval_EvalCode((PyCodeObject*) compiled, globals, locals);
 
 		/* Clear the error indicator before doing anything else. It might cause a
 		 * a false positive for errors in other bits of Python */
@@ -58,9 +62,7 @@
 		// These are things that are now defined globally in JS.
 		DictToKObjectProps(locals, window_global);
 
-		// Switch back to the global thread state
-		PyThreadState_Swap(previous_state);
-
+		Py_DECREF(globals);
 		return kv;
 	}
 
@@ -96,7 +98,6 @@
 			PyObject* k = PyTuple_GetItem(item, 0);
 			PyObject* v = PyTuple_GetItem(item, 1);
 			std::string sk = PythonUtils::ToString(k);
-
 			if (sk.find("__") != 0)
 			{
 				SharedValue newValue = PythonUtils::ToKrollValue(v);
