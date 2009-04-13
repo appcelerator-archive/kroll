@@ -16,6 +16,7 @@
 #include <Poco/ConsoleChannel.h>
 #include <Poco/FileChannel.h>
 #include <Poco/Path.h>
+#include <Poco/File.h>
 
 #define LOGGER_MAX_ENTRY_SIZE 512
 
@@ -25,6 +26,7 @@ using Poco::SplitterChannel;
 using Poco::ConsoleChannel;
 using Poco::FileChannel;
 using Poco::Path;
+using Poco::File;
 
 namespace kroll
 {
@@ -71,7 +73,11 @@ namespace kroll
 		}
 		if (file)
 		{
-			Path logfile = Path(FileUtils::GetApplicationDataDirectory(appID));
+			std::string dataPath = FileUtils::GetApplicationDataDirectory(appID);
+			File dataPathFile = File(dataPath);
+			dataPathFile.createDirectories();
+
+			Path logfile = Path(dataPath);
 			logfile = Path(logfile, "tiapp.log");
 			FileChannel* fileChannel = new FileChannel(logfile.absolute().toString());
 			splitter->addChannel(fileChannel);

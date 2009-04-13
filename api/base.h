@@ -14,6 +14,20 @@
 #include <algorithm>
 #endif
 
+#ifdef OS_WIN32
+#define OS_NAME "win32"
+#elif defined(OS_OSX)
+#define OS_NAME "osx"
+#elif defined(OS_LINUX)
+#define OS_NAME "linux"
+#endif
+
+#ifdef OS_64
+#define OS_TYPE "64bit"
+#else
+#define OS_TYPE "32bit"
+#endif
+
 #ifdef USE_NO_EXPORT
 #define KROLL_API
 #else
