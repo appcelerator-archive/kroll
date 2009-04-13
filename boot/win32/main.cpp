@@ -382,13 +382,14 @@ int main(int _argc, const char* _argv[])
 	std::string buf;
 	int fork_flag = getEnv("KR_FORK",buf);
 	int rc = 0;
+
+	if (argc > 1 && strcmp(argv[1],"--wait-for-debugger")==0)
+	{
+		DebugBreak();
+	}
+
 	if (fork_flag == 0)
 	{
-		if (argc > 1 && strcmp(argv[1],"--wait-for-debugger")==0)
-		{
-			DebugBreak();
-		}
-
 		std::string manifest = FindManifest();
 		if (manifest.empty())
 		{
