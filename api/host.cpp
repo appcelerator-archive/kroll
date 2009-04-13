@@ -351,7 +351,6 @@ namespace kroll
 	void Host::CopyModuleAppResources(std::string& modulePath)
 	{
 		PRINTD("CopyModuleAppResources: " << modulePath);
-		
 		std::string appDir = this->appHomePath;
 
 		try
