@@ -36,7 +36,7 @@ namespace kroll
 		Host(int argc, const char** argv);
 
 		/**
-		 * Get the static host instance§§
+		 * Get the static host instanceÂ§Â§
 		 */
 		static SharedPtr<Host> GetInstance() { return instance_; }
 
@@ -63,7 +63,7 @@ namespace kroll
 		 * @param args method arguments
 		 * @param waitForCompletion block until method is finished (default: true)
 		 *
-		 * @return the method's return value§
+		 * @return the method's return valueÂ§
 		 */
 		virtual SharedValue InvokeMethodOnMainThread(
 			SharedKMethod method,
@@ -95,6 +95,13 @@ namespace kroll
 		 * @return A reference to the module.
 		 */
 		SharedPtr<Module> GetModule(std::string& path);
+		
+		/**
+		 * Get a module give by the module name (such as tiui)
+		 * @param name of the module
+		 * @return A reference to the module
+		 */
+		SharedPtr<Module> GetModuleByName(std::string name);
 
 		/**
 		 * @return whether or not a module with the path exists
@@ -113,12 +120,12 @@ namespace kroll
 		const std::string& GetApplicationHomePath();
 
 		/**
-		 * @return The directory of the current runtime§
+		 * @return The directory of the current runtimeÂ§
 		*/
 		const std::string& GetRuntimePath();
 
 		/**
-		 * @return The home directory of the current runtime§
+		 * @return The home directory of the current runtimeÂ§
 		*/
 		const std::string& GetRuntimeHomePath();
 

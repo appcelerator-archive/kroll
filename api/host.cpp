@@ -647,6 +647,23 @@ namespace kroll
 
 		return iter->second;
 	}
+	
+	SharedPtr<Module> Host::GetModuleByName(std::string name)
+	{
+		ScopedLock lock(&moduleMutex);
+		ModuleMap::iterator i = this->modules.begin();
+		while (i != this->modules.end())
+		{
+			std::string path = i->first;
+			std::size_t pos = path.rfind(name);
+			if (pos!=std::string::npos)
+			{
+				return i->second;
+			}
+			i++;
+		}
+		return SharedPtr<Module>(NULL);
+	}
 
 	bool Host::HasModule(std::string name)
 	{
