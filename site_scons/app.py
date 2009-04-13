@@ -14,6 +14,11 @@ class App:
 		self.publisher = publisher
 		self.url = url
 
+	def installed(self):
+		f = open(p.join(self.contents, '.installed'),'w')
+		f.write('#')
+		f.close()
+		
 	def status(self, msg):
 		print '    -> %s' % msg
 
