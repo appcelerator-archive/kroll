@@ -79,7 +79,7 @@
 #endif
 
 #ifdef DEBUG
-#define KR_DUMP_LOCATION std::cout << "[" << KR_FUNC << "::" << __LINE__ << "]" << std::endl;
+#define KR_DUMP_LOCATION PRINTD("[" << KR_FUNC << "::" << __LINE__ << "]");
 #else
 #define KR_DUMP_LOCATION
 #endif

@@ -188,7 +188,7 @@ namespace kroll
 				this->profilePath = pp;
 				this->profile = true;
 			}
-			else if (arg.find(STRING(_BOOT_HOME_FLAG)))
+			else if (arg.find(STRING(_BOOT_HOME_FLAG))==0)
 			{
 				size_t i = arg.find("=");
 				if (i != std::string::npos)
@@ -463,6 +463,7 @@ namespace kroll
 
 	SharedPtr<Module> Host::LoadModule(std::string& path, ModuleProvider *provider)
 	{
+		PRINTD("Begin load of module " << path);
 		ScopedLock lock(&moduleMutex);
 
 		SharedPtr<Module> module = NULL;
@@ -507,6 +508,7 @@ namespace kroll
 #endif
 		}
 
+		PRINTD("Finish load of module " << path);
 		return module;
 	}
 
