@@ -102,7 +102,7 @@ namespace kroll
 			}
 			else
 			{
-				Component* c = new Component(key, value);
+				KComponent* c = new KComponent(key, value);
 				if (c->typeGuid == RUNTIME_UUID)
 					application->runtime = c;
 				else
@@ -113,7 +113,7 @@ namespace kroll
 		return application;
 	}
 
-	Component::Component(std::string key, std::string value)
+	KComponent::KComponent(std::string key, std::string value)
 	{
 		FileUtils::ExtractVersion(value, &this->requirement, this->version);
 		this->name = key;
@@ -129,7 +129,7 @@ namespace kroll
 		}
 	}
 
-	std::string Component::GetURL(Application* app)
+	std::string KComponent::GetURL(Application* app)
 	{
 		std::string url = app->GetQueryString();
 		url.append("&name=");
@@ -199,10 +199,10 @@ namespace kroll
 
 	Application::~Application()
 	{
-		std::vector<Component*>::iterator i = modules.begin();
+		std::vector<KComponent*>::iterator i = modules.begin();
 		while (i != modules.end())
 		{
-			Component* c = *i;
+			KComponent* c = *i;
 			i = modules.erase(i);
 			delete c;
 		}
