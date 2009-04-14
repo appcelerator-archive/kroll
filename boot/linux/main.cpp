@@ -25,7 +25,7 @@ using namespace kroll;
 using kroll::FileUtils;
 using kroll::BootUtils;
 using kroll::Application;
-using kroll::Component;
+using kroll::KComponent;
 
 #define MODULE_DIR "modules"
 #define RUNTIME_DIR "runtime"
@@ -157,9 +157,9 @@ class Boot
 	}
 
 
-	std::vector<Component*> FindModules()
+	std::vector<KComponent*> FindModules()
 	{
-		std::vector<Component*> unresolved;
+		std::vector<KComponent*> unresolved;
 
 		// Find the runtime module
 		if (!this->FindRuntime(this->app->runtime))
@@ -168,10 +168,10 @@ class Boot
 		}
 
 		// Find all regular modules
-		std::vector<Component*>::iterator i = this->app->modules.begin();
+		std::vector<KComponent*>::iterator i = this->app->modules.begin();
 		while (i != app->modules.end())
 		{
-			Component* m = *i++;
+			KComponent* m = *i++;
 			if (!this->FindModule(m))
 			{
 				unresolved.push_back(m);
@@ -180,10 +180,10 @@ class Boot
 
 		if (unresolved.size() > 0)
 		{
-			std::vector<Component*>::iterator dmi = unresolved.begin();
+			std::vector<KComponent*>::iterator dmi = unresolved.begin();
 			while (dmi != unresolved.end())
 			{
-				Component* m = *dmi++;
+				KComponent* m = *dmi++;
 				std::cout << "Unresolved: " << m->name << std::endl;
 			}
 			std::cout << "---" << std::endl;
@@ -192,7 +192,7 @@ class Boot
 		return unresolved;
 	}
 
-	bool FindModule(Component *m)
+	bool FindModule(KComponent *m)
 	{
 		// Try to find the bundled version of this module.
 		std::string path = FileUtils::Join(this->bundledModulePath.c_str(), m->name.c_str(), NULL);
@@ -219,7 +219,7 @@ class Boot
 		return false; // We couldn't resolve this module!
 	}
 
-	bool FindRuntime(Component *m)
+	bool FindRuntime(KComponent *m)
 	{
 		// Try to find the bundled version of this module.
 		if (FileUtils::IsDirectory(this->bundledRuntimePath))
@@ -258,10 +258,10 @@ class Boot
 			throw std::string("Could not locate an appropriate runtime.");
 
 		std::ostringstream moduleList;
-		std::vector<Component*>::iterator i = this->app->modules.begin();
+		std::vector<KComponent*>::iterator i = this->app->modules.begin();
 		while (i != this->app->modules.end())
 		{
-			Component *m = *i++;
+			KComponent *m = *i++;
 			if (m->path.empty())
 				throw std::string("Could not find module: ") + m->name;
 
@@ -271,7 +271,7 @@ class Boot
 		return moduleList.str();
 	}
 
-	void RunInstaller(std::vector<Component*> missing)
+	void RunInstaller(std::vector<KComponent*> missing)
     {
 		// If we don't have an installer directory, just bail...
 		const char* ci_path = this->installerPath.c_str();
@@ -285,10 +285,10 @@ class Boot
 		args.push_back(this->userRuntimeHome);
 		args.push_back(this->systemRuntimeHome);
 
-		std::vector<Component*>::iterator mi = missing.begin();
+		std::vector<KComponent*>::iterator mi = missing.begin();
 		while (mi != missing.end())
 		{
-			Component* mod = *mi++;
+			KComponent* mod = *mi++;
 			std::string path =
 				BootUtils::FindBundledModuleZip(mod->name, mod->version, this->applicationPath);
 			if (path.empty())
@@ -310,7 +310,7 @@ int prepare_environment(int argc, const char* argv[])
 	{
 		Boot boot = Boot(argv[0]);
 
-		std::vector<Component*> missing = boot.FindModules();
+		std::vector<KComponent*> missing = boot.FindModules();
 		if (missing.size() > 0 || !boot.app->IsInstalled())
 		{
 			boot.RunInstaller(missing);

@@ -28,17 +28,17 @@
 
 namespace kroll
 {
-	class Component;
+	class KComponent;
 	class Application;
 
-	class KROLL_API Component
+	class KROLL_API KComponent
 	{
 		public:
 		/*
 		 * Construct a Kroll Component from the key-value pair
 		 * found in a timanifest file.
 		 */
-		Component(std::string, std::string);
+		KComponent(std::string, std::string);
 		std::string GetURL(Application*);
 
 		std::string type;
@@ -64,8 +64,8 @@ namespace kroll
 		std::string publisher;
 		std::string url;
 		std::string image;
-		std::vector<Component*> modules;
-		Component* runtime;
+		std::vector<KComponent*> modules;
+		KComponent* runtime;
 		std::string queryString;
 	};
 
