@@ -15,4 +15,3 @@ build.env.Append(LIBS=['kroll'])
 
 SConscript('host/SConscript')
 SConscript('modules/SConscript')
-SConscript('test/SConscript', build_dir=path.join(build.dir,'objs', 'test'), duplicate=0)

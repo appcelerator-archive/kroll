@@ -112,6 +112,11 @@ namespace kroll
 		/**
 		 *
 		 */
+		static std::string Dirname(std::string path);
+
+		/**
+		 *
+		 */
 		static bool CreateDirectory(std::string &dir);
 #if defined(OS_WIN32)
 		// TODO: implement this for other platforms

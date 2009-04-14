@@ -14,6 +14,11 @@ class App:
 		self.publisher = publisher
 		self.url = url
 
+	def installed(self):
+		f = open(p.join(self.contents, '.installed'),'w')
+		f.write('#')
+		f.close()
+		
 	def status(self, msg):
 		print '    -> %s' % msg
 
@@ -21,7 +26,7 @@ class App:
 		print modules
 		self.modules = modules
 
-	def prestage(self, build_dir, src_contents=None, src_resources=None):
+	def prestage(self, build_dir, src_contents=None, src_resources=None, bundle=True):
 		src_runtime = p.join(self.build.dir, 'runtime')
 		src_modules = p.join(self.build.dir, 'modules')
 		self.dir = build_dir
@@ -46,11 +51,11 @@ class App:
 
 		excludes = ['.dll.manifest', '.dll.pdb', '.exp', '.ilk', '.lib']
 
-		self.status('copying runtime to %s' % self.contents)
-		futils.CopyToDir(src_runtime, self.contents, exclude=excludes)
-
-		self.status('copying modules to %s' % self.contents)
-		futils.CopyToDir(src_modules, self.contents, exclude=excludes)
+		if bundle:
+			self.status('copying runtime to %s' % self.contents)
+			futils.CopyToDir(src_runtime, self.contents, exclude=excludes)
+			self.status('copying modules to %s' % self.contents)
+			futils.CopyToDir(src_modules, self.contents, exclude=excludes)
 
 		self.status('copying kboot to %s' % self.exe)
 		futils.Copy(self.kboot, self.exe)
@@ -66,9 +71,9 @@ class App:
 			self.status('copying %s to %s' % (src_resources, self.exe))
 			futils.CopyTree(src_resources, self.resources)
 
-	def stage(self, build_dir, src_contents=None, src_resources=None):
+	def stage(self, build_dir, src_contents=None, src_resources=None, bundle=True):
 		print('Staging %s' % self.shortname)
-		self.prestage(build_dir, src_contents=src_contents, src_resources=src_resources)
+		self.prestage(build_dir, src_contents=src_contents, src_resources=src_resources, bundle=bundle)
 
 		if self.build.is_osx():
 			self.status('copying mac resources to %s' % (self.contents))

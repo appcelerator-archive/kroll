@@ -241,9 +241,7 @@ namespace kroll
 		this->registrationsById[record] = e;
 		this->registrations[event] = records;
 
-#ifdef DEBUG
-		std::cout << "Register called for event: " << event << std::endl;
-#endif
+		PRINTD("Register called for event: " << event);
 		return record;
 	}
 
@@ -278,12 +276,10 @@ namespace kroll
 
 	void APIBinding::Fire(const char* event, SharedValue value)
 	{
-#ifdef DEBUG		
-		std::cout << "FIRING: " << event << std::endl;
-#endif
+		PRINTD("FIRING: " << event);
 		
 		//TODO: might want to be a little more lenient on how we lock here
-		ScopedLock lock(&mutex);
+//		ScopedLock lock(&mutex);
 		
 		// optimize even the lookup
 		if (this->registrations.size() == 0)

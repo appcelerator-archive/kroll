@@ -189,9 +189,10 @@ namespace kroll
 
 namespace kroll
 {
-	SharedValue OSXHost::InvokeMethodOnMainThread(SharedKMethod method,
-	                                              const ValueList& args,
-												  bool waitForCompletion)
+	SharedValue OSXHost::InvokeMethodOnMainThread(
+		SharedKMethod method,
+		const ValueList& args,
+		bool waitForCompletion)
 	{
 		// make sure to just invoke if we're already on the
 		// main thread
@@ -219,7 +220,7 @@ namespace kroll
 		if (!waitForCompletion)
 		{
 			[pool release];
-			return Value::Null;
+			return Value::Undefined;
 		}
 		SharedValue exception = [caller getException];
 		if (exception.isNull())
@@ -231,7 +232,8 @@ namespace kroll
 		}
 		[caller release];
 		[pool release];
-		return exception;
+		throw exception;
+		return Value::Undefined;
 	}
 }
 

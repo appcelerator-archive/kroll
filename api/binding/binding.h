@@ -7,24 +7,28 @@
 #ifndef _KR_BINDING_H_
 #define _KR_BINDING_H_
 
-#include "callback.h"
-
 #include "../kroll.h"
 
-#include "value.h"
 #include "kobject.h"
 #include "kmethod.h"
 #include "klist.h"
+#include "value.h"
 #include "static_bound_list.h"
 #include "static_bound_method.h"
 #include "static_bound_object.h"
+#include "value_exception.h"
+#include "callback.h"
 #include "delegate_static_bound_object.h"
 #include "accessor_bound_object.h"
 #include "accessor_bound_list.h"
 #include "scope_method_delegate.h"
-#include "value_exception.h"
 #include "arg_utils.h"
 #include "blob.h"
+
+#include "profiled_bound_object.h"
+#include "profiled_bound_list.h"
+#include "profiled_bound_method.h"
+
 #include "defines.h"
 
 #endif

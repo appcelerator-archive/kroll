@@ -43,6 +43,17 @@ namespace kroll {
 			rb_ary_push(rargs, rb_str_new2(name));
 			rb_ary_push(rargs, ruby_value);
 			rb_protect(kobj_do_method_missing_call, rargs, &error);
+
+			// If the exception wasn't a normal NoMethod exception actually
+			// throw an exception here, because something went wrong.
+			VALUE exception = rb_gv_get("$!");
+			if (rb_obj_is_kind_of(exception, rb_eNoMethodError) != Qtrue
+				&& rb_obj_is_kind_of(exception,rb_eNameError) == Qtrue)
+			{
+				SharedValue exceptionValue = RubyUtils::ToKrollValue(exception);
+				ValueException e = ValueException(exceptionValue);
+				throw e;
+			}
 		}
 
 		// Last resort: set an instance variable
@@ -71,11 +82,39 @@ namespace kroll {
 		}
 		else if (rb_obj_respond_to(object, mm_ID, Qtrue) == Qtrue)
 		{
-			// If this object has a method_missing, call that and return the result
-			ruby_value = rb_funcall(object, mm_ID, 1, ID2SYM(get_ID));
+			// If this object has a method_missing, call that and return the result,
+			int error;
+			VALUE rargs = rb_ary_new();
+			rb_ary_push(rargs, object);
+			rb_ary_push(rargs, ID2SYM(get_ID));
+			ruby_value = rb_protect(kobj_do_method_missing_call, rargs, &error);
+
+			// protect against NoMethodErrors which we don't want to propogate
+			// back through Kroll, but other exceptions should be thrown.
+			VALUE exception = rb_gv_get("$!");
+			if (rb_obj_is_kind_of(exception, rb_eNoMethodError) == Qtrue
+				|| rb_obj_is_kind_of(exception,rb_eNameError) == Qtrue)
+			{
+				return Value::Undefined;
+			}
+			else
+			{
+				SharedValue exceptionValue = RubyUtils::ToKrollValue(exception);
+				ValueException e = ValueException(exceptionValue);
+				throw e;
+			}
 		}
 
 		return RubyUtils::ToKrollValue(ruby_value);
+	}
+
+	bool KRubyObject::Equals(SharedKObject other)
+	{
+		SharedPtr<KRubyObject> rubyOther = other.cast<KRubyObject>();
+		if (rubyOther.isNull())
+			return false;
+
+		return this->ToRuby() == rubyOther->ToRuby();
 	}
 
 	SharedString KRubyObject::DisplayString(int levels)

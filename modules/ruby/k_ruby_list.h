@@ -28,6 +28,14 @@ namespace kroll
 		SharedString DisplayString(int);
 		VALUE ToRuby();
 
+	/*
+	 * Determine if the given Ruby object equals this one
+	 * by comparing these objects's identity e.g. equals?()
+	 *  @param other the object to test
+	 *  @returns true if objects have reference equality, false otherwise
+	 */
+	virtual bool Equals(SharedKObject);
+
 	protected:
 		VALUE list;
 		SharedPtr<KRubyObject> object;

@@ -10,6 +10,41 @@
 namespace kroll
 {
 
+	bool KObject::Equals(SharedKObject other)
+	{
+		return other.get() == this;
+	}
+
+	SharedString KObject::DisplayString(int levels)
+	{
+		std::stringstream ss;
+
+		if (levels == 0)
+		{
+			ss << "<KObject at " << this << ">";
+		}
+		else
+		{
+			SharedStringList props = this->GetPropertyNames();
+			ss << "{";
+			for (size_t i = 0; i < props->size(); i++)
+			{
+				SharedValue prop = this->Get(props->at(i));
+				SharedString disp_string = prop->DisplayString(levels);
+
+				ss << " " << *(props->at(i))
+				    << " : " << *disp_string << ",";
+			}
+
+			if (props->size() > 0) // Erase last comma
+				ss.seekp((int)ss.tellp() - 1);
+
+			ss << "}";
+		}
+
+		return new std::string(ss.str());
+	}
+
 	void KObject::Set(SharedString name, SharedValue value)
 	{
 		this->Set(name->c_str(), value);
@@ -18,6 +53,179 @@ namespace kroll
 	SharedValue KObject::Get(SharedString name)
 	{
 		return this->Get(name->c_str());
+	}
+
+	int KObject::GetInt(const char* name, int defaultValue)
+	{
+		SharedValue prop = this->Get(name);
+		if (prop->IsInt())
+		{
+			return prop->ToInt();
+		}
+		else
+		{
+			return defaultValue;
+		}
+	}
+
+	double KObject::GetDouble(const char* name, double defaultValue)
+	{
+		SharedValue prop = this->Get(name);
+		if (prop->IsDouble())
+		{
+			return prop->ToDouble();
+		}
+		else
+		{
+			return defaultValue;
+		}
+	}
+
+	double KObject::GetNumber(const char* name, double defaultValue)
+	{
+		SharedValue prop = this->Get(name);
+		if (prop->IsNumber())
+		{
+			return prop->ToNumber();
+		}
+		else
+		{
+			return defaultValue;
+		}
+	}
+
+	bool KObject::GetBool(const char* name, bool defaultValue)
+	{
+		SharedValue prop = this->Get(name);
+		if (prop->IsBool())
+		{
+			return prop->ToBool();
+		}
+		else
+		{
+			return defaultValue;
+		}
+	}
+
+	std::string KObject::GetString(const char* name, std::string defaultValue)
+	{
+		SharedValue prop = this->Get(name);
+		if(prop->IsString())
+		{
+			return prop->ToString();
+		}
+		else
+		{
+			return defaultValue;
+		}
+	}
+
+	SharedKObject KObject::GetObject(const char* name, SharedKObject defaultValue)
+	{
+		SharedValue prop = this->Get(name);
+		if (prop->IsObject())
+		{
+			return prop->ToObject();
+		}
+		else
+		{
+			return defaultValue;
+		}
+	}
+
+	SharedKMethod KObject::GetMethod(const char* name, SharedKMethod defaultValue)
+	{
+		SharedValue prop = this->Get(name);
+		if (prop->IsMethod())
+		{
+			return prop->ToMethod();
+		}
+		else
+		{
+			return defaultValue;
+		}
+	}
+
+	SharedKList KObject::GetList(const char* name, SharedKList defaultValue)
+	{
+		SharedValue prop = this->Get(name);
+		if (prop->IsList())
+		{
+			return prop->ToList();
+		}
+		else
+		{
+			return defaultValue;
+		}
+	}
+
+	void KObject::SetInt(const char *name, int v)
+	{
+		SharedValue val = Value::NewInt(v);
+		this->Set(name, val);
+	}
+
+	void KObject::SetDouble(const char *name, double v)
+	{
+		SharedValue val = Value::NewDouble(v);
+		this->Set(name, val);
+	}
+
+	void KObject::SetNumber(const char *name, double v)
+	{
+		SharedValue val = Value::NewDouble(v);
+		this->Set(name, val);
+	}
+
+	void KObject::SetBool(const char *name, bool v)
+	{
+		SharedValue val = Value::NewBool(v);
+		this->Set(name, val);
+	}
+
+	void KObject::SetString(const char *name, std::string v)
+	{
+		SharedValue val = Value::NewString(v);
+		this->Set(name, val);
+	}
+
+	void KObject::SetObject(const char *name, SharedKObject object)
+	{
+		SharedValue obj_val = Value::NewObject(object);
+		this->Set(name, obj_val);
+	}
+
+	void KObject::SetMethod(const char *name, SharedKMethod object)
+	{
+		SharedValue obj_val = Value::NewMethod(object);
+		this->Set(name, obj_val);
+	}
+
+	void KObject::SetList(const char *name, SharedKList object)
+	{
+		SharedValue obj_val = Value::NewList(object);
+		this->Set(name, obj_val);
+	}
+
+	void KObject::GetStringList(const char *name, std::vector<std::string> &list)
+	{
+		SharedValue prop = this->Get(name);
+		if(!prop->IsUndefined() && prop->IsList())
+		{
+			SharedKList values = prop->ToList();
+			if (values->Size() > 0)
+			{
+				for (unsigned int c = 0; c < values->Size(); c++)
+				{
+					SharedValue v = values->At(c);
+					if (v->IsString())
+					{
+						const char *s = v->ToString();
+						list.push_back(s);
+					}
+				}
+			}
+		}
 	}
 
 	void KObject::SetNS(const char *name, SharedValue value)
@@ -130,87 +338,5 @@ namespace kroll
 		return callable_value->ToMethod()->Call(args);
 	}
 
-	SharedString KObject::DisplayString(int levels)
-	{
-		std::stringstream ss;
-
-		if (levels == 0)
-		{
-			ss << "<KObject at " << this << ">";
-		}
-		else
-		{
-			SharedStringList props = this->GetPropertyNames();
-			ss << "{";
-			for (size_t i = 0; i < props->size(); i++)
-			{
-				SharedValue prop = this->Get(props->at(i));
-				SharedString disp_string = prop->DisplayString(levels);
-
-				ss << " " << *(props->at(i))
-				    << " : " << *disp_string << ",";
-			}
-
-			if (props->size() > 0) // Erase last comma
-				ss.seekp((int)ss.tellp() - 1);
-
-			ss << "}";
-		}
-
-		return new std::string(ss.str());
-	}
-
-	std::string KObject::GetString(const char * name, std::string defaultValue)
-	{
-		SharedValue prop = this->Get(name);
-		if(!prop->IsUndefined() && prop->IsString())
-		{
-			return prop->ToString();
-		}
-		else
-		{
-			return defaultValue;
-		}
-	}
-
-	bool KObject::GetBool(const char * name, bool defaultValue)
-	{
-		SharedValue prop = this->Get(name);
-		if(!prop->IsUndefined())
-		{
-			return prop->ToBool();
-		}
-		else
-		{
-			return defaultValue;
-		}
-	}
-
-	void KObject::GetStringList(const char *name, std::vector<std::string> &list)
-	{
-		SharedValue prop = this->Get(name);
-		if(!prop->IsUndefined() && prop->IsList())
-		{
-			SharedKList values = prop->ToList();
-			if (values->Size() > 0)
-			{
-				for (unsigned int c = 0; c < values->Size(); c++)
-				{
-					SharedValue v = values->At(c);
-					if (v->IsString())
-					{
-						const char *s = v->ToString();
-						list.push_back(s);
-					}
-				}
-			}
-		}
-	}
-
-	void KObject::SetObject(const char *name, SharedKObject object)
-	{
-		SharedValue obj_val = Value::NewObject(object);
-		this->Set(name, obj_val);
-	}
 }
 

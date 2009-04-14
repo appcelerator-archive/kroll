@@ -12,6 +12,7 @@
 #include <IOKit/network/IONetworkInterface.h>
 #include <IOKit/network/IOEthernetController.h>
 #include <sys/utsname.h>
+#include <libgen.h>
 #elif defined(OS_WIN32)
 #include <windows.h>
 #include <shlobj.h>
@@ -26,6 +27,7 @@
 #include <netinet/in.h>
 #include <linux/if.h>
 #include <sys/utsname.h>
+#include <libgen.h>
 #endif
 
 #include <iostream>
@@ -272,6 +274,24 @@ namespace kroll
 		return (stat(file.c_str(),&st)==0) && S_ISREG(st.st_mode);
 #endif
 	}
+	std::string FileUtils::Dirname(std::string path)
+	{
+#ifdef OS_WIN32
+	char path_buffer[_MAX_PATH];
+	char drive[_MAX_DRIVE];
+	char dir[_MAX_DIR];
+	char fname[_MAX_FNAME];
+	char ext[_MAX_EXT];
+	strncpy(path_buffer, path.c_str, _MAX_PATH);
+	_splitpath(path_buffer, drive, dir, fname, ext ); 
+	return std::string(dir);
+#else
+	char* pathCopy = strdup(path.c_str());
+	std::string toReturn = dirname(pathCopy);
+	free(pathCopy);
+	return toReturn;
+#endif
+	}	
 	bool FileUtils::CreateDirectory(std::string &dir)
 	{
 #ifdef OS_OSX

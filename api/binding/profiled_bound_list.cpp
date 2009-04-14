@@ -4,8 +4,7 @@
  * Copyright (c) 2009 Appcelerator, Inc. All Rights Reserved.
  */
 
-#include "binding.h"
-#include "profiled_bound_list.h"
+#include "../kroll.h"
 #include <cstdio>
 #include <cstring>
 

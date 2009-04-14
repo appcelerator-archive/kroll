@@ -13,7 +13,6 @@ namespace kroll
 		delegate(NULL)
 	{
 		Py_INCREF(this->object);
-		
 	}
 
 	KPythonObject::KPythonObject(PyObject *obj, bool read_only) :
@@ -83,9 +82,19 @@ namespace kroll
 		return kroll_value;
 	}
 
+	bool KPythonObject::Equals(SharedKObject other)
+	{
+		SharedPtr<KPythonObject> pyOther = other.cast<KPythonObject>();
+
+		// This is not a Python object
+		if (pyOther.isNull())
+			return false;
+
+		return pyOther->ToPython() == this->ToPython();
+	}
+
 	SharedStringList KPythonObject::GetPropertyNames()
 	{
-
 		SharedStringList property_names = new StringList();
 		PyObject *props = PyObject_Dir(this->object);
 		if (props == NULL)

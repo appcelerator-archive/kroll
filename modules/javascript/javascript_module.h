@@ -18,24 +18,22 @@ using namespace kroll;
 
 /* KJS <-> Kroll bindings */
 namespace kroll {
-	class KJSKObject;
-	class KJSKMethod;
-	class KJSKList;
+	class KKJSObject;
+	class KKJSMethod;
+	class KKJSList;
 	class KJSUtil;
 }
-#include "kjs_kobject.h"
-#include "kjs_kmethod.h"
-#include "kjs_klist.h"
+#include "k_kjs_object.h"
+#include "k_kjs_method.h"
+#include "k_kjs_list.h"
 #include "kjs_util.h"
 
 /* the KJS Javascript module provider */
 namespace kroll {
 	class JavascriptModule;
 	class JavascriptModuleInstance;
-	class JavascriptUnitTestSuite;
 }
 #include "javascript_module_instance.h"
-#include "javascript_unit_test_suite.h"
 
 namespace kroll
 {
@@ -58,8 +56,6 @@ namespace kroll
 			return instance;
 		}
 
-		// this is called by the ktest runner for unit testing the module
-		void Test();
 
 	private:
 		static JavascriptModule *instance;

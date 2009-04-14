@@ -123,9 +123,15 @@ def CopySymlink(link, new_link):
 		pass
 	os.symlink(linkto, new_link)
 
-def walk_dir(dir, callback, include=[], exclude=[]):
+def walk_dir(dir, callback, include=[], exclude=[], dirs=False):
 	files = os.walk(dir)
 	for walk in files:
+		if dirs:
+			for dir in walk[1]:
+				dir = os.path.join(walk[0], dir)
+				if filter_file(dir, [], exclude):
+					callback(dir)
+
 		for file in walk[2]:
 			file = os.path.join(walk[0], file)
 			if filter_file(file, include, exclude):
@@ -138,7 +144,7 @@ def TarGzDir(source, dest_file, include=[], exclude=[]):
 		def tarcb(f):
 			arcname = f.replace(dir + os.sep, "")
 			tar.add(f, arcname)
-		walk_dir(dir, tarcb, include, exclude)
+		walk_dir(dir, tarcb, include, exclude, dirs=True)
 	tar.close()
 
 def ZipDir(source, dest_file, include=[], exclude=[]):
@@ -155,9 +161,13 @@ def ZipDir(source, dest_file, include=[], exclude=[]):
 				attr.external_attr = 2716663808L
 				attr.compress_type = zipfile.ZIP_DEFLATED
 				zip.writestr(attr, dest)
+			elif os.path.isdir(f):
+				attr = zipfile.ZipInfo(arcname + '/')
+				attr.external_attr = 0755 << 16L
+				zip.writestr(attr, '')
 			else:
 				zip.write(f, arcname, zipfile.ZIP_DEFLATED)
-		walk_dir(dir, zipcb, include, exclude)
+		walk_dir(dir, zipcb, include, exclude, dirs=True)
 	zip.close()
 
 def Concat(source, dest_file, nofiles=False):

@@ -65,4 +65,12 @@ namespace kroll {
 	{
 		return this->object->ToRuby();
 	}
+
+	bool KRubyHash::Equals(SharedKObject other)
+	{
+		SharedPtr<KRubyHash> hashOther = other.cast<KRubyHash>();
+		if (hashOther.isNull())
+			return false;
+		return hashOther->ToRuby() == this->ToRuby();
+	}
 }

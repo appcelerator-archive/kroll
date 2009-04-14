@@ -89,4 +89,12 @@ namespace kroll {
 	{
 		return this->object->ToRuby();
 	}
+
+	bool KRubyMethod::Equals(SharedKObject other)
+	{
+		SharedPtr<KRubyMethod> methodOther = other.cast<KRubyMethod>();
+		if (methodOther.isNull())
+			return false;
+		return methodOther->ToRuby() == this->ToRuby();
+	}
 }

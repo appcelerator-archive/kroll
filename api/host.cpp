@@ -126,7 +126,7 @@ namespace kroll
 	Host::~Host()
 	{
 	}
-	
+
 	void Host::StartProfiling()
 	{
 		if (this->profile)
@@ -136,7 +136,7 @@ namespace kroll
 			this->profileStream = new Poco::FileOutputStream(this->profilePath);
 		}
 	}
-	
+
 	void Host::StopProfiling()
 	{
 		if (this->profile)
@@ -188,7 +188,7 @@ namespace kroll
 				this->profilePath = pp;
 				this->profile = true;
 			}
-			else if (arg.find(STRING(_BOOT_HOME_FLAG)))
+			else if (arg.find(STRING(_BOOT_HOME_FLAG))==0)
 			{
 				size_t i = arg.find("=");
 				if (i != std::string::npos)
@@ -351,7 +351,6 @@ namespace kroll
 	void Host::CopyModuleAppResources(std::string& modulePath)
 	{
 		PRINTD("CopyModuleAppResources: " << modulePath);
-		
 		std::string appDir = this->appHomePath;
 
 		try
@@ -375,8 +374,16 @@ namespace kroll
 				platformAppResourcesDir.list(files);
 				for (size_t i = 0; i < files.size(); i++) 
 				{
-					PRINTD("Copying " << files.at(i).path() << " to " << appDir);
-					files.at(i).copyTo(appDir);
+					Poco::File f = files.at(i);
+					if (!f.exists())
+					{
+						PRINTD("Copying " << f.path() << " to " << appDir);
+						f.copyTo(appDir);
+					}
+					else
+					{
+						PRINTD("SKIP Copying " << f.path() << " to " << appDir);
+					}
 				}
 			}
 
@@ -387,8 +394,16 @@ namespace kroll
 				allAppResourcesDir.list(files);
 				for (size_t i = 0; i < files.size(); i++) 
 				{
-					PRINTD("Copying " << files.at(i).path() << " to " << appDir);
-					files.at(i).copyTo(appDir);
+					Poco::File f = files.at(i);
+					if (!f.exists())
+					{
+						PRINTD("Copying " << f.path() << " to " << appDir);
+						f.copyTo(appDir);
+					}
+					else
+					{
+						PRINTD("SKIP Copying " << f.path() << " to " << appDir);
+					}
 				}
 			}
 		}
@@ -447,6 +462,7 @@ namespace kroll
 
 	SharedPtr<Module> Host::LoadModule(std::string& path, ModuleProvider *provider)
 	{
+		PRINTD("Begin load of module " << path);
 		ScopedLock lock(&moduleMutex);
 
 		SharedPtr<Module> module = NULL;
@@ -491,6 +507,7 @@ namespace kroll
 #endif
 		}
 
+		PRINTD("Finish load of module " << path);
 		return module;
 	}
 
@@ -630,6 +647,23 @@ namespace kroll
 		}
 
 		return iter->second;
+	}
+	
+	SharedPtr<Module> Host::GetModuleByName(std::string name)
+	{
+		ScopedLock lock(&moduleMutex);
+		ModuleMap::iterator i = this->modules.begin();
+		while (i != this->modules.end())
+		{
+			std::string path = i->first;
+			std::size_t pos = path.rfind(name);
+			if (pos!=std::string::npos)
+			{
+				return i->second;
+			}
+			i++;
+		}
+		return SharedPtr<Module>(NULL);
 	}
 
 	bool Host::HasModule(std::string name)

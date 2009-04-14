@@ -36,11 +36,7 @@ namespace kroll
 		{
 			kvalue == Value::Null;
 		}
-		else if (T_FIXNUM == t)
-		{
-			kvalue = Value::NewInt(NUM2INT(value));
-		}
-		else if (T_FIXNUM == t)
+		else if (T_FIXNUM == t || T_BIGNUM == t || T_FLOAT == t)
 		{
 			kvalue = Value::NewDouble(NUM2DBL(value));
 		}
@@ -114,17 +110,13 @@ namespace kroll
 		{
 			return value->ToBool() ? Qtrue : Qfalse;
 		}
-		else if (value->IsInt())
+		else if (value->IsNumber())
 		{
-			return INT2NUM(value->ToInt());
+			return rb_float_new(value->ToNumber());
 		}
 		else if (value->IsString())
 		{
 			return rb_str_new2(value->ToString());
-		}
-		else if (value->IsDouble())
-		{
-			return rb_float_new(value->ToDouble());
 		}
 		else if (value->IsObject())
 		{

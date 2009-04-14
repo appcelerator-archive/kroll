@@ -7,7 +7,6 @@
 #include <iostream>
 #include <vector>
 #include "api_module.h"
-#include "api_unit_test_suite.h"
 
 namespace kroll
 {
@@ -24,9 +23,4 @@ namespace kroll
 		host->GetGlobalObject()->Set("API", Value::Undefined);
 	}
 
-	void APIModule::Test()
-	{
-		APIUnitTestSuite suite;
-		suite.Run(host, binding);
-	}
 }

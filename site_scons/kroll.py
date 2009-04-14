@@ -119,7 +119,6 @@ class BuildConfig(object):
 			self.os = 'osx'
 		elif self.matches('Linux'):
 			self.os = 'linux'
-
 			if (os.uname()[4] == 'x86_64'):
 				self.arch = '64'
 
@@ -132,6 +131,7 @@ class BuildConfig(object):
 		vars.Add('BOOT_RUNTIME_FLAG','The name of the Kroll runtime command line flag', kwargs['BOOT_RUNTIME_FLAG'])
 		vars.Add('BOOT_HOME_FLAG','The name of the Kroll home command line file', kwargs['BOOT_HOME_FLAG'])
 		vars.Add('BOOT_UPDATESITE_ENVNAME','The name of the Kroll update site environment variable', kwargs['BOOT_UPDATESITE_ENVNAME'])
+		vars.Add('CRASH_REPORT_URL','The URL to send crash dumps to', kwargs['CRASH_REPORT_URL'])
 
 		self.env = SCons.Environment.Environment(variables = vars)
 		self.utils = BuildUtils(self.env)
@@ -144,7 +144,8 @@ class BuildConfig(object):
 			['_CONFIG_FILENAME' , '${CONFIG_FILENAME}'],
 			['_BOOT_RUNTIME_FLAG', '${BOOT_RUNTIME_FLAG}'],
 			['_BOOT_HOME_FLAG', '${BOOT_HOME_FLAG}'],
-			['_BOOT_UPDATESITE_ENVNAME', '${BOOT_UPDATESITE_ENVNAME}']
+			['_BOOT_UPDATESITE_ENVNAME', '${BOOT_UPDATESITE_ENVNAME}'],
+			['_CRASH_REPORT_URL', '${CRASH_REPORT_URL}'],
 		])
 		self.version = kwargs['PRODUCT_VERSION']
 
@@ -204,22 +205,16 @@ class BuildConfig(object):
 		}
 	
 	def init_os_arch(self):
-		if self.is_linux() and self.arch == '64':
+		if self.is_linux() and self.is_64():
 			self.env.Append(CPPFLAGS=['-m64', '-Wall', '-Werror','-fno-common','-fvisibility=hidden'])
 			self.env.Append(LINKFLAGS=['-m64'])
 			self.env.Append(CPPDEFINES = ('OS_64', 1))
-			self.x64 = True
-			self.x32 = False
 		elif self.is_linux() or self.is_osx():
 			self.env.Append(CPPFLAGS=['-m32', '-Wall', '-fno-common','-fvisibility=hidden'])
 			self.env.Append(LINKFLAGS=['-m32'])
 			self.env.Append(CPPDEFINES = ('OS_32', 1))
-			self.x64 = False
-			self.x32 = True
 		else:
 			self.env.Append(CPPDEFINES = ('OS_32', 1))
-			self.x64 = False
-			self.x32 = True
 
 		if self.is_osx():
 			if ARGUMENTS.get('osx_10_4', 0):
@@ -243,6 +238,8 @@ class BuildConfig(object):
 	def is_linux(self): return self.os == 'linux'
 	def is_osx(self): return self.os == 'osx'
 	def is_win32(self): return self.os == 'win32'
+	def is_64(self): return self.arch == '64'
+	def is_32(self): return not self.arch
 
 	def get_module(self, name):
 		for module in self.modules:

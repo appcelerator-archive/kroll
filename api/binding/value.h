@@ -116,7 +116,7 @@ namespace kroll
 		/**
 		 * Test underlying value's equality to another Value
 		 */
-		bool operator== (Value);
+		bool Equals(SharedValue);
 
 		/**
 		 * @return true if the internal value is an \link #Value::Type::INT integer\endlink

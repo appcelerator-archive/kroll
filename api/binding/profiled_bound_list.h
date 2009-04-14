@@ -7,8 +7,6 @@
 #ifndef _KR_PROFILED_BOUND_LIST_H_
 #define _KR_PROFILED_BOUND_LIST_H_
 
-#include "profiled_bound_object.h"
-
 namespace kroll
 {
 	/**

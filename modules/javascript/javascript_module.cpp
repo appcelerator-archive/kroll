@@ -45,9 +45,4 @@ namespace kroll
 		return instance;
 	}
 
-	void JavascriptModule::Test()
-	{
-		JavascriptUnitTestSuite suite;
-		suite.Run(host);
-	}
 }

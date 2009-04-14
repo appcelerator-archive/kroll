@@ -4,7 +4,7 @@
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
 
-#include "binding.h"
+#include "../kroll.h"
 #include <cstring>
 
 namespace kroll

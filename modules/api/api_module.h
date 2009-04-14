@@ -16,7 +16,6 @@ namespace kroll
 	{
 		KROLL_MODULE_CLASS(APIModule)
 
-		void Test();
 
 	protected:
 		SharedPtr<APIBinding> binding;
