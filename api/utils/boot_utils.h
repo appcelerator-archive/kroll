@@ -55,11 +55,13 @@ namespace kroll
 		public:
 		~Application();
 		bool IsInstalled();
+		std::string GetUpdateURL();
 		std::string GetQueryString();
 		std::string GetLicenseText();
 
 		std::string path;
 		std::string name;
+		std::string version;
 		std::string id;
 		std::string guid;
 		std::string publisher;
@@ -80,6 +82,11 @@ namespace kroll
 
 		static Application* ReadManifest(std::string applicationPath);
 		static Application* ReadManifestFile(std::string filePath, std::string appPath);
+		/**
+		 * Compare two version strings in a piecewise way.
+		 * @returns 1 if the first is larger, 0 if they are equal, -1 if the second is larger
+		 */
+		static int CompareVersions(std::string, std::string);
 	};
 }
 #endif
