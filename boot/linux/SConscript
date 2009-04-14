@@ -6,14 +6,18 @@ Env = build.env.Clone()
 sources = Glob('*.cpp')
 sources.extend(build.get_kroll_utils(path.join(build.dir, 'objs', 'boot')))
 
-d = path.join(build.kroll_source_dir, 'boot', 'breakpad')
-sources.extend(Glob(path.join(d, 'common/*.c')))
-sources.extend(Glob(path.join(d, 'common/*.cc')))
-sources.extend(Glob(path.join(d, 'common/linux/*.cc')))
-sources.extend(Glob(path.join(d, 'client/*.cc')))
-sources.extend(Glob(path.join(d, 'client/linux/handler/*.cc')))
-sources.extend(Glob(path.join(d, 'processor/*.cc')))
-Env.Append(CPPPATH=[d, build.kroll_utils_dir])
+if build.arch == '32':
+    d = path.join(build.kroll_source_dir, 'boot', 'breakpad')
+    sources.extend(Glob(path.join(d, 'common/*.c')))
+    sources.extend(Glob(path.join(d, 'common/*.cc')))
+    sources.extend(Glob(path.join(d, 'common/linux/*.cc')))
+    sources.extend(Glob(path.join(d, 'client/*.cc')))
+    sources.extend(Glob(path.join(d, 'client/linux/handler/*.cc')))
+    sources.extend(Glob(path.join(d, 'processor/*.cc')))
+    Env.Append(CPPPATH=[d, build.kroll_utils_dir])
+else:
+    Env.Append(CPPPATH=[build.kroll_utils_dir])
+
 
 Env.Append(LIBS=['dl'])
 

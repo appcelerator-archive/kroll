@@ -12,8 +12,10 @@
 #include <libgen.h>
 #include <limits.h>
 #include <utils.h>
+#ifdef OS_32
 #include "client/linux/handler/exception_handler.h"
 #include "common/linux/http_upload.h"
+#endif
 
 // ensure that Kroll API is never included to create
 // an artificial dependency on kroll shared library
@@ -386,6 +388,7 @@ int start_host(int argc, const char* argv[])
 	}
 
 }
+#ifdef OS_32
 
 #define CRASH_REPORT_OPT "--crash_report"
 static std::string myself;
@@ -412,6 +415,7 @@ bool breakpad_callback(
 	}
 	return succeeded;
 }
+#endif
 
 std::map<std::string, std::string> get_parameters(int argc, const char* argv[])
 {
@@ -425,6 +429,7 @@ std::map<std::string, std::string> get_parameters(int argc, const char* argv[])
 	return params;
 }
 
+#ifdef OS_32
 void send_crash_report(int argc, const char* argv[])
 {
 	std::string url = STRING(CRASH_REPORT_URL);
@@ -461,11 +466,13 @@ void send_crash_report(int argc, const char* argv[])
 	//	gtk_widget_destroy(dialog);
 	//}
 }
+#endif
 
 
 int main(int argc, const char* argv[])
 {
 	myself = argv[0];
+#ifdef OS_32
 	std::string dump_path = "/tmp";
 	breakpad = new google_breakpad::ExceptionHandler(
 		dump_path,
@@ -487,5 +494,16 @@ int main(int argc, const char* argv[])
 		unsetenv("KR_BOOT_READY");
 		return start_host(argc, argv);
 	}
+#else
+	if (!getenv("KR_BOOT_READY"))
+	{
+		return prepare_environment(argc, argv);
+	}
+	else
+	{
+		unsetenv("KR_BOOT_READY");
+		return start_host(argc, argv);
+	}
+#endif
 }
 
