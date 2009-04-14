@@ -471,8 +471,8 @@ void send_crash_report(int argc, const char* argv[])
 
 int main(int argc, const char* argv[])
 {
-	myself = argv[0];
 #ifdef OS_32
+    myself = argv[0];
 	std::string dump_path = "/tmp";
 	breakpad = new google_breakpad::ExceptionHandler(
 		dump_path,
