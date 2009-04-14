@@ -14,6 +14,10 @@
 #ifndef _KROLL_H_
 #define _KROLL_H_
 
+#ifdef OS_WIN32
+	#include "base.h"
+#endif
+
 #include <Poco/SharedPtr.h>
 #include <vector>
 
@@ -93,6 +97,8 @@ namespace kroll
 #include "osx.h"
 #endif
 
-#include "base.h"
+#ifndef OS_WIN32
+	#include "base.h"
+#endif
 
 #endif

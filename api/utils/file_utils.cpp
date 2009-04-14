@@ -170,7 +170,7 @@ namespace kroll
 		}
 		dir.append(KR_PATH_SEP);
 		dir.append(".titanium");
-		
+
 #endif
 		dir.append(KR_PATH_SEP);
 		dir.append("appdata");
@@ -282,8 +282,8 @@ namespace kroll
 	char dir[_MAX_DIR];
 	char fname[_MAX_FNAME];
 	char ext[_MAX_EXT];
-	strncpy(path_buffer, path.c_str, _MAX_PATH);
-	_splitpath(path_buffer, drive, dir, fname, ext ); 
+	strncpy(path_buffer, path.c_str(), _MAX_PATH);
+	_splitpath(path_buffer, drive, dir, fname, ext );
 	return std::string(dir);
 #else
 	char* pathCopy = strdup(path.c_str());
@@ -291,7 +291,7 @@ namespace kroll
 	free(pathCopy);
 	return toReturn;
 #endif
-	}	
+	}
 	bool FileUtils::CreateDirectory(std::string &dir)
 	{
 #ifdef OS_OSX
@@ -993,7 +993,7 @@ namespace kroll
 		return rc;
 #endif
 	}
-	
+
 	#if defined(OS_WIN32)
 	// TODO: implement this for other platforms
 	void FileUtils::CopyRecursive(std::string &dir, std::string &dest)
@@ -1001,7 +1001,7 @@ namespace kroll
 		if (!IsDirectory(dest)) {
 			CreateDirectory(dest);
 		}
-		
+
 		std::cout << "\n>Recursive copy " << dir << " to " << dest << std::endl;
 		WIN32_FIND_DATA findFileData;
 		std::string q(dir+"\\*");
@@ -1012,10 +1012,10 @@ namespace kroll
 			{
 				std::string filename = findFileData.cFileName;
 				if (filename == "." || filename == "..") continue;
-				
+
 				std::string srcName = dir + "\\" + filename;
 				std::string destName = dest + "\\" + filename;
-				
+
 				if (IsDirectory(srcName)) {
 					std::cout << "create dir: " << destName << std::endl;
 					FileUtils::CreateDirectory(destName);
@@ -1032,7 +1032,7 @@ namespace kroll
 
 #endif
 
-	
+
 	std::string FileUtils::GetUsername()
 	{
 #ifdef OS_OSX
