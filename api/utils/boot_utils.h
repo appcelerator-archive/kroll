@@ -12,6 +12,7 @@
 #define RUNTIME_UUID "A2AC5CB5-8C52-456C-9525-601A5B0725DA"
 #define MODULE_UUID "1ACE5D3A-2B52-43FB-A136-007BD166CFD0"
 #define MANIFEST_FILENAME "manifest"
+#define UPDATE_FILENAME ".update"
 #define LICENSE_FILENAME "LICENSE.txt"
 #define INSTALLED_MARKER_FILENAME ".installed"
 
@@ -78,6 +79,7 @@ namespace kroll
 			std::string applicationDirectory);
 
 		static Application* ReadManifest(std::string applicationPath);
+		static Application* ReadManifestFile(std::string filePath, std::string appPath);
 	};
 }
 #endif

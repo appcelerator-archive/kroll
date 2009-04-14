@@ -36,6 +36,11 @@ namespace kroll
 	Application* BootUtils::ReadManifest(std::string appPath)
 	{
 		std::string manifest = FileUtils::Join(appPath.c_str(), MANIFEST_FILENAME, NULL);
+		return ReadManifestFile(manifest, appPath);
+	}
+
+	Application* BootUtils::ReadManifestFile(std::string manifest, std::string appPath)
+	{
 		if (!FileUtils::IsFile(manifest))
 			return NULL;
 
