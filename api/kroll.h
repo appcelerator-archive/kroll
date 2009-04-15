@@ -48,17 +48,10 @@ namespace kroll
 
 	class Logger;
 
-	typedef KObject BoundObject;
-	typedef KMethod BoundMethod;
-	typedef KList BoundList;
-
 	typedef SharedPtr<Value, Poco::ReferenceCounter, ValueReleasePolicy> SharedValue;
 	typedef SharedPtr<KObject> SharedKObject;
 	typedef SharedPtr<KMethod> SharedKMethod;
 	typedef SharedPtr<KList> SharedKList;
-	typedef SharedPtr<KObject> SharedBoundObject;
-	typedef SharedPtr<KMethod> SharedBoundMethod;
-	typedef SharedPtr<KList> SharedBoundList;
 
 	typedef SharedPtr<std::string> SharedString;
 	typedef std::vector<SharedString> StringList;

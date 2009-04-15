@@ -89,7 +89,7 @@ namespace kroll
 		return this->object->GetPropertyNames();
 	}
 
-	SharedBoundList StaticBoundList::FromStringVector(std::vector<std::string>& values)
+	SharedKList StaticBoundList::FromStringVector(std::vector<std::string>& values)
 	{
 		SharedKList l = new StaticBoundList();
 		std::vector<std::string>::iterator i = values.begin();
