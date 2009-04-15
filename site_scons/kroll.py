@@ -199,7 +199,7 @@ class BuildConfig(object):
 				'osx': {
 					'cpp_path': [path.join(self.third_party, 'poco', 'headers')],
 					'lib_path': [path.join(self.third_party, 'poco', 'lib')],
-					'libs': ['PocoFoundation', 'PocoNet', 'PocoNetSSL', 'PocoUtil', 'PocoXML', 'PocoZip']	
+					'libs': ['PocoFoundation', 'PocoNet', 'PocoNetSSL', 'PocoUtil', 'PocoXML', 'PocoZip', 'PocoData', 'PocoSQLite']	
 				}
 			}
 		}
