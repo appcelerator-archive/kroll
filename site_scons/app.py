@@ -114,7 +114,8 @@ class App:
 			include=self.modules,
 			image=self.image,
 			publisher=self.publisher,
-			url=self.url)
+			url=self.url,
+			version=self.version)
 		m_file = open(p.join(self.contents, 'manifest'), 'w')
 		m_file.write(manifest)
 		m_file.close()

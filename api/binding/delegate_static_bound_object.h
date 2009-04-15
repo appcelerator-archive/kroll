@@ -14,7 +14,7 @@
 namespace kroll
 {
 
-	class KROLL_API DelegateStaticBoundObject : public BoundObject
+	class KROLL_API DelegateStaticBoundObject : public KObject
 	{
 	public:
 

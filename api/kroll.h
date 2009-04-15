@@ -14,6 +14,7 @@
 #ifndef _KROLL_H_
 #define _KROLL_H_
 
+#include "base.h"
 #include <Poco/SharedPtr.h>
 #include <vector>
 
@@ -47,17 +48,10 @@ namespace kroll
 
 	class Logger;
 
-	typedef KObject BoundObject;
-	typedef KMethod BoundMethod;
-	typedef KList BoundList;
-
 	typedef SharedPtr<Value, Poco::ReferenceCounter, ValueReleasePolicy> SharedValue;
 	typedef SharedPtr<KObject> SharedKObject;
 	typedef SharedPtr<KMethod> SharedKMethod;
 	typedef SharedPtr<KList> SharedKList;
-	typedef SharedPtr<KObject> SharedBoundObject;
-	typedef SharedPtr<KMethod> SharedBoundMethod;
-	typedef SharedPtr<KList> SharedBoundList;
 
 	typedef SharedPtr<std::string> SharedString;
 	typedef std::vector<SharedString> StringList;
@@ -92,7 +86,5 @@ namespace kroll
 #ifdef OS_OSX
 #include "osx.h"
 #endif
-
-#include "base.h"
 
 #endif

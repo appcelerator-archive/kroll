@@ -12,10 +12,6 @@
 #include <libgen.h>
 #include <limits.h>
 #include <utils.h>
-#ifdef OS_32
-#include "client/linux/handler/exception_handler.h"
-#include "common/linux/http_upload.h"
-#endif
 
 // ensure that Kroll API is never included to create
 // an artificial dependency on kroll shared library
@@ -46,6 +42,7 @@ class Boot
 	public:
 	Application* app;
 	std::string applicationPath;
+	std::string updateFile;
 	std::string installerPath;
 
 	/* Default runtime base path or, if a runtime is found, that runtime home path */
@@ -133,8 +130,28 @@ class Boot
 		// This location is no longer supported for Linux.
 	}
 
+	void FindUpdate()
+	{
+		// Search for an update file in the application data  directory.
+		// It will be placed there by the update service. If it exists
+		// and the version in the update file is greater than the
+		// current app version, we want to force an update.
+		std::string file = FileUtils::GetApplicationDataDirectory(app->id);
+		file = FileUtils::Join(file.c_str(), UPDATE_FILENAME, NULL);
+		if (FileUtils::IsFile(file))
+		{
+			Application* update = BootUtils::ReadManifestFile(file, app->path);
+			if (BootUtils::CompareVersions(update->version, app->version) > 0)
+			{
+				this->app = update;
+				this->updateFile = file;
+			}
+		}
+	}
+
 	Boot(const char* firstArg) :
-		app(NULL)
+		app(NULL),
+		updateFile(std::string())
 	{
 		this->SetupPaths(firstArg);
 
@@ -142,6 +159,8 @@ class Boot
 		if (this->app == NULL)
 			throw std::string("Application packaging error. The application "
 				"manifest was not found in the correct location.");
+
+		this->FindUpdate();
 	}
 
 	~Boot()
@@ -282,10 +301,18 @@ class Boot
 			throw std::string("Missing installer and application has additional modules that are needed.");
 
 		std::vector<std::string> args;
-		args.push_back("--user");
+		args.push_back("--apppath");
 		args.push_back(app->path);
-		args.push_back(this->userRuntimeHome);
+		args.push_back("--sysruntime");
 		args.push_back(this->systemRuntimeHome);
+		args.push_back("--userruntime");
+		args.push_back(this->userRuntimeHome);
+
+		if (!this->updateFile.empty())
+		{
+			args.push_back("--updatefile");
+			args.push_back(this->updateFile);
+		}
 
 		std::vector<KComponent*>::iterator mi = missing.begin();
 		while (mi != missing.end())
@@ -313,17 +340,18 @@ int prepare_environment(int argc, const char* argv[])
 		Boot boot = Boot(argv[0]);
 
 		std::vector<KComponent*> missing = boot.FindModules();
-		if (missing.size() > 0 || !boot.app->IsInstalled())
+		if (missing.size() > 0 || !boot.app->IsInstalled() || !boot.updateFile.empty())
 		{
 			boot.RunInstaller(missing);
 			missing = boot.FindModules();
+			boot.FindUpdate();
 		}
 
-		if (missing.size() > 0 || !boot.app->IsInstalled())
+		if (missing.size() > 0 || !boot.app->IsInstalled() || !boot.updateFile.empty())
 		{
-			// Don't throw an error here, because the module installer
-			// would have thrown an exception on an error, so the user
-			// must have cancelled.
+			// Don't throw an error here. The installer handles internal
+			// errors and cancels on it's own. An error in the installer
+			// preparation would have thrown an exception.
 			return __LINE__;
 		}
 
@@ -388,8 +416,9 @@ int start_host(int argc, const char* argv[])
 	}
 
 }
-#ifdef OS_32
-
+#ifdef USE_BREAKPAD
+#include "client/linux/handler/exception_handler.h"
+#include "common/linux/http_upload.h"
 #define CRASH_REPORT_OPT "--crash_report"
 static std::string myself;
 static google_breakpad::ExceptionHandler* breakpad;
@@ -415,7 +444,6 @@ bool breakpad_callback(
 	}
 	return succeeded;
 }
-#endif
 
 std::map<std::string, std::string> get_parameters(int argc, const char* argv[])
 {
@@ -429,7 +457,6 @@ std::map<std::string, std::string> get_parameters(int argc, const char* argv[])
 	return params;
 }
 
-#ifdef OS_32
 void send_crash_report(int argc, const char* argv[])
 {
 	std::string url = STRING(CRASH_REPORT_URL);
@@ -471,8 +498,9 @@ void send_crash_report(int argc, const char* argv[])
 
 int main(int argc, const char* argv[])
 {
-#ifdef OS_32
-    myself = argv[0];
+
+#ifdef USE_BREAKPAD
+	myself = argv[0];
 	std::string dump_path = "/tmp";
 	breakpad = new google_breakpad::ExceptionHandler(
 		dump_path,
@@ -485,16 +513,8 @@ int main(int argc, const char* argv[])
 	{
 		send_crash_report(argc, argv);
 	}
-	else if (!getenv("KR_BOOT_READY"))
-	{
-		return prepare_environment(argc, argv);
-	}
 	else
-	{
-		unsetenv("KR_BOOT_READY");
-		return start_host(argc, argv);
-	}
-#else
+#endif
 	if (!getenv("KR_BOOT_READY"))
 	{
 		return prepare_environment(argc, argv);
@@ -504,6 +524,5 @@ int main(int argc, const char* argv[])
 		unsetenv("KR_BOOT_READY");
 		return start_host(argc, argv);
 	}
-#endif
 }
 

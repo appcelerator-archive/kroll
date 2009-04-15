@@ -96,6 +96,11 @@ namespace kroll
 				application->url = value;
 				continue;
 			}
+			else if (key == "#version")
+			{
+				application->version = value;
+				continue;
+			}
 			else if (key.c_str()[0] == '#')
 			{
 				continue;
@@ -110,7 +115,42 @@ namespace kroll
 			}
 		}
 
+		file.close();
 		return application;
+	}
+
+	int BootUtils::CompareVersions(std::string one, std::string two)
+	{
+		if (one.empty() && two.empty())
+			return 0;
+		if (one.empty())
+			return -1;
+		if (two.empty())
+			return 1;
+
+		std::string delim = ".";
+		std::vector<std::string> listOne;
+		std::vector<std::string> listTwo;
+		FileUtils::Tokenize(one, listOne, delim);
+		FileUtils::Tokenize(two, listTwo, delim);
+
+		int min = listOne.size();
+		if (listTwo.size() < listOne.size())
+			min = listTwo.size();
+
+		for (int i = 0; i < min; i++)
+		{
+			int result = listOne.at(i).compare(listTwo.at(i));
+			if (result != 0)
+				return result;
+		}
+
+		if (listOne.size() > listTwo.size())
+			return 1;
+		else if (listTwo.size() > listOne.size())
+			return -1;
+		else
+			return 0;
 	}
 
 	KComponent::KComponent(std::string key, std::string value)
@@ -195,6 +235,11 @@ namespace kroll
 			text.append("\n");
 		}
 		return text;
+	}
+
+	std::string Application::GetUpdateURL()
+	{
+		return "nourlyet";
 	}
 
 	Application::~Application()

@@ -273,11 +273,12 @@ class BuildConfig(object):
 			if os.path.exists(f): os.remove(f)
 			self.utils.Zip(m.build_dir, f, exclude=excludes)
 
-	def generate_manifest(self, name, id, guid, exclude=None, include=None, image=None, publisher=None, url=None):
+	def generate_manifest(self, name, id, guid, exclude=None, include=None, image=None, publisher=None, url=None, version=None):
 		manifest = "#appname: %s\n" % name
 		manifest += "#appid: %s\n" % id
 		manifest += "#guid: %s\n" % guid
 
+		if version: manifest += "#version: %s\n" % version
 		if image: manifest += "#image: %s\n" % image
 		if publisher: manifest += "#publisher: %s\n" % publisher
 		if url: manifest += "#url: %s\n" % url
