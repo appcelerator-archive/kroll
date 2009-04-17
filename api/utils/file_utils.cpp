@@ -156,7 +156,7 @@ namespace kroll
 		path[size]='\0';
 		std::string dir = path;
 #elif defined(OS_OSX)
-		std::string dir = getenv("KR_RUNTIME_HOME");
+		std::string dir = GetDefaultRuntimeHomeDirectory();
 #elif defined(OS_LINUX)
 		std::string dir;
 		if (getenv("HOME") != NULL)

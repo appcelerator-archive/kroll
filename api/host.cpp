@@ -24,11 +24,15 @@
 #include "binding/profiled_bound_object.h"
 #include <Poco/DirectoryIterator.h>
 #include <Poco/File.h>
+#include <Poco/Path.h>
 #include <Poco/Environment.h>
 #include <Poco/AutoPtr.h>
 #include <Poco/Util/PropertyFileConfiguration.h>
 #include <Poco/StringTokenizer.h>
 #include <Poco/Timespan.h>
+
+using Poco::File;
+using Poco::Path;
 
 #define HOME_ENV "KR_HOME"
 #define APPID_ENV "KR_APP_ID"
@@ -352,10 +356,11 @@ namespace kroll
 	{
 		PRINTD("CopyModuleAppResources: " << modulePath);
 		std::string appDir = this->appHomePath;
+		Path appPath(this->appHomePath);
 
 		try
 		{
-			Poco::Path moduleDir(modulePath);
+			Path moduleDir(modulePath);
 			moduleDir = moduleDir.parent();
 			std::string mds(moduleDir.toString());
 
@@ -363,19 +368,22 @@ namespace kroll
 			std::string resources_dir = FileUtils::Join(mds.c_str(), "AppResources", NULL);
 			std::string plt_resources_dir = FileUtils::Join(resources_dir.c_str(), platform, NULL);
 			std::string all_resources_dir = FileUtils::Join(resources_dir.c_str(), "all", NULL);
-			Poco::File platformAppResourcesDir(plt_resources_dir);
-			Poco::File allAppResourcesDir(all_resources_dir);
+			File platformAppResourcesDir(plt_resources_dir);
+			File allAppResourcesDir(all_resources_dir);
 
 			if (platformAppResourcesDir.exists()
 				&& platformAppResourcesDir.isDirectory())
 			{
 
-				std::vector<Poco::File> files;
+				std::vector<File> files;
 				platformAppResourcesDir.list(files);
 				for (size_t i = 0; i < files.size(); i++) 
 				{
-					Poco::File f = files.at(i);
-					if (!f.exists())
+					File f = files.at(i);
+					Path targetPath(appPath, Path(Path(f.path()).getBaseName()));
+					File targetFile(targetPath);
+					printf("target: %s\n", targetFile.path().c_str());
+					if (!targetFile.exists())
 					{
 						PRINTD("Copying " << f.path() << " to " << appDir);
 						f.copyTo(appDir);
@@ -390,12 +398,15 @@ namespace kroll
 			if (allAppResourcesDir.exists()
 				&& allAppResourcesDir.isDirectory())
 			{
-				std::vector<Poco::File> files;
+				std::vector<File> files;
 				allAppResourcesDir.list(files);
 				for (size_t i = 0; i < files.size(); i++) 
 				{
-					Poco::File f = files.at(i);
-					if (!f.exists())
+					File f = files.at(i);
+					Path targetPath(appPath, Path(Path(f.path()).getBaseName()));
+					File targetFile(targetPath);
+					printf("target: %s\n", targetFile.path().c_str());
+					if (!targetFile.exists())
 					{
 						PRINTD("Copying " << f.path() << " to " << appDir);
 						f.copyTo(appDir);
