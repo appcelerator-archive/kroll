@@ -13,25 +13,18 @@
 #import "stdlib.h"
 #import <utils.h>
 
+using kroll::Application;
+using kroll::KComponent;
+using std::string;
+using std::vector;
+using namespace kroll;
+
 // ensure that Kroll API is never included to create
 // an artificial dependency on kroll shared library
 #ifdef _KROLL_H_
 #error You should not have included the kroll api!
 #endif
 
-using namespace kroll;
-
-//
-// these UUIDs should never change and uniquely identify a package type
-//
-#define DISTRIBUTION_URL "http://download.titaniumapp.com"
-#define DISTRIBUTION_UUID "7F7FA377-E695-4280-9F1F-96126F3D2C2A"
-#define RUNTIME_UUID "A2AC5CB5-8C52-456C-9525-601A5B0725DA"
-#define MODULE_UUID "1ACE5D3A-2B52-43FB-A136-007BD166CFD0"
-
-
-
-//
 // these flags are compiled in to allow them
 // to be tailed to the embedded environment
 //
@@ -55,433 +48,343 @@ using namespace kroll;
   #define BOOT_HOME_FLAG STRING(_BOOT_HOME_FLAG)
 #endif
 
-#ifndef BOOT_UPDATESITE_ENVNAME
-  #define BOOT_UPDATESITE_ENVNAME STRING(_BOOT_UPDATESITE_ENVNAME)
-#endif
-
-#define OS_NAME "osx"
-
-#define KR_FATAL_ERROR(msg) \
+#define KR_ERROR(msg) \
 { \
 	NSApplicationLoad();\
 	NSRunCriticalAlertPanel(@"Application Error", [NSString stringWithCString:msg], @"Quit", nil, nil); \
-	exit(1); \
 }
 
-#ifndef MAX_PATH
-#define MAX_PATH 512
-#endif
+#define KR_FATAL_ERROR(msg) \
+{ \
+	KR_ERROR(msg);\
+	exit(1);\
+}
 
+string applicationHome;
+string updateFile;
+Application* app;
 
-std::string GetExecutablePath()
+std::string GetApplicationHomePath()
 {
 	NSString *bundle = [[NSBundle mainBundle] bundlePath];
-	NSString *contents = [NSString stringWithFormat:@"%@/Contents",bundle];
+	NSString *contents = [NSString stringWithFormat:@"%@/Contents", bundle];
 	return std::string([contents UTF8String]);
 }
-std::string GetDirectory(std::string &path)
+
+bool RunInstaller(vector<KComponent*> missing)
 {
-	size_t i = path.rfind("/");
-	if (i != std::string::npos)
+	string exec = kroll::FileUtils::Join(
+		app->path.c_str(),
+		"installer",
+		"Installer App.app",
+		"Contents", 
+		"MacOS",
+		"Installer App", NULL);
+	if (!kroll::FileUtils::IsFile(exec))
 	{
-		return path.substr(0,i);
+		KR_ERROR("Missing installer and application has additional modules that are needed.");
+		return false;
 	}
-	return ".";
-}
-std::string GetModuleName(std::string &path)
-{
-	size_t i = path.rfind("/");
-	if (i != std::string::npos)
-	{
-		size_t x = path.rfind("/",i-1);
-		if (x != std::string::npos)
-		{
-			return path.substr(x+1,i-x-1);
-		}
-	}
-	return path;
-}
-std::string FindManifest()
-{
-	std::string currentDir = GetExecutablePath();
-	std::string manifest = FileUtils::Join(currentDir.c_str(),"manifest",NULL);
-#ifdef DEBUG
-	std::cout << "manifest = " << manifest << std::endl;
-#endif
-	if (FileUtils::IsFile(manifest))
-	{
-		return manifest;
-	}
-	return std::string();
-}
-std::string FindModuleDir()
-{
-	std::string currentDir = GetExecutablePath();
-	std::string modules = FileUtils::Join(currentDir.c_str(),"modules",NULL);
-	if (FileUtils::IsDirectory(modules))
-	{
-		return modules;
-	}
-	std::string runtime = FileUtils::GetDefaultRuntimeHomeDirectory();
-	return FileUtils::Join(runtime.c_str(),"modules","osx",NULL);
-}
-bool RunAppInstallerIfNeeded(std::string &homedir,
-							 std::string &runtimePath,
-							 std::string &manifest,
-							 std::vector< std::pair< std::pair<std::string,std::string>,bool> > &modules,
-							 std::vector<std::string> &moduleDirs,
-							 std::string &appname,
-							 std::string &appid,
-							 std::string &runtimeOverride,
-							 std::string &guid)
-{
-	bool result = true;
-	std::vector< std::pair<std::string,std::string> > missing;
-	std::vector< std::pair< std::pair<std::string,std::string>, bool> >::iterator i = modules.begin();
-	while(i!=modules.end())
-	{
-		std::pair< std::pair<std::string,std::string>,bool> p = (*i++);
-		if (!p.second)
-		{
-			missing.push_back(p.first);
-#ifdef DEBUG
-			std::cout << "missing module: " << p.first.first << "/" << p.first.second <<std::endl;
-#endif
-		}
-	}
-	// this is where kroll should be installed
 	std::string runtimeBase = kroll::FileUtils::GetDefaultRuntimeHomeDirectory();
-	
-	if (missing.size()>0)
+
+	vector<string> args;
+	args.push_back("-appPath");
+	args.push_back(applicationHome);
+	args.push_back("-runtimeHome");
+	args.push_back(runtimeBase);
+
+	std::vector<KComponent*>::iterator mi = missing.begin();
+	while (mi != missing.end())
 	{
-		// if we don't have an installer directory, just bail...
-		std::string installerDir = kroll::FileUtils::Join(homedir.c_str(),"installer",NULL);
-		
-		std::string sourceTemp = kroll::FileUtils::GetTempDirectory();
-		std::vector<std::string> args;
-		// appname
-		args.push_back(appname);
-		// title
-		//I18N: localize these
-		args.push_back("Additional application files required");
-		// message
-		//I18N: localize these
-		std::string msg = "There are additional files that are required to complete the installation. These will be downloaded from the Internet. Please press Continue to complete the installation of the ";
-		msg+=appname;
-		msg+=".";
-		args.push_back(msg);
-		// extract directory
-		args.push_back(sourceTemp);
-		// runtime base
-		args.push_back(runtimeBase);
-		
-		// make sure we create our runtime directory
-		kroll::FileUtils::CreateDirectory(runtimeBase);
-		
-		char *updatesite = getenv(BOOT_UPDATESITE_ENVNAME);
-		std::string url;
-		if (!updatesite)
+		KComponent* mod = *mi++;
+		std::string path =
+			BootUtils::FindBundledModuleZip(mod->name, mod->version, app->path);
+		if (path.empty())
 		{
-			url = DISTRIBUTION_URL;
+			path = mod->GetURL(app);
 		}
-		else
-		{
-			url = std::string(updatesite);
-		}
-		
-		if (!url.empty())
-		{
-			std::string mid = kroll::FileUtils::EncodeURIComponent(kroll::PlatformUtils::GetMachineId());
-			std::string osarch = kroll::FileUtils::EncodeURIComponent(kroll::FileUtils::GetOSArchitecture());
-			std::string os = kroll::FileUtils::EncodeURIComponent(OS_NAME);
-			std::string osver = kroll::FileUtils::EncodeURIComponent(kroll::FileUtils::GetOSVersion());
-			char tiver[10];
-			sprintf(tiver, "%.1f", PRODUCT_VERSION);
-			guid = kroll::FileUtils::EncodeURIComponent(guid);
-//NOTE: for now we determine this at compile time -- in the future
-//we might want to actually programmatically determine if running on
-//64-bit processor or not...
-#ifdef OS_32
-			std::string ostype = "32bit";
-#else
-			std::string ostype = "64bit";
-#endif
-			std::string ti_ver = kroll::FileUtils::EncodeURIComponent(tiver);
-			std::string aid = kroll::FileUtils::EncodeURIComponent(appid);
-			std::string qs("?os="+os+"&osver="+osver+"&tiver="+ti_ver+"&mid="+mid+"&aid="+aid+"&guid="+guid+"&ostype="+ostype+"&osarch="+osarch);
-			std::vector< std::pair<std::string,std::string> >::iterator iter = missing.begin();
-			int missingCount = 0;
-			while (iter!=missing.end())
-			{
-				std::pair<std::string,std::string> p = (*iter++);
-				std::string uuid;
-				std::string name = p.first;
-				std::string version = p.second;
-				std::string path;
-				bool found = false;
-				if (p.first == "runtime")
-				{
-					// see if we have a private runtime installed and we can link to that
-					path = kroll::FileUtils::Join(installerDir.c_str(),"runtime",NULL);
-					if (kroll::FileUtils::IsDirectory(path))
-					{
-						found = true;
-						runtimePath = path;
-					}
-					else
-					{
-						uuid = RUNTIME_UUID;
-					}
-				}
-				else
-				{
-					// see if we have a private module installed and we can link to that
-					path = kroll::FileUtils::Join(installerDir.c_str(),"modules",p.first.c_str(),NULL);
-					if (kroll::FileUtils::IsDirectory(path))
-					{
-						found = true;
-					}
-					else
-					{
-						uuid = MODULE_UUID;
-					}
-				}
-				if (found)
-				{
-					moduleDirs.push_back(path);
-				}
-				else
-				{
-					// Attempt to find a bundled module/runtime for
-					// installation purposes -- if found use that path
-					// as the URL.
-					std::string u = BootUtils::FindBundledModuleZip(name, version, homedir);
-
-					if (u.empty())
-					{
-						// this is information that will allow us to 
-						// determine which module/runtime to give you from
-						// the network distribution site
-						u = url;
-						u+=qs;
-						u+="&name=";
-						u+=kroll::FileUtils::EncodeURIComponent(name);
-						u+="&version=";
-						u+=kroll::FileUtils::EncodeURIComponent(version);
-						u+="&uuid=";
-						u+=kroll::FileUtils::EncodeURIComponent(uuid);
-					}
-
-					args.push_back(u);
-					missingCount++;
-				}
-			}
-			
-			// we have to check again in case the private module/runtime was
-			// resolved inside the application folder
-			if (missingCount>0)
-			{
-				// run the installer app which will fetch remote modules/runtime for us
-				std::string exec = kroll::FileUtils::Join(installerDir.c_str(),"Installer App.app","Contents","MacOS","Installer App",NULL);
-				
-				// paranoia check
-				if (kroll::FileUtils::IsFile(exec))
-				{
-					// run and wait for it to exit..
-					kroll::FileUtils::RunAndWait(exec,args);
-					
-					modules.clear();
-					moduleDirs.clear();
-					bool success = kroll::FileUtils::ReadManifest(manifest,runtimePath,modules,moduleDirs,appname,appid,runtimeOverride,guid);
-					if (!success || modules.size()!=moduleDirs.size())
-					{
-						// must have failed
-						// no need to error has installer probably was cancelled
-						result = false;
-					}
-				}
-				else
-				{
-					// something crazy happened
-					result = false;
-					KR_FATAL_ERROR("Missing installer and application has additional modules that are needed.");
-				}
-			}
-		}
-		else
-		{
-			result = false;
-			KR_FATAL_ERROR("Missing installer and application has additional modules that are needed. Not updatesite has been configured.");
-		}
-		
-		// unlink the temporary directory
-		kroll::FileUtils::DeleteDirectory(sourceTemp);
+		args.push_back(path);
 	}
-	return result;
+
+	kroll::FileUtils::RunAndWait(exec, args);
+	return true;
 }
 
-typedef std::vector< std::pair< std::pair<std::string,std::string>,bool> > ModuleList;
-typedef int Executor(int argc, const char **argv);
-
-static void myExecve(NSString *executable, NSArray *args, NSDictionary *environment)
+bool FindModule(KComponent* m)
 {
-    char **argv = (char **)calloc(sizeof(char *), [args count] + 1);
-    char **env = (char **)calloc(sizeof(char *), [environment count] + 1);
-    NSEnumerator *e = [args objectEnumerator];
-    NSString *s;    int i = 0;
-    while ((s = [e nextObject]))
+	// Try to find the bundled version of this module.
+	string bundledPath = FileUtils::Join(
+		applicationHome.c_str(), "modules", m->name.c_str(), NULL);
+	if (FileUtils::IsDirectory(bundledPath))
+	{
+		m->path = bundledPath;
+		return true;
+	}
+
+	string runtimeHome = FileUtils::GetDefaultRuntimeHomeDirectory();
+	string installedPath = FileUtils::Join(
+		runtimeHome.c_str(), "modules", "osx", m->name.c_str(), NULL);
+	string result = FileUtils::FindVersioned(installedPath, m->requirement, m->version);
+	if (!result.empty())
+	{
+		m->path = result;
+		return true;
+	}
+
+	return false; // We couldn't resolve this module!
+}
+
+bool FindRuntime(KComponent* m)
+{
+	// Try to find the bundled version of this module.
+	string bundledPath = FileUtils::Join(applicationHome.c_str(), "runtime", NULL);
+	if (FileUtils::IsDirectory(bundledPath))
+	{
+		m->path = bundledPath;
+		return true;
+	}
+
+	string runtimeHome = FileUtils::GetDefaultRuntimeHomeDirectory();
+	string installedPath = FileUtils::Join(runtimeHome.c_str(), "runtime", "osx", NULL);
+	string result = FileUtils::FindVersioned(installedPath, m->requirement, m->version);
+	if (!result.empty())
+	{
+		m->path = result;
+		return true;
+	}
+
+	return false; // We couldn't resolve this module!
+}
+
+vector<KComponent*> FindModules()
+{
+	vector<KComponent*> unresolved;
+
+	// Find the runtime module
+	if (!FindRuntime(app->runtime))
+	{
+		unresolved.push_back(app->runtime);
+	}
+
+	// Find all regular modules
+	vector<KComponent*>::iterator i = app->modules.begin();
+	while (i != app->modules.end())
+	{
+		KComponent* m = *i++;
+		if (!FindModule(m))
+		{
+			unresolved.push_back(m);
+		}
+	}
+
+	if (unresolved.size() > 0)
+	{
+		vector<KComponent*>::iterator dmi = unresolved.begin();
+		while (dmi != unresolved.end())
+		{
+			KComponent* m = *dmi++;
+			std::cout << "Unresolved: " << m->name << std::endl;
+		}
+		std::cout << "---" << std::endl;
+	}
+	return unresolved;
+}
+
+typedef int Executor(int argc, const char **argv);
+static void MyExecve(NSString *executable, NSArray *args, NSDictionary *environment)
+{
+	char **argv = (char **)calloc(sizeof(char *), [args count] + 1);
+	char **env = (char **)calloc(sizeof(char *), [environment count] + 1);
+	NSEnumerator *e = [args objectEnumerator];
+	NSString *s;
+	int i = 0;
+	while ((s = [e nextObject]))
 	{
 		argv[i++] = (char *) [s UTF8String];
-	}        
-    e = [environment keyEnumerator];
-    i = 0;
-    while ((s = [e nextObject]))
+	}
+	e = [environment keyEnumerator];
+	i = 0;
+	while ((s = [e nextObject]))
 	{
-        env[i++] = (char *) [[NSString stringWithFormat:@"%@=%@", s, [environment objectForKey:s]] UTF8String];
+		env[i++] = (char *) [[NSString stringWithFormat:@"%@=%@", s, [environment objectForKey:s]] UTF8String];
 	}	
 #ifdef DEBUG
-    std::cout << "before exec: " << [executable fileSystemRepresentation] << std::endl;
+	std::cout << "before exec: " << [executable fileSystemRepresentation] << std::endl;
 #endif
-    execve([executable fileSystemRepresentation], argv, env);
+	execve([executable fileSystemRepresentation], argv, env);
+}
+
+void FindUpdate()
+{
+	string file = FileUtils::GetApplicationDataDirectory(app->id);
+	file = FileUtils::Join(file.c_str(), UPDATE_FILENAME, NULL);
+	if (FileUtils::IsFile(file))
+	{
+		updateFile = file;
+		Application* update = BootUtils::ReadManifestFile(updateFile, applicationHome);
+		if (update == NULL)
+		{
+			// We should probably just continue on. A corrupt manifest doesn't
+			// imply that the original application is corrupt.
+			KR_ERROR("Application update error: found corrupt update file.");
+		}
+		else
+		{
+			// If we find an update file, we want to resolve the modules that
+			// requires and ignore our current manifest.
+			app = update;
+		}
+	}
+}
+
+int Bootstrap()
+{
+	applicationHome = GetApplicationHomePath();
+	string manifestPath = FileUtils::Join(applicationHome.c_str(), MANIFEST_FILENAME, NULL);
+	if (!FileUtils::IsFile(manifestPath))
+	{
+		KR_ERROR("Application packaging error: no manifest was found.");
+		return __LINE__;
+	}
+
+	app = BootUtils::ReadManifest(applicationHome);
+	if (app == NULL)
+	{
+		KR_ERROR("Application packaging error: could not read manifest.");
+		return __LINE__;
+	}
+
+	// Look for a .update file in the app data directory
+	FindUpdate();
+
+	vector<KComponent*> missing = FindModules();
+	if (missing.size() > 0 || !app->IsInstalled() || !updateFile.empty())
+	{
+		if (!RunInstaller(missing))
+			return __LINE__;
+
+		missing = FindModules();
+		FindUpdate();
+	}
+
+	if (missing.size() > 0 || !app->IsInstalled() || !updateFile.empty())
+	{
+		// Don't throw an error here. The installer returned successfully
+		// above so this is likely a cancel or an installer error that (hopefully)
+		// has already been reported to the user.
+		return __LINE__;
+	}
+
+	// Construct a list of module pathnames for setting up library paths
+	std::ostringstream moduleList;
+	vector<KComponent*>::iterator i = app->modules.begin();
+	while (i != app->modules.end())
+	{
+		KComponent* module = *i++;
+		moduleList << module->path << ":";
+	}
+
+	NSString *executablePath = [[NSBundle mainBundle] executablePath];
+	NSMutableDictionary *environment = [NSMutableDictionary 
+		dictionaryWithDictionary:[[NSProcessInfo processInfo] environment]]; 
+
+	// Add runtime directory and all module paths to DYLD_FRAMEWORK_PATH,
+	// so modules can be shipped with their own frameworks.
+	string moduleListStr = moduleList.str();
+	NSString* value = [NSString stringWithFormat:@"%s:%s", app->runtime->path.c_str(), moduleListStr.c_str()];
+	NSString *currentPath = [environment objectForKey:@"DYLD_FRAMEWORK_PATH"];
+	if (currentPath)
+	{
+		value = [NSString stringWithFormat:@"%@:%@", value, currentPath];
+	}
+	[environment setObject:value forKey:@"DYLD_FRAMEWORK_PATH"];
+
+	// Add runtime directory to DYLD_LIBRARY_PATH
+	value = [NSString stringWithFormat:@"%s:%s", app->runtime->path.c_str(), moduleListStr.c_str()];
+	currentPath = [environment objectForKey:@"DYLD_FRAMEWORK_PATH"];
+	if (currentPath)
+	{
+		value = [NSString stringWithFormat:@"%@:%@", value, currentPath];
+	}
+	[environment setObject:value forKey:@"DYLD_LIBRARY_PATH"];
+
+	[environment setObject:@"YES" forKey:@"KR_FORK"];
+	[environment setObject:@"YES" forKey:@"WEBKIT_UNSET_DYLD_FRAMEWORK_PATH"];
+	[environment setObject:executablePath forKey:@"WebKitAppPath"];
+	value = [NSString stringWithUTF8String:app->path.c_str()];
+	[environment setObject:value forKey:@"KR_HOME"];
+	value = [NSString stringWithUTF8String:app->runtime->path.c_str()];
+	[environment setObject:value forKey:@"KR_RUNTIME"];
+	value = [NSString stringWithUTF8String:moduleListStr.c_str()];
+	[environment setObject:value forKey:@"KR_MODULES"];
+	std::string runtimeHomeDir = FileUtils::GetDefaultRuntimeHomeDirectory();
+	value = [NSString stringWithUTF8String:runtimeHomeDir.c_str()];
+	[environment setObject:value forKey:@"KR_RUNTIME_HOME"];
+	value = [NSString stringWithUTF8String:app->guid.c_str()];
+	[environment setObject:value forKey:@"KR_APP_GUID"];
+	value = [NSString stringWithUTF8String:app->id.c_str()];
+	[environment setObject:value forKey:@"KR_APP_ID"];
+
+	NSArray* arguments = [[NSProcessInfo processInfo] arguments];
+	MyExecve(executablePath, arguments, environment);
+
+	// If everything goes correctly, we should never get here
+	char *error = strerror(errno);
+	NSString *errorMessage = [NSString stringWithFormat:@"Launching application failed with the error '%s' (%d)", error, errno];
+	KR_ERROR([errorMessage UTF8String]);
+	return __LINE__;
+}
+
+int StartHost(int argc, char** argv)
+{
+	// now we need to load the host and get 'er booted
+	string runtimePath = getenv("KR_RUNTIME");
+	std::string khost = FileUtils::Join(runtimePath.c_str(), "libkhost.dylib", NULL);
+
+	if (!FileUtils::IsFile(khost))
+	{
+		string msg = string("Couldn't find required file:") + khost;
+		KR_ERROR(msg.c_str());
+		return __LINE__;
+	}
+
+	void* lib = dlopen(khost.c_str(), RTLD_LAZY | RTLD_GLOBAL);
+	if (!lib)
+	{
+		string msg = string("Couldn't load file:") + khost + ", error: " + dlerror();
+		KR_ERROR(msg.c_str());
+		return __LINE__;
+	}
+
+	Executor *executor = (Executor*)dlsym(lib, "Execute");
+	if (!executor)
+	{
+		string msg = string("Invalid entry point for") + khost;
+		KR_FATAL_ERROR(msg.c_str());
+		return __LINE__;
+	}
+	return executor(argc, (const char**)argv);
 }
 
 int main(int argc, char *argv[])
 {
 	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-
-	std::string manifest = FindManifest();
-	if (manifest.empty())
-	{
-		KR_FATAL_ERROR("Application packaging error. The application manifest was not found in the correct location.");
-		[pool release];
-		return __LINE__;
-	}
-	std::string homedir = GetExecutablePath();
-	ModuleList modules;
-	std::vector<std::string> moduleDirs;
-	std::string runtimePath;
-	std::string appname;
-	std::string appid;
-	std::string runtimeOverride = homedir;
-	std::string guid;
-	bool success = kroll::FileUtils::ReadManifest(manifest,runtimePath,modules,moduleDirs,appname,appid,runtimeOverride,guid);
-	if (!success)
-	{
-		[pool release];
-		return __LINE__;
-	}
-	// run the app installer if any missing modules/runtime or
-	// version specs not met
-	if (!RunAppInstallerIfNeeded(homedir,runtimePath,manifest,modules,moduleDirs,appname,appid,runtimeOverride,guid))
-	{
-		[pool release];
-		return __LINE__;
-	}
-	
-	int rc = 0;
-	std::string localRuntime = FileUtils::Join(homedir.c_str(),"runtime",NULL);
-	std::string runtimeBasedir = FileUtils::GetDefaultRuntimeHomeDirectory();
-	std::string moduleLocalDir = FindModuleDir();
-	std::string moduleBasedir = FileUtils::Join(runtimeBasedir.c_str(),"modules","osx",NULL);
-	std::ostringstream moduleList;
-
-	// we now need to resolve and load each module and dependencies
-	std::vector<std::string>::iterator i = moduleDirs.begin();
-	while (i!=moduleDirs.end())
-	{
-		std::string moduleDir = (*i++);
-		std::string moduleName = GetModuleName(moduleDir);
-		std::string localModule = FileUtils::Join(homedir.c_str(),"modules",moduleName.c_str(),NULL);
-		moduleList << moduleDir << ":";
-	}
-
-	// we now need to resolve and load each module and dependencies
+	int rc;
 	char *fork_flag = getenv("KR_FORK");
 	if (!fork_flag)
 	{
-		std::string dypath = localRuntime;
-		dypath+=":";
-		dypath+=runtimePath;
-		NSString *frameworkPath = [NSString stringWithCString:dypath.c_str()];
-		NSString *executablePath = [[NSBundle mainBundle] executablePath];
-		NSMutableDictionary *environment = [NSMutableDictionary dictionaryWithDictionary:[[NSProcessInfo processInfo] environment]]; 
-		NSString *curpath = (NSString*)[environment objectForKey:@"DYLD_FRAMEWORK_PATH"];
-		if (curpath)
-		{
-			frameworkPath = [NSString stringWithFormat:@"%@:%@",frameworkPath,curpath];
-		}
-		[environment setObject:frameworkPath forKey:@"DYLD_FRAMEWORK_PATH"];
-		NSString *libpath = [NSString stringWithFormat:@"%s:%s:%s",runtimePath.c_str(),dypath.c_str(),moduleList.str().c_str()];
-		NSString *curlibpath = (NSString*)[environment objectForKey:@"DYLD_LIBRARY_PATH"];
-		if (curlibpath)
-		{
-			libpath = [NSString stringWithFormat:@"%@:%@",libpath,curlibpath];
-		}
-		[environment setObject:libpath forKey:@"DYLD_LIBRARY_PATH"];
-		[environment setObject:@"YES" forKey:@"KR_FORK"];
-		[environment setObject:@"YES" forKey:@"WEBKIT_UNSET_DYLD_FRAMEWORK_PATH"];
-		[environment setObject:executablePath forKey:@"WebKitAppPath"];
-		[environment setObject:[NSString stringWithCString:homedir.c_str()] forKey:@"KR_HOME"];
-		[environment setObject:[NSString stringWithCString:runtimePath.c_str()] forKey:@"KR_RUNTIME"];
-		[environment setObject:[NSString stringWithCString:moduleList.str().c_str()] forKey:@"KR_MODULES"];
-		[environment setObject:[NSString stringWithCString:runtimeBasedir.c_str()] forKey:@"KR_RUNTIME_HOME"];
-		[environment setObject:[NSString stringWithCString:guid.c_str()] forKey:@"KR_APP_GUID"];
-		[environment setObject:[NSString stringWithCString:appid.c_str()] forKey:@"KR_APP_ID"];
-
-		NSMutableArray *arguments = [NSMutableArray arrayWithObjects:executablePath, nil];
-		while (*++argv)
-		{
-			[arguments addObject:[NSString stringWithUTF8String:*argv]];
-		}
-		myExecve(executablePath, arguments, environment);
-		char *error = strerror(errno);    
-		NSString *errorMessage = [NSString stringWithFormat:@"Launching application failed with the error '%s' (%d)", error, errno];
-		KR_FATAL_ERROR([errorMessage UTF8String]);
+		rc = Bootstrap();
 	}
 	else
 	{
-		if (argc > 1 && strcmp(argv[1],"--wait-for-debugger")==0)
-		{
-			std::cout << "Press enter after attaching debugger... your PID: " << getpid() << std::endl;
-			fgetc(stdin);
-		}
 		unsetenv("KR_FORK");
-		
-		// now we need to load the host and get 'er booted
-		std::string khost = FileUtils::Join(runtimePath.c_str(),"libkhost.dylib",NULL);
-
-		if (!FileUtils::IsFile(khost))
-		{
-			char msg[MAX_PATH];
-			sprintf(msg,"Couldn't find required file: %s",khost.c_str());
-			KR_FATAL_ERROR(msg);
-			return __LINE__;
-		}
-
-		void* lib = dlopen(khost.c_str(), RTLD_LAZY | RTLD_GLOBAL);
-		if (!lib)
-		{
-			char msg[MAX_PATH];
-			sprintf(msg,"Couldn't load file: %s, error: %s",khost.c_str(),dlerror());
-			KR_FATAL_ERROR(msg);
-			[pool release];
-			return __LINE__;
-		}
-		Executor *executor = (Executor*)dlsym(lib, "Execute");
-		if (!executor)
-		{
-			char msg[MAX_PATH];
-			sprintf(msg,"Invalid entry point for: %s",khost.c_str());
-			KR_FATAL_ERROR(msg);
-			[pool release];
-			return __LINE__;
-		}
-
-		rc = executor(argc,(const char**)argv);
+		rc = StartHost(argc, argv);
 	}
+
 	#ifdef DEBUG
-		std::cout << "return code: " << rc << std::endl;
+	std::cout << "return code: " << rc << std::endl;
 	#endif
+
 	[pool release];
 	return rc;
 }
