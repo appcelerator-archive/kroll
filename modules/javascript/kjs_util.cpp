@@ -320,7 +320,8 @@ namespace kroll
 		add_special_property_names(*value, names);
 		for (size_t i = 0; i < names->size(); i++)
 		{
-			if (str_name == *names->at(i)) {
+			if (str_name == *names->at(i))
+			{
 				return true;
 			}
 		}
@@ -460,7 +461,7 @@ namespace kroll
 
 	void add_special_property_names(SharedValue value, SharedStringList props)
 	{
-		bool foundLength, foundToString;
+		bool foundLength = false, foundToString = false;
 		for (size_t i = 0; i < props->size(); i++)
 		{
 			SharedString pn = props->at(i);
