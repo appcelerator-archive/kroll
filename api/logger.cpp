@@ -33,6 +33,7 @@ namespace kroll
 	std::map<std::string, Logger> Logger::loggers;
 	char Logger::buffer[LOGGER_MAX_ENTRY_SIZE];
 	Poco::Mutex Logger::mutex;
+	std::string Logger::logpath;
 
 	Logger& Logger::Get(std::string name)
 	{
@@ -40,9 +41,10 @@ namespace kroll
 		return Logger::GetImpl(name);
 	}
 
-	void Logger::Initialize(int console, int file, int level, std::string appID)
+	void Logger::Initialize(int console, int file, int level, std::string appID, std::string logpath)
 	{
 		std::string name = PRODUCT_NAME;
+		Logger::logpath = logpath;
 		Logger::loggers[name] = Logger(console, file, level, name, appID);
 	}
 
@@ -73,12 +75,20 @@ namespace kroll
 		}
 		if (file)
 		{
-			std::string dataPath = FileUtils::GetApplicationDataDirectory(appID);
-			File dataPathFile = File(dataPath);
-			dataPathFile.createDirectories();
+			Path logfile;
+			if (Logger::logpath.empty())
+			{
+				std::string dataPath = FileUtils::GetApplicationDataDirectory(appID);
+				File dataPathFile = File(dataPath);
+				dataPathFile.createDirectories();
 
-			Path logfile = Path(dataPath);
-			logfile = Path(logfile, "tiapp.log");
+				logfile = Path(dataPath);
+				logfile = Path(logfile, "tiapp.log");
+			}
+			else
+			{
+				logfile = Path(logpath);
+			}
 			FileChannel* fileChannel = new FileChannel(logfile.absolute().toString());
 			splitter->addChannel(fileChannel);
 			fileChannel->release();

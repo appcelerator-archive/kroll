@@ -115,12 +115,25 @@ namespace kroll
 
 		if (this->debug)
 		{
-			Logger::Initialize(true, true, Poco::Message::PRIO_DEBUG, this->appID);
+			Logger::Initialize(true, true, Poco::Message::PRIO_DEBUG, this->appID, this->logpath);
 		}
 		else
 		{
-			Logger::Initialize(true, true, Poco::Message::PRIO_INFORMATION, this->appID);
+			Logger::Initialize(true, true, Poco::Message::PRIO_INFORMATION, this->appID, this->logpath);
 		}
+
+#ifdef DEBUG
+		// dump command args
+		Logger& logger = Logger::Get("Host");
+		logger.Info("ARG COUNT = %d",this->args.size());
+		std::vector<std::string>::iterator i = this->args.begin();
+		if (i!=this->args.end())
+		{
+			std::string s = (*i);
+			logger.Info("ARGUMENT => %s",s.c_str());
+			i++;
+		}
+#endif		
 	}
 
 	Host::~Host()
@@ -131,7 +144,7 @@ namespace kroll
 	{
 		if (this->profile)
 		{
-			Logger& logger = Logger::GetRootLogger();
+			Logger& logger = Logger::Get("Host");
 			logger.Info("Starting Profiler. Logging going to %s",this->profilePath.c_str());
 			this->profileStream = new Poco::FileOutputStream(this->profilePath);
 		}
@@ -141,7 +154,7 @@ namespace kroll
 	{
 		if (this->profile)
 		{
-			Logger& logger = Logger::GetRootLogger();
+			Logger& logger = Logger::Get("Host");
 			logger.Info("Stopping Profiler");
 			profileStream->flush();
 			profileStream->close();
@@ -167,11 +180,8 @@ namespace kroll
 		{
 			std::string arg = argv[i];
 			this->args.push_back(arg);
-			PRINTD("ARGUMENT[" << i << "] => " << argv[i]);
-
 			if (arg == "--debug")
 			{
-				std::cout << "DEBUGGING DETECTED!" << std::endl;
 				this->debug = true;
 			}
 			else if (arg == "--attach-debugger")
@@ -183,10 +193,19 @@ namespace kroll
 				std::string pp = arg.substr(10);
 				if (pp.find("\"")==0)
 				{
-					pp = pp.substr(1,pp.length()-1);
+					pp = pp.substr(1,pp.length()-2);
 				}
 				this->profilePath = pp;
 				this->profile = true;
+			}
+			else if (arg.find("--logpath=")==0)
+			{
+				std::string pp = arg.substr(10);
+				if (pp.find("\"")==0)
+				{
+					pp = pp.substr(1,pp.length()-2);
+				}
+				this->logpath = pp;
 			}
 			else if (arg.find(STRING(_BOOT_HOME_FLAG))==0)
 			{
