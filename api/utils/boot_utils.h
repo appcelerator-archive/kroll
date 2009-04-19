@@ -36,10 +36,15 @@ namespace kroll
 	{
 		public:
 		/*
-		 * Construct a Kroll Component from the key-value pair
-		 * found in a timanifest file.
+		 * Construct a Kroll Component from the key-value pair found in a timanifest file.
 		 */
 		KComponent(std::string, std::string);
+
+		/**
+		 * Try to resolve a component by locating it in the given application or runtime homes
+		 */
+		bool Resolve(Application*, std::vector<std::string>& runtimeHomes);
+
 		std::string GetURL(Application*);
 
 		std::string type;
@@ -54,6 +59,13 @@ namespace kroll
 	{
 		public:
 		~Application();
+
+		/**
+		 * Attempt to resolve all components that this applications contains.
+		 * @returns a list of unresolved components
+		 */
+		std::vector<KComponent*> ResolveAllComponents(std::vector<std::string>& runtimeHomes);
+
 		bool IsInstalled();
 		std::string GetUpdateURL();
 		std::string GetQueryString();

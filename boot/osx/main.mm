@@ -48,21 +48,17 @@ using namespace kroll;
   #define BOOT_HOME_FLAG STRING(_BOOT_HOME_FLAG)
 #endif
 
-#define KR_ERROR(msg) \
-{ \
-	NSApplicationLoad();\
-	NSRunCriticalAlertPanel(@"Application Error", [NSString stringWithCString:msg], @"Quit", nil, nil); \
-}
-
-#define KR_FATAL_ERROR(msg) \
-{ \
-	KR_ERROR(msg);\
-	exit(1);\
-}
-
 string applicationHome;
 string updateFile;
 Application* app;
+
+inline void ShowError(std::string error, bool fatal=false)
+{
+	NSApplicationLoad();
+	NSRunCriticalAlertPanel(@"Application Error", [NSString stringWithCString:error.c_str()], @"Quit", nil, nil);
+	if (fatal)
+		exit(1);
+}
 
 std::string GetApplicationHomePath()
 {
@@ -82,7 +78,7 @@ bool RunInstaller(vector<KComponent*> missing)
 		"Installer App", NULL);
 	if (!kroll::FileUtils::IsFile(exec))
 	{
-		KR_ERROR("Missing installer and application has additional modules that are needed.");
+		ShowError("Missing installer and application has additional modules that are needed.");
 		return false;
 	}
 	std::string runtimeBase = kroll::FileUtils::GetDefaultRuntimeHomeDirectory();
@@ -92,6 +88,11 @@ bool RunInstaller(vector<KComponent*> missing)
 	args.push_back(applicationHome);
 	args.push_back("-runtimeHome");
 	args.push_back(runtimeBase);
+	if (!updateFile.empty())
+	{
+		args.push_back("-updateFile");
+		args.push_back(updateFile);
+	}
 
 	std::vector<KComponent*>::iterator mi = missing.begin();
 	while (mi != missing.end())
@@ -110,73 +111,15 @@ bool RunInstaller(vector<KComponent*> missing)
 	return true;
 }
 
-bool FindModule(KComponent* m)
-{
-	// Try to find the bundled version of this module.
-	string bundledPath = FileUtils::Join(
-		applicationHome.c_str(), "modules", m->name.c_str(), NULL);
-	if (FileUtils::IsDirectory(bundledPath))
-	{
-		m->path = bundledPath;
-		return true;
-	}
-
-	string runtimeHome = FileUtils::GetDefaultRuntimeHomeDirectory();
-	string installedPath = FileUtils::Join(
-		runtimeHome.c_str(), "modules", "osx", m->name.c_str(), NULL);
-	string result = FileUtils::FindVersioned(installedPath, m->requirement, m->version);
-	if (!result.empty())
-	{
-		m->path = result;
-		return true;
-	}
-
-	return false; // We couldn't resolve this module!
-}
-
-bool FindRuntime(KComponent* m)
-{
-	// Try to find the bundled version of this module.
-	string bundledPath = FileUtils::Join(applicationHome.c_str(), "runtime", NULL);
-	if (FileUtils::IsDirectory(bundledPath))
-	{
-		m->path = bundledPath;
-		return true;
-	}
-
-	string runtimeHome = FileUtils::GetDefaultRuntimeHomeDirectory();
-	string installedPath = FileUtils::Join(runtimeHome.c_str(), "runtime", "osx", NULL);
-	string result = FileUtils::FindVersioned(installedPath, m->requirement, m->version);
-	if (!result.empty())
-	{
-		m->path = result;
-		return true;
-	}
-
-	return false; // We couldn't resolve this module!
-}
-
 vector<KComponent*> FindModules()
 {
-	vector<KComponent*> unresolved;
+	vector<string> runtimeHomes;
 
-	// Find the runtime module
-	if (!FindRuntime(app->runtime))
-	{
-		unresolved.push_back(app->runtime);
-	}
+	// Add the default runtime home for now, later this
+	// might be a list of possible locations, like on Linux
+	runtimeHomes.push_back(FileUtils::GetDefaultRuntimeHomeDirectory());
 
-	// Find all regular modules
-	vector<KComponent*>::iterator i = app->modules.begin();
-	while (i != app->modules.end())
-	{
-		KComponent* m = *i++;
-		if (!FindModule(m))
-		{
-			unresolved.push_back(m);
-		}
-	}
-
+	vector<KComponent*> unresolved = app->ResolveAllComponents(runtimeHomes);
 	if (unresolved.size() > 0)
 	{
 		vector<KComponent*>::iterator dmi = unresolved.begin();
@@ -226,7 +169,7 @@ void FindUpdate()
 		{
 			// We should probably just continue on. A corrupt manifest doesn't
 			// imply that the original application is corrupt.
-			KR_ERROR("Application update error: found corrupt update file.");
+			ShowError("Application update error: found corrupt update file.");
 		}
 		else
 		{
@@ -243,14 +186,14 @@ int Bootstrap()
 	string manifestPath = FileUtils::Join(applicationHome.c_str(), MANIFEST_FILENAME, NULL);
 	if (!FileUtils::IsFile(manifestPath))
 	{
-		KR_ERROR("Application packaging error: no manifest was found.");
+		ShowError("Application packaging error: no manifest was found.");
 		return __LINE__;
 	}
 
 	app = BootUtils::ReadManifest(applicationHome);
 	if (app == NULL)
 	{
-		KR_ERROR("Application packaging error: could not read manifest.");
+		ShowError("Application packaging error: could not read manifest.");
 		return __LINE__;
 	}
 
@@ -317,6 +260,7 @@ int Bootstrap()
 	[environment setObject:value forKey:@"KR_RUNTIME"];
 	value = [NSString stringWithUTF8String:moduleListStr.c_str()];
 	[environment setObject:value forKey:@"KR_MODULES"];
+	printf("modules: %s\n", moduleListStr.c_str());
 	std::string runtimeHomeDir = FileUtils::GetDefaultRuntimeHomeDirectory();
 	value = [NSString stringWithUTF8String:runtimeHomeDir.c_str()];
 	[environment setObject:value forKey:@"KR_RUNTIME_HOME"];
@@ -331,7 +275,7 @@ int Bootstrap()
 	// If everything goes correctly, we should never get here
 	char *error = strerror(errno);
 	NSString *errorMessage = [NSString stringWithFormat:@"Launching application failed with the error '%s' (%d)", error, errno];
-	KR_ERROR([errorMessage UTF8String]);
+	ShowError([errorMessage UTF8String]);
 	return __LINE__;
 }
 
@@ -344,7 +288,7 @@ int StartHost(int argc, char** argv)
 	if (!FileUtils::IsFile(khost))
 	{
 		string msg = string("Couldn't find required file:") + khost;
-		KR_ERROR(msg.c_str());
+		ShowError(msg);
 		return __LINE__;
 	}
 
@@ -352,7 +296,7 @@ int StartHost(int argc, char** argv)
 	if (!lib)
 	{
 		string msg = string("Couldn't load file:") + khost + ", error: " + dlerror();
-		KR_ERROR(msg.c_str());
+		ShowError(msg);
 		return __LINE__;
 	}
 
@@ -360,7 +304,7 @@ int StartHost(int argc, char** argv)
 	if (!executor)
 	{
 		string msg = string("Invalid entry point for") + khost;
-		KR_FATAL_ERROR(msg.c_str());
+		ShowError(msg);
 		return __LINE__;
 	}
 	return executor(argc, (const char**)argv);

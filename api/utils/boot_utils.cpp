@@ -169,6 +169,40 @@ namespace kroll
 		}
 	}
 
+	bool KComponent::Resolve(Application* app, std::vector<std::string>& runtimeHomes)
+	{
+		// Try to find the bundled version of this module.
+		std::string path;
+		if (this->typeGuid == MODULE_UUID)
+			path = FileUtils::Join(app->path.c_str(), "modules", this->name.c_str(), NULL);
+		else
+			path = FileUtils::Join(app->path.c_str(), "runtime", NULL);
+
+		if (FileUtils::IsDirectory(path))
+		{
+			this->path = path;
+			return true;
+		}
+
+		std::vector<std::string>::iterator i = runtimeHomes.begin();
+		while (i != runtimeHomes.end())
+		{
+			std::string rth = *i++;
+			if (this->typeGuid == MODULE_UUID)
+				path = FileUtils::Join(rth.c_str(), "modules", OS_NAME, this->name.c_str(), NULL);
+			else
+				path = FileUtils::Join(rth.c_str(), "runtime", OS_NAME, NULL);
+			std::string result = FileUtils::FindVersioned(path, this->requirement, this->version);
+			if (!result.empty())
+			{
+				this->path = result;
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	std::string KComponent::GetURL(Application* app)
 	{
 		std::string url = app->GetQueryString();
@@ -179,6 +213,28 @@ namespace kroll
 		url.append("&uuid=");
 		url.append(this->typeGuid);
 		return url;
+	}
+
+	std::vector<KComponent*> Application::ResolveAllComponents(std::vector<std::string>& runtimeHomes)
+	{
+		std::vector<KComponent*> unresolved;
+
+		if (this->runtime != NULL && !this->runtime->Resolve(this, runtimeHomes))
+		{
+			unresolved.push_back(this->runtime);
+		}
+
+		// Find all regular modules
+		std::vector<KComponent*>::iterator i = this->modules.begin();
+		while (i != this->modules.end())
+		{
+			KComponent* m = *i++;
+			printf("resolving: %s\n", m->name.c_str());
+			if (!m->Resolve(this, runtimeHomes))
+				unresolved.push_back(m);
+		}
+
+		return unresolved;
 	}
 
 	bool Application::IsInstalled()
