@@ -99,61 +99,52 @@ namespace kroll
 	void APIBinding::_LogTrace(const ValueList& args, SharedValue result)
 	{
 		SharedValue arg1 = args.at(0);
-		std::string msg = arg1->ToString();
-		this->Log(Logger::LTRACE, msg);
+		this->Log(Logger::LTRACE, arg1);
 	}
 	void APIBinding::_LogDebug(const ValueList& args, SharedValue result)
 	{
 		SharedValue arg1 = args.at(0);
-		std::string msg = arg1->ToString();
-		this->Log(Logger::LDEBUG, msg);
+		this->Log(Logger::LDEBUG, arg1);
 	}
 	void APIBinding::_LogInfo(const ValueList& args, SharedValue result)
 	{
 		SharedValue arg1 = args.at(0);
-		std::string msg = arg1->ToString();
-		this->Log(Logger::LINFO, msg);
+		this->Log(Logger::LINFO, arg1);
 	}
 	void APIBinding::_LogNotice(const ValueList& args, SharedValue result)
 	{
 		SharedValue arg1 = args.at(0);
-		std::string msg = arg1->ToString();
-		this->Log(Logger::LNOTICE, msg);
+		this->Log(Logger::LNOTICE, arg1);
 	}
 	void APIBinding::_LogWarn(const ValueList& args, SharedValue result)
 	{
 		SharedValue arg1 = args.at(0);
-		std::string msg = arg1->ToString();
-		this->Log(Logger::LWARN, msg);
+		this->Log(Logger::LWARN, arg1);
 	}
 	void APIBinding::_LogError(const ValueList& args, SharedValue result)
 	{
 		SharedValue arg1 = args.at(0);
-		std::string msg = arg1->ToString();
-		this->Log(Logger::LERROR, msg);
+		this->Log(Logger::LERROR, arg1);
 	}
 	void APIBinding::_LogCritical(const ValueList& args, SharedValue result)
 	{
 		SharedValue arg1 = args.at(0);
-		std::string msg = arg1->ToString();
-		this->Log(Logger::LCRITICAL, msg);
+		this->Log(Logger::LCRITICAL, arg1);
 	}
 	void APIBinding::_LogFatal(const ValueList& args, SharedValue result)
 	{
 		SharedValue arg1 = args.at(0);
-		std::string msg = arg1->ToString();
-		this->Log(Logger::LFATAL, msg);
+		this->Log(Logger::LFATAL, arg1);
 	}
 
 	void APIBinding::_Log(const ValueList& args, SharedValue result)
 	{
-		if (args.size() ==1)
+		if (args.size() == 1)
 		{
 			SharedValue v = args.at(0);
-			SharedString msg = v->DisplayString();
-			this->Log(Logger::LINFO, *msg);
+			this->Log(Logger::LINFO, v);
 		}
-		else if (args.size()==2)
+		else if (args.size() == 2)
 		{
 			int severity = Logger::LINFO;
 
@@ -190,8 +181,7 @@ namespace kroll
 				severity = arg1->ToInt();
 			}
 			SharedValue v = args.at(1);
-			SharedString msg = v->DisplayString();
-			this->Log(severity, *msg);
+			this->Log(severity, v);
 		}
 	}
 
@@ -217,11 +207,20 @@ namespace kroll
 	}
 
 	//---------------- IMPLEMENTATION METHODS
-
-	void APIBinding::Log(int severity, std::string& message)
+	void APIBinding::Log(int severity, SharedValue value)
 	{
 		Logger& l = Logger::Get("API");
-		l.Log((Logger::Level) severity, message);
+
+		if (value->IsString())
+		{
+			std::string message = value->ToString();
+			l.Log((Logger::Level) severity, message);
+		}
+		else
+		{
+			SharedString message = value->DisplayString();
+			l.Log((Logger::Level) severity, *message);
+		}
 	}
 
 	int APIBinding::Register(std::string& event, SharedKMethod callback)

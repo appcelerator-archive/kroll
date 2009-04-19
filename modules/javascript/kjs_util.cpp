@@ -24,6 +24,10 @@ namespace kroll
 	JSValueRef call_as_function_cb(JSContextRef, JSObjectRef, JSObjectRef, size_t, const JSValueRef[], JSValueRef*);
 	void finalize_cb(JSObjectRef);
 
+	void add_special_property_names(SharedValue, SharedStringList);
+	JSValueRef get_special_property(SharedValue, char*, JSContextRef);
+	JSValueRef to_string_cb(JSContextRef, JSObjectRef, JSObjectRef, size_t, const JSValueRef[], JSValueRef*);
+
 	SharedValue KJSUtil::ToKrollValue(
 		JSValueRef value,
 		JSContextRef ctx,
@@ -298,36 +302,6 @@ namespace kroll
 		delete value;
 	}
 
-	void get_property_names_cb(
-		JSContextRef js_context,
-		JSObjectRef js_object,
-		JSPropertyNameAccumulatorRef js_properties)
-	{
-		SharedValue* value = static_cast<SharedValue*>(JSObjectGetPrivate(js_object));
-		if (value == NULL)
-			return;
-
-		SharedKObject object = (*value)->ToObject();
-		SharedStringList props = object->GetPropertyNames();
-		bool found_length = false;
-		for (size_t i = 0; i < props->size(); i++)
-		{
-			SharedString pn = props->at(i);
-			JSStringRef name = JSStringCreateWithUTF8CString(pn->c_str());
-			JSPropertyNameAccumulatorAddName(js_properties, name);
-			JSStringRelease(name);
-			if (strcmp(pn->c_str(), "length") == 0)
-				found_length = true;
-		}
-
-		if (!found_length && (*value)->IsList())
-		{
-			JSStringRef name = JSStringCreateWithUTF8CString("length");
-			JSPropertyNameAccumulatorAddName(js_properties, name);
-			JSStringRelease(name);
-		}
-	}
-
 	bool has_property_cb(
 		JSContextRef js_context,
 		JSObjectRef js_object,
@@ -343,16 +317,13 @@ namespace kroll
 		free(name);
 
 		SharedStringList names = object->GetPropertyNames();
+		add_special_property_names(*value, names);
 		for (size_t i = 0; i < names->size(); i++)
 		{
 			if (str_name == *names->at(i)) {
 				return true;
 			}
 		}
-
-		// Fake the length property for lists
-		if ((*value)->IsList() && str_name == std::string("length"))
-			return true;
 
 		return false;
 	}
@@ -375,13 +346,10 @@ namespace kroll
 		{
 			SharedValue ti_val = object->Get(name);
 
-			// Fake the length property for lists
-			if ((*value)->IsList() &&
-				strcmp(name, "length") == 0 &&
-				ti_val->IsUndefined())
-				ti_val = Value::NewInt((*value)->ToList()->Size());
-
-			js_val = KJSUtil::ToJSValue(ti_val, js_context);
+			if (ti_val->IsUndefined())
+				js_val = get_special_property(*value, name, js_context);
+			else
+				js_val = KJSUtil::ToJSValue(ti_val, js_context);
 		}
 		catch (ValueException& exception)
 		{
@@ -489,6 +457,80 @@ namespace kroll
 
 		return js_val;
 	}
+
+	void add_special_property_names(SharedValue value, SharedStringList props)
+	{
+		bool foundLength, foundToString;
+		for (size_t i = 0; i < props->size(); i++)
+		{
+			SharedString pn = props->at(i);
+			if (strcmp(pn->c_str(), "length") == 0)
+				foundLength = true;
+			if (strcmp(pn->c_str(), "toString") == 0)
+				foundToString = true;
+		}
+
+		if (!foundLength && value->IsList())
+			props->push_back(new std::string("length"));
+		if (!foundToString)
+			props->push_back(new std::string("toString"));
+	}
+
+	JSValueRef get_special_property(SharedValue value, char* name, JSContextRef ctx)
+	{
+		if (value->IsList() && !strcmp(name, "length"))
+		{
+			SharedKList l = value->ToList();
+			return JSValueMakeNumber(ctx, l->Size());
+		}
+
+		if (!strcmp(name, "toString"))
+		{
+			JSStringRef s = JSStringCreateWithUTF8CString("toString");
+			return JSObjectMakeFunctionWithCallback(ctx, s, &to_string_cb);
+		}
+
+		return JSValueMakeUndefined(ctx);
+	}
+
+	JSValueRef to_string_cb(
+		JSContextRef js_context,
+		JSObjectRef js_function,
+		JSObjectRef js_this,
+		size_t num_args,
+		const JSValueRef args[],
+		JSValueRef* exception)
+	{
+		SharedValue* value = static_cast<SharedValue*>(JSObjectGetPrivate(js_this));
+		if (value == NULL)
+			return JSValueMakeUndefined(js_context);
+
+		SharedString ss = (*value)->DisplayString();
+		SharedValue dsv = Value::NewString(ss);
+		return KJSUtil::ToJSValue(dsv, js_context);
+	}
+
+	void get_property_names_cb(
+		JSContextRef js_context,
+		JSObjectRef js_object,
+		JSPropertyNameAccumulatorRef js_properties)
+	{
+		SharedValue* value = static_cast<SharedValue*>(JSObjectGetPrivate(js_object));
+		if (value == NULL)
+			return;
+
+		SharedKObject object = (*value)->ToObject();
+		SharedStringList props = object->GetPropertyNames();
+		add_special_property_names(*value, props);
+		for (size_t i = 0; i < props->size(); i++)
+		{
+			SharedString pn = props->at(i);
+			JSStringRef name = JSStringCreateWithUTF8CString(pn->c_str());
+			JSPropertyNameAccumulatorAddName(js_properties, name);
+			JSStringRelease(name);
+		}
+	}
+
 
 	std::map<JSObjectRef, JSGlobalContextRef> KJSUtil::contextMap;
 	void KJSUtil::RegisterGlobalContext(
@@ -623,29 +665,32 @@ namespace kroll
 	 */
 	JSValueRef KJSUtil::GetFunctionPrototype(JSContextRef jsContext, JSValueRef* exception) 
 	{
-	  JSObjectRef globalObject = JSContextGetGlobalObject(jsContext);
-	  JSStringRef fnPropName= JSStringCreateWithUTF8CString("Function");
-	  JSValueRef fnCtorValue = JSObjectGetProperty(jsContext, globalObject,
-	      fnPropName, exception);
-	  JSStringRelease(fnPropName);
-	  if (!fnCtorValue) {
-	    return JSValueMakeUndefined(jsContext);
-	  }
+		JSObjectRef globalObject = JSContextGetGlobalObject(jsContext);
+		JSStringRef fnPropName= JSStringCreateWithUTF8CString("Function");
+		JSValueRef fnCtorValue = JSObjectGetProperty(jsContext, globalObject,
+			fnPropName, exception);
+		JSStringRelease(fnPropName);
+		if (!fnCtorValue)
+		{
+			return JSValueMakeUndefined(jsContext);
+		}
 
-	  JSObjectRef fnCtorObject = JSValueToObject(jsContext, fnCtorValue, exception);
-	  if (!fnCtorObject) {
-	    return JSValueMakeUndefined(jsContext);
-	  }
+		JSObjectRef fnCtorObject = JSValueToObject(jsContext, fnCtorValue, exception);
+		if (!fnCtorObject)
+		{
+			return JSValueMakeUndefined(jsContext);
+		}
 
-	  JSStringRef protoPropName = JSStringCreateWithUTF8CString("prototype");
-	  JSValueRef fnPrototype = JSObjectGetProperty(jsContext, fnCtorObject,
-	      protoPropName, exception);
-	  JSStringRelease(protoPropName);
-	  if (!fnPrototype) {
-	    return JSValueMakeUndefined(jsContext);
-	  }
+		JSStringRef protoPropName = JSStringCreateWithUTF8CString("prototype");
+		JSValueRef fnPrototype = JSObjectGetProperty(jsContext, fnCtorObject,
+			protoPropName, exception);
+		JSStringRelease(protoPropName);
+		if (!fnPrototype)
+		{
+			return JSValueMakeUndefined(jsContext);
+		}
 
-	  return fnPrototype;
+	return fnPrototype;
 	}	
 	/*
 	 * The following takes the prototype from the Array constructor, this allows
@@ -655,31 +700,31 @@ namespace kroll
 	 */
 	JSValueRef KJSUtil::GetArrayPrototype(JSContextRef jsContext, JSValueRef* exception) 
 	{
-	  JSObjectRef globalObject = JSContextGetGlobalObject(jsContext);
-	  JSStringRef fnPropName= JSStringCreateWithUTF8CString("Array");
-	  JSValueRef fnCtorValue = JSObjectGetProperty(jsContext, globalObject,
-	      fnPropName, exception);
-	  JSStringRelease(fnPropName);
-	  if (!fnCtorValue) 
-	  {
-	    return JSValueMakeUndefined(jsContext);
-	  }
+		JSObjectRef globalObject = JSContextGetGlobalObject(jsContext);
+		JSStringRef fnPropName= JSStringCreateWithUTF8CString("Array");
+		JSValueRef fnCtorValue = JSObjectGetProperty(jsContext, globalObject,
+			fnPropName, exception);
+		JSStringRelease(fnPropName);
+		if (!fnCtorValue) 
+		{
+			return JSValueMakeUndefined(jsContext);
+		}
 
-	  JSObjectRef fnCtorObject = JSValueToObject(jsContext, fnCtorValue, exception);
-	  if (!fnCtorObject) 
-	  {
-	    return JSValueMakeUndefined(jsContext);
-	  }
+		JSObjectRef fnCtorObject = JSValueToObject(jsContext, fnCtorValue, exception);
+		if (!fnCtorObject)
+		{
+			return JSValueMakeUndefined(jsContext);
+		}
 
-	  JSStringRef protoPropName = JSStringCreateWithUTF8CString("prototype");
-	  JSValueRef fnPrototype = JSObjectGetProperty(jsContext, fnCtorObject,
-	      protoPropName, exception);
-	  JSStringRelease(protoPropName);
-	  if (!fnPrototype) 
-	  {
-	    return JSValueMakeUndefined(jsContext);
-	  }
+		JSStringRef protoPropName = JSStringCreateWithUTF8CString("prototype");
+		JSValueRef fnPrototype = JSObjectGetProperty(jsContext, fnCtorObject,
+			protoPropName, exception);
+		JSStringRelease(protoPropName);
+		if (!fnPrototype) 
+		{
+			return JSValueMakeUndefined(jsContext);
+		}
 
-	  return fnPrototype;
-	}	
+		return fnPrototype;
+	}
 }

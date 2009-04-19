@@ -28,7 +28,7 @@ namespace kroll
 		APIBinding(SharedKObject global);
 		virtual ~APIBinding();
 
-		void Log(int severity, std::string& message);
+		void Log(int severity, SharedValue);
 		int Register(std::string& event, SharedKMethod callback);
 		void Unregister(int ref);
 		void Fire(const char* event, SharedValue data);

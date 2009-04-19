@@ -44,6 +44,11 @@ namespace kroll {
 		if (this->arg != Qnil)
 			rb_ary_push(ruby_args, this->arg);
 
+		// A negative arity means that this method can take a
+		// variable number of arguments, so pass all args
+		if (arity < 0)
+			arity = args.size();
+
 		for (size_t i = 0; i < args.size() && (int) i < arity; i++) {
 			rb_ary_push(ruby_args, RubyUtils::ToRubyValue(args[i]));
 		}

@@ -219,6 +219,7 @@ namespace kroll
 		bool runUILoop;
 		bool profile;
 		std::string profilePath;
+		std::string logpath;
 		Poco::FileOutputStream *profileStream;
 		
 
