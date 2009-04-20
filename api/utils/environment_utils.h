@@ -32,7 +32,7 @@ namespace kroll
 		/*
 		 * Unset an environment variable given a name
 		 */
-		void Unset(std::string name)
+		static void Unset(std::string name);
 	};
 }
 #endif
