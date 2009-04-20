@@ -28,6 +28,11 @@ namespace kroll
 		 * Set an environment variable given a value and a name
 		 */
 		static void Set(std::string name, std::string value);
+
+		/*
+		 * Unset an environment variable given a name
+		 */
+		void Unset(std::string name)
 	};
 }
 #endif
