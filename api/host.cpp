@@ -780,6 +780,11 @@ namespace kroll
 			return 1;
 		}
 
+#ifdef OS_OSX
+		NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+		int iteration = 0;
+#endif
+
 		// allow start to immediately end
 		this->running = this->Start();
 		if (this->runUILoop) 
@@ -791,6 +796,16 @@ namespace kroll
 				{
 					break;
 				}
+#ifdef OS_OSX
+				// this might be a temporary hack that can come out
+				// but we're going to attempt to drain the autorelease
+				// pool on every so many iterations
+				if (iteration++ > 10)
+				{
+					[pool drain];
+					iteration = 0;
+				}
+#endif
 			}
 		}
 
@@ -806,6 +821,10 @@ namespace kroll
 
 		// stop the profiling
 		StopProfiling();
+
+#ifdef OS_OSX
+		[pool release];
+#endif
 
 		PRINTD("EXITING WITH EXITCODE = " << exitCode);
 		return this->exitCode;
