@@ -81,13 +81,11 @@ bool RunInstaller(vector<KComponent*> missing)
 		ShowError("Missing installer and application has additional modules that are needed.");
 		return false;
 	}
-	std::string runtimeBase = kroll::FileUtils::GetDefaultRuntimeHomeDirectory();
-
 	vector<string> args;
 	args.push_back("-appPath");
 	args.push_back(applicationHome);
 	args.push_back("-runtimeHome");
-	args.push_back(runtimeBase);
+	args.push_back(app->runtimeHomePath);
 	if (!updateFile.empty())
 	{
 		args.push_back("-updateFile");
@@ -261,8 +259,7 @@ int Bootstrap()
 	value = [NSString stringWithUTF8String:moduleListStr.c_str()];
 	[environment setObject:value forKey:@"KR_MODULES"];
 	printf("modules: %s\n", moduleListStr.c_str());
-	std::string runtimeHomeDir = FileUtils::GetDefaultRuntimeHomeDirectory();
-	value = [NSString stringWithUTF8String:runtimeHomeDir.c_str()];
+	value = [NSString stringWithUTF8String:app->runtimeHomePath.c_str()];
 	[environment setObject:value forKey:@"KR_RUNTIME_HOME"];
 	value = [NSString stringWithUTF8String:app->guid.c_str()];
 	[environment setObject:value forKey:@"KR_APP_GUID"];

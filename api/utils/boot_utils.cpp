@@ -51,6 +51,10 @@ namespace kroll
 		Application* application = new Application();
 		application->path = appPath;
 
+		// For now this application uses the default runtime home, but during module
+		// resolution, it will use whatever runtime home it finds the runtime in.
+		application->runtimeHomePath = FileUtils::GetDefaultRuntimeHomeDirectory();
+
 		while (!file.eof())
 		{
 			std::string line;
@@ -192,10 +196,18 @@ namespace kroll
 				path = FileUtils::Join(rth.c_str(), "modules", OS_NAME, this->name.c_str(), NULL);
 			else
 				path = FileUtils::Join(rth.c_str(), "runtime", OS_NAME, NULL);
+
 			std::string result = FileUtils::FindVersioned(path, this->requirement, this->version);
 			if (!result.empty())
 			{
 				this->path = result;
+
+				// Mark this path as the application's real runtime home
+				if (this->typeGuid == RUNTIME_UUID)
+				{
+					app->runtimeHomePath = rth;
+				}
+
 				return true;
 			}
 		}
