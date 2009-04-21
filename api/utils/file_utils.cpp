@@ -303,6 +303,10 @@ namespace kroll
 #endif
 		return false;
 	}
+	bool FileUtils::CreateDirectory2(std::string &dir)
+	{
+		return FileUtils::CreateDirectory(dir);
+	}
 	bool FileUtils::DeleteDirectory(std::string &dir)
 	{
 #ifdef OS_OSX

@@ -118,6 +118,9 @@ namespace kroll
 		 *
 		 */
 		static bool CreateDirectory(std::string &dir);
+
+		// TODO - remove this - had to add it to get modules/ti.Database/databases.cpp to link successfully
+		static bool CreateDirectory2(std::string &dir);
 #if defined(OS_WIN32)
 		// TODO: implement this for other platforms
 		static void CopyRecursive(std::string &dir, std::string &dest);
