@@ -156,7 +156,11 @@ namespace kroll
 		path[size]='\0';
 		std::string dir = path;
 #elif defined(OS_OSX)
-		std::string dir = GetDefaultRuntimeHomeDirectory();
+		NSString* nsPath = [
+			NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, NO)
+			objectAtIndex: 0];
+		nsPath = [nsPath stringByAppendingPathComponent: [NSString stringWithUTF8String: PRODUCT_NAME]];
+		std::string dir = [[nsPath stringByExpandingTildeInPath] UTF8String];
 #elif defined(OS_LINUX)
 		std::string dir;
 		if (getenv("HOME") != NULL)
