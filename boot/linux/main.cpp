@@ -100,6 +100,9 @@ class Boot
 		// We can't use FileUtils::GetSystemRuntimeHomeDirectory() because it only locates
 		// the first one of these directories that exists
 
+		string pname = PRODUCT_NAME;
+		std::transform(pname.begin(), pname.end(), pname.begin(), tolower);
+
 		this->AddInstallLocation(FileUtils::GetUserRuntimeHomeDirectory());
 		this->AddInstallLocation(std::string("/opt") + pname);
 		this->AddInstallLocation(std::string("/usr/local/lib") + pname);

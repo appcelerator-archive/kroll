@@ -15,27 +15,30 @@
 #include <libgen.h>
 
 using kroll::FileUtils;
+using std::string;
 
 std::string FileUtils::GetUserRuntimeHomeDirectory()
 {
-	std::string pname = PRODUCT_NAME;
+	string pname = PRODUCT_NAME;
 	std::transform(pname.begin(), pname.end(), pname.begin(), tolower);
 	pname = std::string(".") + pname;
 
 	passwd *user = getpwuid(getuid());
-	return Join(user->pw_dir, pname, NULL)
+	return Join(user->pw_dir, pname.c_str(), NULL);
 }
 
 std::string FileUtils::GetSystemRuntimeHomeDirectory()
 {
 	// Try to be a little smart about where the system runtime home
 	// is. If we can't find it, just give up and use the /opt location
-	string path = Join("/opt", PRODUCT_NAME, NULL);
-	if (!::IsDirectory(path))
-		path = Join("/usr/local/lib", PRODUCT_NAME, NULL);
-	if (!::IsDirectory(path))
-		path = Join("/usr/lib", PRODUCT_NAME, NULL);
-	if (!::IsDirectory(path))
-		path = Join("/opt", PRODUCT_NAME, NULL);
+	string pname = PRODUCT_NAME;
+	std::transform(pname.begin(), pname.end(), pname.begin(), tolower);
+	string path = Join("/opt", pname.c_str(), NULL);
+	if (!IsDirectory(path))
+		path = Join("/usr/local/lib", pname.c_str(), NULL);
+	if (!IsDirectory(path))
+		path = Join("/usr/lib", pname.c_str(), NULL);
+	if (!IsDirectory(path))
+		path = Join("/opt", pname.c_str(), NULL);
 	return path;
 }
