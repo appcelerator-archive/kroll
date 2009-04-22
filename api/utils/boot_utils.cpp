@@ -51,9 +51,9 @@ namespace kroll
 		Application* application = new Application();
 		application->path = appPath;
 
-		// For now this application uses the default runtime home, but during module
+		// For now this application uses the user runtime home, but during module
 		// resolution, it will use whatever runtime home it finds the runtime in.
-		application->runtimeHomePath = FileUtils::GetDefaultRuntimeHomeDirectory();
+		application->runtimeHomePath = FileUtils::GetUserRuntimeHomeDirectory();
 
 		while (!file.eof())
 		{
