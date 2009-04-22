@@ -81,13 +81,9 @@ bool RunInstaller(vector<KComponent*> missing)
 		ShowError("Missing installer and application has additional modules that are needed.");
 		return false;
 	}
-	std::string runtimeBase = kroll::FileUtils::GetDefaultRuntimeHomeDirectory();
-
 	vector<string> args;
 	args.push_back("-appPath");
 	args.push_back(applicationHome);
-	args.push_back("-runtimeHome");
-	args.push_back(runtimeBase);
 	if (!updateFile.empty())
 	{
 		args.push_back("-updateFile");
@@ -115,9 +111,9 @@ vector<KComponent*> FindModules()
 {
 	vector<string> runtimeHomes;
 
-	// Add the default runtime home for now, later this
-	// might be a list of possible locations, like on Linux
-	runtimeHomes.push_back(FileUtils::GetDefaultRuntimeHomeDirectory());
+	// Search user runtime home first and the the system runtime home
+	runtimeHomes.push_back(FileUtils::GetUserRuntimeHomeDirectory());
+	runtimeHomes.push_back(FileUtils::GetSystemRuntimeHomeDirectory());
 
 	vector<KComponent*> unresolved = app->ResolveAllComponents(runtimeHomes);
 	if (unresolved.size() > 0)
@@ -261,8 +257,7 @@ int Bootstrap()
 	value = [NSString stringWithUTF8String:moduleListStr.c_str()];
 	[environment setObject:value forKey:@"KR_MODULES"];
 	printf("modules: %s\n", moduleListStr.c_str());
-	std::string runtimeHomeDir = FileUtils::GetDefaultRuntimeHomeDirectory();
-	value = [NSString stringWithUTF8String:runtimeHomeDir.c_str()];
+	value = [NSString stringWithUTF8String:app->runtimeHomePath.c_str()];
 	[environment setObject:value forKey:@"KR_RUNTIME_HOME"];
 	value = [NSString stringWithUTF8String:app->guid.c_str()];
 	[environment setObject:value forKey:@"KR_APP_GUID"];

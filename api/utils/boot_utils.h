@@ -81,6 +81,7 @@ namespace kroll
 		std::string image;
 		std::vector<KComponent*> modules;
 		KComponent* runtime;
+		std::string runtimeHomePath;
 		std::string queryString;
 	};
 

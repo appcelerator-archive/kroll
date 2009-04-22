@@ -148,30 +148,10 @@ namespace kroll
 		return str.substr(0,pos);
 #endif
 	}
+
 	std::string FileUtils::GetApplicationDataDirectory(std::string &appid)
 	{
-#ifdef OS_WIN32
-		char path[MAX_PATH];
-		int size = GetEnvironmentVariable("KR_RUNTIME_HOME",(char*)path,MAX_PATH);
-		path[size]='\0';
-		std::string dir = path;
-#elif defined(OS_OSX)
-		std::string dir = GetDefaultRuntimeHomeDirectory();
-#elif defined(OS_LINUX)
-		std::string dir;
-		if (getenv("HOME") != NULL)
-		{
-			dir = getenv("HOME");
-		}
-		else
-		{
-			dir = "/home";
-			dir.append(FileUtils::GetUsername());
-		}
-		dir.append(KR_PATH_SEP);
-		dir.append(".titanium");
-
-#endif
+		std::string dir = GetUserRuntimeHomeDirectory();
 		dir.append(KR_PATH_SEP);
 		dir.append("appdata");
 		if (!IsDirectory(dir))
@@ -303,6 +283,10 @@ namespace kroll
 #endif
 		return false;
 	}
+	bool FileUtils::CreateDirectory2(std::string &dir)
+	{
+		return FileUtils::CreateDirectory(dir);
+	}
 	bool FileUtils::DeleteDirectory(std::string &dir)
 	{
 #ifdef OS_OSX
@@ -422,51 +406,9 @@ namespace kroll
 
 	bool FileUtils::IsRuntimeInstalled()
 	{
-		std::string dir = GetDefaultRuntimeHomeDirectory();
-		return IsDirectory(dir);
-	}
-
-	std::string FileUtils::GetDefaultRuntimeHomeDirectory()
-	{
-#ifdef OS_WIN32
-		char path[MAX_PATH];
-		std::string dir;
-		if (SHGetSpecialFolderPath(NULL,path,CSIDL_COMMON_APPDATA,FALSE))
-		{
-			dir.append(path);
-			dir.append("\\");
-			dir.append(PRODUCT_NAME);
-		}
-		else if (SHGetSpecialFolderPath(NULL,path,CSIDL_APPDATA,FALSE))
-		{
-			dir.append(path);
-			dir.append("\\");
-			dir.append(PRODUCT_NAME);
-		}
-		return dir;
-#elif OS_OSX
-		// check to see if we already have a local one
-		NSString *localDir = [[NSString stringWithFormat:@"~/Library/Application Support/%s",PRODUCT_NAME] stringByExpandingTildeInPath];
-		std::string ls = std::string([localDir UTF8String]);
-		if (IsDirectory(ls))
-		{
-			return std::string([localDir UTF8String]);
-		}
-
-		// first check to see if we can install in system directory by checking
-		// if we can write to it
-		NSString *systemPath = @"/Library/Application Support";
-		if ([[NSFileManager defaultManager] isWritableFileAtPath:systemPath])
-		{
-			return std::string([[systemPath stringByAppendingString:@"/"PRODUCT_NAME] UTF8String]);
-		}
-		// if not, we fall back to installing into user directory
-		return std::string([localDir UTF8String]);
-#elif OS_LINUX
-		passwd *user = getpwuid(getuid());
-		std::string dir = std::string(user->pw_dir) + "/" + PRODUCT_NAME + "App";
-		return dir;
-#endif
+		std::string systemRTH = GetSystemRuntimeHomeDirectory();
+		std::string userRTH = GetUserRuntimeHomeDirectory();
+		return IsDirectory(systemRTH) || IsDirectory(userRTH);
 	}
 
 	void FileUtils::ExtractVersion(std::string& spec, int *op, std::string &version)
@@ -864,7 +806,7 @@ namespace kroll
 	}
 	std::string FileUtils::FindRuntime(int op, std::string& version)
 	{
-		std::string runtime = GetDefaultRuntimeHomeDirectory();
+		std::string runtime = GetSystemRuntimeHomeDirectory();
 		std::string path(runtime);
 #ifdef OS_WIN32
 		path += "\\runtime\\win32";
@@ -877,7 +819,7 @@ namespace kroll
 	}
 	std::string FileUtils::FindModule(std::string& name, int op, std::string& version)
 	{
-		std::string runtime = GetDefaultRuntimeHomeDirectory();
+		std::string runtime = GetSystemRuntimeHomeDirectory();
 		std::string path(runtime);
 #ifdef OS_WIN32
 		path += "\\modules\\win32\\";

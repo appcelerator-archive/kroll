@@ -118,6 +118,9 @@ namespace kroll
 		 *
 		 */
 		static bool CreateDirectory(std::string &dir);
+
+		// TODO - remove this - had to add it to get modules/ti.Database/databases.cpp to link successfully
+		static bool CreateDirectory2(std::string &dir);
 #if defined(OS_WIN32)
 		// TODO: implement this for other platforms
 		static void CopyRecursive(std::string &dir, std::string &dest);
@@ -195,12 +198,18 @@ namespace kroll
 		static std::string FindModule(std::string& name, int op, std::string& version);
 
 		/**
-		 * Get the default runtime home directory. For Linux, this just
-		 * gets the old-style runtime home directory and, in general, should
-		 * not be used. Instead either read the value of KR_RUNTIME_HOME or
-		 * Host::GetRuntimeHomePath for the runtime that is currently in use.
+		 * Get the system-wide runtime home directory. This is just a
+		 * default location --  to get the  current runtime home directory
+		 * read the value of KR_RUNTIME_HOME or Host::GetRuntimeHomePath instead.
 		 */
-		static std::string GetDefaultRuntimeHomeDirectory();
+		static std::string GetSystemRuntimeHomeDirectory();
+
+		/**
+		 * Get the user-specific runtime home directory. This is just a
+		 * default location --  to get the  current runtime home directory
+		 * read the value of KR_RUNTIME_HOME or Host::GetRuntimeHomePath instead.
+		 */
+		static std::string GetUserRuntimeHomeDirectory();
 
 		/**
 		 *
