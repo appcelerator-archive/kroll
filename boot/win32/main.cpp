@@ -3,6 +3,7 @@
  * see LICENSE in the root folder for details on the license.
  * Copyright (c) 2008-2009 Appcelerator, Inc. All Rights Reserved.
  */
+
 #include <iostream>
 #include <sstream>
 #include <cstring>
@@ -10,7 +11,6 @@
 #include <cstdlib>
 #include "stdlib.h"
 #include <process.h>
-
 #include <utils.h>
 
 // ensure that Kroll API is never included to create
@@ -19,6 +19,10 @@
 #error You should not have included the kroll api!
 #endif
 
+using kroll::Application;
+using kroll::KComponent;
+using std::string;
+using std::vector;
 using namespace kroll;
 
 //
@@ -45,465 +49,324 @@ using namespace kroll;
   #define BOOT_HOME_FLAG STRING(_BOOT_HOME_FLAG)
 #endif
 
-#ifndef BOOT_UPDATESITE_ENVNAME
-  #define BOOT_UPDATESITE_ENVNAME STRING(_BOOT_UPDATESITE_ENVNAME)
-#endif
-
-
-//
-// these UUIDs should never change and uniquely identify a package type
-// these UUIDs are also used in installation/net_installer/win32/Form.cs - update as needed
-//
-#define DISTRIBUTION_URL "http://download.titaniumapp.com"
-#define DISTRIBUTION_UUID "7F7FA377-E695-4280-9F1F-96126F3D2C2A"
-#define RUNTIME_UUID "A2AC5CB5-8C52-456C-9525-601A5B0725DA"
-#define MODULE_UUID "1ACE5D3A-2B52-43FB-A136-007BD166CFD0"
-
-#define OS_NAME "win32"
-
 #ifndef MAX_PATH
 #define MAX_PATH 512
 #endif
 
-#define KR_FATAL_ERROR(msg) \
-{ \
-	std::cerr << "Error: " << msg << std::endl; \
-	MessageBox(NULL,msg,"Application Error",MB_OK|MB_ICONERROR|MB_SYSTEMMODAL); \
+Application* app;
+string applicationHome;
+string updateFile;
+
+// If this is an application install -- versus an update
+// or just missing modules, record where it installed to.
+string appInstallPath;
+
+
+int argc = 0;
+char **argv = NULL;
+
+inline void ShowError(string msg, bool fatal=false)
+{
+	std::cerr << "Error: " << msg << std::endl;
+	MessageBox(NULL, msg.c_str(), "Application Error", MB_OK|MB_ICONERROR|MB_SYSTEMMODAL);
+	if (fatal)
+		exit(1);
 }
 
-std::string GetExecutablePath()
+bool RunInstaller(vector<KComponent*> missing)
+{
+	string exec = kroll::FileUtils::Join(app->path.c_str(), "installer", "Installer.exe", NULL);
+	if (!kroll::FileUtils::IsFile(exec))
+	{
+		ShowError("Missing installer and application has additional modules that are needed.");
+		return false;
+	}
+
+	vector<string> args;
+	args.push_back("-appPath");
+	args.push_back(applicationHome);
+	args.push_back("-runtimeHome");
+	args.push_back(app->runtimeHomePath);
+	if (!updateFile.empty())
+	{
+		args.push_back("-updateFile");
+		args.push_back(updateFile);
+	}
+
+	std::vector<KComponent*>::iterator mi = missing.begin();
+	while (mi != missing.end())
+	{
+		KComponent* mod = *mi++;
+		std::string path =
+			BootUtils::FindBundledModuleZip(mod->name, mod->version, app->path);
+		if (path.empty())
+		{
+			path = mod->GetURL(app);
+		}
+		args.push_back(path);
+	}
+
+	// A little bit of ugliness goes a long way:
+	// Use ShellExecuteEx here with the undocumented runas verb
+	// so that we can execute the installer executable and have it
+	// properly do the UAC thing. Why isn't this in the API?
+	string paramString = "";
+	for (size_t i = 0; i < args.size(); i++)
+	{
+		paramString.append(" \"");
+		paramString.append(args.at(i));
+		paramString.append("\"");
+	}
+
+	SHELLEXECUTEINFO ShExecInfo = {0};
+	ShExecInfo.cbSize = sizeof(SHELLEXECUTEINFO);
+	ShExecInfo.fMask = SEE_MASK_NOCLOSEPROCESS | SEE_MASK_FLAG_DDEWAIT;
+	ShExecInfo.hwnd = NULL;
+	ShExecInfo.lpVerb = "runas";
+	ShExecInfo.lpFile = exec.c_str();
+	ShExecInfo.lpParameters = paramString.c_str();
+	ShExecInfo.lpDirectory = NULL;
+	ShExecInfo.nShow = SW_SHOW;
+	ShExecInfo.hInstApp = NULL;	
+	ShellExecuteEx(&ShExecInfo);
+	WaitForSingleObject(ShExecInfo.hProcess, INFINITE);
+
+	// Ugh. Now we need to figure out where the app installer installed
+	// to. We would normally use stdout, but we had to execute with
+	// an expensive call to ShellExecuteEx, so we're just going to read
+	// the information from a file.
+	if (!app->IsInstalled())
+	{
+		string fpath = FileUtils::Join(app->path.c_str(), ".installedto", NULL);
+		printf("fpath: %s\n", fpath.c_str());
+
+		// The user probably cancelled -- don't show an error
+		if (!FileUtils::IsFile(fpath))
+			return false;
+
+		std::ifstream file(fpath.c_str());
+		if (file.bad() || file.fail() || file.eof())
+		{
+			ShowError("Application installed failed.");
+			return false; // Don't show further errors
+		}
+		std::getline(file, appInstallPath);
+		appInstallPath = FileUtils::Trim(appInstallPath);
+
+		Application* newapp = BootUtils::ReadManifest(appInstallPath);
+		if (newapp == NULL)
+		{
+			ShowError("Application installed failed.");
+			return false; // Don't show further errors
+		}
+		else
+		{
+			app = newapp;
+		}
+	}
+
+	return true;
+}
+
+std::string GetApplicationHomePath()
 {
 	char path[MAX_PATH];
-	int size = GetModuleFileName(GetModuleHandle(NULL),(char*)path,MAX_PATH);
+	int size = GetModuleFileName(GetModuleHandle(NULL), (char*)path, MAX_PATH);
 	if (size>0)
 	{
-		path[size]='\0';
+		path[size] = '\0';
 	}
-	return std::string(path);
+	return FileUtils::Dirname(string(path));
 }
-std::string GetDirectory(std::string &path)
+
+void FindUpdate()
 {
-	size_t i = path.rfind("\\");
-	if (i != std::string::npos)
+	string file = FileUtils::GetApplicationDataDirectory(app->id);
+	file = FileUtils::Join(file.c_str(), UPDATE_FILENAME, NULL);
+	if (FileUtils::IsFile(file))
 	{
-		return path.substr(0,i);
-	}
-	return ".";
-}
-std::string GetModuleName(std::string &path)
-{
-	size_t i = path.rfind("\\");
-	if (i != std::string::npos)
-	{
-		size_t x = path.rfind("\\",i-1);
-		if (x != std::string::npos)
+		updateFile = file;
+		Application* update = BootUtils::ReadManifestFile(updateFile, applicationHome);
+		if (update == NULL)
 		{
-			return path.substr(x+1,i-x-1);
-		}
-	}
-	return path;
-}
-std::string GetExecutableDir()
-{
-	std::string exec = GetExecutablePath();
-	return GetDirectory(exec);
-}
-std::string FindManifest()
-{
-	std::string currentDir = GetExecutableDir();
-	std::string manifest = FileUtils::Join(currentDir.c_str(),"manifest",NULL);
-	if (FileUtils::IsFile(manifest))
-	{
-		return manifest;
-	}
-	return std::string();
-}
-std::string FindModuleDir()
-{
-	std::string currentDir = GetExecutableDir();
-	std::string modules = FileUtils::Join(currentDir.c_str(),"modules",NULL);
-	if (FileUtils::IsDirectory(modules))
-	{
-		return modules;
-	}
-	std::string runtime = FileUtils::GetDefaultRuntimeHomeDirectory();
-	return FileUtils::Join(runtime.c_str(),"modules","win32",NULL);
-}
-bool RunAppInstallerIfNeeded(std::string &homedir,
-						 std::string &runtimePath,
-						 std::string &manifest,
-						 std::vector< std::pair< std::pair<std::string,std::string>,bool> > &modules,
-						 std::vector<std::string> &moduleDirs,
-						 std::string &appname,
-						 std::string &appid,
-						 std::string &runtimeOverride,
-						 std::string &guid)
-{
-	bool result = true;
-	std::vector< std::pair<std::string,std::string> > missing;
-	std::vector< std::pair< std::pair<std::string,std::string>, bool> >::iterator i = modules.begin();
-	while(i!=modules.end())
-	{
-		std::pair< std::pair<std::string,std::string>,bool> p = (*i++);
-		if (!p.second)
-		{
-			missing.push_back(p.first);
-#ifdef DEBUG
-			std::cout << "missing module: " << p.first.first << "/" << p.first.second <<std::endl;
-#endif
-		}
-	}
-	// this is where kroll should be installed
-	std::string runtimeBase = kroll::FileUtils::GetDefaultRuntimeHomeDirectory();
-
-	if (missing.size()>0)
-	{
-		// if we don't have an installer directory, just bail...
-		std::string installerDir = kroll::FileUtils::Join(homedir.c_str(),"installer",NULL);
-
-		std::string sourceTemp = kroll::FileUtils::GetTempDirectory();
-		std::vector<std::string> args;
-		// appname
-		args.push_back(appname);
-		// title
-		//I18N: localize these
-		args.push_back("Additional application files required");
-		// message
-		//I18N: localize these
-		args.push_back("There are additional application files that are required for this application. These will be downloaded from the network. Press OK to download these files now to complete the installation of the application.");
-		// extract directory
-		args.push_back(sourceTemp);
-		// runtime base
-		args.push_back(runtimeBase);
-		// in Win32 installer, we push the path to this process so he can
-		// invoke back on us to do the unzip
-		args.push_back(GetExecutablePath());
-
-		// make sure we create our runtime directory
-		kroll::FileUtils::CreateDirectory(runtimeBase);
-
-		char updatesite[MAX_PATH];
-		int size = GetEnvironmentVariable(BOOT_UPDATESITE_ENVNAME,(char*)&updatesite,MAX_PATH);
-		updatesite[size]='\0';
-		std::string url;
-		if (size == 0)
-		{
-			const char *us = DISTRIBUTION_URL;
-			if (strlen(us)>0)
-			{
-				url = std::string(us);
-			}
+			// We should probably just continue on. A corrupt manifest doesn't
+			// imply that the original application is corrupt.
+			ShowError("Application update error: found corrupt update file.");
 		}
 		else
 		{
-			url = std::string(updatesite);
+			// If we find an update file, we want to resolve the modules that
+			// requires and ignore our current manifest.
+			app = update;
 		}
-
-		if (!url.empty())
-		{
-			std::string mid = kroll::FileUtils::EncodeURIComponent(kroll::PlatformUtils::GetMachineId());
-			std::string osarch = kroll::FileUtils::EncodeURIComponent(kroll::FileUtils::GetOSArchitecture());
-			std::string os = kroll::FileUtils::EncodeURIComponent(OS_NAME);
-			std::string osver = kroll::FileUtils::EncodeURIComponent(kroll::FileUtils::GetOSVersion());
-			guid = kroll::FileUtils::EncodeURIComponent(guid);
-			char tiver[10];
-			sprintf(tiver, "%.1f", PRODUCT_VERSION);
-#ifdef OS_32
-			std::string ostype = "32bit";
-#else
-			std::string ostype = "64bit";
-#endif
-			std::string ti_ver = kroll::FileUtils::EncodeURIComponent(tiver);
-			std::string aid = kroll::FileUtils::EncodeURIComponent(appid);
-			std::string qs("?os="+os+"&osver="+osver+"&tiver="+ti_ver+"&mid="+mid+"&aid="+aid+"&guid="+guid+"&ostype="+ostype+"&osarch="+osarch);
-			std::vector< std::pair<std::string,std::string> >::iterator iter = missing.begin();
-			int missingCount = 0;
-			while (iter!=missing.end())
-			{
-				std::pair<std::string,std::string> p = (*iter++);
-				std::string uuid;
-				std::string name = p.first;
-				std::string version = p.second;
-				std::string path;
-				bool found = false;
-				if (p.first == "runtime")
-				{
-					// see if we have a private runtime installed and we can link to that
-					path = kroll::FileUtils::Join(installerDir.c_str(),"runtime",NULL);
-					if (kroll::FileUtils::IsDirectory(path))
-					{
-							found = true;
-							runtimePath = path;
-					}
-					else
-					{
-						uuid = RUNTIME_UUID;
-					}
-				}
-				else
-				{
-					// see if we have a private module installed and we can link to that
-					path = kroll::FileUtils::Join(installerDir.c_str(),"modules",p.first.c_str(),NULL);
-					if (kroll::FileUtils::IsDirectory(path))
-					{
-						found = true;
-					}
-					else
-					{
-						uuid = MODULE_UUID;
-					}
-				}
-				if (found)
-				{
-					moduleDirs.push_back(path);
-				}
-				else
-				{
-					// Attempt to find a bundled module/runtime for
-					// installation purposes -- if found use that path
-					// as the URL.
-					std::string u = BootUtils::FindBundledModuleZip(
-						name,
-						version,
-						homedir);
-					if (u.empty())
-					{
-						u = url;
-						u+=qs;
-						u+="&name=";
-						u+=kroll::FileUtils::EncodeURIComponent(name);
-						u+="&version=";
-						u+=kroll::FileUtils::EncodeURIComponent(version);
-						u+="&uuid=";
-						u+=kroll::FileUtils::EncodeURIComponent(uuid);
-					}
-
-					args.push_back(u);
-					missingCount++;
-				}
-			}
-
-			// we have to check again in case the private module/runtime was
-			// resolved inside the application folder
-			if (missingCount>0)
-			{
-				// run the installer app which will fetch remote modules/runtime for us
-				std::string exec = kroll::FileUtils::Join(installerDir.c_str(),"Installer.exe",NULL);
-
-				// paranoia check
-				if (kroll::FileUtils::IsFile(exec))
-				{
-					// ensure temp directory exists
-					kroll::FileUtils::CreateDirectory(sourceTemp);
-
-					// run and wait for it to exit..
-					kroll::FileUtils::RunAndWait(exec,args);
-
-					modules.clear();
-					moduleDirs.clear();
-					bool success = kroll::FileUtils::ReadManifest(manifest,runtimePath,modules,moduleDirs,appname,appid,runtimeOverride,guid);
-					if (!success || modules.size()!=moduleDirs.size())
-					{
-						// must have failed
-						// no need to error has installer probably was cancelled
-						result = false;
-					}
-				}
-				else
-				{
-					// something crazy happened
-					result = false;
-					KR_FATAL_ERROR("Missing installer and application has additional modules that are needed.");
-				}
-			}
-		}
-		else
-		{
-			result = false;
-			KR_FATAL_ERROR("Missing installer and application has additional modules that are needed. Not updatesite has been configured.");
-		}
-
-		// unlink the temporary directory
-		kroll::FileUtils::DeleteDirectory(sourceTemp);
 	}
-	return result;
-}
-typedef std::vector< std::pair< std::pair<std::string,std::string>,bool> > ModuleList;
-typedef int Executor(HINSTANCE hInstance, int argc, const char **argv);
-
-#define MAX_ENV_VARIABLE_SIZE 4096
-
-int getEnv(std::string key, std::string &result)
-{
-	char buf[MAX_ENV_VARIABLE_SIZE];
-	int size = GetEnvironmentVariable(key.c_str(),buf,MAX_ENV_VARIABLE_SIZE);
-	if (size == 0) return 0;
-	buf[size]='\0';
-	result = std::string(buf);
-	return size;
 }
 
-int PerformUnzip(char *from, char *to)
+vector<KComponent*> FindModules()
 {
-	std::string source(from);
-	std::string destination(to);
+	vector<string> runtimeHomes;
 
-	std::cout << "Performing Unzip " << source << " >>> " << destination << std::endl;
-	kroll::FileUtils::Unzip(source, destination);
+	// Add the default runtime home for now, later this
+	// might be a list of possible locations, like on Linux
+	runtimeHomes.push_back(FileUtils::GetDefaultRuntimeHomeDirectory());
 
+	vector<KComponent*> unresolved = app->ResolveAllComponents(runtimeHomes);
+	if (unresolved.size() > 0)
+	{
+		vector<KComponent*>::iterator dmi = unresolved.begin();
+		while (dmi != unresolved.end())
+		{
+			KComponent* m = *dmi++;
+			std::cout << "Unresolved: " << m->name << std::endl;
+		}
+		std::cout << "---" << std::endl;
+	}
+	return unresolved;
+}
+
+int Bootstrap()
+{
+	applicationHome = GetApplicationHomePath();
+	string manifestPath = FileUtils::Join(applicationHome.c_str(), MANIFEST_FILENAME, NULL);
+
+	if (!FileUtils::IsFile(manifestPath))
+	{
+		ShowError("Application packaging error: no manifest was found.");
+		return __LINE__;
+	}
+
+	app = BootUtils::ReadManifest(applicationHome);
+	if (app == NULL)
+	{
+		ShowError("Application packaging error: could not read manifest.");
+		return __LINE__;
+	}
+
+	// Look for a .update file in the app data directory
+	FindUpdate();
+
+	vector<KComponent*> missing = FindModules();
+	if (missing.size() > 0 || !app->IsInstalled() || !updateFile.empty())
+	{
+		if (!RunInstaller(missing))
+			return __LINE__;
+
+		missing = FindModules();
+		FindUpdate();
+	}
+
+	if (missing.size() > 0 || !app->IsInstalled() || !updateFile.empty())
+	{
+		// Don't throw an error here. The installer returned successfully
+		// above so this is likely a cancel or an installer error that (hopefully)
+		// has already been reported to the user.
+		return __LINE__;
+	}
+
+	// Construct a list of module pathnames for setting up library paths
+	std::ostringstream moduleList;
+	vector<KComponent*>::iterator i = app->modules.begin();
+	while (i != app->modules.end())
+	{
+		KComponent* module = *i++;
+		moduleList << module->path << ";";
+	}
+
+	// Registration-free COM requires that our manifest point to a DLL
+	// in a subdirectory of the executable path. Thus we need to copy the
+	// runtime WebKit.dll into the runtime directory of our application home.
+	std::string appRuntimePath = FileUtils::Join(app->path.c_str(), "runtime", NULL);
+	std::string appWebkitDll = FileUtils::Join(appRuntimePath.c_str(), "WebKit.dll", NULL);
+	if (!kroll::FileUtils::IsFile(appWebkitDll))
+	{
+		kroll::FileUtils::CopyRecursive(app->runtime->path, appRuntimePath);
+	}
+
+	// Add runtime path and all module paths to PATH
+	string path = appRuntimePath + ";";
+	path.append(app->runtime->path + ";");
+	path.append(moduleList.str() + ";");
+	if (EnvironmentUtils::Has("PATH"))
+	{
+		path.append(EnvironmentUtils::Get("PATH"));
+	}
+	EnvironmentUtils::Set("PATH", path);
+
+	EnvironmentUtils::Set("KR_FORK", "YES");
+	EnvironmentUtils::Set("KR_HOME", app->path);
+	EnvironmentUtils::Set("KR_RUNTIME", app->runtime->path);
+	EnvironmentUtils::Set("KR_MODULES", moduleList.str());
+	EnvironmentUtils::Set("KR_RUNTIME_HOME", app->runtimeHomePath);
+	EnvironmentUtils::Set("KR_APP_GUID", app->guid);
+	EnvironmentUtils::Set("KR_APP_ID", app->id);
+
+	// If this was a full app install, we need to execute the newly
+	// installed executable as opposed to this one -- which is in a
+	// temporary directory somewhere.
+	string executable = argv[0];
+	if (!appInstallPath.empty())
+	{
+		executable = FileUtils::Basename(executable);
+		executable = FileUtils::Join(appInstallPath.c_str(), executable.c_str(), NULL);
+	}
+
+	_execvp(executable.c_str(), argv);
 	return 0;
+}
+
+typedef int Executor(HINSTANCE, int, const char **);
+int StartHost()
+{
+	string runtimePath = EnvironmentUtils::Get("KR_RUNTIME");
+	std::string khost = FileUtils::Join(runtimePath.c_str(), "khost.dll", NULL);
+
+	// now we need to load the host and get 'er booted
+	if (!FileUtils::IsFile(khost))
+	{
+		ShowError(string("Couldn't find required file: ") + khost);
+		return __LINE__;
+	}
+
+	HMODULE dll = LoadLibrary(khost.c_str());
+	if (!dll)
+	{
+		char msg[MAX_PATH];
+		sprintf_s(msg,"Couldn't load file: %s, error: %d", khost.c_str(), GetLastError());
+		ShowError(msg);
+		return __LINE__;
+	}
+	Executor *executor = (Executor*)GetProcAddress(dll, "Execute");
+	if (!executor)
+	{
+		ShowError(string("Invalid entry point for") + khost);
+		return __LINE__;
+	}
+
+	return executor(::GetModuleHandle(NULL), argc,(const char**)argv);
 }
 
 #if defined(OS_WIN32) && !defined(WIN32_CONSOLE)
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR command_line, int)
 #else
-int main(int _argc, const char* _argv[])
+int main(int __argc, const char* __argv[])
 #endif
 {
-#if !defined(WIN32_CONSOLE)
-	int argc = __argc;
-	char **argv = __argv;
-#else
-	int argc = _argc;
-	char **argv = (char **)_argv;
-#endif
+	argc = __argc;
+	argv = (char**) __argv;
 
-	if (argc > 1 && strcmp(argv[1],"--tiunzip")==0)
+	int rc;
+	if (!EnvironmentUtils::Has("KR_FORK"))
 	{
-		if(argc != 4)
-		{
-			KR_FATAL_ERROR("Unable to perform unzip request.  3 arguments are expected --tiunzip <from> <to>");
-			return __LINE__;
-		}
-
-		return PerformUnzip(argv[2], argv[3]);
-	}
-
-	std::string buf;
-	int fork_flag = getEnv("KR_FORK",buf);
-	int rc = 0;
-
-	if (argc > 1 && strcmp(argv[1],"--wait-for-debugger")==0)
-	{
-		DebugBreak();
-	}
-
-	if (fork_flag == 0)
-	{
-		std::string manifest = FindManifest();
-		if (manifest.empty())
-		{
-			KR_FATAL_ERROR("Application packaging error. The application manifest was not found in the correct location.");
-			return __LINE__;
-		}
-		std::string homedir = GetExecutableDir();
-		ModuleList modules;
-		std::vector<std::string> moduleDirs;
-		std::string runtimePath;
-		std::string appname;
-		std::string appid;
-		std::string runtimeOverride = homedir;
-		std::string guid;
-		bool success = kroll::FileUtils::ReadManifest(manifest,runtimePath,modules,moduleDirs,appname,appid,runtimeOverride,guid);
-		if (!success)
-		{
-			return __LINE__;
-		}
-		// run the app installer if any missing modules/runtime or
-		// version specs not met
-		if (!RunAppInstallerIfNeeded(homedir,runtimePath,manifest,modules,moduleDirs,appname,appid,runtimeOverride,guid))
-		{
-			return __LINE__;
-		}
-
-		std::string localRuntime = FileUtils::Join(homedir.c_str(),"runtime",NULL);
-		std::string runtimeBasedir = FileUtils::GetDefaultRuntimeHomeDirectory();
-		std::string localWebkitDll = FileUtils::Join(localRuntime.c_str(), "WebKit.dll", NULL);
-
-		if (!kroll::FileUtils::IsFile(localWebkitDll)) {
-			kroll::FileUtils::CopyRecursive(runtimePath, localRuntime);
-		}
-
-		std::string moduleLocalDir = FindModuleDir();
-		std::string moduleBasedir = FileUtils::Join(runtimeBasedir.c_str(),"modules","win32",NULL);
-		std::ostringstream moduleList;
-
-		// we now need to resolve and load each module and dependencies
-		std::vector<std::string>::iterator i = moduleDirs.begin();
-		while (i!=moduleDirs.end())
-		{
-			std::string moduleDir = (*i++);
-			std::string moduleName = GetModuleName(moduleDir);
-			std::string localModule = FileUtils::Join(homedir.c_str(),"modules",moduleName.c_str(),NULL);
-			moduleList << moduleDir << ";";
-		}
-
-		std::string dypath = localRuntime;
-		dypath+=";";
-		dypath+=runtimePath;
-		dypath+=";";
-		std::string path;
-		path+=dypath;
-		path+=";";
-		path += moduleList.str();
-		if (getEnv("PATH",buf) > 0)
-		{
-			path+=";";
-			path+=buf;
-		}
-
-		std::cout << "\n\n\n**** SETTING PATH = " << path << "\n\n\n";
-
-		SetEnvironmentVariable("KR_FORK","YES");
-		SetEnvironmentVariable("KR_HOME",homedir.c_str());
-		SetEnvironmentVariable("KR_RUNTIME",runtimePath.c_str());
-		SetEnvironmentVariable("KR_MODULES",moduleList.str().c_str());
-		SetEnvironmentVariable("KR_RUNTIME_HOME",runtimeBasedir.c_str());
-		SetEnvironmentVariable("PATH",path.c_str());
-		SetEnvironmentVariable("KR_APP_GUID",guid.c_str());
-		SetEnvironmentVariable("KR_APP_ID",appid.c_str());
-
-		_execvp(argv[0],argv);
+		rc = Bootstrap();
 	}
 	else
 	{
-		SetEnvironmentVariable("KR_FORK",NULL);
-		getEnv("KR_RUNTIME",buf);
-		std::string runtimePath = buf;
-
-		// now we need to load the host and get 'er booted
-		std::string khost = FileUtils::Join(runtimePath.c_str(),"khost.dll",NULL);
-
-		if (!FileUtils::IsFile(khost))
-		{
-			char msg[MAX_PATH];
-			sprintf_s(msg,"Couldn't find required file: %s",khost.c_str());
-			KR_FATAL_ERROR(msg);
-			return __LINE__;
-		}
-
-		HMODULE dll = LoadLibrary(khost.c_str());
-		if (!dll)
-		{
-			char msg[MAX_PATH];
-			sprintf_s(msg,"Couldn't load file: %s, error: %d",khost.c_str(),GetLastError());
-			KR_FATAL_ERROR(msg);
-			return __LINE__;
-		}
-		Executor *executor = (Executor*)GetProcAddress(dll, "Execute");
-		if (!executor)
-		{
-			char msg[MAX_PATH];
-			sprintf_s(msg,"Invalid entry point for: %s",khost.c_str());
-			KR_FATAL_ERROR(msg);
-			return __LINE__;
-		}
-
-		rc = executor(::GetModuleHandle(NULL), argc,(const char**)argv);
+		EnvironmentUtils::Unset("KR_FORK");
+		rc = StartHost();
 	}
 
-#ifdef DEBUG
+	#ifdef DEBUG
 	std::cout << "return code: " << rc << std::endl;
-#endif
+	#endif
 	return rc;
 }

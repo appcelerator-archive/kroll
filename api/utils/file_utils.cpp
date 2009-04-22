@@ -284,6 +284,9 @@ namespace kroll
 	char ext[_MAX_EXT];
 	strncpy(path_buffer, path.c_str(), _MAX_PATH);
 	_splitpath(path_buffer, drive, dir, fname, ext );
+	
+	if (dir[strlen(dir)-1] == '\\')
+		dir[strlen(dir)-1] = '\0';
 	return std::string(dir);
 #else
 	char* pathCopy = strdup(path.c_str());
@@ -292,6 +295,16 @@ namespace kroll
 	return toReturn;
 #endif
 	}
+
+	std::string FileUtils::Basename(std::string path)
+	{
+		size_t pos = path.find_last_of(KR_PATH_SEP_CHAR);
+		if (pos == std::string::npos)
+			return path;
+		else
+			return path.substr(pos);
+	}
+
 	bool FileUtils::CreateDirectory(std::string &dir)
 	{
 #ifdef OS_OSX
@@ -363,33 +376,34 @@ namespace kroll
 	}
 
 
-	std::string FileUtils::Join(const char* path, ...)
+	std::string FileUtils::Join(const char* inpart, ...)
 	{
 		va_list ap;
-		va_start(ap, path);
+		va_start(ap, inpart);
 		std::vector<std::string> parts;
-		parts.push_back(std::string(path));
-		while (true)
+		while (inpart != NULL)
 		{
-			const char *i = va_arg(ap,const char*);
-			if (i == NULL)
-				break;
-			parts.push_back(Trim(i));
+			parts.push_back(inpart);
+			inpart = va_arg(ap,const char*);
 		}
 		va_end(ap);
+
 		std::string filepath;
 		std::vector<std::string>::iterator iter = parts.begin();
-		while (iter!=parts.end())
+		while (iter != parts.end())
 		{
-			std::string p = (*iter++);
-			filepath += p;
+			std::string part = *iter;
 
-			if (filepath.length() != 0
-				&& iter != parts.end()
-				&& filepath[filepath.length()] != KR_PATH_SEP[0])
-			{
+			part = Trim(part);
+			if (part[part.size()-1] == KR_PATH_SEP_CHAR)
+				part = part.erase(part.size() - 1, 1);
+			if (iter != parts.begin() && part[0] == KR_PATH_SEP_CHAR)
+				part = part.erase(0, 1);
+			filepath += part;
+
+			iter++;
+			if (filepath.length() != 0 && iter != parts.end())
 				filepath += KR_PATH_SEP;
-			}
 		}
 #ifdef OS_OSX
 		NSString *s = [[NSString stringWithCString:filepath.c_str()] stringByExpandingTildeInPath];
@@ -942,37 +956,33 @@ namespace kroll
 		int status = system(p.c_str());
 		return WEXITSTATUS(status);
 #elif defined(OS_WIN32)
-		std::ostringstream ostr;
-		ostr << path.c_str();
-		if (args.size() > 0 )
+		std::string cmdLine = "\"" + path + "\"";
+		for (int i = 0; i < args.size(); i++)
 		{
-			std::vector<std::string>::iterator i = args.begin();
-			int idx = 0;
-			while (i!=args.end())
-			{
-				// we need to quote each argument
-				ostr << " \"" << (*i++).c_str() << "\"";
-			}
+			cmdLine += " \"" + args.at(i) + "\"";
 		}
+		printf("cmd: %s\n", cmdLine.c_str());
+
 		DWORD rc=0;
 		STARTUPINFO si;
 		PROCESS_INFORMATION pi;
 		ZeroMemory( &si, sizeof(si) );
 		si.cb = sizeof(si);
 		ZeroMemory( &pi, sizeof(pi) );
-		char buf[MAX_PATH];
-		DWORD size = GetCurrentDirectory(MAX_PATH,(char*)buf);
-		buf[size]='\0';
-		if (!CreateProcess( NULL,   // No module name (use command line)
-							(char*)ostr.str().c_str(), // Command line
-							NULL,           // Process handle not inheritable
-							NULL,           // Thread handle not inheritable
-							FALSE,          // Set handle inheritance to FALSE
-							0,              // No creation flags
-							NULL,           // Use parent's environment block
-							(char*)buf,		// Use parent's starting directory
-							&si,            // Pointer to STARTUPINFO structure
-							&pi )           // Pointer to PROCESS_INFORMATION structure
+		char cwd[MAX_PATH];
+		DWORD size = GetCurrentDirectory(MAX_PATH, (char*)cwd);
+		cwd[size]='\0';
+		if (!CreateProcess(
+			NULL,                    // No module name (use command line)
+			(char*) cmdLine.c_str(), // Command line
+			NULL,                    // Process handle not inheritable
+			NULL,                    // Thread handle not inheritable
+			FALSE,                   // Set handle inheritance to FALSE
+			0,                       // No creation flags
+			NULL,                    // Use parent's environment block
+			(char*)cwd,		         // Use parent's starting directory
+			&si,                     // Pointer to STARTUPINFO structure
+			&pi )                    // Pointer to PROCESS_INFORMATION structure
 		)
 		{
 			rc = -1;

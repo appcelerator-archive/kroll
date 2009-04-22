@@ -18,13 +18,15 @@
 #include <algorithm>
 
 #ifdef OS_WIN32
+#define KR_PATH_SEP_CHAR '\\'
 #define KR_PATH_SEP "\\"
 #define KR_PATH_SEP_OTHER "/"
 #define KR_LIB_SEP ";"
 #ifndef NO_UNZIP
-#include "../unzip/unzip.h"
+#include "unzip/unzip.h"
 #endif
 #else
+#define KR_PATH_SEP_CHAR '/'
 #define KR_PATH_SEP "/"
 #define KR_PATH_SEP_OTHER "\\"
 #define KR_LIB_SEP ":"
@@ -113,6 +115,11 @@ namespace kroll
 		 *
 		 */
 		static std::string Dirname(std::string path);
+
+		/**
+		 *
+		 */
+		static std::string Basename(std::string path);
 
 		/**
 		 *

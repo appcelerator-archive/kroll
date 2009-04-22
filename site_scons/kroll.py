@@ -179,9 +179,12 @@ class BuildConfig(object):
 	# Give: A unique directory for that build piece where the utils should be copied
 	def get_kroll_utils(self, dir):
 		futils.CopyToDir(self.kroll_utils_dir, dir)
-		return Glob('%s/utils/*.cpp' % dir) + \
+		sources = Glob('%s/utils/*.cpp' % dir) + \
 			Glob('%s/utils/poco/*.cpp' % dir) + \
 			Glob('%s/utils/%s/*.cpp' % (dir, self.os))
+		if self.is_win32():
+			sources.extend(Glob('%s/utils/unzip/*.cpp' % dir))
+		return sources
 
 	def init_thirdparty_libs(self):
 		self.thirdparty_libs = {
