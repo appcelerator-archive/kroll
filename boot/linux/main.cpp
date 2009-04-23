@@ -21,50 +21,19 @@
 
 using namespace kroll;
 using std::string;
+using std::vector;
 using kroll::FileUtils;
 using kroll::BootUtils;
 using kroll::Application;
 using kroll::KComponent;
 
-#define MODULE_DIR "modules"
-#define RUNTIME_DIR "runtime"
-
-typedef int Executor(int argc, const char **argv);
-
-typedef struct InstallLocation
-{
-	std::string runtimeHome;
-	std::string runtime;
-	std::string modules;
-} InstallLocation;
-
 class Boot
 {
 	public:
 	Application* app;
-	std::string applicationPath;
-	std::string updateFile;
-	std::string installerPath;
-
-	/* Default runtime base path or, if a runtime is found, that runtime home path */
-	std::string activeRuntimeHome;
-
-	/* Potential paths for installed modules and runtime */
-	std::vector<InstallLocation*> installLocations;
-
-	/* Paths for bundled modules and runtime */
-	std::string bundledModulePath;
-	std::string bundledRuntimePath;
-
-	void AddInstallLocation(std::string path)
-	{
-		InstallLocation* location = new InstallLocation;
-		location->runtimeHome = path;
-		location->runtime = FileUtils::Join(path.c_str(), RUNTIME_DIR, "linux", NULL);
-		location->modules = FileUtils::Join(path.c_str(), MODULE_DIR, "linux", NULL);
-		this->installLocations.push_back(location);
-	}
-
+	string applicationPath;
+	string updateFile;
+	string installerPath;
 
 	void SetupPaths(const char* argv)
 	{
@@ -79,7 +48,7 @@ class Boot
 			struct stat statbuf;
 			int result = stat(real_path, &statbuf);
 			if (result == 0)
-				this->applicationPath = std::string(dirname(real_path));
+				this->applicationPath = string(dirname(real_path));
 			else
 				this->applicationPath = FileUtils::GetApplicationDirectory();
 		}
@@ -87,29 +56,6 @@ class Boot
 		const char* capplicationPath = applicationPath.c_str();
 		this->installerPath = FileUtils::Join(capplicationPath, "installer", NULL);
 
-		// Allow the user to force an override to the runtime home by setting the
-		// appropriate environment variable -- this will be the first path searched
-		if (EnvironmentUtils::Has("KR_RUNTIME_HOME"))
-			this->AddInstallLocation(EnvironmentUtils::Get("KR_RUNTIME_HOME"));
-
-		// Kroll runtime and modules will located by searching the following paths in order:
-		// 1. ~/.PRODUCT_NAME (eg. ~/.titanium)
-		// 2. /opt/PRODUCT_NAME (default runtime base path for system-wide installation)
-		// 3. /usr/local/lib/PRODUCT_NAME
-		// 4. /usr/lib/PRODUCT_NAME
-		// We can't use FileUtils::GetSystemRuntimeHomeDirectory() because it only locates
-		// the first one of these directories that exists
-
-		string pname = PRODUCT_NAME;
-		std::transform(pname.begin(), pname.end(), pname.begin(), tolower);
-
-		this->AddInstallLocation(FileUtils::GetUserRuntimeHomeDirectory());
-		this->AddInstallLocation(std::string("/opt") + pname);
-		this->AddInstallLocation(std::string("/usr/local/lib") + pname);
-		this->AddInstallLocation(std::string("/usr/lib/") + pname);
-
-		this->bundledModulePath = FileUtils::Join(capplicationPath, MODULE_DIR, NULL);
-		this->bundledRuntimePath = FileUtils::Join(capplicationPath, RUNTIME_DIR, NULL);
 
 		// The installer directory could previously contain bundled runtime / modules.
 		// This location is no longer supported for Linux.
@@ -121,7 +67,7 @@ class Boot
 		// It will be placed there by the update service. If it exists
 		// and the version in the update file is greater than the
 		// current app version, we want to force an update.
-		std::string file = FileUtils::GetApplicationDataDirectory(app->id);
+		string file = FileUtils::GetApplicationDataDirectory(app->id);
 		file = FileUtils::Join(file.c_str(), UPDATE_FILENAME, NULL);
 		if (FileUtils::IsFile(file))
 		{
@@ -136,13 +82,13 @@ class Boot
 
 	Boot(const char* firstArg) :
 		app(NULL),
-		updateFile(std::string())
+		updateFile(string())
 	{
 		this->SetupPaths(firstArg);
 
 		this->app = BootUtils::ReadManifest(this->applicationPath);
 		if (this->app == NULL)
-			throw std::string("Application packaging error. The application "
+			throw string("Application packaging error. The application "
 				"manifest was not found in the correct location.");
 
 		this->FindUpdate();
@@ -152,41 +98,41 @@ class Boot
 	{
 		if (app != NULL)
 			delete this->app;
-
-		std::vector<InstallLocation*>::iterator li = this->installLocations.begin();
-		while (li != this->installLocations.end())
-		{
-			InstallLocation* l = *li;
-			li = this->installLocations.erase(li);
-			delete l;
-		}
 	}
 
 
-	std::vector<KComponent*> FindModules()
+	vector<KComponent*> FindModules()
 	{
-		std::vector<KComponent*> unresolved;
+		vector<string> runtimeHomes;
 
-		// Find the runtime module
-		if (!this->FindRuntime(this->app->runtime))
-		{
-			unresolved.push_back(this->app->runtime);
-		}
+		// Allow the user to force an override to the runtime home by setting the
+		// appropriate environment variable -- this will be the first path searched
+		if (EnvironmentUtils::Has("KR_RUNTIME_HOME"))
+			runtimeHomes.push_back(EnvironmentUtils::Get("KR_RUNTIME_HOME"));
 
-		// Find all regular modules
-		std::vector<KComponent*>::iterator i = this->app->modules.begin();
-		while (i != app->modules.end())
-		{
-			KComponent* m = *i++;
-			if (!this->FindModule(m))
-			{
-				unresolved.push_back(m);
-			}
-		}
+		// Kroll runtime and modules will located by searching the following paths in order:
+		// 1. ~/.PRODUCT_NAME (eg. ~/.titanium)
+		// 2. /opt/PRODUCT_NAME (default runtime base path for system-wide installation)
+		// 3. /usr/local/lib/PRODUCT_NAME
+		// 4. /usr/lib/PRODUCT_NAME
+
+		// We can't use FileUtils::GetSystemRuntimeHomeDirectory() because it
+		// only returns  the first one of these directories that exists
+
+		string pname = PRODUCT_NAME;
+		std::transform(pname.begin(), pname.end(), pname.begin(), tolower);
+
+		runtimeHomes.push_back(FileUtils::GetUserRuntimeHomeDirectory());
+		runtimeHomes.push_back(string("/opt") + pname);
+		runtimeHomes.push_back(string("/usr/local/lib") + pname);
+		runtimeHomes.push_back(string("/usr/lib/") + pname);
+	
+		// Do the actual resolution
+		vector<KComponent*> unresolved = app->ResolveAllComponents(runtimeHomes);
 
 		if (unresolved.size() > 0)
 		{
-			std::vector<KComponent*>::iterator dmi = unresolved.begin();
+			vector<KComponent*>::iterator dmi = unresolved.begin();
 			while (dmi != unresolved.end())
 			{
 				KComponent* m = *dmi++;
@@ -194,78 +140,22 @@ class Boot
 			}
 			std::cout << "---" << std::endl;
 		}
-
 		return unresolved;
 	}
 
-	bool FindModule(KComponent *m)
-	{
-		// Try to find the bundled version of this module.
-		std::string path = FileUtils::Join(this->bundledModulePath.c_str(), m->name.c_str(), NULL);
-		if (FileUtils::IsDirectory(path))
-		{
-			m->path = path;
-			return true;
-		}
 
-		// Search all possible installed paths.
-		std::vector<InstallLocation*>::iterator i = installLocations.begin();
-		while (i != installLocations.end())
-		{
-			InstallLocation* l = *i++;
-			std::string p = FileUtils::Join(l->modules.c_str(), m->name.c_str(), NULL);
-			std::string result = FileUtils::FindVersioned(p, m->requirement, m->version);
-			if (!result.empty())
-			{
-				m->path = result;
-				return true;
-			}
-		}
-
-		return false; // We couldn't resolve this module!
-	}
-
-	bool FindRuntime(KComponent *m)
-	{
-		// Try to find the bundled version of this module.
-		if (FileUtils::IsDirectory(this->bundledRuntimePath))
-		{
-			this->app->runtime->path = this->bundledRuntimePath;
-			return true;
-		}
-
-		// Search all possible installed paths.
-		std::vector<InstallLocation*>::iterator i = this->installLocations.begin();
-		while (i != this->installLocations.end())
-		{
-			InstallLocation* l = *i++;
-			std::string result = FileUtils::FindVersioned(l->runtime, m->requirement, m->version);
-
-			// If we find a runtime in an installed location, make that the
-			// default location for module installation.
-			if (!result.empty())
-			{
-				this->activeRuntimeHome = l->runtimeHome;
-				this->app->runtime->path = result;
-				return true;
-			}
-		}
-
-		return false; // We couldn't resolve this module!
-	}
-
-	std::string GetModuleList()
+	string GetModuleList()
 	{
 		if (this->app->runtime == NULL || this->app->runtime->path.empty())
-			throw std::string("Could not locate an appropriate runtime.");
+			throw string("Could not locate an appropriate runtime.");
 
 		std::ostringstream moduleList;
-		std::vector<KComponent*>::iterator i = this->app->modules.begin();
+		vector<KComponent*>::iterator i = this->app->modules.begin();
 		while (i != this->app->modules.end())
 		{
 			KComponent *m = *i++;
 			if (m->path.empty())
-				throw std::string("Could not find module: ") + m->name;
+				throw string("Could not find module: ") + m->name;
 
 			moduleList << m->path << ":";
 		}
@@ -273,15 +163,15 @@ class Boot
 		return moduleList.str();
 	}
 
-	void RunInstaller(std::vector<KComponent*> missing)
+	void RunInstaller(vector<KComponent*> missing)
     {
 		// If we don't have an installer directory, just bail...
 		const char* ci_path = this->installerPath.c_str();
-		std::string installer = FileUtils::Join(ci_path, "installer", NULL);
+		string installer = FileUtils::Join(ci_path, "installer", NULL);
 		if (!FileUtils::IsDirectory(this->installerPath) || !FileUtils::IsFile(installer))
-			throw std::string("Missing installer and application has additional modules that are needed.");
+			throw string("Missing installer and application has additional modules that are needed.");
 
-		std::vector<std::string> args;
+		vector<string> args;
 		args.push_back("--apppath");
 		args.push_back(app->path);
 
@@ -291,11 +181,11 @@ class Boot
 			args.push_back(this->updateFile);
 		}
 
-		std::vector<KComponent*>::iterator mi = missing.begin();
+		vector<KComponent*>::iterator mi = missing.begin();
 		while (mi != missing.end())
 		{
 			KComponent* mod = *mi++;
-			std::string path =
+			string path =
 				BootUtils::FindBundledModuleZip(mod->name, mod->version, this->applicationPath);
 			if (path.empty())
 			{
@@ -316,7 +206,7 @@ int prepare_environment(int argc, const char* argv[])
 	{
 		Boot boot = Boot(argv[0]);
 
-		std::vector<KComponent*> missing = boot.FindModules();
+		vector<KComponent*> missing = boot.FindModules();
 		if (missing.size() > 0 || !boot.app->IsInstalled() || !boot.updateFile.empty())
 		{
 			boot.RunInstaller(missing);
@@ -336,11 +226,11 @@ int prepare_environment(int argc, const char* argv[])
 		setenv("KR_BOOT_READY", "1", 1);
 		setenv("KR_HOME", boot.applicationPath.c_str(), 1);
 		setenv("KR_RUNTIME", boot.app->runtime->path.c_str(), 1);
-		setenv("KR_RUNTIME_HOME", boot.activeRuntimeHome.c_str(), 1);
+		setenv("KR_RUNTIME_HOME", boot.app->runtimeHomePath.c_str(), 1);
 		setenv("KR_APP_GUID", boot.app->guid.c_str(),1);
 		setenv("KR_APP_ID", boot.app->id.c_str(), 1);
 
-		std::string module_list = boot.GetModuleList();
+		string module_list = boot.GetModuleList();
 		setenv("KR_MODULES", module_list.c_str(), 1);
 
 		const char* prepath = getenv("LD_LIBRARY_PATH");
@@ -349,18 +239,19 @@ int prepare_environment(int argc, const char* argv[])
 		if (prepath != NULL)
 		 	libraryPaths << ":" << prepath;
 
-		std::string libraryPathsStr = libraryPaths.str();
+		string libraryPathsStr = libraryPaths.str();
 		setenv("LD_LIBRARY_PATH", libraryPathsStr.c_str(), 1);
 
 		execv(argv[0], (char* const*) argv);
 	}
-	catch (std::string& e)
+	catch (string& e)
 	{
 		std::cout << e << std::endl;
 	}
 	return 0;
 }
 
+typedef int Executor(int argc, const char **argv);
 int start_host(int argc, const char* argv[])
 {
 	try
@@ -370,23 +261,23 @@ int start_host(int argc, const char* argv[])
 			return __LINE__;
 
 		// now we need to load the host and get 'er booted
-		std::string khost = FileUtils::Join(rt_path, "libkhost.so", NULL);
+		string khost = FileUtils::Join(rt_path, "libkhost.so", NULL);
 		if (!FileUtils::IsFile(khost))
-			throw std::string("Couldn't find required file: ") + khost;
+			throw string("Couldn't find required file: ") + khost;
 
 		void* khost_lib = dlopen(khost.c_str(), RTLD_LAZY | RTLD_GLOBAL);
 		if (!khost_lib)
-			throw std::string("Couldn't load host shared-object: ") + dlerror();
+			throw string("Couldn't load host shared-object: ") + dlerror();
 
 		Executor* executor = (Executor*) dlsym(khost_lib, "Execute");
 		if (!executor)
-			throw std::string("Could not find entry point for host.");
+			throw string("Could not find entry point for host.");
 
 		int rc = executor(argc, argv);
 		return rc;
 
 	}
-	catch (std::string& e)
+	catch (string& e)
 	{
 		std::cout << e << std::endl;
 		return 1;
@@ -397,7 +288,7 @@ int start_host(int argc, const char* argv[])
 #include "client/linux/handler/exception_handler.h"
 #include "common/linux/http_upload.h"
 #define CRASH_REPORT_OPT "--crash_report"
-static std::string myself;
+static string myself;
 static google_breakpad::ExceptionHandler* breakpad;
 bool breakpad_callback(
 	const char* dump_path,
@@ -407,9 +298,9 @@ bool breakpad_callback(
 {
 	if (succeeded)
 	{
-		std::string file = std::string(id) + ".dmp";
+		string file = string(id) + ".dmp";
 		file = FileUtils::Join(dump_path, file.c_str(), NULL);
-		std::string exec_path = myself;
+		string exec_path = myself;
 		exec_path.append(" ");
 		exec_path.append(CRASH_REPORT_OPT);
 		exec_path.append(" ");
@@ -422,13 +313,13 @@ bool breakpad_callback(
 	return succeeded;
 }
 
-std::map<std::string, std::string> get_parameters(int argc, const char* argv[])
+std::map<string, string> get_parameters(int argc, const char* argv[])
 {
-	std::map<std::string, std::string> params;
+	std::map<string, string> params;
 	for (int i = 2; argc > i+1; i++)
 	{
-		std::string key = argv[i];
-		std::string value = argv[i+1];
+		string key = argv[i];
+		string value = argv[i+1];
 		params[key] = value;
 	}
 	return params;
@@ -436,14 +327,14 @@ std::map<std::string, std::string> get_parameters(int argc, const char* argv[])
 
 void send_crash_report(int argc, const char* argv[])
 {
-	std::string url = STRING(CRASH_REPORT_URL);
-	const std::map<std::string, std::string> parameters = get_parameters(argc, argv);
-	std::string upload_file = argv[2];
-	std::string file_part_name = "dump";
-	std::string proxy;
-	std::string proxy_user_pwd;
-	std::string response_body;
-	std::string error_description;
+	string url = STRING(CRASH_REPORT_URL);
+	const std::map<string, string> parameters = get_parameters(argc, argv);
+	string upload_file = argv[2];
+	string file_part_name = "dump";
+	string proxy;
+	string proxy_user_pwd;
+	string response_body;
+	string error_description;
 
 	/*bool success =*/ google_breakpad::HTTPUpload::SendRequest(
 		url,
@@ -478,7 +369,7 @@ int main(int argc, const char* argv[])
 
 #ifdef USE_BREAKPAD
 	myself = argv[0];
-	std::string dump_path = "/tmp";
+	string dump_path = "/tmp";
 	breakpad = new google_breakpad::ExceptionHandler(
 		dump_path,
 		NULL,
