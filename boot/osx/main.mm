@@ -256,7 +256,6 @@ int Bootstrap()
 	[environment setObject:value forKey:@"KR_RUNTIME"];
 	value = [NSString stringWithUTF8String:moduleListStr.c_str()];
 	[environment setObject:value forKey:@"KR_MODULES"];
-	printf("modules: %s\n", moduleListStr.c_str());
 	value = [NSString stringWithUTF8String:app->runtimeHomePath.c_str()];
 	[environment setObject:value forKey:@"KR_RUNTIME_HOME"];
 	value = [NSString stringWithUTF8String:app->guid.c_str()];
