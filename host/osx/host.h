@@ -30,7 +30,6 @@ namespace kroll
 
 	private:
 		std::string appConfig;
-		NSAutoreleasePool* pool;
 	};
 }
 
