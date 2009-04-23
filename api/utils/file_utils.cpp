@@ -216,7 +216,9 @@ namespace kroll
 	
 	if (dir[strlen(dir)-1] == '\\')
 		dir[strlen(dir)-1] = '\0';
-	return std::string(dir);
+	std::string dirname = drive;
+	dirname += std::string(dir);
+	return dirname;
 #else
 	char* pathCopy = strdup(path.c_str());
 	std::string toReturn = dirname(pathCopy);
