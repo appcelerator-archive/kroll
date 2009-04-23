@@ -102,7 +102,10 @@ namespace kroll
 		static bool DeleteDirectory(std::string &dir);
 
 		/**
-		 * This function joins paths together in an OS specific way
+		 * This function joins paths together in an OS specific way. Empty elements --
+		 * those which equal == "" will be ignored. Examples:
+		 * Join('', '/blah', '', 'whatever') => /blah/whatever
+		 * Join('', 'blah', 'whatever') => blah/whatever
 		 */
 		static std::string Join(const char*, ...);
 

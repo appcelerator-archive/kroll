@@ -16,12 +16,10 @@ namespace kroll
 {
 	OSXHost::OSXHost(int _argc, const char **_argv) : Host(_argc,_argv)
 	{
-		this->pool = [[NSAutoreleasePool alloc] init];
 	}
 
 	OSXHost::~OSXHost()
 	{
-		[pool release];
 	}
 
 	const char* OSXHost::GetPlatform()
@@ -44,8 +42,6 @@ namespace kroll
 
 	bool OSXHost::RunLoop()
 	{
-		static int iteration = 0;
-
 		NSApplication *app = [NSApplication sharedApplication];
 		// we pull out an event from the queue, blocking a little bit before returning
 		try
@@ -74,12 +70,6 @@ namespace kroll
 		{
 			std::cerr << "Caught unhandled exception in main loop: " << std::endl;
 			KrollDumpStackTrace();
-		}
-
-		if (iteration++ > 10)
-		{
-			[pool drain];
-			iteration = 0;
 		}
 
 		return true;

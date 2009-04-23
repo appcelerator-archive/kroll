@@ -17,7 +17,7 @@ namespace kroll
 		virtual SharedStringList GetPropertyNames();
 
 		private:
-		static void StripLeadingWhitespace(std::string &);
+		static void Strip(std::string &);
 		static void ConvertLineEndings(std::string &);
 		static void DictToKObjectProps(PyObject* map, SharedKObject o);
 		static void KObjectPropsToDict(SharedKObject o, PyObject* map);
