@@ -74,24 +74,43 @@ namespace kroll
 
 	std::string PlatformUtils::GetOldStyleMachineId()
 	{
-		std::string runtimeHome = FileUtils::GetDefaultRuntimeHomeDirectory();
-		if (EnvironmentUtils::Has("KR_RUNTIME_HOME"))
-			runtimeHome = EnvironmentUtils::Get("KR_RUNTIME_HOME");
+		std::vector<std::string> possibleMIDFiles;
 
 		std::string product = std::string(".") + PRODUCT_NAME;
 		std::transform(product.begin(), product.end(), product.begin(), tolower);
-		std::string path = FileUtils::Join(runtimeHome.c_str(), product.c_str(), NULL);
 
-		if (FileUtils::IsFile(path))
+		std::string path;
+ 		if (EnvironmentUtils::Has("KR_RUNTIME_HOME"))
 		{
-			std::ifstream file(path.c_str());
-			if (!file.bad() && !file.fail() && ! file.eof())
+			path = EnvironmentUtils::Get("KR_RUNTIME_HOME");
+			path = FileUtils::Join(path.c_str(), product.c_str(), NULL);
+			possibleMIDFiles.push_back(path);
+		}
+
+		path = FileUtils::GetUserRuntimeHomeDirectory();
+		path = FileUtils::Join(path.c_str(), product.c_str(), NULL);
+		possibleMIDFiles.push_back(path);
+
+		path = FileUtils::GetSystemRuntimeHomeDirectory();
+		path = FileUtils::Join(path.c_str(), product.c_str(), NULL);
+		possibleMIDFiles.push_back(path);
+
+		for (size_t i = 0; i < possibleMIDFiles.size(); i++)
+		{
+			path = possibleMIDFiles.at(i);
+			if (FileUtils::IsFile(path))
 			{
-				std::string line;
-				std::getline(file, line);
-				FileUtils::Trim(line);
-				return line;
+				std::ifstream file(path.c_str());
+				if (!file.bad() && !file.fail() && ! file.eof())
+				{
+					std::string line;
+					std::getline(file, line);
+					FileUtils::Trim(line);
+					file.close();
+					return line;
+				}
 			}
+
 		}
 		return std::string();
 	}

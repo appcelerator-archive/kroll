@@ -84,8 +84,6 @@ bool RunInstaller(vector<KComponent*> missing)
 	vector<string> args;
 	args.push_back("-appPath");
 	args.push_back(applicationHome);
-	args.push_back("-runtimeHome");
-	args.push_back(app->runtimeHomePath);
 	if (!updateFile.empty())
 	{
 		args.push_back("-updateFile");
@@ -113,9 +111,9 @@ vector<KComponent*> FindModules()
 {
 	vector<string> runtimeHomes;
 
-	// Add the default runtime home for now, later this
-	// might be a list of possible locations, like on Linux
-	runtimeHomes.push_back(FileUtils::GetDefaultRuntimeHomeDirectory());
+	// Search user runtime home first and the the system runtime home
+	runtimeHomes.push_back(FileUtils::GetUserRuntimeHomeDirectory());
+	runtimeHomes.push_back(FileUtils::GetSystemRuntimeHomeDirectory());
 
 	vector<KComponent*> unresolved = app->ResolveAllComponents(runtimeHomes);
 	if (unresolved.size() > 0)

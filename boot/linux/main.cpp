@@ -20,6 +20,7 @@
 #endif
 
 using namespace kroll;
+using std::string;
 using kroll::FileUtils;
 using kroll::BootUtils;
 using kroll::Application;
@@ -46,8 +47,6 @@ class Boot
 	std::string installerPath;
 
 	/* Default runtime base path or, if a runtime is found, that runtime home path */
-	std::string systemRuntimeHome;
-	std::string userRuntimeHome;
 	std::string activeRuntimeHome;
 
 	/* Potential paths for installed modules and runtime */
@@ -88,38 +87,24 @@ class Boot
 		const char* capplicationPath = applicationPath.c_str();
 		this->installerPath = FileUtils::Join(capplicationPath, "installer", NULL);
 
-		std::string pname = PRODUCT_NAME;
-		std::transform(pname.begin(), pname.end(), pname.begin(), tolower);
+		// Allow the user to force an override to the runtime home by setting the
+		// appropriate environment variable -- this will be the first path searched
+		if (EnvironmentUtils::Has("KR_RUNTIME_HOME"))
+			this->AddInstallLocation(EnvironmentUtils::Get("KR_RUNTIME_HOME"));
 
 		// Kroll runtime and modules will located by searching the following paths in order:
 		// 1. ~/.PRODUCT_NAME (eg. ~/.titanium)
 		// 2. /opt/PRODUCT_NAME (default runtime base path for system-wide installation)
 		// 3. /usr/local/lib/PRODUCT_NAME
 		// 4. /usr/lib/PRODUCT_NAME
-		std::string dotLocation = std::string(".") + pname;
-		std::string homePath = getenv("HOME");
-		this->userRuntimeHome = FileUtils::Join(homePath.c_str(), dotLocation.c_str(), NULL);
-		this->AddInstallLocation(this->userRuntimeHome);
+		// We can't use FileUtils::GetSystemRuntimeHomeDirectory() because it only locates
+		// the first one of these directories that exists
 
-		// /opt/PRODUCT_NAME is the default runtime location, but if
-		// one is specified via an environment variable, it must be
-		// searched first.
-		std::string optLocation = std::string("/opt/") + pname;
+		string pname = PRODUCT_NAME;
+		std::transform(pname.begin(), pname.end(), pname.begin(), tolower);
 
-		std::string envVarName = PRODUCT_NAME;
-		std::transform(envVarName.begin(), envVarName.end(), envVarName.begin(), toupper);
-		envVarName += "_HOME";
-		if (EnvironmentUtils::Has(envVarName))
-		{
-			this->activeRuntimeHome = this->systemRuntimeHome = EnvironmentUtils::Get(envVarName);
-			this->AddInstallLocation(this->activeRuntimeHome);
-		}
-		else
-		{
-			this->activeRuntimeHome = this->systemRuntimeHome = optLocation;
-		}
-
-		this->AddInstallLocation(optLocation);
+		this->AddInstallLocation(FileUtils::GetUserRuntimeHomeDirectory());
+		this->AddInstallLocation(std::string("/opt") + pname);
 		this->AddInstallLocation(std::string("/usr/local/lib") + pname);
 		this->AddInstallLocation(std::string("/usr/lib/") + pname);
 
@@ -260,11 +245,7 @@ class Boot
 			// default location for module installation.
 			if (!result.empty())
 			{
-				// Don't ever use the user's runtime home as the system runtime home
-				if (l->runtimeHome != this->userRuntimeHome)
-					this->systemRuntimeHome = l->runtimeHome;
 				this->activeRuntimeHome = l->runtimeHome;
-
 				this->app->runtime->path = result;
 				return true;
 			}
@@ -303,10 +284,6 @@ class Boot
 		std::vector<std::string> args;
 		args.push_back("--apppath");
 		args.push_back(app->path);
-		args.push_back("--sysruntime");
-		args.push_back(this->systemRuntimeHome);
-		args.push_back("--userruntime");
-		args.push_back(this->userRuntimeHome);
 
 		if (!this->updateFile.empty())
 		{

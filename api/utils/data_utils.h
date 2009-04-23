@@ -15,6 +15,17 @@ namespace kroll
 		 * @returns the hexidecimal MD5 hash of a string
 		 */
 		static std::string HexMD5(std::string);
+
+		/**
+		 * Encodes a URI value
+		 */
+		static std::string EncodeURIComponent(std::string value);
+
+		/**
+		 * Decodes a URI value
+		 */
+		static std::string DecodeURIComponent(std::string value);
+
 	};
 }
 #endif

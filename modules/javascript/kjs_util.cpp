@@ -506,7 +506,7 @@ namespace kroll
 		if (value == NULL)
 			return JSValueMakeUndefined(js_context);
 
-		SharedString ss = (*value)->DisplayString();
+		SharedString ss = (*value)->DisplayString(2);
 		SharedValue dsv = Value::NewString(ss);
 		return KJSUtil::ToJSValue(dsv, js_context);
 	}

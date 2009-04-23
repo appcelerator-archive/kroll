@@ -275,7 +275,10 @@ namespace kroll
 
 	void APIBinding::Fire(const char* event, SharedValue value)
 	{
-		PRINTD("FIRING: " << event);
+		// Lots of debug output really slows down things on Win32,
+		// so log this at the trace level
+		Logger& l = Logger::Get("API");
+		l.Trace(std::string("FIRING: ") + event);
 		
 		//TODO: might want to be a little more lenient on how we lock here
 //		ScopedLock lock(&mutex);

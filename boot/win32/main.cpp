@@ -85,15 +85,16 @@ bool RunInstaller(vector<KComponent*> missing)
 	vector<string> args;
 	args.push_back("-appPath");
 	args.push_back(applicationHome);
-	args.push_back("-runtimeHome");
-	args.push_back(app->runtimeHomePath);
+	args.push_back("-exePath");
+	args.push_back(argv[0]);
 	if (!updateFile.empty())
 	{
 		args.push_back("-updateFile");
 		args.push_back(updateFile);
 	}
 
-	std::vector<KComponent*>::iterator mi = missing.begin();
+	vector<string> jobs;
+	vector<KComponent*>::iterator mi = missing.begin();
 	while (mi != missing.end())
 	{
 		KComponent* mod = *mi++;
@@ -103,13 +104,30 @@ bool RunInstaller(vector<KComponent*> missing)
 		{
 			path = mod->GetURL(app);
 		}
-		args.push_back(path);
+		jobs.push_back(path);
 	}
 
 	// A little bit of ugliness goes a long way:
 	// Use ShellExecuteEx here with the undocumented runas verb
 	// so that we can execute the installer executable and have it
 	// properly do the UAC thing. Why isn't this in the API?
+
+	// More ugliness: The path length for ShellExecuteEx is limited so just
+	// pass a file name containing all the download jobs. :(
+	string tempdir = FileUtils::GetTempDirectory();
+	string jobsFile = FileUtils::Join(tempdir.c_str(), "jobs", NULL);
+	if (jobs.size() > 0)
+	{
+		FileUtils::CreateDirectory(tempdir);
+		std::ofstream outfile(jobsFile.c_str());
+		for (size_t i = 0; i < jobs.size(); i++)
+		{
+			outfile << jobs[i] << "\n";
+		}
+		outfile.close();
+		args.push_back(jobsFile);
+	}
+
 	string paramString = "";
 	for (size_t i = 0; i < args.size(); i++)
 	{
@@ -131,22 +149,26 @@ bool RunInstaller(vector<KComponent*> missing)
 	ShellExecuteEx(&ShExecInfo);
 	WaitForSingleObject(ShExecInfo.hProcess, INFINITE);
 
+	if (FileUtils::IsDirectory(tempdir))
+	{
+		FileUtils::DeleteDirectory(tempdir);
+	}
+
 	// Ugh. Now we need to figure out where the app installer installed
 	// to. We would normally use stdout, but we had to execute with
 	// an expensive call to ShellExecuteEx, so we're just going to read
 	// the information from a file.
 	if (!app->IsInstalled())
 	{
-		string fpath = FileUtils::Join(app->path.c_str(), ".installedto", NULL);
-		printf("fpath: %s\n", fpath.c_str());
-
+		string installedToFile = FileUtils::Join(app->path.c_str(), ".installedto", NULL);
 		// The user probably cancelled -- don't show an error
-		if (!FileUtils::IsFile(fpath))
+		if (!FileUtils::IsFile(installedToFile))
 			return false;
 
-		std::ifstream file(fpath.c_str());
+		std::ifstream file(installedToFile.c_str());
 		if (file.bad() || file.fail() || file.eof())
 		{
+			DeleteFile(installedToFile.c_str());
 			ShowError("Application installed failed.");
 			return false; // Don't show further errors
 		}
@@ -163,6 +185,7 @@ bool RunInstaller(vector<KComponent*> missing)
 		{
 			app = newapp;
 		}
+		DeleteFile(installedToFile.c_str());
 	}
 
 	return true;
@@ -206,9 +229,9 @@ vector<KComponent*> FindModules()
 {
 	vector<string> runtimeHomes;
 
-	// Add the default runtime home for now, later this
-	// might be a list of possible locations, like on Linux
-	runtimeHomes.push_back(FileUtils::GetDefaultRuntimeHomeDirectory());
+	// Search user runtime path first and then the system one
+	runtimeHomes.push_back(FileUtils::GetUserRuntimeHomeDirectory());
+	runtimeHomes.push_back(FileUtils::GetSystemRuntimeHomeDirectory());
 
 	vector<KComponent*> unresolved = app->ResolveAllComponents(runtimeHomes);
 	if (unresolved.size() > 0)
@@ -229,6 +252,7 @@ int Bootstrap()
 	applicationHome = GetApplicationHomePath();
 	string manifestPath = FileUtils::Join(applicationHome.c_str(), MANIFEST_FILENAME, NULL);
 
+	printf("%s\n", manifestPath.c_str());
 	if (!FileUtils::IsFile(manifestPath))
 	{
 		ShowError("Application packaging error: no manifest was found.");
@@ -275,14 +299,17 @@ int Bootstrap()
 	// Registration-free COM requires that our manifest point to a DLL
 	// in a subdirectory of the executable path. Thus we need to copy the
 	// runtime WebKit.dll into the runtime directory of our application home.
-	std::string appRuntimePath = FileUtils::Join(app->path.c_str(), "runtime", NULL);
-	std::string appWebkitDll = FileUtils::Join(appRuntimePath.c_str(), "WebKit.dll", NULL);
-	if (!kroll::FileUtils::IsFile(appWebkitDll))
-	{
-		kroll::FileUtils::CopyRecursive(app->runtime->path, appRuntimePath);
-	}
+	//std::string rtWKDLL = FileUtils::Join(app->runtime->path.c_str(), "WebKit.dll", NULL);
+	//std::string appWKDLL = FileUtils::Join(app->path.c_str(), "WebKit.dll", NULL);
+	//if (!kroll::FileUtils::IsFile(appWKDLL))
+	//{
+	//	printf("copying %s to %s\n", rtWKDLL.c_str(), appWKDLL.c_str());
+	//	CopyFileA(rtWKDLL.c_str(), appWKDLL.c_str(), FALSE);
+	//	//kroll::FileUtils::CopyRecursive(app->runtime->path, appRuntimePath);
+	//}
 
 	// Add runtime path and all module paths to PATH
+	std::string appRuntimePath = FileUtils::Join(app->path.c_str(), "runtime", NULL);
 	string path = appRuntimePath + ";";
 	path.append(app->runtime->path + ";");
 	path.append(moduleList.str() + ";");

@@ -43,10 +43,9 @@ namespace kroll
 	class DelegateStaticBoundObject;
 	class ScopeMethodDelegate;
 	class Blob;
-
 	class ValueReleasePolicy;
-
 	class Logger;
+	class ArgList;
 
 	typedef SharedPtr<Value, Poco::ReferenceCounter, ValueReleasePolicy> SharedValue;
 	typedef SharedPtr<KObject> SharedKObject;
@@ -57,13 +56,7 @@ namespace kroll
 	typedef std::vector<SharedString> StringList;
 	typedef SharedPtr<StringList> SharedStringList;
 
-	/**
-	 * This tyepdef is only used for argument lists. For
-	 * a list implementation to be used as a value in the
-	 * binding layer, take a look at KList and
-	 * StaticBoundList.
-	 */
-	typedef std::vector<SharedValue> ValueList;
+	typedef ArgList ValueList;
 
 
 }

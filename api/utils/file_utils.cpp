@@ -66,60 +66,6 @@ static std::string safe_encode(std::string &str)
 
 namespace kroll
 {
-	const char HEX2DEC[256] =
-	{
-		/*       0  1  2  3   4  5  6  7   8  9  A  B   C  D  E  F */
-		/* 0 */ -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1,
-		/* 1 */ -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1,
-		/* 2 */ -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1,
-		/* 3 */  0, 1, 2, 3,  4, 5, 6, 7,  8, 9,-1,-1, -1,-1,-1,-1,
-
-		/* 4 */ -1,10,11,12, 13,14,15,-1, -1,-1,-1,-1, -1,-1,-1,-1,
-		/* 5 */ -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1,
-		/* 6 */ -1,10,11,12, 13,14,15,-1, -1,-1,-1,-1, -1,-1,-1,-1,
-		/* 7 */ -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1,
-
-		/* 8 */ -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1,
-		/* 9 */ -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1,
-		/* A */ -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1,
-		/* B */ -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1,
-
-		/* C */ -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1,
-		/* D */ -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1,
-		/* E */ -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1,
-		/* F */ -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1
-	};
-	// Only alphanum is safe.
-	const char SAFE[256] =
-	{
-		/*      0 1 2 3  4 5 6 7  8 9 A B  C D E F */
-		/* 0 */ 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
-		/* 1 */ 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
-		/* 2 */ 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
-		/* 3 */ 1,1,1,1, 1,1,1,1, 1,1,0,0, 0,0,0,0,
-
-		/* 4 */ 0,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1,
-		/* 5 */ 1,1,1,1, 1,1,1,1, 1,1,1,0, 0,0,0,0,
-		/* 6 */ 0,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1,
-		/* 7 */ 1,1,1,1, 1,1,1,1, 1,1,1,0, 0,0,0,0,
-
-		/* 8 */ 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
-		/* 9 */ 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
-		/* A */ 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
-		/* B */ 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
-
-		/* C */ 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
-		/* D */ 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
-		/* E */ 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
-		/* F */ 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0
-	};
-
-	static bool CompareVersions(std::string a, std::string b)
-	{
-		int a1 = FileUtils::MakeVersion(a);
-		int b1 = FileUtils::MakeVersion(b);
-		return b1 > a1;
-	}
 	std::string FileUtils::GetApplicationDirectory()
 	{
 #ifdef OS_OSX
@@ -148,30 +94,10 @@ namespace kroll
 		return str.substr(0,pos);
 #endif
 	}
+
 	std::string FileUtils::GetApplicationDataDirectory(std::string &appid)
 	{
-#ifdef OS_WIN32
-		char path[MAX_PATH];
-		int size = GetEnvironmentVariable("KR_RUNTIME_HOME",(char*)path,MAX_PATH);
-		path[size]='\0';
-		std::string dir = path;
-#elif defined(OS_OSX)
-		std::string dir = GetDefaultRuntimeHomeDirectory();
-#elif defined(OS_LINUX)
-		std::string dir;
-		if (getenv("HOME") != NULL)
-		{
-			dir = getenv("HOME");
-		}
-		else
-		{
-			dir = "/home";
-			dir.append(FileUtils::GetUsername());
-		}
-		dir.append(KR_PATH_SEP);
-		dir.append(".titanium");
-
-#endif
+		std::string dir = GetUserRuntimeHomeDirectory();
 		dir.append(KR_PATH_SEP);
 		dir.append("appdata");
 		if (!IsDirectory(dir))
@@ -186,6 +112,7 @@ namespace kroll
 		}
 		return dir;
 	}
+
 	std::string FileUtils::GetTempDirectory()
 	{
 #ifdef OS_OSX
@@ -207,13 +134,12 @@ namespace kroll
 #define BUFSIZE 512
 		TCHAR szTempName[BUFSIZE];
 		GetTempPath(BUFSIZE,szTempName);
-		std::ostringstream s;
-		srand(GetTickCount()); // initialize seed
 		std::string dir(szTempName);
-		s << dir;
-		s << "\\k";
-		s << (double)rand();
-		return s.str();
+		srand(GetTickCount()); // initialize seed
+		std::ostringstream s;
+		s << "k" << (double)rand();
+		std::string end = s.str();
+		return FileUtils::Join(dir.c_str(), end.c_str(), NULL);
 #else
 		std::ostringstream dir;
 		const char* tmp = getenv("TMPDIR");
@@ -236,6 +162,7 @@ namespace kroll
 		return tmp_str;
 #endif
 	}
+
 	std::string FileUtils::GetResourcesDirectory()
 	{
 #ifdef OS_OSX
@@ -251,6 +178,7 @@ namespace kroll
 #endif
 		return dir;
 	}
+
 	bool FileUtils::IsFile(std::string &file)
 	{
 #ifdef OS_OSX
@@ -274,6 +202,7 @@ namespace kroll
 		return (stat(file.c_str(),&st)==0) && S_ISREG(st.st_mode);
 #endif
 	}
+
 	std::string FileUtils::Dirname(std::string path)
 	{
 #ifdef OS_WIN32
@@ -302,7 +231,7 @@ namespace kroll
 		if (pos == std::string::npos)
 			return path;
 		else
-			return path.substr(pos);
+			return path.substr(pos+1);
 	}
 
 	bool FileUtils::CreateDirectory(std::string &dir)
@@ -316,6 +245,12 @@ namespace kroll
 #endif
 		return false;
 	}
+
+	bool FileUtils::CreateDirectory2(std::string &dir)
+	{
+		return FileUtils::CreateDirectory(dir);
+	}
+
 	bool FileUtils::DeleteDirectory(std::string &dir)
 	{
 #ifdef OS_OSX
@@ -334,6 +269,7 @@ namespace kroll
 #endif
 		return false;
 	}
+
 	bool FileUtils::IsDirectory(std::string &dir)
 	{
 #ifdef OS_OSX
@@ -343,13 +279,24 @@ namespace kroll
 #elif OS_WIN32
 		WIN32_FIND_DATA findFileData;
 		HANDLE hFind = FindFirstFile(dir.c_str(), &findFileData);
-		if (hFind != INVALID_HANDLE_VALUE)
+		if (hFind == INVALID_HANDLE_VALUE)
 		{
-			bool yesno = (findFileData.dwFileAttributes & 0x00000010) == 0x00000010;
-			FindClose(hFind);
-			return yesno;
+			return false;
 		}
-		return false;
+		else
+		{
+			if ((findFileData.dwFileAttributes & 0x00000010) == 0x00000010)
+			{
+				FindClose(hFind);
+				return true;
+			}
+			else
+			{
+				FindClose(hFind);
+				return false;
+			}
+		}
+
 #elif OS_LINUX
 		struct stat st;
 		return (stat(dir.c_str(),&st)==0) && S_ISDIR(st.st_mode);
@@ -393,16 +340,21 @@ namespace kroll
 		while (iter != parts.end())
 		{
 			std::string part = *iter;
+			bool first = (iter == parts.begin());
+			bool last = (iter == parts.end()-1);
+			iter++;
+
+			if (part == "")
+				continue;
 
 			part = Trim(part);
 			if (part[part.size()-1] == KR_PATH_SEP_CHAR)
 				part = part.erase(part.size() - 1, 1);
-			if (iter != parts.begin() && part[0] == KR_PATH_SEP_CHAR)
+			if (!first && part[0] == KR_PATH_SEP_CHAR)
 				part = part.erase(0, 1);
 			filepath += part;
 
-			iter++;
-			if (filepath.length() != 0 && iter != parts.end())
+			if (!last)
 				filepath += KR_PATH_SEP;
 		}
 #ifdef OS_OSX
@@ -434,168 +386,6 @@ namespace kroll
 #endif
 	}
 
-	bool FileUtils::IsRuntimeInstalled()
-	{
-		std::string dir = GetDefaultRuntimeHomeDirectory();
-		return IsDirectory(dir);
-	}
-
-	std::string FileUtils::GetDefaultRuntimeHomeDirectory()
-	{
-#ifdef OS_WIN32
-		char path[MAX_PATH];
-		std::string dir;
-		if (SHGetSpecialFolderPath(NULL,path,CSIDL_COMMON_APPDATA,FALSE))
-		{
-			dir.append(path);
-			dir.append("\\");
-			dir.append(PRODUCT_NAME);
-		}
-		else if (SHGetSpecialFolderPath(NULL,path,CSIDL_APPDATA,FALSE))
-		{
-			dir.append(path);
-			dir.append("\\");
-			dir.append(PRODUCT_NAME);
-		}
-		return dir;
-#elif OS_OSX
-		// check to see if we already have a local one
-		NSString *localDir = [[NSString stringWithFormat:@"~/Library/Application Support/%s",PRODUCT_NAME] stringByExpandingTildeInPath];
-		std::string ls = std::string([localDir UTF8String]);
-		if (IsDirectory(ls))
-		{
-			return std::string([localDir UTF8String]);
-		}
-
-		// first check to see if we can install in system directory by checking
-		// if we can write to it
-		NSString *systemPath = @"/Library/Application Support";
-		if ([[NSFileManager defaultManager] isWritableFileAtPath:systemPath])
-		{
-			return std::string([[systemPath stringByAppendingString:@"/"PRODUCT_NAME] UTF8String]);
-		}
-		// if not, we fall back to installing into user directory
-		return std::string([localDir UTF8String]);
-#elif OS_LINUX
-		passwd *user = getpwuid(getuid());
-		std::string dir = std::string(user->pw_dir) + "/" + PRODUCT_NAME + "App";
-		return dir;
-#endif
-	}
-
-	void FileUtils::ExtractVersion(std::string& spec, int *op, std::string &version)
-	{
-		if (spec.find(">=")!=std::string::npos)
-		{
-			*op = GreaterThanEqualTo;
-			version = spec.substr(2,spec.length());
-		}
-		else if (spec.find("<=")!=std::string::npos)
-		{
-			*op = LessThanEqualTo;
-			version = spec.substr(2,spec.length());
-		}
-		else if (spec.find("<")!=std::string::npos)
-		{
-			*op = LessThan;
-			version = spec.substr(1,spec.length());
-		}
-		else if (spec.find(">")!=std::string::npos)
-		{
-			*op = GreaterThan;
-			version = spec.substr(1,spec.length());
-		}
-		else if (spec.find("=")!=std::string::npos)
-		{
-			*op = EqualTo;
-			version = spec.substr(1,spec.length());
-		}
-		else
-		{
-			*op = EqualTo;
-			version = spec;
-		}
-	}
-	int FileUtils::MakeVersion(std::string& ver)
-	{
-		std::string v;
-		size_t pos = 0;
-		while(1)
-		{
-			size_t newpos = ver.find(".",pos);
-			if (newpos==std::string::npos)
-			{
-				v.append(ver.substr(pos,ver.length()));
-				break;
-			}
-			v.append(ver.substr(pos,newpos));
-			pos = newpos+1;
-		}
-		return atoi(v.c_str());
-	}
-	std::string FileUtils::FindVersioned(std::string& path, int op, std::string& version)
-	{
-		std::vector<std::string> files;
-		std::vector<std::string> found;
-		ListDir(path,files);
-		std::vector<std::string>::iterator iter = files.begin();
-		int findVersion = MakeVersion(version);
-		while (iter!=files.end())
-		{
-			std::string str = (*iter++);
-			std::string fullpath = std::string(path);
-			fullpath.append(KR_PATH_SEP);
-			fullpath.append(str);
-			if (IsDirectory(fullpath))
-			{
-				int theVersion = MakeVersion(str);
-				bool matched = false;
-
-				switch(op)
-				{
-					case EqualTo:
-					{
-						matched = (theVersion == findVersion);
-						break;
-					}
-					case GreaterThanEqualTo:
-					{
-						matched = (theVersion >= findVersion);
-						break;
-					}
-					case LessThanEqualTo:
-					{
-						matched = (theVersion <= findVersion);
-						break;
-					}
-					case GreaterThan:
-					{
-						matched = (theVersion > findVersion);
-						break;
-					}
-					case LessThan:
-					{
-						matched = (theVersion < findVersion);
-						break;
-					}
-				}
-				if (matched)
-				{
-					found.push_back(std::string(str));
-				}
-			}
-		}
-		if (found.size() > 0)
-		{
-			std::sort(found.begin(),found.end(),CompareVersions);
-			std::string file = found.at(0);
-			std::string f = std::string(path);
-			f.append(KR_PATH_SEP);
-			f.append(file);
-			return f;
-		}
-		return std::string();
-	}
 	std::string FileUtils::GetOSVersion()
 	{
 #ifdef OS_WIN32
@@ -614,6 +404,7 @@ namespace kroll
 		return uts.release;
 #endif
 	}
+
 	std::string FileUtils::GetOSArchitecture()
 	{
 #ifdef OS_WIN32
@@ -624,75 +415,12 @@ namespace kroll
 		return uts.machine;
 #endif
 	}
-	std::string FileUtils::EncodeURIComponent(std::string src)
-	{
-		const char DEC2HEX[16 + 1] = "0123456789ABCDEF";
-		const unsigned char *pSrc = (const unsigned char *)src.c_str();
-	   	const int SRC_LEN = src.length();
-	   	unsigned char * const pStart = new unsigned char[SRC_LEN * 3];
-	   	unsigned char * pEnd = pStart;
-	   	const unsigned char * const SRC_END = pSrc + SRC_LEN;
 
-	   	for (; pSrc < SRC_END; ++pSrc)
-	   	{
-	      if (SAFE[*pSrc])
-	         *pEnd++ = *pSrc;
-	      else
-	      {
-	         // escape this char
-	         *pEnd++ = '%';
-	         *pEnd++ = DEC2HEX[*pSrc >> 4];
-	         *pEnd++ = DEC2HEX[*pSrc & 0x0F];
-	      }
-	   	}
-
-	   	std::string sResult((char *)pStart, (char *)pEnd);
-	   	delete [] pStart;
-
-	   	return sResult;
-	}
-	std::string FileUtils::DecodeURIComponent(std::string src)
-	{
-		// Note from RFC1630: "Sequences which start with a percent
-		// sign but are not followed by two hexadecimal characters
-		// (0-9, A-F) are reserved for future extension"
-
-		const unsigned char * pSrc = (const unsigned char *)src.c_str();
-		const int SRC_LEN = src.length();
-		const unsigned char * const SRC_END = pSrc + SRC_LEN;
-		// last decodable '%'
-		const unsigned char * const SRC_LAST_DEC = SRC_END - 2;
-
-		char * const pStart = new char[SRC_LEN];
-		char * pEnd = pStart;
-
-		while (pSrc < SRC_LAST_DEC)
-		{
-		   if (*pSrc == '%')
-		   {
-		      char dec1, dec2;
-		      if (-1 != (dec1 = HEX2DEC[*(pSrc + 1)])
-		         && -1 != (dec2 = HEX2DEC[*(pSrc + 2)]))
-		      {
-		         *pEnd++ = (dec1 << 4) + dec2;
-		         pSrc += 3;
-		         continue;
-		      }
-		   }
-
-		   *pEnd++ = *pSrc++;
-		}
-
-		// the last 2- chars
-		while (pSrc < SRC_END)
-		   *pEnd++ = *pSrc++;
-
-		std::string sResult(pStart, pEnd);
-		delete [] pStart;
-
-		return sResult;
-	}
-	void FileUtils::Tokenize(const std::string& str, std::vector<std::string>& tokens, const std::string &delimeters, bool skip_if_found)
+	void FileUtils::Tokenize(
+		const std::string& str,
+		std::vector<std::string>& tokens, 
+		const std::string &delimeters, 
+		bool skip_if_found)
 	{
 		std::string::size_type lastPos = str.find_first_not_of(delimeters,0);
 		std::string::size_type pos = str.find_first_of(delimeters,lastPos);
@@ -721,6 +449,7 @@ namespace kroll
 			pos = str.find_first_of(delimeters,lastPos);
 		}
 	}
+
 	std::string FileUtils::Trim(std::string str)
 	{
 		std::string c(safe_encode(str));
@@ -744,165 +473,7 @@ namespace kroll
 		}
 		return c;
 	}
-	bool FileUtils::ReadManifest(std::string& path, std::string &runtimePath, std::vector< std::pair< std::pair<std::string,std::string>, bool> >& modules, std::vector<std::string> &moduleDirs, std::string &appname, std::string &appid, std::string &runtimeOverride, std::string &guid)
-	{
-		std::ifstream file(path.c_str());
-		if (file.bad() || file.fail())
-		{
-			return false;
-		}
-		bool foundRuntime = false;
-		const char *rt = runtimeOverride.c_str();
-#ifdef DEBUG
-				std::cout << "Read Manifest: " << rt << std::endl;
-#endif
 
-		while (!file.eof())
-		{
-			std::string line;
-			std::getline(file,line);
-			if (line.find(" ")==0)
-			{
-				continue;
-			}
-			size_t pos = line.find(":");
-			if (pos!=std::string::npos)
-			{
-				std::string key = Trim(line.substr(0,pos));
-				std::string value = Trim(line.substr(pos+1,line.length()));
-				if (key == "#appname")
-				{
-					appname = value;
-					continue;
-				}
-				else if (key == "#appid")
-				{
-					appid = value;
-					continue;
-				}
-				else if (key == "#guid")
-				{
-					guid = value;
-					continue;
-				}
-				else if (key.c_str()[0]=='#')
-				{
-					continue;
-				}
-				int op;
-				std::string version;
-				ExtractVersion(value,&op,version);
-#ifdef DEBUG
-				std::cout << "Component: " << key << ":" << version << ", operation: " << op << std::endl;
-#endif
-				std::pair<std::string,std::string> p(key,version);
-				if (key == "runtime")
-				{
-					// check to see if our runtime is found in our override directory
-					if (!runtimeOverride.empty())
-					{
-						std::string potentialRuntime = Join(rt,"runtime",NULL);
-						if (IsDirectory(potentialRuntime))
-						{
-							// extra special check for Win32 since we have to place the WebKit.dll
-							// inside the same relative path as .exe because of the COM embedded manifest crap-o-la
-							// so if we can't find kroll.dll in the resources folder we don't override
-#ifdef OS_WIN32
-							std::string krolldll = kroll::FileUtils::Join(potentialRuntime.c_str(),"kroll.dll",NULL);
-							if (kroll::FileUtils::IsFile(krolldll))
-							{
-#endif
-								runtimePath = potentialRuntime;
-#ifdef DEBUG
-								std::cout << "found override runtime at: " << runtimePath << std::endl;
-#endif
-								foundRuntime = true;
-								continue;
-#ifdef OS_WIN32
-							}
-#endif
-						}
-					}
-					runtimePath = FindRuntime(op,version);
-					if (runtimePath == "") {
-						modules.push_back(std::pair< std::pair<std::string,std::string>, bool>(p,false));
-					}
-
-					foundRuntime = true; // so we don't add again
-				}
-				else
-				{
-					// check to see if our module is contained within our runtime override
-					// directory and if it is, use it...
-					std::string potentialModule = kroll::FileUtils::Join(rt,"modules",key.c_str(),NULL);
-
-#ifdef DEBUG
-					std::cout << "looking for bundled module at " << potentialModule << std::endl;
-#endif
-					if (IsDirectory(potentialModule))
-					{
-						modules.push_back(std::pair< std::pair<std::string,std::string>, bool>(p,true));
-						moduleDirs.push_back(potentialModule);
-#ifdef DEBUG
-						std::cout << "found override module at: " << potentialModule << std::endl;
-#endif
-						continue;
-					}
-					std::string dir = FindModule(key,op,version);
-					bool found = dir!="";
-					modules.push_back(std::pair< std::pair<std::string,std::string>, bool>(p,found));
-					if (found)
-					{
-#ifdef DEBUG
-						std::cout << "found module at: " << dir << std::endl;
-#endif
-						moduleDirs.push_back(dir);
-					}
-#ifdef DEBUG
-					else
-					{
-						std::cerr << "couldn't find module module: " << key  << "/" << version << std::endl;
-					}
-#endif
-				}
-			}
-		}
-		// we gotta always have a runtime
-		if (!foundRuntime)
-		{
-			std::pair<std::string,std::string> p("runtime",STRING(PRODUCT_VERSION)); //TODO: huh, what do we use?
-			modules.push_back(std::pair< std::pair<std::string,std::string>, bool>(p,false));
-		}
-		file.close();
-		return true;
-	}
-	std::string FileUtils::FindRuntime(int op, std::string& version)
-	{
-		std::string runtime = GetDefaultRuntimeHomeDirectory();
-		std::string path(runtime);
-#ifdef OS_WIN32
-		path += "\\runtime\\win32";
-#elif OS_LINUX
-		path += "/runtime/linux";
-#elif OS_OSX
-		path += "/runtime/osx";
-#endif
-		return FindVersioned(path,op,version);
-	}
-	std::string FileUtils::FindModule(std::string& name, int op, std::string& version)
-	{
-		std::string runtime = GetDefaultRuntimeHomeDirectory();
-		std::string path(runtime);
-#ifdef OS_WIN32
-		path += "\\modules\\win32\\";
-#elif OS_LINUX
-		path += "/modules/linux/";
-#elif OS_OSX
-		path += "/modules/osx/";
-#endif
-		path += name;
-		return FindVersioned(path,op,version);
-	}
 	void FileUtils::ListDir(std::string& path, std::vector<std::string> &files)
 	{
 	#if defined(OS_WIN32)
@@ -936,6 +507,7 @@ namespace kroll
 		}
 	#endif
 	}
+
 	int FileUtils::RunAndWait(std::string &path, std::vector<std::string> &args)
 	{
 #ifndef OS_WIN32
@@ -1004,44 +576,6 @@ namespace kroll
 #endif
 	}
 
-	#if defined(OS_WIN32)
-	// TODO: implement this for other platforms
-	void FileUtils::CopyRecursive(std::string &dir, std::string &dest)
-	{
-		if (!IsDirectory(dest)) {
-			CreateDirectory(dest);
-		}
-
-		std::cout << "\n>Recursive copy " << dir << " to " << dest << std::endl;
-		WIN32_FIND_DATA findFileData;
-		std::string q(dir+"\\*");
-		HANDLE hFind = FindFirstFile(q.c_str(), &findFileData);
-		if (hFind != INVALID_HANDLE_VALUE)
-		{
-			do
-			{
-				std::string filename = findFileData.cFileName;
-				if (filename == "." || filename == "..") continue;
-
-				std::string srcName = dir + "\\" + filename;
-				std::string destName = dest + "\\" + filename;
-
-				if (IsDirectory(srcName)) {
-					std::cout << "create dir: " << destName << std::endl;
-					FileUtils::CreateDirectory(destName);
-					CopyRecursive(srcName, destName);
-				}
-				else {
-					//std::cout << "> copy file " << srcName << " to " << destName << std::endl;
-					CopyFileA(srcName.c_str(), destName.c_str(), FALSE);
-				}
-			} while (FindNextFile(hFind, &findFileData));
-			FindClose(hFind);
-		}
-	}
-
-#endif
-
 
 	std::string FileUtils::GetUsername()
 	{
@@ -1063,6 +597,7 @@ namespace kroll
 		return std::string(getlogin());
 #endif
 	}
+
 #ifndef NO_UNZIP
 	void FileUtils::Unzip(std::string& source, std::string& destination)
 	{
