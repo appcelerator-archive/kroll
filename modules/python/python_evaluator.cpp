@@ -17,7 +17,7 @@
 
 		// Normalize tabs and convert line-feeds
 		std::string code = args[1]->ToString();
-		PythonEvaluator::StripLeadingWhitespace(code);
+		PythonEvaluator::Strip(code);
 		PythonEvaluator::ConvertLineEndings(code);
 
 		// Insert all the js global properties into a copy globals()
@@ -28,7 +28,7 @@
 		KObjectPropsToDict(window_global, globals);
 
 		// Another way to do this is to use a Python sub-interpreter,
-		// but that seems to put us into a restricted execution mode
+		// but that seems to put us into restricted execution mode
 		// sometimes. So we're going to try to isolate the variables
 		// in this script by compiling it and supplying our own copy
 		// of the globals.
@@ -68,11 +68,13 @@
 
 	void PythonEvaluator::KObjectPropsToDict(SharedKObject o, PyObject* pyobj)
 	{
+		PyObject* builtins = PyDict_GetItemString(pyobj, "__builtins__");
+
 		SharedStringList props = o->GetPropertyNames();
 		for (size_t i = 0; i < props->size(); i++)
 		{
 			const char* k = props->at(i)->c_str();
-			if (!PyDict_GetItemString(pyobj, k))
+			if (!PyDict_GetItemString(pyobj, k) && !PyObject_GetAttrString(builtins, k))
 			{
 				SharedValue v = o->Get(k);
 				PyObject* pv = PythonUtils::ToPyObject(v);
@@ -123,11 +125,15 @@
 		return SharedStringList();
 	}
 
-	void PythonEvaluator::StripLeadingWhitespace(std::string &code)
+	void PythonEvaluator::Strip(std::string &code)
 	{
 		size_t startpos = code.find_first_not_of(" \t\n");
 		if (std::string::npos != startpos)
 			code.replace(0, startpos, "");
+
+		startpos = code.find_last_not_of(" \t\n") + 1;
+		if (startpos != code.size())
+			code.replace(startpos, code.size() - startpos, "\n");
 	}
 
 	void PythonEvaluator::ConvertLineEndings(std::string &code)
