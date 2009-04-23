@@ -330,8 +330,9 @@ namespace kroll
 		std::vector<std::string> parts;
 		while (inpart != NULL)
 		{
-			parts.push_back(inpart);
-			inpart = va_arg(ap,const char*);
+			if (strcmp(inpart, ""))
+				parts.push_back(inpart);
+			inpart = va_arg(ap, const char*);
 		}
 		va_end(ap);
 
@@ -343,9 +344,6 @@ namespace kroll
 			bool first = (iter == parts.begin());
 			bool last = (iter == parts.end()-1);
 			iter++;
-
-			if (part == "")
-				continue;
 
 			part = Trim(part);
 			if (part[part.size()-1] == KR_PATH_SEP_CHAR)
