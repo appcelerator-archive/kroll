@@ -197,7 +197,9 @@ class BuildConfig(object):
 				'linux': {
 					'cpp_path': [path.join(self.third_party, 'poco', 'include')],
 					'lib_path': [path.join(self.third_party, 'poco', 'lib')],
-					'libs': ['PocoFoundation', 'PocoNet', 'PocoNetSSL', 'PocoUtil', 'PocoXML', 'PocoZip', 'PocoData', 'PocoSQLite']
+					'libs': ['PocoFoundation', 'PocoNet', 'PocoNetSSL', 'PocoUtil', 'PocoXML', 'PocoZip']
+					# TODO: Re-enable Poco data when binary management is pushed
+					#'libs': ['PocoFoundation', 'PocoNet', 'PocoNetSSL', 'PocoUtil', 'PocoXML', 'PocoZip', 'PocoData', 'PocoSQLite']
 				},
 				'osx': {
 					'cpp_path': [path.join(self.third_party, 'poco', 'headers')],
