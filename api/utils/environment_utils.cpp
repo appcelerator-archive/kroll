@@ -63,4 +63,14 @@ namespace kroll
 		}
 #endif
 	}
+
+	void EnvironmentUtils::Unset(std::string name)
+	{
+#ifdef OS_WIN32
+		SetEnvironmentVariable(name.c_str(), NULL);
+#else
+		unsetenv(name.c_str());
+#endif
+
+	}
 }

@@ -5,15 +5,19 @@
  */
 #include "utils.h"
 
+using std::string;
+using std::vector;
+using std::pair;
+
 namespace kroll
 {
 
-	std::string BootUtils::FindBundledModuleZip(
-		std::string name,
-		std::string version,
-		std::string applicationDirectory)
+	string BootUtils::FindBundledModuleZip(
+		string name,
+		string version,
+		string applicationDirectory)
 	{
-		std::string zipName;
+		string zipName;
 		if (name != "runtime")
 			zipName.append("module-");
 		zipName.append(name);
@@ -21,7 +25,7 @@ namespace kroll
 		zipName.append(version);
 		zipName.append(".zip");
 
-		std::string zipLocation = FileUtils::Join(
+		string zipLocation = FileUtils::Join(
 			applicationDirectory.c_str(),
 			"dist",
 			zipName.c_str(),
@@ -30,16 +34,16 @@ namespace kroll
 		if (FileUtils::IsFile(zipLocation))
 			return zipLocation;
 		else
-			return std::string();
+			return string();
 	}
 
-	Application* BootUtils::ReadManifest(std::string appPath)
+	Application* BootUtils::ReadManifest(string appPath)
 	{
-		std::string manifest = FileUtils::Join(appPath.c_str(), MANIFEST_FILENAME, NULL);
+		string manifest = FileUtils::Join(appPath.c_str(), MANIFEST_FILENAME, NULL);
 		return ReadManifestFile(manifest, appPath);
 	}
 
-	Application* BootUtils::ReadManifestFile(std::string manifest, std::string appPath)
+	Application* BootUtils::ReadManifestFile(string manifest, string appPath)
 	{
 		if (!FileUtils::IsFile(manifest))
 			return NULL;
@@ -51,9 +55,13 @@ namespace kroll
 		Application* application = new Application();
 		application->path = appPath;
 
+		// For now this application uses the user runtime home, but during module
+		// resolution, it will use whatever runtime home it finds the runtime in.
+		application->runtimeHomePath = FileUtils::GetUserRuntimeHomeDirectory();
+
 		while (!file.eof())
 		{
-			std::string line;
+			string line;
 			std::getline(file, line);
 			line = FileUtils::Trim(line);
 
@@ -61,8 +69,8 @@ namespace kroll
 			if (pos == 0 || pos == line.length() - 1)
 				continue;
 
-			std::string key = line.substr(0, pos);
-			std::string value = line.substr(pos + 1, line.length());
+			string key = line.substr(0, pos);
+			string value = line.substr(pos + 1, line.length());
 			key = FileUtils::Trim(key);
 			value = FileUtils::Trim(value);
 
@@ -119,7 +127,12 @@ namespace kroll
 		return application;
 	}
 
-	int BootUtils::CompareVersions(std::string one, std::string two)
+	bool BootUtils::WeakCompareVersions(string one, string two)
+	{
+		return CompareVersions(one, two) > 0;
+	}
+
+	int BootUtils::CompareVersions(string one, string two)
 	{
 		if (one.empty() && two.empty())
 			return 0;
@@ -128,17 +141,17 @@ namespace kroll
 		if (two.empty())
 			return 1;
 
-		std::string delim = ".";
-		std::vector<std::string> listOne;
-		std::vector<std::string> listTwo;
+		string delim = ".";
+		vector<string> listOne;
+		vector<string> listTwo;
 		FileUtils::Tokenize(one, listOne, delim);
 		FileUtils::Tokenize(two, listTwo, delim);
 
-		int min = listOne.size();
+		size_t min = listOne.size();
 		if (listTwo.size() < listOne.size())
 			min = listTwo.size();
 
-		for (int i = 0; i < min; i++)
+		for (size_t i = 0; i < min; i++)
 		{
 			int result = listOne.at(i).compare(listTwo.at(i));
 			if (result != 0)
@@ -153,10 +166,50 @@ namespace kroll
 			return 0;
 	}
 
-	KComponent::KComponent(std::string key, std::string value)
+	pair<Requirement, string> KComponent::ParseVersion(string& specStr)
 	{
-		FileUtils::ExtractVersion(value, &this->requirement, this->version);
+		pair<Requirement, string> spec;
+
+		if (specStr.find(">=") != string::npos)
+		{
+			spec.first = GTE;
+			spec.second = specStr.substr(2, specStr.length());
+		}
+		else if (specStr.find("<=") != string::npos)
+		{
+			spec.first = LTE;
+			spec.second = specStr.substr(2, specStr.length());
+		}
+		else if (specStr.find("<") != string::npos)
+		{
+			spec.first = LT;
+			spec.second = specStr.substr(1, specStr.length());
+		}
+		else if (specStr.find(">") != string::npos)
+		{
+			spec.first = GT;
+			spec.second = specStr.substr(1, specStr.length());
+		}
+		else if (specStr.find("=") != string::npos)
+		{
+			spec.first = EQ;
+			spec.second = specStr.substr(1, specStr.length());
+		}
+		else
+		{
+			spec.first = EQ;
+			spec.second = specStr;
+		}
+		return spec;
+	}
+
+	KComponent::KComponent(string key, string value)
+	{
+		pair<Requirement, string> spec = ParseVersion(value);
+		this->requirement = spec.first;
+		this->version = spec.second;
 		this->name = key;
+
 		if (key == "runtime")
 		{
 			this->type = "runtime";
@@ -169,33 +222,102 @@ namespace kroll
 		}
 	}
 
-	bool KComponent::Resolve(Application* app, std::vector<std::string>& runtimeHomes)
+	string BootUtils::FindVersionedSubfolder(
+		string path,
+		Requirement req,
+		string version)
+	{
+		vector<string> found;
+		vector<string> files;
+		FileUtils::ListDir(path, files);
+		vector<string>::iterator iter = files.begin();
+		while (iter != files.end())
+		{
+			string str = (*iter++);
+			string fullpath = FileUtils::Join(path.c_str(), str.c_str(), NULL);
+			if (str != "." && str == ".." && FileUtils::IsDirectory(fullpath))
+				continue;
+
+			int compare = CompareVersions(str, version);
+			if (req == EQ && compare == 0)
+			{
+				found.push_back(str);
+			}
+			else if (req == GTE && compare >= 0)
+			{
+				found.push_back(str);
+			}
+			else if (req == LTE && compare <= 0)
+			{
+				found.push_back(str);
+			}
+			else if (req == GT && compare > 0)
+			{
+				found.push_back(str);
+			}
+			else if (req == LT && compare < 0)
+			{
+				found.push_back(str);
+			}
+			
+		}
+
+		if (found.size() > 0)
+		{
+			std::sort(found.begin(), found.end(), WeakCompareVersions);
+			string file = found[0];
+			return FileUtils::Join(path.c_str(), file.c_str(), NULL);
+		}
+		else
+		{
+			return string();
+		}
+	}
+
+	bool KComponent::Resolve(Application* app, vector<string>& runtimeHomes)
 	{
 		// Try to find the bundled version of this module.
-		std::string path;
+		string path = app->path.c_str();
 		if (this->typeGuid == MODULE_UUID)
-			path = FileUtils::Join(app->path.c_str(), "modules", this->name.c_str(), NULL);
+		{
+			path = FileUtils::Join(path.c_str(), "modules", this->name.c_str(), NULL);
+		}
+		else if (this->typeGuid == RUNTIME_UUID)
+		{
+			path = FileUtils::Join(path.c_str(), "runtime", NULL);
+		}
 		else
-			path = FileUtils::Join(app->path.c_str(), "runtime", NULL);
-
+		{
+			return false;
+		}
+		
 		if (FileUtils::IsDirectory(path))
 		{
 			this->path = path;
 			return true;
 		}
 
-		std::vector<std::string>::iterator i = runtimeHomes.begin();
+		vector<string>::iterator i = runtimeHomes.begin();
 		while (i != runtimeHomes.end())
 		{
-			std::string rth = *i++;
+			string rth = *i++;
 			if (this->typeGuid == MODULE_UUID)
 				path = FileUtils::Join(rth.c_str(), "modules", OS_NAME, this->name.c_str(), NULL);
 			else
 				path = FileUtils::Join(rth.c_str(), "runtime", OS_NAME, NULL);
-			std::string result = FileUtils::FindVersioned(path, this->requirement, this->version);
+
+			string result = BootUtils::FindVersionedSubfolder(
+				path, this->requirement, this->version);
 			if (!result.empty())
 			{
 				this->path = result;
+
+				// Mark this path as the application's real runtime home
+				if (this->typeGuid == RUNTIME_UUID)
+				{
+					app->runtimeHomePath = rth;
+				}
+
 				return true;
 			}
 		}
@@ -203,9 +325,9 @@ namespace kroll
 		return false;
 	}
 
-	std::string KComponent::GetURL(Application* app)
+	string KComponent::GetURL(Application* app)
 	{
-		std::string url = app->GetQueryString();
+		string url = app->GetQueryString();
 		url.append("&name=");
 		url.append(this->name);
 		url.append("&version=");
@@ -215,9 +337,9 @@ namespace kroll
 		return url;
 	}
 
-	std::vector<KComponent*> Application::ResolveAllComponents(std::vector<std::string>& runtimeHomes)
+	vector<KComponent*> Application::ResolveAllComponents(vector<string>& runtimeHomes)
 	{
-		std::vector<KComponent*> unresolved;
+		vector<KComponent*> unresolved;
 
 		if (this->runtime != NULL && !this->runtime->Resolve(this, runtimeHomes))
 		{
@@ -225,7 +347,7 @@ namespace kroll
 		}
 
 		// Find all regular modules
-		std::vector<KComponent*>::iterator i = this->modules.begin();
+		vector<KComponent*>::iterator i = this->modules.begin();
 		while (i != this->modules.end())
 		{
 			KComponent* m = *i++;
@@ -239,14 +361,14 @@ namespace kroll
 
 	bool Application::IsInstalled()
 	{
-		std::string marker = FileUtils::Join(
+		string marker = FileUtils::Join(
 			this->path.c_str(),
 			INSTALLED_MARKER_FILENAME,
 			NULL);
 		return FileUtils::IsFile(marker);
 	}
 
-	std::string Application::GetQueryString()
+	string Application::GetQueryString()
 	{
 		if (this->queryString.empty())
 		{
@@ -254,28 +376,28 @@ namespace kroll
 			if (EnvironmentUtils::Has(BOOT_UPDATESITE_ENVNAME))
 				this->queryString = EnvironmentUtils::Get(BOOT_UPDATESITE_ENVNAME);
 
-			std::string mid = PlatformUtils::GetMachineId();
-			std::string os = OS_NAME;
-			std::string osver = FileUtils::GetOSVersion();
-			std::string osarch = FileUtils::GetOSArchitecture();
+			string mid = PlatformUtils::GetMachineId();
+			string os = OS_NAME;
+			string osver = FileUtils::GetOSVersion();
+			string osarch = FileUtils::GetOSArchitecture();
 
-			this->queryString += "?os=" + FileUtils::EncodeURIComponent(os);
-			this->queryString += "&osver=" + FileUtils::EncodeURIComponent(osver);
-			this->queryString += "&tiver=" + FileUtils::EncodeURIComponent(STRING(_PRODUCT_VERSION));
-			this->queryString += "&mid=" + FileUtils::EncodeURIComponent(mid);
-			this->queryString += "&aid=" + FileUtils::EncodeURIComponent(this->id);
-			this->queryString += "&guid=" + FileUtils::EncodeURIComponent(this->guid);
-			this->queryString += "&ostype=" + FileUtils::EncodeURIComponent(OS_TYPE);
-			this->queryString += "&osarch=" + FileUtils::EncodeURIComponent(osarch);
+			this->queryString += "?os=" + DataUtils::EncodeURIComponent(os);
+			this->queryString += "&osver=" + DataUtils::EncodeURIComponent(osver);
+			this->queryString += "&tiver=" + DataUtils::EncodeURIComponent(STRING(_PRODUCT_VERSION));
+			this->queryString += "&mid=" + DataUtils::EncodeURIComponent(mid);
+			this->queryString += "&aid=" + DataUtils::EncodeURIComponent(this->id);
+			this->queryString += "&guid=" + DataUtils::EncodeURIComponent(this->guid);
+			this->queryString += "&ostype=" + DataUtils::EncodeURIComponent(OS_TYPE);
+			this->queryString += "&osarch=" + DataUtils::EncodeURIComponent(osarch);
 		}
 		return this->queryString;
 	}
 
-	std::string Application::GetLicenseText()
+	string Application::GetLicenseText()
 	{
-		std::string text;
+		string text;
 
-		std::string license = FileUtils::Join(this->path.c_str(), LICENSE_FILENAME, NULL);
+		string license = FileUtils::Join(this->path.c_str(), LICENSE_FILENAME, NULL);
 		if (!FileUtils::IsFile(license))
 			return text;
 
@@ -285,7 +407,7 @@ namespace kroll
 
 		while (!file.eof())
 		{
-			std::string line;
+			string line;
 			std::getline(file, line);
 			text.append(line);
 			text.append("\n");
@@ -293,14 +415,14 @@ namespace kroll
 		return text;
 	}
 
-	std::string Application::GetUpdateURL()
+	string Application::GetUpdateURL()
 	{
 		return "nourlyet";
 	}
 
 	Application::~Application()
 	{
-		std::vector<KComponent*>::iterator i = modules.begin();
+		vector<KComponent*>::iterator i = modules.begin();
 		while (i != modules.end())
 		{
 			KComponent* c = *i;

@@ -6,23 +6,52 @@
 
 #include "../kroll.h"
 #include <sstream>
-#include <cstring>
 
 namespace kroll
 {
 
-	bool ArgUtils::VerifyArgs(const ValueList& args, const char* sig)
+	ArgList::ArgList()
 	{
-		std::vector<std::string>* sig_vector = ArgUtils::ParseSigString(sig);
-		return ArgUtils::VerifyArgsImpl(args, sig_vector);
+		this->args = new std::vector<SharedValue>;
 	}
 
-	void ArgUtils::VerifyArgsException(const char *name, const ValueList& args, const char* sig)
+	ArgList::ArgList(const ArgList& other)
 	{
-		std::vector<std::string>* sig_vector = ArgUtils::ParseSigString(sig);
-		if (!VerifyArgsImpl(args, sig_vector))
+		this->args = other.args;
+	}
+
+	void ArgList::push_back(SharedValue v)
+	{
+		this->args->push_back(v);
+	}
+
+	size_t ArgList::size() const
+	{
+		return this->args->size();
+	}
+
+	const SharedValue& ArgList::at(size_t index) const
+	{
+		return this->args->at(index);
+	}
+
+	const SharedValue& ArgList::operator[](size_t index) const
+	{
+		return this->args->at(index);
+	}
+
+	bool ArgList::Verify(const char* sig) const
+	{
+		std::vector<std::string>* sig_vector = ArgList::ParseSigString(sig);
+		return ArgList::VerifyImpl(sig_vector);
+	}
+
+	void ArgList::VerifyException(const char *name, const char* sig) const
+	{
+		std::vector<std::string>* sig_vector = ArgList::ParseSigString(sig);
+		if (!VerifyImpl(sig_vector))
 		{
-			SharedString sig = ArgUtils::GenerateSignature(name, sig_vector);
+			SharedString sig = ArgList::GenerateSignature(name, sig_vector);
 			std::string s = "Invalid arguments passed for: " + *sig;
 			delete sig_vector;
 			throw ValueException::FromString(s);
@@ -30,7 +59,7 @@ namespace kroll
 		delete sig_vector;
 	}
 
-	inline std::vector<std::string>* ArgUtils::ParseSigString(const char* sig)
+	inline std::vector<std::string>* ArgList::ParseSigString(const char* sig)
 	{
 		std::vector<std::string>* sig_vector = new std::vector<std::string>();
 		std::string types = "";
@@ -54,7 +83,7 @@ namespace kroll
 		return sig_vector;
 	}
 
-	SharedString ArgUtils::GenerateSignature(const char* name, std::vector<std::string>* sig_vector)
+	SharedString ArgList::GenerateSignature(const char* name, std::vector<std::string>* sig_vector)
 	{
 		std::ostringstream out;
 		bool optional = false;
@@ -105,7 +134,7 @@ namespace kroll
 		return new std::string(out.str());
 	}
 
-	bool ArgUtils::VerifyArgsImpl(const ValueList& args, std::vector<std::string>* sig_vector)
+	bool ArgList::VerifyImpl(std::vector<std::string>* sig_vector) const
 	{
 		bool optional = false;
 		for (size_t i = 0; i < sig_vector->size(); i++)
@@ -123,22 +152,22 @@ namespace kroll
 
 			// Not enough args given, but we're in
 			// optional mode.
-			if (args.size() < i + 1 && optional)
+			if (this->size() < i + 1 && optional)
 				return true;
 
 			// Not enough args given.
-			if (args.size() < i + 1)
+			if (this->size() < i + 1)
 				return false;
 
 			// Arg doesn't conform to arg string
-			if (!VerifyArg(args.at(i), t))
+			if (!ArgList::VerifyArg(this->at(i), t))
 				return false;
 		}
 		return true;
 	}
 
 
-	inline bool ArgUtils::VerifyArg(SharedValue arg, const char* t)
+	inline bool ArgList::VerifyArg(SharedValue arg, const char* t)
 	{
 		while (*t != '\0')
 		{

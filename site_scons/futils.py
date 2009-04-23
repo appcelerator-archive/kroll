@@ -1,4 +1,4 @@
-import os.path as path, shutil, types, tarfile, zipfile
+import os.path as path, shutil, types, tarfile, zipfile, stat
 from SCons.Script import *
 
 def filter_file(file, include=[], exclude=[], filter=None):
@@ -194,3 +194,41 @@ def ReplaceVars(file, replacements):
 	out = open(file, 'w')
 	out.write(txt)
 	out.close()
+
+def NeedsUpdate(source, target, exclude):
+	files = os.walk(source)
+	for walk in files:
+		for file in walk[2]:
+			file = path.join(walk[0], file)
+			if filter_file(file, [], exclude):
+
+				out_file = target + os.sep + file.replace(source, '')
+				if not path.exists(out_file):
+					print '    -> %s does not exist' % out_file
+					return True
+				else:
+					tstamp_o = os.stat(file)[stat.ST_MTIME]
+					tstamp_d = os.stat(out_file)[stat.ST_MTIME]
+					if tstamp_o > tstamp_d:
+						print '    -> %s is out of date' % out_file
+						return True
+	return False
+
+def LightWeightCopyTreeImpl(source, target, exclude):
+	if not path.isdir(source):
+		return
+	
+	if NeedsUpdate(source, target, exclude):
+		print "        -> Copying %s ==> %s" % (source, target)
+		CopyTree(source, target, exclude=exclude)
+	else:
+		print "        -> Already up to date: %s"  % target
+
+def LightWeightCopyTree(sources, outdir, exclude=[]):
+
+	if type(sources) == types.ListType:
+		for source in sources:
+			LightWeightCopyTreeImpl(source, outdir, exclude)
+	else:
+		LightWeightCopyTreeImpl(sources, outdir, exclude)
+

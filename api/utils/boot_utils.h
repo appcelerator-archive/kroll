@@ -32,6 +32,15 @@ namespace kroll
 	class KComponent;
 	class Application;
 
+	enum Requirement
+	{
+		EQ,
+		GT,
+		LT,
+		GTE,
+		LTE,
+	};
+
 	class KROLL_API KComponent
 	{
 		public:
@@ -52,7 +61,10 @@ namespace kroll
 		std::string name;
 		std::string version;
 		std::string path;
-		int requirement;
+		Requirement requirement;
+
+		private:
+		static std::pair<Requirement, std::string> ParseVersion(std::string&);
 	};
 
 	class KROLL_API Application
@@ -81,24 +93,47 @@ namespace kroll
 		std::string image;
 		std::vector<KComponent*> modules;
 		KComponent* runtime;
+		std::string runtimeHomePath;
 		std::string queryString;
 	};
 
 	class KROLL_API BootUtils
 	{
 		public:
+
+		/**
+		 * Find a bundled .zip in a application directory
+		 * @returns Path to the .zip or an empty string() if not found
+		 */
 		static std::string FindBundledModuleZip(
 			std::string name,
 			std::string version,
 			std::string applicationDirectory);
 
+		/**
+		 * Find a subfolder which meets a version requirement 
+		 * @returns Path to the subfolder with the greatest version matching the requirement
+		 *          or an empty string() if none is found.
+		 */
+		static std::string FindVersionedSubfolder(
+			std::string path,
+			Requirement req,
+			std::string version);
+
 		static Application* ReadManifest(std::string applicationPath);
 		static Application* ReadManifestFile(std::string filePath, std::string appPath);
+
 		/**
 		 * Compare two version strings in a piecewise way.
 		 * @returns 1 if the first is larger, 0 if they are equal, -1 if the second is larger
 		 */
 		static int CompareVersions(std::string, std::string);
+
+		/**
+		 * Compare two version strings in a piecewise way, weakly
+		 * @returns true if the first is larger or false otherwise
+		 */
+		static bool WeakCompareVersions(std::string, std::string);
 	};
 }
 #endif

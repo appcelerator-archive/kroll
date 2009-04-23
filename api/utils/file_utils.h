@@ -18,13 +18,15 @@
 #include <algorithm>
 
 #ifdef OS_WIN32
+#define KR_PATH_SEP_CHAR '\\'
 #define KR_PATH_SEP "\\"
 #define KR_PATH_SEP_OTHER "/"
 #define KR_LIB_SEP ";"
 #ifndef NO_UNZIP
-#include "../unzip/unzip.h"
+#include "unzip/unzip.h"
 #endif
 #else
+#define KR_PATH_SEP_CHAR '/'
 #define KR_PATH_SEP "/"
 #define KR_PATH_SEP_OTHER "\\"
 #define KR_LIB_SEP ":"
@@ -39,12 +41,6 @@
 #define KROLL_API
 #endif
 
-#define EqualTo 0
-#define GreaterThanEqualTo 1
-#define LessThanEqualTo 2
-#define GreaterThan 3
-#define LessThan 4
-
 namespace kroll
 {
 	/**
@@ -53,31 +49,6 @@ namespace kroll
 	class KROLL_API FileUtils
 	{
 	public:
-		/**
-		 * Extracts a matching operation and version from the
-		 * passed-in version spec. For example, a spec of ">= 0.1"
-		 * would set op to <GreaterThanEqualTo> and version to "0.1"
-		 * @param spec a version matching spec, i.e ">= 0.1", "= 0.2", etc
-		 * @param op will be set to the matching operation:
-		 * GreaterThanEqualTo, LessThanEqualTo, LessThan, GreaterThan, EqualTo
-		 * @param version the version from the spec i.e "0.1"
-		 */
-		static void ExtractVersion(std::string& spec, int *op, std::string &version);
-
-		/**
-		 * Turn a version string into an integer representing the version.
-		 * @param version The version string
-		 *\code
-		 * int version = kroll::FileUtils::MakeVersion("1.2.3");
-		 * // version is now 123
-		 * \endcode
-		*/
-		static int MakeVersion(std::string& version);
-
-		/**
-		 * find a versioned for a given root path and a version spec in op
-		 */
-		static std::string FindVersioned(std::string& path, int op, std::string& version);
 
 		/**
 		 * tokenize a string by delimeter into parts and place in vector tokens
@@ -88,11 +59,6 @@ namespace kroll
 		 * @param str The string to trim
 		 */
 		static std::string Trim(std::string str);
-
-		/**
-		 *
-		 */
-		static bool ReadManifest(std::string& path, std::string &runtimePath, std::vector< std::pair< std::pair<std::string,std::string>,bool> >& modules, std::vector<std::string> &moduleDirs, std::string &appname, std::string &appid, std::string &runtimeOverride, std::string &guid);
 
 		/**
 		 *
@@ -117,7 +83,15 @@ namespace kroll
 		/**
 		 *
 		 */
+		static std::string Basename(std::string path);
+
+		/**
+		 *
+		 */
 		static bool CreateDirectory(std::string &dir);
+
+		// TODO - remove this - had to add it to get modules/ti.Database/databases.cpp to link successfully
+		static bool CreateDirectory2(std::string &dir);
 #if defined(OS_WIN32)
 		// TODO: implement this for other platforms
 		static void CopyRecursive(std::string &dir, std::string &dest);
@@ -141,16 +115,6 @@ namespace kroll
 		 * This function returns the Operating system architecture
 		 */
 		static std::string GetOSArchitecture();
-
-		/**
-		 * Encodes a URI value
-		 */
-		static std::string EncodeURIComponent(std::string value);
-
-		/**
-		 * Encodes a URI value
-		 */
-		static std::string DecodeURIComponent(std::string value);
 
 		/**
 		 * This function returns temporary directory for application
@@ -184,28 +148,25 @@ namespace kroll
 		 */
 		static bool IsHidden(std::string &file);
 
-		/*
-			Function: FindRuntime
-		*/
-		static std::string FindRuntime(int op, std::string& version);
+		/**
+		 * Get the system-wide runtime home directory. This is just a
+		 * default location --  to get the  current runtime home directory
+		 * read the value of KR_RUNTIME_HOME or Host::GetRuntimeHomePath instead.
+		 */
+		static std::string GetSystemRuntimeHomeDirectory();
 
 		/**
-		 *
+		 * Get the user-specific runtime home directory. This is just a
+		 * default location --  to get the  current runtime home directory
+		 * read the value of KR_RUNTIME_HOME or Host::GetRuntimeHomePath instead.
 		 */
-		static std::string FindModule(std::string& name, int op, std::string& version);
-
-		/**
-		 * Get the default runtime home directory. For Linux, this just
-		 * gets the old-style runtime home directory and, in general, should
-		 * not be used. Instead either read the value of KR_RUNTIME_HOME or
-		 * Host::GetRuntimeHomePath for the runtime that is currently in use.
-		 */
-		static std::string GetDefaultRuntimeHomeDirectory();
+		static std::string GetUserRuntimeHomeDirectory();
 
 		/**
 		 *
 		 */
 		static bool IsRuntimeInstalled();
+
 #ifndef NO_UNZIP
 		/**
 		 *

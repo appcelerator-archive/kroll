@@ -54,8 +54,11 @@ class App:
 		if bundle:
 			self.status('copying runtime to %s' % self.contents)
 			futils.CopyToDir(src_runtime, self.contents, exclude=excludes)
+
 			self.status('copying modules to %s' % self.contents)
-			futils.CopyToDir(src_modules, self.contents, exclude=excludes)
+			for module_dir in glob.glob(p.join(src_modules, '*')):
+				futils.LightWeightCopyTree(module_dir, p.join(self.contents, 'modules', p.basename(module_dir)))
+			#futils.CopyToDir(src_modules, self.contents, exclude=excludes)
 
 		self.status('copying kboot to %s' % self.exe)
 		futils.Copy(self.kboot, self.exe)
@@ -104,7 +107,7 @@ class App:
 		if self.build.is_win32():
 			self.status('copying ms c runtime to %s' % (self.contents))
 			mscrt = p.join(self.build.third_party, 'microsoft', 'Microsoft.VC80.CRT')
-			self.build.utils.CopyToDir(mscrt, self.contents)
+			futils.CopyToDir(mscrt, self.contents)
 
 		self.status('writing manifest to %s' % p.join(self.contents, 'manifest'))
 		manifest = self.build.generate_manifest(

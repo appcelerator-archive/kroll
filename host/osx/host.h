@@ -27,15 +27,13 @@ namespace kroll
 		virtual ~OSXHost();
 		virtual bool RunLoop();
 		virtual bool Start();
-		
+
 	private:
 		std::string appConfig;
+		NSAutoreleasePool* pool;
 	};
 }
 
 extern "C"
-{
-	EXPORT int Execute(int argc,const char** argv);
-}
-
+{ EXPORT int Execute(int argc,const char** argv); }
 #endif
