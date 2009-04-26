@@ -36,21 +36,46 @@ namespace kroll
 		else
 			return string();
 	}
-
-	Application* BootUtils::ReadManifest(string appPath)
+	
+	std::string BootUtils::FindCommandLineArg(std::string name, std::string def, int argc, char *argv[])
 	{
-		string manifest = FileUtils::Join(appPath.c_str(), MANIFEST_FILENAME, NULL);
-		return ReadManifestFile(manifest, appPath);
+		for (int c=1;c<argc;c++)
+		{
+			std::string arg = std::string(argv[c]);
+			std::string s = "--" + name + "=";
+			if (arg.find(s)==0)
+			{
+				std::size_t pos = arg.find("=");
+				std::string v = arg.substr(pos+1);
+				if (v[0]=='"')
+				{
+					// trim off quotes
+					return v.substr(1,v.length()-2);
+				}
+				return v;
+			}
+		}
+		return def;
 	}
 
-	Application* BootUtils::ReadManifestFile(string manifest, string appPath)
+	Application* BootUtils::ReadManifest(string appPath,int argc, char *argv[])
+	{
+		string manifest = FileUtils::Join(appPath.c_str(), MANIFEST_FILENAME, NULL);
+		return ReadManifestFile(manifest, appPath, argc, argv);
+	}
+
+	Application* BootUtils::ReadManifestFile(string manifest, string appPath, int argc, char *argv[])
 	{
 		if (!FileUtils::IsFile(manifest))
+		{
 			return NULL;
+		}
 
 		std::ifstream file(manifest.c_str());
 		if (file.bad() || file.fail())
+		{
 			return NULL;
+		}
 
 		Application* application = new Application();
 		application->path = appPath;
@@ -67,7 +92,9 @@ namespace kroll
 
 			size_t pos = line.find(":");
 			if (pos == 0 || pos == line.length() - 1)
+			{
 				continue;
+			}
 
 			string key = line.substr(0, pos);
 			string value = line.substr(pos + 1, line.length());
@@ -117,12 +144,36 @@ namespace kroll
 			{
 				KComponent* c = new KComponent(key, value);
 				if (c->typeGuid == RUNTIME_UUID)
+				{
 					application->runtime = c;
+				}
 				else
+				{
 					application->modules.push_back(c);
+				}
 			}
 		}
 
+		// if we pass in --runtime_override we'll use that as our runtime dir
+		std::string rto = FindCommandLineArg("runtime_override","",argc,argv);
+		if (!rto.empty())
+		{
+			application->runtime_override = rto;
+#ifdef DEBUG
+			std::cout << "Runtime override is = " << rto << std::endl;
+#endif
+		}
+
+		// if we pass in --module_override we'll use that as our module dir
+		std::string mo = FindCommandLineArg("module_override","",argc,argv);
+		if (!mo.empty())
+		{
+			application->module_override = mo;
+#ifdef DEBUG
+			std::cout << "Module override is = " << mo << std::endl;
+#endif
+		}
+		
 		file.close();
 		return application;
 	}
@@ -276,19 +327,32 @@ namespace kroll
 
 	bool KComponent::Resolve(Application* app, vector<string>& runtimeHomes)
 	{
-		// Try to find the bundled version of this module.
 		string path = app->path.c_str();
-		if (this->typeGuid == MODULE_UUID)
+		
+		// see if we have command line overrides (priority)
+		if (this->typeGuid == MODULE_UUID && !app->module_override.empty())
 		{
-			path = FileUtils::Join(path.c_str(), "modules", this->name.c_str(), NULL);
+			path = FileUtils::Join(app->module_override.c_str(), this->name.c_str(), NULL);
 		}
-		else if (this->typeGuid == RUNTIME_UUID)
+		else if (this->typeGuid == RUNTIME_UUID && !app->runtime_override.empty())
 		{
-			path = FileUtils::Join(path.c_str(), "runtime", NULL);
+			path = app->runtime_override;
 		}
 		else
 		{
-			return false;
+			// Try to find the bundled version of this module.
+			if (this->typeGuid == MODULE_UUID)
+			{
+				path = FileUtils::Join(path.c_str(), "modules", this->name.c_str(), NULL);
+			}
+			else if (this->typeGuid == RUNTIME_UUID)
+			{
+				path = FileUtils::Join(path.c_str(), "runtime", NULL);
+			}
+			else
+			{
+				return false;
+			}
 		}
 		
 		if (FileUtils::IsDirectory(path))
@@ -302,9 +366,13 @@ namespace kroll
 		{
 			string rth = *i++;
 			if (this->typeGuid == MODULE_UUID)
+			{
 				path = FileUtils::Join(rth.c_str(), "modules", OS_NAME, this->name.c_str(), NULL);
+			}
 			else
+			{
 				path = FileUtils::Join(rth.c_str(), "runtime", OS_NAME, NULL);
+			}
 
 			string result = BootUtils::FindVersionedSubfolder(
 				path, this->requirement, this->version);
@@ -351,9 +419,13 @@ namespace kroll
 		while (i != this->modules.end())
 		{
 			KComponent* m = *i++;
+#ifdef DEBUG
 			printf("resolving: %s\n", m->name.c_str());
+#endif
 			if (!m->Resolve(this, runtimeHomes))
+			{
 				unresolved.push_back(m);
+			}
 		}
 
 		return unresolved;

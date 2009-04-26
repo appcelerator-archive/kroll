@@ -37,7 +37,7 @@ namespace kroll
 		Logger& GetChild(std::string name);
 		std::string& GetName();
 
-		void Log(Level, std::string);
+		void Log(Level, std::string &);
 		void Log(Level, const char*, va_list);
 		void Log(Level, const char*, ...);
 		std::string Format(const char*, va_list);

@@ -57,7 +57,9 @@ inline void ShowError(std::string error, bool fatal=false)
 	NSApplicationLoad();
 	NSRunCriticalAlertPanel(@"Application Error", [NSString stringWithCString:error.c_str()], @"Quit", nil, nil);
 	if (fatal)
+	{
 		exit(1);
+	}
 }
 
 std::string GetApplicationHomePath()
@@ -160,7 +162,7 @@ void FindUpdate()
 	if (FileUtils::IsFile(file))
 	{
 		updateFile = file;
-		Application* update = BootUtils::ReadManifestFile(updateFile, applicationHome);
+		Application* update = BootUtils::ReadManifestFile(updateFile, applicationHome,0,NULL);
 		if (update == NULL)
 		{
 			// We should probably just continue on. A corrupt manifest doesn't
@@ -176,7 +178,7 @@ void FindUpdate()
 	}
 }
 
-int Bootstrap()
+int Bootstrap(int argc, char *argv[])
 {
 	applicationHome = GetApplicationHomePath();
 	string manifestPath = FileUtils::Join(applicationHome.c_str(), MANIFEST_FILENAME, NULL);
@@ -186,7 +188,7 @@ int Bootstrap()
 		return __LINE__;
 	}
 
-	app = BootUtils::ReadManifest(applicationHome);
+	app = BootUtils::ReadManifest(applicationHome,argc,argv);
 	if (app == NULL)
 	{
 		ShowError("Application packaging error: could not read manifest.");
@@ -200,7 +202,9 @@ int Bootstrap()
 	if (missing.size() > 0 || !app->IsInstalled() || !updateFile.empty())
 	{
 		if (!RunInstaller(missing))
+		{
 			return __LINE__;
+		}
 
 		missing = FindModules();
 		FindUpdate();
@@ -263,6 +267,8 @@ int Bootstrap()
 	value = [NSString stringWithUTF8String:app->id.c_str()];
 	[environment setObject:value forKey:@"KR_APP_ID"];
 
+	delete app;
+	
 	NSArray* arguments = [[NSProcessInfo processInfo] arguments];
 	MyExecve(executablePath, arguments, environment);
 
@@ -311,7 +317,7 @@ int main(int argc, char *argv[])
 	char *fork_flag = getenv("KR_FORK");
 	if (!fork_flag)
 	{
-		rc = Bootstrap();
+		rc = Bootstrap(argc,argv);
 	}
 	else
 	{

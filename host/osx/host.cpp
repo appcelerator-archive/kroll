@@ -32,6 +32,17 @@ namespace kroll
 		return "module.dylib";
 	}
 
+	void OSXHost::Exit(int exitcode)
+	{
+		// create an application specific exit event
+		NSEvent *event = [NSEvent otherEventWithType:NSApplicationDefined location:NSZeroPoint modifierFlags:0 timestamp:[[NSDate date] timeIntervalSinceNow] windowNumber:0 context:nil subtype:1022 data1:0 data2:0];
+		NSApplication *app = [NSApplication sharedApplication];
+		// we're going to post our event to our event queue to cause him
+		// to wake up (since he'll block waiting for pending events)
+		[app postEvent:event atStart:YES];
+		Host::Exit(exitCode);
+	}
+
 	bool OSXHost::Start()
 	{
 		NSApplication *app = [NSApplication sharedApplication];
@@ -51,24 +62,32 @@ namespace kroll
 				NSEvent *event = [app nextEventMatchingMask:NSAnyEventMask untilDate:[NSDate dateWithTimeIntervalSinceNow:10.0] inMode:NSDefaultRunLoopMode dequeue:YES];
 				if (event)
 				{
+					// this is our queued stop event
+					if ([event type] == NSApplicationDefined && [event subtype]==1022 && [event data1]==0)
+					{
+						return false;
+					}
 					[app sendEvent:event];
 					[app updateWindows];
 				}
 			}
 			@catch(NSException *e)
 			{
-				std::cerr << "Caught NSException in main loop: " << [[e reason] UTF8String] << std::endl;
+				static Logger &logger = Logger::Get("OSXHost");
+				logger.Error("Caught NSException in main loop: %s",[[e reason] UTF8String]);
 				KrollDumpStackTraceFromException(e);
 			}
 		}
 		catch (std::exception &e)
 		{
-			std::cerr << "Caught exception in main loop: " << e.what() << std::endl;
+			static Logger &logger = Logger::Get("OSXHost");
+			logger.Error("Caught exception in main loop: %s",e.what());
 			KrollDumpStackTrace();
 		}
 		catch (...)
 		{
-			std::cerr << "Caught unhandled exception in main loop: " << std::endl;
+			static Logger &logger = Logger::Get("OSXHost");
+		 	logger.Error("Caught unhandled exception in main loop");
 			KrollDumpStackTrace();
 		}
 

@@ -123,7 +123,7 @@ namespace kroll
 		return Logger::GetImpl(childName);
 	}
 
-	void Logger::Log(Level level, std::string message)
+	void Logger::Log(Level level, std::string& message)
 	{
 		Poco::Logger& loggerImpl = Poco::Logger::get(name);
 		Poco::Message m(this->name, message, (Poco::Message::Priority) level);

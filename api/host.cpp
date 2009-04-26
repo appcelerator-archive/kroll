@@ -57,6 +57,7 @@ namespace kroll
 		autoScan(false),
 		runUILoop(true),
 		profile(false),
+		consoleLogging(true),
 		profileStream(NULL)
 	{
 		instance_ = this;
@@ -119,11 +120,11 @@ namespace kroll
 
 		if (this->debug)
 		{
-			Logger::Initialize(true, true, Poco::Message::PRIO_DEBUG, this->appID, this->logpath);
+			Logger::Initialize(this->consoleLogging, true, Poco::Message::PRIO_DEBUG, this->appID, this->logpath);
 		}
 		else
 		{
-			Logger::Initialize(true, true, Poco::Message::PRIO_INFORMATION, this->appID, this->logpath);
+			Logger::Initialize(this->consoleLogging, true, Poco::Message::PRIO_INFORMATION, this->appID, this->logpath);
 		}
 
 #ifdef DEBUG
@@ -191,6 +192,10 @@ namespace kroll
 			else if (arg == "--attach-debugger")
 			{
 				this->waitForDebugger = true;
+			}
+			else if (arg.find("--no-console-logging")==0)
+			{
+				this->consoleLogging = false;
 			}
 			else if (arg.find("--profile=")==0)
 			{
@@ -543,6 +548,8 @@ namespace kroll
 
 	void Host::UnloadModules()
 	{
+		KR_DUMP_LOCATION
+		
 		ScopedLock lock(&moduleMutex);
 
 		// Stop all modules
@@ -760,6 +767,9 @@ namespace kroll
 
 	int Host::Run()
 	{
+		KR_DUMP_LOCATION
+		
+		static Logger &logger = Logger::Get("Host");
 
 		if (this->waitForDebugger)
 		{
@@ -779,6 +789,8 @@ namespace kroll
 			PRINTD(*ss);
 			return 1;
 		}
+		
+		logger.Debug("starting run loop");
 
 		// allow start to immediately end
 		this->running = this->Start();
@@ -789,10 +801,13 @@ namespace kroll
 				ScopedLock lock(&moduleMutex);
 				if (!this->RunLoop())
 				{
+					logger.Debug("leaving run loop");
 					break;
 				}
 			}
 		}
+
+		logger.Debug("completed run loop");
 
 		ScopedLock lock(&moduleMutex);
 		this->Stop();
@@ -807,12 +822,17 @@ namespace kroll
 		// stop the profiling
 		StopProfiling();
 
-		PRINTD("EXITING WITH EXITCODE = " << exitCode);
+		logger.Info("exiting with exitcode %d",this->exitCode);
 		return this->exitCode;
 	}
 
 	void Host::Exit(int exitcode)
 	{
+		KR_DUMP_LOCATION
+		static Logger &logger = Logger::Get("Host");
+		
+		logger.Debug("Beginning exit with exitcode = %d",exitcode);
+		
 		ScopedLock lock(&moduleMutex);
 		running = false;
 		this->exitCode = exitcode;
@@ -825,5 +845,7 @@ namespace kroll
 			module->Exiting(exitcode);
 			i++;
 		}
+
+		logger.Debug("Leaving exit with exitcode = %d",exitcode);
 	}
 }

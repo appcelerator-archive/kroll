@@ -95,6 +95,8 @@ namespace kroll
 		KComponent* runtime;
 		std::string runtimeHomePath;
 		std::string queryString;
+		std::string module_override;
+		std::string runtime_override;
 	};
 
 	class KROLL_API BootUtils
@@ -120,8 +122,8 @@ namespace kroll
 			Requirement req,
 			std::string version);
 
-		static Application* ReadManifest(std::string applicationPath);
-		static Application* ReadManifestFile(std::string filePath, std::string appPath);
+		static Application* ReadManifest(std::string applicationPath, int argc, char *argv[]);
+		static Application* ReadManifestFile(std::string filePath, std::string appPath, int argc, char *argv[]);
 
 		/**
 		 * Compare two version strings in a piecewise way.
@@ -134,6 +136,9 @@ namespace kroll
 		 * @returns true if the first is larger or false otherwise
 		 */
 		static bool WeakCompareVersions(std::string, std::string);
+	
+	private:
+		static std::string FindCommandLineArg(std::string name, std::string def, int argc, char *argv[]);
 	};
 }
 #endif
