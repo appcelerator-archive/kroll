@@ -37,12 +37,28 @@ namespace kroll
 			return string();
 	}
 	
+	bool BootUtils::HasCommandLineArg(std::string name, int argc, char *argv[])
+	{
+		for (int c=1;c<argc;c++)
+		{
+			std::string arg = std::string(argv[c]);
+			// we don't use equal as some parameters
+			// are just things like --debug
+			std::string s = (name.find("--")==0) ? name : "--" + name ;
+			if (arg.find(s)==0)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+	
 	std::string BootUtils::FindCommandLineArg(std::string name, std::string def, int argc, char *argv[])
 	{
 		for (int c=1;c<argc;c++)
 		{
 			std::string arg = std::string(argv[c]);
-			std::string s = "--" + name + "=";
+			std::string s = ((name.find("--")==0) ? "" : "--") + name + "=";
 			if (arg.find(s)==0)
 			{
 				std::size_t pos = arg.find("=");
@@ -419,9 +435,6 @@ namespace kroll
 		while (i != this->modules.end())
 		{
 			KComponent* m = *i++;
-#ifdef DEBUG
-			printf("resolving: %s\n", m->name.c_str());
-#endif
 			if (!m->Resolve(this, runtimeHomes))
 			{
 				unresolved.push_back(m);

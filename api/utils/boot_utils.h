@@ -137,8 +137,18 @@ namespace kroll
 		 */
 		static bool WeakCompareVersions(std::string, std::string);
 	
-	private:
+		/** 
+		 * Find a command line value (in the form --<name>=<value>) and return the value
+		 * optionally de-quoting the value if it begins with "
+		 * @returns value or default 
+		 */
 		static std::string FindCommandLineArg(std::string name, std::string def, int argc, char *argv[]);
+
+		/** 
+		 * Check a command line value (in the form --<name>) is present
+		 * @returns true if found or false if not
+		 */
+		static bool HasCommandLineArg(std::string name, int argc, char *argv[]);
 	};
 }
 #endif

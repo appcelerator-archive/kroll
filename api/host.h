@@ -300,7 +300,7 @@ namespace kroll
 
 		void AddInvalidModuleFile(std::string path);
 		void SetupAppInstallerIfRequired();
-		void ParseCommandLineArguments(int argc, const char** argv);
+		void ParseCommandLineArguments(int argc, char** argv);
 		static void AssertEnvironmentVariable(std::string);
 		std::string FindAppInstaller();
 

@@ -325,10 +325,6 @@ int main(int argc, char *argv[])
 		rc = StartHost(argc, argv);
 	}
 
-	#ifdef DEBUG
-	std::cout << "return code: " << rc << std::endl;
-	#endif
-
 	[pool release];
 	return rc;
 }

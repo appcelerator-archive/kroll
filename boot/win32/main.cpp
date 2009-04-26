@@ -392,8 +392,5 @@ int main(int __argc, const char* __argv[])
 		rc = StartHost();
 	}
 
-	#ifdef DEBUG
-	std::cout << "return code: " << rc << std::endl;
-	#endif
 	return rc;
 }

@@ -91,7 +91,7 @@ namespace kroll
 
 		// check to see if we have to install the app
 		SetupAppInstallerIfRequired();
-		ParseCommandLineArguments(argc, argv);
+		ParseCommandLineArguments(argc, (char**)argv);
 
 		PRINTD(">>> " << HOME_ENV << "=" << this->appHomePath);
 		PRINTD(">>> " << APPID_ENV << "=" << this->appID);
@@ -130,12 +130,12 @@ namespace kroll
 #ifdef DEBUG
 		// dump command args
 		Logger& logger = Logger::Get("Host");
-		logger.Info("ARG COUNT = %d",this->args.size());
+		logger.Debug("ARG COUNT = %d",this->args.size());
 		std::vector<std::string>::iterator i = this->args.begin();
 		if (i!=this->args.end())
 		{
 			std::string s = (*i);
-			logger.Info("ARGUMENT => %s",s.c_str());
+			logger.Debug("ARGUMENT => %s",s.c_str());
 			i++;
 		}
 #endif		
@@ -172,60 +172,39 @@ namespace kroll
 	{
 		if (!Environment::has(variable))
 		{
-			std::cerr << variable << " not defined, aborting." << std::endl;
-			exit(1);
+			Logger &logger = Logger::Get("Host");
+			logger.Fatal("required variable '%s' not defined, aborting.");
+			exit(-999);
 		}
 	}
 
-	void Host::ParseCommandLineArguments(int argc, const char** argv)
+	void Host::ParseCommandLineArguments(int argc, char** argv)
 	{
+		this->debug = BootUtils::HasCommandLineArg("debug",argc,argv) ? 1 : this->debug;
+		this->waitForDebugger = BootUtils::HasCommandLineArg("attach-debugger",argc,argv);
+		this->consoleLogging = !BootUtils::HasCommandLineArg("no-console-logging",argc,argv);
+		
+		if (BootUtils::HasCommandLineArg("profile",argc,argv))
+		{
+			this->profile = true;
+			this->profilePath = BootUtils::FindCommandLineArg("profile","",argc,argv);
+		}
+		if (BootUtils::HasCommandLineArg("logpath",argc,argv))
+		{
+			this->logpath = BootUtils::FindCommandLineArg("logpath","",argc,argv);
+		}
+		if (BootUtils::HasCommandLineArg(STRING(_BOOT_HOME_FLAG),argc,argv))
+		{
+			this->appHomePath = BootUtils::FindCommandLineArg(STRING(_BOOT_HOME_FLAG),"",argc,argv);
+			Environment::set(HOME_ENV, this->appHomePath);
+		}
+		
 		// Sometimes libraries parsing argc and argv will
 		// modify them, so we want to keep our own copy here
 		for (int i = 0; i < argc; i++)
 		{
 			std::string arg = argv[i];
 			this->args.push_back(arg);
-			if (arg == "--debug")
-			{
-				this->debug = true;
-			}
-			else if (arg == "--attach-debugger")
-			{
-				this->waitForDebugger = true;
-			}
-			else if (arg.find("--no-console-logging")==0)
-			{
-				this->consoleLogging = false;
-			}
-			else if (arg.find("--profile=")==0)
-			{
-				std::string pp = arg.substr(10);
-				if (pp.find("\"")==0)
-				{
-					pp = pp.substr(1,pp.length()-2);
-				}
-				this->profilePath = pp;
-				this->profile = true;
-			}
-			else if (arg.find("--logpath=")==0)
-			{
-				std::string pp = arg.substr(10);
-				if (pp.find("\"")==0)
-				{
-					pp = pp.substr(1,pp.length()-2);
-				}
-				this->logpath = pp;
-			}
-			else if (arg.find(STRING(_BOOT_HOME_FLAG))==0)
-			{
-				size_t i = arg.find("=");
-				if (i != std::string::npos)
-				{
-					std::string newHome = arg.substr(i + 1);
-					Environment::set(HOME_ENV, newHome);
-					this->appHomePath = newHome;
-				}
-			}
 		}
 	}
 
@@ -406,7 +385,7 @@ namespace kroll
 					File f = files.at(i);
 					Path targetPath(appPath, Path(Path(f.path()).getBaseName()));
 					File targetFile(targetPath);
-					printf("target: %s\n", targetFile.path().c_str());
+					PRINTD("target: " << targetFile.path());
 					if (!targetFile.exists())
 					{
 						PRINTD("Copying " << f.path() << " to " << appDir);
@@ -429,7 +408,7 @@ namespace kroll
 					File f = files.at(i);
 					Path targetPath(appPath, Path(Path(f.path()).getBaseName()));
 					File targetFile(targetPath);
-					printf("target: %s\n", targetFile.path().c_str());
+					PRINTD("target: " << targetFile.path());
 					if (!targetFile.exists())
 					{
 						PRINTD("Copying " << f.path() << " to " << appDir);
