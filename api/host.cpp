@@ -777,7 +777,6 @@ namespace kroll
 		{
 			while (this->running)
 			{
-				ScopedLock lock(&moduleMutex);
 				if (!this->RunLoop())
 				{
 					logger.Debug("leaving run loop");
