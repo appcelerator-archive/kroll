@@ -226,6 +226,9 @@ class App:
 	
 		invoke('hdiutil detach %s' % volume)
 		invoke('hdiutil convert "%s" -format UDBZ -imagekey zlib-level=9 -o "%s"' % (temp_dmg, dmg))
-		invoke('hdiutil internet-enable -yes "%s"' % dmg)
+
+# NOTE: removing since this causes auto extraction which we no longer
+# want if we're not using package manager installs
+#		invoke('hdiutil internet-enable -yes "%s"' % dmg)
 	
 		os.remove(temp_dmg)

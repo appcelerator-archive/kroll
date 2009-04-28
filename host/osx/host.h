@@ -27,6 +27,7 @@ namespace kroll
 		virtual ~OSXHost();
 		virtual bool RunLoop();
 		virtual bool Start();
+		virtual void Exit(int exitcode);
 
 	private:
 		std::string appConfig;

@@ -159,8 +159,9 @@ namespace kroll
 	{
 		if (!Environment::has(variable))
 		{
-			std::cerr << variable << " not defined, aborting." << std::endl;
-			exit(1);
+			Logger &logger = Logger::Get("Host");
+			logger.Fatal("required variable '%s' not defined, aborting.");
+			exit(-999);
 		}
 	}
 
@@ -340,7 +341,7 @@ namespace kroll
 					File f = files.at(i);
 					Path targetPath(appPath, Path(Path(f.path()).getBaseName()));
 					File targetFile(targetPath);
-					printf("target: %s\n", targetFile.path().c_str());
+					PRINTD("target: " << targetFile.path());
 					if (!targetFile.exists())
 					{
 						PRINTD("Copying " << f.path() << " to " << appDir);
@@ -363,7 +364,7 @@ namespace kroll
 					File f = files.at(i);
 					Path targetPath(appPath, Path(Path(f.path()).getBaseName()));
 					File targetFile(targetPath);
-					printf("target: %s\n", targetFile.path().c_str());
+					PRINTD("target: " << targetFile.path());
 					if (!targetFile.exists())
 					{
 						PRINTD("Copying " << f.path() << " to " << appDir);
@@ -484,6 +485,8 @@ namespace kroll
 
 	void Host::UnloadModules()
 	{
+		KR_DUMP_LOCATION
+		
 		ScopedLock lock(&moduleMutex);
 
 		// Stop all modules
@@ -704,6 +707,8 @@ namespace kroll
 			log.Error(*ss);
 			return 1;
 		}
+		
+		logger.Debug("starting run loop");
 
 		// Depending on the implementation of platform-specific host,
 		// it may block in Start() or implement a UI loop which will
@@ -715,10 +720,13 @@ namespace kroll
 			{
 				if (!this->RunLoop())
 				{
+					logger.Debug("leaving run loop");
 					break;
 				}
 			}
 		}
+
+		logger.Debug("completed run loop");
 
 		ScopedLock lock(&moduleMutex);
 		this->Stop();
@@ -736,6 +744,11 @@ namespace kroll
 
 	void Host::Exit(int exitCode)
 	{
+		KR_DUMP_LOCATION
+		static Logger &logger = Logger::Get("Host");
+		
+		logger.Debug("Beginning exit with exitcode = %d",exitcode);
+		
 		ScopedLock lock(&moduleMutex);
 		running = false;
 		this->exitCode = exitCode;
@@ -747,5 +760,7 @@ namespace kroll
 			printf("%s\n", (*iter)->GetPath().c_str());
 			(*iter++)->Exiting(exitCode);
 		}
+
+		logger.Debug("Leaving exit with exitcode = %d",exitcode);
 	}
 }
