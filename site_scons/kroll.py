@@ -127,9 +127,6 @@ class BuildConfig(object):
 		vars.Add('PRODUCT_NAME', 'The underlying product name that Kroll will display (default: "Kroll")', kwargs['PRODUCT_NAME'])
 		vars.Add('GLOBAL_NS_VARNAME','The name of the Kroll global variable', kwargs['GLOBAL_NS_VARNAME'])
 		vars.Add('CONFIG_FILENAME','The name of the Kroll config file', kwargs['CONFIG_FILENAME'])
-
-		vars.Add('BOOT_RUNTIME_FLAG','The name of the Kroll runtime command line flag', kwargs['BOOT_RUNTIME_FLAG'])
-		vars.Add('BOOT_HOME_FLAG','The name of the Kroll home command line file', kwargs['BOOT_HOME_FLAG'])
 		vars.Add('BOOT_UPDATESITE_ENVNAME','The name of the Kroll update site environment variable', kwargs['BOOT_UPDATESITE_ENVNAME'])
 		vars.Add('CRASH_REPORT_URL','The URL to send crash dumps to', kwargs['CRASH_REPORT_URL'])
 
@@ -252,7 +249,7 @@ class BuildConfig(object):
 				return module
 		return None
 
-	def add_module(self, name, version=None, resources=True):
+	def add_module(self, name, version=None, resources=True, env=None):
 		if not version:
 			version = self.version
 
@@ -260,6 +257,9 @@ class BuildConfig(object):
 		build_dir = path.join(self.dir, 'modules', name)
 		m = Module(name, self.version, build_dir, self)
 		self.modules.append(m)
+
+		if env:
+			env.Append(CPPDEFINES=[('MODULE_NAME', m.name), ('MODULE_VERSION', m.version)])
 
 		m.copy_resources(self.cwd(2))
 

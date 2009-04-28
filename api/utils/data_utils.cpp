@@ -10,7 +10,7 @@
 using KPoco::DigestEngine;
 using KPoco::MD5Engine;
 
-namespace kroll
+namespace UTILS_NS
 {
 
 	namespace DataUtilsNS

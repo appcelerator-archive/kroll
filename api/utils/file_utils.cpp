@@ -64,7 +64,7 @@ static std::string safe_encode(std::string &str)
 }
 
 
-namespace kroll
+namespace UTILS_NS
 {
 	std::string FileUtils::GetApplicationDirectory()
 	{
@@ -118,7 +118,7 @@ namespace kroll
 #ifdef OS_OSX
 		NSString * tempDir = NSTemporaryDirectory();
 		if (tempDir == nil)
-		    tempDir = @"/tmp";
+			tempDir = @"/tmp";
 
 		NSString *tmp = [tempDir stringByAppendingPathComponent:@"kXXXXX"];
 		const char * fsTemplate = [tmp fileSystemRepresentation];
@@ -419,7 +419,7 @@ namespace kroll
 	void FileUtils::Tokenize(
 		const std::string& str,
 		std::vector<std::string>& tokens, 
-		const std::string &delimeters, 
+		const std::string delimeters, 
 		bool skip_if_found)
 	{
 		std::string::size_type lastPos = str.find_first_not_of(delimeters,0);
@@ -476,8 +476,11 @@ namespace kroll
 
 	void FileUtils::ListDir(std::string& path, std::vector<std::string> &files)
 	{
-	#if defined(OS_WIN32)
+		if (!IsDirectory(path))
+			return;
+		files.clear();
 
+	#if defined(OS_WIN32)
 		WIN32_FIND_DATA findFileData;
 		std::string q(path+"\\*");
 		HANDLE hFind = FindFirstFile(q.c_str(), &findFileData);

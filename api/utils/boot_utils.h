@@ -26,103 +26,61 @@
   #define BOOT_UPDATESITE_ENVNAME STRING(_BOOT_UPDATESITE_ENVNAME)
 #endif
 
-
-namespace kroll
+namespace UTILS_NS
 {
-	class KComponent;
-	class Application;
+	using std::string;
+	using std::vector;
 
-	enum Requirement
+	enum KComponentType
 	{
-		EQ,
-		GT,
-		LT,
-		GTE,
-		LTE,
+		MODULE,
+		RUNTIME
 	};
 
+	/**
+	 * Represents a single component dependency -- one line in the application manifest
+	 */
+	class KROLL_API Dependency
+	{
+		public:
+		enum Requirement
+		{
+			EQ,
+			GT,
+			LT,
+			GTE,
+			LTE,
+		};
+		KComponentType type;
+		std::string name;
+		std::string version;
+		Requirement requirement;
+
+		/**
+		 * Generate a dependency from a key/value pair found in a manifest
+		 */
+		static SharedDependency NewDependency(std::string key, std::string value);
+	};
+
+	/**
+	 * Represents a concrete Kroll components -- a runtime or module found on disk
+	 */
 	class KROLL_API KComponent
 	{
 		public:
-		/*
-		 * Construct a Kroll Component from the key-value pair found in a timanifest file.
-		 */
-		KComponent(std::string, std::string);
-
-		/**
-		 * Try to resolve a component by locating it in the given application or runtime homes
-		 */
-		bool Resolve(Application*, std::vector<std::string>& runtimeHomes);
-
-		std::string GetURL(Application*);
-
-		std::string type;
-		std::string typeGuid;
+		KComponentType type;
 		std::string name;
 		std::string version;
 		std::string path;
-		Requirement requirement;
+		bool bundled;
 
-		private:
-		static std::pair<Requirement, std::string> ParseVersion(std::string&);
-	};
-
-	class KROLL_API Application
-	{
-		public:
-		~Application();
-
-		/**
-		 * Attempt to resolve all components that this applications contains.
-		 * @returns a list of unresolved components
-		 */
-		std::vector<KComponent*> ResolveAllComponents(std::vector<std::string>& runtimeHomes);
-
-		bool IsInstalled();
-		std::string GetUpdateURL();
-		std::string GetQueryString();
-		std::string GetLicenseText();
-
-		std::string path;
-		std::string name;
-		std::string version;
-		std::string id;
-		std::string guid;
-		std::string publisher;
-		std::string url;
-		std::string image;
-		std::vector<KComponent*> modules;
-		KComponent* runtime;
-		std::string runtimeHomePath;
-		std::string queryString;
+		static SharedComponent NewComponent(
+			KComponentType, std::string, std::string, std::string, bool bundled=false);
 	};
 
 	class KROLL_API BootUtils
 	{
 		public:
-
-		/**
-		 * Find a bundled .zip in a application directory
-		 * @returns Path to the .zip or an empty string() if not found
-		 */
-		static std::string FindBundledModuleZip(
-			std::string name,
-			std::string version,
-			std::string applicationDirectory);
-
-		/**
-		 * Find a subfolder which meets a version requirement 
-		 * @returns Path to the subfolder with the greatest version matching the requirement
-		 *          or an empty string() if none is found.
-		 */
-		static std::string FindVersionedSubfolder(
-			std::string path,
-			Requirement req,
-			std::string version);
-
-		static Application* ReadManifest(std::string applicationPath);
-		static Application* ReadManifestFile(std::string filePath, std::string appPath);
-
 		/**
 		 * Compare two version strings in a piecewise way.
 		 * @returns 1 if the first is larger, 0 if they are equal, -1 if the second is larger
@@ -133,7 +91,15 @@ namespace kroll
 		 * Compare two version strings in a piecewise way, weakly
 		 * @returns true if the first is larger or false otherwise
 		 */
-		static bool WeakCompareVersions(std::string, std::string);
+		static bool WeakCompareComponents(SharedComponent, SharedComponent);
+
+		// These are lazily initialized static variables, so always
+		// access them via the respective accessor functions.
+		static std::vector<std::string> componentSearchPaths;
+		static std::vector<std::string>& GetComponentSearchPaths();
+
+		static std::vector<SharedComponent> installedComponents;
+		static std::vector<SharedComponent>& GetInstalledComponents(bool force = false);
 	};
 }
 #endif

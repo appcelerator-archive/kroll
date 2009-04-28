@@ -3,8 +3,7 @@ import os, os.path as path, futils
 Import('build')
 
 Env = build.env.Clone()
-Env.Append(CPPDEFINES=('KROLL_API_EXPORT', 1))
-Env.Append(CPPPATH=[build.kroll_utils_dir])
+Env.Append(CPPDEFINES=[('KROLL_API_EXPORT', 1)])
 build.add_thirdparty(Env, 'poco')
 
 if build.is_win32():

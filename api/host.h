@@ -12,7 +12,6 @@
 namespace kroll
 {
 	class Module;
-	typedef std::map<std::string, SharedPtr<Module> > ModuleMap;
 	typedef std::vector<SharedPtr<Module> > ModuleList;
 
 	/**
@@ -22,12 +21,11 @@ namespace kroll
 	class KROLL_API Host : public ModuleProvider
 	{
 		friend class Poco::ReleasePolicy<Host>;
-	public:
 
-		/**
-		 * The Titanium platform as a string
-		 */
-		static const char* Platform;
+	protected:
+		virtual ~Host();
+
+	public:
 
 		/**
 		 * @param argc argument count
@@ -39,11 +37,6 @@ namespace kroll
 		 * Get the static host instance§§
 		 */
 		static SharedPtr<Host> GetInstance() { return instance_; }
-
-	protected:
-		virtual ~Host();
-
-	public:
 
 		/**
 		 * Called to run the host
@@ -86,7 +79,7 @@ namespace kroll
 		 *
 		 * @module The module to remove.
 		 */
-		void UnregisterModule(Module* module);
+		void UnregisterModule(SharedPtr<Module> module);
 
 		/**
 		 * Get a module given the module path.
@@ -94,14 +87,14 @@ namespace kroll
 		 *
 		 * @return A reference to the module.
 		 */
-		SharedPtr<Module> GetModule(std::string& path);
+		SharedPtr<Module> GetModuleByPath(std::string& path);
 		
 		/**
 		 * Get a module give by the module name (such as tiui)
 		 * @param name of the module
 		 * @return A reference to the module
 		 */
-		SharedPtr<Module> GetModuleByName(std::string name);
+		SharedPtr<Module> GetModuleByName(std::string& name);
 
 		/**
 		 * @return whether or not a module with the path exists
@@ -196,21 +189,14 @@ namespace kroll
 		}
 
 	protected:
-		ModuleMap modules;
 		ModuleList loaded_modules;
 
 		Mutex moduleMutex;
 		std::vector<ModuleProvider *> module_providers;
 		std::vector<std::string> module_paths;
 		SharedPtr<KObject> global_object;
-		std::vector<std::string> args;
 
-		std::string appHomePath;
-		std::string runtimePath;
-		std::string runtimeHomePath;
-		std::string appConfigPath;
-		std::string appID;
-		std::string appGUID;
+		SharedApplication application;
 		bool running;
 		int exitCode;
 		bool debug;
@@ -219,9 +205,9 @@ namespace kroll
 		bool runUILoop;
 		bool profile;
 		std::string profilePath;
-		std::string logpath;
+		std::string logFilePath;
 		Poco::FileOutputStream *profileStream;
-		
+		bool consoleLogging;
 
 		/* This is the module suffix for this module provider. Since
 		 * this is the basic provider the suffix is "module.(dll|dylib|so)"
@@ -229,9 +215,8 @@ namespace kroll
 		 * default behavior of IsModule(). */
 		std::string module_suffix;
 
-
-		// we store a cache of invalid module files so external providers
-		// can re-query them without initiating a filesystem search
+		/* We store a cache of invalid module files so external providers
+		   can re-query them without initiating a filesystem search */
 		std::vector<std::string> invalid_module_files;
 
 		/**
@@ -299,14 +284,18 @@ namespace kroll
 
 		void AddInvalidModuleFile(std::string path);
 		void SetupAppInstallerIfRequired();
-		void ParseCommandLineArguments(int argc, const char** argv);
+		void ParseCommandLineArguments();
 		static void AssertEnvironmentVariable(std::string);
 		std::string FindAppInstaller();
 
 	private:
 		static SharedPtr<Host> instance_;
 		static Poco::Timestamp started_;
-		void StartProfiling();
+
+		// Some initialization methods
+		void SetupApplication(int argc, const char* argv[]);
+		void SetupLogging();
+		void SetupProfiling();
 		void StopProfiling();
 
 		DISALLOW_EVIL_CONSTRUCTORS(Host);

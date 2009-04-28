@@ -10,7 +10,7 @@
 
 namespace kroll
 {
-	KROLL_MODULE(APIModule)
+	KROLL_MODULE(APIModule, STRING(MODULE_NAME), STRING(MODULE_VERSION));
 
 	void APIModule::Initialize()
 	{

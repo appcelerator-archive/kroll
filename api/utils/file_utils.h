@@ -41,7 +41,7 @@
 #define KROLL_API
 #endif
 
-namespace kroll
+namespace UTILS_NS
 {
 	/**
 	 * An API for various file utilities (mostly centered around the kroll runtime)
@@ -53,7 +53,7 @@ namespace kroll
 		/**
 		 * tokenize a string by delimeter into parts and place in vector tokens
 		 */
-		static void Tokenize(const std::string& str, std::vector<std::string>& tokens, const std::string &delimeters, bool skip_if_found=false);
+		static void Tokenize(const std::string& str, std::vector<std::string>& tokens, const std::string delimeters, bool skip_if_found=false);
 
 		/**
 		 * @param str The string to trim

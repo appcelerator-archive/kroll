@@ -61,9 +61,10 @@ namespace kroll
 		{
 			try
 			{
+				Host* host = Host::GetInstance();
 				ValueList args;
 				args.push_back(Value::NewObject(this->GetSharedPtr()));
-				return method->Call(args);
+				return host->InvokeMethodOnMainThread(method, args);
 			}
 			catch (ValueException& e)
 			{

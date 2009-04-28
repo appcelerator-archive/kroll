@@ -8,7 +8,7 @@
 
 namespace kroll
 {
-	KROLL_MODULE(PythonModule)
+	KROLL_MODULE(PythonModule, STRING(MODULE_VERSION), STRING(MODULE_NAME));
 
 	PythonModule* PythonModule::instance_ = NULL;
 

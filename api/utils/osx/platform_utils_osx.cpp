@@ -37,7 +37,7 @@
 #include <ifaddrs.h>
 #include <net/if_dl.h>
 
-namespace kroll
+namespace UTILS_NS
 {
 	void PlatformUtils::GetNodeId(NodeId& id)
 	{

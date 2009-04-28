@@ -9,7 +9,7 @@
 
 namespace kroll
 {
-	KROLL_MODULE(JavascriptModule)
+	KROLL_MODULE(JavascriptModule, STRING(MODULE_NAME), STRING(MODULE_VERSION));
 
 	JavascriptModule* JavascriptModule::instance = NULL;
 	void JavascriptModule::Initialize()

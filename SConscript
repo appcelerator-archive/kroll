@@ -8,7 +8,7 @@ Import('build')
 Import('debug')
 
 SConscript('thirdparty/SConscript', duplicate=0)
-SConscript('boot/SConscript')
+SConscript('boot/SConscript', duplicate=0, build_dir=path.join(build.dir, 'objs', 'boot'))
 
 SConscript('api/SConscript', build_dir=path.join(build.dir,'objs','api'), duplicate=0)
 build.env.Append(LIBS=['kroll'])

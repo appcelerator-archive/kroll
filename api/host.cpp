@@ -3,25 +3,14 @@
  * see LICENSE in the root folder for details on the license.
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
-#ifdef OS_OSX
-#include <Cocoa/Cocoa.h>
-#endif
-#if defined(OS_WIN32)
-#include "base.h"
-#include <windows.h>
-#else
-#include <dirent.h>
-#endif
 #include <cerrno>
 #include <vector>
 #include <algorithm>
 #include <cstring>
 #include <cstdio>
 #include <cstdlib>
-#include <sys/types.h>
 
 #include "kroll.h"
-#include "binding/profiled_bound_object.h"
 #include <Poco/DirectoryIterator.h>
 #include <Poco/File.h>
 #include <Poco/Path.h>
@@ -35,12 +24,15 @@ using Poco::File;
 using Poco::Path;
 
 #define HOME_ENV "KR_HOME"
-#define APPID_ENV "KR_APP_ID"
-#define APPGUID_ENV "KR_APP_GUID"
 #define RUNTIME_ENV "KR_RUNTIME"
-#define RUNTIME_HOME_ENV "KR_RUNTIME_HOME"
 #define MODULES_ENV "KR_MODULES"
 #define DEBUG_ENV "KR_DEBUG"
+#define DEBUG_ARG "--debug"
+#define ATTACH_DEBUGGER_ARG "--attach-debugger"
+#define NO_CONSOLE_LOG_ARG "--no-consoler-logger"
+#define PROFILE_ARG "--profile"
+#define LOGPATH_ARG "--logpath"
+#define BOOT_HOME_ARG "--start"
 
 using Poco::Environment;
 
@@ -50,6 +42,7 @@ namespace kroll
 	Poco::Timestamp Host::started_;
 	
 	Host::Host(int argc, const char *argv[]) :
+		application(NULL),
 		running(false),
 		exitCode(0),
 		debug(false),
@@ -57,99 +50,94 @@ namespace kroll
 		autoScan(false),
 		runUILoop(true),
 		profile(false),
-		profileStream(NULL)
+		profileStream(NULL),
+		consoleLogging(true)
 	{
 		instance_ = this;
 
-		AssertEnvironmentVariable(HOME_ENV);
-		AssertEnvironmentVariable(APPID_ENV);
-		AssertEnvironmentVariable(APPGUID_ENV);
-		AssertEnvironmentVariable(RUNTIME_ENV);
-		AssertEnvironmentVariable(RUNTIME_HOME_ENV);
-		AssertEnvironmentVariable(MODULES_ENV);
+		// Initialize our global object to be a simple mapped Kroll object
+		this->global_object = new StaticBoundObject();
 
+		this->SetupApplication(argc, argv);
+		this->ParseCommandLineArguments(); // Depends on this->application
+		
 		if (Environment::has(DEBUG_ENV))
 		{
 			std::string debug_val = Environment::get(DEBUG_ENV);
 			this->debug = (debug_val == "true" || debug_val == "yes" || debug_val == "1");
 		}
-
 #ifdef DEBUG
 		this->debug = true; // if you compile in debug, force debug here
 #endif
 
-		this->appHomePath = Environment::get(HOME_ENV);
-		this->appID = Environment::get(APPID_ENV);
-		this->appGUID = Environment::get(APPGUID_ENV);
-		this->runtimePath = Environment::get(RUNTIME_ENV);
-		this->runtimeHomePath = Environment::get(RUNTIME_HOME_ENV);
+		this->SetupLogging(); // Depends on command-line arguments and this->debug
+		this->SetupProfiling(); // Depends on logging
+	}
 
-		std::string paths = Environment::get(MODULES_ENV);
-		//TI-180 make sure there is only one module specified
-		FileUtils::Tokenize(paths, this->module_paths, KR_LIB_SEP, true);
+	void Host::SetupApplication(int argc, const char* argv[])
+	{
+		AssertEnvironmentVariable(HOME_ENV);
+		AssertEnvironmentVariable(RUNTIME_ENV);
+		AssertEnvironmentVariable(MODULES_ENV);
 
-		// check to see if we have to install the app
-		SetupAppInstallerIfRequired();
-		ParseCommandLineArguments(argc, argv);
+		string applicationHome = Environment::get(HOME_ENV);
+		string runtimePath = Environment::get(RUNTIME_ENV);
+		string modulePaths = Environment::get(MODULES_ENV);
 
-		PRINTD(">>> " << HOME_ENV << "=" << this->appHomePath);
-		PRINTD(">>> " << APPID_ENV << "=" << this->appID);
-		PRINTD(">>> " << APPGUID_ENV << "=" << this->appGUID);
-		PRINTD(">>> " << RUNTIME_ENV << "=" << this->runtimePath);
-		PRINTD(">>> " << RUNTIME_HOME_ENV << "=" << this->runtimeHomePath);
-		PRINTD(">>> " << MODULES_ENV << "=" << paths);
-		
-		// start profiling if turned on
-		StartProfiling();
-
-		// link the name of our global variable to ourself so
-		// we can reference from global scope directly to get it
-		if (this->profile)
-		{
-			// in the case of profiling, we wrap our top level global object
-			// to use the profiled bound object which will profile all methods
-			// going through this object and it's attached children
-			this->global_object = new ProfiledBoundObject(GLOBAL_NS_VARNAME,new StaticBoundObject(),this->profileStream);
-		}
-		else
-		{
-			this->global_object = new StaticBoundObject();
-		}
-		this->global_object->SetObject(GLOBAL_NS_VARNAME,this->global_object);
-
-		if (this->debug)
-		{
-			Logger::Initialize(true, true, Poco::Message::PRIO_DEBUG, this->appID, this->logpath);
-		}
-		else
-		{
-			Logger::Initialize(true, true, Poco::Message::PRIO_INFORMATION, this->appID, this->logpath);
-		}
-
-#ifdef DEBUG
-		// dump command args
 		Logger& logger = Logger::Get("Host");
-		logger.Info("ARG COUNT = %d",this->args.size());
-		std::vector<std::string>::iterator i = this->args.begin();
-		if (i!=this->args.end())
+		logger.Notice(">>> %s=%s", HOME_ENV, applicationHome.c_str());
+		logger.Notice(">>> %s=%s", RUNTIME_ENV, runtimePath.c_str());
+		logger.Notice(">>> %s=%s", MODULES_ENV, modulePaths.c_str());
+
+		this->application = Application::NewApplication(applicationHome);
+		if (this->application.isNull())
 		{
-			std::string s = (*i);
-			logger.Info("ARGUMENT => %s",s.c_str());
-			i++;
+			std::cerr << "Could not load the application at: " << applicationHome << std::endl;
+			exit(__LINE__);
 		}
-#endif		
+		this->application->SetArguments(argc, argv);
+
+		// Re-resolve module/runtime dependencies of the application so that the
+		// API module can introspect into the loaded components.
+		this->application->ResolveDependencies();
+		if (!this->application->runtime.isNull())
+		{
+			this->application->runtime->version = STRING(PRODUCT_VERSION);
+		}
+
+		// Parse the module paths, we'll later use this to load all the shared-objects.
+		FileUtils::Tokenize(modulePaths, this->module_paths, KR_LIB_SEP, true);
+	}
+
+	void Host::SetupLogging()
+	{
+		// Initialize the logger
+		if (this->logFilePath.empty())
+		{
+			string dataDir = FileUtils::GetApplicationDataDirectory(this->application->id);
+			this->logFilePath = FileUtils::Join(dataDir.c_str(), "tiapp.log", NULL);
+		}
+		Poco::Message::Priority prio = this->debug ?
+			 Poco::Message::PRIO_DEBUG : Poco::Message::PRIO_INFORMATION;
+		Logger::Initialize(true, true, prio, this->logFilePath);
 	}
 
 	Host::~Host()
 	{
 	}
 
-	void Host::StartProfiling()
+	void Host::SetupProfiling()
 	{
 		if (this->profile)
 		{
+			// In the case of profiling, we wrap our top level global object
+			// to use the profiled bound object which will profile all methods
+			// going through this object and it's attached children
+			this->global_object = new ProfiledBoundObject(
+				GLOBAL_NS_VARNAME, this->global_object, this->profileStream);
+
 			Logger& logger = Logger::Get("Host");
-			logger.Info("Starting Profiler. Logging going to %s",this->profilePath.c_str());
+			logger.Info("Starting Profiler. Output going to %s", this->profilePath.c_str());
 			this->profileStream = new Poco::FileOutputStream(this->profilePath);
 		}
 	}
@@ -176,117 +164,66 @@ namespace kroll
 		}
 	}
 
-	void Host::ParseCommandLineArguments(int argc, const char** argv)
+	void Host::ParseCommandLineArguments()
 	{
-		// Sometimes libraries parsing argc and argv will
-		// modify them, so we want to keep our own copy here
-		for (int i = 0; i < argc; i++)
+		if (this->application->HasArgument(DEBUG_ARG))
 		{
-			std::string arg = argv[i];
-			this->args.push_back(arg);
-			if (arg == "--debug")
+			this->debug = true;
+		}
+		if (this->application->HasArgument(ATTACH_DEBUGGER_ARG))
+		{
+			this->waitForDebugger = true;
+		}
+		if (this->application->HasArgument(NO_CONSOLE_LOG_ARG))
+		{
+			this->consoleLogging = false;
+		}
+		if (this->application->HasArgument(PROFILE_ARG))
+		{
+			this->profilePath = this->application->GetArgumentValue(PROFILE_ARG);
+		}
+		if (this->application->HasArgument(LOGPATH_ARG))
+		{
+			this->logFilePath = this->application->GetArgumentValue(LOGPATH_ARG);
+		}
+
+		// Was this only used by the appinstaller? It complicates things a bit,
+		// and the component list might not be correct after this point. -- Martin
+		if (this->application->HasArgument(BOOT_HOME_ARG))
+		{
+			string newHome = this->application->GetArgumentValue(BOOT_HOME_ARG);
+			SharedApplication newApp = Application::NewApplication(newHome);
+			if (!newApp.isNull())
 			{
-				this->debug = true;
-			}
-			else if (arg == "--attach-debugger")
-			{
-				this->waitForDebugger = true;
-			}
-			else if (arg.find("--profile=")==0)
-			{
-				std::string pp = arg.substr(10);
-				if (pp.find("\"")==0)
+				newApp->SetArguments(this->application->GetArguments());
+				newApp->ResolveDependencies();
+				if (!newApp->runtime.isNull())
 				{
-					pp = pp.substr(1,pp.length()-2);
+					newApp->runtime->version = STRING(PRODUCT_VERSION);
 				}
-				this->profilePath = pp;
-				this->profile = true;
-			}
-			else if (arg.find("--logpath=")==0)
-			{
-				std::string pp = arg.substr(10);
-				if (pp.find("\"")==0)
-				{
-					pp = pp.substr(1,pp.length()-2);
-				}
-				this->logpath = pp;
-			}
-			else if (arg.find(STRING(_BOOT_HOME_FLAG))==0)
-			{
-				size_t i = arg.find("=");
-				if (i != std::string::npos)
-				{
-					std::string newHome = arg.substr(i + 1);
-					Environment::set(HOME_ENV, newHome);
-					this->appHomePath = newHome;
-				}
+				this->application = newApp;
 			}
 		}
 	}
 
 	const std::string& Host::GetApplicationHomePath()
 	{
-		return this->appHomePath;
+		return this->application->path;
 	}
 
 	const std::string& Host::GetRuntimePath()
 	{
-		return this->runtimePath;
-	}
-
-	const std::string& Host::GetRuntimeHomePath()
-	{
-		return this->runtimeHomePath;
+		return this->application->runtime->path;
 	}
 
 	const std::string& Host::GetApplicationID()
 	{
-		return this->appID;
+		return this->application->id;
 	}
 
 	const std::string& Host::GetApplicationGUID()
 	{
-		return this->appGUID;
-	}
-
-	std::string Host::FindAppInstaller()
-	{
-		std::string appinstaller = FileUtils::Join(this->appHomePath.c_str(), "appinstaller", NULL);
-		if (FileUtils::IsDirectory(appinstaller))
-		{
-			PRINTD("Found app installer at: " << appinstaller);
-			return FileUtils::Trim(appinstaller);
-		}
-
-		appinstaller = FileUtils::Join(this->runtimePath.c_str(), "appinstaller", NULL);
-		if (FileUtils::IsDirectory(appinstaller))
-		{
-			PRINTD("Found app installer at: " << appinstaller);
-			return FileUtils::Trim(appinstaller);
-		}
-		
-		PRINTD("Couldn't find app installer");
-		return std::string();
-	}
-
-	void Host::SetupAppInstallerIfRequired()
-	{
-		std::string marker = FileUtils::Join(this->appHomePath.c_str(), ".installed", NULL);
-		if (!FileUtils::IsFile(marker))
-		{
-			// not yet installed, look for the app installer
-			std::string ai = FindAppInstaller();
-			if (!ai.empty())
-			{
-				// make the app installer our new home so that the
-				// app installer will run and set the environment var
-				// to the special setting with the old home
-				Environment::set("KR_APP_INSTALL_FROM",  this->appHomePath);
-				this->appHomePath = ai;
-				Environment::set(HOME_ENV, ai);
-			}
-			PRINTD("Application needs installation but no app installer found");
-		}
+		return this->application->guid;
 	}
 
 	bool Host::IsDebugMode()
@@ -296,14 +233,16 @@ namespace kroll
 
 	const int Host::GetCommandLineArgCount()
 	{
-		return this->args.size();
+		vector<string>& args = this->application->GetArguments();
+		return args.size();
 	}
 
 	const char* Host::GetCommandLineArg(int index)
 	{
-		if ((int) this->args.size() > index)
+		vector<string>& args = this->application->GetArguments();
+		if ((int) args.size() > index)
 		{
-			return this->args.at(index).c_str();
+			return args.at(index).c_str();
 		}
 		else
 		{
@@ -374,8 +313,8 @@ namespace kroll
 	void Host::CopyModuleAppResources(std::string& modulePath)
 	{
 		PRINTD("CopyModuleAppResources: " << modulePath);
-		std::string appDir = this->appHomePath;
-		Path appPath(this->appHomePath);
+		std::string appDir = this->application->path;
+		Path appPath(this->application->path);
 
 		try
 		{
@@ -492,52 +431,54 @@ namespace kroll
 
 	SharedPtr<Module> Host::LoadModule(std::string& path, ModuleProvider *provider)
 	{
-		PRINTD("Begin load of module " << path);
+		Logger& log = Logger::Get("Host");
 		ScopedLock lock(&moduleMutex);
 
-		SharedPtr<Module> module = NULL;
+		//TI-180: Don't load the same module twice
+		SharedPtr<Module> module = this->GetModuleByPath(path);
+		if (!module.isNull())
+		{
+			log.Warn("Module cannot be loaded twice: %s", path.c_str());
+		}
+
 		try
 		{
 			this->CopyModuleAppResources(path);
 			this->ReadModuleManifest(path);
 			module = provider->CreateModule(path);
 			module->SetProvider(provider); // set the provider
-
-			PRINTD("Loaded " << module->GetName()
-			          << " (" << path << ")");
-
-			// Call module Load lifecycle event
 			module->Initialize();
 
-			// Store module
-			this->modules[path] = module;
+			// loaded_modules keeps track of the Module which is loaded from the
+			// module shared-object, while application->modules holds the KComponent
+			// metadata description of each module.
 			this->loaded_modules.push_back(module);
+			this->application->UsingModule(module->GetName(), module->GetVersion(), path);
 		}
 		catch (kroll::ValueException& e)
 		{
 			SharedString s = e.GetValue()->DisplayString();
-			std::cerr << "Error generated loading module ("
-			          << path << "): " << *s << std::endl;
+			log.Error("Could not load module (%s): %s", path.c_str(), s->c_str());
 #ifdef OS_OSX
 			KrollDumpStackTrace();
 #endif
 		}
 		catch(std::exception &e)
 		{
-			std::cerr << "Error generated loading module (" << path <<"): " << e.what()<< std::endl;
+			string msg = e.what();
+			log.Error("Could not load module (%s): %s", path.c_str(), msg.c_str());
 #ifdef OS_OSX
 			KrollDumpStackTrace();
 #endif
 		}
 		catch(...)
 		{
-			std::cerr << "Error generated loading module: " << path << std::endl;
+			log.Error("Could not load module (%s)", path.c_str());
 #ifdef OS_OSX
 			KrollDumpStackTrace();
 #endif
 		}
 
-		PRINTD("Finish load of module " << path);
 		return module;
 	}
 
@@ -550,7 +491,6 @@ namespace kroll
 		{
 			this->UnregisterModule(this->loaded_modules.at(0));
 		}
-
 	}
 
 	void Host::LoadModules()
@@ -667,80 +607,64 @@ namespace kroll
 		}
 	}
 
-	SharedPtr<Module> Host::GetModule(std::string& name)
+	SharedPtr<Module> Host::GetModuleByPath(std::string& path)
 	{
 		ScopedLock lock(&moduleMutex);
-		ModuleMap::iterator iter = this->modules.find(name);
-		if (this->modules.end() == iter) 
+		ModuleList::iterator iter = this->loaded_modules.begin();
+		while (iter != this->loaded_modules.end())
 		{
-			return SharedPtr<Module>(NULL);
+			SharedPtr<Module> m = (*iter++);
+			if (m->GetPath() == path)
+				return m;
 		}
-
-		return iter->second;
-	}
-	
-	SharedPtr<Module> Host::GetModuleByName(std::string name)
-	{
-		ScopedLock lock(&moduleMutex);
-		ModuleMap::iterator i = this->modules.begin();
-		while (i != this->modules.end())
-		{
-			std::string path = i->first;
-			std::size_t pos = path.rfind(name);
-			if (pos!=std::string::npos)
-			{
-				return i->second;
-			}
-			i++;
-		}
-		return SharedPtr<Module>(NULL);
+		return NULL;
 	}
 
-	bool Host::HasModule(std::string name)
+	SharedPtr<Module> Host::GetModuleByName(std::string& name)
 	{
 		ScopedLock lock(&moduleMutex);
-		ModuleMap::iterator iter = this->modules.find(name);
-		return (this->modules.end() != iter);
+		ModuleList::iterator iter = this->loaded_modules.begin();
+		while (iter != this->loaded_modules.end())
+		{
+			SharedPtr<Module> m = (*iter++);
+			if (m->GetName() == name)
+				return m;
+		}
+		return NULL;
 	}
 
-	void Host::UnregisterModule(Module* module)
+	void Host::UnregisterModule(SharedPtr<Module> module)
 	{
 		ScopedLock lock(&moduleMutex);
+		Logger& log = Logger::Get("Host");
 
-		PRINTD("Unregistering: " << module->GetName());
+		log.Notice("Unregistering: %s", module->GetName().c_str());
+		module->Stop(); // Call Stop() lifecycle event
 
-		// Remove from the module map
-		ModuleMap::iterator i = this->modules.begin();
-		while (i != this->modules.end())
-		{
-			if (module == (i->second).get())
-			{
-				break;
-			}
-			i++;
-		}
-
-		// Remove from the list of loaded modules
 		ModuleList::iterator j = this->loaded_modules.begin();
 		while (j != this->loaded_modules.end())
 		{
 			if (module == (*j).get())
 			{
-				break;
+				j = this->loaded_modules.erase(j);
 			}
-			j++;
+			else
+			{
+				j++;
+			}
 		}
 
-		module->Stop(); // Call Stop() lifecycle event
-
-		if (i != this->modules.end())
+		std::vector<SharedComponent>::iterator i = this->application->modules.begin();
+		while (i != this->application->modules.end())
 		{
-			this->modules.erase(i);
-		}
-
-		if (j != this->loaded_modules.end())
-		{
-			this->loaded_modules.erase(j);
+			if (module->GetPath() == (*i)->path)
+			{
+				i = this->application->modules.erase(i);
+			}
+			else
+			{
+				i++;
+			}
 		}
 	}
 
@@ -760,6 +684,7 @@ namespace kroll
 
 	int Host::Run()
 	{
+		Logger& log = Logger::Get("Host");
 
 		if (this->waitForDebugger)
 		{
@@ -776,17 +701,18 @@ namespace kroll
 		catch (ValueException e)
 		{
 			SharedString ss = e.GetValue()->DisplayString();
-			PRINTD(*ss);
+			log.Error(*ss);
 			return 1;
 		}
 
-		// allow start to immediately end
+		// Depending on the implementation of platform-specific host,
+		// it may block in Start() or implement a UI loop which will
+		// be continually called until this->running becomes false.
 		this->running = this->Start();
 		if (this->runUILoop) 
 		{
 			while (this->running)
 			{
-				ScopedLock lock(&moduleMutex);
 				if (!this->RunLoop())
 				{
 					break;
@@ -799,31 +725,27 @@ namespace kroll
 		this->UnloadModuleProviders();
 		this->UnloadModules();
 
-		// Clear the global object, being sure to remove the recursion, so
-		// that the memory will be cleared
-		this->global_object->Set(GLOBAL_NS_VARNAME, Value::Undefined);
 		this->global_object = NULL;
 
-		// stop the profiling
-		StopProfiling();
+		// Stop the profiler, if it was enabledk
+		StopProfiling(); 
 
-		PRINTD("EXITING WITH EXITCODE = " << exitCode);
+		log.Notice("Exiting with exit code: %i", exitCode);
 		return this->exitCode;
 	}
 
-	void Host::Exit(int exitcode)
+	void Host::Exit(int exitCode)
 	{
 		ScopedLock lock(&moduleMutex);
 		running = false;
-		this->exitCode = exitcode;
+		this->exitCode = exitCode;
 
 		// give our modules a hook for exit
-		ModuleMap::iterator i = this->modules.begin();
-		while (i != this->modules.end())
+		ModuleList::iterator iter = this->loaded_modules.begin();
+		while (iter != this->loaded_modules.end())
 		{
-			SharedPtr<Module> module = i->second;
-			module->Exiting(exitcode);
-			i++;
+			printf("%s\n", (*iter)->GetPath().c_str());
+			(*iter++)->Exiting(exitCode);
 		}
 	}
 }

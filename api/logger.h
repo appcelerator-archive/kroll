@@ -27,12 +27,12 @@ namespace kroll
 
 		static Logger& Get(std::string name);
 		static Logger& GetRootLogger();
-		static void Initialize(int, int, int, std::string, std::string logpath);
+		static void Initialize(int, int, int, std::string logFilePath);
 
 		Logger() {};
 		~Logger() {};
 		Logger(std::string);
-		Logger(bool, bool, int, std::string, std::string);
+		Logger(bool, bool, int, std::string);
 
 		Logger& GetChild(std::string name);
 		std::string& GetName();
@@ -69,7 +69,7 @@ namespace kroll
 		protected:
 		static Poco::Mutex mutex;
 		static char buffer[];
-		static std::string logpath;
+		static std::string logFilePath;
 
 		std::string name;
 		static Logger& GetImpl(std::string name);

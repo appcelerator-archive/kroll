@@ -10,8 +10,10 @@
 
 namespace kroll
 {
-	JavascriptModuleInstance::JavascriptModuleInstance(Host *host, std::string path)
-		: Module(host, path), path(path)
+	// TODO: Implement real method metadata and lifecycle events for
+	// scripting language-based modules
+	JavascriptModuleInstance::JavascriptModuleInstance(Host *host, std::string path) :
+		Module(host, path.c_str(), path.c_str(), "0.1"), path(path)
 	{
 		try
 		{

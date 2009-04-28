@@ -6,7 +6,7 @@
 #ifndef _KR_DATA_UTILS_H_
 #define _KR_DATA_UTILS_H_
 #include <string>
-namespace kroll
+namespace UTILS_NS
 {
 	class KROLL_API DataUtils
 	{

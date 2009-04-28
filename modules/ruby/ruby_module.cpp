@@ -8,7 +8,7 @@
 
 namespace kroll
 {
-	KROLL_MODULE(RubyModule)
+	KROLL_MODULE(RubyModule, STRING(MODULE_NAME), STRING(MODULE_VERSION));
 
 	RubyModule* RubyModule::instance_ = NULL;
 
@@ -18,7 +18,9 @@ namespace kroll
 
 		ruby_init();
 		ruby_init_loadpath();
-		ruby_incpush(this->GetPath());
+
+		string modulePath = this->GetPath();
+		ruby_incpush(modulePath.c_str());
 		this->InitializeBinding();
 
 		host->AddModuleProvider(this);

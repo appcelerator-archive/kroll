@@ -25,6 +25,6 @@ elif build.is_win32():
 	Env.Append(LIBS=['python25'])
 	Env.Append(CCFLAGS = ['/MD'])
 
-m = build.add_module('python')
+m = build.add_module('python', env=Env)
 t = Env.SharedLibrary(m.build_dir + '/pythonmodule', Glob('*.cpp'))
 build.mark_build_target(t)

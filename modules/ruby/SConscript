@@ -30,6 +30,6 @@ elif build.is_win32():
 	Env.Append(LIBPATH=['C:\\Ruby\\lib'])
 	Env.Append(LIBS=['msvcrt-ruby18'])
 
-m = build.add_module('ruby')
+m = build.add_module('ruby', env=Env)
 t = Env.SharedLibrary(m.build_dir + '/rubymodule', Glob('*.cpp'))
 build.mark_build_target(t)

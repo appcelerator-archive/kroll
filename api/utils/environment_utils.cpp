@@ -11,7 +11,7 @@
 #include <windows.h>
 #endif
 
-namespace kroll
+namespace UTILS_NS
 {
 	bool EnvironmentUtils::Has(std::string name)
 	{
