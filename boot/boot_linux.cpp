@@ -46,10 +46,10 @@ namespace KrollBoot
 
 	bool RunInstaller(vector<SharedDependency> missing)
 	{
-		string exec = kroll::FileUtils::Join(
+		string exec = FileUtils::Join(
 			app->path.c_str(), "installer", "installer", NULL);
 
-		if (!kroll::FileUtils::IsFile(exec))
+		if (!FileUtils::IsFile(exec))
 		{
 			ShowError("Missing installer and application has additional modules that are needed.");
 			return false;
@@ -72,7 +72,7 @@ namespace KrollBoot
 			args.push_back(url);
 		}
 
-		kroll::FileUtils::RunAndWait(exec, args);
+		return FileUtils::RunAndWait(exec, args);
 	}
 
 	void BootstrapPlatformSpecific(string moduleList)

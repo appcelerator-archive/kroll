@@ -204,7 +204,6 @@ namespace kroll
 		bool autoScan;
 		bool runUILoop;
 		bool profile;
-		bool consoleLogging;
 		std::string profilePath;
 		std::string logFilePath;
 		Poco::FileOutputStream *profileStream;

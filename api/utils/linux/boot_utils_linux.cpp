@@ -5,7 +5,7 @@
  */
 #include "../utils.h"
 
-namespace kroll
+namespace UTILS_NS
 {
 	vector<string>& BootUtils::GetComponentSearchPaths()
 	{

@@ -44,12 +44,12 @@ namespace KrollBoot
 
 	bool RunInstaller(vector<SharedDependency> missing)
 	{
-		string exec = kroll::FileUtils::Join(
+		string exec = FileUtils::Join(
 			app->path.c_str(),
 			"installer",
 			"Installer.exe", NULL);
 
-		if (!kroll::FileUtils::IsFile(exec))
+		if (!FileUtils::IsFile(exec))
 		{
 			ShowError("Missing installer and application has additional modules that are needed.");
 			return false;
