@@ -21,7 +21,7 @@ if build.is_linux():
 	Env.Append(LIBS=['dl'])
 
 if build.is_win32():
-	sources += ['boot_win32.cpp', 'winboot.rc']
+	sources += ['boot_win32.cpp', 'win32/winboot.rc']
 
 	Env.Append(LIBS=['kernel32','shell32','user32','advapi32','iphlpapi'])
 	Env.Append(LINKFLAGS=['/NODEFAULTLIB:MSJAVA.lib'])

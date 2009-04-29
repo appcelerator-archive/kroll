@@ -5,6 +5,7 @@
  */
 
 #include "boot.h"
+#include <process.h>
 
 #ifndef MAX_PATH
 #define MAX_PATH 512
@@ -67,10 +68,10 @@ namespace KrollBoot
 		}
 	
 		vector<string> jobs;
-		vector<SharedDependency*>::iterator mi = missing.begin();
+		vector<SharedDependency>::iterator mi = missing.begin();
 		while (mi != missing.end())
 		{
-			SharedDependency d = *di++;
+			SharedDependency d = *mi++;
 			string url = app->GetURLForDependency(d);
 			jobs.push_back(url);
 		}
@@ -143,7 +144,7 @@ namespace KrollBoot
 			std::getline(file, appInstallPath);
 			appInstallPath = FileUtils::Trim(appInstallPath);
 
-			Application* newapp = BootUtils::ReadManifest(appInstallPath);
+			Application* newapp = Application::NewApplication(appInstallPath);
 			if (newapp == NULL)
 			{
 				ShowError("Application installed failed.");
@@ -173,7 +174,7 @@ namespace KrollBoot
 		EnvironmentUtils::Set("PATH", path);
 	}
 
-	string Blastoff
+	string Blastoff()
 	{
 		// If this was a full app install, we need to execute the newly
 		// installed executable as opposed to this one -- which is in a
@@ -251,12 +252,12 @@ int main(int __argc, const char* __argv[])
 	int rc;
 	if (!EnvironmentUtils::Has(BOOTSTRAP_ENV))
 	{
-		return Bootstrap();
+		return KrollBoot::Bootstrap();
 	}
 	else
 	{
 		EnvironmentUtils::Unset(BOOTSTRAP_ENV);
-		return StartHost();
+		return KrollBoot::StartHost();
 	}
 
 	return rc;
