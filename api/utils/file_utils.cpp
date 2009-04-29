@@ -14,10 +14,12 @@
 #include <sys/utsname.h>
 #include <libgen.h>
 #elif defined(OS_WIN32)
+#include "../base.h"
 #include <windows.h>
 #include <shlobj.h>
 #include <Iphlpapi.h>
 #include <process.h>
+#include <shellapi.h>
 #elif defined(OS_LINUX)
 #include <cstdarg>
 #include <unistd.h>
@@ -74,7 +76,7 @@ namespace UTILS_NS
 		return std::string([contents UTF8String]);
 #elif OS_WIN32
 		char path[MAX_PATH];
-		GetModuleFileName(NULL,path,MAX_PATH);
+		GetModuleFileNameA(NULL,path,MAX_PATH);
 		std::string p(path);
 		std::string::size_type pos = p.rfind("\\");
 		if (pos!=std::string::npos)
@@ -133,7 +135,7 @@ namespace UTILS_NS
 #elif defined(OS_WIN32)
 #define BUFSIZE 512
 		TCHAR szTempName[BUFSIZE];
-		GetTempPath(BUFSIZE,szTempName);
+		GetTempPathA(BUFSIZE,szTempName);
 		std::string dir(szTempName);
 		srand(GetTickCount()); // initialize seed
 		std::ostringstream s;
@@ -241,7 +243,7 @@ namespace UTILS_NS
 #ifdef OS_OSX
 		return [[NSFileManager defaultManager] createDirectoryAtPath:[NSString stringWithCString:dir.c_str()] attributes:nil];
 #elif OS_WIN32
-		return ::CreateDirectory(dir.c_str(),NULL);
+		return ::CreateDirectoryA(dir.c_str(),NULL);
 #elif OS_LINUX
 		return mkdir(dir.c_str(),0755) == 0;
 #endif
@@ -545,9 +547,8 @@ namespace UTILS_NS
 		si.cb = sizeof(si);
 		ZeroMemory( &pi, sizeof(pi) );
 		char cwd[MAX_PATH];
-		DWORD size = GetCurrentDirectory(MAX_PATH, (char*)cwd);
-		cwd[size]='\0';
-		if (!CreateProcess(
+		DWORD size = GetCurrentDirectoryA(MAX_PATH, (char*)cwd);
+		if (!CreateProcessA(
 			NULL,                    // No module name (use command line)
 			(char*) cmdLine.c_str(), // Command line
 			NULL,                    // Process handle not inheritable
@@ -587,7 +588,7 @@ namespace UTILS_NS
 #elif OS_WIN32
 		char buf[MAX_PATH];
 		DWORD size = MAX_PATH;
-        if (::GetUserName(buf,&size))
+        if (::GetUserNameA(buf,&size))
 		{
 			buf[size]='\0';
 		}

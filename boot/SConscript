@@ -21,8 +21,9 @@ if build.is_linux():
 	Env.Append(LIBS=['dl'])
 
 if build.is_win32():
-	sources += ['boot_win32.cpp', 'winboot.rc']
-
+	sources += ['boot_win32.cpp']
+	res = 'win32/winboot.rc'
+	
 	Env.Append(LIBS=['kernel32','shell32','user32','advapi32','iphlpapi'])
 	Env.Append(LINKFLAGS=['/NODEFAULTLIB:MSJAVA.lib'])
 	Env.Append(CCFLAGS=['/O2','/GL','/FD','/EHsc','/W3','/Wp64','/Zi','/TP'])
@@ -36,6 +37,9 @@ if build.is_win32():
 		linkflags.append('/SUBSYSTEM:CONSOLE'),
 		Env.Append(CPPDEFINES=['WIN32_CONSOLE=1'])
 	Env.Append(LINKFLAGS=linkflags)
+	r = Env.RES(res)
+	build.mark_build_target(r)
+	sources += r
 
 # Breakpad integration
 breakpad = ARGUMENTS.get('breakpad', '0') != '0'
