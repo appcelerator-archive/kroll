@@ -7,6 +7,7 @@
 #include <libgen.h>
 #include <limits.h>
 #include <errno.h>
+#include <gtk/gtk.h>
 #include "boot.h"
 
 #ifdef USE_BREAKPAD
@@ -25,6 +26,15 @@ namespace KrollBoot
 	void ShowError(string error, bool fatal)
 	{
 		std::cout << error << std::endl;
+		GtkWidget* dialog = gtk_message_dialog_new(
+			NULL,
+			GTK_DIALOG_MODAL,
+			GTK_MESSAGE_ERROR,
+			GTK_BUTTONS_CLOSE,
+			"%s",
+			error.c_str());
+		gtk_dialog_run(GTK_DIALOG(dialog));
+		gtk_widget_destroy(dialog);
 		if (fatal)
 			exit(1);
 	}
@@ -140,6 +150,7 @@ namespace KrollBoot
 
 #ifdef USE_BREAKPAD
 	static google_breakpad::ExceptionHandler* breakpad;
+	extern string dumpFilePath;
 
 	char breakpadCallBuffer[PATH_MAX];
 	bool HandleCrash(
@@ -155,24 +166,38 @@ namespace KrollBoot
 			system(breakpadCallBuffer);
 		}
 #ifdef DEBUG
-		return false
+		return false;
 #else
 		return true;
 #endif
 	}
 	
-	int SendCrashReport(int argc, const char* argv[])
+	int SendCrashReport()
 	{
+		gtk_init(&argc, (char***) &argv);
+
 		string url = STRING(CRASH_REPORT_URL);
-		const std::map<string, string> parameters = get_parameters(argc, argv);
-		string upload_file = argv[2];
+		const std::map<string, string> parameters = GetCrashReportParameters();
 		string filePartName = "dump";
 		string proxy;
 		string proxyUserPassword;
 		string responseBody;
 		string errorDescription;
 
-		bool success google_breakpad::HTTPUpload::SendRequest(
+		GtkWidget* dialog = gtk_message_dialog_new(
+			NULL,
+			GTK_DIALOG_MODAL,
+			GTK_MESSAGE_ERROR,
+			GTK_BUTTONS_OK_CANCEL,
+			PRODUCT_NAME" has crashed. Press OK to send a crash report");
+		gtk_window_set_title(GTK_WINDOW(dialog), PRODUCT_NAME" has crashed.");
+		int response = gtk_dialog_run(GTK_DIALOG(dialog));
+		if (response != GTK_RESPONSE_OK)
+		{
+			return 1;
+		}
+
+		bool success = google_breakpad::HTTPUpload::SendRequest(
 			url,
 			parameters,
 			dumpFilePath.c_str(),
@@ -182,20 +207,12 @@ namespace KrollBoot
 			&responseBody,
 			&errorDescription
 		);
-
 		if (!success)
 		{
-			GtkWidget* dialog = gtk_message_dialog_new(
-				NULL,
-				GTK_DIALOG_DESTROY_WITH_PARENT,
-				GTK_MESSAGE_ERROR,
-				GTK_BUTTONS_CLOSE,
-				"Error uploading crash dump: %s",
-				errorDescription.c_str());
-			gtk_dialog_run(GTK_DIALOG(dialog));
-			gtk_widget_destroy(dialog);
+			ShowError(string("Error uploading crash dump: ") + errorDescription);
+			return 2;
 		}
-		return 1;
+		return 0;
 	}
 #endif
 }
@@ -212,7 +229,7 @@ int main(int argc, const char* argv[])
 
 	// Don't install a handler if we are just handling an error (above).
 	string dumpPath = "/tmp";
-	breakpad = new google_breakpad::ExceptionHandler(
+	KrollBoot::breakpad = new google_breakpad::ExceptionHandler(
 		dumpPath,
 		NULL,
 		KrollBoot::HandleCrash,

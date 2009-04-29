@@ -179,9 +179,9 @@ namespace KrollBoot
 
 		NSApplicationLoad();
 		NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-		[alert setMessageText:@"Titanium has crashed."];
+		[alert setMessageText:@PRODUCT_NAME" has crashed."];
 		[alert setInformativeText:
-			@"If you send a crash report to Appcelerator, we can try to fix this problem."];
+			@"If you send a crash report, we can try to fix this problem."];
 		[alert addButtonWithTitle:@"Send Crash Report"];
 		[alert addButtonWithTitle:@"Cancel"];
 		int response = [alert runModal];

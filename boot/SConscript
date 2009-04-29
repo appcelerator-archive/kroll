@@ -19,6 +19,7 @@ if build.is_osx():
 if build.is_linux():
 	sources.append('boot_linux.cpp')
 	Env.Append(LIBS=['dl'])
+	Env.ParseConfig('pkg-config --cflags --libs gtk+-2.0 gdk-2.0')
 
 if build.is_win32():
 	sources += ['boot_win32.cpp']
