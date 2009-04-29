@@ -106,6 +106,11 @@ namespace kroll
 		 * @return the Global context object. In most languages this is known as "Titanium"
 		 */
 		SharedPtr<KObject> GetGlobalObject();
+		
+		/**
+		 * @return the SharedApplication instance for this host
+		 */
+		const SharedApplication GetApplication();
 
 		/**
 		 * @return The home directory for this application

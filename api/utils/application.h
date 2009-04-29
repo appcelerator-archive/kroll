@@ -25,6 +25,7 @@ namespace UTILS_NS
 		string publisher;
 		string url;
 		string image;
+		string stream;
 		vector<SharedDependency> dependencies;
 		vector<SharedComponent> modules;
 		SharedComponent runtime;

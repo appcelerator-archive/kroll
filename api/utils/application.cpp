@@ -37,6 +37,10 @@ namespace UTILS_NS
 
 		Application* application = new Application();
 		application->path = appPath;
+		
+		// default is production and is optional and doesn't have to be 
+		// in the manifest unless switching from production to test or dev
+		application->stream = "production"; 
 
 		while (!file.eof())
 		{
@@ -87,6 +91,11 @@ namespace UTILS_NS
 			else if (key == "#version")
 			{
 				application->version = value;
+				continue;
+			}
+			else if (key == "#stream")
+			{
+				application->stream = value;
 				continue;
 			}
 			else if (key.c_str()[0] == '#')

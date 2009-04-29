@@ -182,6 +182,7 @@ namespace kroll
 		if (this->application->HasArgument(PROFILE_ARG))
 		{
 			this->profilePath = this->application->GetArgumentValue(PROFILE_ARG);
+//CRASHER->	this->profile = !this->profilePath.empty();
 		}
 		if (this->application->HasArgument(LOGPATH_ARG))
 		{
@@ -205,6 +206,11 @@ namespace kroll
 				this->application = newApp;
 			}
 		}
+	}
+
+	const SharedApplication Host::GetApplication()
+	{
+		return this->application;
 	}
 
 	const std::string& Host::GetApplicationHomePath()
