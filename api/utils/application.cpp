@@ -253,8 +253,13 @@ namespace UTILS_NS
 
 	void Application::GetAvailableComponents(vector<SharedComponent>& components)
 	{
-		string overridePath = this->GetArgumentValue(OVERRIDE_ARG);
-		if (overridePath.empty())
+		if (this->HasArgument(OVERRIDE_ARG))
+		{
+			// Only scan bundled components on the override path
+			string overridePath = this->GetArgumentValue(OVERRIDE_ARG);
+			ScanBundledComponents(overridePath, components); 
+		}
+		else
 		{
 			// Merge bundled and installed components
 			ScanBundledComponents(this->path, components); 
@@ -264,16 +269,11 @@ namespace UTILS_NS
 				components.push_back(installedComponents.at(i));
 			}
 		}
-		else
-		{
-			// Only scan bundled components on the override path
-			ScanBundledComponents(overridePath, components); 
-		}
 	}
 
 	void Application::UsingModule(string name, string version, string path)
 	{
-		//// Ensure that this module is not already in our list of modules.
+		// Ensure that this module is not already in our list of modules.
 		vector<SharedComponent>::iterator i = this->modules.begin();
 		while (i != this->modules.end())
 		{

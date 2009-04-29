@@ -62,6 +62,12 @@ namespace KrollBoot
 		FindUpdate();
 	
 		vector<SharedDependency> missing = app->ResolveDependencies();
+		for (int i = 0; i < missing.size(); i++)
+		{
+			SharedDependency d = missing.at(i);
+			std::cerr << "Unresolved: " << d->name << " " << d->version << std::endl;
+		}
+
 		if (missing.size() > 0 || !app->IsInstalled() || !updateFile.empty())
 		{
 			if (!RunInstaller(missing))
