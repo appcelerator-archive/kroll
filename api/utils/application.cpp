@@ -258,7 +258,7 @@ namespace UTILS_NS
 		{
 			// Merge bundled and installed components
 			ScanBundledComponents(this->path, components); 
-			vector<SharedComponent>& installedComponents = BootUtils::GetInstalledComponents();
+			vector<SharedComponent>& installedComponents = BootUtils::GetInstalledComponents(true);
 			for (size_t i = 0; i < installedComponents.size(); i++)
 			{
 				components.push_back(installedComponents.at(i));
