@@ -22,6 +22,7 @@
 
 using Poco::File;
 using Poco::Path;
+using Poco::Environment;
 
 #define HOME_ENV "KR_HOME"
 #define RUNTIME_ENV "KR_RUNTIME"
@@ -33,8 +34,6 @@ using Poco::Path;
 #define PROFILE_ARG "--profile"
 #define LOGPATH_ARG "--logpath"
 #define BOOT_HOME_ARG "--start"
-
-using Poco::Environment;
 
 namespace kroll
 {
@@ -133,12 +132,12 @@ namespace kroll
 			// In the case of profiling, we wrap our top level global object
 			// to use the profiled bound object which will profile all methods
 			// going through this object and it's attached children
+			this->profileStream = new Poco::FileOutputStream(this->profilePath);
 			this->global_object = new ProfiledBoundObject(
 				GLOBAL_NS_VARNAME, this->global_object, this->profileStream);
 
 			Logger& logger = Logger::Get("Host");
 			logger.Info("Starting Profiler. Output going to %s", this->profilePath.c_str());
-			this->profileStream = new Poco::FileOutputStream(this->profilePath);
 		}
 	}
 
@@ -182,7 +181,7 @@ namespace kroll
 		if (this->application->HasArgument(PROFILE_ARG))
 		{
 			this->profilePath = this->application->GetArgumentValue(PROFILE_ARG);
-//CRASHER->	this->profile = !this->profilePath.empty();
+			this->profile = !this->profilePath.empty();
 		}
 		if (this->application->HasArgument(LOGPATH_ARG))
 		{
