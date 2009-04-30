@@ -16,8 +16,12 @@ namespace UTILS_NS
 	 */
 	class KROLL_API Application
 	{
+		private:
+			Application(string appPath, string manifestPath);
+
 		public:
 		string path;
+		string manifestPath;
 		string name;
 		string version;
 		string id;
@@ -41,6 +45,21 @@ namespace UTILS_NS
 		 * Whether or not this application has a .installed file in it's path
 		 */
 		bool IsInstalled();
+
+		/**
+		 * Get the path to this application's executablej
+		 */
+		string GetExecutablePath();
+
+		/**
+		 * Get the path to this application's user data directory.
+		 */
+		string GetDataPath();
+
+		/**
+		 * Get the path to this application's resources directory.
+		 */
+		string GetResourcesPath();
 
 		/**
 		 * Try to resolve all application dependencies with installed or bundled components.
@@ -72,7 +91,8 @@ namespace UTILS_NS
 		 * including bundled components and any components or all the components
 		 * in the bundle override directory.
 		 */
-		void GetAvailableComponents(vector<SharedComponent>&);
+		void GetAvailableComponents(
+			vector<SharedComponent>&, bool onlyBundled = false);
 
 		/**
 		 * Inform the application that it is using a module with the given

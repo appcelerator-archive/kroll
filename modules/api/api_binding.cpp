@@ -4,12 +4,23 @@
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
 #include "api_binding.h"
+#include "application_binding.h"
+#include "component_binding.h"
+#include "dependency_binding.h"
 #include <algorithm>
+
+using std::string;
+using std::vector;
+using std::pair;
+using std::map;
 
 namespace kroll
 {
-	APIBinding::APIBinding(SharedKObject global) : record(0), global(global)
-	{
+	APIBinding::APIBinding(Host* host) :
+		host(host),
+		global(host->GetGlobalObject()),
+		record(0)
+	{ 
 		this->SetMethod("set", &APIBinding::_Set);
 		this->SetMethod("get", &APIBinding::_Get);
 		this->SetMethod("log", &APIBinding::_Log);
@@ -17,17 +28,14 @@ namespace kroll
 		this->SetMethod("unregister", &APIBinding::_Unregister);
 		this->SetMethod("fire", &APIBinding::_Fire);
 
-		// these are properties for log severity levels
-		this->Set("TRACE", Value::NewInt(Logger::LTRACE));
-		this->Set("DEBUG", Value::NewInt(Logger::LDEBUG));
-		this->Set("INFO", Value::NewInt(Logger::LINFO));
-		this->Set("NOTICE", Value::NewInt(Logger::LNOTICE));
-		this->Set("WARN", Value::NewInt(Logger::LWARN));
-		this->Set("ERROR", Value::NewInt(Logger::LERROR));
-		this->Set("CRITICAL", Value::NewInt(Logger::LCRITICAL));
-		this->Set("FATAL", Value::NewInt(Logger::LFATAL));
+		this->SetMethod("getApplication", &APIBinding::_GetApplication);
+		this->SetMethod("getInstalledComponents", &APIBinding::_GetInstalledComponents);
+		this->SetMethod("getInstalledModules", &APIBinding::_GetInstalledModules);
+		this->SetMethod("getInstalledRuntimes", &APIBinding::_GetInstalledRuntimes);
+		this->SetMethod("getComponentSearchPaths", &APIBinding::_GetComponentSearchPaths);
+		this->SetMethod("readApplicationManifest", &APIBinding::_ReadApplicationManifest);
 
-		// these are convenience methods so you can do:
+		// These are convenience methods so you can do:
 		// Titanium.API.debug("hello")
 		// or
 		// Titanium.API.log(Titanium.API.DEBUG,"hello")
@@ -39,6 +47,29 @@ namespace kroll
 		this->SetMethod("error", &APIBinding::_LogError);
 		this->SetMethod("critical", &APIBinding::_LogCritical);
 		this->SetMethod("fatal", &APIBinding::_LogFatal);
+
+		// These are properties for log severity levels
+		this->Set("TRACE", Value::NewInt(Logger::LTRACE));
+		this->Set("DEBUG", Value::NewInt(Logger::LDEBUG));
+		this->Set("INFO", Value::NewInt(Logger::LINFO));
+		this->Set("NOTICE", Value::NewInt(Logger::LNOTICE));
+		this->Set("WARN", Value::NewInt(Logger::LWARN));
+		this->Set("ERROR", Value::NewInt(Logger::LERROR));
+		this->Set("CRITICAL", Value::NewInt(Logger::LCRITICAL));
+		this->Set("FATAL", Value::NewInt(Logger::LFATAL));
+
+		// These are properties for dependencies
+		this->Set("EQ", Value::NewInt(Dependency::EQ));
+		this->Set("LT", Value::NewInt(Dependency::LT));
+		this->Set("LTE", Value::NewInt(Dependency::LTE));
+		this->Set("GT", Value::NewInt(Dependency::GT));
+		this->Set("GTE", Value::NewInt(Dependency::GTE));
+
+		// Component types
+		this->Set("MODULE", Value::NewInt(MODULE));
+		this->Set("RUNTIME", Value::NewInt(RUNTIME));
+		this->Set("UNKNOWN", Value::NewInt(UNKNOWN));
+
 	}
 
 	APIBinding::~APIBinding()
@@ -58,11 +89,11 @@ namespace kroll
 	void APIBinding::_Set(const ValueList& args, SharedValue result)
 	{
 		const char *key = args.at(0)->ToString();
-		std::string s = key;
+		string s = key;
 		SharedValue value = args.at(1);
-		std::string::size_type pos = s.find_first_of(".");
+		string::size_type pos = s.find_first_of(".");
 
-		if (pos==std::string::npos)
+		if (pos==string::npos)
 		{
 			this->Set(key, value);
 		}
@@ -77,12 +108,12 @@ namespace kroll
 
 	void APIBinding::_Get(const ValueList& args, SharedValue result)
 	{
-		std::string s = args.at(0)->ToString();
+		string s = args.at(0)->ToString();
 		const char *key = s.c_str();
 		SharedValue r = NULL;
-		std::string::size_type pos = s.find_first_of(".");
+		string::size_type pos = s.find_first_of(".");
 
-		if (pos==std::string::npos)
+		if (pos==string::npos)
 		{
 			r = this->Get(key);
 		}
@@ -151,7 +182,7 @@ namespace kroll
 			SharedValue arg1 = args.at(0);
 			if (arg1->IsString())
 			{
-				std::string type = arg1->ToString();
+				string type = arg1->ToString();
 				if (type == "TRACE")
 					severity = Logger::LTRACE;
 
@@ -187,7 +218,7 @@ namespace kroll
 
 	void APIBinding::_Register(const ValueList& args, SharedValue result)
 	{
-		std::string event = args.at(0)->ToString();
+		string event = args.at(0)->ToString();
 		SharedKMethod method = args.at(1)->ToMethod();
 
 		int id = this->Register(event, method);
@@ -213,7 +244,7 @@ namespace kroll
 
 		if (value->IsString())
 		{
-			std::string message = value->ToString();
+			string message = value->ToString();
 			l.Log((Logger::Level) severity, message);
 		}
 		else
@@ -223,14 +254,14 @@ namespace kroll
 		}
 	}
 
-	int APIBinding::Register(std::string& event, SharedKMethod callback)
+	int APIBinding::Register(string& event, SharedKMethod callback)
 	{
 		ScopedLock lock(&mutex);
 		int record = GetNextRecord();
 		/* Fetch the records for this event. If the EventRecords
 		 * doesn't exist in registrations, the STL map
 		 * implementation will insert it into the map */
-		std::string en(event);
+		string en(event);
 		EventRecords records = this->registrations[en];
 		records.push_back(callback);
 
@@ -247,7 +278,7 @@ namespace kroll
 	void APIBinding::Unregister(int id)
 	{
 		ScopedLock lock(&mutex);
-		std::map<int, BoundEventEntry>::iterator i = registrationsById.find(id);
+		map<int, BoundEventEntry>::iterator i = registrationsById.find(id);
 		if (i == registrationsById.end())
 		{
 			return;
@@ -278,11 +309,10 @@ namespace kroll
 		// Lots of debug output really slows down things on Win32,
 		// so log this at the trace level
 		Logger& l = Logger::Get("API");
-		l.Trace(std::string("FIRING: ") + event);
-		
+		l.Trace(string("FIRING: ") + event);
+
 		//TODO: might want to be a little more lenient on how we lock here
-//		ScopedLock lock(&mutex);
-		
+		// ScopedLock lock(&mutex);
 		// optimize even the lookup
 		if (this->registrations.size() == 0)
 			return;
@@ -297,6 +327,111 @@ namespace kroll
 				method->Call(event,value);
 			}
 		}
+	}
+
+	void APIBinding::_GetApplication(const ValueList& args, SharedValue result)
+	{
+		SharedKObject app = new ApplicationBinding(host->GetApplication(), true);
+		result->SetObject(app);
+	}
+
+	void APIBinding::_GetInstalledComponents(const ValueList& args, SharedValue result)
+	{
+		vector<SharedComponent>& components = BootUtils::GetInstalledComponents(false);
+		SharedKList componentList = ComponentVectorToKList(components);
+		result->SetList(componentList);
+	}
+
+	void APIBinding::_GetInstalledModules(const ValueList& args, SharedValue result)
+	{
+		vector<SharedComponent>& components = BootUtils::GetInstalledComponents(false);
+		SharedKList componentList = ComponentVectorToKList(components, MODULE);
+		result->SetList(componentList);
+	}
+
+	void APIBinding::_GetInstalledRuntimes(const ValueList& args, SharedValue result)
+	{
+		vector<SharedComponent>& components = BootUtils::GetInstalledComponents(false);
+		SharedKList componentList = ComponentVectorToKList(components, RUNTIME);
+		result->SetList(componentList);
+	}
+
+	void APIBinding::_GetComponentSearchPaths(const ValueList& args, SharedValue result)
+	{
+		vector<string>& paths = BootUtils::GetComponentSearchPaths();
+		SharedKList pathList = StaticBoundList::FromStringVector(paths);
+		result->SetList(pathList);
+	}
+
+	void APIBinding::_ReadApplicationManifest(const ValueList& args, SharedValue result)
+	{
+		args.VerifyException("readApplicationManifest", "s,?s");
+		string manifestPath = args.at(0)->ToString();
+		string appPath;
+		if (args.size() > 1 && args.at(1)->IsString())
+		{
+			appPath = args.at(1)->ToString();
+		}
+		else
+		{
+			appPath = FileUtils::Dirname(manifestPath);
+		}
+
+		SharedApplication app = Application::NewApplication(manifestPath, appPath);
+		if (!app.isNull())
+		{
+			result->SetObject(new ApplicationBinding(app));
+		}
+		else
+		{
+			result->SetNull();
+		}
+	}
+
+	SharedKList APIBinding::ComponentVectorToKList(
+		vector<SharedComponent>& components,
+		KComponentType filter)
+	{
+		SharedKList componentList = new StaticBoundList();
+		vector<SharedComponent>::iterator i = components.begin();
+		while (i != components.end())
+		{
+			SharedComponent c = *i++;
+			if (filter == UNKNOWN || filter == c->type)
+			{
+				SharedValue cValue = Value::NewObject(new ComponentBinding(c));
+				componentList->Append(cValue);
+			}
+		}
+
+		return componentList;
+	}
+
+	SharedKList APIBinding::DependencyVectorToKList(std::vector<SharedDependency>& deps)
+	{
+		SharedKList dependencyList = new StaticBoundList();
+		std::vector<SharedDependency>::iterator i = deps.begin();
+		while (i != deps.end())
+		{
+			SharedValue dValue = Value::NewObject(new DependencyBinding(*i++));
+			dependencyList->Append(dValue);
+		}
+		return dependencyList;
+	}
+
+	SharedKList APIBinding::ManifestToKList(vector<pair<string, string> >& manifest)
+	{
+		SharedKList list = new StaticBoundList();
+		vector<pair<string, string> >::iterator i = manifest.begin();
+		while (i != manifest.end())
+		{
+			SharedKList entry = new StaticBoundList();
+			entry->Append(Value::NewString(i->first));
+			entry->Append(Value::NewString(i->second));
+			list->Append(Value::NewList(entry));
+			*i++;
+		}
+		return list;
 	}
 
 }

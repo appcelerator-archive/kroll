@@ -25,7 +25,7 @@ namespace kroll
 	class APIBinding : public StaticBoundObject
 	{
 	public:
-		APIBinding(SharedKObject global);
+		APIBinding(Host* host);
 		virtual ~APIBinding();
 
 		void Log(int severity, SharedValue);
@@ -33,7 +33,24 @@ namespace kroll
 		void Unregister(int ref);
 		void Fire(const char* event, SharedValue data);
 
+		static SharedKList ComponentVectorToKList(
+			vector<SharedComponent>&,
+			KComponentType filter = UNKNOWN);
+
+		static SharedKList DependencyVectorToKList(
+			std::vector<SharedDependency>&);
+
+		static SharedKList ManifestToKList(
+			vector<pair<string, string> >&);
+
+
 	private:
+		Host* host;
+		SharedKObject global;
+		int record;
+		std::map<std::string, EventRecords> registrations;
+		std::map<int, BoundEventEntry> registrationsById;
+
 		void _Set(const ValueList& args, SharedValue result);
 		void _Get(const ValueList& args, SharedValue result);
 		void _Register(const ValueList& args, SharedValue result);
@@ -50,10 +67,12 @@ namespace kroll
 		void _LogCritical(const ValueList& args, SharedValue result);
 		void _LogFatal(const ValueList& args, SharedValue result);
 
-		std::map<std::string, EventRecords> registrations;
-		std::map<int, BoundEventEntry> registrationsById;
-		int record;
-		SharedKObject global;
+		void _GetApplication(const ValueList& args, SharedValue value);
+		void _GetInstalledComponents(const ValueList& args, SharedValue value);
+		void _GetInstalledModules(const ValueList& args, SharedValue value);
+		void _GetInstalledRuntimes(const ValueList& args, SharedValue value);
+		void _GetComponentSearchPaths(const ValueList& args, SharedValue value);
+		void _ReadApplicationManifest(const ValueList& args, SharedValue value);
 
 		int GetNextRecord();
 	};

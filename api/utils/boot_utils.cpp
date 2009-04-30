@@ -185,6 +185,12 @@ namespace UTILS_NS
 		return c;
 	}
 
+	vector<pair<string, string> > KComponent::ReadManifest()
+	{
+		string manifestPath = FileUtils::Join(this->path.c_str(), MANIFEST_FILENAME, NULL);
+		return BootUtils::ReadManifestFile(manifestPath);
+	}
+
 	int BootUtils::CompareVersions(string one, string two)
 	{
 		if (one.empty() && two.empty())
@@ -221,5 +227,43 @@ namespace UTILS_NS
 	bool BootUtils::WeakCompareComponents(SharedComponent one, SharedComponent two)
 	{
 		return BootUtils::CompareVersions(one->version, two->version) > 0;
+	}
+
+	vector<pair<string, string> > BootUtils::ReadManifestFile(std::string path)
+	{
+		vector<pair<string, string> > manifest;
+		if (!FileUtils::IsFile(path))
+		{
+			return manifest;
+		}
+
+		std::ifstream file(path.c_str());
+		if (file.bad() || file.fail())
+		{
+			return manifest;
+		}
+
+		while (!file.eof())
+		{
+			string line;
+			std::getline(file, line);
+			line = FileUtils::Trim(line);
+
+			size_t pos = line.find(":");
+			if (pos == 0 || pos == line.length() - 1)
+			{
+				continue;
+			}
+			else
+			{
+				string key = line.substr(0, pos);
+				string value = line.substr(pos + 1, line.length());
+				key = FileUtils::Trim(key);
+				value = FileUtils::Trim(value);
+				manifest.push_back(pair<string, string>(key, value));
+			}
+		}
+		file.close();
+		return manifest;
 	}
 }

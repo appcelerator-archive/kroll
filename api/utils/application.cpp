@@ -22,41 +22,24 @@ namespace UTILS_NS
 		return Application::NewApplication(manifest, appPath);
 	}
 
-	SharedPtr<Application> Application::NewApplication(string manifest, string appPath)
+	SharedPtr<Application> Application::NewApplication(
+		string manifestPath,
+		string appPath)
 	{
-		if (!FileUtils::IsFile(manifest))
+		vector<pair<string, string> > manifest =
+			BootUtils::ReadManifestFile(manifestPath);
+		if (manifest.empty())
 		{
 			return NULL;
 		}
 
-		std::ifstream file(manifest.c_str());
-		if (file.bad() || file.fail())
+		Application* application = new Application(appPath, manifestPath);
+		vector<pair<string, string> >::iterator i = manifest.begin();
+		while (i != manifest.end())
 		{
-			return NULL;
-		}
-
-		Application* application = new Application();
-		application->path = appPath;
-		
-		// default is production and is optional and doesn't have to be 
-		// in the manifest unless switching from production to test or dev
-		application->stream = "production"; 
-
-		while (!file.eof())
-		{
-			string line;
-			std::getline(file, line);
-			line = FileUtils::Trim(line);
-
-			size_t pos = line.find(":");
-			if (pos == 0 || pos == line.length() - 1)
-				continue;
-			
-
-			string key = line.substr(0, pos);
-			string value = line.substr(pos + 1, line.length());
-			key = FileUtils::Trim(key);
-			value = FileUtils::Trim(value);
+			string key = i->first;
+			string value = i->second;
+			*i++;
 
 			if (key == "#appname")
 			{
@@ -75,7 +58,8 @@ namespace UTILS_NS
 			}
 			else if (key == "#image")
 			{
-				application->image = FileUtils::Join(appPath.c_str(), "Resources", value.c_str(), NULL);
+				application->image =
+					 FileUtils::Join(application->GetResourcesPath().c_str(), value.c_str(), NULL);
 				continue;
 			}
 			else if (key == "#publisher")
@@ -98,7 +82,7 @@ namespace UTILS_NS
 				application->stream = value;
 				continue;
 			}
-			else if (key.c_str()[0] == '#')
+			else if (key[0] == '#')
 			{
 				continue;
 			}
@@ -108,15 +92,56 @@ namespace UTILS_NS
 				application->dependencies.push_back(d);
 			}
 		}
-
-		file.close();
 		return application;
+	}
+
+	Application::Application(string path, string manifestPath) :
+		path(path),
+		manifestPath(manifestPath),
+		stream("production")
+	{
+		// Default stream is production and is optional and doesn't have to be 
+		// in the manifest unless switching from production to test or dev
 	}
 
 	Application::~Application()
 	{
 		this->modules.clear();
 		this->runtime = NULL;
+	}
+
+	string Application::GetExecutablePath()
+	{
+		string exeName = this->name + ".exe"
+		string path = FileUtils::Join(this->path.c_str(), exeName.c_str(), NULL);
+		if (FileUtils::IsFile(path))
+		{
+			return path;
+		}
+
+		path = FileUtils::Join(this->path.c_str(), "MacOS", this->name, NULL);
+		if (FileUtils::IsFile(path))
+		{
+			return path;
+		}
+
+		path = FileUtils::Join(this->path.c_str(), this->name, NULL);
+		if (FileUtils::IsFile(path))
+		{
+			return path;
+		}
+
+		return string();
+	}
+
+	string Application::GetDataPath()
+	{
+		return FileUtils::GetApplicationDataDirectory(this->id);
+	}
+
+	string Application::GetResourcesPath()
+	{
+		return FileUtils::Join(this->path.c_str(), "Resources", NULL);
 	}
 
 	bool Application::IsInstalled()
@@ -260,24 +285,31 @@ namespace UTILS_NS
 		return NULL;
 	} 
 
-	void Application::GetAvailableComponents(vector<SharedComponent>& components)
+	void Application::GetAvailableComponents(vector<SharedComponent>& components, bool onlyBundled)
 	{
 		if (this->HasArgument(OVERRIDE_ARG))
 		{
 			// Only scan bundled components on the override path
 			string overridePath = this->GetArgumentValue(OVERRIDE_ARG);
 			ScanBundledComponents(overridePath, components); 
+			onlyBundled = true;
 		}
 		else
 		{
 			// Merge bundled and installed components
 			ScanBundledComponents(this->path, components); 
-			vector<SharedComponent>& installedComponents = BootUtils::GetInstalledComponents(true);
+		}
+
+		if (!onlyBundled)
+		{
+			vector<SharedComponent>& installedComponents =
+				BootUtils::GetInstalledComponents(true);
 			for (size_t i = 0; i < installedComponents.size(); i++)
 			{
 				components.push_back(installedComponents.at(i));
 			}
 		}
+		
 	}
 
 	void Application::UsingModule(string name, string version, string path)
