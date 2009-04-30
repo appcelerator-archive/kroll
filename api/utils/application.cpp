@@ -112,20 +112,20 @@ namespace UTILS_NS
 
 	string Application::GetExecutablePath()
 	{
-		string exeName = this->name + ".exe"
+		string exeName = this->name + ".exe";
 		string path = FileUtils::Join(this->path.c_str(), exeName.c_str(), NULL);
 		if (FileUtils::IsFile(path))
 		{
 			return path;
 		}
 
-		path = FileUtils::Join(this->path.c_str(), "MacOS", this->name, NULL);
+		path = FileUtils::Join(this->path.c_str(), "MacOS", this->name.c_str(), NULL);
 		if (FileUtils::IsFile(path))
 		{
 			return path;
 		}
 
-		path = FileUtils::Join(this->path.c_str(), this->name, NULL);
+		path = FileUtils::Join(this->path.c_str(), this->name.c_str(), NULL);
 		if (FileUtils::IsFile(path))
 		{
 			return path;
