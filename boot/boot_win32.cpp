@@ -104,6 +104,7 @@ namespace KrollBoot
 			paramString.append(args.at(i));
 			paramString.append("\"");
 		}
+		printf("%s\n", paramString.c_str());
 	
 		SHELLEXECUTEINFO ShExecInfo = {0};
 		ShExecInfo.cbSize = sizeof(SHELLEXECUTEINFO);
@@ -144,8 +145,8 @@ namespace KrollBoot
 			std::getline(file, appInstallPath);
 			appInstallPath = FileUtils::Trim(appInstallPath);
 
-			Application* newapp = Application::NewApplication(appInstallPath);
-			if (newapp == NULL)
+			SharedApplication newapp = Application::NewApplication(appInstallPath);
+			if (newapp.isNull())
 			{
 				ShowError("Application installed failed.");
 				return false; // Don't show further errors
@@ -189,7 +190,9 @@ namespace KrollBoot
 		_execv(executable.c_str(), argv);
 
 		// If we get here an error happened with the execv 
-		return strerror(errno);
+		char errorBuffer[1024];
+		strerror_s(errorBuffer, 1024, errno);
+		return errorBuffer;
 	}
 
 	typedef int Executor(HINSTANCE, int, const char **);
@@ -222,6 +225,74 @@ namespace KrollBoot
 
 		return executor(::GetModuleHandle(NULL), argc,(const char**)argv);
 	}
+
+#ifdef USE_BREAKPAD
+	static google_breakpad::ExceptionHandler* breakpad;
+	extern string dumpFilePath;
+
+	char breakpadCallBuffer[PATH_MAX];
+	bool HandleCrash(
+		const char* dump_path,
+		const char* id,
+		void* context,
+		bool succeeded)
+	{
+		if (succeeded)
+		{
+			snprintf(breakpadCallBuffer, PATH_MAX - 1,
+				 "%s %s %s %s", argv[0], CRASH_REPORT_OPT, dump_path, id);
+			system(breakpadCallBuffer);
+		}
+#ifdef DEBUG
+		return false;
+#else
+		return true;
+#endif
+	}
+	
+	int SendCrashReport()
+	{
+		gtk_init(&argc, (char***) &argv);
+
+		string url = STRING(CRASH_REPORT_URL);
+		const std::map<string, string> parameters = GetCrashReportParameters();
+		string filePartName = "dump";
+		string proxy;
+		string proxyUserPassword;
+		string responseBody;
+		string errorDescription;
+
+		GtkWidget* dialog = gtk_message_dialog_new(
+			NULL,
+			GTK_DIALOG_MODAL,
+			GTK_MESSAGE_ERROR,
+			GTK_BUTTONS_OK_CANCEL,
+			PRODUCT_NAME" has crashed. Press OK to send a crash report");
+		gtk_window_set_title(GTK_WINDOW(dialog), PRODUCT_NAME" has crashed.");
+		int response = gtk_dialog_run(GTK_DIALOG(dialog));
+		if (response != GTK_RESPONSE_OK)
+		{
+			return 1;
+		}
+
+		bool success = google_breakpad::HTTPUpload::SendRequest(
+			url,
+			parameters,
+			dumpFilePath.c_str(),
+			filePartName,
+			proxy,
+			proxyUserPassword,
+			&responseBody,
+			&errorDescription
+		);
+		if (!success)
+		{
+			ShowError(string("Error uploading crash dump: ") + errorDescription);
+			return 2;
+		}
+		return 0;
+	}
+#endif
 }
 
 #if defined(OS_WIN32) && !defined(WIN32_CONSOLE)
