@@ -5,10 +5,18 @@
  */
 
 #include "boot.h"
+#include "popup_dialog_win32.h"
 #include <process.h>
+#include <windows.h>
+using std::wstring;
 
 #ifndef MAX_PATH
 #define MAX_PATH 512
+#endif
+
+#ifdef USE_BREAKPAD
+#include "client/windows/handler/exception_handler.h"
+#include "common/windows/http_upload.h"
 #endif
 
 namespace KrollBoot
@@ -27,7 +35,7 @@ namespace KrollBoot
 	inline void ShowError(string msg, bool fatal)
 	{
 		std::cerr << "Error: " << msg << std::endl;
-		MessageBox(NULL, msg.c_str(), "Application Error", MB_OK|MB_ICONERROR|MB_SYSTEMMODAL);
+		MessageBoxA(NULL, msg.c_str(), "Application Error", MB_OK|MB_ICONERROR|MB_SYSTEMMODAL);
 		if (fatal)
 			exit(1);
 	}
@@ -35,7 +43,7 @@ namespace KrollBoot
 	std::string GetApplicationHomePath()
 	{
 		char path[MAX_PATH];
-		int size = GetModuleFileName(GetModuleHandle(NULL), (char*)path, MAX_PATH);
+		int size = GetModuleFileNameA(GetModuleHandle(NULL), (char*)path, MAX_PATH);
 		if (size>0)
 		{
 			path[size] = '\0';
@@ -106,7 +114,7 @@ namespace KrollBoot
 		}
 		printf("%s\n", paramString.c_str());
 	
-		SHELLEXECUTEINFO ShExecInfo = {0};
+		SHELLEXECUTEINFOA ShExecInfo = {0};
 		ShExecInfo.cbSize = sizeof(SHELLEXECUTEINFO);
 		ShExecInfo.fMask = SEE_MASK_NOCLOSEPROCESS | SEE_MASK_FLAG_DDEWAIT;
 		ShExecInfo.hwnd = NULL;
@@ -116,7 +124,7 @@ namespace KrollBoot
 		ShExecInfo.lpDirectory = NULL;
 		ShExecInfo.nShow = SW_SHOW;
 		ShExecInfo.hInstApp = NULL;	
-		ShellExecuteEx(&ShExecInfo);
+		ShellExecuteExA(&ShExecInfo);
 		WaitForSingleObject(ShExecInfo.hProcess, INFINITE);
 
 		if (FileUtils::IsDirectory(tempdir))
@@ -138,7 +146,7 @@ namespace KrollBoot
 			std::ifstream file(installedToFile.c_str());
 			if (file.bad() || file.fail() || file.eof())
 			{
-				DeleteFile(installedToFile.c_str());
+				DeleteFileA(installedToFile.c_str());
 				ShowError("Application installed failed.");
 				return false; // Don't show further errors
 			}
@@ -155,7 +163,7 @@ namespace KrollBoot
 			{
 				app = newapp;
 			}
-			DeleteFile(installedToFile.c_str());
+			DeleteFileA(installedToFile.c_str());
 		}
 
 		return true;
@@ -177,22 +185,10 @@ namespace KrollBoot
 
 	string Blastoff()
 	{
-		// If this was a full app install, we need to execute the newly
-		// installed executable as opposed to this one -- which is in a
-		// temporary directory somewhere.
-		string executable = argv[0];
-		if (!appInstallPath.empty())
-		{
-			executable = FileUtils::Basename(executable);
-			executable = FileUtils::Join(appInstallPath.c_str(), executable.c_str(), NULL);
-		}
-
-		_execv(executable.c_str(), argv);
-
-		// If we get here an error happened with the execv 
-		char errorBuffer[1024];
-		strerror_s(errorBuffer, 1024, errno);
-		return errorBuffer;
+		// Windows boot does not need to restart itself, so just launch
+		// the host here and exit with the appropriate return value.
+		EnvironmentUtils::Unset(BOOTSTRAP_ENV);
+		exit(KrollBoot::StartHost());
 	}
 
 	typedef int Executor(HINSTANCE, int, const char **);
@@ -208,7 +204,7 @@ namespace KrollBoot
 			return __LINE__;
 		}
 	
-		HMODULE dll = LoadLibrary(khost.c_str());
+		HMODULE dll = LoadLibraryA(khost.c_str());
 		if (!dll)
 		{
 			char msg[MAX_PATH];
@@ -230,18 +226,33 @@ namespace KrollBoot
 	static google_breakpad::ExceptionHandler* breakpad;
 	extern string dumpFilePath;
 
-	char breakpadCallBuffer[PATH_MAX];
-	bool HandleCrash(
-		const char* dump_path,
-		const char* id,
+	char breakpadCallBuffer[MAX_PATH];
+  	bool HandleCrash(
+		const wchar_t* dumpPath,
+		const wchar_t* id,
 		void* context,
+		EXCEPTION_POINTERS* exinfo,
+		MDRawAssertionInfo* assertion,
 		bool succeeded)
 	{
 		if (succeeded)
 		{
-			snprintf(breakpadCallBuffer, PATH_MAX - 1,
-				 "%s %s %s %s", argv[0], CRASH_REPORT_OPT, dump_path, id);
-			system(breakpadCallBuffer);
+			STARTUPINFOA startupInfo = {0};
+			startupInfo.cb = sizeof(startupInfo);
+			PROCESS_INFORMATION processInformation;
+			_snprintf_s(breakpadCallBuffer, MAX_PATH, MAX_PATH - 1,
+				 "%s %s %S %S", argv[0], CRASH_REPORT_OPT, dumpPath, id);
+			CreateProcessA(
+				NULL,
+				breakpadCallBuffer,
+				NULL,
+				NULL,
+				FALSE,
+				0,
+				NULL,
+				NULL,
+				&startupInfo,
+				&processInformation);
 		}
 #ifdef DEBUG
 		return false;
@@ -249,45 +260,62 @@ namespace KrollBoot
 		return true;
 #endif
 	}
+
+	wstring StringToWString(string in)
+	{
+		wstring out(in.length(), L' ');
+		copy(in.begin(), in.end(), out.begin());
+		return out; 
+	}
+
+	map<wstring, wstring> GetCrashReportParametersW()
+	{
+		map<wstring, wstring> paramsW;
+		map<string, string> params = GetCrashReportParameters();
+		map<string, string>::iterator i = params.begin();
+		while (i != params.end())
+		{
+			wstring key = StringToWString(i->first);
+			wstring val = StringToWString(i->second);
+			i++;
+
+			paramsW[key] = val;
+		}
+		return paramsW;
+	}
 	
 	int SendCrashReport()
 	{
-		gtk_init(&argc, (char***) &argv);
+		std::string title = PRODUCT_NAME" has crashed";
+		std::string msg = PRODUCT_NAME" has crashed. Do you want to send a crash report?";
 
-		string url = STRING(CRASH_REPORT_URL);
-		const std::map<string, string> parameters = GetCrashReportParameters();
-		string filePartName = "dump";
-		string proxy;
-		string proxyUserPassword;
-		string responseBody;
-		string errorDescription;
-
-		GtkWidget* dialog = gtk_message_dialog_new(
-			NULL,
-			GTK_DIALOG_MODAL,
-			GTK_MESSAGE_ERROR,
-			GTK_BUTTONS_OK_CANCEL,
-			PRODUCT_NAME" has crashed. Press OK to send a crash report");
-		gtk_window_set_title(GTK_WINDOW(dialog), PRODUCT_NAME" has crashed.");
-		int response = gtk_dialog_run(GTK_DIALOG(dialog));
-		if (response != GTK_RESPONSE_OK)
+		Win32PopupDialog popupDialog(NULL);
+		popupDialog.SetTitle(title);
+		popupDialog.SetMessage(msg);
+		popupDialog.SetShowCancelButton(true);
+		if (popupDialog.Show() != IDYES)
 		{
 			return 1;
 		}
 
+		wstring url = StringToWString(STRING(CRASH_REPORT_URL));
+		const std::map<wstring, wstring> parameters = GetCrashReportParametersW();
+		wstring dumpFilePathW = StringToWString(dumpFilePath);
+		wstring responseBody;
+		int responseCode;
+
 		bool success = google_breakpad::HTTPUpload::SendRequest(
 			url,
 			parameters,
-			dumpFilePath.c_str(),
-			filePartName,
-			proxy,
-			proxyUserPassword,
+			dumpFilePathW.c_str(),
+			L"dump",
+			NULL,
 			&responseBody,
-			&errorDescription
-		);
+			&responseCode);
+
 		if (!success)
 		{
-			ShowError(string("Error uploading crash dump: ") + errorDescription);
+			ShowError("Error uploading crash dump.");
 			return 2;
 		}
 		return 0;
@@ -305,31 +333,20 @@ int main(int __argc, const char* __argv[])
 	KrollBoot::argv = (const char**) __argv;
 
 #ifdef USE_BREAKPAD
-	if (argc > 2 && !strcmp(CRASH_REPORT_OPT, argv[1]))
+	// Don't install a handler if we are just handling an error.
+	if (__argc > 2 && !strcmp(CRASH_REPORT_OPT, __argv[1]))
 	{
 		return KrollBoot::SendCrashReport();
 	}
 
-	// Don't install a handler if we are just handling an error (above).
-	string dumpPath = "/tmp";
-	breakpad = new google_breakpad::ExceptionHandler(
-		dumpPath,
+	wchar_t tempPath[MAX_PATH];
+	GetTempPathW(MAX_PATH, tempPath);
+	KrollBoot::breakpad = new google_breakpad::ExceptionHandler(
+		tempPath,
 		NULL,
 		KrollBoot::HandleCrash,
 		NULL,
-		true);
+		google_breakpad::ExceptionHandler::HANDLER_ALL);
 #endif
-
-	int rc;
-	if (!EnvironmentUtils::Has(BOOTSTRAP_ENV))
-	{
-		return KrollBoot::Bootstrap();
-	}
-	else
-	{
-		EnvironmentUtils::Unset(BOOTSTRAP_ENV);
-		return KrollBoot::StartHost();
-	}
-
-	return rc;
+	return KrollBoot::Bootstrap();
 }

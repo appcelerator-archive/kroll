@@ -15,7 +15,7 @@ namespace UTILS_NS
 	std::string FileUtils::GetUserRuntimeHomeDirectory()
 	{
 		char path[MAX_PATH];
-		if (SHGetSpecialFolderPath(NULL, path, CSIDL_APPDATA, FALSE))
+		if (SHGetSpecialFolderPathA(NULL, path, CSIDL_APPDATA, FALSE))
 		{
 			return Join(path, PRODUCT_NAME, NULL);
 		}
@@ -30,7 +30,7 @@ namespace UTILS_NS
 	std::string FileUtils::GetSystemRuntimeHomeDirectory()
 	{
 		char path[MAX_PATH];
-		if (SHGetSpecialFolderPath(NULL, path, CSIDL_COMMON_APPDATA, FALSE))
+		if (SHGetSpecialFolderPathA(NULL, path, CSIDL_COMMON_APPDATA, FALSE))
 		{
 			return Join(path, PRODUCT_NAME, NULL);
 		}
@@ -49,9 +49,9 @@ namespace UTILS_NS
 		}
 	
 		std::cout << "\n>Recursive copy " << dir << " to " << dest << std::endl;
-		WIN32_FIND_DATA findFileData;
+		WIN32_FIND_DATAA findFileData;
 		std::string q(dir+"\\*");
-		HANDLE hFind = FindFirstFile(q.c_str(), &findFileData);
+		HANDLE hFind = FindFirstFileA(q.c_str(), &findFileData);
 		if (hFind != INVALID_HANDLE_VALUE)
 		{
 			do
@@ -73,7 +73,7 @@ namespace UTILS_NS
 					//std::cout << "> copy file " << srcName << " to " << destName << std::endl;
 					CopyFileA(srcName.c_str(), destName.c_str(), FALSE);
 				}
-			} while (FindNextFile(hFind, &findFileData));
+			} while (FindNextFileA(hFind, &findFileData));
 			FindClose(hFind);
 		}
 	}

@@ -171,15 +171,16 @@ class BuildConfig(object):
 		self.kroll_third_party = self.third_party
 		self.kroll_include_dir = path.join(self.dir, 'include')
 		self.kroll_utils_dir = path.join(self.kroll_source_dir, 'api', 'utils');
+		self.kroll_support_dir = path.join(self.kroll_source_dir, 'support', self.os)
 
 	# Get a separate copy of the Kroll Utils for a particular build piece
 	# Give: A unique directory for that build piece where the utils should be copied
-	def get_kroll_utils(self, dir):
+	def get_kroll_utils(self, dir, unzip=True):
 		futils.CopyToDir(self.kroll_utils_dir, dir)
 		sources = Glob('%s/utils/*.cpp' % dir) + \
 			Glob('%s/utils/poco/*.cpp' % dir) + \
 			Glob('%s/utils/%s/*.cpp' % (dir, self.os))
-		if self.is_win32():
+		if self.is_win32() and unzip:
 			sources.extend(Glob('%s/utils/unzip/*.cpp' % dir))
 		return sources
 
