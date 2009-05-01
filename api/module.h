@@ -42,16 +42,41 @@ namespace kroll
 	class KROLL_API Module
 	{
 	public:
-		Module(Host *host, std::string path)
-			 : host(host), path(path) {}
-		virtual ~Module() {}
+		Module(Host *host, const char* inpath, const char* inname, const char* inversion) :
+			host(host),
+			path(std::string(inpath)),
+			name(std::string(inname)),
+			version(std::string(inversion))
+		{
+		}
 
-	public:
+		virtual ~Module()
+		{
+		}
+
+		/**
+		 * @return the path to this module's main directory
+		 */
+		std::string GetPath()
+		{
+			return this->path;
+		}
 
 		/*
 		 * @return the name of the module
 		 */
-		virtual const char* GetName() = 0;
+		std::string GetName()
+		{
+			return this->name;
+		}
+
+		/*
+		 * @return the version of the module
+		 */
+		std::string GetVersion()
+		{
+			return this->version;
+		}
 
 		/**
 		 * Called directly after module loading, during the loading
@@ -98,71 +123,53 @@ namespace kroll
 			return provider;
 		}
 
-
-		/**
-		 * @return the path to this module's main directory
-		 */
-		const char *GetPath()
-		{
-			return path.c_str();
-		}
-
 	protected:
 		Host *host;
 		ModuleProvider *provider;
+
 	private:
 		std::string path;
+		std::string name;
+		std::string version;
 		DISALLOW_EVIL_CONSTRUCTORS(Module);
 	};
 }
 
-//
-// MACROS that are used to make it much easier to define
-// and implement a module
-//
-
+// MACROS that are used to make it much easier to define and implement a module
 using namespace kroll;
-#define KROLL_MODULE_FACTORY_DEFINE(s) extern "C" EXPORT s* CreateModule(Host *host, const char* path) \
-{ \
-	return new s(host, std::string(path));\
-}  \
-const char* s::GetName() \
-{ \
-	return #s; \
-}
-
 typedef void* ModuleMethod;
-
-/**
- * \def KROLL_MODULE_CLASS(klass)
- * \brief A convenience macro for the module's header file.
- * \description Defines the default constructor, destructor, and lifecycle methods for the module "klass"
- */
-#define KROLL_MODULE_CLASS(s) public: \
-s(kroll::Host *host, std::string path); \
-virtual ~s(); \
-const char* GetName(); \
-void Initialize(); \
-void Stop();
-
-#define KROLL_MODULE_CONSTRUCTOR(s) s::s(Host *host, std::string path) : kroll::Module(host, path)
-#define KROLL_MODULE_DESTRUCTOR(s) s::~s()
 
 /**
  * \def KROLL_MODULE(klass)
  * \brief A convenience macro for the module's implementation file.
  * \description Defines the default constructor, destructor, library implementations for the module "klass"
  */
-#define KROLL_MODULE(s) \
-KROLL_MODULE_CONSTRUCTOR(s)\
-{\
-}\
-\
-KROLL_MODULE_DESTRUCTOR(s)\
-{\
-}\
-\
-KROLL_MODULE_FACTORY_DEFINE(s)\
+#define KROLL_MODULE(ClassName, Name, Version) \
+ClassName::ClassName(Host *host, const char* path, const char* name, const char* version) : \
+	kroll::Module(host, path, name, version) \
+{ \
+} \
+  \
+ClassName::~ClassName() \
+{ \
+} \
+  \
+extern "C" EXPORT ClassName* CreateModule(Host *host, const char* path) \
+{ \
+	return new ClassName(host, path, Name, Version); \
+}  \
+
+/**
+ * \def KROLL_MODULE_CLASS(klass)
+ * \brief A convenience macro for the module's header file.
+ * \description Defines the default constructor, destructor, and lifecycle methods for the module "klass"
+ */
+#define KROLL_MODULE_CLASS(ClassName) \
+public: \
+	ClassName(kroll::Host *host, const char* path, const char* name, const char* version); \
+	virtual ~ClassName(); \
+	void Initialize(); \
+	void Stop();
 
 
 

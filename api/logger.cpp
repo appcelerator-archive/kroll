@@ -33,7 +33,7 @@ namespace kroll
 	std::map<std::string, Logger> Logger::loggers;
 	char Logger::buffer[LOGGER_MAX_ENTRY_SIZE];
 	Poco::Mutex Logger::mutex;
-	std::string Logger::logpath;
+	std::string Logger::logFilePath;
 
 	Logger& Logger::Get(std::string name)
 	{
@@ -41,11 +41,11 @@ namespace kroll
 		return Logger::GetImpl(name);
 	}
 
-	void Logger::Initialize(int console, int file, int level, std::string appID, std::string logpath)
+	void Logger::Initialize(int console, int file, int level, std::string logFilePath)
 	{
 		std::string name = PRODUCT_NAME;
-		Logger::logpath = logpath;
-		Logger::loggers[name] = Logger(console, file, level, name, appID);
+		Logger::logFilePath = logFilePath;
+		Logger::loggers[name] = Logger(console, file, level, name);
 	}
 
 	Logger& Logger::GetRootLogger()
@@ -63,7 +63,7 @@ namespace kroll
 	}
 
 	/* The root logger */
-	Logger::Logger(bool console, bool file, int level, std::string name, std::string appID) :
+	Logger::Logger(bool console, bool file, int level, std::string name) :
 		name(name)
 	{
 		SplitterChannel* splitter = new SplitterChannel();
@@ -75,21 +75,12 @@ namespace kroll
 		}
 		if (file)
 		{
-			Path logfile;
-			if (Logger::logpath.empty())
-			{
-				std::string dataPath = FileUtils::GetApplicationDataDirectory(appID);
-				File dataPathFile = File(dataPath);
-				dataPathFile.createDirectories();
+			string logDirectory = FileUtils::Dirname(logFilePath);
+			File logDirectoryFile = File(logDirectory);
+			logDirectoryFile.createDirectories();
 
-				logfile = Path(dataPath);
-				logfile = Path(logfile, "tiapp.log");
-			}
-			else
-			{
-				logfile = Path(logpath);
-			}
-			FileChannel* fileChannel = new FileChannel(logfile.absolute().toString());
+			Path logFilePathPath = Path(logFilePath);
+			FileChannel* fileChannel = new FileChannel(logFilePathPath.absolute().toString());
 			splitter->addChannel(fileChannel);
 			fileChannel->release();
 		}
@@ -123,7 +114,7 @@ namespace kroll
 		return Logger::GetImpl(childName);
 	}
 
-	void Logger::Log(Level level, std::string message)
+	void Logger::Log(Level level, std::string& message)
 	{
 		Poco::Logger& loggerImpl = Poco::Logger::get(name);
 		Poco::Message m(this->name, message, (Poco::Message::Priority) level);

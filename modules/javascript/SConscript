@@ -36,7 +36,7 @@ elif build.is_win32():
                      'pthreadVC2', 'kroll'])
 	Env.Append(LINKFLAGS=['/LTCG', '/INCREMENTAL:NO'])
 
-m = build.add_module('javascript')
+m = build.add_module('javascript', env=Env)
 t = Env.SharedLibrary(m.build_dir + '/javascriptmodule', Glob('*.cpp'))
 build.mark_build_target(t)
 

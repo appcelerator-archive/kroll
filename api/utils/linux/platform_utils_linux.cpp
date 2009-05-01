@@ -39,9 +39,8 @@
 #include <netinet/in.h>
 #include <net/if.h>
 
-namespace kroll
+namespace UTILS_NS
 {
-
 	void PlatformUtils::GetNodeId(NodeId& id)
 	{
 		//Based on code from:

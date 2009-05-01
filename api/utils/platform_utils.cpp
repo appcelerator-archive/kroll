@@ -30,7 +30,7 @@
 // DEALINGS IN THE SOFTWARE.
 #include "utils.h"
 
-namespace kroll
+namespace UTILS_NS
 {
 	std::string PlatformUtils::GetFirstMACAddress()
 	{

@@ -14,10 +14,12 @@
 #include <sys/utsname.h>
 #include <libgen.h>
 #elif defined(OS_WIN32)
+#include "../base.h"
 #include <windows.h>
 #include <shlobj.h>
 #include <Iphlpapi.h>
 #include <process.h>
+#include <shellapi.h>
 #elif defined(OS_LINUX)
 #include <cstdarg>
 #include <unistd.h>
@@ -64,7 +66,7 @@ static std::string safe_encode(std::string &str)
 }
 
 
-namespace kroll
+namespace UTILS_NS
 {
 	std::string FileUtils::GetApplicationDirectory()
 	{
@@ -74,7 +76,7 @@ namespace kroll
 		return std::string([contents UTF8String]);
 #elif OS_WIN32
 		char path[MAX_PATH];
-		GetModuleFileName(NULL,path,MAX_PATH);
+		GetModuleFileNameA(NULL,path,MAX_PATH);
 		std::string p(path);
 		std::string::size_type pos = p.rfind("\\");
 		if (pos!=std::string::npos)
@@ -118,7 +120,7 @@ namespace kroll
 #ifdef OS_OSX
 		NSString * tempDir = NSTemporaryDirectory();
 		if (tempDir == nil)
-		    tempDir = @"/tmp";
+			tempDir = @"/tmp";
 
 		NSString *tmp = [tempDir stringByAppendingPathComponent:@"kXXXXX"];
 		const char * fsTemplate = [tmp fileSystemRepresentation];
@@ -132,8 +134,8 @@ namespace kroll
 		return std::string([temporaryDirectory UTF8String]);
 #elif defined(OS_WIN32)
 #define BUFSIZE 512
-		TCHAR szTempName[BUFSIZE];
-		GetTempPath(BUFSIZE,szTempName);
+		char szTempName[BUFSIZE];
+		GetTempPathA(BUFSIZE, szTempName);
 		std::string dir(szTempName);
 		srand(GetTickCount()); // initialize seed
 		std::ostringstream s;
@@ -188,8 +190,8 @@ namespace kroll
 		BOOL found = [[NSFileManager defaultManager] fileExistsAtPath:p isDirectory:&isDir];
 		return found && !isDir;
 #elif OS_WIN32
-		WIN32_FIND_DATA findFileData;
-		HANDLE hFind = FindFirstFile(file.c_str(), &findFileData);
+		WIN32_FIND_DATAA findFileData;
+		HANDLE hFind = FindFirstFileA(file.c_str(), &findFileData);
 		if (hFind != INVALID_HANDLE_VALUE)
 		{
 			bool yesno = (findFileData.dwFileAttributes & 0x00000000) == 0x00000000;
@@ -241,7 +243,7 @@ namespace kroll
 #ifdef OS_OSX
 		return [[NSFileManager defaultManager] createDirectoryAtPath:[NSString stringWithCString:dir.c_str()] attributes:nil];
 #elif OS_WIN32
-		return ::CreateDirectory(dir.c_str(),NULL);
+		return ::CreateDirectoryA(dir.c_str(),NULL);
 #elif OS_LINUX
 		return mkdir(dir.c_str(),0755) == 0;
 #endif
@@ -258,13 +260,13 @@ namespace kroll
 #ifdef OS_OSX
 		[[NSFileManager defaultManager] removeFileAtPath:[NSString stringWithCString:dir.c_str()] handler:nil];
 #elif OS_WIN32
-		SHFILEOPSTRUCT op;
+		SHFILEOPSTRUCTA op;
 		op.hwnd = NULL;
 		op.wFunc = FO_DELETE;
 		op.pFrom = dir.c_str();
 		op.pTo = NULL;
 		op.fFlags = FOF_NOCONFIRMATION | FOF_SILENT | FOF_NOERRORUI;
-		int rc = SHFileOperation(&op);
+		int rc = SHFileOperationA(&op);
 		return (rc == 0);
 #elif OS_LINUX
 		return unlink(dir.c_str()) == 0;
@@ -279,8 +281,8 @@ namespace kroll
 		BOOL found = [[NSFileManager defaultManager] fileExistsAtPath:[NSString stringWithCString:dir.c_str()] isDirectory:&isDir];
 		return found && isDir;
 #elif OS_WIN32
-		WIN32_FIND_DATA findFileData;
-		HANDLE hFind = FindFirstFile(dir.c_str(), &findFileData);
+		WIN32_FIND_DATAA findFileData;
+		HANDLE hFind = FindFirstFileA(dir.c_str(), &findFileData);
 		if (hFind == INVALID_HANDLE_VALUE)
 		{
 			return false;
@@ -372,8 +374,8 @@ namespace kroll
 		// TODO finish this
 		return false;
 #elif OS_WIN32
-		WIN32_FIND_DATA findFileData;
-		HANDLE hFind = FindFirstFile(file.c_str(), &findFileData);
+		WIN32_FIND_DATAA findFileData;
+		HANDLE hFind = FindFirstFileA(file.c_str(), &findFileData);
 		if (hFind != INVALID_HANDLE_VALUE)
 		{
 			bool yesno = (findFileData.dwFileAttributes & 0x00000002) == 0x00000002;
@@ -419,7 +421,7 @@ namespace kroll
 	void FileUtils::Tokenize(
 		const std::string& str,
 		std::vector<std::string>& tokens, 
-		const std::string &delimeters, 
+		const std::string delimeters, 
 		bool skip_if_found)
 	{
 		std::string::size_type lastPos = str.find_first_not_of(delimeters,0);
@@ -476,17 +478,20 @@ namespace kroll
 
 	void FileUtils::ListDir(std::string& path, std::vector<std::string> &files)
 	{
-	#if defined(OS_WIN32)
+		if (!IsDirectory(path))
+			return;
+		files.clear();
 
-		WIN32_FIND_DATA findFileData;
+	#if defined(OS_WIN32)
+		WIN32_FIND_DATAA findFileData;
 		std::string q(path+"\\*");
-		HANDLE hFind = FindFirstFile(q.c_str(), &findFileData);
+		HANDLE hFind = FindFirstFileA(q.c_str(), &findFileData);
 		if (hFind != INVALID_HANDLE_VALUE)
 		{
 			do
 			{
 				files.push_back(std::string(findFileData.cFileName));
-			} while (FindNextFile(hFind, &findFileData));
+			} while (FindNextFileA(hFind, &findFileData));
 			FindClose(hFind);
 		}
 	#else
@@ -536,15 +541,14 @@ namespace kroll
 		printf("cmd: %s\n", cmdLine.c_str());
 
 		DWORD rc=0;
-		STARTUPINFO si;
+		STARTUPINFOA si;
 		PROCESS_INFORMATION pi;
 		ZeroMemory( &si, sizeof(si) );
 		si.cb = sizeof(si);
 		ZeroMemory( &pi, sizeof(pi) );
 		char cwd[MAX_PATH];
-		DWORD size = GetCurrentDirectory(MAX_PATH, (char*)cwd);
-		cwd[size]='\0';
-		if (!CreateProcess(
+		DWORD size = GetCurrentDirectoryA(MAX_PATH, (char*)cwd);
+		if (!CreateProcessA(
 			NULL,                    // No module name (use command line)
 			(char*) cmdLine.c_str(), // Command line
 			NULL,                    // Process handle not inheritable
@@ -584,7 +588,7 @@ namespace kroll
 #elif OS_WIN32
 		char buf[MAX_PATH];
 		DWORD size = MAX_PATH;
-        if (::GetUserName(buf,&size))
+        if (::GetUserNameA(buf,&size))
 		{
 			buf[size]='\0';
 		}

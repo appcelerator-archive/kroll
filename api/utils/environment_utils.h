@@ -7,7 +7,7 @@
 #define _KR_ENVIRONMENT_UTILS_H_
 #include <string>
 
-namespace kroll
+namespace UTILS_NS
 {
 
 	class KROLL_API EnvironmentUtils

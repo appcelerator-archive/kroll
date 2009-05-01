@@ -32,7 +32,7 @@
 #include "../poco/KUnWindows.h"
 #include <Iphlpapi.h>
 
-namespace kroll
+namespace UTILS_NS
 {
 	void PlatformUtils::GetNodeId(NodeId& id)
 	{

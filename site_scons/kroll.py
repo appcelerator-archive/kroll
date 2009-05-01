@@ -127,9 +127,6 @@ class BuildConfig(object):
 		vars.Add('PRODUCT_NAME', 'The underlying product name that Kroll will display (default: "Kroll")', kwargs['PRODUCT_NAME'])
 		vars.Add('GLOBAL_NS_VARNAME','The name of the Kroll global variable', kwargs['GLOBAL_NS_VARNAME'])
 		vars.Add('CONFIG_FILENAME','The name of the Kroll config file', kwargs['CONFIG_FILENAME'])
-
-		vars.Add('BOOT_RUNTIME_FLAG','The name of the Kroll runtime command line flag', kwargs['BOOT_RUNTIME_FLAG'])
-		vars.Add('BOOT_HOME_FLAG','The name of the Kroll home command line file', kwargs['BOOT_HOME_FLAG'])
 		vars.Add('BOOT_UPDATESITE_ENVNAME','The name of the Kroll update site environment variable', kwargs['BOOT_UPDATESITE_ENVNAME'])
 		vars.Add('CRASH_REPORT_URL','The URL to send crash dumps to', kwargs['CRASH_REPORT_URL'])
 
@@ -174,15 +171,16 @@ class BuildConfig(object):
 		self.kroll_third_party = self.third_party
 		self.kroll_include_dir = path.join(self.dir, 'include')
 		self.kroll_utils_dir = path.join(self.kroll_source_dir, 'api', 'utils');
+		self.kroll_support_dir = path.join(self.kroll_source_dir, 'support', self.os)
 
 	# Get a separate copy of the Kroll Utils for a particular build piece
 	# Give: A unique directory for that build piece where the utils should be copied
-	def get_kroll_utils(self, dir):
+	def get_kroll_utils(self, dir, unzip=True):
 		futils.CopyToDir(self.kroll_utils_dir, dir)
 		sources = Glob('%s/utils/*.cpp' % dir) + \
 			Glob('%s/utils/poco/*.cpp' % dir) + \
 			Glob('%s/utils/%s/*.cpp' % (dir, self.os))
-		if self.is_win32():
+		if self.is_win32() and unzip:
 			sources.extend(Glob('%s/utils/unzip/*.cpp' % dir))
 		return sources
 
@@ -197,9 +195,7 @@ class BuildConfig(object):
 				'linux': {
 					'cpp_path': [path.join(self.third_party, 'poco', 'include')],
 					'lib_path': [path.join(self.third_party, 'poco', 'lib')],
-					'libs': ['PocoFoundation', 'PocoNet', 'PocoNetSSL', 'PocoUtil', 'PocoXML', 'PocoZip']
-					# TODO: Re-enable Poco data when binary management is pushed
-					#'libs': ['PocoFoundation', 'PocoNet', 'PocoNetSSL', 'PocoUtil', 'PocoXML', 'PocoZip', 'PocoData', 'PocoSQLite']
+					'libs': ['PocoFoundation', 'PocoNet', 'PocoNetSSL', 'PocoUtil', 'PocoXML', 'PocoZip', 'PocoData', 'PocoSQLite']
 				},
 				'osx': {
 					'cpp_path': [path.join(self.third_party, 'poco', 'headers')],
@@ -252,7 +248,7 @@ class BuildConfig(object):
 				return module
 		return None
 
-	def add_module(self, name, version=None, resources=True):
+	def add_module(self, name, version=None, resources=True, env=None):
 		if not version:
 			version = self.version
 
@@ -260,6 +256,9 @@ class BuildConfig(object):
 		build_dir = path.join(self.dir, 'modules', name)
 		m = Module(name, self.version, build_dir, self)
 		self.modules.append(m)
+
+		if env:
+			env.Append(CPPDEFINES=[('MODULE_NAME', m.name), ('MODULE_VERSION', m.version)])
 
 		m.copy_resources(self.cwd(2))
 

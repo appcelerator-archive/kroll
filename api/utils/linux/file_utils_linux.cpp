@@ -14,31 +14,33 @@
 #include <sys/utsname.h>
 #include <libgen.h>
 
-using kroll::FileUtils;
 using std::string;
 
-std::string FileUtils::GetUserRuntimeHomeDirectory()
+namespace UTILS_NS
 {
-	string pname = PRODUCT_NAME;
-	std::transform(pname.begin(), pname.end(), pname.begin(), tolower);
-	pname = std::string(".") + pname;
-
-	passwd *user = getpwuid(getuid());
-	return Join(user->pw_dir, pname.c_str(), NULL);
-}
-
-std::string FileUtils::GetSystemRuntimeHomeDirectory()
-{
-	// Try to be a little smart about where the system runtime home
-	// is. If we can't find it, just give up and use the /opt location
-	string pname = PRODUCT_NAME;
-	std::transform(pname.begin(), pname.end(), pname.begin(), tolower);
-	string path = Join("/opt", pname.c_str(), NULL);
-	if (!IsDirectory(path))
-		path = Join("/usr/local/lib", pname.c_str(), NULL);
-	if (!IsDirectory(path))
-		path = Join("/usr/lib", pname.c_str(), NULL);
-	if (!IsDirectory(path))
-		path = Join("/opt", pname.c_str(), NULL);
-	return path;
+	std::string FileUtils::GetUserRuntimeHomeDirectory()
+	{
+		string pname = PRODUCT_NAME;
+		std::transform(pname.begin(), pname.end(), pname.begin(), tolower);
+		pname = std::string(".") + pname;
+	
+		passwd *user = getpwuid(getuid());
+		return Join(user->pw_dir, pname.c_str(), NULL);
+	}
+	
+	std::string FileUtils::GetSystemRuntimeHomeDirectory()
+	{
+		// Try to be a little smart about where the system runtime home
+		// is. If we can't find it, just give up and use the /opt location
+		string pname = PRODUCT_NAME;
+		std::transform(pname.begin(), pname.end(), pname.begin(), tolower);
+		string path = Join("/opt", pname.c_str(), NULL);
+		if (!IsDirectory(path))
+			path = Join("/usr/local/lib", pname.c_str(), NULL);
+		if (!IsDirectory(path))
+			path = Join("/usr/lib", pname.c_str(), NULL);
+		if (!IsDirectory(path))
+			path = Join("/opt", pname.c_str(), NULL);
+		return path;
+	}
 }

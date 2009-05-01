@@ -7,20 +7,26 @@
 
 namespace kroll
 {
+	// TODO: Implement real method metadata and lifecycle events for
+	// scripting language-based modules
 	PythonModuleInstance::PythonModuleInstance(Host *host, std::string path) :
-		Module(host, path), path(path)
+		Module(host, path.c_str(), path.c_str(), "0.1"), path(path)
 	{
 	}
+
 	PythonModuleInstance::~PythonModuleInstance()
 	{
 	}
+
 	const char* PythonModuleInstance::GetName() 
 	{ 
 		return path.c_str(); 
 	}
+
 	void PythonModuleInstance::Initialize () 
 	{
 	}
+
 	void PythonModuleInstance::Destroy () 
 	{
 	}

@@ -11,7 +11,7 @@
 #include <windows.h>
 #endif
 
-namespace kroll
+namespace UTILS_NS
 {
 	bool EnvironmentUtils::Has(std::string name)
 	{
@@ -67,7 +67,7 @@ namespace kroll
 	void EnvironmentUtils::Unset(std::string name)
 	{
 #ifdef OS_WIN32
-		SetEnvironmentVariable(name.c_str(), NULL);
+		SetEnvironmentVariableA(name.c_str(), NULL);
 #else
 		unsetenv(name.c_str());
 #endif

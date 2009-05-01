@@ -32,6 +32,17 @@ namespace kroll
 		return "module.dylib";
 	}
 
+	void OSXHost::Exit(int exitcode)
+	{
+		// create an application specific exit event
+		NSEvent *event = [NSEvent otherEventWithType:NSApplicationDefined location:NSZeroPoint modifierFlags:0 timestamp:[[NSDate date] timeIntervalSinceNow] windowNumber:0 context:nil subtype:1022 data1:0 data2:0];
+		NSApplication *app = [NSApplication sharedApplication];
+		// we're going to post our event to our event queue to cause him
+		// to wake up (since he'll block waiting for pending events)
+		[app postEvent:event atStart:YES];
+		Host::Exit(exitCode);
+	}
+
 	bool OSXHost::Start()
 	{
 		NSApplication *app = [NSApplication sharedApplication];
@@ -42,36 +53,76 @@ namespace kroll
 
 	bool OSXHost::RunLoop()
 	{
-		NSApplication *app = [NSApplication sharedApplication];
-		// we pull out an event from the queue, blocking a little bit before returning
-		try
+		// number of iterations before we yield back control
+		// to the main loop driver in the superclass
+		static int iterations = 10;
+		// number of seconds we want to block waiting on a 
+		// pending event to be visible in the queue
+		// 0.5 seems to be the most optimal based on testing 
+		// on Leopard and using some basic animated JS tests 
+		// like John Resig's processing.js demos. 0.5 seems to
+		// keep the CPU at effectively 0.0% when idle and seems
+		// to give us very good frame rate and CPU during animation
+		static double wait_time_in_seconds = 0.5;
+		// since we call this method a lot, set the app in a static var
+		static NSApplication *app = [NSApplication sharedApplication];
+
+		// cache there here since we call these on each iteration
+		static NSMenu *services_menu = [app servicesMenu];
+		static NSMenu *windows_menu = [app windowsMenu];
+		static NSMenu *main_menu = [app mainMenu];
+		
+		// create a pool to sweep memory throught the loop
+		NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+		for (int c=0;c<iterations;c++)
 		{
-			@try
+			// we pull out an event from the queue, blocking a little bit before returning
+			try
 			{
-				NSEvent *event = [app nextEventMatchingMask:NSAnyEventMask untilDate:[NSDate dateWithTimeIntervalSinceNow:10.0] inMode:NSDefaultRunLoopMode dequeue:YES];
-				if (event)
+				@try
 				{
-					[app sendEvent:event];
-					[app updateWindows];
+					NSEvent *event = [app nextEventMatchingMask:NSAnyEventMask untilDate:[NSDate dateWithTimeIntervalSinceNow:wait_time_in_seconds] inMode:NSDefaultRunLoopMode dequeue:YES];
+					if (event)
+					{
+						NSEventType type = [event type];
+						// this is our queued stop event
+						if (type == NSApplicationDefined && [event subtype]==1022 && [event data1]==0)
+						{
+							[pool release];
+							return false;
+						}
+						[app sendEvent:event];
+						// Additional processing that [NSApp run] does after each event
+						if (type != NSPeriodic && type != NSMouseMoved) 
+						{
+					        [services_menu update];
+					        [windows_menu update];
+					        [main_menu update];
+						}
+						[app updateWindows];
+					}
+				}
+				@catch(NSException *e)
+				{
+					static Logger &logger = Logger::Get("OSXHost");
+					logger.Error("Caught NSException in main loop: %s",[[e reason] UTF8String]);
+					KrollDumpStackTraceFromException(e);
 				}
 			}
-			@catch(NSException *e)
+			catch (std::exception &e)
 			{
-				std::cerr << "Caught NSException in main loop: " << [[e reason] UTF8String] << std::endl;
-				KrollDumpStackTraceFromException(e);
+				static Logger &logger = Logger::Get("OSXHost");
+				logger.Error("Caught exception in main loop: %s",e.what());
+				KrollDumpStackTrace();
+			}
+			catch (...)
+			{
+				static Logger &logger = Logger::Get("OSXHost");
+			 	logger.Error("Caught unhandled exception in main loop");
+				KrollDumpStackTrace();
 			}
 		}
-		catch (std::exception &e)
-		{
-			std::cerr << "Caught exception in main loop: " << e.what() << std::endl;
-			KrollDumpStackTrace();
-		}
-		catch (...)
-		{
-			std::cerr << "Caught unhandled exception in main loop: " << std::endl;
-			KrollDumpStackTrace();
-		}
-
+		[pool release];
 		return true;
 	}
 

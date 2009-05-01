@@ -8,7 +8,7 @@
 #include <string>
 #include "poco/KTypes.h"
 
-namespace kroll
+namespace UTILS_NS
 {
 	typedef KPoco::KUInt8 NodeId[6]; /// Ethernet address.
 
