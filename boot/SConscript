@@ -24,7 +24,7 @@ if build.is_linux():
 if build.is_win32():
 	sources += Glob('*_win32.cpp') + [Env.RES('winboot.rc')]
 	
-	Env.Append(LIBS=['kernel32','shell32','user32','advapi32','iphlpapi'])
+	Env.Append(LIBS=['kernel32','shell32','user32','advapi32','iphlpapi','gdi32'])
 	Env.Append(LINKFLAGS=['/NODEFAULTLIB:MSJAVA.lib'])
 	ccf = Env['CCFLAGS']
 	if '/Z7' in ccf: ccf.remove('/Z7')

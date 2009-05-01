@@ -57,7 +57,7 @@ namespace kroll
 		}
 		static std::string MakeFullPath(ProfiledBoundObject* ref,std::string name);
 		SharedValue ProfiledCall(ProfiledBoundObject* ref, SharedKMethod method, const ValueList& args);
-		void Log (const char* format, ...);
+		void Log(std::string str);
 		static SharedValue Wrap(ProfiledBoundObject* source, const char *name, SharedValue value, ProfiledBoundObject **out);
 	};
 }
