@@ -49,7 +49,7 @@ class App:
 		self.resources = p.join(self.contents, 'Resources');
 		self.net_installer = p.join(self.build.runtime_build_dir, 'installer')
 
-		excludes = ['.manifest', '.pdb', '.exp', '.ilk', '.lib']
+		excludes = ['.pdb', '.exp', '.ilk', '.lib']
 
 		if bundle:
 			self.status('copying runtime to %s' % self.contents)
