@@ -122,7 +122,7 @@ class BuildConfig(object):
 			if (os.uname()[4] == 'x86_64'):
 				self.arch = '64'
 
-		vars = SCons.Variables.Variables()
+		vars = SCons.Variables.Variables(args = ARGUMENTS)
 		vars.Add('PRODUCT_VERSION', 'The underlying product version for Kroll', kwargs['PRODUCT_VERSION'])
 		vars.Add('PRODUCT_NAME', 'The underlying product name that Kroll will display (default: "Kroll")', kwargs['PRODUCT_NAME'])
 		vars.Add('GLOBAL_NS_VARNAME','The name of the Kroll global variable', kwargs['GLOBAL_NS_VARNAME'])
@@ -144,7 +144,7 @@ class BuildConfig(object):
 			['_BOOT_UPDATESITE_ENVNAME', '${BOOT_UPDATESITE_ENVNAME}'],
 			['_CRASH_REPORT_URL', '${CRASH_REPORT_URL}'],
 		])
-		self.version = kwargs['PRODUCT_VERSION']
+		self.version = self.env['PRODUCT_VERSION']
 
 		self.dir = path.abspath(path.join(kwargs['BUILD_DIR'], self.os))
 		self.third_party = path.abspath(path.join(kwargs['THIRD_PARTY_DIR'],self.os))
