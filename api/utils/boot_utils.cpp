@@ -82,7 +82,6 @@ namespace UTILS_NS
 
 		// Read everything that looks like <searchpath>/sdk/<os>/*
 		string sdkPath = FileUtils::Join(path.c_str(), "sdk", OS_NAME, NULL);
-		printf("looking at %s\n", sdkPath.c_str());
 		FileUtils::ListDir(sdkPath, paths);
 
 		vector<string>::iterator sdkVersion = paths.begin();
