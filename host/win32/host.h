@@ -39,12 +39,13 @@ namespace kroll
 											 bool waitForCompletion=true);
 		const char* GetPlatform();
 		const char* GetModuleSuffix();
-
+		
 	protected:
 		bool RunLoop();
 		bool Start();
 		Poco::Mutex& GetJobQueueMutex();
 		std::vector<Win32Job*>& GetJobs();
+		static UINT tickleRequestMessage;
 
 	private:
 		HINSTANCE instance_handle;
