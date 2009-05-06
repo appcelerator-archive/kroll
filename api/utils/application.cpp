@@ -156,6 +156,7 @@ namespace UTILS_NS
 	vector<SharedDependency> Application::ResolveDependencies()
 	{
 		this->modules.clear(); // Blank slate
+		this->sdks.clear();
 		this->runtime = NULL;
 		vector<SharedComponent> components;
 		this->GetAvailableComponents(components);
@@ -174,6 +175,10 @@ namespace UTILS_NS
 			{
 				this->modules.push_back(c);
 			}
+			else if (c->type == SDK)
+			{
+				this->sdks.push_back(c);
+			}
 			else if (c->type == RUNTIME)
 			{
 				this->runtime = c;
@@ -190,6 +195,10 @@ namespace UTILS_NS
 		if (d->type == RUNTIME)
 		{
 			zipfile = string("runtime-") + d->version + ".zip";
+		}
+		else if (d->type == SDK)
+		{
+			zipfile = string("sdk-") +  d->version + ".zip";
 		}
 		else
 		{
@@ -229,6 +238,8 @@ namespace UTILS_NS
 		url.append("&uuid=");
 		if (d->type == RUNTIME)
 			url.append(RUNTIME_UUID);
+		if (d->type == SDK)
+			url.append(SDK_UUID);
 		if (d->type == MODULE)
 			url.append(MODULE_UUID);
 		return url;

@@ -30,6 +30,7 @@ namespace kroll
 
 		this->SetMethod("getApplication", &APIBinding::_GetApplication);
 		this->SetMethod("getInstalledComponents", &APIBinding::_GetInstalledComponents);
+		this->SetMethod("getInstalledSDKs", &APIBinding::_GetInstalledSDKs);
 		this->SetMethod("getInstalledModules", &APIBinding::_GetInstalledModules);
 		this->SetMethod("getInstalledRuntimes", &APIBinding::_GetInstalledRuntimes);
 		this->SetMethod("getComponentSearchPaths", &APIBinding::_GetComponentSearchPaths);
@@ -353,6 +354,13 @@ namespace kroll
 	{
 		vector<SharedComponent>& components = BootUtils::GetInstalledComponents(false);
 		SharedKList componentList = ComponentVectorToKList(components, RUNTIME);
+		result->SetList(componentList);
+	}
+
+	void APIBinding::_GetInstalledSDKs(const ValueList& args, SharedValue result)
+	{
+		vector<SharedComponent>& components = BootUtils::GetInstalledComponents(false);
+		SharedKList componentList = ComponentVectorToKList(components, SDK);
 		result->SetList(componentList);
 	}
 
