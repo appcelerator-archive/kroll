@@ -24,7 +24,6 @@
 		SharedKObject window_global = args.at(2)->ToObject();
 		PyObject* main_module = PyImport_AddModule("__main__");
 		PyObject* globals = PyDict_Copy(PyModule_GetDict(main_module));
-		PyObject* locals = PyDict_New();
 		KObjectPropsToDict(window_global, globals);
 
 		// Another way to do this is to use a Python sub-interpreter,
@@ -41,13 +40,11 @@
 			return Value::Undefined;
 		}
 
-		//PyObject *return_value = PyEval_EvalCode((PyCodeObject*) compiled, globals, locals);
-		PyObject *return_value = Py_None;
-		Py_INCREF(Py_None);
+		PyObject *return_value = PyEval_EvalCode((PyCodeObject*) compiled, globals, globals);
 
-		/* Clear the error indicator before doing anything else. It might cause a
-		 * a false positive for errors in other bits of Python */
-		/* TODO: Logging */
+		// Clear the error indicator before doing anything else. It might
+		// cause a a false positive for errors in other bits of Python.
+		// TODO: Logging
 		SharedValue kv = Value::Undefined;
 		if (return_value == NULL && PyErr_Occurred())
 		{
@@ -60,11 +57,9 @@
 			Py_DECREF(return_value);
 		}
 
-		// Move all the new variables in locals() to the  window context.
+		// Move all the new variables in gloals() to the window context.
 		// These are things that are now defined globally in JS.
-		DictToKObjectProps(locals, window_global);
-
-		Py_DECREF(globals);
+		DictToKObjectProps(globals, window_global);
 		return kv;
 	}
 
@@ -99,7 +94,8 @@
 			return;
 
 		PyObject *item;
-		while ((item = PyIter_Next(iterator))) {
+		while ((item = PyIter_Next(iterator)))
+		{
 			PyObject* k = PyTuple_GetItem(item, 0);
 			PyObject* v = PyTuple_GetItem(item, 1);
 			std::string sk = PythonUtils::ToString(k);
@@ -108,7 +104,9 @@
 				SharedValue newValue = PythonUtils::ToKrollValue(v);
 				SharedValue existingValue = o->Get(sk.c_str());
 				if (!newValue->Equals(existingValue))
+				{
 					o->Set(sk.c_str(), newValue);
+				}
 			}
 			Py_DECREF(item);
 		}
