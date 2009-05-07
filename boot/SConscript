@@ -56,7 +56,7 @@ if breakpad and build.is_win32():
 		['breakpad/client/windows/handler/exception_handler.cc',
 		 'breakpad/common/windows/guid_string.cc',
 		 'breakpad/common/windows/http_upload.cc']
-	Env.Append(LIBS=['wininet', 'gdi32'])
+	Env.Append(LIBS=['wininet'])
 
 elif breakpad:
 	sources += \

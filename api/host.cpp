@@ -425,8 +425,8 @@ namespace kroll
 				for (size_t i = 0; i < t.count(); i++) 
 				{
 					std::string lib = t[i];
-					newLibPath += KR_LIB_SEP;
-					newLibPath += FileUtils::Join(moduleTopDir.toString().c_str(), lib.c_str(), NULL);
+					newLibPath = FileUtils::Join(moduleTopDir.toString().c_str(), lib.c_str(), NULL) +
+						KR_LIB_SEP + newLibPath;
 				}
 
 				PRINTD(libPathEnv << "=" << newLibPath);

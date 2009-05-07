@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import os.path as p, os, types, glob, futils, shutil
+import zipfile
 
 class App:
 	def __init__(self, build, shortname="", fullname="", id="", version="0.1", guid="fakeguid", image=None, publisher=None, url=None):
@@ -49,7 +50,7 @@ class App:
 		self.resources = p.join(self.contents, 'Resources');
 		self.net_installer = p.join(self.build.runtime_build_dir, 'installer')
 
-		excludes = ['.dll.manifest', '.dll.pdb', '.exp', '.ilk', '.lib']
+		excludes = ['.pdb', '.exp', '.ilk', '.lib']
 
 		if bundle:
 			self.status('copying runtime to %s' % self.contents)
@@ -129,17 +130,19 @@ class App:
 			self.package_dmg(**kwargs)
 		elif self.build.is_linux():
 			self.package_tgz(**kwargs)
+		elif self.build.is_win32():
+			self.package_self_extractor_exe(**kwargs)
 
-	def package_self_extractor_exe(self, out_dir, se_archive=None, **kwargs):
+	def package_self_extractor_exe(self, out_dir=None, se_archive_name=None, **kwargs):
 		if not se_archive_name:
 			se_archive_name = p.basename(self.dir)
 		if not out_dir: out_dir = p.basename(self.dir)
 		if not p.isdir(out_dir): os.makedirs(out_dir)
 
-		exe_out = path.join(path.dirname(self.exe), 'installer.exe')
+		exe_out = p.join(p.dirname(self.exe), 'installer.exe')
 		futils.Copy(self.exe, exe_out)
 
-		self_extractor = p.join(build.dir, 'self_extractor.exe')
+		self_extractor = p.join(self.build.dir, 'self_extractor.exe')
 		se_file = p.join(out_dir, se_archive_name) + '.exe'
 		futils.Copy(self_extractor, se_file)
 
