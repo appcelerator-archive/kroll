@@ -25,8 +25,8 @@ namespace UTILS_NS
 			string pname = PRODUCT_NAME;
 			std::transform(pname.begin(), pname.end(), pname.begin(), tolower);
 			componentSearchPaths.push_back(FileUtils::GetUserRuntimeHomeDirectory());
-			componentSearchPaths.push_back(string("/opt") + pname);
-			componentSearchPaths.push_back(string("/usr/local/lib") + pname);
+			componentSearchPaths.push_back(string("/opt/") + pname);
+			componentSearchPaths.push_back(string("/usr/local/lib/") + pname);
 			componentSearchPaths.push_back(string("/usr/lib/") + pname);
 
 			initialized = true;
