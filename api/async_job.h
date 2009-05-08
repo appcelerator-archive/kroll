@@ -5,6 +5,9 @@
  */
 #ifndef _KR_ASYNC_JOB_H_
 #define _KR_ASYNC_JOB_H_
+#include <Poco/Thread.h>
+#include <Poco/RunnableAdapter.h>
+
 namespace kroll
 {
 	class KROLL_API AsyncJob : public StaticBoundObject
@@ -13,7 +16,7 @@ namespace kroll
 		/*
 		 * Create an AsyncJob and initialize its binding-layer properties.
 		 */
-		AsyncJob(SharedKMethod job);
+		AsyncJob(SharedKMethod job=NULL);
 
 		/*
 		 * Destroy an AsyncJob and release its callbacks.
@@ -27,10 +30,26 @@ namespace kroll
 		SharedPtr<AsyncJob> GetSharedPtr();
 
 		/*
-		 * Execute this async job's job on the current thread and block
-		 * until it completes.
+		 * Run an async job synchronously (on the same thread).
 		 */
-		void Execute();
+		void Run();
+
+		/*
+		 * Run an async job asynchronously (on the different thread).
+		 */
+		void RunAsynchronously();
+
+		/*
+		 * The target method of an asynchronous job execution. This does
+		 * whatever bookkeeping is necessary at the start of a new thread
+		 * and then calls Run().
+		 */
+		void RunThreadTarget();
+
+		/*
+		 * Cancel a job.
+		 */
+		void Cancel();
 
 		/**
 		 * The result of the execution of this job. On an execution
@@ -89,19 +108,35 @@ namespace kroll
 		 */
 		void AddErrorCallback(SharedKMethod);
 
-		private:
+		protected:
 		SharedKMethod job;
 		double progress;
 		SharedValue result;
 		bool hadError;
+		bool cancelled;
+		void Error(ValueException&);
 
+		/*
+		 * Execute the "work" part of this async job. This is generally not
+		 * called directly, as it does not call any callbacks or necessarily
+		 * modify the progress -- Run or RunAsynchronously are better
+		 * choices. It can be overridden to create custom job types which
+		 * do something other than just execute a KMethod.
+		 */
+		virtual SharedValue Execute();
+
+		void _Cancel(const ValueList&, SharedValue);
+		void _GetProgress(const ValueList&, SharedValue);
+
+		private:
 		SharedPtr<AsyncJob> sharedThis;
 		std::vector<SharedKMethod> progressCallbacks;
 		std::vector<SharedKMethod> completedCallbacks;
 		std::vector<SharedKMethod> errorCallbacks;
 
-		void Error(ValueException&);
-		SharedValue DoCallback(SharedKMethod, bool reportErrors=false);
+		Poco::Thread* thread;
+		Poco::RunnableAdapter<AsyncJob>* adapter;
+		void DoCallback(SharedKMethod, bool reportErrors=false);
 	};
 }
 #endif

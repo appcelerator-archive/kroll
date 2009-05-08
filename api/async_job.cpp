@@ -4,21 +4,28 @@
  * Copyright (c) 2009 Appcelerator, Inc. All Rights Reserved.
  */
 #include "kroll.h"
-
+#include <Poco/Bugcheck.h>
 namespace kroll
 {
 		AsyncJob::AsyncJob(SharedKMethod job) :
 			StaticBoundObject(),
 			job(job),
 			result(Value::Undefined),
-			hadError(false)
+			hadError(false),
+			cancelled(false),
+			thread(NULL),
+			adapter(NULL)
 		{
 			this->SetProgress(0.0);
+			this->SetMethod("getProgress", &AsyncJob::_GetProgress);
+			this->SetMethod("cancel", &AsyncJob::_Cancel);
+
 			this->sharedThis = this;
 		}
 
 		AsyncJob::~AsyncJob()
 		{
+			printf("\n\n\nfreeing job\n");
 			this->progressCallbacks.clear();
 			this->completedCallbacks.clear();
 			this->errorCallbacks.clear();
@@ -30,26 +37,78 @@ namespace kroll
 			return this->sharedThis;
 		}
 
-		void AsyncJob::Execute()
+		void AsyncJob::RunAsynchronously()
 		{
-			if (job.isNull())
-				return;
+			this->adapter = new Poco::RunnableAdapter<AsyncJob>(
+				*this,
+				&AsyncJob::RunThreadTarget);
+			this->thread = new Poco::Thread();
+			this->thread->start(*this->adapter);
+		}
 
-			this->result = DoCallback(job);
-			this->SetProgress(1.0);
-
-			if (this->hadError)
-				return;
-
-			this->OnCompleted();
-			std::vector<SharedKMethod>::iterator i = this->completedCallbacks.begin();
-			while (i != this->completedCallbacks.end())
+		void AsyncJob::RunThreadTarget()
+		{
+			// We are now in a new thread -- on OSX we need to do some 
+			// basic bookkeeping for the reference counter, but other
+			// than that, everything past here is like executing a job
+			// in a synchronous fashion.
+#ifdef OS_OSX
+			NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+#endif
+			this->Run();
+#ifdef OS_OSX
+			[pool release];
+#endif
+			try
 			{
-				this->DoCallback(*i++, true);
+			//delete this->thread;
+			delete this->adapter;
+			}
+			catch (Poco::BugcheckException& bge)
+			{
+				std::cout << bge.what() << std::endl;
+			}
+		}
+
+		void AsyncJob::Run()
+		{
+			this->result = this->Execute();
+
+			if (!this->hadError)
+			{
+				this->SetProgress(1.0);
+			}
+
+			if (!this->hadError)
+			{
+				this->OnCompleted();
+				std::vector<SharedKMethod>::iterator i = this->completedCallbacks.begin();
+				while (i != this->completedCallbacks.end())
+				{
+					this->DoCallback(*i++, true);
+				}
 			}
 
 			// Make sure that this particular job gets cleaned up.
 			this->sharedThis = NULL;
+		}
+
+		SharedValue AsyncJob::Execute()
+		{
+			try
+			{
+				return this->job->Call(ValueList());
+			}
+			catch (ValueException& e)
+			{
+				this->Error(e);
+				return Value::Undefined;
+			}
+		}
+
+		void AsyncJob::Cancel()
+		{
+			this->cancelled = true;
 		}
 
 		double AsyncJob::GetProgress()
@@ -57,32 +116,33 @@ namespace kroll
 			return this->progress;
 		}
 
-		SharedValue AsyncJob::DoCallback(SharedKMethod method, bool reportErrors)
+		void AsyncJob::DoCallback(SharedKMethod method, bool reportErrors)
 		{
 			try
 			{
 				Host* host = Host::GetInstance();
 				ValueList args;
 				args.push_back(Value::NewObject(this->GetSharedPtr()));
-				return host->InvokeMethodOnMainThread(method, args);
+				host->InvokeMethodOnMainThread(method, args, false);
 			}
 			catch (ValueException& e)
 			{
 				if (reportErrors)
 					this->Error(e);
-				return Value::Undefined;
 			}
 		}
 
 		void AsyncJob::SetProgress(double progress, bool callbacks)
 		{
 			if (progress < 0.0)
+			{
 				progress = 0.0;
-			if (progress > 1.0)
+			}
+			else if (progress > 1.0)
+			{
 				progress = 1.0;
-
+			}
 			this->progress = progress;
-			this->Set("progress", Value::NewDouble(this->progress));
 
 			/*
 			 * One can avoid an infinite loop by setting callbacks=false
@@ -125,4 +185,15 @@ namespace kroll
 		{
 			this->errorCallbacks.push_back(callback);
 		}
+
+		void AsyncJob::_Cancel(const ValueList& args, SharedValue result)
+		{
+			this->Cancel();
+		}
+
+		void AsyncJob::_GetProgress(const ValueList& args, SharedValue result)
+		{
+			result->SetDouble(this->GetProgress());
+		}
+
 }
