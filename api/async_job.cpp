@@ -10,6 +10,7 @@ namespace kroll
 		AsyncJob::AsyncJob(SharedKMethod job) :
 			StaticBoundObject(),
 			job(job),
+			completed(false),
 			result(Value::Undefined),
 			hadError(false),
 			cancelled(false),
@@ -19,13 +20,13 @@ namespace kroll
 			this->SetProgress(0.0);
 			this->SetMethod("getProgress", &AsyncJob::_GetProgress);
 			this->SetMethod("cancel", &AsyncJob::_Cancel);
+			this->SetMethod("isComplete", &AsyncJob::_IsComplete);
 
 			this->sharedThis = this;
 		}
 
 		AsyncJob::~AsyncJob()
 		{
-			printf("\n\n\nfreeing job\n");
 			this->progressCallbacks.clear();
 			this->completedCallbacks.clear();
 			this->errorCallbacks.clear();
@@ -76,12 +77,9 @@ namespace kroll
 
 			if (!this->hadError)
 			{
-				this->SetProgress(1.0);
-			}
-
-			if (!this->hadError)
-			{
+				this->completed = true;
 				this->OnCompleted();
+
 				std::vector<SharedKMethod>::iterator i = this->completedCallbacks.begin();
 				while (i != this->completedCallbacks.end())
 				{
@@ -118,18 +116,10 @@ namespace kroll
 
 		void AsyncJob::DoCallback(SharedKMethod method, bool reportErrors)
 		{
-			try
-			{
-				Host* host = Host::GetInstance();
-				ValueList args;
-				args.push_back(Value::NewObject(this->GetSharedPtr()));
-				host->InvokeMethodOnMainThread(method, args, false);
-			}
-			catch (ValueException& e)
-			{
-				if (reportErrors)
-					this->Error(e);
-			}
+			Host* host = Host::GetInstance();
+			ValueList args;
+			args.push_back(Value::NewObject(this->GetSharedPtr()));
+			host->InvokeMethodOnMainThread(method, args, false);
 		}
 
 		void AsyncJob::SetProgress(double progress, bool callbacks)
@@ -194,6 +184,11 @@ namespace kroll
 		void AsyncJob::_GetProgress(const ValueList& args, SharedValue result)
 		{
 			result->SetDouble(this->GetProgress());
+		}
+
+		void AsyncJob::_IsComplete(const ValueList& args, SharedValue result)
+		{
+			result->SetBool(this->completed);
 		}
 
 }

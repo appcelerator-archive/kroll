@@ -111,6 +111,7 @@ namespace kroll
 		protected:
 		SharedKMethod job;
 		double progress;
+		bool completed;
 		SharedValue result;
 		bool hadError;
 		bool cancelled;
@@ -127,6 +128,7 @@ namespace kroll
 
 		void _Cancel(const ValueList&, SharedValue);
 		void _GetProgress(const ValueList&, SharedValue);
+		void _IsComplete(const ValueList& args, SharedValue result);
 
 		private:
 		SharedPtr<AsyncJob> sharedThis;
