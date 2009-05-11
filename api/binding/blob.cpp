@@ -14,6 +14,7 @@ namespace kroll
 	{
 		this->buffer = new char[len];
 		memcpy(this->buffer,buf,len);
+		this->buffer[len]='\0'; // null terminate buffer
 		this->SetMethod("toString",&Blob::ToString);
 		this->SetMethod("get",&Blob::Get);
 		this->Set("length",Value::NewInt(len));
