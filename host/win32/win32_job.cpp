@@ -38,8 +38,6 @@ namespace kroll
 		try
 		{
 			this->return_value = this->method->Call(this->args);
-			if (this->wait)
-				this->semaphore.set();
 		}
 		catch (ValueException& e)
 		{
@@ -57,6 +55,9 @@ namespace kroll
 		{
 			this->exception = ValueException::FromString("Unknown Exception from job queue");
 		}
+
+		if (this->wait)
+			this->semaphore.set();
 	}
 
 	SharedValue Win32Job::GetResult()

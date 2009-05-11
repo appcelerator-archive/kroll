@@ -18,6 +18,23 @@ namespace UTILS_NS
 	void ScanSDKsAtPath(string, vector<SharedComponent>&);
 	void ScanModulesAtPath(string, vector<SharedComponent>&);
 	void ScanBundledComponents(string, vector<SharedComponent>&);
+	void AddToComponentVector(vector<SharedComponent>&, SharedComponent);
+
+	void AddToComponentVector(vector<SharedComponent>& components, SharedComponent c)
+	{
+		// Avoid adding duplicate components to a component vector
+		vector<SharedComponent>::iterator i = components.begin();
+		while (i != components.end())
+		{
+			SharedComponent e = *i++;
+			if (e->type == c->type && e->path == c->path)
+			{
+				return;
+			}
+		}
+
+		components.push_back(c);
+	}
 
 	vector<SharedComponent>& BootUtils::GetInstalledComponents(bool force)
 	{
@@ -67,7 +84,7 @@ namespace UTILS_NS
 			string version = *runtimeVersion++;
 			string fullPath = FileUtils::Join(rtPath.c_str(), version.c_str(), NULL);
 			c = KComponent::NewComponent(RUNTIME, "runtime", version, fullPath);
-			results.push_back(c);
+			AddToComponentVector(results, c);
 		}
 	}
 
@@ -90,7 +107,7 @@ namespace UTILS_NS
 			string version = *sdkVersion++;
 			string fullPath = FileUtils::Join(sdkPath.c_str(), version.c_str(), NULL);
 			c = KComponent::NewComponent(SDK, "sdk", version, fullPath);
-			results.push_back(c);
+			AddToComponentVector(results, c);
 		}
 	}
 
@@ -123,7 +140,7 @@ namespace UTILS_NS
 				string version = *moduleVersion++;
 				string fullPath = FileUtils::Join(versionsPath.c_str(), version.c_str(), NULL);
 				c = KComponent::NewComponent(MODULE, name, version, fullPath);
-				results.push_back(c);
+				AddToComponentVector(results, c);
 			}
 		}
 	}
