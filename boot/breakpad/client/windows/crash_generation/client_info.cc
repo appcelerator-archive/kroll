@@ -27,6 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <base.h>
+#include <windows.h>
 #include "client/windows/crash_generation/client_info.h"
 #include "client/windows/common/ipc_protocol.h"
 

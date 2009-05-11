@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 import os.path as p, os, types, glob, futils, shutil
+import zipfile
 
 class App:
-	def __init__(self, build, shortname="", fullname="", id="", version="0.1", guid="fakeguid", image=None, publisher=None, url=None):
+	def __init__(self, build, fullname="", id="", version="0.1", guid="fakeguid", image=None, publisher=None, url=None):
 		self.build = build
-		self.shortname = shortname
 		self.fullname = fullname
 		self.id = id
 		self.version = version
@@ -23,7 +23,6 @@ class App:
 		print '    -> %s' % msg
 
 	def set_modules(self, modules):
-		print modules
 		self.modules = modules
 
 	def prestage(self, build_dir, src_contents=None, src_resources=None, bundle=True):
@@ -33,23 +32,23 @@ class App:
 
 		if self.build.is_linux():
 			self.contents = build_dir
-			self.exe = p.join(self.contents, self.shortname)
+			self.exe = p.join(self.contents, self.fullname)
 			self.kboot = p.join(self.build.dir, 'runtime', 'template', 'kboot')
 		elif self.build.is_win32():
 			self.contents = build_dir
-			self.exe = p.join(self.contents, self.shortname+'.exe')
+			self.exe = p.join(self.contents, self.fullname+'.exe')
 			self.kboot = p.join(self.build.dir, 'runtime', 'template', 'kboot.exe')
 		elif self.build.is_osx():
 			if not self.dir.endswith('.app'): self.dir += '.app'
 			self.contents = p.join(self.dir, 'Contents')
-			self.exe = p.join(self.contents, 'MacOS', self.shortname)
+			self.exe = p.join(self.contents, 'MacOS', self.fullname)
 			self.kboot = p.join(self.build.dir, 'runtime', 'template', 'kboot')
 
 		self.runtime = p.join(self.contents, 'runtime');
 		self.resources = p.join(self.contents, 'Resources');
 		self.net_installer = p.join(self.build.runtime_build_dir, 'installer')
 
-		excludes = ['.dll.manifest', '.dll.pdb', '.exp', '.ilk', '.lib']
+		excludes = ['.pdb', '.exp', '.ilk', '.lib']
 
 		if bundle:
 			self.status('copying runtime to %s' % self.contents)
@@ -75,7 +74,7 @@ class App:
 			futils.CopyTree(src_resources, self.resources)
 
 	def stage(self, build_dir, src_contents=None, src_resources=None, bundle=True):
-		print('Staging %s' % self.shortname)
+		print('Staging %s' % self.fullname)
 		self.prestage(build_dir, src_contents=src_contents, src_resources=src_resources, bundle=bundle)
 
 		if self.build.is_osx():
@@ -96,7 +95,7 @@ class App:
 			plist = p.join(self.contents, 'Info.plist')
 			futils.CopyToDir(p.join(self.build.titanium_support_dir, 'Info.plist'), self.contents)
 			futils.ReplaceVars(plist, {
-				'APPEXE': self.shortname,
+				'APPEXE': self.fullname,
 				'APPNAME': self.fullname,
 				'APPICON': 'titanium.icns',
 				'APPID': self.id,
@@ -124,22 +123,24 @@ class App:
 		m_file.close()
 
 	def package(self, **kwargs):
-		print('Packaging %s' % self.shortname)
+		print('Packaging %s' % self.fullname)
 		if self.build.is_osx():
 			self.package_dmg(**kwargs)
 		elif self.build.is_linux():
 			self.package_tgz(**kwargs)
+		elif self.build.is_win32():
+			self.package_self_extractor_exe(**kwargs)
 
-	def package_self_extractor_exe(self, out_dir, se_archive=None, **kwargs):
+	def package_self_extractor_exe(self, out_dir=None, se_archive_name=None, **kwargs):
 		if not se_archive_name:
 			se_archive_name = p.basename(self.dir)
 		if not out_dir: out_dir = p.basename(self.dir)
 		if not p.isdir(out_dir): os.makedirs(out_dir)
 
-		exe_out = path.join(path.dirname(self.exe), 'installer.exe')
+		exe_out = p.join(p.dirname(self.exe), 'installer.exe')
 		futils.Copy(self.exe, exe_out)
 
-		self_extractor = p.join(build.dir, 'self_extractor.exe')
+		self_extractor = p.join(self.build.dir, 'self_extractor.exe')
 		se_file = p.join(out_dir, se_archive_name) + '.exe'
 		futils.Copy(self_extractor, se_file)
 
@@ -192,7 +193,7 @@ class App:
 		if not vol_name: vol_name = self.longname
 		volume = '/Volumes/%s' % vol_name
 		
-		if not dmg_name: dmg_name = self.shortname
+		if not dmg_name: dmg_name = self.fullname
 		dmg = '%s/%s.dmg' % (out_dir, dmg_name)
 		temp_dmg_name = '_' + dmg_name
 		temp_dmg = '%s/%s.dmg' % (out_dir, temp_dmg_name)
@@ -214,7 +215,7 @@ class App:
 			shutil.move(p.join(volume, p.basename(self.dir)), p.join(volume, app_name))
 		else:
 			app_name = p.basename(self.dir)
-	
+
 		if icns_file:
 			futils.Copy(icns_file, '%s/.VolumeIcon.icns' % volume)
 			invoke('/Developer/Tools/SetFile -a C %s' % volume)
@@ -227,8 +228,7 @@ class App:
 		invoke('hdiutil detach %s' % volume)
 		invoke('hdiutil convert "%s" -format UDBZ -imagekey zlib-level=9 -o "%s"' % (temp_dmg, dmg))
 
-# NOTE: removing since this causes auto extraction which we no longer
-# want if we're not using package manager installs
-#		invoke('hdiutil internet-enable -yes "%s"' % dmg)
-	
+		# NOTE: removing since this causes auto extraction which we no longer
+		# want if we're not using package manager installs
+		# invoke('hdiutil internet-enable -yes "%s"' % dmg)
 		os.remove(temp_dmg)

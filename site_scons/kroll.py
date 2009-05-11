@@ -122,7 +122,7 @@ class BuildConfig(object):
 			if (os.uname()[4] == 'x86_64'):
 				self.arch = '64'
 
-		vars = SCons.Variables.Variables()
+		vars = SCons.Variables.Variables(args = ARGUMENTS)
 		vars.Add('PRODUCT_VERSION', 'The underlying product version for Kroll', kwargs['PRODUCT_VERSION'])
 		vars.Add('PRODUCT_NAME', 'The underlying product name that Kroll will display (default: "Kroll")', kwargs['PRODUCT_NAME'])
 		vars.Add('GLOBAL_NS_VARNAME','The name of the Kroll global variable', kwargs['GLOBAL_NS_VARNAME'])
@@ -144,7 +144,7 @@ class BuildConfig(object):
 			['_BOOT_UPDATESITE_ENVNAME', '${BOOT_UPDATESITE_ENVNAME}'],
 			['_CRASH_REPORT_URL', '${CRASH_REPORT_URL}'],
 		])
-		self.version = kwargs['PRODUCT_VERSION']
+		self.version = self.env['PRODUCT_VERSION']
 
 		self.dir = path.abspath(path.join(kwargs['BUILD_DIR'], self.os))
 		self.third_party = path.abspath(path.join(kwargs['THIRD_PARTY_DIR'],self.os))
@@ -171,15 +171,16 @@ class BuildConfig(object):
 		self.kroll_third_party = self.third_party
 		self.kroll_include_dir = path.join(self.dir, 'include')
 		self.kroll_utils_dir = path.join(self.kroll_source_dir, 'api', 'utils');
+		self.kroll_support_dir = path.join(self.kroll_source_dir, 'support', self.os)
 
 	# Get a separate copy of the Kroll Utils for a particular build piece
 	# Give: A unique directory for that build piece where the utils should be copied
-	def get_kroll_utils(self, dir):
+	def get_kroll_utils(self, dir, unzip=True):
 		futils.CopyToDir(self.kroll_utils_dir, dir)
 		sources = Glob('%s/utils/*.cpp' % dir) + \
 			Glob('%s/utils/poco/*.cpp' % dir) + \
 			Glob('%s/utils/%s/*.cpp' % (dir, self.os))
-		if self.is_win32():
+		if self.is_win32() and unzip:
 			sources.extend(Glob('%s/utils/unzip/*.cpp' % dir))
 		return sources
 
@@ -194,9 +195,7 @@ class BuildConfig(object):
 				'linux': {
 					'cpp_path': [path.join(self.third_party, 'poco', 'include')],
 					'lib_path': [path.join(self.third_party, 'poco', 'lib')],
-					'libs': ['PocoFoundation', 'PocoNet', 'PocoNetSSL', 'PocoUtil', 'PocoXML', 'PocoZip']
-					# TODO: Re-enable Poco data when binary management is pushed
-					#'libs': ['PocoFoundation', 'PocoNet', 'PocoNetSSL', 'PocoUtil', 'PocoXML', 'PocoZip', 'PocoData', 'PocoSQLite']
+					'libs': ['PocoFoundation', 'PocoNet', 'PocoNetSSL', 'PocoUtil', 'PocoXML', 'PocoZip', 'PocoData', 'PocoSQLite']
 				},
 				'osx': {
 					'cpp_path': [path.join(self.third_party, 'poco', 'headers')],

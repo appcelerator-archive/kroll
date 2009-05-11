@@ -20,7 +20,7 @@ namespace kroll
 		static void Strip(std::string &);
 		static void ConvertLineEndings(std::string &);
 		static void DictToKObjectProps(PyObject* map, SharedKObject o);
-		static void KObjectPropsToDict(SharedKObject o, PyObject* map);
+		static void KObjectPropsToDict(SharedKObject o, PyObject* pyobj);
 
 	};
 }

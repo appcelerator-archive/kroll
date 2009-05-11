@@ -47,7 +47,7 @@ namespace kroll
 		JSStringRef s = JSStringCreateWithUTF8CString(name);
 		JSValueRef exception = NULL;
 		JSValueRef js_value =
-		    JSObjectGetProperty(this->context, this->object, s, NULL);
+			JSObjectGetProperty(this->context, this->object, s, NULL);
 		JSStringRelease(s);
 
 		if (exception != NULL) //exception thrown
@@ -100,7 +100,7 @@ namespace kroll
 		SharedStringList list(new StringList());
 
 		JSPropertyNameArrayRef names =
-		                 JSObjectCopyPropertyNames(this->context, this->object);
+			JSObjectCopyPropertyNames(this->context, this->object);
 		JSPropertyNameArrayRetain(names);
 
 		size_t count = JSPropertyNameArrayGetCount(names);

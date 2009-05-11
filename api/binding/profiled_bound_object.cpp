@@ -7,6 +7,8 @@
 #include "../kroll.h"
 #include <cstdio>
 #include <cstring>
+#include <iostream>
+#include <sstream>
 #include <Poco/Stopwatch.h>
 
 namespace kroll
@@ -86,7 +88,9 @@ namespace kroll
 		sw.stop();
 		if (po)
 		{
-			this->Log("set,%s,%lld",po->GetFullPath().c_str(),sw.elapsed());
+			std::ostringstream o;
+			o << "set," << po->GetFullPath() << "," << sw.elapsed();
+			this->Log(o.str());
 		}
 	}
 	SharedValue ProfiledBoundObject::Get(const char *name)
@@ -99,7 +103,9 @@ namespace kroll
 		SharedValue result = ProfiledBoundObject::Wrap(this,name,value,&po);
 		if (po)
 		{
-			this->Log("get,%s,%lld",po->GetFullPath().c_str(),sw.elapsed());
+			std::ostringstream o;
+			o << "get," << po->GetFullPath() << "," << sw.elapsed();
+			this->Log(o.str());
 		}
 		return result;
 	}
@@ -115,26 +121,23 @@ namespace kroll
 		catch(...)
 		{
 			sw.stop();
-			this->Log("call,%s,%lld",ref->GetFullPath().c_str(),sw.elapsed());
+			std::ostringstream o;
+			o << "call," << ref->GetFullPath() << "," << sw.elapsed();
+			this->Log(o.str());
 			throw;
 		}
 		sw.stop();
-		this->Log("call,%s,%lld",ref->GetFullPath().c_str(),sw.elapsed());
+		std::ostringstream o;
+		o << "call," << ref->GetFullPath() << "," << sw.elapsed();
+		this->Log(o.str());
 		return value;
 	}
 	SharedStringList ProfiledBoundObject::GetPropertyNames()
 	{
 		return delegate->GetPropertyNames();
 	}
-	void ProfiledBoundObject::Log(const char *format, ...)
+	void ProfiledBoundObject::Log(std::string str)
 	{
-		char buffer[256];
-		va_list args;
-		va_start (args,format);
-		vsprintf (buffer,format,args);
-		char ts[80];
-		sprintf(ts,"%lld,",Host::GetElapsedTime());
-		(*stream) << ts << buffer << "\n";
-		va_end (args);
+		(*stream) << Host::GetElapsedTime() << "," << str << "\n";
 	}
 }

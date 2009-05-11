@@ -24,8 +24,8 @@ namespace kroll
 	JSValueRef call_as_function_cb(JSContextRef, JSObjectRef, JSObjectRef, size_t, const JSValueRef[], JSValueRef*);
 	void finalize_cb(JSObjectRef);
 
-	void add_special_property_names(SharedValue, SharedStringList);
-	JSValueRef get_special_property(SharedValue, char*, JSContextRef);
+	void add_special_property_names(SharedValue, SharedStringList, bool);
+	JSValueRef get_special_property(SharedValue, char*, JSContextRef, SharedValue);
 	JSValueRef to_string_cb(JSContextRef, JSObjectRef, JSObjectRef, size_t, const JSValueRef[], JSValueRef*);
 
 	SharedValue KJSUtil::ToKrollValue(
@@ -317,7 +317,7 @@ namespace kroll
 		free(name);
 
 		SharedStringList names = object->GetPropertyNames();
-		add_special_property_names(*value, names);
+		add_special_property_names(*value, names, true);
 		for (size_t i = 0; i < names->size(); i++)
 		{
 			if (str_name == *names->at(i))
@@ -346,11 +346,7 @@ namespace kroll
 		try
 		{
 			SharedValue ti_val = object->Get(name);
-
-			if (ti_val->IsUndefined())
-				js_val = get_special_property(*value, name, js_context);
-			else
-				js_val = KJSUtil::ToJSValue(ti_val, js_context);
+			js_val = get_special_property(*value, name, js_context, ti_val);
 		}
 		catch (ValueException& exception)
 		{
@@ -459,8 +455,14 @@ namespace kroll
 		return js_val;
 	}
 
-	void add_special_property_names(SharedValue value, SharedStringList props)
+	void add_special_property_names(SharedValue value, SharedStringList props, bool showInvisible)
 	{
+		// Some attributes should be hidden unless the are requested specifically -- 
+		// essentially a has_property(...) versus  get_property_list(...). An example
+		// of this type of attribute is toString(). Some JavaScript code might expect
+		// a "hash" object to have no methods in its property list. We don't want
+		// toString() to show up in those situations.
+
 		bool foundLength = false, foundToString = false;
 		for (size_t i = 0; i < props->size(); i++)
 		{
@@ -472,26 +474,36 @@ namespace kroll
 		}
 
 		if (!foundLength && value->IsList())
+		{
 			props->push_back(new std::string("length"));
-		if (!foundToString)
+		}
+		if (!foundToString && showInvisible)
+		{
 			props->push_back(new std::string("toString"));
+		}
 	}
 
-	JSValueRef get_special_property(SharedValue value, char* name, JSContextRef ctx)
+	JSValueRef get_special_property(SharedValue value, char* name, JSContextRef ctx, SharedValue objValue)
 	{
+		// Always override the length property on lists. Some languages
+		// supply their own length property, which might be a method instead
+		// of a number -- bad news.
 		if (value->IsList() && !strcmp(name, "length"))
 		{
 			SharedKList l = value->ToList();
 			return JSValueMakeNumber(ctx, l->Size());
 		}
 
-		if (!strcmp(name, "toString"))
+		// Only overload toString if it is not a method (might be undefined)
+		// We want the user to be able to supply their own toString methods.
+		if (!objValue->IsMethod() && !strcmp(name, "toString"))
 		{
 			JSStringRef s = JSStringCreateWithUTF8CString("toString");
 			return JSObjectMakeFunctionWithCallback(ctx, s, &to_string_cb);
 		}
 
-		return JSValueMakeUndefined(ctx);
+		// Otherwise this is just a normal JS value
+		return KJSUtil::ToJSValue(objValue, ctx);
 	}
 
 	JSValueRef to_string_cb(
@@ -522,7 +534,7 @@ namespace kroll
 
 		SharedKObject object = (*value)->ToObject();
 		SharedStringList props = object->GetPropertyNames();
-		add_special_property_names(*value, props);
+		add_special_property_names(*value, props, false);
 		for (size_t i = 0; i < props->size(); i++)
 		{
 			SharedString pn = props->at(i);
@@ -531,7 +543,6 @@ namespace kroll
 			JSStringRelease(name);
 		}
 	}
-
 
 	std::map<JSObjectRef, JSGlobalContextRef> KJSUtil::contextMap;
 	void KJSUtil::RegisterGlobalContext(

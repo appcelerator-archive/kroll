@@ -100,18 +100,9 @@ namespace UTILS_NS
 	std::string FileUtils::GetApplicationDataDirectory(std::string &appid)
 	{
 		std::string dir = GetUserRuntimeHomeDirectory();
-		dir.append(KR_PATH_SEP);
-		dir.append("appdata");
-		if (!IsDirectory(dir))
-		{
-			CreateDirectory(dir);
-		}
-		dir.append(KR_PATH_SEP);
-		dir.append(appid);
-		if (!IsDirectory(dir))
-		{
-			CreateDirectory(dir);
-		}
+		dir = FileUtils::Join(dir.c_str(), "appdata", appid.c_str(), NULL);
+		CreateDirectory(dir, true);
+
 		return dir;
 	}
 
@@ -134,8 +125,8 @@ namespace UTILS_NS
 		return std::string([temporaryDirectory UTF8String]);
 #elif defined(OS_WIN32)
 #define BUFSIZE 512
-		TCHAR szTempName[BUFSIZE];
-		GetTempPathA(BUFSIZE,szTempName);
+		char szTempName[BUFSIZE];
+		GetTempPathA(BUFSIZE, szTempName);
 		std::string dir(szTempName);
 		srand(GetTickCount()); // initialize seed
 		std::ostringstream s;
@@ -190,8 +181,8 @@ namespace UTILS_NS
 		BOOL found = [[NSFileManager defaultManager] fileExistsAtPath:p isDirectory:&isDir];
 		return found && !isDir;
 #elif OS_WIN32
-		WIN32_FIND_DATA findFileData;
-		HANDLE hFind = FindFirstFile(file.c_str(), &findFileData);
+		WIN32_FIND_DATAA findFileData;
+		HANDLE hFind = FindFirstFileA(file.c_str(), &findFileData);
 		if (hFind != INVALID_HANDLE_VALUE)
 		{
 			bool yesno = (findFileData.dwFileAttributes & 0x00000000) == 0x00000000;
@@ -238,8 +229,13 @@ namespace UTILS_NS
 			return path.substr(pos+1);
 	}
 
-	bool FileUtils::CreateDirectory(std::string &dir)
+	bool FileUtils::CreateDirectory(std::string &dir, bool recursive)
 	{
+		string parent = Dirname(dir);
+		if (recursive && !IsDirectory(parent))
+		{
+			CreateDirectory(parent, true);
+		}
 #ifdef OS_OSX
 		return [[NSFileManager defaultManager] createDirectoryAtPath:[NSString stringWithCString:dir.c_str()] attributes:nil];
 #elif OS_WIN32
@@ -260,13 +256,13 @@ namespace UTILS_NS
 #ifdef OS_OSX
 		[[NSFileManager defaultManager] removeFileAtPath:[NSString stringWithCString:dir.c_str()] handler:nil];
 #elif OS_WIN32
-		SHFILEOPSTRUCT op;
+		SHFILEOPSTRUCTA op;
 		op.hwnd = NULL;
 		op.wFunc = FO_DELETE;
 		op.pFrom = dir.c_str();
 		op.pTo = NULL;
 		op.fFlags = FOF_NOCONFIRMATION | FOF_SILENT | FOF_NOERRORUI;
-		int rc = SHFileOperation(&op);
+		int rc = SHFileOperationA(&op);
 		return (rc == 0);
 #elif OS_LINUX
 		return unlink(dir.c_str()) == 0;
@@ -281,8 +277,8 @@ namespace UTILS_NS
 		BOOL found = [[NSFileManager defaultManager] fileExistsAtPath:[NSString stringWithCString:dir.c_str()] isDirectory:&isDir];
 		return found && isDir;
 #elif OS_WIN32
-		WIN32_FIND_DATA findFileData;
-		HANDLE hFind = FindFirstFile(dir.c_str(), &findFileData);
+		WIN32_FIND_DATAA findFileData;
+		HANDLE hFind = FindFirstFileA(dir.c_str(), &findFileData);
 		if (hFind == INVALID_HANDLE_VALUE)
 		{
 			return false;
@@ -374,8 +370,8 @@ namespace UTILS_NS
 		// TODO finish this
 		return false;
 #elif OS_WIN32
-		WIN32_FIND_DATA findFileData;
-		HANDLE hFind = FindFirstFile(file.c_str(), &findFileData);
+		WIN32_FIND_DATAA findFileData;
+		HANDLE hFind = FindFirstFileA(file.c_str(), &findFileData);
 		if (hFind != INVALID_HANDLE_VALUE)
 		{
 			bool yesno = (findFileData.dwFileAttributes & 0x00000002) == 0x00000002;
@@ -483,15 +479,15 @@ namespace UTILS_NS
 		files.clear();
 
 	#if defined(OS_WIN32)
-		WIN32_FIND_DATA findFileData;
+		WIN32_FIND_DATAA findFileData;
 		std::string q(path+"\\*");
-		HANDLE hFind = FindFirstFile(q.c_str(), &findFileData);
+		HANDLE hFind = FindFirstFileA(q.c_str(), &findFileData);
 		if (hFind != INVALID_HANDLE_VALUE)
 		{
 			do
 			{
 				files.push_back(std::string(findFileData.cFileName));
-			} while (FindNextFile(hFind, &findFileData));
+			} while (FindNextFileA(hFind, &findFileData));
 			FindClose(hFind);
 		}
 	#else
@@ -541,7 +537,7 @@ namespace UTILS_NS
 		printf("cmd: %s\n", cmdLine.c_str());
 
 		DWORD rc=0;
-		STARTUPINFO si;
+		STARTUPINFOA si;
 		PROCESS_INFORMATION pi;
 		ZeroMemory( &si, sizeof(si) );
 		si.cb = sizeof(si);

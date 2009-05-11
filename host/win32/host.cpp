@@ -17,12 +17,11 @@
 using Poco::ScopedLock;
 using Poco::Mutex;
 
-#define WM_JOB_TICKLE_REQUEST WM_USER+1
-
 namespace kroll
 {
 	bool Win32Host::ole_initialized = false;
-
+	UINT Win32Host::tickleRequestMessage = ::RegisterWindowMessage(PRODUCT_NAME "TickleRequest");
+		
 	/*static*/
 	void Win32Host::InitOLE() {
 		if (!ole_initialized) {
@@ -76,15 +75,16 @@ namespace kroll
 		MSG message;
 		if (GetMessage(&message, NULL, 0, 0))
 		{
-			if(message.message == WM_JOB_TICKLE_REQUEST)
+			if(message.message == tickleRequestMessage)
 			{
 				this->InvokeMethods();
 			}
-			else
-			{
-				TranslateMessage(&message);
-				DispatchMessage(&message);
-			}
+			
+			// still translate/dispatch this message, in case
+			// we are polluting the message namespace
+			// .. i'm looking at you flash!
+			TranslateMessage(&message);
+			DispatchMessage(&message);
 		}
 		return true;
 	}
@@ -127,7 +127,7 @@ namespace kroll
 		}
 
 		// send a message to tickle the windows message queue
-		PostThreadMessage(thread_id, WM_JOB_TICKLE_REQUEST, 0, 0);
+		PostThreadMessage(thread_id, tickleRequestMessage, 0, 0);
 
 		if (!synchronous)
 		{

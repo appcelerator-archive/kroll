@@ -147,26 +147,37 @@ def TarGzDir(source, dest_file, include=[], exclude=[]):
 		walk_dir(dir, tarcb, include, exclude, dirs=True)
 	tar.close()
 
-def ZipDir(source, dest_file, include=[], exclude=[]):
-	zip = zipfile.ZipFile(dest_file, 'w', zipfile.ZIP_DEFLATED)
+def AddToZip(zip, filepath, zippath):
+	#arcname = filepath.replace(dir + os.sep, "")
+	if os.path.islink(filepath):
+		dest = os.readlink(filepath)
+		attr = zipfile.ZipInfo()
+		attr.filename = zippath
+		attr.create_system = 3
+		attr.external_attr = 2716663808L
+		attr.compress_type = zipfile.ZIP_DEFLATED
+		zip.writestr(attr, dest)
+	elif os.path.isdir(filepath):
+		attr = zipfile.ZipInfo(zippath + '/')
+		attr.external_attr = 0755 << 16L
+		zip.writestr(attr, '')
+	else:
+		zip.write(filepath, zippath, zipfile.ZIP_DEFLATED)
+	
+def ZipDir(source, dest_file, include=[], exclude=[], dest_path=None):
+	zip = None
+	if isinstance(dest_file, zipfile.ZipFile):
+		zip = dest_file
+	else:
+		zip = zipfile.ZipFile(dest_file, 'w', zipfile.ZIP_DEFLATED)
+	
 	if (type(source) != types.ListType): source = [source]
 	for dir in source:
 		def zipcb(f):
 			arcname = f.replace(dir + os.sep, "")
-			if os.path.islink(f):
-				dest = os.readlink(f)
-				attr = zipfile.ZipInfo()
-				attr.filename = arcname 
-				attr.create_system = 3
-				attr.external_attr = 2716663808L
-				attr.compress_type = zipfile.ZIP_DEFLATED
-				zip.writestr(attr, dest)
-			elif os.path.isdir(f):
-				attr = zipfile.ZipInfo(arcname + '/')
-				attr.external_attr = 0755 << 16L
-				zip.writestr(attr, '')
-			else:
-				zip.write(f, arcname, zipfile.ZIP_DEFLATED)
+			if dest_path:
+				arcname = '/'.join([dest_path, arcname])
+			AddToZip(zip, f, arcname)
 		walk_dir(dir, zipcb, include, exclude, dirs=True)
 	zip.close()
 

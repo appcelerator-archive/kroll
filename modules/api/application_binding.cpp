@@ -88,17 +88,20 @@ namespace kroll
 
 	void ApplicationBinding::_GetExecutablePath(const ValueList& args, SharedValue result)
 	{
-		result->SetString(this->application->GetExecutablePath());
+		string executablePath = this->application->GetExecutablePath();
+		result->SetString(executablePath);
 	}
 
 	void ApplicationBinding::_GetResourcesPath(const ValueList& args, SharedValue result)
 	{
-		result->SetString(this->application->GetResourcesPath());
+		string resourcesPath = this->application->GetResourcesPath();
+		result->SetString(resourcesPath);
 	}
 
 	void ApplicationBinding::_GetDataPath(const ValueList& args, SharedValue result)
 	{
-		result->SetString(this->application->GetDataPath());
+		string dataPath = this->application->GetDataPath();
+		result->SetString(dataPath);
 	}
 
 	void ApplicationBinding::_GetManifestPath(const ValueList& args, SharedValue result)
@@ -150,7 +153,8 @@ namespace kroll
 	{
 		args.VerifyException("getArgumentValue", "s");
 		string arg = args.at(0)->ToString();
-		result->SetString(this->application->GetArgumentValue(arg));
+		string argValue = this->application->GetArgumentValue(arg);
+		result->SetString(argValue);
 	}
 
 	void ApplicationBinding::_GetDependencies(const ValueList& args, SharedValue result)

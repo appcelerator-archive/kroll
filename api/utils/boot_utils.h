@@ -11,6 +11,7 @@
 // these UUIDs should never change and uniquely identify a package type
 #define RUNTIME_UUID "A2AC5CB5-8C52-456C-9525-601A5B0725DA"
 #define MODULE_UUID "1ACE5D3A-2B52-43FB-A136-007BD166CFD0"
+#define SDK_UUID "FF71038E-3CD6-40EA-A1C2-CFEE1D284CEA"
 #define MANIFEST_FILENAME "manifest"
 #define UPDATE_FILENAME ".update"
 #define LICENSE_FILENAME "LICENSE.txt"
@@ -36,6 +37,7 @@ namespace UTILS_NS
 	{
 		MODULE,
 		RUNTIME,
+		SDK,
 		UNKNOWN
 	};
 

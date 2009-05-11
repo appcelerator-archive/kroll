@@ -98,9 +98,6 @@ namespace KrollBoot
 		EnvironmentUtils::Set("KR_HOME", app->path);
 		EnvironmentUtils::Set("KR_RUNTIME", app->runtime->path);
 		EnvironmentUtils::Set("KR_MODULES", moduleList.str());
-		EnvironmentUtils::Set("KR_RUNTIME_HOME", FileUtils::GetSystemRuntimeHomeDirectory());
-		EnvironmentUtils::Set("KR_APP_GUID", app->guid);
-		EnvironmentUtils::Set("KR_APP_ID", app->id);
 
 		BootstrapPlatformSpecific(moduleList.str());
 		string error = Blastoff();
