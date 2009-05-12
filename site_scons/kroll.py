@@ -188,7 +188,7 @@ class BuildConfig(object):
 		self.thirdparty_libs = {
 			'poco': {
 				'win32': {
-					'cpp_path': [path.join(self.third_party, 'poco', 'include')],
+					'cpp_path': [path.join(self.third_party, 'poco', 'include'), 'C:\\OpenSSL\\include'],
 					'lib_path': [path.join(self.third_party, 'poco', 'lib')],
 					'libs': ['PocoFoundation', 'PocoNet', 'PocoNetSSL', 'PocoUtil', 'PocoXML', 'PocoZip', 'PocoData', 'PocoSQLite']
 				},
