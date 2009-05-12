@@ -26,6 +26,7 @@ namespace KrollBoot
 	void ShowError(string error, bool fatal)
 	{
 		std::cout << error << std::endl;
+		gtk_init(&argc, (char***) &argv);
 		GtkWidget* dialog = gtk_message_dialog_new(
 			NULL,
 			GTK_DIALOG_MODAL,
