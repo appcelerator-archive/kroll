@@ -62,8 +62,8 @@ namespace kroll
 #endif
 			try
 			{
-			//delete this->thread;
-			delete this->adapter;
+				//delete this->thread;
+				delete this->adapter;
 			}
 			catch (Poco::BugcheckException& bge)
 			{

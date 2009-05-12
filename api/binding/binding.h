@@ -16,6 +16,7 @@
 #include "static_bound_list.h"
 #include "static_bound_method.h"
 #include "static_bound_object.h"
+#include "k_function_ptr_method.h"
 #include "arg_list.h"
 #include "value_exception.h"
 #include "callback.h"
