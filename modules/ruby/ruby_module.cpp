@@ -1,7 +1,6 @@
-/**
- * Appcelerator Kroll - licensed under the Apache Public License 2
- * see LICENSE in the root folder for details on the license.
- * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
+/** Appcelerator Kroll - licensed under the Apache Public License 2 see LICENSE
+ * in the root folder for details on the license.  Copyright (c) 2008
+ * Appcelerator, Inc. All Rights Reserved.
  */
 #include <signal.h>
 #include "ruby_module.h"
@@ -20,7 +19,11 @@ namespace kroll
 		ruby_init_loadpath();
 
 		string modulePath = this->GetPath();
-		ruby_incpush(modulePath.c_str());
+
+		// Add the application directoy to the Ruby include path so
+		// that includes work in a intuitive way for application developers.
+		ruby_incpush(host->GetApplication()->GetResourcesPath().c_str());
+
 		this->InitializeBinding();
 
 		host->AddModuleProvider(this);

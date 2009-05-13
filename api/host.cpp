@@ -207,7 +207,7 @@ namespace kroll
 		}
 	}
 
-	const SharedApplication Host::GetApplication()
+	SharedApplication Host::GetApplication()
 	{
 		return this->application;
 	}

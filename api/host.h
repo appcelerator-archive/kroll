@@ -110,7 +110,7 @@ namespace kroll
 		/**
 		 * @return the SharedApplication instance for this host
 		 */
-		const SharedApplication GetApplication();
+		SharedApplication GetApplication();
 
 		/**
 		 * @return The home directory for this application

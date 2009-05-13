@@ -21,6 +21,10 @@ namespace kroll
 
 		//TODO: maybe we need to setup path to script?
 		//Py_SetProgramName(); 
+		PyObject *path = PySys_GetObject("path");
+		PyObject *s = PyString_FromString(host->GetApplication()->GetResourcesPath().c_str());
+		PyList_Insert(path, 0, s);
+		Py_XDECREF(s);
 
 		this->InitializeBinding();
 		host->AddModuleProvider(this);
