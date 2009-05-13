@@ -1,0 +1,104 @@
+/**
+ * Appcelerator Kroll - licensed under the Apache Public License 2
+ * see LICENSE in the root folder for details on the license.
+ * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
+ */
+#include "k_python_list.h"
+
+namespace kroll
+{
+	KPythonTuple::KPythonTuple(PyObject *tuple) :
+		tuple(tuple),
+		object(new KPythonObject(tuple, true))
+	{
+		Py_INCREF(this->tuple);
+	}
+
+	KPythonTuple::~KPythonTuple()
+	{
+		Py_DECREF(this->tuple);
+	}
+
+	void KPythonTuple::Append(SharedValue value)
+	{
+		throw ValueException::FromString("Cannot modify the size of a Python tuple.");
+	}
+
+	unsigned int KPythonTuple::Size()
+	{
+		return PyTuple_Size(this->tuple);
+	}
+
+	bool KPythonTuple::Remove(unsigned int index)
+	{
+		throw ValueException::FromString("Cannot modify the size of a Python tuple.");
+		return false;
+	}
+
+	SharedValue KPythonTuple::At(unsigned int index)
+	{
+		if (index >= 0 && index < this->Size())
+		{
+			PyObject *p = PyTuple_GetItem(this->tuple, index);
+			SharedValue v = PythonUtils::ToKrollValue(p);
+			Py_DECREF(p);
+			return v;
+		}
+		else
+		{
+			return Value::Undefined;
+		}
+	}
+
+	void KPythonTuple::Set(const char *name, SharedValue value)
+	{
+		throw ValueException::FromString("Cannot modify a Python tuple.");
+	}
+
+	void KPythonTuple::SetAt(unsigned int index, SharedValue value)
+	{
+		throw ValueException::FromString("Cannot modify a Python tuple.");
+	}
+
+	SharedValue KPythonTuple::Get(const char *name)
+	{
+		if (KList::IsInt(name))
+		{
+			unsigned int index = (unsigned int) atoi(name);
+			if (index >= 0)
+			{
+				return this->At(index);
+			}
+		}
+		return object->Get(name);
+	}
+
+	SharedStringList KPythonTuple::GetPropertyNames()
+	{
+		SharedStringList property_names = object->GetPropertyNames();
+		for (size_t i = 0; i < this->Size(); i++)
+		{
+			std::string name = KList::IntToChars(i);
+			property_names->push_back(new std::string(name));
+		}
+		return property_names;
+	}
+
+	PyObject* KPythonTuple::ToPython()
+	{
+		return this->object->ToPython();
+	}
+
+	bool KPythonTuple::Equals(SharedKObject other)
+	{
+		SharedPtr<KPythonTuple> pyOther = other.cast<KPythonTuple>();
+		if (pyOther.isNull())
+		{
+			return false;
+		}
+		else
+		{
+			return pyOther->ToPython() == this->ToPython();
+		}
+	}
+}

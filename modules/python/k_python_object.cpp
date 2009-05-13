@@ -9,15 +9,15 @@ namespace kroll
 {
 	KPythonObject::KPythonObject(PyObject *obj) :
 		object(obj),
-		read_only(false),
+		readOnly(false),
 		delegate(NULL)
 	{
 		Py_INCREF(this->object);
 	}
 
-	KPythonObject::KPythonObject(PyObject *obj, bool read_only) :
+	KPythonObject::KPythonObject(PyObject *obj, bool readOnly) :
 		object(obj),
-		read_only(read_only),
+		readOnly(readOnly),
 		delegate(new StaticBoundObject())
 	{
 		Py_INCREF(this->object);
@@ -40,7 +40,7 @@ namespace kroll
 	{
 		PyObject* py_value = PythonUtils::ToPyObject(value);
 
-		if (read_only)
+		if (readOnly)
 		{
 			// This object is likely read-only, allow for binding
 			// layer-only properties, even though this isn't a great idea.
@@ -60,7 +60,7 @@ namespace kroll
 	{
 		if (0 == (PyObject_HasAttrString(this->object, (char*)name)))
 		{
-			if (this->read_only)
+			if (this->readOnly)
 			{
 				// Read-only objects can have binding layer properties
 				return delegate->Get(name);

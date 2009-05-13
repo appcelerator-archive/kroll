@@ -17,6 +17,7 @@
 #include "k_python_object.h" 
 #include "k_python_method.h"
 #include "k_python_list.h"
+#include "k_python_tuple.h"
 #include "k_python_dict.h"
 #include "python_evaluator.h"
 
