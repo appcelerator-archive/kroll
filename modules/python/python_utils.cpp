@@ -241,6 +241,15 @@ namespace kroll
 			long lval = PyInt_AsLong(value);
 			return Value::NewInt((int) lval);
 		}
+		else if (PyLong_Check(value))
+		{
+			double dval = PyLong_AsDouble(value);
+			if (dval == -1.0)
+			{
+				THROW_PYTHON_EXCEPTION
+			}
+			return Value::NewDouble(dval);
+		}
 		else if (PyFloat_Check(value))
 		{
 			double dval = PyFloat_AsDouble(value);
