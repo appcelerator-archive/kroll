@@ -16,46 +16,53 @@ namespace kroll
 	{
 		Create(buf,len);
 	}
+
 	Blob::Blob(const char *buffer, int len)
 	{
 		Create((char*)buffer,len);
 	}
+
 	Blob::Blob(std::string str)
 	{
 		Create((char*)str.c_str(),str.length());
 	}
+
 	Blob::Blob(std::string& str)
 	{
 		Create((char*)str.c_str(),str.length());
 	}
+
 	void Blob::Create(char *buf, int len)
 	{
 		if (len > 0)
 		{
-			this->buffer = new char[len];
-			memcpy(this->buffer,buf,len);
+			this->buffer = new char[len + 1];
+			memcpy(this->buffer, buf, len);
 			this->buffer[len]='\0'; // null terminate buffer
 		}
 		else
 		{
 			this->buffer = NULL;
 		}
+
 		this->length = len;
-		this->SetMethod("toString",&Blob::ToString);
-		this->SetMethod("get",&Blob::Get);
+		this->SetMethod("toString", &Blob::ToString);
+		this->SetMethod("get", &Blob::Get);
+
 		// mimic some string operations to make it more 
 		// friendly when using a Blob in Javascript
-		this->SetMethod("indexOf",&Blob::IndexOf);
-		this->SetMethod("lastIndexOf",&Blob::LastIndexOf);
-		this->SetMethod("charAt",&Blob::CharAt);
-		this->SetMethod("split",&Blob::Split);
-		this->SetMethod("substring",&Blob::Substring);
-		this->SetMethod("substr",&Blob::Substring);
-		this->SetMethod("toLowerCase",&Blob::ToLowerCase);
-		this->SetMethod("toUpperCase",&Blob::ToUpperCase);
-		this->SetMethod("replace",&Blob::Replace);
-		this->Set("length",Value::NewInt(len));
+		this->SetMethod("indexOf", &Blob::IndexOf);
+		this->SetMethod("lastIndexOf", &Blob::LastIndexOf);
+		this->SetMethod("charAt", &Blob::CharAt);
+		this->SetMethod("split", &Blob::Split);
+		this->SetMethod("substring", &Blob::Substring);
+		this->SetMethod("substr", &Blob::Substring);
+		this->SetMethod("toLowerCase", &Blob::ToLowerCase);
+		this->SetMethod("toUpperCase", &Blob::ToUpperCase);
+		this->SetMethod("replace", &Blob::Replace);
+		this->Set("length", Value::NewInt(len));
 	}
+
 	Blob::~Blob()
 	{
 		if (this->buffer!=NULL)
@@ -65,18 +72,22 @@ namespace kroll
 		this->buffer = NULL;
 		this->length = 0;
 	}
+
 	void Blob::ToString(const ValueList& args, SharedValue result)
 	{
 		result->SetString(buffer);
 	}
+
 	void Blob::Get(const ValueList& args, SharedValue result)
 	{
 		result->SetVoidPtr(buffer);
 	}
+
 	void Blob::Length(const ValueList& args, SharedValue result)
 	{
 		result->SetInt(length);
 	}
+
 	void Blob::IndexOf(const ValueList& args, SharedValue result)
 	{
 		if (this->length > 0)
@@ -90,6 +101,7 @@ namespace kroll
 			result->SetInt(-1);
 		}
 	}
+
 	void Blob::LastIndexOf(const ValueList& args, SharedValue result)
 	{
 		if (this->length > 0)
@@ -103,27 +115,28 @@ namespace kroll
 			result->SetInt(-1);
 		}
 	}
+
 	void Blob::CharAt(const ValueList& args, SharedValue result)
 	{
-		if (this->length > 0)
+		args.VerifyException("charAt", "n");
+		int position = args.at(0)->ToInt();
+
+		if (position < 0)
 		{
-			int position = args.at(0)->ToInt();
-			std::stringstream ostr;
-			if (position < this->length)
-			{
-				ostr << (char)this->buffer[position];
-				result->SetString(ostr.str().c_str());
-			}
-			else
-			{
-				result->SetNull();
-			}
+			result->SetBool(true);
+			return;
 		}
-		else
+
+		char buf[2] = {'\0', '\0'};
+		if (position > 0 && position < this->length)
 		{
-			result->SetNull();
+			buf[0] = (char) this->buffer[position];
 		}
+		// Else return an empty string 
+		// https://developer.mozilla.org/en/core_javascript_1.5_reference/global_objects/string/charat
+		result->SetString(buf);
 	}
+
 	void Blob::Split(const ValueList& args, SharedValue result)
 	{
 		SharedKList list = new StaticBoundList();
@@ -141,6 +154,7 @@ namespace kroll
 		}
 		result->SetList(list);
 	}
+
 	void Blob::Substring(const ValueList& args, SharedValue result)
 	{
 		int a = args.at(0)->ToInt();
@@ -166,6 +180,7 @@ namespace kroll
 		}
 		result->SetNull();
 	}
+
 	void Blob::ToLowerCase(const ValueList& args, SharedValue result)
 	{
 		if (this->length>0)
@@ -179,6 +194,7 @@ namespace kroll
 			result->SetNull();
 		}
 	}
+
 	void Blob::ToUpperCase(const ValueList& args, SharedValue result)
 	{
 		if (this->length>0)
@@ -192,6 +208,7 @@ namespace kroll
 			result->SetNull();
 		}
 	}
+
 	void Blob::Replace(const ValueList& args, SharedValue result)
 	{
 		if (args.size()!=2)
