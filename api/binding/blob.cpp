@@ -14,25 +14,25 @@ namespace kroll
 
 	Blob::Blob(char *buf, int len)
 	{
-		Create(buf,len);
+		Create(static_cast<const char*>(buf), len);
 	}
 
 	Blob::Blob(const char *buffer, int len)
 	{
-		Create((char*)buffer,len);
+		Create(buffer, len);
 	}
 
 	Blob::Blob(std::string str)
 	{
-		Create((char*)str.c_str(),str.length());
+		Create(str.c_str(), str.length());
 	}
 
 	Blob::Blob(std::string& str)
 	{
-		Create((char*)str.c_str(),str.length());
+		Create(str.c_str(), str.length());
 	}
 
-	void Blob::Create(char *buf, int len)
+	void Blob::Create(const char *buf, int len)
 	{
 		if (len > 0)
 		{
@@ -128,9 +128,9 @@ namespace kroll
 		}
 
 		char buf[2] = {'\0', '\0'};
-		if (position > 0 && position < this->length)
+		if (position >= 0 && position < this->length)
 		{
-			buf[0] = (char) this->buffer[position];
+			buf[0] = this->buffer[position];
 		}
 		// Else return an empty string 
 		// https://developer.mozilla.org/en/core_javascript_1.5_reference/global_objects/string/charat

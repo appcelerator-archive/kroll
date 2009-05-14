@@ -56,7 +56,7 @@ namespace kroll
 		void ToUpperCase(const ValueList& args, SharedValue result);
 		void Replace(const ValueList& args, SharedValue result);
 
-		void Create(char *buf, int len);
+		void Create(const char *buf, int len);
 
 	};
 }
