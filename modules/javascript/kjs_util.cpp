@@ -27,6 +27,7 @@ namespace kroll
 	void add_special_property_names(SharedValue, SharedStringList, bool);
 	JSValueRef get_special_property(SharedValue, char*, JSContextRef, SharedValue);
 	JSValueRef to_string_cb(JSContextRef, JSObjectRef, JSObjectRef, size_t, const JSValueRef[], JSValueRef*);
+	JSValueRef equals_cb(JSContextRef, JSObjectRef, JSObjectRef, size_t, const JSValueRef[], JSValueRef*);
 
 	SharedValue KJSUtil::ToKrollValue(
 		JSValueRef value,
@@ -463,12 +464,14 @@ namespace kroll
 		// a "hash" object to have no methods in its property list. We don't want
 		// toString() to show up in those situations.
 
-		bool foundLength = false, foundToString = false;
+		bool foundLength = false, foundToString = false, foundEquals = false;
 		for (size_t i = 0; i < props->size(); i++)
 		{
 			SharedString pn = props->at(i);
 			if (strcmp(pn->c_str(), "length") == 0)
 				foundLength = true;
+			if (strcmp(pn->c_str(), "toString") == 0)
+				foundToString = true;
 			if (strcmp(pn->c_str(), "toString") == 0)
 				foundToString = true;
 		}
@@ -477,9 +480,15 @@ namespace kroll
 		{
 			props->push_back(new std::string("length"));
 		}
+
 		if (!foundToString && showInvisible)
 		{
 			props->push_back(new std::string("toString"));
+		}
+
+		if (!foundEquals && showInvisible)
+		{
+			props->push_back(new std::string("equals"));
 		}
 	}
 
@@ -494,12 +503,23 @@ namespace kroll
 			return JSValueMakeNumber(ctx, l->Size());
 		}
 
-		// Only overload toString if it is not a method (might be undefined)
-		// We want the user to be able to supply their own toString methods.
-		if (!objValue->IsMethod() && !strcmp(name, "toString"))
+		// Only overload these methods if the value in our object is not a
+		// method We want the user to be able to supply their own versions,
+		// but we don't want JavaScript code to freak out in situations where
+		// Kroll objects use attributes with the same name that aren't methods.
+		if (!objValue->IsMethod())
 		{
-			JSStringRef s = JSStringCreateWithUTF8CString("toString");
-			return JSObjectMakeFunctionWithCallback(ctx, s, &to_string_cb);
+			if (!strcmp(name, "toString"))
+			{
+				JSStringRef s = JSStringCreateWithUTF8CString("toString");
+				return JSObjectMakeFunctionWithCallback(ctx, s, &to_string_cb);
+			}
+
+			if (!strcmp(name, "equals"))
+			{
+				JSStringRef s = JSStringCreateWithUTF8CString("equals");
+				return JSObjectMakeFunctionWithCallback(ctx, s, &equals_cb);
+			}
 		}
 
 		// Otherwise this is just a normal JS value
@@ -522,6 +542,39 @@ namespace kroll
 		SharedValue dsv = Value::NewString(ss);
 		return KJSUtil::ToJSValue(dsv, js_context);
 	}
+
+	JSValueRef equals_cb(
+		JSContextRef ctx,
+		JSObjectRef function,
+		JSObjectRef jsThis,
+		size_t numArgs,
+		const JSValueRef args[],
+		JSValueRef* exception)
+	{
+		SharedValue* value = static_cast<SharedValue*>(JSObjectGetPrivate(jsThis));
+		if (value == NULL || numArgs < 1)
+		{
+			return JSValueMakeBoolean(ctx, false);
+		}
+
+		// Ensure argument is a JavaScript object
+		if (!JSValueIsObject(ctx, args[0]))
+		{
+			return JSValueMakeBoolean(ctx, false);
+		}
+
+		// Ensure argument is a Kroll JavaScript
+		JSObjectRef otherObject = JSValueToObject(ctx, args[0], NULL);
+		SharedValue* otherValue = static_cast<SharedValue*>(JSObjectGetPrivate(jsThis));
+		if (otherValue == NULL)
+		{
+			return JSValueMakeBoolean(ctx, false);
+		}
+
+		// Test equality
+		return JSValueMakeBoolean(ctx, (*value)->Equals(*otherValue));
+	}
+
 
 	void get_property_names_cb(
 		JSContextRef js_context,
@@ -678,7 +731,7 @@ namespace kroll
 	JSValueRef KJSUtil::GetFunctionPrototype(JSContextRef jsContext, JSValueRef* exception) 
 	{
 		JSObjectRef globalObject = JSContextGetGlobalObject(jsContext);
-		JSStringRef fnPropName= JSStringCreateWithUTF8CString("Function");
+		JSStringRef fnPropName = JSStringCreateWithUTF8CString("Function");
 		JSValueRef fnCtorValue = JSObjectGetProperty(jsContext, globalObject,
 			fnPropName, exception);
 		JSStringRelease(fnPropName);
@@ -703,7 +756,8 @@ namespace kroll
 		}
 
 	return fnPrototype;
-	}	
+	}
+
 	/*
 	 * The following takes the prototype from the Array constructor, this allows
 	 * us to easily support array like functions
@@ -713,7 +767,7 @@ namespace kroll
 	JSValueRef KJSUtil::GetArrayPrototype(JSContextRef jsContext, JSValueRef* exception) 
 	{
 		JSObjectRef globalObject = JSContextGetGlobalObject(jsContext);
-		JSStringRef fnPropName= JSStringCreateWithUTF8CString("Array");
+		JSStringRef fnPropName = JSStringCreateWithUTF8CString("Array");
 		JSValueRef fnCtorValue = JSObjectGetProperty(jsContext, globalObject,
 			fnPropName, exception);
 		JSStringRelease(fnPropName);
