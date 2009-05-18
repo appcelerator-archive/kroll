@@ -95,30 +95,30 @@ namespace kroll
 						// Additional processing that [NSApp run] does after each event
 						if (type != NSPeriodic && type != NSMouseMoved) 
 						{
-					        [services_menu update];
-					        [windows_menu update];
-					        [main_menu update];
+							[services_menu update];
+							[windows_menu update];
+							[main_menu update];
 						}
 						[app updateWindows];
 					}
 				}
 				@catch(NSException *e)
 				{
-					static Logger &logger = Logger::Get("OSXHost");
-					logger.Error("Caught NSException in main loop: %s",[[e reason] UTF8String]);
+					static Logger* logger = Logger::Get("Host");
+					logger->Error("Caught NSException in main loop: %s",[[e reason] UTF8String]);
 					KrollDumpStackTraceFromException(e);
 				}
 			}
 			catch (std::exception &e)
 			{
-				static Logger &logger = Logger::Get("OSXHost");
-				logger.Error("Caught exception in main loop: %s",e.what());
+				static Logger* logger = Logger::Get("Host");
+				logger->Error("Caught exception in main loop: %s",e.what());
 				KrollDumpStackTrace();
 			}
 			catch (...)
 			{
-				static Logger &logger = Logger::Get("OSXHost");
-			 	logger.Error("Caught unhandled exception in main loop");
+				static Logger* logger = Logger::Get("Host");
+			 	logger->Error("Caught unhandled exception in main loop");
 				KrollDumpStackTrace();
 			}
 		}

@@ -30,11 +30,11 @@ using Poco::Environment;
 #define DEBUG_ENV "KR_DEBUG"
 #define DEBUG_ARG "--debug"
 #define ATTACH_DEBUGGER_ARG "--attach-debugger"
-#define NO_CONSOLE_LOG_ARG "--no-consoler-logger"
+#define NO_CONSOLE_LOG_ARG "--no-console-logging"
+#define NO_FILE_LOG_ARG "--no-file-logging"
 #define PROFILE_ARG "--profile"
 #define LOGPATH_ARG "--logpath"
-#define BOOT_HOME_ARG "--start"
-
+#define BOOT_HOME_ARG "--start" 
 namespace kroll
 {
 	SharedPtr<Host> Host::instance_;
@@ -50,7 +50,9 @@ namespace kroll
 		runUILoop(true),
 		profile(false),
 		profileStream(NULL),
-		consoleLogging(true)
+		consoleLogging(true),
+		fileLogging(true),
+		logger(NULL)
 	{
 		instance_ = this;
 
@@ -83,10 +85,10 @@ namespace kroll
 		string runtimePath = Environment::get(RUNTIME_ENV);
 		string modulePaths = Environment::get(MODULES_ENV);
 
-		Logger& logger = Logger::Get("Host");
-		logger.Notice(">>> %s=%s", HOME_ENV, applicationHome.c_str());
-		logger.Notice(">>> %s=%s", RUNTIME_ENV, runtimePath.c_str());
-		logger.Notice(">>> %s=%s", MODULES_ENV, modulePaths.c_str());
+		// Loggin isn't activated yet -- need to just print here
+		printf(">>> %s=%s\n", HOME_ENV, applicationHome.c_str());
+		printf(">>> %s=%s\n", RUNTIME_ENV, runtimePath.c_str());
+		printf(">>> %s=%s\n", MODULES_ENV, modulePaths.c_str());
 
 		this->application = Application::NewApplication(applicationHome);
 		if (this->application.isNull())
@@ -110,15 +112,21 @@ namespace kroll
 
 	void Host::SetupLogging()
 	{
-		// Initialize the logger
-		if (this->logFilePath.empty())
+		// Initialize the logger -- an empty logFilePath signfies no file logging,
+		// but don't turn it off unless that was specified via the command-line.
+		if (!this->fileLogging)
+		{
+			this->logFilePath = std::string();
+		}
+		else if (this->logFilePath.empty())
 		{
 			string dataDir = FileUtils::GetApplicationDataDirectory(this->application->id);
 			this->logFilePath = FileUtils::Join(dataDir.c_str(), "tiapp.log", NULL);
 		}
-		Poco::Message::Priority prio = this->debug ?
-			 Poco::Message::PRIO_DEBUG : Poco::Message::PRIO_INFORMATION;
-		Logger::Initialize(true, true, prio, this->logFilePath);
+
+		Logger::Level level = this->debug ?  Logger::LDEBUG : Logger::LINFO;
+		Logger::Initialize(this->consoleLogging, this->logFilePath, level);
+		this->logger = Logger::Get("Host");
 	}
 
 	Host::~Host()
@@ -136,8 +144,7 @@ namespace kroll
 			this->global_object = new ProfiledBoundObject(
 				GLOBAL_NS_VARNAME, this->global_object, this->profileStream);
 
-			Logger& logger = Logger::Get("Host");
-			logger.Info("Starting Profiler. Output going to %s", this->profilePath.c_str());
+			logger->Info("Starting Profiler. Output going to %s", this->profilePath.c_str());
 		}
 	}
 
@@ -145,8 +152,7 @@ namespace kroll
 	{
 		if (this->profile)
 		{
-			Logger& logger = Logger::Get("Host");
-			logger.Info("Stopping Profiler");
+			logger->Info("Stopping Profiler");
 			profileStream->flush();
 			profileStream->close();
 			profileStream = NULL;
@@ -158,8 +164,8 @@ namespace kroll
 	{
 		if (!Environment::has(variable))
 		{
-			Logger &logger = Logger::Get("Host");
-			logger.Fatal("required variable '%s' not defined, aborting.");
+			Logger* logger = Logger::Get("Host");
+			logger->Fatal("required variable '%s' not defined, aborting.");
 			exit(-999);
 		}
 	}
@@ -170,19 +176,28 @@ namespace kroll
 		{
 			this->debug = true;
 		}
+
 		if (this->application->HasArgument(ATTACH_DEBUGGER_ARG))
 		{
 			this->waitForDebugger = true;
 		}
+
 		if (this->application->HasArgument(NO_CONSOLE_LOG_ARG))
 		{
 			this->consoleLogging = false;
 		}
+
+		if (this->application->HasArgument(NO_FILE_LOG_ARG))
+		{
+			this->fileLogging = false;
+		}
+
 		if (this->application->HasArgument(PROFILE_ARG))
 		{
 			this->profilePath = this->application->GetArgumentValue(PROFILE_ARG);
 			this->profile = !this->profilePath.empty();
 		}
+
 		if (this->application->HasArgument(LOGPATH_ARG))
 		{
 			this->logFilePath = this->application->GetArgumentValue(LOGPATH_ARG);
@@ -318,7 +333,7 @@ namespace kroll
 
 	void Host::CopyModuleAppResources(std::string& modulePath)
 	{
-		PRINTD("CopyModuleAppResources: " << modulePath);
+		this->logger->Trace("CopyModuleAppResources: %s", modulePath.c_str());
 		std::string appDir = this->application->path;
 		Path appPath(this->application->path);
 
@@ -346,15 +361,15 @@ namespace kroll
 					File f = files.at(i);
 					Path targetPath(appPath, Path(Path(f.path()).getBaseName()));
 					File targetFile(targetPath);
-					PRINTD("target: " << targetFile.path());
+					this->logger->Trace("target: %s", targetFile.path().c_str());
 					if (!targetFile.exists())
 					{
-						PRINTD("Copying " << f.path() << " to " << appDir);
+						this->logger->Trace("Copying : %s to %s", f.path().c_str(), appDir.c_str());
 						f.copyTo(appDir);
 					}
 					else
 					{
-						PRINTD("SKIP Copying " << f.path() << " to " << appDir);
+						this->logger->Trace("SKIP Copying : %s to %s", f.path().c_str(), appDir.c_str());
 					}
 				}
 			}
@@ -369,15 +384,15 @@ namespace kroll
 					File f = files.at(i);
 					Path targetPath(appPath, Path(Path(f.path()).getBaseName()));
 					File targetFile(targetPath);
-					PRINTD("target: " << targetFile.path());
+					this->logger->Trace("target: %s", targetFile.path().c_str());
 					if (!targetFile.exists())
 					{
-						PRINTD("Copying " << f.path() << " to " << appDir);
+						this->logger->Trace("Copying: %s to %s", f.path().c_str(), appDir.c_str());
 						f.copyTo(appDir);
 					}
 					else
 					{
-						PRINTD("SKIP Copying " << f.path() << " to " << appDir);
+						this->logger->Trace("SKIP Copying : %s to %s", f.path().c_str(), appDir.c_str());
 					}
 				}
 			}
@@ -398,14 +413,11 @@ namespace kroll
 		Poco::File manifestFile(manifestPath);
 		if (manifestFile.exists()) 
 		{
-			PRINTD("Reading manifest for module: " << manifestPath.toString());
-
+			this->logger->Debug("Reading manifest for module: %s", manifestPath.toString().c_str());
 			Poco::AutoPtr<Poco::Util::PropertyFileConfiguration> manifest = new Poco::Util::PropertyFileConfiguration(manifestFile.path());
 
 			if (manifest->hasProperty("libpath")) 
 			{
-				PRINTD("libpath: " << modulePath);
-
 				std::string libPath = manifest->getString("libpath");
 				Poco::StringTokenizer t(libPath, ",", Poco::StringTokenizer::TOK_TRIM);
 	#if defined(OS_WIN32)
@@ -429,7 +441,7 @@ namespace kroll
 						KR_LIB_SEP + newLibPath;
 				}
 
-				PRINTD(libPathEnv << "=" << newLibPath);
+				this->logger->Debug("%s=%s", libPathEnv.c_str(), newLibPath.c_str());
 				Environment::set(libPathEnv, newLibPath);
 			}
 		}
@@ -437,14 +449,13 @@ namespace kroll
 
 	SharedPtr<Module> Host::LoadModule(std::string& path, ModuleProvider *provider)
 	{
-		Logger& log = Logger::Get("Host");
 		ScopedLock lock(&moduleMutex);
 
 		//TI-180: Don't load the same module twice
 		SharedPtr<Module> module = this->GetModuleByPath(path);
 		if (!module.isNull())
 		{
-			log.Warn("Module cannot be loaded twice: %s", path.c_str());
+			logger->Warn("Module cannot be loaded twice: %s", path.c_str());
 		}
 
 		try
@@ -464,7 +475,7 @@ namespace kroll
 		catch (kroll::ValueException& e)
 		{
 			SharedString s = e.GetValue()->DisplayString();
-			log.Error("Could not load module (%s): %s", path.c_str(), s->c_str());
+			logger->Error("Could not load module (%s): %s", path.c_str(), s->c_str());
 #ifdef OS_OSX
 			KrollDumpStackTrace();
 #endif
@@ -472,14 +483,14 @@ namespace kroll
 		catch(std::exception &e)
 		{
 			string msg = e.what();
-			log.Error("Could not load module (%s): %s", path.c_str(), msg.c_str());
+			logger->Error("Could not load module (%s): %s", path.c_str(), msg.c_str());
 #ifdef OS_OSX
 			KrollDumpStackTrace();
 #endif
 		}
 		catch(...)
 		{
-			log.Error("Could not load module (%s)", path.c_str());
+			logger->Error("Could not load module (%s)", path.c_str());
 #ifdef OS_OSX
 			KrollDumpStackTrace();
 #endif
@@ -642,9 +653,8 @@ namespace kroll
 	void Host::UnregisterModule(SharedPtr<Module> module)
 	{
 		ScopedLock lock(&moduleMutex);
-		Logger& log = Logger::Get("Host");
 
-		log.Notice("Unregistering: %s", module->GetName().c_str());
+		logger->Notice("Unregistering: %s", module->GetName().c_str());
 		module->Stop(); // Call Stop() lifecycle event
 
 		ModuleList::iterator j = this->loaded_modules.begin();
@@ -690,8 +700,6 @@ namespace kroll
 
 	int Host::Run()
 	{
-		Logger& log = Logger::Get("Host");
-
 		if (this->waitForDebugger)
 		{
 			printf("Waiting for debugger (Press Any Key to Continue)...\n");
@@ -707,7 +715,7 @@ namespace kroll
 		catch (ValueException e)
 		{
 			SharedString ss = e.GetValue()->DisplayString();
-			log.Error(*ss);
+			logger->Error(*ss);
 			return 1;
 		}
 		
@@ -737,14 +745,15 @@ namespace kroll
 		// Stop the profiler, if it was enabledk
 		StopProfiling(); 
 
-		log.Notice("Exiting with exit code: %i", exitCode);
+		logger->Notice("Exiting with exit code: %i", exitCode);
+
+		Logger::Shutdown();
 		return this->exitCode;
 	}
 
 	void Host::Exit(int exitCode)
 	{
-		static Logger &logger = Logger::Get("Host");
-		logger.Notice("Received exit signal (%d)", exitCode);
+		logger->Notice("Received exit signal (%d)", exitCode);
 
 		ScopedLock lock(&moduleMutex);
 		running = false;
