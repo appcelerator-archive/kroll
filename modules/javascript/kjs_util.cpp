@@ -565,7 +565,7 @@ namespace kroll
 
 		// Ensure argument is a Kroll JavaScript
 		JSObjectRef otherObject = JSValueToObject(ctx, args[0], NULL);
-		SharedValue* otherValue = static_cast<SharedValue*>(JSObjectGetPrivate(jsThis));
+		SharedValue* otherValue = static_cast<SharedValue*>(JSObjectGetPrivate(otherObject));
 		if (otherValue == NULL)
 		{
 			return JSValueMakeBoolean(ctx, false);
