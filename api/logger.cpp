@@ -21,6 +21,8 @@ using Poco::PatternFormatter;
 using Poco::Path;
 using Poco::File;
 
+#define LOG_CHECK(l) if (l <= this->level) return;
+
 namespace kroll
 {
 	std::map<std::string, Logger*> Logger::loggers;
@@ -147,6 +149,7 @@ namespace kroll
 
 	void Logger::Log(Level level, const char* format, ...)
 	{
+		LOG_CHECK(level)
 		va_list args;
 		va_start(args, format);
 		this->Log(level, format, args);
@@ -155,11 +158,13 @@ namespace kroll
 
 	void Logger::Trace(std::string message)
 	{
+		LOG_CHECK(LTRACE)
 		this->Log(LTRACE, message);
 	}
 
 	void Logger::Trace(const char* format, ...)
 	{
+		LOG_CHECK(LTRACE)
 		va_list args;
 		va_start(args, format);
 		this->Log(LTRACE, format, args);
@@ -168,11 +173,13 @@ namespace kroll
 
 	void Logger::Debug(std::string message)
 	{
+		LOG_CHECK(LDEBUG)
 		this->Log(LDEBUG, message);
 	}
 
 	void Logger::Debug(const char* format, ...)
 	{
+		LOG_CHECK(LDEBUG)
 		va_list args;
 		va_start(args, format);
 		this->Log(LDEBUG, format, args);
@@ -181,11 +188,13 @@ namespace kroll
 
 	void Logger::Info(std::string message)
 	{
+		LOG_CHECK(LINFO)
 		this->Log(LINFO, message);
 	}
 
 	void Logger::Info(const char* format, ...)
 	{
+		LOG_CHECK(LINFO)
 		va_list args;
 		va_start(args, format);
 		this->Log(LINFO, format, args);
@@ -194,11 +203,13 @@ namespace kroll
 
 	void Logger::Notice(std::string message)
 	{
+		LOG_CHECK(LNOTICE)
 		this->Log(LNOTICE, message);
 	}
 
 	void Logger::Notice(const char* format, ...)
 	{
+		LOG_CHECK(LNOTICE)
 		va_list args;
 		va_start(args, format);
 		this->Log(LNOTICE, format, args);
@@ -207,11 +218,13 @@ namespace kroll
 
 	void Logger::Warn(std::string message)
 	{
+		LOG_CHECK(LWARN)
 		this->Log(LWARN, message);
 	}
 
 	void Logger::Warn(const char* format, ...)
 	{
+		LOG_CHECK(LWARN)
 		va_list args;
 		va_start(args, format);
 		this->Log(LWARN, format, args);
@@ -220,11 +233,13 @@ namespace kroll
 
 	void Logger::Error(std::string message)
 	{
+		LOG_CHECK(LERROR)
 		this->Log(LERROR, message);
 	}
 
 	void Logger::Error(const char* format, ...)
 	{
+		LOG_CHECK(LERROR)
 		va_list args;
 		va_start(args, format);
 		this->Log(LERROR, format, args);
@@ -233,11 +248,13 @@ namespace kroll
 
 	void Logger::Critical(std::string message)
 	{
+		LOG_CHECK(LCRITICAL)
 		this->Log(LCRITICAL, message);
 	}
 
 	void Logger::Critical(const char* format, ...)
 	{
+		LOG_CHECK(LCRITICAL)
 		va_list args;
 		va_start(args, format);
 		this->Log(LCRITICAL, format, args);
@@ -246,11 +263,13 @@ namespace kroll
 
 	void Logger::Fatal(std::string message)
 	{
+		LOG_CHECK(LFATAL)
 		this->Log(LFATAL, message);
 	}
 
 	void Logger::Fatal(const char* format, ...)
 	{
+		LOG_CHECK(LFATAL)
 		va_list args;
 		va_start(args, format);
 		this->Log(LFATAL, format, args);

@@ -44,6 +44,12 @@ namespace kroll
 		std::string& GetName();
 		Logger* GetChild(std::string name);
 		Logger* GetParent();
+		
+		inline bool IsEnabled(Level level) { return level <= this->level; }
+		inline bool IsTraceEnabled() { return (LTRACE <= this->level); }
+		inline bool IsDebugEnabled() { return (LDEBUG <= this->level); }
+		inline bool IsInfoEnabled() { return (LINFO <= this->level); }
+		inline bool IsNoticeEnabled() { return (LNOTICE <= this->level); }
 
 		virtual void Log(Poco::Message m);
 		void Log(Level, std::string &);

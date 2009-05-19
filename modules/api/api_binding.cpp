@@ -19,7 +19,8 @@ namespace kroll
 	APIBinding::APIBinding(Host* host) :
 		host(host),
 		global(host->GetGlobalObject()),
-		record(0)
+		record(0),
+		logger(Logger::Get("API"))
 	{ 
 		this->SetMethod("set", &APIBinding::_Set);
 		this->SetMethod("get", &APIBinding::_Get);
@@ -241,17 +242,21 @@ namespace kroll
 	//---------------- IMPLEMENTATION METHODS
 	void APIBinding::Log(int severity, SharedValue value)
 	{
-		Logger* l = Logger::Get("API");
-
+		// optimize these calls since they're called a lot
+		if (false == logger->IsEnabled((Logger::Level)severity))
+		{
+			return;
+		}
+		
 		if (value->IsString())
 		{
 			string message = value->ToString();
-			l->Log((Logger::Level) severity, message);
+			logger->Log((Logger::Level) severity, message);
 		}
 		else
 		{
 			SharedString message = value->DisplayString();
-			l->Log((Logger::Level) severity, *message);
+			logger->Log((Logger::Level) severity, *message);
 		}
 	}
 
@@ -309,14 +314,15 @@ namespace kroll
 	{
 		// Lots of debug output really slows down things on Win32,
 		// so log this at the trace level
-		Logger* l = Logger::Get("API");
-		l->Trace(string("FIRING: ") + event);
+		if (logger->IsTraceEnabled())
+		{
+			logger->Trace(string("FIRING: ") + event);
+		}
 
-		//TODO: might want to be a little more lenient on how we lock here
-		// ScopedLock lock(&mutex);
-		// optimize even the lookup
 		if (this->registrations.size() == 0)
+		{
 			return;
+		}
 
 		EventRecords records = this->registrations[event];
 		if (records.size() > 0)

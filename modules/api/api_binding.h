@@ -48,6 +48,7 @@ namespace kroll
 		Host* host;
 		SharedKObject global;
 		int record;
+		Logger* logger;
 		std::map<std::string, EventRecords> registrations;
 		std::map<int, BoundEventEntry> registrationsById;
 

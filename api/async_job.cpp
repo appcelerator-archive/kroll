@@ -67,7 +67,7 @@ namespace kroll
 			}
 			catch (Poco::BugcheckException& bge)
 			{
-				std::cout << bge.what() << std::endl;
+				std::cerr << bge.what() << std::endl;
 			}
 		}
 
