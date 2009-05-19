@@ -7,118 +7,131 @@
 
 #include <cstdarg>
 #include <cstdio>
+#include <iostream>
+#include <fstream>
 #include <Poco/Mutex.h>
 #include <Poco/ScopedLock.h>
-#include <Poco/Logger.h>
 #include <Poco/PatternFormatter.h>
-#include <Poco/FormattingChannel.h>
-#include <Poco/SplitterChannel.h>
-#include <Poco/ConsoleChannel.h>
-#include <Poco/FileChannel.h>
 #include <Poco/Path.h>
 #include <Poco/File.h>
 
 #define LOGGER_MAX_ENTRY_SIZE 512
 
 using Poco::PatternFormatter;
-using Poco::FormattingChannel;
-using Poco::SplitterChannel;
-using Poco::ConsoleChannel;
-using Poco::FileChannel;
 using Poco::Path;
 using Poco::File;
 
 namespace kroll
 {
-	std::map<std::string, Logger> Logger::loggers;
+	std::map<std::string, Logger*> Logger::loggers;
 	char Logger::buffer[LOGGER_MAX_ENTRY_SIZE];
 	Poco::Mutex Logger::mutex;
-	std::string Logger::logFilePath;
 
-	Logger& Logger::Get(std::string name)
+	Logger* Logger::Get(std::string name)
 	{
 		name = std::string(PRODUCT_NAME) + "." + name;
 		return Logger::GetImpl(name);
 	}
 
-	void Logger::Initialize(int console, int file, int level, std::string logFilePath)
+	void Logger::Initialize(bool console, std::string logFilePath, Level level)
 	{
-		std::string name = PRODUCT_NAME;
-		Logger::logFilePath = logFilePath;
-		Logger::loggers[name] = Logger(console, file, level, name);
+		Logger::loggers[PRODUCT_NAME] = 
+			new RootLogger(console, logFilePath, level);
 	}
 
-	Logger& Logger::GetRootLogger()
+	void Logger::Shutdown()
+	{
+		std::map<std::string, Logger*>::iterator i = loggers.begin();
+		while (i != loggers.end())
+		{
+			Logger* l = (i++)->second;
+			delete l;
+		}
+		loggers.clear();
+	}
+
+	Logger* Logger::GetRootLogger()
 	{
 		return Logger::GetImpl(PRODUCT_NAME);
 	}
 
-	Logger& Logger::GetImpl(std::string name)
+	Logger* Logger::GetImpl(std::string name)
 	{
 		if (loggers.find(name) == loggers.end())
 		{
-			loggers[name] = Logger(name);
+			loggers[name] = new Logger(name);
 		}
 		return loggers[name];
-	}
-
-	/* The root logger */
-	Logger::Logger(bool console, bool file, int level, std::string name) :
-		name(name)
-	{
-		SplitterChannel* splitter = new SplitterChannel();
-		if (console)
-		{
-			ConsoleChannel* consoleChannel = new ConsoleChannel();
-			splitter->addChannel(consoleChannel);
-			consoleChannel->release();
-		}
-		if (file)
-		{
-			string logDirectory = FileUtils::Dirname(logFilePath);
-			File logDirectoryFile = File(logDirectory);
-			logDirectoryFile.createDirectories();
-
-			Path logFilePathPath = Path(logFilePath);
-			FileChannel* fileChannel = new FileChannel(logFilePathPath.absolute().toString());
-			splitter->addChannel(fileChannel);
-			fileChannel->release();
-		}
-
-		PatternFormatter* formatter = new PatternFormatter("[%H:%M:%S:%i] [%s] [%p] %t");
-		FormattingChannel* fChannel = new Poco::FormattingChannel(formatter);
-		formatter->release();
-
-		fChannel->setChannel(splitter);
-		splitter->release();
-
-		Poco::Logger& loggerImpl = Poco::Logger::get(name);
-		loggerImpl.setChannel(fChannel);
-		loggerImpl.setLevel(level);
-		fChannel->release();
 	}
 
 	Logger::Logger(std::string name) :
 		name(name)
 	{
+		Logger* parent = this->GetParent();
+		this->level = parent->GetLevel();
 	}
+
+	Logger::Logger(std::string name, Level level) :
+		name(name),
+		level(level)
+	{ }
 
 	std::string& Logger::GetName()
 	{
 		return this->name;
 	}
 
-	Logger& Logger::GetChild(std::string name)
+	Logger::Level Logger::GetLevel()
+	{
+		return this->level;
+	}
+
+	Logger* Logger::GetChild(std::string name)
 	{
 		std::string childName = this->name + "." + name;
 		return Logger::GetImpl(childName);
 	}
 
+	Logger* Logger::GetParent()
+	{
+		size_t lastPeriodPos = this->name.rfind(".");
+		if (lastPeriodPos == std::string::npos)
+		{
+			return Logger::GetRootLogger();
+		}
+		else
+		{
+			std::string parentName = this->name.substr(0, lastPeriodPos);
+			return Logger::GetImpl(parentName);
+		}
+	}
+
+	void Logger::Log(Poco::Message m)
+	{
+		// This check only happens at the entry logger and never in it's
+		// parents. This is so a child logger can have a more permissive level.
+		if ((Level) m.getPriority() <= this->level)
+		{
+			RootLogger* root = RootLogger::instance;
+			root->LogImpl(m);
+		}
+	}
+
 	void Logger::Log(Level level, std::string& message)
 	{
-		Poco::Logger& loggerImpl = Poco::Logger::get(name);
 		Poco::Message m(this->name, message, (Poco::Message::Priority) level);
-		loggerImpl.log(m);
+		this->Log(m);
+	}
+
+	void Logger::Log(Level level, const char* format, va_list args)
+	{
+		// Don't do formatting when this logger filters the message.
+		// This prevents unecessary string manipulation.
+		if (level <= this->level)
+		{
+			std::string messageText = Logger::Format(format, args);
+			this->Log(level, messageText);
+		}
 	}
 
 	std::string Logger::Format(const char* format, va_list args)
@@ -132,19 +145,6 @@ namespace kroll
 		return text;
 	}
 
-	void Logger::Log(Level level, const char* format, va_list args)
-	{
-		Poco::Logger& loggerImpl = Poco::Logger::get(name);
-
-		// Don't do formatting when this logger filters the message.
-		// This prevents unecessary string manipulation.
-		if (level <= (Level) loggerImpl.getLevel())
-		{
-			std::string messageText = Logger::Format(format, args);
-			this->Log(level, messageText);
-		}
-	}
-
 	void Logger::Log(Level level, const char* format, ...)
 	{
 		va_list args;
@@ -155,8 +155,7 @@ namespace kroll
 
 	void Logger::Trace(std::string message)
 	{
-		Poco::Logger& loggerImpl = Poco::Logger::get(name);
-		loggerImpl.trace(message);
+		this->Log(LTRACE, message);
 	}
 
 	void Logger::Trace(const char* format, ...)
@@ -169,8 +168,7 @@ namespace kroll
 
 	void Logger::Debug(std::string message)
 	{
-		Poco::Logger& loggerImpl = Poco::Logger::get(name);
-		loggerImpl.debug(message);
+		this->Log(LDEBUG, message);
 	}
 
 	void Logger::Debug(const char* format, ...)
@@ -183,8 +181,7 @@ namespace kroll
 
 	void Logger::Info(std::string message)
 	{
-		Poco::Logger& loggerImpl = Poco::Logger::get(name);
-		loggerImpl.information(message);
+		this->Log(LINFO, message);
 	}
 
 	void Logger::Info(const char* format, ...)
@@ -197,8 +194,7 @@ namespace kroll
 
 	void Logger::Notice(std::string message)
 	{
-		Poco::Logger& loggerImpl = Poco::Logger::get(name);
-		loggerImpl.notice(message);
+		this->Log(LNOTICE, message);
 	}
 
 	void Logger::Notice(const char* format, ...)
@@ -211,8 +207,7 @@ namespace kroll
 
 	void Logger::Warn(std::string message)
 	{
-		Poco::Logger& loggerImpl = Poco::Logger::get(name);
-		loggerImpl.warning(message);
+		this->Log(LWARN, message);
 	}
 
 	void Logger::Warn(const char* format, ...)
@@ -225,8 +220,7 @@ namespace kroll
 
 	void Logger::Error(std::string message)
 	{
-		Poco::Logger& loggerImpl = Poco::Logger::get(name);
-		loggerImpl.error(message);
+		this->Log(LERROR, message);
 	}
 
 	void Logger::Error(const char* format, ...)
@@ -239,8 +233,7 @@ namespace kroll
 
 	void Logger::Critical(std::string message)
 	{
-		Poco::Logger& loggerImpl = Poco::Logger::get(name);
-		loggerImpl.critical(message);
+		this->Log(LCRITICAL, message);
 	}
 
 	void Logger::Critical(const char* format, ...)
@@ -253,8 +246,7 @@ namespace kroll
 
 	void Logger::Fatal(std::string message)
 	{
-		Poco::Logger& loggerImpl = Poco::Logger::get(name);
-		loggerImpl.fatal(message);
+		this->Log(LFATAL, message);
 	}
 
 	void Logger::Fatal(const char* format, ...)
@@ -263,5 +255,56 @@ namespace kroll
 		va_start(args, format);
 		this->Log(LFATAL, format, args);
 		va_end(args);
+	}
+
+	RootLogger* RootLogger::instance = NULL;
+	RootLogger::RootLogger(bool consoleLogging, std::string logFilePath, Level level) :
+		Logger(PRODUCT_NAME, level),
+		consoleLogging(consoleLogging),
+		fileLogging(!logFilePath.empty())
+	{
+		RootLogger::instance = this;
+		this->formatter = new PatternFormatter("[%H:%M:%S:%i] [%s] [%p] %t");
+
+		if (fileLogging)
+		{
+			// Before opening the logfile, ensure that a parent directory exists
+			string logDirectory = FileUtils::Dirname(logFilePath);
+			File logDirectoryFile = File(logDirectory);
+			logDirectoryFile.createDirectories();
+
+			this->logFile.open(logFilePath.c_str(), std::ios::out | std::ios::app);
+
+			// Couldn't open the file, perhaps there is contention?
+			if (!this->logFile.is_open())
+			{
+				this->fileLogging = false;
+			}
+		}
+	}
+
+	RootLogger::~RootLogger()
+	{
+		if (fileLogging)
+		{
+			this->logFile.close();
+		}
+	}
+
+	void RootLogger::LogImpl(Poco::Message m)
+	{
+		std::string line;
+		this->formatter->format(m, line);
+
+		if (fileLogging)
+		{
+			this->logFile << line << std::endl;
+			this->logFile.flush();
+		}
+
+		if (consoleLogging)
+		{
+			std::cout << line << std::endl;
+		}
 	}
 }

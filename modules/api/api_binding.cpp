@@ -241,17 +241,17 @@ namespace kroll
 	//---------------- IMPLEMENTATION METHODS
 	void APIBinding::Log(int severity, SharedValue value)
 	{
-		Logger& l = Logger::Get("API");
+		Logger* l = Logger::Get("API");
 
 		if (value->IsString())
 		{
 			string message = value->ToString();
-			l.Log((Logger::Level) severity, message);
+			l->Log((Logger::Level) severity, message);
 		}
 		else
 		{
 			SharedString message = value->DisplayString();
-			l.Log((Logger::Level) severity, *message);
+			l->Log((Logger::Level) severity, *message);
 		}
 	}
 
@@ -309,8 +309,8 @@ namespace kroll
 	{
 		// Lots of debug output really slows down things on Win32,
 		// so log this at the trace level
-		Logger& l = Logger::Get("API");
-		l.Trace(string("FIRING: ") + event);
+		Logger* l = Logger::Get("API");
+		l->Trace(string("FIRING: ") + event);
 
 		//TODO: might want to be a little more lenient on how we lock here
 		// ScopedLock lock(&mutex);

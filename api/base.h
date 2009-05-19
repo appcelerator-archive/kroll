@@ -93,7 +93,7 @@
 #endif
 
 #ifdef DEBUG
-#define KR_DUMP_LOCATION PRINTD("[" << KR_FUNC << "::" << __LINE__ << "]");
+#define KR_DUMP_LOCATION std::cout << "[" << KR_FUNC << "::" << __LINE__ << "]" << std::endl;
 #else
 #define KR_DUMP_LOCATION
 #endif
@@ -128,7 +128,7 @@
 
 #ifdef DEBUG
 #include <sstream>
-#define PRINTD(x) { std::ostringstream ostr; ostr << x; kroll::Logger logger = kroll::Logger::GetRootLogger(); logger.Debug(ostr.str()); };
+#define PRINTD(x) { std::ostringstream ostr; ostr << x; kroll::Logger* logger = kroll::Logger::GetRootLogger(); logger->Debug(ostr.str()); };
 #else
 #define PRINTD(x)
 #endif

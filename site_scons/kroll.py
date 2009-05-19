@@ -152,7 +152,7 @@ class BuildConfig(object):
 		self.runtime_build_dir = path.join(self.dir, 'runtime')
 		self.runtime_template_dir = path.join(self.runtime_build_dir, 'template')
 
-		self.env.Append(LIBPATH=[self.dir, self.runtime_build_dir])
+		self.env.Append(LIBPATH=[self.dir])
 
 		if (self.arch):
 			self.third_party += self.arch
