@@ -169,12 +169,26 @@ namespace KrollBoot
 		return true;
 	}
 
-	void BootstrapPlatformSpecific(string moduleList)
+	bool IsWindowsXP()
 	{
-		moduleList = app->runtime->path + ";" + moduleList;
+		OSVERSIONINFO osVersion;
+		osVersion.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
+		::GetVersionEx(&osVersion);
+		return osVersion.dwMajorVersion == 5;
+	}
+
+	void BootstrapPlatformSpecific(string path)
+	{
+
+			//string bundledRuntimePath = app->path + "\\runtime";
+			//if (!FileUtils::IsDirectory(bundledRuntimePath))
+			//{
+			//	FileUtils::CopyRecursive(app->runtime->path, bundledRuntimePath);
+			//}
+			//app->runtime->path = bundledRuntimePath;
 
 		// Add runtime path and all module paths to PATH
-		string path = moduleList;
+		path = app->runtime->path + ";" + path;
 		string currentPath = EnvironmentUtils::Get("PATH");
 		if (!currentPath.empty())
 		{
@@ -185,10 +199,66 @@ namespace KrollBoot
 
 	string Blastoff()
 	{
-		// Windows boot does not need to restart itself, so just launch
-		// the host here and exit with the appropriate return value.
-		EnvironmentUtils::Unset(BOOTSTRAP_ENV);
-		exit(KrollBoot::StartHost());
+		if (!IsWindowsXP())
+		{
+			// Windows boot does not normally need to restart itself,  so just
+			// launch the host here and exit with the appropriate return value.
+			EnvironmentUtils::Unset(BOOTSTRAP_ENV);
+			exit(KrollBoot::StartHost());
+		}
+
+		// TODO: Fix manual activation context setup for Windows XP so we don't need
+		// to do the thing below any longer.
+
+		// We are on Windows XP. We need to reboot ourselves, but using the kboot.exe
+		// that is included with the runtime. The manifest embedded in kboot points
+		// to a DLL named "WebKit.dll" relative to the exe -- we need that path to
+		// resolve for registration-free COM to work.
+		string allArgs;
+		for (int i = 0; i < argc; i++)
+		{
+			string arg = argv[i];
+			size_t quotePos = arg.find('\"');
+			if (quotePos == string::npos)
+			{
+				allArgs.append("\"");
+				allArgs.append(arg);
+				allArgs.append("\" ");
+			}
+			else
+			{
+				allArgs.append(arg + " ");
+			}
+		}
+		string appName = app->runtime->path + "\\kboot.exe";
+
+		STARTUPINFOA startupInfo = {0};
+		startupInfo.cb = sizeof(startupInfo);
+		PROCESS_INFORMATION processInformation;
+		
+		char* applicationName = _strdup(appName.c_str());
+		char* allArguments = _strdup(allArgs.c_str());
+		int success = CreateProcessA(
+			applicationName, allArguments,
+			NULL, NULL, FALSE, 0, NULL, NULL,
+			&startupInfo, &processInformation);
+		free(applicationName);
+		free(allArguments);
+		if (success == 0)
+		{
+			return "Could not bootstrap the host.";
+		}
+		else
+		{
+			CloseHandle(processInformation.hThread);
+			WaitForSingleObject(processInformation.hProcess, INFINITE);
+			DWORD retCode;
+			if (GetExitCodeProcess(processInformation.hProcess, &retCode))
+			{
+				exit(retCode);
+			}
+			return "Could not retrieve the exit code.";
+		}
 	}
 
 	typedef int Executor(HINSTANCE, int, const char **);
@@ -348,5 +418,15 @@ int main(int __argc, const char* __argv[])
 		NULL,
 		google_breakpad::ExceptionHandler::HANDLER_ALL);
 #endif
-	return KrollBoot::Bootstrap();
+
+	// Only Windows XP systems will need to restart the host.
+	if (EnvironmentUtils::Has(BOOTSTRAP_ENV))
+	{
+			EnvironmentUtils::Unset(BOOTSTRAP_ENV);
+			return KrollBoot::StartHost();
+	}
+	else
+	{
+		return KrollBoot::Bootstrap();
+	}
 }
