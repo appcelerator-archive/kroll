@@ -45,15 +45,15 @@ namespace kroll
 		Logger* GetChild(std::string name);
 		Logger* GetParent();
 		
-		inline bool IsEnabled(Level);
-		inline bool IsTraceEnabled();
-		inline bool IsDebugEnabled();
-		inline bool IsInfoEnabled();
-		inline bool IsNoticeEnabled();
-		inline bool IsWarningEnabled();
-		inline bool IsErrorEnabled();
-		inline bool IsCriticalEnabled();
-		inline bool IsFatalEnabled();
+		bool IsEnabled(Level);
+		bool IsTraceEnabled();
+		bool IsDebugEnabled();
+		bool IsInfoEnabled();
+		bool IsNoticeEnabled();
+		bool IsWarningEnabled();
+		bool IsErrorEnabled();
+		bool IsCriticalEnabled();
+		bool IsFatalEnabled();
 
 		virtual void Log(Poco::Message m);
 		void Log(Level, std::string &);
