@@ -5,6 +5,11 @@
  */
 #include "boot.h"
 
+// this is for bundle
+#ifdef OS_OSX
+#include <Foundation/Foundation.h>
+#endif
+
 namespace KrollBoot
 {
 	string applicationHome;
@@ -107,8 +112,57 @@ namespace KrollBoot
 		ShowError(error, false);
 		return __LINE__;
 	}
+	string GetApplicationName()
+	{
+		if (!app.isNull())
+		{
+			return app->name.c_str();
+		}
+#ifdef OS_OSX
+		// fall back to the info.plist if we haven't loaded the application
+		// which happens in a crash situation
+		NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
+		NSString *applicationName = [infoDictionary objectForKey:@"CFBundleName"];
+		if (!applicationName) 
+		{
+			applicationName = [infoDictionary objectForKey:@"CFBundleExecutable"];
+		}
+		return [applicationName UTF8String];
+#else
+		return PRODUCT_NAME;
+#endif
+	}
 
 #ifdef USE_BREAKPAD
+	string GetCrashDetectionTitle()
+	{
+		// osx displays title inside the dialog but others are in titlebar
+#ifdef OS_OSX
+		return app->name + " appears to have encountered a fatal error and cannot continue.";
+#else
+		return GetApplicationName() + " encountered an error";
+#endif		
+	}
+	string GetCrashDetectionMessage()
+	{
+		// osx displays title inside the dialog so we can do a partial message
+#ifdef OS_OSX
+		return "The application has collected information about the error in the form of a detailed error report. If you send the crash report, we will attempt to resolve this problem.";
+#else
+		return GetApplicationName() + " appears to have encountered a fatal error and cannot continue. The application has collected information about the error in the form of a detailed error report. If you send the crash report, we will attempt to resolve this problem.";
+#endif
+	}
+	void InitCrashDetection()
+	{
+		// we need to load this since in a crash situation
+		// we restart back and by-pass the normal load mechanism
+		applicationHome = GetApplicationHomePath();
+		string manifestPath = FileUtils::Join(applicationHome.c_str(), MANIFEST_FILENAME, NULL);
+		if (FileUtils::IsFile(manifestPath))
+		{
+			app = Application::NewApplication(applicationHome);
+		}
+	}
 	string dumpFilePath;
 	map<string, string> GetCrashReportParameters()
 	{
@@ -122,6 +176,44 @@ namespace KrollBoot
 			string value = argv[i+1];
 			params[key] = value;
 		}
+
+		// we need to load this since in a crash situation
+		// we restart back and by-pass the normal load mechanism
+		if (!app.isNull())
+		{
+			app = Application::NewApplication(applicationHome);
+			params["location"] = "desktop"; // this differentiates mobile vs desktop
+			params["app_name"] = app->name;
+			params["app_id"] = app->id;
+			params["app_ver"] = app->version;
+			params["app_guid"] = app->guid;
+			params["app_home"] = GetApplicationHomePath();
+			params["mid"] = PlatformUtils::GetMachineId();
+			params["mac"] = PlatformUtils::GetFirstMACAddress();
+			params["os"] = OS_NAME;
+#ifdef OS_32
+			params["ostype"] = "32bit";
+#elif OS_64
+			params["ostype"] = "32bit";
+#else
+			params["ostype"] = "unknown";
+#endif
+			params["osver"] = FileUtils::GetOSVersion();
+			params["osarch"] = FileUtils::GetOSArchitecture();
+			params["ver"] = STRING(_PRODUCT_VERSION);
+			params["un"] = FileUtils::GetUsername();
+			vector<SharedComponent> components;
+			app->GetAvailableComponents(components);
+			vector<SharedComponent>::const_iterator i = components.begin();
+			while(i!=components.end())
+			{
+				SharedComponent c = (*i++);
+				params["module_" + c->name + "_version"] = c->version;
+				params["module_" + c->name + "_path"] = c->path;
+				params["module_" + c->name + "_bundled"] = c->bundled ? "1":"0";
+			}
+		}
+	
 		return params;
 	}
 #endif

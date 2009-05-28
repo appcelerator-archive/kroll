@@ -42,7 +42,7 @@ if build.is_win32():
 	Env.Append(LINKFLAGS=linkflags)
 
 # Breakpad integration
-breakpad = ARGUMENTS.get('breakpad', '0') != '0'
+breakpad = ARGUMENTS.get('breakpad', '1') != '0'
 if not(build.is_32()) and build.is_linux():
 	breakpad = False
 

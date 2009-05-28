@@ -34,6 +34,7 @@ namespace KrollBoot
 			GTK_BUTTONS_CLOSE,
 			"%s",
 			error.c_str());
+		gtk_window_set_title(GTK_WINDOW(dialog), GetApplicationName().c_str());
 		gtk_dialog_run(GTK_DIALOG(dialog));
 		gtk_widget_destroy(dialog);
 		if (fatal)
@@ -177,7 +178,10 @@ namespace KrollBoot
 	{
 		gtk_init(&argc, (char***) &argv);
 
-		string url = STRING(CRASH_REPORT_URL);
+		InitCrashDetection();
+		std::string title = GetCrashDetectionTitle();
+		std::string msg = GetCrashDetectionMessage();
+		string url = "https://" + CRASH_REPORT_URL;
 		const std::map<string, string> parameters = GetCrashReportParameters();
 		string filePartName = "dump";
 		string proxy;
@@ -190,13 +194,14 @@ namespace KrollBoot
 			GTK_DIALOG_MODAL,
 			GTK_MESSAGE_ERROR,
 			GTK_BUTTONS_OK_CANCEL,
-			PRODUCT_NAME" has crashed. Press OK to send a crash report");
-		gtk_window_set_title(GTK_WINDOW(dialog), PRODUCT_NAME" has crashed.");
+			msg);
+		gtk_window_set_title(GTK_WINDOW(dialog), title);
 		int response = gtk_dialog_run(GTK_DIALOG(dialog));
 		if (response != GTK_RESPONSE_OK)
 		{
 			return 1;
 		}
+		
 
 		bool success = google_breakpad::HTTPUpload::SendRequest(
 			url,

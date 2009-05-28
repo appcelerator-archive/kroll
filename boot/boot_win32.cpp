@@ -35,7 +35,7 @@ namespace KrollBoot
 	inline void ShowError(string msg, bool fatal)
 	{
 		std::cerr << "Error: " << msg << std::endl;
-		MessageBoxA(NULL, msg.c_str(), "Application Error", MB_OK|MB_ICONERROR|MB_SYSTEMMODAL);
+		MessageBoxA(NULL, msg.c_str(), GetApplicationName().c_str(), MB_OK|MB_ICONERROR|MB_SYSTEMMODAL);
 		if (fatal)
 			exit(1);
 	}
@@ -311,7 +311,7 @@ namespace KrollBoot
 			startupInfo.cb = sizeof(startupInfo);
 			PROCESS_INFORMATION processInformation;
 			_snprintf_s(breakpadCallBuffer, MAX_PATH, MAX_PATH - 1,
-				 "%s %s %S %S", argv[0], CRASH_REPORT_OPT, dumpPath, id);
+				 "\"%s\" \"%s\" \"%S\" \"%S\"", argv[0], CRASH_REPORT_OPT, dumpPath, id);
 			CreateProcessA(
 				NULL,
 				breakpadCallBuffer,
@@ -356,8 +356,10 @@ namespace KrollBoot
 	
 	int SendCrashReport()
 	{
-		std::string title = PRODUCT_NAME" has crashed";
-		std::string msg = PRODUCT_NAME" has crashed. Do you want to send a crash report?";
+		InitCrashDetection();
+		
+		std::string title = GetCrashDetectionTitle();
+		std::string msg = GetCrashDetectionMessage();
 
 		Win32PopupDialog popupDialog(NULL);
 		popupDialog.SetTitle(title);
@@ -368,7 +370,7 @@ namespace KrollBoot
 			return 1;
 		}
 
-		wstring url = StringToWString(STRING(CRASH_REPORT_URL));
+		wstring url = L"https://" + StringToWString(CRASH_REPORT_URL);
 		const std::map<wstring, wstring> parameters = GetCrashReportParametersW();
 		wstring dumpFilePathW = StringToWString(dumpFilePath);
 		wstring responseBody;

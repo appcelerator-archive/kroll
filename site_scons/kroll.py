@@ -127,7 +127,6 @@ class BuildConfig(object):
 		vars.Add('PRODUCT_NAME', 'The underlying product name that Kroll will display (default: "Kroll")', kwargs['PRODUCT_NAME'])
 		vars.Add('GLOBAL_NS_VARNAME','The name of the Kroll global variable', kwargs['GLOBAL_NS_VARNAME'])
 		vars.Add('CONFIG_FILENAME','The name of the Kroll config file', kwargs['CONFIG_FILENAME'])
-		vars.Add('BOOT_UPDATESITE_ENVNAME','The name of the Kroll update site environment variable', kwargs['BOOT_UPDATESITE_ENVNAME'])
 		vars.Add('CRASH_REPORT_URL','The URL to send crash dumps to', kwargs['CRASH_REPORT_URL'])
 
 		self.env = SCons.Environment.Environment(variables = vars)
@@ -141,7 +140,6 @@ class BuildConfig(object):
 			['_CONFIG_FILENAME' , '${CONFIG_FILENAME}'],
 			['_BOOT_RUNTIME_FLAG', '${BOOT_RUNTIME_FLAG}'],
 			['_BOOT_HOME_FLAG', '${BOOT_HOME_FLAG}'],
-			['_BOOT_UPDATESITE_ENVNAME', '${BOOT_UPDATESITE_ENVNAME}'],
 			['_CRASH_REPORT_URL', '${CRASH_REPORT_URL}'],
 		])
 		self.version = self.env['PRODUCT_VERSION']
