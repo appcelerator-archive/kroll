@@ -49,10 +49,10 @@ namespace kroll
 
 		SharedKMethod evaluator = new PythonEvaluator();
 		/**
-		 * @tiapi(method=True,name=Python.evaluate,since=0.2) evaluate a python script
+		 * @tiapi(method=True,name=Python.evaluate,since=0.2) Evaluates a string as python code
 		 * @tiarg(for=Python.evaluate,name=code,type=string) python script code
 		 * @tiarg(for=Python.evaluate,name=scope,type=object) global variable scope
-		 * @tiresult(for=Python.evaluate,type=object) result
+		 * @tiresult(for=Python.evaluate,type=object) the result of the evaluation
 		 */
 		this->binding->Set("evaluate", Value::NewMethod(evaluator));
 

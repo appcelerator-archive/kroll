@@ -48,10 +48,10 @@ namespace kroll
 		global->Set("Ruby", Value::NewObject(binding));
 		SharedKMethod evaluator = new RubyEvaluator();
 		/**
-		 * @tiapi(method=True,name=Ruby.evaluate,since=0.2) evaluate a ruby script
+		 * @tiapi(method=True,name=Ruby.evaluate,since=0.2) Evaluates a string as ruby code
 		 * @tiarg(for=Ruby.evaluate,name=code,type=string) ruby script code
 		 * @tiarg(for=Ruby.evaluate,name=scope,type=object) global variable scope
-		 * @tiresult(for=Ruby.evaluate,type=object) result
+		 * @tiresult(for=Ruby.evaluate,type=object) result of the evaluation
 		 */
 		binding->Set("evaluate", Value::NewMethod(evaluator));
 
