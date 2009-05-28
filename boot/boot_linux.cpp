@@ -164,7 +164,7 @@ namespace KrollBoot
 		if (succeeded)
 		{
 			snprintf(breakpadCallBuffer, PATH_MAX - 1,
-				 "%s %s %s %s", argv[0], CRASH_REPORT_OPT, dump_path, id);
+				 "\"%s\" %s \"%s\" %s", argv[0], CRASH_REPORT_OPT, dump_path, id);
 			system(breakpadCallBuffer);
 		}
 #ifdef DEBUG

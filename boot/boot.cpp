@@ -166,54 +166,57 @@ namespace KrollBoot
 	string dumpFilePath;
 	map<string, string> GetCrashReportParameters()
 	{
-		string dumpId = string(argv[3]) + ".dmp";
-		dumpFilePath = FileUtils::Join(argv[2], dumpId.c_str(), NULL);
-
-		std::map<string, string> params;
-		for (int i = 4; i < argc; i++)
+		map<string, string> params;
+		if (argc > 3)
 		{
-			string key = argv[i];
-			string value = argv[i+1];
-			params[key] = value;
-		}
+			string dumpId = string(argv[3]);
+			dumpId +=".dmp";
+			dumpFilePath = FileUtils::Join(argv[2], dumpId.c_str(), NULL);
 
-		// we need to load this since in a crash situation
-		// we restart back and by-pass the normal load mechanism
-		if (!app.isNull())
-		{
-			app = Application::NewApplication(applicationHome);
-			params["location"] = "desktop"; // this differentiates mobile vs desktop
-			params["app_name"] = app->name;
-			params["app_id"] = app->id;
-			params["app_ver"] = app->version;
-			params["app_guid"] = app->guid;
-			params["app_home"] = GetApplicationHomePath();
-			params["mid"] = PlatformUtils::GetMachineId();
-			params["mac"] = PlatformUtils::GetFirstMACAddress();
-			params["os"] = OS_NAME;
-#ifdef OS_32
-			params["ostype"] = "32bit";
-#elif OS_64
-			params["ostype"] = "32bit";
-#else
-			params["ostype"] = "unknown";
-#endif
-			params["osver"] = FileUtils::GetOSVersion();
-			params["osarch"] = FileUtils::GetOSArchitecture();
-			params["ver"] = STRING(_PRODUCT_VERSION);
-			params["un"] = FileUtils::GetUsername();
-			vector<SharedComponent> components;
-			app->GetAvailableComponents(components);
-			vector<SharedComponent>::const_iterator i = components.begin();
-			while(i!=components.end())
+			for (int i = 4; i < argc; i++)
 			{
-				SharedComponent c = (*i++);
-				params["module_" + c->name + "_version"] = c->version;
-				params["module_" + c->name + "_path"] = c->path;
-				params["module_" + c->name + "_bundled"] = c->bundled ? "1":"0";
+				char key[255];
+				sprintf(key,"cmdline_%d_%s",(i-4),argv[i]);
+				string value = argv[i+1];
+				params[key] = value;
+			}
+
+			// we need to load this since in a crash situation
+			// we restart back and by-pass the normal load mechanism
+			if (!app.isNull())
+			{
+				params["location"] = "desktop"; // this differentiates mobile vs desktop
+				params["app_name"] = app->name;
+				params["app_id"] = app->id;
+				params["app_ver"] = app->version;
+				params["app_guid"] = app->guid;
+				params["app_home"] = GetApplicationHomePath();
+				params["mid"] = PlatformUtils::GetMachineId();
+				params["mac"] = PlatformUtils::GetFirstMACAddress();
+				params["os"] = OS_NAME;
+	#ifdef OS_32
+				params["ostype"] = "32bit";
+	#elif OS_64
+				params["ostype"] = "32bit";
+	#else
+				params["ostype"] = "unknown";
+	#endif
+				params["osver"] = FileUtils::GetOSVersion();
+				params["osarch"] = FileUtils::GetOSArchitecture();
+				params["ver"] = STRING(_PRODUCT_VERSION);
+				params["un"] = FileUtils::GetUsername();
+				vector<SharedComponent> components;
+				app->GetAvailableComponents(components);
+				vector<SharedComponent>::const_iterator i = components.begin();
+				while(i!=components.end())
+				{
+					SharedComponent c = (*i++);
+					params["module_" + c->name + "_version"] = c->version;
+					params["module_" + c->name + "_path"] = c->path;
+					params["module_" + c->name + "_bundled"] = c->bundled ? "1":"0";
+				}
 			}
 		}
-	
 		return params;
 	}
 #endif
