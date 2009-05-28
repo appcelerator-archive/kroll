@@ -28,7 +28,7 @@ if build.is_win32():
 	Env.Append(LINKFLAGS=['/NODEFAULTLIB:MSJAVA.lib'])
 	ccf = Env['CCFLAGS']
 	if '/Z7' in ccf: ccf.remove('/Z7')
-	ccf += ['/O2','/GL','/FD','/EHsc','/W3','/Wp64','/Zi','/TP']
+	ccf += ['/O2','/GL','/FD','/EHsc','/W3','/Wp64','/Zi','/TP','/DUNICODE']
 	Env['CCFLAGS'] = ccf
 
 	# Generate a manifest which will later be merged with the common controls manifest

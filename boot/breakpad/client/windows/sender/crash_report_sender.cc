@@ -60,6 +60,7 @@ CrashReportSender::CrashReportSender(const wstring &checkpoint_file)
 ReportResult CrashReportSender::SendCrashReport(
     const wstring &url, const map<wstring, wstring> &parameters,
     const wstring &dump_file_name, wstring *report_code) {
+
   int today = GetCurrentDate();
   if (today == last_sent_date_ &&
       max_reports_per_day_ != -1 &&
