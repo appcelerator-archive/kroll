@@ -208,7 +208,9 @@ namespace KrollBoot
 			{
 				NSString* key = [NSString stringWithUTF8String:i->first.c_str()];
 				NSString* value = [NSString stringWithUTF8String:i->second.c_str()];
+#ifdef DEBUG
 				NSLog(@"key = %@, value = %@",key,value);
+#endif
 				[nsParams setObject:value forKey:key];
 				i++;
 			}
