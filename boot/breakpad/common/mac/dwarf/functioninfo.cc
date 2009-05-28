@@ -34,20 +34,32 @@
 #include <vector>
 
 
+#include <string>
+#include <ext/hash_map>
+
+namespace __gnu_cxx
+{
+        template<> struct hash< std::string >
+        {
+                size_t operator()( const std::string& x ) const
+                {
+                        return hash< const char* >()( x.c_str() );
+                }
+        };
+}
+
 #include "common/mac/dwarf/functioninfo.h"
 
 #include "common/mac/dwarf/bytereader.h"
 
-
-namespace __gnu_cxx 
-{
-  template<> 
-    struct hash<std::string> 
-    {
-      size_t operator()(const std::string& k) const;
-    };
-}
-
+// namespace __gnu_cxx 
+// {
+//   template<> 
+//     struct hash<std::string> 
+//     {
+//       size_t operator()(const std::string& k) const;
+//     };
+// }
 
 namespace dwarf2reader {
 
@@ -187,7 +199,7 @@ void CUFunctionInfoHandler::ProcessAttributeUnsigned(uint64 offset,
   if (attr == DW_AT_stmt_list) {
     SectionMap::const_iterator iter = sections_.find("__debug_line");
     assert(iter != sections_.end());
-
+  
     // this should be a scoped_ptr but we dont' use boost :-(
     auto_ptr<LineInfo> lireader(new LineInfo(iter->second.first + data,
                                                iter->second.second  - data,

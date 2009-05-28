@@ -177,8 +177,10 @@ namespace KrollBoot
 			params[key] = value;
 		}
 
-		// we need to load this since in a crash situation
-		// we restart back and by-pass the normal load mechanism
+		// send all the stuff that will help us figure out 
+		// what the heck is going on and why the shiiiiit is
+		// crashing... probably gonna be microsoft's fault
+		// at least we can blame it on them...
 		if (!app.isNull())
 		{
 			app = Application::NewApplication(applicationHome);
@@ -194,7 +196,7 @@ namespace KrollBoot
 #ifdef OS_32
 			params["ostype"] = "32bit";
 #elif OS_64
-			params["ostype"] = "32bit";
+			params["ostype"] = "64bit";
 #else
 			params["ostype"] = "unknown";
 #endif
