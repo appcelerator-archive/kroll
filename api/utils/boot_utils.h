@@ -17,16 +17,6 @@
 #define LICENSE_FILENAME "LICENSE.txt"
 #define INSTALLED_MARKER_FILENAME ".installed"
 
-// these flags are compiled in to allow them
-// to be tailed to the embedded environment
-#ifndef _BOOT_UPDATESITE_ENVNAME
-  #define _BOOT_UPDATESITE_ENVNAME UPDATESITE
-#endif
-
-#ifndef BOOT_UPDATESITE_ENVNAME
-  #define BOOT_UPDATESITE_ENVNAME STRING(_BOOT_UPDATESITE_ENVNAME)
-#endif
-
 namespace UTILS_NS
 {
 	using std::string;

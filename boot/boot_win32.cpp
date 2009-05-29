@@ -35,7 +35,7 @@ namespace KrollBoot
 	inline void ShowError(string msg, bool fatal)
 	{
 		std::cerr << "Error: " << msg << std::endl;
-		MessageBoxA(NULL, msg.c_str(), "Application Error", MB_OK|MB_ICONERROR|MB_SYSTEMMODAL);
+		MessageBoxA(NULL, msg.c_str(), GetApplicationName().c_str(), MB_OK|MB_ICONERROR|MB_SYSTEMMODAL);
 		if (fatal)
 			exit(1);
 	}
@@ -310,8 +310,10 @@ namespace KrollBoot
 			STARTUPINFOA startupInfo = {0};
 			startupInfo.cb = sizeof(startupInfo);
 			PROCESS_INFORMATION processInformation;
+			
 			_snprintf_s(breakpadCallBuffer, MAX_PATH, MAX_PATH - 1,
-				 "%s %s %S %S", argv[0], CRASH_REPORT_OPT, dumpPath, id);
+				 "\"%s\" \"%s\" %S %S", argv[0], CRASH_REPORT_OPT, dumpPath, id);
+
 			CreateProcessA(
 				NULL,
 				breakpadCallBuffer,
@@ -356,8 +358,10 @@ namespace KrollBoot
 	
 	int SendCrashReport()
 	{
-		std::string title = PRODUCT_NAME" has crashed";
-		std::string msg = PRODUCT_NAME" has crashed. Do you want to send a crash report?";
+		InitCrashDetection();
+		
+		std::string title = GetCrashDetectionTitle();
+		std::string msg = GetCrashDetectionMessage();
 
 		Win32PopupDialog popupDialog(NULL);
 		popupDialog.SetTitle(title);
@@ -368,12 +372,14 @@ namespace KrollBoot
 			return 1;
 		}
 
-		wstring url = StringToWString(STRING(CRASH_REPORT_URL));
+		wstring url = L"https://";
+		url += StringToWString(CRASH_REPORT_URL);
+
 		const std::map<wstring, wstring> parameters = GetCrashReportParametersW();
 		wstring dumpFilePathW = StringToWString(dumpFilePath);
 		wstring responseBody;
 		int responseCode;
-
+		
 		bool success = google_breakpad::HTTPUpload::SendRequest(
 			url,
 			parameters,
@@ -382,12 +388,20 @@ namespace KrollBoot
 			NULL,
 			&responseBody,
 			&responseCode);
-
+	
 		if (!success)
 		{
+#ifdef DEBUG		
 			ShowError("Error uploading crash dump.");
+#endif
 			return 2;
 		}
+#ifdef DEBUG
+		else
+		{
+			MessageBoxW(NULL,L"Your crash report has been submitted. Thank You!",L"Error Reporting Status",MB_OK | MB_ICONINFORMATION);
+		}
+#endif
 		return 0;
 	}
 #endif
@@ -403,6 +417,9 @@ int main(int __argc, const char* __argv[])
 	KrollBoot::argv = (const char**) __argv;
 
 #ifdef USE_BREAKPAD
+	// turn off win32 built-in crash detection which interferes with ours
+	SetErrorMode(SEM_FAILCRITICALERRORS);
+		
 	// Don't install a handler if we are just handling an error.
 	if (__argc > 2 && !strcmp(CRASH_REPORT_OPT, __argv[1]))
 	{

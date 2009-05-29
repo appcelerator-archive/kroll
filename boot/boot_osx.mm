@@ -24,7 +24,7 @@ namespace KrollBoot
 	{
 		NSApplicationLoad();
 		NSRunCriticalAlertPanel(
-			@"Application Error",
+			[NSString stringWithCString:GetApplicationName().c_str()],
 			[NSString stringWithCString:error.c_str()], 
 			@"Quit", nil, nil);
 
@@ -162,9 +162,19 @@ namespace KrollBoot
 	{
 		if (succeeded)
 		{
-			snprintf(breakpadCallBuffer, PATH_MAX,
-				"%s %s %s %s", argv[0], CRASH_REPORT_OPT, dumpDirectory, minidumpId);
-			system(breakpadCallBuffer);
+			NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+			NSApplicationLoad();
+			NSLog(@"Crash detected");
+			// use a task so that we can exit this process but
+			// launch the dialog to show and send the crash report
+			NSTask *task = [[NSTask alloc] init];
+			[task setLaunchPath:[NSString stringWithCString:argv[0]]];
+			[task setArguments:[NSArray arrayWithObjects:
+				[NSString stringWithCString:CRASH_REPORT_OPT], 
+				[NSString stringWithCString:dumpDirectory], 
+				[NSString stringWithCString:minidumpId],nil]];
+			[task launch];
+			[pool release];
 		}
 		return __LINE__;
 	}
@@ -177,12 +187,14 @@ namespace KrollBoot
 			return __LINE__;
 		}
 
+		InitCrashDetection();
 		NSApplicationLoad();
 		NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-		[alert setMessageText:@PRODUCT_NAME" has crashed."];
-		[alert setInformativeText:
-			@"If you send a crash report, we can try to fix this problem."];
-		[alert addButtonWithTitle:@"Send Crash Report"];
+		NSString *title = [NSString stringWithCString:GetCrashDetectionTitle().c_str()];
+		NSString *message = [NSString stringWithCString:GetCrashDetectionMessage().c_str()];
+		[alert setMessageText: title];
+		[alert setInformativeText: message];
+		[alert addButtonWithTitle:@"Send Report"];
 		[alert addButtonWithTitle:@"Cancel"];
 		int response = [alert runModal];
 
@@ -196,11 +208,15 @@ namespace KrollBoot
 			{
 				NSString* key = [NSString stringWithUTF8String:i->first.c_str()];
 				NSString* value = [NSString stringWithUTF8String:i->second.c_str()];
+#ifdef DEBUG
+				NSLog(@"key = %@, value = %@",key,value);
+#endif
 				[nsParams setObject:value forKey:key];
+				i++;
 			}
 
-			NSURL* url = [NSURL URLWithString:
-				[NSString stringWithUTF8String: STRING(CRASH_REPORT_URL)]];
+			NSURL* url = [NSURL URLWithString:[NSString stringWithFormat: @"https://%s", CRASH_REPORT_URL]];
+			NSLog(@"Sending crash report to %@",url);
 			HTTPMultipartUpload* uploader = [[HTTPMultipartUpload alloc] initWithURL:url];
 			[uploader addFileAtPath:[NSString stringWithUTF8String:dumpFilePath.c_str()] name:@"dump"];
 			[uploader setParameters:nsParams];
@@ -209,7 +225,7 @@ namespace KrollBoot
 			[uploader send:&error];
 			if (error != NULL)
 			{
-				string msg = "An error occured while sending the crash report: ";
+				string msg = "An error occured while attempting sending the crash report: ";
 				msg += [[error localizedDescription] UTF8String];
 				ShowError(msg);
 				return __LINE__;

@@ -212,8 +212,6 @@ namespace UTILS_NS
 		if (this->queryString.empty()) // Lazy caching of app query string
 		{
 			this->queryString = DISTRIBUTION_URL;
-			if (EnvironmentUtils::Has(BOOT_UPDATESITE_ENVNAME))
-				this->queryString = EnvironmentUtils::Get(BOOT_UPDATESITE_ENVNAME);
 
 			string mid = PlatformUtils::GetMachineId();
 			string os = OS_NAME;
