@@ -185,10 +185,14 @@ class BuildConfig(object):
 		return sources
 
 	def init_thirdparty_libs(self):
+		poco_win32_cpp_path = [path.join(self.third_party, 'poco', 'include')]
+		if os.environ.has_key('OPENSSL_PATH'):
+			poco_win32_cpp_path += [os.path.join(os.environ['OPENSSL_PATH'], 'include')]
+		
 		self.thirdparty_libs = {
 			'poco': {
 				'win32': {
-					'cpp_path': [path.join(self.third_party, 'poco', 'include'), 'C:\\OpenSSL\\include'],
+					'cpp_path': poco_win32_cpp_path,
 					'lib_path': [path.join(self.third_party, 'poco', 'lib')],
 					'libs': ['PocoFoundation', 'PocoNet', 'PocoNetSSL', 'PocoUtil', 'PocoXML', 'PocoZip', 'PocoData', 'PocoSQLite']
 				},
