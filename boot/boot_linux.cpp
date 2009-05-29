@@ -181,7 +181,7 @@ namespace KrollBoot
 		InitCrashDetection();
 		std::string title = GetCrashDetectionTitle();
 		std::string msg = GetCrashDetectionMessage();
-		string url = "https://" + CRASH_REPORT_URL;
+		string url = string("https://") + CRASH_REPORT_URL;
 		const std::map<string, string> parameters = GetCrashReportParameters();
 		string filePartName = "dump";
 		string proxy;
@@ -194,8 +194,8 @@ namespace KrollBoot
 			GTK_DIALOG_MODAL,
 			GTK_MESSAGE_ERROR,
 			GTK_BUTTONS_OK_CANCEL,
-			msg);
-		gtk_window_set_title(GTK_WINDOW(dialog), title);
+			msg.c_str());
+		gtk_window_set_title(GTK_WINDOW(dialog), title.c_str());
 		int response = gtk_dialog_run(GTK_DIALOG(dialog));
 		if (response != GTK_RESPONSE_OK)
 		{
