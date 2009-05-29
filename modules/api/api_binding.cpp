@@ -277,7 +277,7 @@ namespace kroll
 		this->registrationsById[record] = e;
 		this->registrations[event] = records;
 
-		PRINTD("Register called for event: " << event);
+		logger->Debug("Register called for event: %s\n", event.c_str());
 		return record;
 	}
 
