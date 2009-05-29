@@ -457,7 +457,7 @@ namespace kroll
 		{
 			logger->Warn("Module cannot be loaded twice: %s", path.c_str());
 		}
-
+		
 		try
 		{
 			this->CopyModuleAppResources(path);
@@ -471,6 +471,8 @@ namespace kroll
 			// metadata description of each module.
 			this->loaded_modules.push_back(module);
 			this->application->UsingModule(module->GetName(), module->GetVersion(), path);
+
+			logger->Info("Loaded module = %s", module->GetName().c_str());
 		}
 		catch (kroll::ValueException& e)
 		{

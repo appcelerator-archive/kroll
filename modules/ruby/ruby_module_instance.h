@@ -13,11 +13,10 @@ namespace kroll
 	class RubyModuleInstance : public Module
 	{
 	public:
-		RubyModuleInstance(Host *host, std::string path);
+		RubyModuleInstance(Host *host, std::string path, std::string dir, std::string name);
 	protected:
 		virtual ~RubyModuleInstance();
 	public:
-		const char* GetName();
 		void Initialize ();
 		void Destroy ();
 	private:

@@ -12,8 +12,8 @@ namespace kroll
 {
 	// TODO: Implement real method metadata and lifecycle events for
 	// scripting language-based modules
-	JavascriptModuleInstance::JavascriptModuleInstance(Host *host, std::string path) :
-		Module(host, path.c_str(), path.c_str(), "0.1"), path(path)
+	JavascriptModuleInstance::JavascriptModuleInstance(Host *host, std::string path, std::string dir, std::string name) :
+		Module(host, dir.c_str(), name.c_str(), "0.1"), path(path)
 	{
 		try
 		{
@@ -23,8 +23,8 @@ namespace kroll
 		catch (ValueException& e)
 		{
 			SharedString ss = e.GetValue()->DisplayString();
-			std::cerr << "Could not execute " << path << " because: "
-			          <<  *ss << std::endl;
+			Logger *logger = Logger::Get("Javascript");
+			logger->Error("Could not execute %s because %s", path.c_str(), (*ss).c_str());
 		}
 
 	}
@@ -90,11 +90,10 @@ namespace kroll
 			SharedValue e = KJSUtil::ToKrollValue(exception, context, NULL);
 			throw ValueException(e);
 		}
+		
+		// null it out so we don't hold a bunch of this in memory
+		this->code = "";
 	}
 
-	const char* JavascriptModuleInstance::GetName()
-	{
-		return path.c_str();
-	}
 }
 

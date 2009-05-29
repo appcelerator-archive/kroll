@@ -4,6 +4,7 @@
  */
 #include <signal.h>
 #include "ruby_module.h"
+#include <Poco/Path.h>
 
 namespace kroll
 {
@@ -69,15 +70,21 @@ namespace kroll
 
 	Module* RubyModule::CreateModule(std::string& path)
 	{
-		std::cout << "Create ruby module: " << path << std::endl;
-
 		rb_load_file(path.c_str());
 		ruby_exec();
 
 //		ruby_cleanup();  <-- at some point we need to call?
 
-		std::cout << "return new RubyModuleInstance " << path << std::endl;
-		return new RubyModuleInstance(host, path);
+
+		Poco::Path p(path);
+		std::string basename = p.getBaseName();
+		std::string name = basename.substr(0,basename.length()-ruby_suffix.length()+3);
+		std::string moduledir = path.substr(0,path.length()-basename.length()-3);
+
+		Logger *logger = Logger::Get("Ruby");
+		logger->Info("Loading Ruby path=%s", path.c_str());
+
+		return new RubyModuleInstance(host, path, moduledir, name);
 	}
 
 }

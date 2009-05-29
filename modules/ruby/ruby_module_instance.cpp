@@ -9,18 +9,13 @@ namespace kroll
 {
 	// TODO: Implement real method metadata and lifecycle events for
 	// scripting language-based modules
-	RubyModuleInstance::RubyModuleInstance(Host *host, std::string path) :
-		Module(host, path.c_str(), path.c_str(), "0.1"), path(path)
+	RubyModuleInstance::RubyModuleInstance(Host *host, std::string path, std::string dir, std::string name) :
+		Module(host, dir.c_str(), name.c_str(), "0.1"), path(path)
 	{
 	}
 
 	RubyModuleInstance::~RubyModuleInstance()
 	{
-	}
-
-	const char* RubyModuleInstance::GetName() 
-	{ 
-		return path.c_str(); 
 	}
 
 	void RubyModuleInstance::Initialize () 

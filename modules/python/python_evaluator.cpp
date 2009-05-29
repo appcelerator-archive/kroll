@@ -31,11 +31,21 @@
 		// sometimes. So we're going to try to isolate the variables
 		// in this script by compiling it and supplying our own copy
 		// of the globals.
-		PyObject* compiled = Py_CompileStringFlags(code.c_str(), "<onthepage>", Py_file_input, NULL);
+		PyObject* compiled = Py_CompileStringFlags(code.c_str(), "<window>", Py_file_input, NULL);
 		if (compiled == NULL)
 		{
-			std::cout << "An error occured while parsing Python on the page: " << std::endl;
+			Logger *logger = Logger::Get("Python");
+			logger->Error("An error occured while parsing Python on the page: ");
 			PyErr_Print();
+			// log to the console to give the user a better indication
+			// of what's going on down in python
+			SharedValue value = window_global->GetNS("console.error");
+			if (value->IsMethod())
+			{
+				SharedKMethod m = value->ToMethod();
+				std::string msg = "An error occured while parsing Python on the page";
+				m->Call(Value::NewString(msg));
+			}
 			Py_DECREF(globals);
 			return Value::Undefined;
 		}
@@ -48,8 +58,18 @@
 		SharedValue kv = Value::Undefined;
 		if (return_value == NULL && PyErr_Occurred())
 		{
-			std::cout << "An error occured while parsing Python on the page: " << std::endl;
+			Logger *logger = Logger::Get("Python");
+			logger->Error("An error occured while parsing Python on the page");
 			PyErr_Print();
+			// log to the console to give the user a better indication
+			// of what's going on down in python
+			SharedValue value = window_global->GetNS("console.log");
+			if (value->IsMethod())
+			{
+				SharedKMethod m = value->ToMethod();
+				std::string msg = "An error occured while parsing Python on the page";
+				m->Call(Value::NewString(msg));
+			}
 		}
 		else
 		{
@@ -57,7 +77,7 @@
 			Py_DECREF(return_value);
 		}
 
-		// Move all the new variables in gloals() to the window context.
+		// Move all the new variables in globals() to the window context.
 		// These are things that are now defined globally in JS.
 		DictToKObjectProps(globals, window_global);
 		return kv;

@@ -6,6 +6,7 @@
 #include <iostream>
 #include <signal.h>
 #include "javascript_module.h"
+#include <Poco/Path.h>
 
 namespace kroll
 {
@@ -40,8 +41,15 @@ namespace kroll
 
 	Module* JavascriptModule::CreateModule(std::string& path)
 	{
-		JavascriptModuleInstance* instance =
-			new JavascriptModuleInstance(this->host, path);
+		Poco::Path p(path);
+		std::string basename = p.getBaseName();
+		std::string name = basename.substr(0,basename.length()-js_suffix.length()+3);
+		std::string moduledir = path.substr(0,path.length()-basename.length()-3);
+
+		Logger *logger = Logger::Get("Javascript");
+		logger->Info("Loading JS path=%s", path.c_str());
+
+		JavascriptModuleInstance* instance = new JavascriptModuleInstance(this->host, path, moduledir, name);
 		return instance;
 	}
 
