@@ -15,7 +15,9 @@ namespace UTILS_NS
 			// Allow the user to force an override to the runtime home by setting the
 			// appropriate environment variable -- this will be the first path searched
 			if (EnvironmentUtils::Has("KR_RUNTIME_HOME"))
+			{
 				componentSearchPaths.push_back(EnvironmentUtils::Get("KR_RUNTIME_HOME"));
+			}
 
 			componentSearchPaths.push_back(FileUtils::GetUserRuntimeHomeDirectory());
 			componentSearchPaths.push_back(FileUtils::GetSystemRuntimeHomeDirectory());

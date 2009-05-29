@@ -72,9 +72,10 @@ bool HTTPUpload::SendRequest(const wstring &url,
   if (response_code) {
     *response_code = 0;
   }
-
+  
   // TODO(bryner): support non-ASCII parameter names
   if (!CheckParameters(parameters)) {
+	*response_body = L"Error: non-ASCII parameter names";
     return false;
   }
 
@@ -89,6 +90,7 @@ bool HTTPUpload::SendRequest(const wstring &url,
   components.dwHostNameLength = sizeof(host) / sizeof(host[0]);
   components.lpszUrlPath = path;
   components.dwUrlPathLength = sizeof(path) / sizeof(path[0]);
+
   if (!InternetCrackUrl(url.c_str(), static_cast<DWORD>(url.size()),
                         0, &components)) {
     return false;
@@ -105,6 +107,8 @@ bool HTTPUpload::SendRequest(const wstring &url,
                                            NULL,  // proxy name
                                            NULL,  // proxy bypass
                                            0));   // flags
+
+										   
   if (!internet.get()) {
     return false;
   }
@@ -117,6 +121,7 @@ bool HTTPUpload::SendRequest(const wstring &url,
                                                 INTERNET_SERVICE_HTTP,
                                                 0,       // flags
                                                 NULL));  // context
+												
   if (!connection.get()) {
     return false;
   }
@@ -130,6 +135,7 @@ bool HTTPUpload::SendRequest(const wstring &url,
                                              NULL,    // agent type
                                              http_open_flags,
                                              NULL));  // context
+
   if (!request.get()) {
     return false;
   }
@@ -146,7 +152,7 @@ bool HTTPUpload::SendRequest(const wstring &url,
                            file_part_name, boundary, &request_body)) {
     return false;
   }
-
+  
   if (timeout) {
     if (!InternetSetOption(request.get(),
                            INTERNET_OPTION_SEND_TIMEOUT,
@@ -272,6 +278,7 @@ bool HTTPUpload::GenerateRequestBody(const map<wstring, wstring> &parameters,
                                      string *request_body) {
   vector<char> contents;
   GetFileContents(upload_file, &contents);
+
   if (contents.empty()) {
     return false;
   }
@@ -291,7 +298,7 @@ bool HTTPUpload::GenerateRequestBody(const map<wstring, wstring> &parameters,
                          WideToUTF8(pos->first) + "\"\r\n\r\n" +
                          WideToUTF8(pos->second) + "\r\n");
   }
-
+  
   // Now append the upload file as a binary (octet-stream) part
   string filename_utf8 = WideToUTF8(upload_file);
   if (filename_utf8.empty()) {

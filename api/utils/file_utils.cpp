@@ -100,18 +100,9 @@ namespace UTILS_NS
 	std::string FileUtils::GetApplicationDataDirectory(std::string &appid)
 	{
 		std::string dir = GetUserRuntimeHomeDirectory();
-		dir.append(KR_PATH_SEP);
-		dir.append("appdata");
-		if (!IsDirectory(dir))
-		{
-			CreateDirectory(dir);
-		}
-		dir.append(KR_PATH_SEP);
-		dir.append(appid);
-		if (!IsDirectory(dir))
-		{
-			CreateDirectory(dir);
-		}
+		dir = FileUtils::Join(dir.c_str(), "appdata", appid.c_str(), NULL);
+		CreateDirectory(dir, true);
+
 		return dir;
 	}
 
@@ -238,8 +229,13 @@ namespace UTILS_NS
 			return path.substr(pos+1);
 	}
 
-	bool FileUtils::CreateDirectory(std::string &dir)
+	bool FileUtils::CreateDirectory(std::string &dir, bool recursive)
 	{
+		string parent = Dirname(dir);
+		if (recursive && !IsDirectory(parent))
+		{
+			CreateDirectory(parent, true);
+		}
 #ifdef OS_OSX
 		return [[NSFileManager defaultManager] createDirectoryAtPath:[NSString stringWithCString:dir.c_str()] attributes:nil];
 #elif OS_WIN32

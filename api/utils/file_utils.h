@@ -88,7 +88,7 @@ namespace UTILS_NS
 		/**
 		 *
 		 */
-		static bool CreateDirectory(std::string &dir);
+		static bool CreateDirectory(std::string &dir, bool recursive=false);
 
 		// TODO - remove this - had to add it to get modules/ti.Database/databases.cpp to link successfully
 		static bool CreateDirectory2(std::string &dir);

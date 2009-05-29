@@ -181,10 +181,14 @@ namespace kroll
 			{
 				return pylist->ToPython();
 			}
-			else
+
+			SharedPtr<KPythonTuple> pytuple = value->ToList().cast<KPythonTuple>();
+			if (!pytuple.isNull())
 			{
-				return PythonUtils::KListToPyObject(value);
+				return pytuple->ToPython();
 			}
+
+			return PythonUtils::KListToPyObject(value);
 		}
 		if (value->IsObject())
 		{
@@ -219,10 +223,9 @@ namespace kroll
 
 	SharedValue PythonUtils::ToKrollValue(PyObject* value)
 	{
-		/* These are built-in Python types */
-		if (Py_None==value)
+		if (Py_None == value)
 		{
-			return Value::Undefined;
+			return Value::Null;
 		}
 		else if (PyString_Check(value))
 		{
@@ -238,6 +241,15 @@ namespace kroll
 			long lval = PyInt_AsLong(value);
 			return Value::NewInt((int) lval);
 		}
+		else if (PyLong_Check(value))
+		{
+			double dval = PyLong_AsDouble(value);
+			if (dval == -1.0)
+			{
+				THROW_PYTHON_EXCEPTION
+			}
+			return Value::NewDouble(dval);
+		}
 		else if (PyFloat_Check(value))
 		{
 			double dval = PyFloat_AsDouble(value);
@@ -246,6 +258,12 @@ namespace kroll
 		else if (PyList_Check(value))
 		{
 			SharedKList l = new KPythonList(value);
+			SharedValue til = Value::NewList(l);
+			return til;
+		}
+		else if (PyTuple_Check(value))
+		{
+			SharedKList l = new KPythonTuple(value);
 			SharedValue til = Value::NewList(l);
 			return til;
 		}

@@ -18,7 +18,7 @@ namespace kroll
 
 	const char* RubyUtils::ToString(VALUE value)
 	{
-		if (TYPE(value)==T_STRING)
+		if (TYPE(value) == T_STRING)
 		{
 			const char *result = StringValueCStr(value);
 			return result;
@@ -34,7 +34,7 @@ namespace kroll
 		VALUE c = rb_obj_class(value);
 		if (T_NIL == t)
 		{
-			kvalue == Value::Null;
+			kvalue = Value::Null;
 		}
 		else if (T_FIXNUM == t || T_BIGNUM == t || T_FLOAT == t)
 		{
@@ -54,6 +54,11 @@ namespace kroll
 			kvalue = Value::NewString(ptr);
 		}
 		else if (T_OBJECT == t)
+		{
+			SharedKObject kobj = new KRubyObject(value);
+			kvalue = Value::NewObject(kobj);
+		}
+		else if (T_STRUCT == t)
 		{
 			SharedKObject kobj = new KRubyObject(value);
 			kvalue = Value::NewObject(kobj);
@@ -387,7 +392,7 @@ namespace kroll
 		// Lazily initialize the KMethod wrapper class
 		if (klist_class == Qnil)
 		{
-			klist_class = rb_define_class("RubyKMethod", rb_cObject);
+			klist_class = rb_define_class("RubyKList", rb_cObject);
 			rb_define_method(klist_class, "method_missing",
 				RUBY_METHOD_FUNC(ruby_kobject_method_missing), -1);
 			rb_define_method(kobj_class, "method",

@@ -28,7 +28,7 @@ if build.is_win32():
 	Env.Append(LINKFLAGS=['/NODEFAULTLIB:MSJAVA.lib'])
 	ccf = Env['CCFLAGS']
 	if '/Z7' in ccf: ccf.remove('/Z7')
-	ccf += ['/O2','/GL','/FD','/EHsc','/W3','/Wp64','/Zi','/TP']
+	ccf += ['/O2','/GL','/FD','/EHsc','/W3','/Wp64','/Zi','/TP','/DUNICODE']
 	Env['CCFLAGS'] = ccf
 
 	# Generate a manifest which will later be merged with the common controls manifest
@@ -42,7 +42,7 @@ if build.is_win32():
 	Env.Append(LINKFLAGS=linkflags)
 
 # Breakpad integration
-breakpad = ARGUMENTS.get('breakpad', '0') != '0'
+breakpad = ARGUMENTS.get('breakpad', '1') != '0'
 if not(build.is_32()) and build.is_linux():
 	breakpad = False
 
@@ -85,9 +85,21 @@ build.mark_build_target(p)
 
 # Merge kboot's manifest with the common controls manifest, so that
 # it can use XP-style common controls -- and still have the correct
-# references to MSVCRT8
+# references to MSVCRT8. Also include Webkit.tlb in the manifest and
+# have it reference the path "WebKit.dll". This is for XP systems which
+# will need to bootstrap by running runtimedir/kboot.exe during the 
+# boot process.
 if build.is_win32():
+	t = build.utils.CopyToDir(p[0], path.join(build.dir, 'runtime'))
+	build.mark_build_target(t)
+
+	webkit_tp = path.join(build.third_party, 'webkit')
+	webkit_lib = path.join(webkit_tp, 'lib')
+	webkit_tlb = path.join(webkit_lib, 'WebKit.tlb')
+
 	cc_manifest = path.join(build.kroll_support_dir, 'common_controls.manifest')
 	merged_manifest = path.join(build.dir, 'kboot.merged.manifest')
 	Env.AddPostAction(p, 'mt.exe -nologo -manifest "%s" "%s" -out:"%s"' % (intermediate_manifest, cc_manifest, merged_manifest))
-	Env.AddPostAction(p, 'mt.exe -nologo -manifest "%s" -outputresource:"%s;1"' % (merged_manifest, p[0]))
+	Env.AddPostAction(p, ('mt.exe -nologo /tlb:"%s" /dll:"WebKit" /outputresource:"%s.exe;#1" /manifest "%s"' % (webkit_tlb, kboot_out, merged_manifest)))
+
+#	Env.AddPostAction(p, 'mt.exe -nologo -manifest "%s" -outputresource:"%s;1"' % (merged_manifest, p[0]))

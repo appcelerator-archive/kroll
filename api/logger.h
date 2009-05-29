@@ -6,10 +6,15 @@
 #include <Poco/Logger.h>
 #include <Poco/Message.h>
 #include <Poco/Mutex.h>
+#include <Poco/PatternFormatter.h>
 #include <cstdarg>
+#include <iostream>
+#include <fstream>
 
 namespace kroll
 {
+	class RootLogger;
+
 	class KROLL_API Logger
 	{
 		public:
@@ -25,18 +30,32 @@ namespace kroll
 			LTRACE = Poco::Message::PRIO_TRACE
 		};
 
-		static Logger& Get(std::string name);
-		static Logger& GetRootLogger();
-		static void Initialize(int, int, int, std::string logFilePath);
+		static Logger* Get(std::string name);
+		static Logger* GetRootLogger();
+		static void Initialize(bool, std::string, Level);
+		static void Shutdown();
 
 		Logger() {};
-		~Logger() {};
+		virtual ~Logger() {};
 		Logger(std::string);
-		Logger(bool, bool, int, std::string);
+		Logger(std::string, Level);
 
-		Logger& GetChild(std::string name);
+		Level GetLevel();
 		std::string& GetName();
+		Logger* GetChild(std::string name);
+		Logger* GetParent();
+		
+		bool IsEnabled(Level);
+		bool IsTraceEnabled();
+		bool IsDebugEnabled();
+		bool IsInfoEnabled();
+		bool IsNoticeEnabled();
+		bool IsWarningEnabled();
+		bool IsErrorEnabled();
+		bool IsCriticalEnabled();
+		bool IsFatalEnabled();
 
+		virtual void Log(Poco::Message m);
 		void Log(Level, std::string &);
 		void Log(Level, const char*, va_list);
 		void Log(Level, const char*, ...);
@@ -67,13 +86,31 @@ namespace kroll
 		void Fatal(const char*, ...);
 
 		protected:
+		std::string name;
+		Level level;
 		static Poco::Mutex mutex;
 		static char buffer[];
-		static std::string logFilePath;
 
-		std::string name;
-		static Logger& GetImpl(std::string name);
-		static std::map<std::string, Logger> loggers;
+		static Logger* GetImpl(std::string name);
+		static std::map<std::string, Logger*> loggers;
 	};
+
+	class KROLL_API RootLogger : public Logger
+	{
+		public:
+		RootLogger(bool, std::string, Level);
+		~RootLogger();
+		static RootLogger* instance;
+		virtual void LogImpl(Poco::Message m);
+
+		protected:
+		bool consoleLogging;
+		bool fileLogging;
+		Poco::PatternFormatter* formatter;
+		std::string logFilePath;
+		std::ofstream logFile;
+
+	};
+
 }
 

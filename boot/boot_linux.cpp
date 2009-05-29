@@ -26,6 +26,7 @@ namespace KrollBoot
 	void ShowError(string error, bool fatal)
 	{
 		std::cout << error << std::endl;
+		gtk_init(&argc, (char***) &argv);
 		GtkWidget* dialog = gtk_message_dialog_new(
 			NULL,
 			GTK_DIALOG_MODAL,
@@ -33,6 +34,7 @@ namespace KrollBoot
 			GTK_BUTTONS_CLOSE,
 			"%s",
 			error.c_str());
+		gtk_window_set_title(GTK_WINDOW(dialog), GetApplicationName().c_str());
 		gtk_dialog_run(GTK_DIALOG(dialog));
 		gtk_widget_destroy(dialog);
 		if (fatal)
@@ -162,7 +164,7 @@ namespace KrollBoot
 		if (succeeded)
 		{
 			snprintf(breakpadCallBuffer, PATH_MAX - 1,
-				 "%s %s %s %s", argv[0], CRASH_REPORT_OPT, dump_path, id);
+				 "\"%s\" %s \"%s\" %s", argv[0], CRASH_REPORT_OPT, dump_path, id);
 			system(breakpadCallBuffer);
 		}
 #ifdef DEBUG
@@ -176,7 +178,10 @@ namespace KrollBoot
 	{
 		gtk_init(&argc, (char***) &argv);
 
-		string url = STRING(CRASH_REPORT_URL);
+		InitCrashDetection();
+		std::string title = GetCrashDetectionTitle();
+		std::string msg = GetCrashDetectionMessage();
+		string url = "https://" + CRASH_REPORT_URL;
 		const std::map<string, string> parameters = GetCrashReportParameters();
 		string filePartName = "dump";
 		string proxy;
@@ -189,13 +194,14 @@ namespace KrollBoot
 			GTK_DIALOG_MODAL,
 			GTK_MESSAGE_ERROR,
 			GTK_BUTTONS_OK_CANCEL,
-			PRODUCT_NAME" has crashed. Press OK to send a crash report");
-		gtk_window_set_title(GTK_WINDOW(dialog), PRODUCT_NAME" has crashed.");
+			msg);
+		gtk_window_set_title(GTK_WINDOW(dialog), title);
 		int response = gtk_dialog_run(GTK_DIALOG(dialog));
 		if (response != GTK_RESPONSE_OK)
 		{
 			return 1;
 		}
+		
 
 		bool success = google_breakpad::HTTPUpload::SendRequest(
 			url,

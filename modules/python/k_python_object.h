@@ -15,7 +15,7 @@ namespace kroll
 	{
 	public:
 		KPythonObject(PyObject *obj);
-		KPythonObject(PyObject *obj, bool read_only);
+		KPythonObject(PyObject *obj, bool readOnly);
 		virtual ~KPythonObject();
 
 		virtual void Set(const char *name, SharedValue value);
@@ -26,7 +26,7 @@ namespace kroll
 
 	private:
 		PyObject *object;
-		bool read_only;
+		bool readOnly;
 		SharedKObject delegate;
 		DISALLOW_EVIL_CONSTRUCTORS(KPythonObject);
 	};

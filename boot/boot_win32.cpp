@@ -35,7 +35,7 @@ namespace KrollBoot
 	inline void ShowError(string msg, bool fatal)
 	{
 		std::cerr << "Error: " << msg << std::endl;
-		MessageBoxA(NULL, msg.c_str(), "Application Error", MB_OK|MB_ICONERROR|MB_SYSTEMMODAL);
+		MessageBoxA(NULL, msg.c_str(), GetApplicationName().c_str(), MB_OK|MB_ICONERROR|MB_SYSTEMMODAL);
 		if (fatal)
 			exit(1);
 	}
@@ -169,12 +169,26 @@ namespace KrollBoot
 		return true;
 	}
 
-	void BootstrapPlatformSpecific(string moduleList)
+	bool IsWindowsXP()
 	{
-		moduleList = app->runtime->path + ";" + moduleList;
+		OSVERSIONINFO osVersion;
+		osVersion.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
+		::GetVersionEx(&osVersion);
+		return osVersion.dwMajorVersion == 5;
+	}
+
+	void BootstrapPlatformSpecific(string path)
+	{
+
+			//string bundledRuntimePath = app->path + "\\runtime";
+			//if (!FileUtils::IsDirectory(bundledRuntimePath))
+			//{
+			//	FileUtils::CopyRecursive(app->runtime->path, bundledRuntimePath);
+			//}
+			//app->runtime->path = bundledRuntimePath;
 
 		// Add runtime path and all module paths to PATH
-		string path = moduleList;
+		path = app->runtime->path + ";" + path;
 		string currentPath = EnvironmentUtils::Get("PATH");
 		if (!currentPath.empty())
 		{
@@ -185,10 +199,66 @@ namespace KrollBoot
 
 	string Blastoff()
 	{
-		// Windows boot does not need to restart itself, so just launch
-		// the host here and exit with the appropriate return value.
-		EnvironmentUtils::Unset(BOOTSTRAP_ENV);
-		exit(KrollBoot::StartHost());
+		if (!IsWindowsXP())
+		{
+			// Windows boot does not normally need to restart itself,  so just
+			// launch the host here and exit with the appropriate return value.
+			EnvironmentUtils::Unset(BOOTSTRAP_ENV);
+			exit(KrollBoot::StartHost());
+		}
+
+		// TODO: Fix manual activation context setup for Windows XP so we don't need
+		// to do the thing below any longer.
+
+		// We are on Windows XP. We need to reboot ourselves, but using the kboot.exe
+		// that is included with the runtime. The manifest embedded in kboot points
+		// to a DLL named "WebKit.dll" relative to the exe -- we need that path to
+		// resolve for registration-free COM to work.
+		string allArgs;
+		for (int i = 0; i < argc; i++)
+		{
+			string arg = argv[i];
+			size_t quotePos = arg.find('\"');
+			if (quotePos == string::npos)
+			{
+				allArgs.append("\"");
+				allArgs.append(arg);
+				allArgs.append("\" ");
+			}
+			else
+			{
+				allArgs.append(arg + " ");
+			}
+		}
+		string appName = app->runtime->path + "\\kboot.exe";
+
+		STARTUPINFOA startupInfo = {0};
+		startupInfo.cb = sizeof(startupInfo);
+		PROCESS_INFORMATION processInformation;
+		
+		char* applicationName = _strdup(appName.c_str());
+		char* allArguments = _strdup(allArgs.c_str());
+		int success = CreateProcessA(
+			applicationName, allArguments,
+			NULL, NULL, FALSE, 0, NULL, NULL,
+			&startupInfo, &processInformation);
+		free(applicationName);
+		free(allArguments);
+		if (success == 0)
+		{
+			return "Could not bootstrap the host.";
+		}
+		else
+		{
+			CloseHandle(processInformation.hThread);
+			WaitForSingleObject(processInformation.hProcess, INFINITE);
+			DWORD retCode;
+			if (GetExitCodeProcess(processInformation.hProcess, &retCode))
+			{
+				exit(retCode);
+			}
+			return "Could not retrieve the exit code.";
+		}
 	}
 
 	typedef int Executor(HINSTANCE, int, const char **);
@@ -240,8 +310,10 @@ namespace KrollBoot
 			STARTUPINFOA startupInfo = {0};
 			startupInfo.cb = sizeof(startupInfo);
 			PROCESS_INFORMATION processInformation;
+			
 			_snprintf_s(breakpadCallBuffer, MAX_PATH, MAX_PATH - 1,
-				 "%s %s %S %S", argv[0], CRASH_REPORT_OPT, dumpPath, id);
+				 "\"%s\" \"%s\" %S %S", argv[0], CRASH_REPORT_OPT, dumpPath, id);
+
 			CreateProcessA(
 				NULL,
 				breakpadCallBuffer,
@@ -286,8 +358,10 @@ namespace KrollBoot
 	
 	int SendCrashReport()
 	{
-		std::string title = PRODUCT_NAME" has crashed";
-		std::string msg = PRODUCT_NAME" has crashed. Do you want to send a crash report?";
+		InitCrashDetection();
+		
+		std::string title = GetCrashDetectionTitle();
+		std::string msg = GetCrashDetectionMessage();
 
 		Win32PopupDialog popupDialog(NULL);
 		popupDialog.SetTitle(title);
@@ -298,12 +372,14 @@ namespace KrollBoot
 			return 1;
 		}
 
-		wstring url = StringToWString(STRING(CRASH_REPORT_URL));
+		wstring url = L"https://";
+		url += StringToWString(CRASH_REPORT_URL);
+
 		const std::map<wstring, wstring> parameters = GetCrashReportParametersW();
 		wstring dumpFilePathW = StringToWString(dumpFilePath);
 		wstring responseBody;
 		int responseCode;
-
+		
 		bool success = google_breakpad::HTTPUpload::SendRequest(
 			url,
 			parameters,
@@ -312,12 +388,20 @@ namespace KrollBoot
 			NULL,
 			&responseBody,
 			&responseCode);
-
+	
 		if (!success)
 		{
+#ifdef DEBUG		
 			ShowError("Error uploading crash dump.");
+#endif
 			return 2;
 		}
+#ifdef DEBUG
+		else
+		{
+			MessageBoxW(NULL,L"Your crash report has been submitted. Thank You!",L"Error Reporting Status",MB_OK | MB_ICONINFORMATION);
+		}
+#endif
 		return 0;
 	}
 #endif
@@ -333,6 +417,9 @@ int main(int __argc, const char* __argv[])
 	KrollBoot::argv = (const char**) __argv;
 
 #ifdef USE_BREAKPAD
+	// turn off win32 built-in crash detection which interferes with ours
+	SetErrorMode(SEM_FAILCRITICALERRORS);
+		
 	// Don't install a handler if we are just handling an error.
 	if (__argc > 2 && !strcmp(CRASH_REPORT_OPT, __argv[1]))
 	{
@@ -348,5 +435,15 @@ int main(int __argc, const char* __argv[])
 		NULL,
 		google_breakpad::ExceptionHandler::HANDLER_ALL);
 #endif
-	return KrollBoot::Bootstrap();
+
+	// Only Windows XP systems will need to restart the host.
+	if (EnvironmentUtils::Has(BOOTSTRAP_ENV))
+	{
+			EnvironmentUtils::Unset(BOOTSTRAP_ENV);
+			return KrollBoot::StartHost();
+	}
+	else
+	{
+		return KrollBoot::Bootstrap();
+	}
 }

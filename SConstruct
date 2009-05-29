@@ -18,9 +18,7 @@ build = BuildConfig(
 	CONFIG_FILENAME = 'tiapp.xml',
 	BUILD_DIR = path.abspath('build'),
 	THIRD_PARTY_DIR = path.abspath('thirdparty'),
-	BOOT_UPDATESITE_ENVNAME = 'KR_UPDATESITE',
-	BOOT_UPDATESITE_URL = 'nosite',
-	CRASH_REPORT_URL = 'nosite',
+	CRASH_REPORT_URL = 'api.appcelerator.net/p/v1/app-crash-report',
 )
 build.set_kroll_source_dir(path.abspath('.'))
 

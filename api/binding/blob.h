@@ -16,7 +16,7 @@
 namespace kroll
 {
 	/**
-	 * An object that represents an arbitrary amount of binary data§
+	 * An object that represents an arbitrary amount of binary dataÂ§
 	 */
 	class KROLL_API Blob : public StaticBoundObject
 	{
@@ -24,6 +24,9 @@ namespace kroll
 
 
 		Blob(char *buffer, int size);
+		Blob(const char *buffer, int size);
+		Blob(std::string);
+		Blob(std::string&);
 		virtual ~Blob();
 
 		/**
@@ -32,7 +35,7 @@ namespace kroll
 		const char* Get() { return buffer; }
 
 		/**
-		 * @return the length of the underlying buffer§
+		 * @return the length of the underlying bufferÂ§
 		 */
 		const int Length () { return length; }
 
@@ -43,6 +46,17 @@ namespace kroll
 		void ToString(const ValueList& args, SharedValue result);
 		void Get(const ValueList& args, SharedValue result);
 		void Length(const ValueList& args, SharedValue result);
+
+		void IndexOf(const ValueList& args, SharedValue result);
+		void LastIndexOf(const ValueList& args, SharedValue result);
+		void CharAt(const ValueList& args, SharedValue result);
+		void Split(const ValueList& args, SharedValue result);
+		void Substring(const ValueList& args, SharedValue result);
+		void ToLowerCase(const ValueList& args, SharedValue result);
+		void ToUpperCase(const ValueList& args, SharedValue result);
+		void Replace(const ValueList& args, SharedValue result);
+
+		void Create(const char *buf, int len);
 
 	};
 }

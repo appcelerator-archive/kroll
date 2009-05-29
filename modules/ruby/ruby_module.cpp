@@ -1,7 +1,6 @@
-/**
- * Appcelerator Kroll - licensed under the Apache Public License 2
- * see LICENSE in the root folder for details on the license.
- * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
+/** Appcelerator Kroll - licensed under the Apache Public License 2 see LICENSE
+ * in the root folder for details on the license.  Copyright (c) 2008
+ * Appcelerator, Inc. All Rights Reserved.
  */
 #include <signal.h>
 #include "ruby_module.h"
@@ -20,7 +19,11 @@ namespace kroll
 		ruby_init_loadpath();
 
 		string modulePath = this->GetPath();
-		ruby_incpush(modulePath.c_str());
+
+		// Add the application directoy to the Ruby include path so
+		// that includes work in a intuitive way for application developers.
+		ruby_incpush(host->GetApplication()->GetResourcesPath().c_str());
+
 		this->InitializeBinding();
 
 		host->AddModuleProvider(this);
@@ -45,10 +48,10 @@ namespace kroll
 		global->Set("Ruby", Value::NewObject(binding));
 		SharedKMethod evaluator = new RubyEvaluator();
 		/**
-		 * @tiapi(method=True,name=Ruby.evaluate,since=0.2) evaluate a ruby script
+		 * @tiapi(method=True,name=Ruby.evaluate,since=0.2) Evaluates a string as ruby code
 		 * @tiarg(for=Ruby.evaluate,name=code,type=string) ruby script code
 		 * @tiarg(for=Ruby.evaluate,name=scope,type=object) global variable scope
-		 * @tiresult(for=Ruby.evaluate,type=object) result
+		 * @tiresult(for=Ruby.evaluate,type=object) result of the evaluation
 		 */
 		binding->Set("evaluate", Value::NewMethod(evaluator));
 

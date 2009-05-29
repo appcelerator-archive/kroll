@@ -159,7 +159,7 @@ namespace KrollBoot
 				if(this->showCancelButton) controlCount++;
 				if(this->showInputText) controlCount++;
 
-				int labelHeight = 14;
+				int labelHeight = 34;
 				int width = 300;
 				int height = 90;
 				int margin = 10;

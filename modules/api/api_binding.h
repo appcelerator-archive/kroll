@@ -48,6 +48,7 @@ namespace kroll
 		Host* host;
 		SharedKObject global;
 		int record;
+		Logger* logger;
 		std::map<std::string, EventRecords> registrations;
 		std::map<int, BoundEventEntry> registrationsById;
 
@@ -70,6 +71,7 @@ namespace kroll
 		void _GetApplication(const ValueList& args, SharedValue value);
 		void _GetInstalledComponents(const ValueList& args, SharedValue value);
 		void _GetInstalledModules(const ValueList& args, SharedValue value);
+		void _GetInstalledSDKs(const ValueList& args, SharedValue value);
 		void _GetInstalledRuntimes(const ValueList& args, SharedValue value);
 		void _GetComponentSearchPaths(const ValueList& args, SharedValue value);
 		void _ReadApplicationManifest(const ValueList& args, SharedValue value);

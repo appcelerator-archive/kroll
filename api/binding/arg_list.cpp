@@ -15,6 +15,36 @@ namespace kroll
 		this->args = new std::vector<SharedValue>;
 	}
 
+	ArgList::ArgList(SharedValue a)
+	{
+		this->args = new std::vector<SharedValue>;
+		this->args->push_back(a);
+	}
+
+	ArgList::ArgList(SharedValue a, SharedValue b)
+	{
+		this->args = new std::vector<SharedValue>;
+		this->args->push_back(a);
+		this->args->push_back(b);
+	}
+
+	ArgList::ArgList(SharedValue a, SharedValue b, SharedValue c)
+	{
+		this->args = new std::vector<SharedValue>;
+		this->args->push_back(a);
+		this->args->push_back(b);
+		this->args->push_back(c);
+	}
+
+	ArgList::ArgList(SharedValue a, SharedValue b, SharedValue c, SharedValue d)
+	{
+		this->args = new std::vector<SharedValue>;
+		this->args->push_back(a);
+		this->args->push_back(b);
+		this->args->push_back(c);
+		this->args->push_back(d);
+	}
+
 	ArgList::ArgList(const ArgList& other)
 	{
 		this->args = other.args;

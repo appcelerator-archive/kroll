@@ -110,7 +110,7 @@ namespace kroll
 		/**
 		 * @return the SharedApplication instance for this host
 		 */
-		const SharedApplication GetApplication();
+		SharedApplication GetApplication();
 
 		/**
 		 * @return The home directory for this application
@@ -213,6 +213,8 @@ namespace kroll
 		std::string logFilePath;
 		Poco::FileOutputStream *profileStream;
 		bool consoleLogging;
+		bool fileLogging;
+		Logger* logger;
 
 		/* This is the module suffix for this module provider. Since
 		 * this is the basic provider the suffix is "module.(dll|dylib|so)"

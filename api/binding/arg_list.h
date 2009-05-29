@@ -24,6 +24,10 @@ namespace kroll
 	{
 	public:
 		ArgList();
+		ArgList(SharedValue);
+		ArgList(SharedValue, SharedValue);
+		ArgList(SharedValue, SharedValue, SharedValue);
+		ArgList(SharedValue, SharedValue, SharedValue, SharedValue);
 		ArgList(const ArgList&);
 		~ArgList() {};
 

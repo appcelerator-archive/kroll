@@ -13,7 +13,7 @@ namespace kroll
 
 	void Value::reset()
 	{
-		if (this->IsString())
+		if (this->IsString() && this->stringValue)
 		{
 			free(this->stringValue);
 			this->stringValue = NULL;
@@ -235,7 +235,7 @@ namespace kroll
 		type = STRING;
 	}
 
-	void Value::SetString(std::string value)
+	void Value::SetString(std::string& value)
 	{
 		this->SetString(value.c_str());
 	}

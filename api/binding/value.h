@@ -269,7 +269,7 @@ namespace kroll
 		 * Change the internal value of this Value to an \link #Value::Type::STRING string\endlink
 		 * @param value the string value
 		 */
-		void SetString(std::string value);
+		void SetString(std::string& value);
 
 		/**
 		 * Change the internal value of this Value to an \link #Value::Type::STRING string\endlink
