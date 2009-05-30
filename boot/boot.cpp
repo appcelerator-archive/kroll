@@ -33,14 +33,11 @@ namespace KrollBoot
 			// On error: We should just continue on. A corrupt or old update manifest 
 			// doesn't imply that the original application is corrupt.
 			SharedApplication update = Application::NewApplication(file, app->path);
-			if (update.isNull() && BootUtils::CompareVersions(update->version, app->version) > 0)
-			{
-				app = update;
-				updateFile = file;
-			}
-			else
+			if (!update.isNull() && BootUtils::CompareVersions(update->version, app->version) > 0)
 			{
 				update->SetArguments(argc, argv);
+				app = update;
+				updateFile = file;
 			}
 		}
 	}
