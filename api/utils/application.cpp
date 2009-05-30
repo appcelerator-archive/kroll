@@ -238,6 +238,8 @@ namespace UTILS_NS
 			url.append(RUNTIME_UUID);
 		if (d->type == SDK)
 			url.append(SDK_UUID);
+		if (d->type == MOBILESDK)
+			url.append(MOBILESDK_UUID);
 		if (d->type == MODULE)
 			url.append(MODULE_UUID);
 		return url;
