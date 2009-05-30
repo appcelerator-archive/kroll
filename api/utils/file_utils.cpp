@@ -68,7 +68,7 @@ static std::string safe_encode(std::string &str)
 
 namespace UTILS_NS
 {
-	std::string FileUtils::GetApplicationDirectory()
+	std::string FileUtils::GetExecutableDirectory()
 	{
 #ifdef OS_OSX
 		NSString* bundlePath = [[NSBundle mainBundle] bundlePath];
@@ -154,22 +154,6 @@ namespace UTILS_NS
 		free(tempdir);
 		return tmp_str;
 #endif
-	}
-
-	std::string FileUtils::GetResourcesDirectory()
-	{
-#ifdef OS_OSX
-		NSString* resourcePath = [[NSBundle mainBundle] resourcePath];
-		std::string dir = std::string([resourcePath UTF8String]);
-#elif OS_WIN32
-		std::string dir = FileUtils::GetApplicationDirectory();
-		dir.append("\\Resources");
-#elif OS_LINUX
-		// TODO test this
-		std::string dir = FileUtils::GetApplicationDirectory();
-		dir.append("/Resources");
-#endif
-		return dir;
 	}
 
 	bool FileUtils::IsFile(std::string &file)
