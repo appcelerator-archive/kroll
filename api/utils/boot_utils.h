@@ -28,6 +28,7 @@ namespace UTILS_NS
 		MODULE,
 		RUNTIME,
 		SDK,
+		APP_UPDATE,
 		UNKNOWN
 	};
 
