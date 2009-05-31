@@ -706,8 +706,12 @@ namespace kroll
 	{
 		if (this->waitForDebugger)
 		{
+#ifdef OS_WIN32
+			DebugBreak();
+#else
 			printf("Waiting for debugger (Press Any Key to Continue)...\n");
 			getchar();
+#endif
 		}
 
 		try
