@@ -72,8 +72,7 @@ namespace KrollBoot
 			args.push_back(url);
 		}
 
-		FileUtils::RunAndWait(exec, args);
-		return true;
+		return 0 == FileUtils::RunAndWait(exec, args);
 	}
 
 	void BootstrapPlatformSpecific(string moduleList)

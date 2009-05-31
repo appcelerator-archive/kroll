@@ -26,21 +26,23 @@ namespace KrollBoot
 		// current app version, we want to force an update.
 		string file = FileUtils::GetApplicationDataDirectory(app->id);
 		file = FileUtils::Join(file.c_str(), UPDATE_FILENAME, NULL);
+
+		std::cerr << ">>>>> UPDATE ===> " << file << std::endl;
+				
 		if (FileUtils::IsFile(file))
 		{
+			std::cerr << ">>>>> FOUND UPDATE ===> " << file << std::endl;
 			// If we find an update file, we want to resolve the modules that
 			// it requires and ignore our current manifest.
 			// On error: We should just continue on. A corrupt or old update manifest 
 			// doesn't imply that the original application is corrupt.
 			SharedApplication update = Application::NewApplication(file, app->path);
-			if (update.isNull() && BootUtils::CompareVersions(update->version, app->version) > 0)
+			if (!update.isNull())
 			{
+				std::cerr << ">>>>> FOUND VALID UPDATE ===> " << file << std::endl;
+				update->SetArguments(argc, argv);
 				app = update;
 				updateFile = file;
-			}
-			else
-			{
-				update->SetArguments(argc, argv);
 			}
 		}
 	}

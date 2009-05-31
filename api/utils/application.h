@@ -76,8 +76,8 @@ namespace UTILS_NS
 
 		/**
 		 * Construct an appropriate URL to get *this* version of the application. For instance,
-		 * to * get an update for an application, construct it using the update manifest and
-		 * then call this method on the resulting Application*.
+		 * to get an update for an application, construct it using the update manifest and
+		 * then call this method on the resulting Application.
 		 */
 		std::string GetUpdateURL();
 

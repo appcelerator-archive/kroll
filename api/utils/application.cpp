@@ -179,6 +179,10 @@ namespace UTILS_NS
 			{
 				this->sdks.push_back(c);
 			}
+			else if (c->type == MOBILESDK)
+			{
+				this->sdks.push_back(c);
+			}
 			else if (c->type == RUNTIME)
 			{
 				this->runtime = c;
@@ -200,6 +204,14 @@ namespace UTILS_NS
 		{
 			zipfile = string("sdk-") +  d->version + ".zip";
 		}
+		else if (d->type == MOBILESDK)
+		{
+			zipfile = string("mobilesdk-") +  d->version + ".zip";
+		}
+		else if (d->type == APP_UPDATE)
+		{
+			zipfile = "appupdate";
+		}
 		else
 		{
 			zipfile = string("module-") + d->name + "-" + d->version + ".zip";
@@ -211,7 +223,11 @@ namespace UTILS_NS
 		// Otherwise return a URL on the distribution site
 		if (this->queryString.empty()) // Lazy caching of app query string
 		{
-			this->queryString = DISTRIBUTION_URL;
+			// this->queryString = DISTRIBUTION_URL;
+			// this->queryString += "/" + this->stream.substr(0,1);
+			// this->queryString += "/v1/release-download";
+			
+			this->queryString = "http://localhost/~jhaynie/t/cvf.zip";
 
 			string mid = PlatformUtils::GetMachineId();
 			string os = OS_NAME;
@@ -242,6 +258,8 @@ namespace UTILS_NS
 			url.append(MOBILESDK_UUID);
 		if (d->type == MODULE)
 			url.append(MODULE_UUID);
+		if (d->type == APP_UPDATE)
+			url.append(APP_UPDATE_UUID);
 		return url;
 	}
 
@@ -269,7 +287,8 @@ namespace UTILS_NS
 
 	string Application::GetUpdateURL()
 	{
-		return "nourlyet";
+		SharedDependency d = Dependency::NewDependency("app_update",this->version);
+		return GetURLForDependency(d);
 	}
 
 	SharedComponent Application::ResolveDependency(SharedDependency dep, vector<SharedComponent>& components)

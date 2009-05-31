@@ -16,6 +16,7 @@ namespace UTILS_NS
 
 	void ScanRuntimesAtPath(string, vector<SharedComponent>&);
 	void ScanSDKsAtPath(string, vector<SharedComponent>&);
+	void ScanMobileSDKsAtPath(string, vector<SharedComponent>&);
 	void ScanModulesAtPath(string, vector<SharedComponent>&);
 	void ScanBundledComponents(string, vector<SharedComponent>&);
 	void AddToComponentVector(vector<SharedComponent>&, SharedComponent);
@@ -49,6 +50,7 @@ namespace UTILS_NS
 				string path = *i++;
 				ScanRuntimesAtPath(path, installedComponents);
 				ScanSDKsAtPath(path, installedComponents);
+				ScanMobileSDKsAtPath(path, installedComponents);
 				ScanModulesAtPath(path, installedComponents);
 			}
 
@@ -107,6 +109,29 @@ namespace UTILS_NS
 			string version = *sdkVersion++;
 			string fullPath = FileUtils::Join(sdkPath.c_str(), version.c_str(), NULL);
 			c = KComponent::NewComponent(SDK, "sdk", version, fullPath);
+			AddToComponentVector(results, c);
+		}
+	}
+
+	void ScanMobileSDKsAtPath(string path, vector<SharedComponent>& results)
+	{
+		vector<string> paths;
+		SharedComponent c;
+		if (!FileUtils::IsDirectory(path))
+		{
+			return;
+		}
+
+		// Read everything that looks like <searchpath>/mobilesdk/<os>/*
+		string sdkPath = FileUtils::Join(path.c_str(), "sdk", OS_NAME, NULL);
+		FileUtils::ListDir(sdkPath, paths);
+
+		vector<string>::iterator sdkVersion = paths.begin();
+		while (sdkVersion != paths.end())
+		{
+			string version = *sdkVersion++;
+			string fullPath = FileUtils::Join(sdkPath.c_str(), version.c_str(), NULL);
+			c = KComponent::NewComponent(MOBILESDK, "mobilesdk", version, fullPath);
 			AddToComponentVector(results, c);
 		}
 	}
@@ -212,6 +237,10 @@ namespace UTILS_NS
 			d->type = RUNTIME;
 		else if (key == "sdk")
 			d->type = SDK;
+		else if (key=="mobilesdk")
+			d->type = MOBILESDK;
+		else if (key=="app_update")
+			d->type = APP_UPDATE;
 		else
 			d->type = MODULE;
 		return d;
