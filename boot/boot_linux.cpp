@@ -52,7 +52,7 @@ namespace KrollBoot
 		}
 		else
 		{
-			return FileUtils::GetApplicationDirectory();
+			return FileUtils::GetExecutableDirectory();
 		}
 	}
 
