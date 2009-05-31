@@ -223,11 +223,9 @@ namespace UTILS_NS
 		// Otherwise return a URL on the distribution site
 		if (this->queryString.empty()) // Lazy caching of app query string
 		{
-			// this->queryString = DISTRIBUTION_URL;
-			// this->queryString += "/" + this->stream.substr(0,1);
-			// this->queryString += "/v1/release-download";
-			
-			this->queryString = "http://localhost/~jhaynie/t/cvf.zip";
+			this->queryString = DISTRIBUTION_URL;
+			this->queryString += "/" + this->stream.substr(0,1);
+			this->queryString += "/v1/release-download";
 
 			string mid = PlatformUtils::GetMachineId();
 			string os = OS_NAME;
