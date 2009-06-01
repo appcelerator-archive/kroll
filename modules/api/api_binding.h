@@ -11,6 +11,8 @@
 #include <map>
 #include <vector>
 #include <string>
+#include <Poco/Thread.h>
+#include <Poco/RunnableAdapter.h>
 
 namespace kroll
 {
@@ -52,6 +54,17 @@ namespace kroll
 		std::map<std::string, EventRecords> registrations;
 		std::map<int, BoundEventEntry> registrationsById;
 
+		// Use a FastMutex to protect the installer, because we are
+		// always trying to lock it in the same thread.
+		Poco::FastMutex installerMutex;
+		Poco::Thread* installerThread;
+		Poco::RunnableAdapter<APIBinding>* installerThreadAdapter;
+		vector<SharedDependency> installerDependencies;
+		SharedKMethod installerCallback;
+
+
+		void RunInstaller();
+
 		void _Set(const ValueList& args, SharedValue result);
 		void _Get(const ValueList& args, SharedValue result);
 		void _Register(const ValueList& args, SharedValue result);
@@ -68,7 +81,7 @@ namespace kroll
 		void _LogCritical(const ValueList& args, SharedValue result);
 		void _LogFatal(const ValueList& args, SharedValue result);
 
-		void _GetComponents(KComponentType type, const ValueList& args, SharedValue result);
+		void _GetInstalledComponentsImpl(KComponentType type, const ValueList& args, SharedValue result);
 		void _GetApplication(const ValueList& args, SharedValue value);
 		void _GetInstalledComponents(const ValueList& args, SharedValue value);
 		void _GetInstalledModules(const ValueList& args, SharedValue value);
@@ -77,6 +90,9 @@ namespace kroll
 		void _GetInstalledRuntimes(const ValueList& args, SharedValue value);
 		void _GetComponentSearchPaths(const ValueList& args, SharedValue value);
 		void _ReadApplicationManifest(const ValueList& args, SharedValue value);
+
+		void _CreateDependency(const ValueList& args, SharedValue value);
+		void _InstallDependencies(const ValueList& args, SharedValue value);
 
 		int GetNextRecord();
 	};

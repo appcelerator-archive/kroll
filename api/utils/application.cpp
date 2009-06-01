@@ -88,7 +88,7 @@ namespace UTILS_NS
 			}
 			else
 			{
-				SharedDependency d = Dependency::NewDependency(key, value);
+				SharedDependency d = Dependency::NewDependencyFromManifestLine(key, value);
 				application->dependencies.push_back(d);
 			}
 		}
@@ -285,7 +285,8 @@ namespace UTILS_NS
 
 	string Application::GetUpdateURL()
 	{
-		SharedDependency d = Dependency::NewDependency("app_update",this->version);
+		SharedDependency d = Dependency::NewDependencyFromValues(
+			APP_UPDATE, "app_update", this->version);
 		return GetURLForDependency(d);
 	}
 

@@ -14,9 +14,9 @@ namespace UTILS_NS
 		{
 			// Allow the user to force an override to the runtime home by setting the
 			// appropriate environment variable -- this will be the first path searched
-			if (EnvironmentUtils::Has("KR_RUNTIME_HOME"))
+			if (EnvironmentUtils::Has("KR_SEARCH_PATH"))
 			{
-				componentSearchPaths.push_back(EnvironmentUtils::Get("KR_RUNTIME_HOME"));
+				componentSearchPaths.push_back(EnvironmentUtils::Get("KR_SEARCH_PATH"));
 			}
 
 			componentSearchPaths.push_back(FileUtils::GetUserRuntimeHomeDirectory());
@@ -24,5 +24,57 @@ namespace UTILS_NS
 			initialized = true;
 		}
 		return componentSearchPaths;
+	}
+
+	bool BootUtils::RunInstaller(
+		vector<SharedDependency> missing,
+		SharedApplication application,
+		std::string updateFile,
+		std::string installerPath,
+		bool quiet)
+	{
+		if (installerPath.empty())
+		{
+			installerPath = application->path;
+		}
+
+		string exec = FileUtils::Join(
+			installerPath.c_str(),
+			"installer",
+			"Installer App.app",
+			"Contents", 
+			"MacOS",
+			"Installer App", NULL);
+
+		if (!FileUtils::IsFile(exec))
+		{
+			return false;
+		}
+
+		vector<string> args;
+		args.push_back("-appPath");
+		args.push_back(applicationHome);
+
+		if (!updateFile.empty())
+		{
+			args.push_back("-updateFile");
+			args.push_back(updateFile);
+		}
+
+		if (quiet)
+		{
+			args.push_back("-quiet");
+		}
+
+		std::vector<SharedDependency>::iterator di = missing.begin();
+		while (di != missing.end())
+		{
+			SharedDependency d = *di++;
+			string url = app->GetURLForDependency(d);
+			args.push_back(url);
+		}
+
+		FileUtils::RunAndWait(exec, args);
+		return true;
 	}
 }

@@ -123,11 +123,6 @@ namespace kroll
 		const std::string& GetRuntimePath();
 
 		/**
-		 * @return The home directory of the current runtime§
-		*/
-		const std::string& GetRuntimeHomePath();
-
-		/**
 		 * @return The id of the current application
 		*/
 		const std::string& GetApplicationID();

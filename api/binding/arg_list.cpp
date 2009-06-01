@@ -217,5 +217,100 @@ namespace kroll
 		return false;
 	}
 
+	int ArgList::GetInt(size_t index, int defaultValue) const
+	{
+		if (this->size() > index && this->at(index)->IsInt())
+		{
+			return this->at(index)->ToInt();
+		}
+		else
+		{
+			return defaultValue;
+		}
+	}
+
+	double ArgList::GetDouble(size_t index, double defaultValue) const
+	{
+		if (this->size() > index && this->at(index)->IsDouble())
+		{
+			return this->at(index)->ToDouble();
+		}
+		else
+		{
+			return defaultValue;
+		}
+	}
+
+	double ArgList::GetNumber(size_t index, double defaultValue) const
+	{
+		if (this->size() > index && this->at(index)->IsNumber())
+		{
+			return this->at(index)->ToDouble();
+		}
+		else
+		{
+			return defaultValue;
+		}
+	}
+
+	bool ArgList::GetBool(size_t index, bool defaultValue) const
+	{
+		if (this->size() > index && this->at(index)->IsBool())
+		{
+			return this->at(index)->ToBool();
+		}
+		else
+		{
+			return defaultValue;
+		}
+	}
+
+	std::string ArgList::GetString(size_t index, std::string defaultValue) const
+	{
+		if (this->size() > index && this->at(index)->IsString())
+		{
+			return this->at(index)->ToString();
+		}
+		else
+		{
+			return defaultValue;
+		}
+	}
+
+	SharedKObject ArgList::GetObject(size_t index, SharedKObject defaultValue) const
+	{
+		if (this->size() > index && this->at(index)->IsObject())
+		{
+			return this->at(index)->ToObject();
+		}
+		else
+		{
+			return defaultValue;
+		}
+	}
+
+	SharedKMethod ArgList::GetMethod(size_t index, SharedKMethod defaultValue) const
+	{
+		if (this->size() > index && this->at(index)->IsMethod())
+		{
+			return this->at(index)->ToMethod();
+		}
+		else
+		{
+			return defaultValue;
+		}
+	}
+
+	SharedKList ArgList::GetList(size_t index, SharedKList defaultValue) const
+	{
+		if (this->size() > index && this->at(index)->IsList())
+		{
+			return this->at(index)->ToList();
+		}
+		else
+		{
+			return defaultValue;
+		}
+	}
 }
 

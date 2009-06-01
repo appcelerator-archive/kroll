@@ -560,28 +560,6 @@ namespace UTILS_NS
 #endif
 	}
 
-
-	std::string FileUtils::GetUsername()
-	{
-#ifdef OS_OSX
-		return std::string([NSUserName() UTF8String]);
-#elif OS_WIN32
-		char buf[MAX_PATH];
-		DWORD size = MAX_PATH;
-        if (::GetUserNameA(buf,&size))
-		{
-			buf[size]='\0';
-		}
-		else
-		{
-			sprintf(buf,"Unknown");
-		}
-		return std::string(buf);
-#elif OS_LINUX
-		return std::string(getlogin());
-#endif
-	}
-
 #ifndef NO_UNZIP
 	void FileUtils::Unzip(std::string& source, std::string& destination)
 	{

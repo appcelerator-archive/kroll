@@ -57,7 +57,14 @@ namespace UTILS_NS
 		/**
 		 * Generate a dependency from a key/value pair found in a manifest
 		 */
-		static SharedDependency NewDependency(std::string key, std::string value);
+		static SharedDependency NewDependencyFromManifestLine(
+			std::string key, std::string value);
+
+		/**
+		 * Generate a dependency from a set of values
+		 */
+		static SharedDependency NewDependencyFromValues(
+			KComponentType type, std::string name, std::string version);
 	};
 
 	/**
@@ -104,6 +111,17 @@ namespace UTILS_NS
 		 *    manifest's contents or an empty vector if it cannot be read.
 		 */
 		static vector<pair<string, string> > ReadManifestFile(std::string);
+
+		/**
+		 * Launch the intaller to install a list of dependencies. 
+		 * @returns false only if the installer cannot be found
+		 */
+		static bool RunInstaller(
+			vector<SharedDependency> missing,
+			SharedApplication application,
+			std::string updatefile = "",
+			std::string installerPath = "",
+			bool quiet=false);
 
 		// These are lazily initialized static variables, so always
 		// access them via the respective accessor functions.

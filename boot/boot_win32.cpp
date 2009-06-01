@@ -53,120 +53,6 @@ namespace KrollBoot
 
 	bool RunInstaller(vector<SharedDependency> missing)
 	{
-		string exec = FileUtils::Join(
-			app->path.c_str(),
-			"installer",
-			"Installer.exe", NULL);
-
-		if (!FileUtils::IsFile(exec))
-		{
-			ShowError("Missing installer and application has additional modules that are needed.");
-			return false;
-		}
-
-		vector<string> args;
-		args.push_back("-appPath");
-		args.push_back(applicationHome);
-		args.push_back("-exePath");
-		args.push_back(argv[0]);
-		if (!updateFile.empty())
-		{
-			args.push_back("-updateFile");
-			args.push_back(updateFile);
-		}
-	
-		vector<string> jobs;
-		vector<SharedDependency>::iterator mi = missing.begin();
-		while (mi != missing.end())
-		{
-			SharedDependency d = *mi++;
-			string url = app->GetURLForDependency(d);
-			jobs.push_back(url);
-		}
-	
-		// A little bit of ugliness goes a long way:
-		// Use ShellExecuteEx here with the undocumented runas verb
-		// so that we can execute the installer executable and have it
-		// properly do the UAC thing. Why isn't this in the API?
-	
-		// More ugliness: The path length for ShellExecuteEx is limited so just
-		// pass a file name containing all the download jobs. :(
-		string tempdir = FileUtils::GetTempDirectory();
-		string jobsFile = FileUtils::Join(tempdir.c_str(), "jobs", NULL);
-		if (jobs.size() > 0)
-		{
-			FileUtils::CreateDirectory(tempdir);
-			std::ofstream outfile(jobsFile.c_str());
-			for (size_t i = 0; i < jobs.size(); i++)
-			{
-				outfile << jobs[i] << "\n";
-			}
-			outfile.close();
-			args.push_back(jobsFile);
-		}
-	
-		string paramString = "";
-		for (size_t i = 0; i < args.size(); i++)
-		{
-			paramString.append(" \"");
-			paramString.append(args.at(i));
-			paramString.append("\"");
-		}
-		printf("%s\n", paramString.c_str());
-	
-		SHELLEXECUTEINFOA ShExecInfo = {0};
-		ShExecInfo.cbSize = sizeof(SHELLEXECUTEINFO);
-		ShExecInfo.fMask = SEE_MASK_NOCLOSEPROCESS | SEE_MASK_FLAG_DDEWAIT;
-		ShExecInfo.hwnd = NULL;
-		ShExecInfo.lpVerb = "runas";
-		ShExecInfo.lpFile = exec.c_str();
-		ShExecInfo.lpParameters = paramString.c_str();
-		ShExecInfo.lpDirectory = NULL;
-		ShExecInfo.nShow = SW_SHOW;
-		ShExecInfo.hInstApp = NULL;	
-		ShellExecuteExA(&ShExecInfo);
-		WaitForSingleObject(ShExecInfo.hProcess, INFINITE);
-
-		if (FileUtils::IsDirectory(tempdir))
-		{
-			FileUtils::DeleteDirectory(tempdir);
-		}
-
-		// Ugh. Now we need to figure out where the app installer installed
-		// to. We would normally use stdout, but we had to execute with
-		// an expensive call to ShellExecuteEx, so we're just going to read
-		// the information from a file.
-		if (!app->IsInstalled())
-		{
-			string installedToFile = FileUtils::Join(app->path.c_str(), ".installedto", NULL);
-			// The user probably cancelled -- don't show an error
-			if (!FileUtils::IsFile(installedToFile))
-				return false;
-
-			std::ifstream file(installedToFile.c_str());
-			if (file.bad() || file.fail() || file.eof())
-			{
-				DeleteFileA(installedToFile.c_str());
-				ShowError("Application installed failed.");
-				return false; // Don't show further errors
-			}
-			std::getline(file, appInstallPath);
-			appInstallPath = FileUtils::Trim(appInstallPath);
-
-			SharedApplication newapp = Application::NewApplication(appInstallPath);
-			if (newapp.isNull())
-			{
-				ShowError("Application installed failed.");
-				return false; // Don't show further errors
-			}
-			else
-			{
-				app = newapp;
-			}
-			DeleteFileA(installedToFile.c_str());
-		}
-
-		return true;
 	}
 
 	bool IsWindowsXP()
@@ -179,14 +65,6 @@ namespace KrollBoot
 
 	void BootstrapPlatformSpecific(string path)
 	{
-
-			//string bundledRuntimePath = app->path + "\\runtime";
-			//if (!FileUtils::IsDirectory(bundledRuntimePath))
-			//{
-			//	FileUtils::CopyRecursive(app->runtime->path, bundledRuntimePath);
-			//}
-			//app->runtime->path = bundledRuntimePath;
-
 		// Add runtime path and all module paths to PATH
 		path = app->runtime->path + ";" + path;
 		string currentPath = EnvironmentUtils::Get("PATH");
@@ -244,6 +122,7 @@ namespace KrollBoot
 			&startupInfo, &processInformation);
 		free(applicationName);
 		free(allArguments);
+
 		if (success == 0)
 		{
 			return "Could not bootstrap the host.";
@@ -359,9 +238,10 @@ namespace KrollBoot
 	int SendCrashReport()
 	{
 		InitCrashDetection();
-		
 		std::string title = GetCrashDetectionTitle();
-		std::string msg = GetCrashDetectionMessage();
+		std::string msg = GetCrashDetectionHeader();
+		msg.append("\n\n");
+		msg.append(GetGetCrashDetectionMessage());
 
 		Win32PopupDialog popupDialog(NULL);
 		popupDialog.SetTitle(title);
@@ -369,7 +249,7 @@ namespace KrollBoot
 		popupDialog.SetShowCancelButton(true);
 		if (popupDialog.Show() != IDYES)
 		{
-			return 1;
+			return __LINE__;
 		}
 
 		wstring url = L"https://";
@@ -394,7 +274,7 @@ namespace KrollBoot
 #ifdef DEBUG		
 			ShowError("Error uploading crash dump.");
 #endif
-			return 2;
+			return __LINE__;
 		}
 #ifdef DEBUG
 		else

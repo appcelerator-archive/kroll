@@ -195,7 +195,19 @@ namespace UTILS_NS
 		}
 	}
 
-	SharedDependency Dependency::NewDependency(string key, string value)
+	SharedDependency Dependency::NewDependencyFromValues(
+		KComponentType type, std::string name, std::string version)
+	{
+		Dependency* d = new Dependency();
+		d->type = type;
+		d->name = name;
+		d->version = version;
+		d->requirement = EQ;
+		return d;
+	}
+
+	SharedDependency Dependency::NewDependencyFromManifestLine(
+		string key, string value)
 	{
 		Dependency* d = new Dependency();
 		size_t versionStart;
@@ -234,15 +246,21 @@ namespace UTILS_NS
 		d->version = value.substr(versionStart);
 
 		if (key == "runtime")
+		{
 			d->type = RUNTIME;
+		}
 		else if (key == "sdk")
+		{
 			d->type = SDK;
-		else if (key=="mobilesdk")
+		}
+		else if (key == "mobilesdk")
+		{
 			d->type = MOBILESDK;
-		else if (key=="app_update")
-			d->type = APP_UPDATE;
+		}
 		else
+		{
 			d->type = MODULE;
+		}
 		return d;
 	}
 

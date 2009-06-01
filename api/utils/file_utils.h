@@ -154,14 +154,14 @@ namespace UTILS_NS
 		/**
 		 * Get the system-wide runtime home directory. This is just a
 		 * default location --  to get the  current runtime home directory
-		 * read the value of KR_RUNTIME_HOME or Host::GetRuntimeHomePath instead.
+		 * read the value of the runtime path from the host's current application.
 		 */
 		static std::string GetSystemRuntimeHomeDirectory();
 
 		/**
 		 * Get the user-specific runtime home directory. This is just a
 		 * default location --  to get the  current runtime home directory
-		 * read the value of KR_RUNTIME_HOME or Host::GetRuntimeHomePath instead.
+		 * read the value of the runtime path from the host's current application.
 		 */
 		static std::string GetUserRuntimeHomeDirectory();
 

@@ -39,42 +39,6 @@ namespace KrollBoot
 		return std::string([contents UTF8String]);
 	}
 
-	bool RunInstaller(vector<SharedDependency> missing)
-	{
-		string exec = FileUtils::Join(
-			app->path.c_str(),
-			"installer",
-			"Installer App.app",
-			"Contents", 
-			"MacOS",
-			"Installer App", NULL);
-
-		if (!FileUtils::IsFile(exec))
-		{
-			ShowError("Missing installer and application has additional modules that are needed.");
-			return false;
-		}
-
-		vector<string> args;
-		args.push_back("-appPath");
-		args.push_back(applicationHome);
-		if (!updateFile.empty())
-		{
-			args.push_back("-updateFile");
-			args.push_back(updateFile);
-		}
-
-		std::vector<SharedDependency>::iterator di = missing.begin();
-		while (di != missing.end())
-		{
-			SharedDependency d = *di++;
-			string url = app->GetURLForDependency(d);
-			args.push_back(url);
-		}
-
-		return 0 == FileUtils::RunAndWait(exec, args);
-	}
-
 	void BootstrapPlatformSpecific(string moduleList)
 	{
 		moduleList = app->runtime->path + ":" + moduleList;
@@ -189,7 +153,7 @@ namespace KrollBoot
 		InitCrashDetection();
 		NSApplicationLoad();
 		NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-		NSString *title = [NSString stringWithCString:GetCrashDetectionTitle().c_str()];
+		NSString *title = [NSString stringWithCString:GetCrashDetectionHeader().c_str()];
 		NSString *message = [NSString stringWithCString:GetCrashDetectionMessage().c_str()];
 		[alert setMessageText: title];
 		[alert setInformativeText: message];

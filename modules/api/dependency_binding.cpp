@@ -18,6 +18,11 @@ namespace kroll
 		this->SetMethod("getRequirement", &DependencyBinding::_GetRequirement);
 	}
 
+	SharedDependency DependencyBinding::GetDependency()
+	{
+		return dependency;
+	}
+
 	void DependencyBinding::_GetType(const ValueList& args, SharedValue result)
 	{
 		result->SetInt((int) this->dependency->type);

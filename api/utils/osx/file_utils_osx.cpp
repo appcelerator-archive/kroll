@@ -31,4 +31,9 @@ namespace UTILS_NS
 		nsPath = [nsPath stringByAppendingPathComponent: [NSString stringWithUTF8String: PRODUCT_NAME]];
 		return [[nsPath stringByExpandingTildeInPath] UTF8String];
 	}
+
+	std::string FileUtils::GetUsername()
+	{
+		return std::string([NSUserName() UTF8String]);
+	}
 }

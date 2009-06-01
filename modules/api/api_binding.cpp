@@ -20,8 +20,13 @@ namespace kroll
 		host(host),
 		global(host->GetGlobalObject()),
 		record(0),
-		logger(Logger::Get("API"))
-	{ 
+		logger(Logger::Get("API")),
+		installerThread(0),
+		installerThreadAdapter(0)
+	{
+		this->installerThreadAdapter = new Poco::RunnableAdapter<APIBinding>(
+			*this, &APIBinding::RunInstaller);
+
 		this->SetMethod("set", &APIBinding::_Set);
 		this->SetMethod("get", &APIBinding::_Get);
 		this->SetMethod("log", &APIBinding::_Log);
@@ -37,6 +42,8 @@ namespace kroll
 		this->SetMethod("getInstalledRuntimes", &APIBinding::_GetInstalledRuntimes);
 		this->SetMethod("getComponentSearchPaths", &APIBinding::_GetComponentSearchPaths);
 		this->SetMethod("readApplicationManifest", &APIBinding::_ReadApplicationManifest);
+		this->SetMethod("createDependency", &APIBinding::_CreateDependency);
+		this->SetMethod("installDependencies", &APIBinding::_InstallDependencies);
 
 		// These are convenience methods so you can do:
 		// Titanium.API.debug("hello")
@@ -73,6 +80,7 @@ namespace kroll
 		this->Set("RUNTIME", Value::NewInt(RUNTIME));
 		this->Set("SDK", Value::NewInt(SDK));
 		this->Set("MOBILESDK", Value::NewInt(MOBILESDK));
+		this->Set("APP_UPDATE", Value::NewInt(APP_UPDATE));
 		this->Set("UNKNOWN", Value::NewInt(UNKNOWN));
 
 	}
@@ -115,7 +123,7 @@ namespace kroll
 	{
 		string s = args.at(0)->ToString();
 		const char *key = s.c_str();
-		SharedValue r = NULL;
+		SharedValue r = 0;
 		string::size_type pos = s.find_first_of(".");
 
 		if (pos==string::npos)
@@ -344,49 +352,44 @@ namespace kroll
 		SharedKObject app = new ApplicationBinding(host->GetApplication(), true);
 		result->SetObject(app);
 	}
-	
-	void APIBinding::_GetComponents(KComponentType type, const ValueList& args, SharedValue result)
+
+	void APIBinding::_GetInstalledComponentsImpl(
+		KComponentType type, const ValueList& args, SharedValue result)
 	{
-		bool force = false;
-		if (args.size()==1 && args.at(0)->IsBool())
-		{
-			force = args.at(0)->ToBool();
-		}
+		bool force = args.GetBool(0, false);
 		vector<SharedComponent>& components = BootUtils::GetInstalledComponents(force);
-		SharedKList componentList = ComponentVectorToKList(components,type);
+		SharedKList componentList = ComponentVectorToKList(components, type);
 		result->SetList(componentList);
 	}
 
 	void APIBinding::_GetInstalledComponents(const ValueList& args, SharedValue result)
 	{
-		bool force = false;
-		if (args.size()==1 && args.at(0)->IsBool())
-		{
-			force = args.at(0)->ToBool();
-		}
-		vector<SharedComponent>& components = BootUtils::GetInstalledComponents(force);
-		SharedKList componentList = ComponentVectorToKList(components);
-		result->SetList(componentList);
+		args.VerifyException("getInstalledComponents", "?b");
+		_GetInstalledComponentsImpl(UNKNOWN, args, result);
 	}
 
 	void APIBinding::_GetInstalledModules(const ValueList& args, SharedValue result)
 	{
-		_GetComponents(MODULE,args,result);
+		args.VerifyException("getInstalledModules", "?b");
+		_GetInstalledComponentsImpl(MODULE, args, result);
 	}
 
 	void APIBinding::_GetInstalledRuntimes(const ValueList& args, SharedValue result)
 	{
-		_GetComponents(RUNTIME,args,result);
+		args.VerifyException("getInstalledRuntimes", "?b");
+		_GetInstalledComponentsImpl(RUNTIME, args, result);
 	}
 
 	void APIBinding::_GetInstalledSDKs(const ValueList& args, SharedValue result)
 	{
-		_GetComponents(SDK,args,result);
+		args.VerifyException("getInstalledSDKs", "?b");
+		_GetInstalledComponentsImpl(SDK, args, result);
 	}
 
 	void APIBinding::_GetInstalledMobileSDKs(const ValueList& args, SharedValue result)
 	{
-		_GetComponents(MOBILESDK,args,result);
+		args.VerifyException("getInstalledMobileSDKs", "?b");
+		_GetInstalledComponentsImpl(MOBILESDK, args, result);
 	}
 
 	void APIBinding::_GetComponentSearchPaths(const ValueList& args, SharedValue result)
@@ -400,15 +403,7 @@ namespace kroll
 	{
 		args.VerifyException("readApplicationManifest", "s,?s");
 		string manifestPath = args.at(0)->ToString();
-		string appPath;
-		if (args.size() > 1 && args.at(1)->IsString())
-		{
-			appPath = args.at(1)->ToString();
-		}
-		else
-		{
-			appPath = FileUtils::Dirname(manifestPath);
-		}
+		string appPath = args.GetString(1, FileUtils::Dirname(manifestPath));
 
 		SharedApplication app = Application::NewApplication(manifestPath, appPath);
 		if (!app.isNull())
@@ -419,6 +414,84 @@ namespace kroll
 		{
 			result->SetNull();
 		}
+	}
+
+	void APIBinding::_CreateDependency(const ValueList& args, SharedValue result)
+	{
+		args.VerifyException("readApplicationManifest", "i,s,s");
+		int type = args.GetInt(0, UNKNOWN);
+		string name = args.GetString(1);
+		string version = args.GetString(2);
+
+		if (type != MODULE && type != RUNTIME
+			&& type != SDK && type != MOBILESDK
+			&& type != APP_UPDATE)
+		{
+			throw ValueException::FromString(
+				"Tried to create a dependency with an unknown dependency type");
+		}
+		else
+		{
+			SharedDependency d = Dependency::NewDependencyFromValues(
+				static_cast<KComponentType>(type), name, version);
+			SharedKObject dBinding = new DependencyBinding(d);
+			result->SetObject(dBinding);
+		}
+	}
+
+	void APIBinding::_InstallDependencies(const ValueList& args, SharedValue result)
+	{
+		args.VerifyException("installDependencies", "l,m");
+		SharedKList dependenciesList = args.GetList(0);
+		SharedKMethod callback = args.GetMethod(1, 0);
+		vector<SharedDependency> dependencies;
+
+		for (unsigned int i = 0; i < dependenciesList->Size(); i++)
+		{
+			if (!dependenciesList->At(i)->IsObject())
+			{
+				continue;
+			}
+
+			SharedPtr<DependencyBinding> d =
+				dependenciesList->At(i)->ToObject().cast<DependencyBinding>();
+			if (!d.isNull())
+			{
+				dependencies.push_back(d->GetDependency());
+			}
+		}
+
+		if (dependencies.size() > 0)
+		{
+			if (!this->installerMutex.tryLock())
+			{
+				throw ValueException::FromString(
+					"Tried to launch more than one instance of the installer");
+			}
+
+			if (this->installerThread)
+			{
+				delete this->installerThread;
+			}
+			this->installerDependencies = dependencies;
+			this->installerCallback = callback;
+			this->installerThread = new Poco::Thread();
+			this->installerThread->start(*this->installerThreadAdapter);
+		}
+	}
+
+	void APIBinding::RunInstaller()
+	{
+		SharedApplication app = host->GetApplication();
+		BootUtils::RunInstaller(
+			this->installerDependencies, app, "", app->runtime->path, true);
+
+		if (!this->installerCallback.isNull())
+		{
+			host->InvokeMethodOnMainThread(
+				this->installerCallback, ValueList(), false);
+		}
+		this->installerMutex.unlock();
 	}
 
 	SharedKList APIBinding::ComponentVectorToKList(
