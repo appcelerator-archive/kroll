@@ -11,6 +11,10 @@
 
 namespace kroll
 {
+	Blob::Blob() 
+	{
+		Create(NULL,0);
+	}
 
 	Blob::Blob(char *buf, int len)
 	{
@@ -75,7 +79,15 @@ namespace kroll
 
 	void Blob::ToString(const ValueList& args, SharedValue result)
 	{
-		result->SetString(buffer);
+		if (this->length == 0)
+		{
+			std::string s;
+			result->SetString(s);
+		}
+		else
+		{
+			result->SetString(buffer);
+		}
 	}
 
 	void Blob::Get(const ValueList& args, SharedValue result)
