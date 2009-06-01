@@ -53,7 +53,7 @@ namespace UTILS_NS
 
 		vector<string> args;
 		args.push_back("-appPath");
-		args.push_back(applicationHome);
+		args.push_back(application->path);
 
 		if (!updateFile.empty())
 		{
@@ -70,7 +70,7 @@ namespace UTILS_NS
 		while (di != missing.end())
 		{
 			SharedDependency d = *di++;
-			string url = app->GetURLForDependency(d);
+			string url = application->GetURLForDependency(d);
 			args.push_back(url);
 		}
 
