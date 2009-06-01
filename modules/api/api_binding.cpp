@@ -32,6 +32,7 @@ namespace kroll
 		this->SetMethod("getApplication", &APIBinding::_GetApplication);
 		this->SetMethod("getInstalledComponents", &APIBinding::_GetInstalledComponents);
 		this->SetMethod("getInstalledSDKs", &APIBinding::_GetInstalledSDKs);
+		this->SetMethod("getInstalledMobileSDKs", &APIBinding::_GetInstalledMobileSDKs);
 		this->SetMethod("getInstalledModules", &APIBinding::_GetInstalledModules);
 		this->SetMethod("getInstalledRuntimes", &APIBinding::_GetInstalledRuntimes);
 		this->SetMethod("getComponentSearchPaths", &APIBinding::_GetComponentSearchPaths);
@@ -70,6 +71,8 @@ namespace kroll
 		// Component types
 		this->Set("MODULE", Value::NewInt(MODULE));
 		this->Set("RUNTIME", Value::NewInt(RUNTIME));
+		this->Set("SDK", Value::NewInt(SDK));
+		this->Set("MOBILESDK", Value::NewInt(MOBILESDK));
 		this->Set("UNKNOWN", Value::NewInt(UNKNOWN));
 
 	}
@@ -341,33 +344,49 @@ namespace kroll
 		SharedKObject app = new ApplicationBinding(host->GetApplication(), true);
 		result->SetObject(app);
 	}
+	
+	void APIBinding::_GetComponents(KComponentType type, const ValueList& args, SharedValue result)
+	{
+		bool force = false;
+		if (args.size()==1 && args.at(0)->IsBool())
+		{
+			force = args.at(0)->ToBool();
+		}
+		vector<SharedComponent>& components = BootUtils::GetInstalledComponents(force);
+		SharedKList componentList = ComponentVectorToKList(components,type);
+		result->SetList(componentList);
+	}
 
 	void APIBinding::_GetInstalledComponents(const ValueList& args, SharedValue result)
 	{
-		vector<SharedComponent>& components = BootUtils::GetInstalledComponents(false);
+		bool force = false;
+		if (args.size()==1 && args.at(0)->IsBool())
+		{
+			force = args.at(0)->ToBool();
+		}
+		vector<SharedComponent>& components = BootUtils::GetInstalledComponents(force);
 		SharedKList componentList = ComponentVectorToKList(components);
 		result->SetList(componentList);
 	}
 
 	void APIBinding::_GetInstalledModules(const ValueList& args, SharedValue result)
 	{
-		vector<SharedComponent>& components = BootUtils::GetInstalledComponents(false);
-		SharedKList componentList = ComponentVectorToKList(components, MODULE);
-		result->SetList(componentList);
+		_GetComponents(MODULE,args,result);
 	}
 
 	void APIBinding::_GetInstalledRuntimes(const ValueList& args, SharedValue result)
 	{
-		vector<SharedComponent>& components = BootUtils::GetInstalledComponents(false);
-		SharedKList componentList = ComponentVectorToKList(components, RUNTIME);
-		result->SetList(componentList);
+		_GetComponents(RUNTIME,args,result);
 	}
 
 	void APIBinding::_GetInstalledSDKs(const ValueList& args, SharedValue result)
 	{
-		vector<SharedComponent>& components = BootUtils::GetInstalledComponents(false);
-		SharedKList componentList = ComponentVectorToKList(components, SDK);
-		result->SetList(componentList);
+		_GetComponents(SDK,args,result);
+	}
+
+	void APIBinding::_GetInstalledMobileSDKs(const ValueList& args, SharedValue result)
+	{
+		_GetComponents(MOBILESDK,args,result);
 	}
 
 	void APIBinding::_GetComponentSearchPaths(const ValueList& args, SharedValue result)

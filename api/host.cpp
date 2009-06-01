@@ -236,6 +236,12 @@ namespace kroll
 	{
 		return this->application->runtime->path;
 	}
+	
+	const std::string& Host::GetRuntimeHomePath()
+	{
+		//FIXME - martin review the right location of this
+		return this->application->runtime->path;
+	}
 
 	const std::string& Host::GetApplicationID()
 	{
