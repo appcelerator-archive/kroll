@@ -4,6 +4,7 @@
  * Copyright (c) 2009 Appcelerator, Inc. All Rights Reserved.
  */
 #include "../utils.h"
+using std::wstring;
 
 namespace UTILS_NS
 {
@@ -37,7 +38,7 @@ namespace UTILS_NS
 		}
 
 		string exec = FileUtils::Join(
-			insallerPath.c_str(), "installer", "Installer.exe", NULL);
+			installerPath.c_str(), "installer", "Installer.exe", NULL);
 
 		if (!FileUtils::IsFile(exec))
 		{
@@ -46,10 +47,10 @@ namespace UTILS_NS
 
 		vector<string> args;
 		args.push_back("-appPath");
-		args.push_back(app->path);
+		args.push_back(application->path);
 
 		args.push_back("-exePath");
-		args.push_back(argv[0]);
+		args.push_back(application->GetExecutablePath());
 		if (!updateFile.empty())
 		{
 			args.push_back("-updateFile");
@@ -66,7 +67,7 @@ namespace UTILS_NS
 		while (mi != missing.end())
 		{
 			SharedDependency d = *mi++;
-			string url = app->GetURLForDependency(d);
+			string url = application->GetURLForDependency(d);
 			jobs.push_back(url);
 		}
 	
@@ -122,9 +123,9 @@ namespace UTILS_NS
 		// to. We would normally use stdout, but we had to execute with
 		// an expensive call to ShellExecuteEx, so we're just going to read
 		// the information from a file.
-		if (!app->IsInstalled())
+		if (!application->IsInstalled())
 		{
-			string installedToFile = FileUtils::Join(app->path.c_str(), ".installedto", NULL);
+			string installedToFile = FileUtils::Join(application->path.c_str(), ".installedto", NULL);
 			// The user probably cancelled -- don't show an error
 			if (!FileUtils::IsFile(installedToFile))
 				return false;
@@ -133,21 +134,20 @@ namespace UTILS_NS
 			if (file.bad() || file.fail() || file.eof())
 			{
 				DeleteFileA(installedToFile.c_str());
-				ShowError("Application installed failed.");
 				return false; // Don't show further errors
 			}
+			string appInstallPath;
 			std::getline(file, appInstallPath);
 			appInstallPath = FileUtils::Trim(appInstallPath);
 
 			SharedApplication newapp = Application::NewApplication(appInstallPath);
 			if (newapp.isNull())
 			{
-				ShowError("Application installed failed.");
 				return false; // Don't show further errors
 			}
 			else
 			{
-				app = newapp;
+				application = newapp;
 			}
 			DeleteFileA(installedToFile.c_str());
 		}

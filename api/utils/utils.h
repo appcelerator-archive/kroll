@@ -11,6 +11,10 @@
 // include libkroll, we should use our simple version
 // of SharedPtr -- if not use Poco's which is thread-safe.
 #if defined(KROLL_HOST_EXPORT) || defined(KROLL_API_EXPORT) || defined(_KROLL_H_)
+	#ifdef OS_WIN32
+		#include <windows.h>
+	#endif
+
 	#include "../kroll.h"
 	using Poco::SharedPtr;
 	#define UTILS_NS kroll
