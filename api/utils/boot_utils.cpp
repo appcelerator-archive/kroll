@@ -123,7 +123,7 @@ namespace UTILS_NS
 		}
 
 		// Read everything that looks like <searchpath>/mobilesdk/<os>/*
-		string sdkPath = FileUtils::Join(path.c_str(), "sdk", OS_NAME, NULL);
+		string sdkPath = FileUtils::Join(path.c_str(), "mobilesdk", OS_NAME, NULL);
 		FileUtils::ListDir(sdkPath, paths);
 
 		vector<string>::iterator sdkVersion = paths.begin();
