@@ -27,11 +27,6 @@ namespace KrollBoot
 	extern int argc;
 	extern const char** argv;
 
-	// If this is an application install -- versus an update
-	// or just missing modules, record where it installed to
-	// Windows does an actual copy-files type install currently.
-	string appInstallPath;
-
 	inline void ShowError(string msg, bool fatal)
 	{
 		std::cerr << "Error: " << msg << std::endl;
@@ -241,7 +236,7 @@ namespace KrollBoot
 		std::string title = GetCrashDetectionTitle();
 		std::string msg = GetCrashDetectionHeader();
 		msg.append("\n\n");
-		msg.append(GetGetCrashDetectionMessage());
+		msg.append(GetCrashDetectionMessage());
 
 		Win32PopupDialog popupDialog(NULL);
 		popupDialog.SetTitle(title);
