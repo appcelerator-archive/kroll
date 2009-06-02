@@ -139,23 +139,13 @@ namespace KrollBoot
 
 	char breakpadCallBuffer[PATH_MAX];
 	bool HandleCrash(
-		const char* dumpDirectory, const char* minidumpId, void* context, bool succeeded)
+		const char* dumpPath, const char* dumpId, void* context, bool succeeded)
 	{
 		if (succeeded)
 		{
-			NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-			NSApplicationLoad();
-			NSLog(@"Crash detected");
-			// use a task so that we can exit this process but
-			// launch the dialog to show and send the crash report
-			NSTask *task = [[NSTask alloc] init];
-			[task setLaunchPath:[NSString stringWithCString:argv[0]]];
-			[task setArguments:[NSArray arrayWithObjects:
-				[NSString stringWithCString:CRASH_REPORT_OPT], 
-				[NSString stringWithCString:dumpDirectory], 
-				[NSString stringWithCString:minidumpId],nil]];
-			[task launch];
-			[pool release];
+			snprintf(breakpadCallBuffer, PATH_MAX - 1,
+				 "\"%s\" %s \"%s\" %s &", argv[0], CRASH_REPORT_OPT, dumpPath, dumpId);
+			system(breakpadCallBuffer);
 		}
 		return __LINE__;
 	}
