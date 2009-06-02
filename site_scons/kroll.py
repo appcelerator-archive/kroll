@@ -280,7 +280,7 @@ class BuildConfig(object):
 			if os.path.exists(f): os.remove(f)
 			self.utils.Zip(m.build_dir, f, exclude=excludes)
 
-	def generate_manifest(self, name, id, guid, exclude=None, include=None, image=None, publisher=None, url=None, version=None):
+	def generate_manifest(self, name, id, guid, exclude=None, include=None, image=None, publisher=None, url=None, version=None, sdk=False):
 		manifest = "#appname: %s\n" % name
 		manifest += "#appid: %s\n" % id
 		manifest += "#guid: %s\n" % guid
@@ -297,6 +297,8 @@ class BuildConfig(object):
 				continue
 			else:
 				manifest += "%s:%s\n" % (m.name, m.version)
+		if sdk:
+			manifest += "sdk:%s\n" % self.version		
 		return manifest
 
 	def add_thirdparty(self, env, name):

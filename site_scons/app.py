@@ -3,7 +3,7 @@ import os.path as p, os, types, glob, futils, shutil
 import zipfile
 
 class App:
-	def __init__(self, build, fullname="", id="", version="0.1", guid="fakeguid", image=None, publisher=None, url=None):
+	def __init__(self, build, fullname="", id="", version="0.1", guid="fakeguid", image=None, publisher=None, url=None, sdk=False):
 		self.build = build
 		self.fullname = fullname
 		self.id = id
@@ -13,6 +13,7 @@ class App:
 		self.image = image
 		self.publisher = publisher
 		self.url = url
+		self.sdk = sdk
 
 	def installed(self):
 		f = open(p.join(self.contents, '.installed'),'w')
@@ -117,7 +118,8 @@ class App:
 			image=self.image,
 			publisher=self.publisher,
 			url=self.url,
-			version=self.version)
+			version=self.version,
+			sdk=self.sdk)
 		m_file = open(p.join(self.contents, 'manifest'), 'w')
 		m_file.write(manifest)
 		m_file.close()
