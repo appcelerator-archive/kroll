@@ -57,8 +57,8 @@ class App:
 
 			self.status('copying modules to %s' % self.contents)
 			for module_dir in glob.glob(p.join(src_modules, '*')):
-				futils.LightWeightCopyTree(module_dir, p.join(self.contents, 'modules', p.basename(module_dir)))
-			#futils.CopyToDir(src_modules, self.contents, exclude=excludes)
+				module_target = p.join(self.contents, 'modules', p.basename(module_dir))
+				futils.LightWeightCopyTree(module_dir, module_target, exclude=excludes)
 
 		self.status('copying kboot to %s' % self.exe)
 		futils.Copy(self.kboot, self.exe)
