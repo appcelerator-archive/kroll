@@ -119,6 +119,18 @@ namespace KrollBoot
 		return executor(argc, argv);
 	}
 
+	bool RunInstaller(vector<SharedDependency> missing)
+	{
+		string exec = FileUtils::Join(
+			app->path.c_str(), "installer", "installer", NULL);
+		if (!FileUtils::IsFile(exec))
+		{
+			ShowError("Missing installer and application has additional modules that are needed.");
+			return false;
+		}
+		return BootUtils::RunInstaller(missing, app, updateFile);
+	}
+
 #ifdef USE_BREAKPAD
 	static google_breakpad::ExceptionHandler* breakpad;
 	extern string dumpFilePath;

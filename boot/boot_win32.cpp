@@ -46,10 +46,6 @@ namespace KrollBoot
 		return FileUtils::Dirname(string(path));
 	}
 
-	bool RunInstaller(vector<SharedDependency> missing)
-	{
-	}
-
 	bool IsWindowsXP()
 	{
 		OSVERSIONINFO osVersion;
@@ -164,6 +160,53 @@ namespace KrollBoot
 		}
 
 		return executor(::GetModuleHandle(NULL), argc,(const char**)argv);
+	}
+
+	bool RunInstaller(vector<SharedDependency> missing)
+	{
+		string exec = FileUtils::Join(
+			app->path.c_str(), "installer", "Installer.exe", NULL);
+		if (!FileUtils::IsFile(exec))
+		{
+			ShowError("Missing installer and application has additional modules that are needed.");
+			return false;
+		}
+		bool result = BootUtils::RunInstaller(missing, app, updateFile);
+
+		// Ugh. Now we need to figure out where the app installer installed
+		// to. We would normally use stdout, but we had to execute with
+		// an expensive call to ShellExecuteEx, so we're just going to read
+		// the information from a file.
+		if (!app->IsInstalled())
+		{
+			string installedToFile = FileUtils::Join(app->path.c_str(), ".installedto", NULL);
+			// The user probably cancelled -- don't show an error
+			if (!FileUtils::IsFile(installedToFile))
+				return true;
+
+			std::ifstream file(installedToFile.c_str());
+			if (file.bad() || file.fail() || file.eof())
+			{
+				DeleteFileA(installedToFile.c_str());
+				ShowError("Could not determine where installer installed application.");
+				return false; // Don't show further errors
+			}
+			string appInstallPath;
+			std::getline(file, appInstallPath);
+			appInstallPath = FileUtils::Trim(appInstallPath);
+
+			SharedApplication newapp = Application::NewApplication(appInstallPath);
+			if (newapp.isNull())
+			{
+				return false; // Don't show further errors
+			}
+			else
+			{
+				app = newapp;
+			}
+			DeleteFileA(installedToFile.c_str());
+		}
+		return result;
 	}
 
 #ifdef USE_BREAKPAD

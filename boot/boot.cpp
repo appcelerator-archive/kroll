@@ -73,9 +73,8 @@ namespace KrollBoot
 
 		if (missing.size() > 0 || !app->IsInstalled() || !updateFile.empty())
 		{
-			if (!BootUtils::RunInstaller(missing, app, updateFile))
+			if (!RunInstaller(missing))
 			{
-				ShowError("Missing installer and application has additional modules that are needed.");
 				return __LINE__;
 			}
 

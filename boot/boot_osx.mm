@@ -113,6 +113,24 @@ namespace KrollBoot
 		return executor(argc, (const char**)argv);
 	}
 
+	bool RunInstaller(vector<SharedDependency> missing)
+	{
+		string exec = FileUtils::Join(
+			app->path.c_str(),
+			"installer",
+			"Installer App.app",
+			"Contents", 
+			"MacOS",
+			"Installer App", NULL);
+		if (!FileUtils::IsFile(exec))
+		{
+			ShowError("Missing installer and application has additional modules that are needed.");
+			return false;
+		}
+
+		return BootUtils::RunInstaller(missing, app, updateFile);
+	}
+
 #ifdef USE_BREAKPAD
 	// Allocate this statically because after a crash we want to access
 	// the heap as little as possible.

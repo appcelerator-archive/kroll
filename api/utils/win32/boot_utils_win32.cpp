@@ -119,39 +119,6 @@ namespace UTILS_NS
 			FileUtils::DeleteDirectory(tempdir);
 		}
 
-		// Ugh. Now we need to figure out where the app installer installed
-		// to. We would normally use stdout, but we had to execute with
-		// an expensive call to ShellExecuteEx, so we're just going to read
-		// the information from a file.
-		if (!application->IsInstalled())
-		{
-			string installedToFile = FileUtils::Join(application->path.c_str(), ".installedto", NULL);
-			// The user probably cancelled -- don't show an error
-			if (!FileUtils::IsFile(installedToFile))
-				return false;
-
-			std::ifstream file(installedToFile.c_str());
-			if (file.bad() || file.fail() || file.eof())
-			{
-				DeleteFileA(installedToFile.c_str());
-				return false; // Don't show further errors
-			}
-			string appInstallPath;
-			std::getline(file, appInstallPath);
-			appInstallPath = FileUtils::Trim(appInstallPath);
-
-			SharedApplication newapp = Application::NewApplication(appInstallPath);
-			if (newapp.isNull())
-			{
-				return false; // Don't show further errors
-			}
-			else
-			{
-				application = newapp;
-			}
-			DeleteFileA(installedToFile.c_str());
-		}
-
 		return true;
 	}
 }
