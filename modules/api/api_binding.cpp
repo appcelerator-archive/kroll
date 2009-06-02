@@ -44,6 +44,7 @@ namespace kroll
 		this->SetMethod("readApplicationManifest", &APIBinding::_ReadApplicationManifest);
 		this->SetMethod("createDependency", &APIBinding::_CreateDependency);
 		this->SetMethod("installDependencies", &APIBinding::_InstallDependencies);
+		this->SetMethod("componentGUIDToComponentType", &APIBinding::_ComponentGUIDToComponentType);
 
 		// These are convenience methods so you can do:
 		// Titanium.API.debug("hello")
@@ -477,6 +478,35 @@ namespace kroll
 			this->installerCallback = callback;
 			this->installerThread = new Poco::Thread();
 			this->installerThread->start(*this->installerThreadAdapter);
+		}
+	}
+	
+	void APIBinding::_ComponentGUIDToComponentType(const ValueList& args, SharedValue result)
+	{
+		std::string type = args.at(0)->ToString();
+		if (type == RUNTIME_UUID)
+		{
+			result->SetInt(RUNTIME);
+		}
+		else if (type == MODULE_UUID)
+		{
+			result->SetInt(MODULE);
+		}
+		else if (type == SDK_UUID)
+		{
+			result->SetInt(SDK);
+		}
+		else if (type == MOBILESDK_UUID)
+		{
+			result->SetInt(MOBILESDK);
+		}
+		else if (type == APP_UPDATE_UUID)
+		{
+			result->SetInt(APP_UPDATE);
+		}
+		else
+		{
+			result->SetInt(UNKNOWN);
 		}
 	}
 

@@ -90,6 +90,7 @@ namespace kroll
 		void _GetInstalledRuntimes(const ValueList& args, SharedValue value);
 		void _GetComponentSearchPaths(const ValueList& args, SharedValue value);
 		void _ReadApplicationManifest(const ValueList& args, SharedValue value);
+		void _ComponentGUIDToComponentType(const ValueList& args, SharedValue value);
 
 		void _CreateDependency(const ValueList& args, SharedValue value);
 		void _InstallDependencies(const ValueList& args, SharedValue value);
