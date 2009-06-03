@@ -16,7 +16,9 @@ class App:
 		self.sdk = sdk
 
 	def installed(self):
-		f = open(p.join(self.contents, '.installed'),'w')
+		if not p.exists(self.data):
+			os.makedirs(self.data)
+		f = open(p.join(self.data, '.installed'),'w')
 		f.write('#')
 		f.close()
 		
@@ -35,15 +37,18 @@ class App:
 			self.contents = build_dir
 			self.exe = p.join(self.contents, self.fullname)
 			self.kboot = p.join(self.build.dir, 'runtime', 'template', 'kboot')
+			self.data = p.join(p.expanduser('~'), 'titanium', 'appdata', self.id)
 		elif self.build.is_win32():
 			self.contents = build_dir
 			self.exe = p.join(self.contents, self.fullname+'.exe')
 			self.kboot = p.join(self.build.dir, 'runtime', 'template', 'kboot.exe')
+			self.data = p.join(os.environ['APPDATA'], 'Titanium', 'appdata', self.id)
 		elif self.build.is_osx():
 			if not self.dir.endswith('.app'): self.dir += '.app'
 			self.contents = p.join(self.dir, 'Contents')
 			self.exe = p.join(self.contents, 'MacOS', self.fullname)
 			self.kboot = p.join(self.build.dir, 'runtime', 'template', 'kboot')
+			self.data = p.join(p.expanduser('~'), 'Library', 'Application Support', 'Titanium', 'appdata', self.id)
 
 		self.runtime = p.join(self.contents, 'runtime');
 		self.resources = p.join(self.contents, 'Resources');
