@@ -147,7 +147,7 @@ namespace UTILS_NS
 	bool Application::IsInstalled()
 	{
 		string marker = FileUtils::Join(
-			this->path.c_str(),
+			this->GetDataPath().c_str(),
 			INSTALLED_MARKER_FILENAME,
 			NULL);
 		return FileUtils::IsFile(marker);

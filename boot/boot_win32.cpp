@@ -179,7 +179,7 @@ namespace KrollBoot
 		// the information from a file.
 		if (!app->IsInstalled())
 		{
-			string installedToFile = FileUtils::Join(app->path.c_str(), ".installedto", NULL);
+			string installedToFile = FileUtils::Join(app->GetDataPath().c_str(), ".installedto", NULL);
 			// The user probably cancelled -- don't show an error
 			if (!FileUtils::IsFile(installedToFile))
 				return true;
