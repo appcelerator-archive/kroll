@@ -146,11 +146,16 @@ namespace UTILS_NS
 
 	bool Application::IsInstalled()
 	{
-		string marker = FileUtils::Join(
+		string dataDirMarker = FileUtils::Join(
 			this->GetDataPath().c_str(),
 			INSTALLED_MARKER_FILENAME,
 			NULL);
-		return FileUtils::IsFile(marker);
+		string appDirMarker = FileUtils::Join(
+			this->path.c_str(),
+			INSTALLED_MARKER_FILENAME,
+			NULL);
+		return FileUtils::IsFile(dataDirMarker) ||
+			FileUtils::IsFile(appDirMarker);
 	}
 
 	vector<SharedDependency> Application::ResolveDependencies()
