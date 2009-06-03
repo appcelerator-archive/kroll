@@ -80,10 +80,10 @@ namespace UTILS_NS
 		std::transform(product.begin(), product.end(), product.begin(), tolower);
 
 		std::string path;
- 		if (EnvironmentUtils::Has("KR_RUNTIME_HOME"))
+ 		if (EnvironmentUtils::Has("KR_RUNTIME"))
 		{
-			path = EnvironmentUtils::Get("KR_RUNTIME_HOME");
-			path = FileUtils::Join(path.c_str(), product.c_str(), NULL);
+			path = EnvironmentUtils::Get("KR_RUNTIME");
+			path = FileUtils::Join(path.c_str(), "..", "..", "..", product.c_str(), NULL);
 			possibleMIDFiles.push_back(path);
 		}
 

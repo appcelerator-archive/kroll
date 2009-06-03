@@ -16,6 +16,7 @@ namespace UTILS_NS
 
 	void ScanRuntimesAtPath(string, vector<SharedComponent>&);
 	void ScanSDKsAtPath(string, vector<SharedComponent>&);
+	void ScanMobileSDKsAtPath(string, vector<SharedComponent>&);
 	void ScanModulesAtPath(string, vector<SharedComponent>&);
 	void ScanBundledComponents(string, vector<SharedComponent>&);
 	void AddToComponentVector(vector<SharedComponent>&, SharedComponent);
@@ -49,6 +50,7 @@ namespace UTILS_NS
 				string path = *i++;
 				ScanRuntimesAtPath(path, installedComponents);
 				ScanSDKsAtPath(path, installedComponents);
+				ScanMobileSDKsAtPath(path, installedComponents);
 				ScanModulesAtPath(path, installedComponents);
 			}
 
@@ -107,6 +109,29 @@ namespace UTILS_NS
 			string version = *sdkVersion++;
 			string fullPath = FileUtils::Join(sdkPath.c_str(), version.c_str(), NULL);
 			c = KComponent::NewComponent(SDK, "sdk", version, fullPath);
+			AddToComponentVector(results, c);
+		}
+	}
+
+	void ScanMobileSDKsAtPath(string path, vector<SharedComponent>& results)
+	{
+		vector<string> paths;
+		SharedComponent c;
+		if (!FileUtils::IsDirectory(path))
+		{
+			return;
+		}
+
+		// Read everything that looks like <searchpath>/mobilesdk/<os>/*
+		string sdkPath = FileUtils::Join(path.c_str(), "mobilesdk", OS_NAME, NULL);
+		FileUtils::ListDir(sdkPath, paths);
+
+		vector<string>::iterator sdkVersion = paths.begin();
+		while (sdkVersion != paths.end())
+		{
+			string version = *sdkVersion++;
+			string fullPath = FileUtils::Join(sdkPath.c_str(), version.c_str(), NULL);
+			c = KComponent::NewComponent(MOBILESDK, "mobilesdk", version, fullPath);
 			AddToComponentVector(results, c);
 		}
 	}
@@ -170,7 +195,19 @@ namespace UTILS_NS
 		}
 	}
 
-	SharedDependency Dependency::NewDependency(string key, string value)
+	SharedDependency Dependency::NewDependencyFromValues(
+		KComponentType type, std::string name, std::string version)
+	{
+		Dependency* d = new Dependency();
+		d->type = type;
+		d->name = name;
+		d->version = version;
+		d->requirement = EQ;
+		return d;
+	}
+
+	SharedDependency Dependency::NewDependencyFromManifestLine(
+		string key, string value)
 	{
 		Dependency* d = new Dependency();
 		size_t versionStart;
@@ -209,11 +246,21 @@ namespace UTILS_NS
 		d->version = value.substr(versionStart);
 
 		if (key == "runtime")
+		{
 			d->type = RUNTIME;
+		}
 		else if (key == "sdk")
+		{
 			d->type = SDK;
+		}
+		else if (key == "mobilesdk")
+		{
+			d->type = MOBILESDK;
+		}
 		else
+		{
 			d->type = MODULE;
+		}
 		return d;
 	}
 

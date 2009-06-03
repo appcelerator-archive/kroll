@@ -88,7 +88,7 @@ namespace UTILS_NS
 			}
 			else
 			{
-				SharedDependency d = Dependency::NewDependency(key, value);
+				SharedDependency d = Dependency::NewDependencyFromManifestLine(key, value);
 				application->dependencies.push_back(d);
 			}
 		}
@@ -147,7 +147,7 @@ namespace UTILS_NS
 	bool Application::IsInstalled()
 	{
 		string marker = FileUtils::Join(
-			this->path.c_str(),
+			this->GetDataPath().c_str(),
 			INSTALLED_MARKER_FILENAME,
 			NULL);
 		return FileUtils::IsFile(marker);
@@ -179,6 +179,10 @@ namespace UTILS_NS
 			{
 				this->sdks.push_back(c);
 			}
+			else if (c->type == MOBILESDK)
+			{
+				this->sdks.push_back(c);
+			}
 			else if (c->type == RUNTIME)
 			{
 				this->runtime = c;
@@ -200,6 +204,14 @@ namespace UTILS_NS
 		{
 			zipfile = string("sdk-") +  d->version + ".zip";
 		}
+		else if (d->type == MOBILESDK)
+		{
+			zipfile = string("mobilesdk-") +  d->version + ".zip";
+		}
+		else if (d->type == APP_UPDATE)
+		{
+			zipfile = "appupdate";
+		}
 		else
 		{
 			zipfile = string("module-") + d->name + "-" + d->version + ".zip";
@@ -212,6 +224,8 @@ namespace UTILS_NS
 		if (this->queryString.empty()) // Lazy caching of app query string
 		{
 			this->queryString = DISTRIBUTION_URL;
+			this->queryString += "/" + this->stream.substr(0,1);
+			this->queryString += "/v1/release-download";
 
 			string mid = PlatformUtils::GetMachineId();
 			string os = OS_NAME;
@@ -238,8 +252,12 @@ namespace UTILS_NS
 			url.append(RUNTIME_UUID);
 		if (d->type == SDK)
 			url.append(SDK_UUID);
+		if (d->type == MOBILESDK)
+			url.append(MOBILESDK_UUID);
 		if (d->type == MODULE)
 			url.append(MODULE_UUID);
+		if (d->type == APP_UPDATE)
+			url.append(APP_UPDATE_UUID);
 		return url;
 	}
 
@@ -267,7 +285,9 @@ namespace UTILS_NS
 
 	string Application::GetUpdateURL()
 	{
-		return "nourlyet";
+		SharedDependency d = Dependency::NewDependencyFromValues(
+			APP_UPDATE, "app_update", this->version);
+		return GetURLForDependency(d);
 	}
 
 	SharedComponent Application::ResolveDependency(SharedDependency dep, vector<SharedComponent>& components)

@@ -67,6 +67,7 @@ namespace KrollBoot
 #ifdef USE_BREAKPAD
 	void InitCrashDetection();
 	string GetCrashDetectionTitle();
+	string GetCrashDetectionHeader();
 	string GetCrashDetectionMessage();
 	map<string, string> GetCrashReportParameters();
 #endif

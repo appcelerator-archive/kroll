@@ -52,41 +52,10 @@ namespace KrollBoot
 		}
 		else
 		{
-			return FileUtils::GetApplicationDirectory();
+			return FileUtils::GetExecutableDirectory();
 		}
 	}
 
-	bool RunInstaller(vector<SharedDependency> missing)
-	{
-		string exec = FileUtils::Join(
-			app->path.c_str(), "installer", "installer", NULL);
-
-		if (!FileUtils::IsFile(exec))
-		{
-			ShowError("Missing installer and application has additional modules that are needed.");
-			return false;
-		}
-
-		vector<string> args;
-		args.push_back("--apppath");
-		args.push_back(app->path);
-		if (!updateFile.empty())
-		{
-			args.push_back("--updatefile");
-			args.push_back(updateFile);
-		}
-
-		std::vector<SharedDependency>::iterator di = missing.begin();
-		while (di != missing.end())
-		{
-			SharedDependency d = *di++;
-			string url = app->GetURLForDependency(d);
-			args.push_back(url);
-		}
-
-		FileUtils::RunAndWait(exec, args);
-		return true;
-	}
 
 	void BootstrapPlatformSpecific(string moduleList)
 	{
@@ -150,6 +119,18 @@ namespace KrollBoot
 		return executor(argc, argv);
 	}
 
+	bool RunInstaller(vector<SharedDependency> missing)
+	{
+		string exec = FileUtils::Join(
+			app->path.c_str(), "installer", "installer", NULL);
+		if (!FileUtils::IsFile(exec))
+		{
+			ShowError("Missing installer and application has additional modules that are needed.");
+			return false;
+		}
+		return BootUtils::RunInstaller(missing, app, updateFile);
+	}
+
 #ifdef USE_BREAKPAD
 	static google_breakpad::ExceptionHandler* breakpad;
 	extern string dumpFilePath;
@@ -164,7 +145,7 @@ namespace KrollBoot
 		if (succeeded)
 		{
 			snprintf(breakpadCallBuffer, PATH_MAX - 1,
-				 "\"%s\" %s \"%s\" %s", argv[0], CRASH_REPORT_OPT, dump_path, id);
+				 "\"%s\" %s \"%s\" %s&", argv[0], CRASH_REPORT_OPT, dump_path, id);
 			system(breakpadCallBuffer);
 		}
 #ifdef DEBUG
@@ -173,50 +154,51 @@ namespace KrollBoot
 		return true;
 #endif
 	}
-	
+
 	int SendCrashReport()
 	{
 		gtk_init(&argc, (char***) &argv);
 
 		InitCrashDetection();
 		std::string title = GetCrashDetectionTitle();
-		std::string msg = GetCrashDetectionMessage();
+		std::string msg = GetCrashDetectionHeader();
+		msg.append("\n\n");
+		msg.append(GetCrashDetectionMessage());
+
 		string url = string("https://") + CRASH_REPORT_URL;
 		const std::map<string, string> parameters = GetCrashReportParameters();
-		string filePartName = "dump";
-		string proxy;
-		string proxyUserPassword;
-		string responseBody;
-		string errorDescription;
 
 		GtkWidget* dialog = gtk_message_dialog_new(
 			NULL,
 			GTK_DIALOG_MODAL,
 			GTK_MESSAGE_ERROR,
-			GTK_BUTTONS_OK_CANCEL,
+			GTK_BUTTONS_NONE,
+			"%s",
 			msg.c_str());
+		gtk_dialog_add_buttons(GTK_DIALOG(dialog),
+			GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+			"Send Report", GTK_RESPONSE_OK,
+			NULL);
 		gtk_window_set_title(GTK_WINDOW(dialog), title.c_str());
 		int response = gtk_dialog_run(GTK_DIALOG(dialog));
 		if (response != GTK_RESPONSE_OK)
 		{
-			return 1;
+			return __LINE__;
 		}
-		
 
+		string filePartName = "dump";
+		string proxy;
+		string proxyUserPassword;
+		string responseBody;
+		string errorDescription;
 		bool success = google_breakpad::HTTPUpload::SendRequest(
-			url,
-			parameters,
-			dumpFilePath.c_str(),
-			filePartName,
-			proxy,
-			proxyUserPassword,
-			&responseBody,
-			&errorDescription
-		);
+			url, parameters, dumpFilePath.c_str(), filePartName,
+			proxy, proxyUserPassword, &responseBody, &errorDescription);
+
 		if (!success)
 		{
 			ShowError(string("Error uploading crash dump: ") + errorDescription);
-			return 2;
+			return __LINE__;
 		}
 		return 0;
 	}

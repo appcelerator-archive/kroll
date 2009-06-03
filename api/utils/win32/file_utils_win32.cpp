@@ -77,5 +77,21 @@ namespace UTILS_NS
 			FindClose(hFind);
 		}
 	}
+
+	std::string FileUtils::GetUsername()
+	{
+		char buf[MAX_PATH];
+		DWORD size = MAX_PATH;
+		if (::GetUserNameA(buf,&size))
+		{
+			buf[size]='\0';
+		}
+		else
+		{
+			sprintf(buf,"Unknown");
+		}
+		return std::string(buf);
+	}
+
 }
 

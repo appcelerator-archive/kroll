@@ -27,7 +27,7 @@ namespace UTILS_NS
 		passwd *user = getpwuid(getuid());
 		return Join(user->pw_dir, pname.c_str(), NULL);
 	}
-	
+
 	std::string FileUtils::GetSystemRuntimeHomeDirectory()
 	{
 		// Try to be a little smart about where the system runtime home
@@ -42,5 +42,22 @@ namespace UTILS_NS
 		if (!IsDirectory(path))
 			path = Join("/opt", pname.c_str(), NULL);
 		return path;
+	}
+
+	std::string FileUtils::GetUsername()
+	{
+		char* loginName = getlogin();
+		if (loginName != NULL)
+		{
+			return loginName;
+		}
+		else if (EnvironmentUtils::Has("USER"))
+		{
+			return EnvironmentUtils::Get("USER");
+		}
+		else
+		{
+			return "unknown";
+		}
 	}
 }

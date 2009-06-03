@@ -236,6 +236,7 @@ namespace kroll
 	{
 		return this->application->runtime->path;
 	}
+	
 
 	const std::string& Host::GetApplicationID()
 	{
@@ -413,7 +414,7 @@ namespace kroll
 		Poco::File manifestFile(manifestPath);
 		if (manifestFile.exists()) 
 		{
-			this->logger->Debug("Reading manifest for module: %s", manifestPath.toString().c_str());
+			this->logger->Trace("Reading manifest for module: %s", manifestPath.toString().c_str());
 			Poco::AutoPtr<Poco::Util::PropertyFileConfiguration> manifest = new Poco::Util::PropertyFileConfiguration(manifestFile.path());
 
 			if (manifest->hasProperty("libpath")) 
@@ -456,10 +457,12 @@ namespace kroll
 		if (!module.isNull())
 		{
 			logger->Warn("Module cannot be loaded twice: %s", path.c_str());
+			return NULL;
 		}
-
+		
 		try
 		{
+			logger->Debug("Loading module: %s", path.c_str());
 			this->CopyModuleAppResources(path);
 			this->ReadModuleManifest(path);
 			module = provider->CreateModule(path);
@@ -471,6 +474,8 @@ namespace kroll
 			// metadata description of each module.
 			this->loaded_modules.push_back(module);
 			this->application->UsingModule(module->GetName(), module->GetVersion(), path);
+
+			logger->Info("Loaded module = %s", module->GetName().c_str());
 		}
 		catch (kroll::ValueException& e)
 		{
@@ -523,12 +528,12 @@ namespace kroll
 			this->FindBasicModules((*iter++));
 		}
 
-		/* All modules are now loaded, so start them all */
-		this->StartModules(this->loaded_modules);
-
 		/* Try to load files that weren't modules
 		 * using newly available module providers */
 		this->ScanInvalidModuleFiles();
+
+		/* All modules are now loaded, so start them all */
+		this->StartModules(this->loaded_modules);
 
 		/* From now on, adding a module provider will trigger
 		 * a rescan of all invalid module files */
@@ -702,8 +707,12 @@ namespace kroll
 	{
 		if (this->waitForDebugger)
 		{
+#ifdef OS_WIN32
+			DebugBreak();
+#else
 			printf("Waiting for debugger (Press Any Key to Continue)...\n");
 			getchar();
+#endif
 		}
 
 		try

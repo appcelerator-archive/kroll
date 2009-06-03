@@ -17,6 +17,7 @@ namespace kroll
 	{
 		public:
 		DependencyBinding(SharedDependency dependency);
+		SharedDependency GetDependency();
 
 		private:
 		SharedDependency dependency;

@@ -228,14 +228,15 @@ class BuildConfig(object):
 			else:
 				OSX_SDK = '/Developer/SDKs/MacOSX10.5.sdk'
 				OSX_MINVERS = '-mmacosx-version-min=10.5'
+				self.env['MACOSX_DEPLOYMENT_TARGET'] = '10.5'
 
-			OSX_UNIV_LINKER = '-isysroot '+OSX_SDK+' -syslibroot,'+OSX_SDK+' -arch i386 -arch ppc -lstdc++ ' + OSX_MINVERS
+			OSX_UNIV_LINKER = '-isysroot '+OSX_SDK+' -syslibroot,'+OSX_SDK+' -arch i386 -arch ppc -lstdc++ ' + OSX_MINVERS 
 			self.env.Append(CXXFLAGS=['-isysroot',OSX_SDK,'-arch','i386',OSX_MINVERS,'-x','objective-c++'])
 			self.env.Append(CPPFLAGS=['-arch','i386'])
 			self.env.Append(CPPFLAGS=['-arch','ppc'])
 			self.env.Append(LINKFLAGS=OSX_UNIV_LINKER)
 			self.env.Append(FRAMEWORKS=['Foundation'])
-			self.env.Append(CPPFLAGS=['-Wall', '-fno-common','-fvisibility=hidden'])
+			self.env.Append(CPPFLAGS=['-Wall', '-fno-common','-fvisibility=hidden','-DMACOSX_DEPLOYMENT_TARGET='+self.env['MACOSX_DEPLOYMENT_TARGET']])
 
 	def matches(self, n): return bool(re.match(os.uname()[0], n))
 	def is_linux(self): return self.os == 'linux'
@@ -279,7 +280,7 @@ class BuildConfig(object):
 			if os.path.exists(f): os.remove(f)
 			self.utils.Zip(m.build_dir, f, exclude=excludes)
 
-	def generate_manifest(self, name, id, guid, exclude=None, include=None, image=None, publisher=None, url=None, version=None):
+	def generate_manifest(self, name, id, guid, exclude=None, include=None, image=None, publisher=None, url=None, version=None, sdk=False):
 		manifest = "#appname: %s\n" % name
 		manifest += "#appid: %s\n" % id
 		manifest += "#guid: %s\n" % guid
@@ -296,6 +297,8 @@ class BuildConfig(object):
 				continue
 			else:
 				manifest += "%s:%s\n" % (m.name, m.version)
+		if sdk:
+			manifest += "sdk:%s\n" % self.version		
 		return manifest
 
 	def add_thirdparty(self, env, name):

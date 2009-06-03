@@ -39,43 +39,6 @@ namespace KrollBoot
 		return std::string([contents UTF8String]);
 	}
 
-	bool RunInstaller(vector<SharedDependency> missing)
-	{
-		string exec = FileUtils::Join(
-			app->path.c_str(),
-			"installer",
-			"Installer App.app",
-			"Contents", 
-			"MacOS",
-			"Installer App", NULL);
-
-		if (!FileUtils::IsFile(exec))
-		{
-			ShowError("Missing installer and application has additional modules that are needed.");
-			return false;
-		}
-
-		vector<string> args;
-		args.push_back("-appPath");
-		args.push_back(applicationHome);
-		if (!updateFile.empty())
-		{
-			args.push_back("-updateFile");
-			args.push_back(updateFile);
-		}
-
-		std::vector<SharedDependency>::iterator di = missing.begin();
-		while (di != missing.end())
-		{
-			SharedDependency d = *di++;
-			string url = app->GetURLForDependency(d);
-			args.push_back(url);
-		}
-
-		FileUtils::RunAndWait(exec, args);
-		return true;
-	}
-
 	void BootstrapPlatformSpecific(string moduleList)
 	{
 		moduleList = app->runtime->path + ":" + moduleList;
@@ -150,6 +113,24 @@ namespace KrollBoot
 		return executor(argc, (const char**)argv);
 	}
 
+	bool RunInstaller(vector<SharedDependency> missing)
+	{
+		string exec = FileUtils::Join(
+			app->path.c_str(),
+			"installer",
+			"Installer App.app",
+			"Contents", 
+			"MacOS",
+			"Installer App", NULL);
+		if (!FileUtils::IsFile(exec))
+		{
+			ShowError("Missing installer and application has additional modules that are needed.");
+			return false;
+		}
+
+		return BootUtils::RunInstaller(missing, app, updateFile);
+	}
+
 #ifdef USE_BREAKPAD
 	// Allocate this statically because after a crash we want to access
 	// the heap as little as possible.
@@ -158,23 +139,13 @@ namespace KrollBoot
 
 	char breakpadCallBuffer[PATH_MAX];
 	bool HandleCrash(
-		const char* dumpDirectory, const char* minidumpId, void* context, bool succeeded)
+		const char* dumpPath, const char* dumpId, void* context, bool succeeded)
 	{
 		if (succeeded)
 		{
-			NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-			NSApplicationLoad();
-			NSLog(@"Crash detected");
-			// use a task so that we can exit this process but
-			// launch the dialog to show and send the crash report
-			NSTask *task = [[NSTask alloc] init];
-			[task setLaunchPath:[NSString stringWithCString:argv[0]]];
-			[task setArguments:[NSArray arrayWithObjects:
-				[NSString stringWithCString:CRASH_REPORT_OPT], 
-				[NSString stringWithCString:dumpDirectory], 
-				[NSString stringWithCString:minidumpId],nil]];
-			[task launch];
-			[pool release];
+			snprintf(breakpadCallBuffer, PATH_MAX - 1,
+				 "\"%s\" %s \"%s\" %s &", argv[0], CRASH_REPORT_OPT, dumpPath, dumpId);
+			system(breakpadCallBuffer);
 		}
 		return __LINE__;
 	}
@@ -190,7 +161,7 @@ namespace KrollBoot
 		InitCrashDetection();
 		NSApplicationLoad();
 		NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-		NSString *title = [NSString stringWithCString:GetCrashDetectionTitle().c_str()];
+		NSString *title = [NSString stringWithCString:GetCrashDetectionHeader().c_str()];
 		NSString *message = [NSString stringWithCString:GetCrashDetectionMessage().c_str()];
 		[alert setMessageText: title];
 		[alert setInformativeText: message];

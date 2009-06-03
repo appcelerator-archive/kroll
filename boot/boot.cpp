@@ -26,6 +26,7 @@ namespace KrollBoot
 		// current app version, we want to force an update.
 		string file = FileUtils::GetApplicationDataDirectory(app->id);
 		file = FileUtils::Join(file.c_str(), UPDATE_FILENAME, NULL);
+
 		if (FileUtils::IsFile(file))
 		{
 			// If we find an update file, we want to resolve the modules that
@@ -33,14 +34,11 @@ namespace KrollBoot
 			// On error: We should just continue on. A corrupt or old update manifest 
 			// doesn't imply that the original application is corrupt.
 			SharedApplication update = Application::NewApplication(file, app->path);
-			if (update.isNull() && BootUtils::CompareVersions(update->version, app->version) > 0)
-			{
-				app = update;
-				updateFile = file;
-			}
-			else
+			if (!update.isNull())
 			{
 				update->SetArguments(argc, argv);
+				app = update;
+				updateFile = file;
 			}
 		}
 	}
@@ -54,7 +52,7 @@ namespace KrollBoot
 			ShowError("Application packaging error: no manifest was found.");
 			return __LINE__;
 		}
-	
+
 		app = Application::NewApplication(applicationHome);
 		if (app.isNull())
 		{
@@ -76,7 +74,9 @@ namespace KrollBoot
 		if (missing.size() > 0 || !app->IsInstalled() || !updateFile.empty())
 		{
 			if (!RunInstaller(missing))
+			{
 				return __LINE__;
+			}
 
 			missing = app->ResolveDependencies();
 		}
@@ -84,7 +84,7 @@ namespace KrollBoot
 		if (missing.size() > 0 || !app->IsInstalled())
 		{
 			// The user cancelled or the installer encountered an error
-			// -- which is should have already reported. We not checking
+			// -- which is should have already reported. We're not checking
 			// for updateFile.empty() here, because if the user cancelled
 			// the update, we just want to start the application as usual.
 			return __LINE__;
@@ -112,6 +112,7 @@ namespace KrollBoot
 		ShowError(error, false);
 		return __LINE__;
 	}
+
 	string GetApplicationName()
 	{
 		if (!app.isNull())
@@ -136,81 +137,96 @@ namespace KrollBoot
 #ifdef USE_BREAKPAD
 	string GetCrashDetectionTitle()
 	{
-		// osx displays title inside the dialog but others are in titlebar
-#ifdef OS_OSX
-		return app->name + " appears to have encountered a fatal error and cannot continue.";
-#else
 		return GetApplicationName() + " encountered an error";
-#endif		
 	}
+
+	string GetCrashDetectionHeader()
+	{
+		return GetApplicationName() + " appears to have encountered a fatal error and cannot continue.";
+	}
+
 	string GetCrashDetectionMessage()
 	{
-		// osx displays title inside the dialog so we can do a partial message
-#ifdef OS_OSX
-		return "The application has collected information about the error in the form of a detailed error report. If you send the crash report, we will attempt to resolve this problem.";
-#else
-		return GetApplicationName() + " appears to have encountered a fatal error and cannot continue. The application has collected information about the error in the form of a detailed error report. If you send the crash report, we will attempt to resolve this problem.";
-#endif
+		return "The application has collected information about the error"
+		" in the form of a detailed error report. If you send the crash report,"
+		" we will attempt to resolve this problem.";
 	}
+
 	void InitCrashDetection()
 	{
-		// we need to load this since in a crash situation
-		// we restart back and by-pass the normal load mechanism
+		// We need to load this since in a crash situation
+		// we restart back and by-pass the normal load mechanism.
 		applicationHome = GetApplicationHomePath();
 		string manifestPath = FileUtils::Join(applicationHome.c_str(), MANIFEST_FILENAME, NULL);
+
 		if (FileUtils::IsFile(manifestPath))
 		{
 			app = Application::NewApplication(applicationHome);
 		}
 	}
+
 	string dumpFilePath;
 	map<string, string> GetCrashReportParameters()
 	{
 		map<string, string> params;
 		if (argc > 3)
 		{
-			string dumpId = string(argv[3]);
-			dumpId +=".dmp";
+			string dumpId = string(argv[3]) + ".dmp";
 			dumpFilePath = FileUtils::Join(argv[2], dumpId.c_str(), NULL);
 
 			// send all the stuff that will help us figure out 
-			// what the heck is going on and why the shiiiiit is
+			// what the heck is going on and why the shiiiiiiiiit is
 			// crashing... probably gonna be microsoft's fault
 			// at least we can blame it on them...
-			if (!app.isNull())
+
+			// this differentiates mobile vs desktop
+			params["location"] = "desktop"; 
+			params["mid"] = PlatformUtils::GetMachineId();
+			params["mac"] = PlatformUtils::GetFirstMACAddress();
+			params["os"] = OS_NAME;
+			params["ostype"] = OS_TYPE;
+			params["osver"] = FileUtils::GetOSVersion();
+			params["osarch"] = FileUtils::GetOSArchitecture();
+			params["ver"] = STRING(_PRODUCT_VERSION);
+			params["un"] = FileUtils::GetUsername();
+
+			if (app.isNull())
 			{
-				params["location"] = "desktop"; // this differentiates mobile vs desktop
 				params["app_name"] = app->name;
 				params["app_id"] = app->id;
 				params["app_ver"] = app->version;
 				params["app_guid"] = app->guid;
 				params["app_home"] = GetApplicationHomePath();
-				params["mid"] = PlatformUtils::GetMachineId();
-				params["mac"] = PlatformUtils::GetFirstMACAddress();
-				params["os"] = OS_NAME;
-	#ifdef OS_32
-				params["ostype"] = "32bit";
-	#elif OS_64
-				params["ostype"] = "64bit";
-	#else
-				params["ostype"] = "unknown";
-	#endif
-				params["osver"] = FileUtils::GetOSVersion();
-				params["osarch"] = FileUtils::GetOSArchitecture();
-				params["ver"] = STRING(_PRODUCT_VERSION);
-				params["un"] = FileUtils::GetUsername();
+
 				vector<SharedComponent> components;
 				app->GetAvailableComponents(components);
 				vector<SharedComponent>::const_iterator i = components.begin();
-				while(i!=components.end())
+				while (i != components.end())
 				{
 					SharedComponent c = (*i++);
-					params["module_" + c->name + "_version"] = c->version;
-					params["module_" + c->name + "_path"] = c->path;
-					params["module_" + c->name + "_bundled"] = c->bundled ? "1":"0";
+					string type = "unknown";
+					if (c->type == KrollUtils::MODULE)
+					{
+						type = "module";
+					}
+					else if (c->type == KrollUtils::RUNTIME)
+					{
+						type = "runtime";
+					}
+					else if (c->type == KrollUtils::SDK)
+					{
+						type = "sdk";
+					}
+					else if (c->type == KrollUtils::MOBILESDK)
+					{
+						type = "mobilesdk";
+					}
+					params[type + "_" + c->name + "_version"] = c->version;
+					params[type + "_" + c->name + "_path"] = c->path;
+					params[type + "_" + c->name + "_bundled"] = c->bundled ? "1":"0";
 				}
 			}
-		}		
+		}
 		return params;
 	}
 #endif

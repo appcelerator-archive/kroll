@@ -125,10 +125,10 @@ namespace UTILS_NS
 		static std::string GetTempDirectory();
 
 		/**
-		 * This function uses the KR_HOME environment variable set by the boot process
-		 * @return the directory for the application files
+		 * This function returns the path of the currently running executable.
+		 * @return the path for the currently running executable
 		*/
-		static std::string GetApplicationDirectory();
+		static std::string GetExecutableDirectory();
 
 		/**
 		 * @return the applications data directory
@@ -154,14 +154,14 @@ namespace UTILS_NS
 		/**
 		 * Get the system-wide runtime home directory. This is just a
 		 * default location --  to get the  current runtime home directory
-		 * read the value of KR_RUNTIME_HOME or Host::GetRuntimeHomePath instead.
+		 * read the value of the runtime path from the host's current application.
 		 */
 		static std::string GetSystemRuntimeHomeDirectory();
 
 		/**
 		 * Get the user-specific runtime home directory. This is just a
 		 * default location --  to get the  current runtime home directory
-		 * read the value of KR_RUNTIME_HOME or Host::GetRuntimeHomePath instead.
+		 * read the value of the runtime path from the host's current application.
 		 */
 		static std::string GetUserRuntimeHomeDirectory();
 

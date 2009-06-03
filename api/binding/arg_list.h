@@ -40,6 +40,15 @@ namespace kroll
 		const SharedValue& at(size_t) const;
 		const SharedValue& operator[](size_t) const;
 
+		int GetInt(size_t index, int defaultValue=0) const;
+		double GetDouble(size_t index, double defaultValue=0.0) const;
+		double GetNumber(size_t index, double defaultValue=0.0) const;
+		bool GetBool(size_t index, bool defaultValue=false) const;
+		std::string GetString(size_t index, std::string defaultValue="") const;
+		SharedKObject GetObject(size_t index, SharedKObject defaultValue=NULL) const;
+		SharedKMethod GetMethod(size_t index, SharedKMethod defaultValue=NULL) const;
+		SharedKList GetList(size_t index, SharedKList defaultValue=NULL) const;
+
 	private:
 		SharedPtr<std::vector<SharedValue> > args;
 

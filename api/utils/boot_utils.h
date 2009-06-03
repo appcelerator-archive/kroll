@@ -6,12 +6,14 @@
 #ifndef _KR_BOOT_UTILS_H_
 #define _KR_BOOT_UTILS_H_
 
-#define DISTRIBUTION_URL "http://download.titaniumapp.com"
+#define DISTRIBUTION_URL "http://api.appcelerator.net"
 #define DISTRIBUTION_UUID "7F7FA377-E695-4280-9F1F-96126F3D2C2A"
 // these UUIDs should never change and uniquely identify a package type
 #define RUNTIME_UUID "A2AC5CB5-8C52-456C-9525-601A5B0725DA"
 #define MODULE_UUID "1ACE5D3A-2B52-43FB-A136-007BD166CFD0"
 #define SDK_UUID "FF71038E-3CD6-40EA-A1C2-CFEE1D284CEA"
+#define MOBILESDK_UUID "05645B49-C629-4D8F-93AF-F1CF83200E34"
+#define APP_UPDATE_UUID "353AACB5-A36C-406A-8A67-33CD45E36550"
 #define MANIFEST_FILENAME "manifest"
 #define UPDATE_FILENAME ".update"
 #define LICENSE_FILENAME "LICENSE.txt"
@@ -28,6 +30,8 @@ namespace UTILS_NS
 		MODULE,
 		RUNTIME,
 		SDK,
+		MOBILESDK,
+		APP_UPDATE,
 		UNKNOWN
 	};
 
@@ -53,7 +57,14 @@ namespace UTILS_NS
 		/**
 		 * Generate a dependency from a key/value pair found in a manifest
 		 */
-		static SharedDependency NewDependency(std::string key, std::string value);
+		static SharedDependency NewDependencyFromManifestLine(
+			std::string key, std::string value);
+
+		/**
+		 * Generate a dependency from a set of values
+		 */
+		static SharedDependency NewDependencyFromValues(
+			KComponentType type, std::string name, std::string version);
 	};
 
 	/**
@@ -100,6 +111,17 @@ namespace UTILS_NS
 		 *    manifest's contents or an empty vector if it cannot be read.
 		 */
 		static vector<pair<string, string> > ReadManifestFile(std::string);
+
+		/**
+		 * Launch the intaller to install a list of dependencies. 
+		 * @returns false only if the installer cannot be found
+		 */
+		static bool RunInstaller(
+			vector<SharedDependency> missing,
+			SharedApplication application,
+			std::string updatefile = "",
+			std::string installerPath = "",
+			bool quiet=false);
 
 		// These are lazily initialized static variables, so always
 		// access them via the respective accessor functions.

@@ -5,6 +5,7 @@
  */
 #include <signal.h>
 #include "python_module.h"
+#include <Poco/Path.h>
 
 namespace kroll
 {
@@ -73,14 +74,19 @@ namespace kroll
 
 	Module* PythonModule::CreateModule(std::string& path)
 	{
-		std::cout << "Create module: " << path << std::endl;
 		FILE *file = fopen(path.c_str(), "r");
 
 		PyRun_SimpleFile(file,path.c_str());
-		std::cout << "PyRan simple file" << std::endl;
 
-		std::cout << "return new PythonModuleInstance " << path << std::endl;
-		return new PythonModuleInstance(host, path);
+		Poco::Path p(path);
+		std::string basename = p.getBaseName();
+		std::string name = basename.substr(0,basename.length()-python_suffix.length()+3);
+		std::string moduledir = path.substr(0,path.length()-basename.length()-3);
+
+		Logger *logger = Logger::Get("Python");
+		logger->Info("Loading Python path=%s", path.c_str());
+
+		return new PythonModuleInstance(host, path, moduledir, name);
 	}
 
 }

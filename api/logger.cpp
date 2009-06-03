@@ -369,7 +369,7 @@ namespace kroll
 			File logDirectoryFile = File(logDirectory);
 			logDirectoryFile.createDirectories();
 
-			this->logFile.open(logFilePath.c_str(), std::ios::out | std::ios::app);
+			this->logFile.open(logFilePath.c_str(), std::ios::out | std::ios::trunc);
 
 			// Couldn't open the file, perhaps there is contention?
 			if (!this->logFile.is_open())
