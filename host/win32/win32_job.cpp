@@ -80,7 +80,7 @@ namespace kroll
 		if (this->return_value.isNull())
 		{
 			SharedString ss = this->exception.GetValue()->DisplayString();
-			std::cout << "Exception in job queue: " << *ss << std::endl;
+			Logger::Get("Win32Job")->Error("Exception in job queue: %s", ss->c_str());
 		}
 	}
 }
