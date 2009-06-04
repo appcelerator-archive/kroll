@@ -71,9 +71,11 @@ namespace KrollBoot
 			std::cerr << "Unresolved: " << d->name << " " << d->version << std::endl;
 		}
 
-		if (missing.size() > 0 || !app->IsInstalled() || !updateFile.empty())
+		bool forceInstall = app->HasArgument("--force-install");
+		
+		if (forceInstall || missing.size() > 0 || !app->IsInstalled() || !updateFile.empty())
 		{
-			if (!RunInstaller(missing))
+			if (!RunInstaller(missing, forceInstall))
 			{
 				return __LINE__;
 			}

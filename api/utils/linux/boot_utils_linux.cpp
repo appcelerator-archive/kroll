@@ -39,7 +39,8 @@ namespace UTILS_NS
 		SharedApplication application,
 		std::string updateFile,
 		std::string installerPath,
-		bool quiet)
+		bool quiet,
+		bool forceInstall)
 	{
 		if (installerPath.empty())
 		{

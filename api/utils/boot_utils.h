@@ -121,7 +121,8 @@ namespace UTILS_NS
 			SharedApplication application,
 			std::string updatefile = "",
 			std::string installerPath = "",
-			bool quiet=false);
+			bool quiet=false,
+			bool forceInstaller=false);
 
 		// These are lazily initialized static variables, so always
 		// access them via the respective accessor functions.
