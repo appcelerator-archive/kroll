@@ -136,15 +136,12 @@ namespace kroll
 		// But don't block the invocation task while we actually execute
 		// the jobs -- one of these jobs may try to add something to the
 		// job queue -- deadlock-o-rama
-		std::vector<LinuxJob*> jobs = host->GetJobs();
+		std::vector<LinuxJob*> jobs;
 		{
 			Poco::ScopedLock<Poco::Mutex> s(host->GetJobQueueMutex());
-			std::vector<LinuxJob*>& hostJobs = host->GetJobs();
-			hostJobs.clear();
+			jobs = host->GetJobs();
+			host->GetJobs().clear();
 		}
-
-		if (jobs.size() == 0)
-			return TRUE;
 
 		std::vector<LinuxJob*>::iterator j = jobs.begin();
 		while (j != jobs.end())
