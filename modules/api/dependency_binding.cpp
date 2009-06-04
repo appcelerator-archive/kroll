@@ -12,9 +12,32 @@ namespace kroll
 	DependencyBinding::DependencyBinding(SharedDependency dependency) :
 		dependency(dependency)
 	{
+		/**
+		 * @tiapi(method=True,name=API.Dependency.getType,since=0.4)
+		 * @tiapi Get the type of this dependency (eg API.MODULE)
+		 * @tiresult[int] The type of this dependency
+		 */
 		this->SetMethod("getType", &DependencyBinding::_GetType);
+
+		/**
+		 * @tiapi(method=True,name=API.Dependency.getName,since=0.4)
+		 * @tiapi Get the name of this dependency
+		 * @tiresult[string] The name of this dependency
+		 */
 		this->SetMethod("getName", &DependencyBinding::_GetName);
+
+		/**
+		 * @tiapi(method=True,name=API.Dependency.getVersion,since=0.4)
+		 * @tiapi Get the version of this dependency
+		 * @tiresult[string] The version of this dependency
+		 */
 		this->SetMethod("getVersion", &DependencyBinding::_GetVersion);
+
+		/**
+		 * @tiapi(method=True,name=API.Dependency.getVersion,since=0.4)
+		 * @tiapi Get the requirement for this dependency (eg API.LTE)
+		 * @tiresult[string] The requirement for this dependency
+		 */
 		this->SetMethod("getRequirement", &DependencyBinding::_GetRequirement);
 	}
 
