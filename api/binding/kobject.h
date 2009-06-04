@@ -170,6 +170,18 @@ namespace kroll
 		SharedKList GetList(const char *name, SharedKList defaultValue=NULL);
 
 		/**
+		 * Set an undefined property on this object
+		 * When an error occurs will throw an exception of type ValueException.
+		 */
+		void SetUndefined(const char *name);
+
+		/**
+		 * Set a null property on this object
+		 * When an error occurs will throw an exception of type ValueException.
+		 */
+		void SetNull(const char *name);
+
+		/**
 		 * Set an int property on this object
 		 * When an error occurs will throw an exception of type ValueException.
 		 */
