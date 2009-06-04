@@ -162,7 +162,7 @@ namespace KrollBoot
 		return executor(::GetModuleHandle(NULL), argc,(const char**)argv);
 	}
 
-	bool RunInstaller(vector<SharedDependency> missing)
+	bool RunInstaller(vector<SharedDependency> missing, bool forceInstall)
 	{
 		string exec = FileUtils::Join(
 			app->path.c_str(), "installer", "Installer.exe", NULL);
@@ -171,7 +171,7 @@ namespace KrollBoot
 			ShowError("Missing installer and application has additional modules that are needed.");
 			return false;
 		}
-		bool result = BootUtils::RunInstaller(missing, app, updateFile);
+		bool result = BootUtils::RunInstaller(missing, app, updateFile, "", false, forceInstall);
 
 		// Ugh. Now we need to figure out where the app installer installed
 		// to. We would normally use stdout, but we had to execute with

@@ -113,7 +113,7 @@ namespace KrollBoot
 		return executor(argc, (const char**)argv);
 	}
 
-	bool RunInstaller(vector<SharedDependency> missing)
+	bool RunInstaller(vector<SharedDependency> missing, bool forceInstall)
 	{
 		string exec = FileUtils::Join(
 			app->path.c_str(),

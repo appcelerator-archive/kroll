@@ -38,7 +38,8 @@ namespace UTILS_NS
 		SharedApplication application,
 		std::string updateFile,
 		std::string installerPath,
-		bool quiet)
+		bool quiet,
+		bool forceInstall)
 	{
 		if (installerPath.empty())
 		{
@@ -68,6 +69,11 @@ namespace UTILS_NS
 		if (quiet)
 		{
 			args.push_back("-quiet");
+		}
+		
+		if (forceInstall)
+		{
+			args.push_back("-forceInstall");
 		}
 
 		vector<string> jobs;
@@ -123,12 +129,17 @@ namespace UTILS_NS
 		ShExecInfo.hInstApp = NULL;	
 		ShellExecuteExA(&ShExecInfo);
 		WaitForSingleObject(ShExecInfo.hProcess, INFINITE);
-
+		DWORD returnCode;
+		GetExitCodeProcess(ShExecInfo.hProcess, &returnCode);
+		
 		if (FileUtils::IsDirectory(tempdir))
 		{
 			FileUtils::DeleteDirectory(tempdir);
 		}
 
+		if (returnCode != 0) {
+			return false;
+		}
 		return true;
 	}
 }
