@@ -152,16 +152,14 @@ namespace kroll
 
 	void Win32Host::InvokeMethods()
 	{
-		Poco::ScopedLock<Poco::Mutex> s(this->GetJobQueueMutex());
-
 		// Prevent other threads trying to queue while we clear the queue.
 		// But don't block the invocation task while we actually execute
 		// the jobs -- one of these jobs may try to add something to the
 		// job queue -- deadlock-o-rama
-		std::vector<Win32Job*> jobs = host->GetJobs();
+		std::vector<Win32Job*> jobs = this->GetJobs();
 		{
-			Poco::ScopedLock<Poco::Mutex> s(host->GetJobQueueMutex());
-			std::vector<Win32Job*>& hostJobs = host->GetJobs();
+			Poco::ScopedLock<Poco::Mutex> s(this->GetJobQueueMutex());
+			std::vector<Win32Job*>& hostJobs = this->GetJobs();
 			hostJobs.clear();
 		}
 
