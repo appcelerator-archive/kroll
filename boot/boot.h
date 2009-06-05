@@ -63,6 +63,8 @@ namespace KrollBoot
 	int StartHost();
 	string Blastoff();
 	string GetApplicationName();
+	vector<SharedDependency> FilterForSDKInstall(
+		vector<SharedDependency> dependencies);
 
 #ifdef USE_BREAKPAD
 	void InitCrashDetection();

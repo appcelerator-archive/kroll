@@ -289,6 +289,7 @@ class BuildConfig(object):
 		if image: manifest += "#image: %s\n" % image
 		if publisher: manifest += "#publisher: %s\n" % publisher
 		if url: manifest += "#url: %s\n" % url
+		if sdk: manifest += "sdk: %s\n" % self.version
 
 		manifest += "runtime: %s\n" % self.version
 		for m in self.modules:
@@ -297,8 +298,6 @@ class BuildConfig(object):
 				continue
 			else:
 				manifest += "%s:%s\n" % (m.name, m.version)
-		if sdk:
-			manifest += "sdk:%s\n" % self.version		
 		return manifest
 
 	def add_thirdparty(self, env, name):
