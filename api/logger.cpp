@@ -389,6 +389,7 @@ namespace kroll
 
 	void RootLogger::LogImpl(Poco::Message m)
 	{
+		Poco::Mutex::ScopedLock lock(mutex);
 		std::string line;
 		this->formatter->format(m, line);
 

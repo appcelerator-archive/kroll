@@ -109,6 +109,7 @@ namespace kroll
 		Poco::PatternFormatter* formatter;
 		std::string logFilePath;
 		std::ofstream logFile;
+		Poco::Mutex mutex;
 
 	};
 
