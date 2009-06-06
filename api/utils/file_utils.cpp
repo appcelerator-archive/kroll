@@ -470,7 +470,11 @@ namespace UTILS_NS
 		{
 			do
 			{
-				files.push_back(std::string(findFileData.cFileName));
+				std::string fn = std::string(findFileData.cFileName);
+				if (fn.substr(0,1) == "." || fn.substr(0,2) == "..") {
+					continue;
+				}
+				files.push_back(fn);
 			} while (FindNextFileA(hFind, &findFileData));
 			FindClose(hFind);
 		}
