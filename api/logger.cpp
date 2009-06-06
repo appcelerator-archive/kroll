@@ -401,7 +401,8 @@ namespace kroll
 
 		if (consoleLogging)
 		{
-			std::cout << line << std::endl;
+			//std::cout << line << std::endl;
+			printf("%s\n", line.c_str());
 		}
 	}
 }
