@@ -171,10 +171,12 @@ namespace UTILS_NS
 		static bool IsRuntimeInstalled();
 
 #ifndef NO_UNZIP
+		typedef void (*UnzipCallback)(char *message, int current, int total, void *data);
+		
 		/**
 		 *
 		 */
-		static void Unzip(std::string& source, std::string& destination);
+		static void Unzip(std::string& source, std::string& destination, UnzipCallback callback = NULL, void *data = NULL);
 #endif
 
 		/**

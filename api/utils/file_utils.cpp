@@ -561,7 +561,7 @@ namespace UTILS_NS
 	}
 
 #ifndef NO_UNZIP
-	void FileUtils::Unzip(std::string& source, std::string& destination)
+	void FileUtils::Unzip(std::string& source, std::string& destination, UnzipCallback callback, void *data)
 	{
 #ifdef OS_OSX
 		//
@@ -592,9 +592,23 @@ namespace UTILS_NS
 		ZIPENTRY ze;
 		GetZipItem(hz,-1,&ze);
 		int numitems=ze.index;
+		char message[1024];
+			
+		if (callback != NULL) {
+			sprintf(message, "Starting extraction of %d items from %s to %s", numitems, source.c_str(), destination.c_str());
+			
+			callback(message, 0, numitems, data);
+		}
+		
 		for (int zi=0; zi < numitems; zi++)
 		{
 			GetZipItem(hz,zi,&ze);
+			
+			if (callback != NULL) {
+				sprintf(message, "Extracting %s...", ze.name);
+				callback(message, zi, numitems, data);
+			}
+			
 			UnzipItem(hz,zi,ze.name);
 		}
 		CloseZip(hz);
