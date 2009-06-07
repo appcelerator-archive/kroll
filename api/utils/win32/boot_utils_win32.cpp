@@ -82,7 +82,8 @@ namespace UTILS_NS
 		{
 			SharedDependency d = *mi++;
 			string url = application->GetURLForDependency(d);
-			jobs.push_back(url);
+			string job = d->name + "," + d->version + "," + url;
+			jobs.push_back(job);
 		}
 	
 		// A little bit of ugliness goes a long way:
