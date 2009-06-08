@@ -37,7 +37,7 @@ class App:
 			self.contents = build_dir
 			self.exe = p.join(self.contents, self.fullname)
 			self.kboot = p.join(self.build.dir, 'runtime', 'template', 'kboot')
-			self.data = p.join(p.expanduser('~'), 'titanium', 'appdata', self.id)
+			self.data = p.join(p.expanduser('~'), '.titanium', 'appdata', self.id)
 		elif self.build.is_win32():
 			self.contents = build_dir
 			self.exe = p.join(self.contents, self.fullname+'.exe')
