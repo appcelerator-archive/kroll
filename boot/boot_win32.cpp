@@ -340,7 +340,6 @@ int main(int __argc, const char* __argv[])
 	// Don't install a handler if we are just handling an error.
 	if (__argc > 2 && !strcmp(CRASH_REPORT_OPT, __argv[1]))
 	{
-		printf("handling crash\n");
 		return KrollBoot::SendCrashReport();
 	}
 
