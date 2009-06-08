@@ -23,8 +23,10 @@ namespace kroll
 	UINT Win32Host::tickleRequestMessage = ::RegisterWindowMessage(PRODUCT_NAME "TickleRequest");
 		
 	/*static*/
-	void Win32Host::InitOLE() {
-		if (!ole_initialized) {
+	void Win32Host::InitOLE()
+	{
+		if (!ole_initialized)
+		{
 			OleInitialize(NULL);
 			ole_initialized = true;
 		}
@@ -37,7 +39,8 @@ namespace kroll
 
 	Win32Host::~Win32Host()
 	{
-		if (ole_initialized) {
+		if (ole_initialized)
+		{
 			OleUninitialize();
 		}
 	}
@@ -117,7 +120,8 @@ namespace kroll
 		bool synchronous)
 	{
 		Win32Job* job = new Win32Job(method, args, synchronous);
-		if (thread_id == GetCurrentThreadId()) {
+		if (thread_id == GetCurrentThreadId())
+		{
 			job->Execute();
 		}
 		else
@@ -152,18 +156,21 @@ namespace kroll
 
 	void Win32Host::InvokeMethods()
 	{
-		// Prevent other threads trying to queue jobs.
-		Poco::ScopedLock<Poco::Mutex> s(this->GetJobQueueMutex());
-
-		std::vector<Win32Job*>& jobs = this->GetJobs();
-		if (jobs.size() == 0)
-			return;
-
-		std::vector<Win32Job*>::iterator j = jobs.begin();
-		while (j != jobs.end())
+		// Prevent other threads trying to queue while we clear the queue.
+		// But don't block the invocation task while we actually execute
+		// the jobs -- one of these jobs may try to add something to the
+		// job queue -- deadlock-o-rama
+		std::vector<Win32Job*> myJobs;
 		{
-			Win32Job* job = *j;
-			j = jobs.erase(j);
+			Poco::ScopedLock<Poco::Mutex> s(this->GetJobQueueMutex());
+			myJobs = this->jobs;	
+			this->jobs.clear();
+		}
+
+		std::vector<Win32Job*>::iterator j = myJobs.begin();
+		while (j != myJobs.end())
+		{
+			Win32Job* job = *j++;
 
 			// Job might be freed soon after Execute()
 			bool asynchronous = !job->IsSynchronous();
@@ -175,7 +182,6 @@ namespace kroll
 				delete job;
 			}
 		}
-
 	}
 }
 
@@ -183,7 +189,8 @@ extern "C"
 {
 	static const WORD MAX_CONSOLE_LINES = 500;
 
-	void RedirectIOToConsole() {
+	void RedirectIOToConsole()
+	{
 		int hConHandle;
 		long lStdHandle;
 		CONSOLE_SCREEN_BUFFER_INFO coninfo;
@@ -231,7 +238,8 @@ extern "C"
 #ifndef DEBUG
 		// only create a debug console when not compiled in debug mode -- otherwise, it should be autocreated
 
-		if (host->IsDebugMode()) {
+		if (host->IsDebugMode())
+		{
 			RedirectIOToConsole();
 		}
 #endif

@@ -8,6 +8,14 @@ using std::wstring;
 
 namespace UTILS_NS
 {
+	bool IsWindowsXP()
+	{
+		OSVERSIONINFO osVersion;
+		osVersion.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
+		::GetVersionEx(&osVersion);
+		return osVersion.dwMajorVersion == 5;
+	}
+	
 	vector<string>& BootUtils::GetComponentSearchPaths()
 	{
 		static bool initialized = false;
@@ -30,7 +38,8 @@ namespace UTILS_NS
 		SharedApplication application,
 		std::string updateFile,
 		std::string installerPath,
-		bool quiet)
+		bool quiet,
+		bool forceInstall)
 	{
 		if (installerPath.empty())
 		{
@@ -61,6 +70,11 @@ namespace UTILS_NS
 		{
 			args.push_back("-quiet");
 		}
+		
+		if (forceInstall)
+		{
+			args.push_back("-forceInstall");
+		}
 
 		vector<string> jobs;
 		vector<SharedDependency>::iterator mi = missing.begin();
@@ -68,7 +82,8 @@ namespace UTILS_NS
 		{
 			SharedDependency d = *mi++;
 			string url = application->GetURLForDependency(d);
-			jobs.push_back(url);
+			string job = d->name + "," + d->version + "," + url;
+			jobs.push_back(job);
 		}
 	
 		// A little bit of ugliness goes a long way:
@@ -105,7 +120,9 @@ namespace UTILS_NS
 		ShExecInfo.cbSize = sizeof(SHELLEXECUTEINFO);
 		ShExecInfo.fMask = SEE_MASK_NOCLOSEPROCESS | SEE_MASK_FLAG_DDEWAIT;
 		ShExecInfo.hwnd = NULL;
-		ShExecInfo.lpVerb = "runas";
+		if (!IsWindowsXP()) {
+			ShExecInfo.lpVerb = "runas";
+		}
 		ShExecInfo.lpFile = exec.c_str();
 		ShExecInfo.lpParameters = paramString.c_str();
 		ShExecInfo.lpDirectory = NULL;
@@ -113,12 +130,17 @@ namespace UTILS_NS
 		ShExecInfo.hInstApp = NULL;	
 		ShellExecuteExA(&ShExecInfo);
 		WaitForSingleObject(ShExecInfo.hProcess, INFINITE);
-
+		DWORD returnCode;
+		GetExitCodeProcess(ShExecInfo.hProcess, &returnCode);
+		
 		if (FileUtils::IsDirectory(tempdir))
 		{
 			FileUtils::DeleteDirectory(tempdir);
 		}
 
+		if (returnCode != 0) {
+			return false;
+		}
 		return true;
 	}
 }

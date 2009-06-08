@@ -58,11 +58,13 @@ namespace KrollBoot
 	 */
 	void ShowError(std::string error, bool fatal=false);
 	std::string GetApplicationHomePath();
-	bool RunInstaller(vector<SharedDependency> missing);
+	bool RunInstaller(vector<SharedDependency> missing, bool forceInstall=false);
 	void BootstrapPlatformSpecific(string moduleList);
 	int StartHost();
 	string Blastoff();
 	string GetApplicationName();
+	vector<SharedDependency> FilterForSDKInstall(
+		vector<SharedDependency> dependencies);
 
 #ifdef USE_BREAKPAD
 	void InitCrashDetection();

@@ -130,19 +130,23 @@ namespace kroll
 
 	gboolean main_thread_job_handler(gpointer data)
 	{
-		// Prevent other threads trying to queue jobs.
 		LinuxHost *host = (LinuxHost*) data;
-		Poco::ScopedLock<Poco::Mutex> s(host->GetJobQueueMutex());
 
-		std::vector<LinuxJob*>& jobs = host->GetJobs();
-		if (jobs.size() == 0)
-			return TRUE;
+		// Prevent other threads trying to queue while we clear the queue.
+		// But don't block the invocation task while we actually execute
+		// the jobs -- one of these jobs may try to add something to the
+		// job queue -- deadlock-o-rama
+		std::vector<LinuxJob*> jobs;
+		{
+			Poco::ScopedLock<Poco::Mutex> s(host->GetJobQueueMutex());
+			jobs = host->GetJobs();
+			host->GetJobs().clear();
+		}
 
 		std::vector<LinuxJob*>::iterator j = jobs.begin();
 		while (j != jobs.end())
 		{
-			LinuxJob* job = *j;
-			j = jobs.erase(j);
+			LinuxJob* job = *j++;
 
 			// Job might be freed soon after Execute()
 			bool asynchronous = !job->IsSynchronous();

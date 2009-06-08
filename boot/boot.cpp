@@ -43,6 +43,33 @@ namespace KrollBoot
 		}
 	}
 
+	vector<SharedDependency> FilterForSDKInstall(
+		vector<SharedDependency> dependencies)
+	{
+		// If this list of dependencies incluces the SDKs, just install
+		// those -- we assume that they also supply our other dependencies.
+		vector<SharedDependency>::iterator i = dependencies.begin();
+		vector<SharedDependency> justSDKs;
+
+		while (i != dependencies.end())
+		{
+			SharedDependency d = *i++;
+			if (d->type == KrollUtils::SDK || d->type == KrollUtils::MOBILESDK)
+			{
+				justSDKs.push_back(d);
+			}
+		}
+
+		if (justSDKs.size() > 0)
+		{
+			return justSDKs;
+		}
+		else
+		{
+			return dependencies;
+		}
+	}
+
 	int Bootstrap()
 	{
 		applicationHome = GetApplicationHomePath();
@@ -71,9 +98,15 @@ namespace KrollBoot
 			std::cerr << "Unresolved: " << d->name << " " << d->version << std::endl;
 		}
 
-		if (missing.size() > 0 || !app->IsInstalled() || !updateFile.empty())
+		bool forceInstall = app->HasArgument("--force-install");
+		if (forceInstall || missing.size() > 0
+			|| !app->IsInstalled() || !updateFile.empty())
 		{
-			if (!RunInstaller(missing))
+			// If this list of dependencies incluces the SDKs, just install
+			// those -- we assume that they also supply our other dependencies.
+			missing = FilterForSDKInstall(missing);
+
+			if (!RunInstaller(missing, forceInstall))
 			{
 				return __LINE__;
 			}

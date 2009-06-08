@@ -55,7 +55,7 @@ namespace kroll
 		bool IsCriticalEnabled();
 		bool IsFatalEnabled();
 
-		virtual void Log(Poco::Message m);
+		virtual void Log(Poco::Message& m);
 		void Log(Level, std::string &);
 		void Log(Level, const char*, va_list);
 		void Log(Level, const char*, ...);
@@ -101,7 +101,7 @@ namespace kroll
 		RootLogger(bool, std::string, Level);
 		~RootLogger();
 		static RootLogger* instance;
-		virtual void LogImpl(Poco::Message m);
+		virtual void LogImpl(Poco::Message& m);
 
 		protected:
 		bool consoleLogging;
@@ -109,6 +109,7 @@ namespace kroll
 		Poco::PatternFormatter* formatter;
 		std::string logFilePath;
 		std::ofstream logFile;
+		Poco::Mutex mutex;
 
 	};
 

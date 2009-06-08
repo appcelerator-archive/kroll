@@ -159,10 +159,14 @@ namespace kroll
 		}
 	}
 
-	void KObject::SetInt(const char *name, int v)
+	void KObject::SetUndefined(const char *name)
 	{
-		SharedValue val = Value::NewInt(v);
-		this->Set(name, val);
+		this->Set(name, Value::Undefined);
+	}
+
+	void KObject::SetNull(const char *name)
+	{
+		this->Set(name, Value::Null);
 	}
 
 	void KObject::SetDouble(const char *name, double v)

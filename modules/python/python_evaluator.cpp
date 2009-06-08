@@ -91,8 +91,12 @@
 		for (size_t i = 0; i < props->size() / 2; i++)
 		{
 			const char* k = props->at(i)->c_str();
-			if (!PyDict_GetItemString(pyobj, k)
-			 && !PyObject_HasAttrString(builtins, k))
+
+			// Don't override builtin Python properties like open, etc. We *do* want
+			// to override the PRODUCT_NAME object though, as each window contains a
+			// version of that object with special delegated properties.
+			if ((!PyDict_GetItemString(pyobj, k) && !PyObject_HasAttrString(builtins, k))
+					|| !strcmp(k, PRODUCT_NAME))
 			{
 				SharedValue v = o->Get(k);
 				PyObject* pv = PythonUtils::ToPyObject(v);

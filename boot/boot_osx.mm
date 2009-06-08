@@ -113,7 +113,7 @@ namespace KrollBoot
 		return executor(argc, (const char**)argv);
 	}
 
-	bool RunInstaller(vector<SharedDependency> missing)
+	bool RunInstaller(vector<SharedDependency> missing, bool forceInstall)
 	{
 		string exec = FileUtils::Join(
 			app->path.c_str(),
@@ -147,7 +147,7 @@ namespace KrollBoot
 				 "\"%s\" %s \"%s\" %s &", argv[0], CRASH_REPORT_OPT, dumpPath, dumpId);
 			system(breakpadCallBuffer);
 		}
-		return __LINE__;
+		return true;
 	}
 
 	int SendCrashReport()

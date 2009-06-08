@@ -151,7 +151,7 @@ namespace kroll
 		}
 	}
 
-	void Logger::Log(Poco::Message m)
+	void Logger::Log(Poco::Message& m)
 	{
 		// This check only happens at the entry logger and never in it's
 		// parents. This is so a child logger can have a more permissive level.
@@ -387,8 +387,9 @@ namespace kroll
 		}
 	}
 
-	void RootLogger::LogImpl(Poco::Message m)
+	void RootLogger::LogImpl(Poco::Message& m)
 	{
+		Poco::Mutex::ScopedLock lock(mutex);
 		std::string line;
 		this->formatter->format(m, line);
 
@@ -400,7 +401,8 @@ namespace kroll
 
 		if (consoleLogging)
 		{
-			std::cout << line << std::endl;
+			//std::cout << line << std::endl;
+			printf("%s\n", line.c_str());
 		}
 	}
 }

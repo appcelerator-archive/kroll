@@ -162,7 +162,7 @@ namespace KrollBoot
 		return executor(::GetModuleHandle(NULL), argc,(const char**)argv);
 	}
 
-	bool RunInstaller(vector<SharedDependency> missing)
+	bool RunInstaller(vector<SharedDependency> missing, bool forceInstall)
 	{
 		string exec = FileUtils::Join(
 			app->path.c_str(), "installer", "Installer.exe", NULL);
@@ -171,7 +171,7 @@ namespace KrollBoot
 			ShowError("Missing installer and application has additional modules that are needed.");
 			return false;
 		}
-		bool result = BootUtils::RunInstaller(missing, app, updateFile);
+		bool result = BootUtils::RunInstaller(missing, app, updateFile, "", false, forceInstall);
 
 		// Ugh. Now we need to figure out where the app installer installed
 		// to. We would normally use stdout, but we had to execute with
@@ -243,11 +243,13 @@ namespace KrollBoot
 				&startupInfo,
 				&processInformation);
 		}
-#ifdef DEBUG
-		return false;
-#else
+
+		// We would not normally need to do this, but on Windows XP it
+		// seems that this callback is called multiple times for a crash.
+		// We should probably try to remove the following line the next
+		// time we update breakpad.
+		exit(__LINE__);
 		return true;
-#endif
 	}
 
 	wstring StringToWString(string in)
@@ -335,9 +337,6 @@ int main(int __argc, const char* __argv[])
 	KrollBoot::argv = (const char**) __argv;
 
 #ifdef USE_BREAKPAD
-	// turn off win32 built-in crash detection which interferes with ours
-	SetErrorMode(SEM_FAILCRITICALERRORS);
-		
 	// Don't install a handler if we are just handling an error.
 	if (__argc > 2 && !strcmp(CRASH_REPORT_OPT, __argv[1]))
 	{
