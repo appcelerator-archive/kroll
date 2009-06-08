@@ -243,11 +243,13 @@ namespace KrollBoot
 				&startupInfo,
 				&processInformation);
 		}
-#ifdef DEBUG
-		return false;
-#else
+
+		// We would not normally need to do this, but on Windows XP it
+		// seems that this callback is called multiple times for a crash.
+		// We should probably try to remove the following line the next
+		// time we update breakpad.
+		exit(__LINE__);
 		return true;
-#endif
 	}
 
 	wstring StringToWString(string in)
@@ -335,12 +337,10 @@ int main(int __argc, const char* __argv[])
 	KrollBoot::argv = (const char**) __argv;
 
 #ifdef USE_BREAKPAD
-	// turn off win32 built-in crash detection which interferes with ours
-	SetErrorMode(SEM_FAILCRITICALERRORS);
-		
 	// Don't install a handler if we are just handling an error.
 	if (__argc > 2 && !strcmp(CRASH_REPORT_OPT, __argv[1]))
 	{
+		printf("handling crash\n");
 		return KrollBoot::SendCrashReport();
 	}
 

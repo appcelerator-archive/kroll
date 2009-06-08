@@ -147,7 +147,7 @@ namespace KrollBoot
 				 "\"%s\" %s \"%s\" %s &", argv[0], CRASH_REPORT_OPT, dumpPath, dumpId);
 			system(breakpadCallBuffer);
 		}
-		return __LINE__;
+		return true;
 	}
 
 	int SendCrashReport()

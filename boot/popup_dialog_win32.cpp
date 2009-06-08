@@ -118,12 +118,13 @@ namespace KrollBoot
 				OffsetRect(&rc, -rc.left, -rc.top);
 				OffsetRect(&rc, -rcDlg.right, -rcDlg.bottom);
 
-				SetWindowPos(hDlg,
-							HWND_TOP,
-							rcOwner.left + (rc.right / 2),
-							rcOwner.top + (rc.bottom / 2),
-							0, 0,							// Ignores size arguments.
-							SWP_NOSIZE);
+				SetWindowPos(
+					hDlg,
+					HWND_TOP,
+					rcOwner.left + (rc.right / 2),
+					rcOwner.top + (rc.bottom / 2),
+					0, 0, // Ignores size arguments.
+					SWP_NOSIZE);
 
 				return TRUE;
 			}
@@ -161,7 +162,7 @@ namespace KrollBoot
 
 				int labelHeight = 34;
 				int width = 300;
-				int height = 90;
+				int height = 105;
 				int margin = 10;
 				int buttonWidth = 50;
 				int buttonHeight = 14;
