@@ -41,4 +41,9 @@
 #include "environment_utils.h"
 #include "boot_utils.h"
 
+// Platform specific utilities
+#ifdef OS_WIN32
+#include "win32/win32_utils.h"
+#endif
+
 #endif

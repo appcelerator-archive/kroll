@@ -116,26 +116,10 @@ namespace KrollBoot
 
 		if (success == 0)
 		{
-			string errorString = string("Could not bootstrap into ") + appName;
-			LPSTR errorText = NULL;
-			FormatMessageA(
-   				FORMAT_MESSAGE_FROM_SYSTEM
-   				 |FORMAT_MESSAGE_ALLOCATE_BUFFER
-   				 |FORMAT_MESSAGE_IGNORE_INSERTS,  
-			   NULL, // unused with FORMAT_MESSAGE_FROM_SYSTEM
-			   GetLastError(),
-			   MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-			   (LPSTR)&errorText,  // output 
-			   0, // minimum size for output buffer
-			   NULL);   // arguments - see note 
-
-			if (NULL != errorText)
-			{
-				errorString += string(": ") + errorText;
-   				LocalFree(errorText);
-				errorText = NULL;
-			}
-
+			string errorString = string("Could not bootstrap into ");
+			errorString.append(appName);
+			errorString.append(": ");
+			errorString.append(KrollUtils::Win32Utils::QuickFormatMessage(GetLastError()));
 			ShowError(errorString);
 		}
 		else
