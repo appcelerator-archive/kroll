@@ -116,7 +116,27 @@ namespace KrollBoot
 
 		if (success == 0)
 		{
-			return "Could not bootstrap the host.";
+			string errorString = string("Could not bootstrap into ") + appName;
+			LPSTR errorText = NULL;
+			FormatMessageA(
+   				FORMAT_MESSAGE_FROM_SYSTEM
+   				 |FORMAT_MESSAGE_ALLOCATE_BUFFER
+   				 |FORMAT_MESSAGE_IGNORE_INSERTS,  
+			   NULL, // unused with FORMAT_MESSAGE_FROM_SYSTEM
+			   GetLastError(),
+			   MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+			   (LPSTR)&errorText,  // output 
+			   0, // minimum size for output buffer
+			   NULL);   // arguments - see note 
+
+			if (NULL != errorText)
+			{
+				errorString += string(": ") + errorText;
+   				LocalFree(errorText);
+				errorText = NULL;
+			}
+
+			ShowError(errorString);
 		}
 		else
 		{
