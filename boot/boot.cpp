@@ -223,7 +223,7 @@ namespace KrollBoot
 			params["ver"] = STRING(_PRODUCT_VERSION);
 			params["un"] = FileUtils::GetUsername();
 
-			if (app.isNull())
+			if (!app.isNull())
 			{
 				params["app_name"] = app->name;
 				params["app_id"] = app->id;
