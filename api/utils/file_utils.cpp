@@ -215,8 +215,12 @@ namespace UTILS_NS
 
 	bool FileUtils::CreateDirectory(std::string &dir, bool recursive)
 	{
+		if (IsDirectory(dir)) {
+			return true;
+		}
+		
 		string parent = Dirname(dir);
-		if (recursive && !IsDirectory(parent))
+		if (recursive && parent.size() > 0 && !IsDirectory(parent))
 		{
 			CreateDirectory(parent, true);
 		}
