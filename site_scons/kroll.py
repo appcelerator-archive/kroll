@@ -14,30 +14,31 @@ class Module(object):
 	def __str__(self):
 		return self.build_dir
 
+	
+	def light_weight_copy(self, name, indir, outdir):
+		if os.path.exists(indir):
+			t = self.build.env.LightWeightCopyTree(name, [], OUTDIR=outdir, IN=indir, EXCLUDE=['.h'])
+			self.build.mark_stage_target(t)
+			AlwaysBuild(t)
+
 	def copy_resources(self, d=None):
 		if not d:
 			d = self.build.cwd(2)
 
-		def light_weight_copy(name, indir, outdir):
-			if os.path.exists(indir):
-				t = self.build.env.LightWeightCopyTree(name, [], OUTDIR=outdir, IN=indir, EXCLUDE=['.h'])
-				self.build.mark_stage_target(t)
-				AlwaysBuild(t)
-
 		indir = path.join(d, 'AppResources', 'all')
 		outdir = path.join(self.build_dir, 'AppResources', 'all'), 
-		light_weight_copy('#' + self.name + '-AllAppResources', indir, outdir)
+		self.light_weight_copy('#' + self.name + '-AllAppResources', indir, outdir)
 
 		indir = path.join(d, 'AppResources', self.build.os)
 		outdir = path.join(self.build_dir, 'AppResources', self.build.os), 
-		light_weight_copy('#' + self.name + '-OSAppResources', indir, outdir)
+		self.light_weight_copy('#' + self.name + '-OSAppResources', indir, outdir)
 
 		outdir = self.build_dir
 		indir = path.join(d, 'Resources', 'all')
-		light_weight_copy('#' + self.name + '-AllResources', indir, outdir)
+		self.light_weight_copy('#' + self.name + '-AllResources', indir, outdir)
 
 		indir = path.join(d, 'Resources', self.build.os)
-		light_weight_copy('#' + self.name + '-OSResources', indir, outdir)
+		self.light_weight_copy('#' + self.name + '-OSResources', indir, outdir)
 
 		manifest = path.join(d, 'manifest')
 		if path.exists(manifest):
@@ -111,16 +112,21 @@ class BuildConfig(object):
 	def __init__(self, **kwargs):
 		self.debug = False
 		self.os = None
-		self.arch = None # default x86 32-bit
 		self.modules = [] 
 		if not hasattr(os, 'uname') or self.matches('CYGWIN'):
 			self.os = 'win32'
+			self.arch = 'i386'
+
 		elif self.matches('Darwin'):
 			self.os = 'osx'
+			self.arch = 'universal'
+
 		elif self.matches('Linux'):
 			self.os = 'linux'
 			if (os.uname()[4] == 'x86_64'):
-				self.arch = '64'
+				self.arch = os.uname()[4]
+			else:
+				self.arch = 'i386'
 
 		vars = SCons.Variables.Variables(args = ARGUMENTS)
 		vars.Add('PRODUCT_VERSION', 'The underlying product version for Kroll', kwargs['PRODUCT_VERSION'])
@@ -145,17 +151,12 @@ class BuildConfig(object):
 		self.version = self.env['PRODUCT_VERSION']
 
 		self.dir = path.abspath(path.join(kwargs['BUILD_DIR'], self.os))
-		self.third_party = path.abspath(path.join(kwargs['THIRD_PARTY_DIR'],self.os))
 		self.dist_dir = path.join(self.dir, 'dist')
 		self.runtime_build_dir = path.join(self.dir, 'runtime')
 		self.runtime_template_dir = path.join(self.runtime_build_dir, 'template')
 
 		self.env.Append(LIBPATH=[self.dir])
 
-		if (self.arch):
-			self.third_party += self.arch
-
-		self.init_thirdparty_libs()
 		self.init_os_arch()
 		self.build_targets = []  # targets needed before packaging & distribution can occur
 		self.staging_targets = []  # staging the module and sdk directories
@@ -166,7 +167,6 @@ class BuildConfig(object):
 
 	def set_kroll_source_dir(self, dir):
 		self.kroll_source_dir = path.abspath(dir)
-		self.kroll_third_party = self.third_party
 		self.kroll_include_dir = path.join(self.dir, 'include')
 		self.kroll_utils_dir = path.join(self.kroll_source_dir, 'api', 'utils');
 		self.kroll_support_dir = path.join(self.kroll_source_dir, 'support', self.os)
@@ -182,31 +182,6 @@ class BuildConfig(object):
 			sources.extend(Glob('%s/utils/unzip/*.cpp' % dir))
 		return sources
 
-	def init_thirdparty_libs(self):
-		poco_win32_cpp_path = [path.join(self.third_party, 'poco', 'include')]
-		if os.environ.has_key('OPENSSL_PATH'):
-			poco_win32_cpp_path += [os.path.join(os.environ['OPENSSL_PATH'], 'include')]
-		
-		self.thirdparty_libs = {
-			'poco': {
-				'win32': {
-					'cpp_path': poco_win32_cpp_path,
-					'lib_path': [path.join(self.third_party, 'poco', 'lib')],
-					'libs': ['PocoFoundation', 'PocoNet', 'PocoNetSSL', 'PocoUtil', 'PocoXML', 'PocoZip', 'PocoData', 'PocoSQLite']
-				},
-				'linux': {
-					'cpp_path': [path.join(self.third_party, 'poco', 'include')],
-					'lib_path': [path.join(self.third_party, 'poco', 'lib')],
-					'libs': ['PocoFoundation', 'PocoNet', 'PocoNetSSL', 'PocoUtil', 'PocoXML', 'PocoZip', 'PocoData', 'PocoSQLite']
-				},
-				'osx': {
-					'cpp_path': [path.join(self.third_party, 'poco', 'headers')],
-					'lib_path': [path.join(self.third_party, 'poco', 'lib')],
-					'libs': ['PocoFoundation', 'PocoNet', 'PocoNetSSL', 'PocoUtil', 'PocoXML', 'PocoZip', 'PocoData', 'PocoSQLite']
-				}
-			}
-		}
-	
 	def init_os_arch(self):
 		if self.is_linux() and self.is_64():
 			self.env.Append(CPPFLAGS=['-m64', '-Wall', '-Werror','-fno-common','-fvisibility=hidden'])
@@ -242,8 +217,8 @@ class BuildConfig(object):
 	def is_linux(self): return self.os == 'linux'
 	def is_osx(self): return self.os == 'osx'
 	def is_win32(self): return self.os == 'win32'
-	def is_64(self): return self.arch == '64'
-	def is_32(self): return not self.arch
+	def is_64(self): return self.arch == 'x86_64'
+	def is_32(self): return not self.is_64()
 
 	def get_module(self, name):
 		for module in self.modules:
@@ -301,9 +276,14 @@ class BuildConfig(object):
 		return manifest
 
 	def add_thirdparty(self, env, name):
-		env.Append(CPPPATH=[self.thirdparty_libs[name][self.os]['cpp_path']])
-		env.Append(LIBPATH=[self.thirdparty_libs[name][self.os]['lib_path']])
-		env.Append(LIBS=[self.thirdparty_libs[name][self.os]['libs']])
+		if name is 'poco':
+			cpppath = path.join(self.third_party, 'poco', 'include')
+			libpath = path.join(self.third_party, 'poco', 'lib')
+			libs = ['PocoFoundation', 'PocoNet', 'PocoNetSSL', 'PocoUtil',
+			        'PocoXML', 'PocoZip', 'PocoData', 'PocoSQLite']
+		env.Append(CPPPATH=[cpppath])
+		env.Append(LIBPATH=[libpath])
+		env.Append(LIBS=[libs])
 
 	def cwd(self, depth=1):
 		return path.dirname(sys._getframe(depth).f_code.co_filename)

@@ -3,3 +3,4 @@
 *.os
 docs
 *.pyc
+thirdparty-*
