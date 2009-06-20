@@ -129,6 +129,13 @@ namespace UTILS_NS
 		 */
 		string GetArgumentValue(string needle);
 
+		/**
+		 * Get an active component path given a name.
+		 * @arg name a component name either the name of a module (e.g. 'tiui') or 'runtime'
+		 * @returns the path to the component with the given name or an empty string if not found
+		 */
+		string GetComponentPath(string name);
+
 		private:
 		SharedComponent ResolveDependency(SharedDependency dep, std::vector<SharedComponent>&);
 	};

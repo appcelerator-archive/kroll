@@ -189,6 +189,16 @@ namespace UTILS_NS
 		 */
 		static std::string GetUsername();
 
+		/**
+		 * Convert a file URL to an absolute path
+		 */
+		static std::string FileURLToPath(std::string url);
+
+		/**
+		 * Convert an path to a file URL
+		 */
+		static std::string PathToFileURL(std::string path);
+
 	private:
 		FileUtils() {}
 		~FileUtils() {}

@@ -134,6 +134,28 @@ namespace UTILS_NS
 		return string();
 	}
 
+	string Application::GetComponentPath(string name)
+	{
+		std::transform(name.begin(), name.end(), name.begin(), tolower);
+		if (name == "runtime")
+		{
+			return this->runtime->path;
+		}
+		else
+		{
+			vector<SharedComponent>::iterator i = this->modules.begin();
+			while (i != this->modules.end())
+			{
+				SharedComponent comp = *i++;
+				if (comp->name == name)
+				{
+					return comp->path;
+				}
+			}
+		}
+		return string();
+	}
+
 	string Application::GetDataPath()
 	{
 		return FileUtils::GetApplicationDataDirectory(this->id);

@@ -116,12 +116,12 @@ namespace UTILS_NS
 		NSString *tmp = [tempDir stringByAppendingPathComponent:@"kXXXXX"];
 		const char * fsTemplate = [tmp fileSystemRepresentation];
 		NSMutableData * bufferData = [NSMutableData dataWithBytes: fsTemplate
-		                                                   length: strlen(fsTemplate)+1];
+														   length: strlen(fsTemplate)+1];
 		char * buffer = (char*)[bufferData mutableBytes];
 		mkdtemp(buffer);
 		NSString * temporaryDirectory = [[NSFileManager defaultManager]
-		        stringWithFileSystemRepresentation: buffer
-		                                    length: strlen(buffer)];
+				stringWithFileSystemRepresentation: buffer
+											length: strlen(buffer)];
 		return std::string([temporaryDirectory UTF8String]);
 #elif defined(OS_WIN32)
 #define BUFSIZE 512
@@ -189,8 +189,8 @@ namespace UTILS_NS
 	char fname[_MAX_FNAME];
 	char ext[_MAX_EXT];
 	strncpy(path_buffer, path.c_str(), _MAX_PATH);
+	path_buffer[_MAX_PATH - 1] = '\0'
 	_splitpath(path_buffer, drive, dir, fname, ext );
-	
 	if (dir[strlen(dir)-1] == '\\')
 		dir[strlen(dir)-1] = '\0';
 	std::string dirname = drive;
@@ -544,7 +544,7 @@ namespace UTILS_NS
 			FALSE,                   // Set handle inheritance to FALSE
 			0,                       // No creation flags
 			NULL,                    // Use parent's environment block
-			(char*)cwd,		         // Use parent's starting directory
+			(char*)cwd,              // Use parent's starting directory
 			&si,                     // Pointer to STARTUPINFO structure
 			&pi )                    // Pointer to PROCESS_INFORMATION structure
 		)
@@ -623,5 +623,42 @@ namespace UTILS_NS
 #endif
 	}
 #endif
+
+	std::string FileUtils::FileURLToPath(std::string url)
+	{
+		size_t fileLength = 7; // file://
+		if (url.find("file://") == 0)
+		{
+			url = url.substr(fileLength);
+		}
+
+		if ('/' != KR_PATH_SEP_CHAR)
+		{
+			for (size_t i = 0; i < url.size(); i++)
+			{
+				if (url[i] == '/')
+				{
+						url[i] = KR_PATH_SEP_CHAR;
+				}
+			}
+		}
+		return url;
+	}
+
+	std::string FileUtils::PathToFileURL(std::string path)
+	{
+		if ('\\' == KR_PATH_SEP_CHAR)
+		{
+			for (size_t i = 0; i < path.size(); i++)
+			{
+				if (path[i] == '\\')
+				{
+					path[i] = '/';
+				}
+			}
+		}
+		return string("file://") + path;
+	}
+
 }
 
