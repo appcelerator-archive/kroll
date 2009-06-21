@@ -24,8 +24,8 @@ namespace KrollBoot
 	{
 		NSApplicationLoad();
 		NSRunCriticalAlertPanel(
-			[NSString stringWithCString:GetApplicationName().c_str()],
-			[NSString stringWithCString:error.c_str()], 
+			[NSString stringWithCString:GetApplicationName().c_str() encoding:NSUTF8StringEncoding],
+			[NSString stringWithCString:error.c_str() encoding:NSUTF8StringEncoding], 
 			@"Quit", nil, nil);
 
 		if (fatal)
@@ -161,8 +161,8 @@ namespace KrollBoot
 		InitCrashDetection();
 		NSApplicationLoad();
 		NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-		NSString *title = [NSString stringWithCString:GetCrashDetectionHeader().c_str()];
-		NSString *message = [NSString stringWithCString:GetCrashDetectionMessage().c_str()];
+		NSString *title = [NSString stringWithCString:GetCrashDetectionHeader().c_str() encoding:NSUTF8StringEncoding];
+		NSString *message = [NSString stringWithCString:GetCrashDetectionMessage().c_str() encoding:NSUTF8StringEncoding];
 		[alert setMessageText: title];
 		[alert setInformativeText: message];
 		[alert addButtonWithTitle:@"Send Report"];

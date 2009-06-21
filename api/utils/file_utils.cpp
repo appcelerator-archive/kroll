@@ -160,7 +160,7 @@ namespace UTILS_NS
 	{
 #ifdef OS_OSX
 		BOOL isDir = NO;
-		NSString *f = [NSString stringWithCString:file.c_str()];
+		NSString *f = [NSString stringWithCString:file.c_str()  encoding:NSUTF8StringEncoding];
 		NSString *p = [f stringByStandardizingPath];
 		BOOL found = [[NSFileManager defaultManager] fileExistsAtPath:p isDirectory:&isDir];
 		return found && !isDir;
@@ -225,7 +225,7 @@ namespace UTILS_NS
 			CreateDirectory(parent, true);
 		}
 #ifdef OS_OSX
-		return [[NSFileManager defaultManager] createDirectoryAtPath:[NSString stringWithCString:dir.c_str()] attributes:nil];
+		return [[NSFileManager defaultManager] createDirectoryAtPath:[NSString stringWithCString:dir.c_str() encoding:NSUTF8StringEncoding] attributes:nil];
 #elif OS_WIN32
 		return ::CreateDirectoryA(dir.c_str(),NULL);
 #elif OS_LINUX
@@ -242,7 +242,7 @@ namespace UTILS_NS
 	bool FileUtils::DeleteDirectory(std::string &dir)
 	{
 #ifdef OS_OSX
-		[[NSFileManager defaultManager] removeFileAtPath:[NSString stringWithCString:dir.c_str()] handler:nil];
+		[[NSFileManager defaultManager] removeFileAtPath:[NSString stringWithCString:dir.c_str() encoding:NSUTF8StringEncoding] handler:nil];
 #elif OS_WIN32
 		SHFILEOPSTRUCTA op;
 		op.hwnd = NULL;
@@ -262,7 +262,7 @@ namespace UTILS_NS
 	{
 #ifdef OS_OSX
 		BOOL isDir = NO;
-		BOOL found = [[NSFileManager defaultManager] fileExistsAtPath:[NSString stringWithCString:dir.c_str()] isDirectory:&isDir];
+		BOOL found = [[NSFileManager defaultManager] fileExistsAtPath:[NSString stringWithCString:dir.c_str() encoding:NSUTF8StringEncoding] isDirectory:&isDir];
 		return found && isDir;
 #elif OS_WIN32
 		WIN32_FIND_DATAA findFileData;
@@ -303,7 +303,7 @@ namespace UTILS_NS
 			}
 		}
 #ifdef OS_OSX
-		NSString *s = [[NSString stringWithCString:file.substr(0,pos).c_str()] stringByExpandingTildeInPath];
+		NSString *s = [[NSString stringWithCString:file.substr(0,pos).c_str() encoding:NSUTF8StringEncoding] stringByExpandingTildeInPath];
 		return [s fileSystemRepresentation];
 #else
 		return file.substr(0, pos);
@@ -344,7 +344,7 @@ namespace UTILS_NS
 				filepath += KR_PATH_SEP;
 		}
 #ifdef OS_OSX
-		NSString *s = [[NSString stringWithCString:filepath.c_str()] stringByExpandingTildeInPath];
+		NSString *s = [[NSString stringWithCString:filepath.c_str() encoding:NSUTF8StringEncoding] stringByExpandingTildeInPath];
 		NSString *p = [s stringByStandardizingPath];
 		return std::string([p fileSystemRepresentation]);
 #else

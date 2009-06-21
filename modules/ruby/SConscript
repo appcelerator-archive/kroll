@@ -8,8 +8,7 @@ Env.Append(CPPDEFINES=('KROLL_RUBY_API_EXPORT', 1))
 build.add_thirdparty(Env, 'poco')
 
 if build.is_osx():
-	Env.Append(CPPPATH=['/usr/lib/ruby/1.8/universal-darwin9.0','/usr/lib/ruby/1.8/universal-darwin8.0',build.kroll_include_dir])
-#	Env.Append(FRAMEWORKS=['Ruby'])
+	Env.Append(CPPPATH=['/usr/lib/ruby/1.8/universal-darwin10.0','/usr/lib/ruby/1.8/universal-darwin9.0','/usr/lib/ruby/1.8/universal-darwin8.0',build.kroll_include_dir])
 	Env.Append(LIBS=['libruby'])
 
 
