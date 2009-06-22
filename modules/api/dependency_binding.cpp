@@ -34,7 +34,7 @@ namespace kroll
 		this->SetMethod("getVersion", &DependencyBinding::_GetVersion);
 
 		/**
-		 * @tiapi(method=True,name=API.Dependency.getVersion,since=0.4)
+		 * @tiapi(method=True,name=API.Dependency.getRequirement,since=0.4)
 		 * @tiapi Get the requirement for this dependency (eg API.LTE)
 		 * @tiresult[string] The requirement for this dependency
 		 */
