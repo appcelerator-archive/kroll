@@ -21,8 +21,8 @@ def exists():
 	return path.isdir(tpbase)
 
 def fetch():
-	print "You don't seem to have the appropriate thirdparty files."
-	print "I'll just fetch those for you real quick..."
+	print "You don't seem to have the appropriate thirdparty files. I'll fetch them."
+	print "Downloading %s" % url
 
 	pbar = ProgressBar().start()
 	try:
