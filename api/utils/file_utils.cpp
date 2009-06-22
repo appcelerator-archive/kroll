@@ -189,7 +189,7 @@ namespace UTILS_NS
 	char fname[_MAX_FNAME];
 	char ext[_MAX_EXT];
 	strncpy(path_buffer, path.c_str(), _MAX_PATH);
-	path_buffer[_MAX_PATH - 1] = '\0'
+	path_buffer[_MAX_PATH - 1] = '\0';
 	_splitpath(path_buffer, drive, dir, fname, ext );
 	if (dir[strlen(dir)-1] == '\\')
 		dir[strlen(dir)-1] = '\0';
