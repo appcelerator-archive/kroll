@@ -116,6 +116,7 @@ namespace kroll
 	SharedString ArgList::GenerateSignature(const char* name, std::vector<std::string>* sig_vector)
 	{
 		std::ostringstream out;
+		out << name << "(";
 		bool optional = false;
 		for (size_t i = 0; i < sig_vector->size(); i++)
 		{
@@ -158,9 +159,11 @@ namespace kroll
 		}
 
 		if (optional)
+		{
 			out << "]";
-		out << ")";
+		}
 
+		out << ")";
 		return new std::string(out.str());
 	}
 

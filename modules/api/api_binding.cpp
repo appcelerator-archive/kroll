@@ -120,6 +120,8 @@ namespace kroll
 		/**
 		 * @tiapi(method=True,name=API.readApplicationManifest,since=0.4)
 		 * @tiapi Read an application manifest at a given path
+		 * @tiarg[string, manifestPath] the path to the manifest to read
+		 * @tiarg[string, applicationPath,optional=True] an optional application path override
 		 * @tiresult[object] an API.Application which represents the application with given manifest
 		 */
 		this->SetMethod("readApplicationManifest", &APIBinding::_ReadApplicationManifest);
@@ -664,7 +666,7 @@ namespace kroll
 
 	void APIBinding::_CreateDependency(const ValueList& args, SharedValue result)
 	{
-		args.VerifyException("readApplicationManifest", "i,s,s,?i");
+		args.VerifyException("createDepenendency", "i,s,s,?i");
 		int type = args.GetInt(0, UNKNOWN);
 		string name = args.GetString(1);
 		string version = args.GetString(2);
