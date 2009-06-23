@@ -180,6 +180,8 @@ class BuildConfig(object):
 			Glob('%s/utils/%s/*.cpp' % (dir, self.os))
 		if self.is_win32() and unzip:
 			sources.extend(Glob('%s/utils/unzip/*.cpp' % dir))
+		if self.is_osx():
+			sources.extend(Glob('%s/utils/%s/*.mm' % (dir, self.os)))
 		return sources
 
 	def init_os_arch(self):

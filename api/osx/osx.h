@@ -3,7 +3,7 @@
  * (see LICENSE below) with minor renames/removal/compiler fixes
  * re-licensed under the same license by Appcelerator
  */
-#include "base.h"
+#include "../base.h"
 
 #import <Foundation/Foundation.h>
 

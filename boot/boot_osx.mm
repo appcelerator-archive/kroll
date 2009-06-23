@@ -225,9 +225,7 @@ namespace KrollBoot
 			}
 			return [applicationName UTF8String];
 		}
-#endif
 	}
-
 #endif
 }
 
