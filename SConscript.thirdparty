@@ -10,7 +10,7 @@ import distutils.dir_util as dirutil
 from progressbar import ProgressBar
 Import('build')
 
-revision = 1
+revision = 2
 url = 'http://kroll.appcelerator.com.s3.amazonaws.com/kroll-thirdparty-r%s.tgz' % revision
 tpbase = path.join(build.cwd(), 'thirdparty-r%s' % revision)
 tppath = 'thirdparty-r%s/%s-%s' % (revision, build.os, build.arch)
