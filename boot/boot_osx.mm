@@ -10,6 +10,7 @@
 #ifdef USE_BREAKPAD
 #import "client/mac/handler/exception_handler.h"
 #import "common/mac/HTTPMultipartUpload.h"
+#include <Foundation/Foundation.h>
 #endif
 
 namespace KrollBoot
@@ -205,6 +206,28 @@ namespace KrollBoot
 
 		return 0;
 	}
+
+	string GetApplicationName()
+	{
+		if (!app.isNull())
+		{
+			return app->name.c_str();
+		}
+		else
+		{
+			// fall back to the info.plist if we haven't loaded the application
+			// which happens in a crash situation
+			NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
+			NSString *applicationName = [infoDictionary objectForKey:@"CFBundleName"];
+			if (!applicationName) 
+			{
+				applicationName = [infoDictionary objectForKey:@"CFBundleExecutable"];
+			}
+			return [applicationName UTF8String];
+		}
+#endif
+	}
+
 #endif
 }
 

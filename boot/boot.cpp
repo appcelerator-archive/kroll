@@ -5,11 +5,6 @@
  */
 #include "boot.h"
 
-// this is for bundle
-#ifdef OS_OSX
-#include <Foundation/Foundation.h>
-#endif
-
 namespace KrollBoot
 {
 	string applicationHome;
@@ -144,27 +139,6 @@ namespace KrollBoot
 		error = string("Launching application failed: ") + error;
 		ShowError(error, false);
 		return __LINE__;
-	}
-
-	string GetApplicationName()
-	{
-		if (!app.isNull())
-		{
-			return app->name.c_str();
-		}
-#ifdef OS_OSX
-		// fall back to the info.plist if we haven't loaded the application
-		// which happens in a crash situation
-		NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
-		NSString *applicationName = [infoDictionary objectForKey:@"CFBundleName"];
-		if (!applicationName) 
-		{
-			applicationName = [infoDictionary objectForKey:@"CFBundleExecutable"];
-		}
-		return [applicationName UTF8String];
-#else
-		return PRODUCT_NAME;
-#endif
 	}
 
 #ifdef USE_BREAKPAD

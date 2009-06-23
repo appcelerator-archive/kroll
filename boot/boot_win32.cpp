@@ -218,7 +218,7 @@ namespace KrollBoot
 	extern string dumpFilePath;
 
 	char breakpadCallBuffer[MAX_PATH];
-  	bool HandleCrash(
+	bool HandleCrash(
 		const wchar_t* dumpPath,
 		const wchar_t* id,
 		void* context,
@@ -328,6 +328,16 @@ namespace KrollBoot
 #endif
 		return 0;
 	}
+
+	string GetApplicationName()
+	{
+		if (!app.isNull())
+		{
+			return app->name.c_str();
+		}
+		return PRODUCT_NAME;
+	}
+
 #endif
 }
 

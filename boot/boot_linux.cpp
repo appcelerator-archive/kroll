@@ -202,6 +202,15 @@ namespace KrollBoot
 		}
 		return 0;
 	}
+
+	string GetApplicationName()
+	{
+		if (!app.isNull())
+		{
+			return app->name.c_str();
+		}
+		return PRODUCT_NAME;
+	}
 #endif
 }
 

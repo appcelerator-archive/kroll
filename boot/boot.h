@@ -62,7 +62,6 @@ namespace KrollBoot
 	void BootstrapPlatformSpecific(string moduleList);
 	int StartHost();
 	string Blastoff();
-	string GetApplicationName();
 	vector<SharedDependency> FilterForSDKInstall(
 		vector<SharedDependency> dependencies);
 
@@ -72,6 +71,7 @@ namespace KrollBoot
 	string GetCrashDetectionHeader();
 	string GetCrashDetectionMessage();
 	map<string, string> GetCrashReportParameters();
+	string GetApplicationName();
 #endif
 }
 #endif

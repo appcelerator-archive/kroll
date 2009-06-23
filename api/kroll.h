@@ -84,7 +84,7 @@ namespace kroll
 #include "host.h"
 
 #ifdef OS_OSX
-#include "osx.h"
+#include "osx/osx.h"
 #endif
 
 #endif

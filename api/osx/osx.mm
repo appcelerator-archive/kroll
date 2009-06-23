@@ -1,4 +1,3 @@
-#ifdef OS_OSX
 #define OSX_CPP_COMPILE
 #import "osx.h"
 
@@ -535,4 +534,3 @@ void KrollDumpStackTraceFromException(NSException *e){
 
 
 #undef OSX_CPP_COMPILE
-#endif // OS_OSX

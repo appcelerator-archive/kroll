@@ -8,6 +8,6 @@ Env.Append(CPPDEFINES=('KROLL_HOST_EXPORT',1))
 Env.Append(FRAMEWORKS=['Cocoa'])
 build.add_thirdparty(Env, 'poco')
 
-t = Env.SharedLibrary(build.dir + '/runtime/khost', ['host.cpp'])
+t = Env.SharedLibrary(build.dir + '/runtime/khost', ['host.mm'])
 build.mark_build_target(t)
 
