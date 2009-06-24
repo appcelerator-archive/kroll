@@ -28,13 +28,17 @@ namespace UTILS_NS
 		static void GetNodeId(NodeId&);
 
 		/**
-		 * Get the machine ID of this machine, based on the MAC address
-		 * or the .PRODUCT_NAME file (for backwards-compatibility)
+		 * Get the machine ID of this machine from the .PRODUCT_NAME file
+		 * or create it if it doesn't exist.
 		 */
 		static std::string GetMachineId();
 
-		private:
-		static std::string GetOldStyleMachineId();
+		/**
+		 * Create a machine ID for this machine and write it to the .PRODUCT_NAME file
+		 * in the user runtime home directory. The machine id is specific to a particular
+		 * user on a particular OS install and does not uniquely identify a machine.
+		 */
+		static std::string CreateMachineId();
 	};
 }
 #endif

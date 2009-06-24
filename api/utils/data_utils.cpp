@@ -110,24 +110,24 @@ namespace UTILS_NS
 
 		while (pSrc < SRC_LAST_DEC)
 		{
-		   if (*pSrc == '%')
-		   {
-		      char dec1, dec2;
-		      if (-1 != (dec1 = DataUtilsNS::HEX2DEC[*(pSrc + 1)])
-		         && -1 != (dec2 = DataUtilsNS::HEX2DEC[*(pSrc + 2)]))
-		      {
-		         *pEnd++ = (dec1 << 4) + dec2;
-		         pSrc += 3;
-		         continue;
-		      }
-		   }
+			if (*pSrc == '%')
+			{
+				char dec1, dec2;
+				if (-1 != (dec1 = DataUtilsNS::HEX2DEC[*(pSrc + 1)])
+					&& -1 != (dec2 = DataUtilsNS::HEX2DEC[*(pSrc + 2)]))
+				{
+					*pEnd++ = (dec1 << 4) + dec2;
+					pSrc += 3;
+					continue;
+				}
+			}
 
-		   *pEnd++ = *pSrc++;
+			*pEnd++ = *pSrc++;
 		}
 
 		// the last 2- chars
 		while (pSrc < SRC_END)
-		   *pEnd++ = *pSrc++;
+			*pEnd++ = *pSrc++;
 
 		std::string sResult(pStart, pEnd);
 		delete [] pStart;

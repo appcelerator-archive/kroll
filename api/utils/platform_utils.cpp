@@ -29,6 +29,8 @@
 // ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 #include "utils.h"
+#include <iostream>
+#include <fstream>
 
 namespace UTILS_NS
 {
@@ -38,8 +40,7 @@ namespace UTILS_NS
 		try
 		{
 			PlatformUtils::GetNodeId(id);
-		}
-		catch(std::string e)
+		} catch(std::string e)
 		{
 			return e;
 		}
@@ -59,20 +60,6 @@ namespace UTILS_NS
 	}
 
 	std::string PlatformUtils::GetMachineId()
-	{
-		std::string id = GetOldStyleMachineId();
-		if (!id.empty())
-		{
-			return id;
-		}
-		else
-		{
-			std::string MACAddress = PlatformUtils::GetFirstMACAddress();
-			return DataUtils::HexMD5(MACAddress);
-		}
-	}
-
-	std::string PlatformUtils::GetOldStyleMachineId()
 	{
 		std::vector<std::string> possibleMIDFiles;
 
@@ -110,8 +97,24 @@ namespace UTILS_NS
 					return line;
 				}
 			}
-
 		}
-		return std::string();
+
+		return CreateMachineId();
+	}
+
+	std::string PlatformUtils::CreateMachineId()
+	{
+		std::string product = std::string(".") + PRODUCT_NAME;
+		std::transform(product.begin(), product.end(), product.begin(), tolower);
+		std::string uuidFilePath = FileUtils::GetUserRuntimeHomeDirectory();
+		uuidFilePath = FileUtils::Join(uuidFilePath.c_str(), product.c_str(), NULL);
+
+		std::string newUUID = DataUtils::GenerateUUID();
+		std::ofstream myfile;
+		myfile.open(uuidFilePath.c_str());
+		myfile << newUUID << std::endl;
+		myfile.close();
+
+		return newUUID;
 	}
 }

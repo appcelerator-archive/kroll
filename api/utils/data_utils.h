@@ -26,6 +26,12 @@ namespace UTILS_NS
 		 */
 		static std::string DecodeURIComponent(std::string value);
 
+		/**
+		 * Generate a new UUID
+		 * @returns a new UUID as a string
+		 */
+		static std::string GenerateUUID();
+
 	};
 }
 #endif
