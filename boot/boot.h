@@ -64,6 +64,7 @@ namespace KrollBoot
 	string Blastoff();
 	vector<SharedDependency> FilterForSDKInstall(
 		vector<SharedDependency> dependencies);
+	string GetApplicationName();
 
 #ifdef USE_BREAKPAD
 	void InitCrashDetection();
@@ -71,7 +72,6 @@ namespace KrollBoot
 	string GetCrashDetectionHeader();
 	string GetCrashDetectionMessage();
 	map<string, string> GetCrashReportParameters();
-	string GetApplicationName();
 #endif
 }
 #endif

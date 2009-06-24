@@ -131,6 +131,15 @@ namespace KrollBoot
 		return BootUtils::RunInstaller(missing, app, updateFile);
 	}
 
+	string GetApplicationName()
+	{
+		if (!app.isNull())
+		{
+			return app->name.c_str();
+		}
+		return PRODUCT_NAME;
+	}
+
 #ifdef USE_BREAKPAD
 	static google_breakpad::ExceptionHandler* breakpad;
 	extern string dumpFilePath;
@@ -201,15 +210,6 @@ namespace KrollBoot
 			return __LINE__;
 		}
 		return 0;
-	}
-
-	string GetApplicationName()
-	{
-		if (!app.isNull())
-		{
-			return app->name.c_str();
-		}
-		return PRODUCT_NAME;
 	}
 #endif
 }
