@@ -6,7 +6,7 @@
 
 #include "../utils.h"
 #include "../kashmir/uuid.h"
-#include "../kashmir/devrandom.h"
+#include "../kashmir/winrandom.h"
 #include <sstream>
 
 namespace UTILS_NS
