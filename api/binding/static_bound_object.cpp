@@ -9,8 +9,7 @@
 
 namespace kroll
 {
-	StaticBoundObject::StaticBoundObject(const char *type)
-		: KObject(type)
+	StaticBoundObject::StaticBoundObject()
 	{
 	}
 
@@ -85,3 +84,4 @@ namespace kroll
 
 }
 
+>>>>>>> fc65dcadca1f41234f6a015c8628c831c5e6e4d0:api/binding/static_bound_object.cpp
