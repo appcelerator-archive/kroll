@@ -10,15 +10,21 @@ import distutils.dir_util as dirutil
 from progressbar import ProgressBar
 Import('build')
 
-revision = 5
-url = 'http://kroll.appcelerator.com.s3.amazonaws.com/kroll-thirdparty-r%s.tgz' % revision
-tpbase = path.join(build.cwd(), 'thirdparty-r%s' % revision)
-tppath = 'thirdparty-r%s/%s-%s' % (revision, build.os, build.arch)
-fpath = build.third_party = path.join(build.cwd(), tppath)
+revisions = {
+	"linux-i386": 5,
+	"linux-x86_64": 5,
+	"osx-universal": 5,
+	"win32-i386": 6
+}
+
+thirdparty_name = 'thirdparty-%s-%s-r%s' % (build.os, build.arch, revisions[build.os+'-'+build.arch])
+url = 'http://kroll.appcelerator.com.s3.amazonaws.com/kroll-%s.tgz' % (thirdparty_name)
+
+build.third_party = path.join(build.cwd(), thirdparty_name)
 rtdir = build.runtime_build_dir
 
 def exists():
-	return path.isdir(tpbase)
+	return path.isdir(build.third_party)
 
 def fetch():
 	print "You don't seem to have the appropriate thirdparty files. I'll fetch them."
@@ -35,9 +41,9 @@ def fetch():
 		fname, msg = urllib.urlretrieve(url, reporthook=progress_callback)
 
 		print "Fetched it (%s). I'm going to unpack it now..." % (fname)
-		os.makedirs(tpbase)
+		os.makedirs(build.third_party)
 		tfile = tarfile.open(fname, mode="r:gz")
-		tfile.extractall(path=tpbase)
+		tfile.extractall(path=build.third_party)
 	finally:
 		urllib.urlcleanup()
 		pbar.finish()
@@ -45,15 +51,15 @@ def fetch():
 if not exists(): fetch()
 
 if build.is_linux():
-	futils.CopyTree(path.join(fpath, 'webkit/lib'), rtdir)
-	futils.CopyTree(path.join(fpath, 'poco/lib'), rtdir)
+	futils.CopyTree(path.join(build.third_party, 'webkit/lib'), rtdir)
+	futils.CopyTree(path.join(build.third_party, 'poco/lib'), rtdir)
 
 elif build.is_win32():
-	futils.CopyTree(path.join(fpath, 'poco', 'bin'), rtdir)
-	futils.CopyTree(path.join(fpath, 'webkit', 'bin'), rtdir)
-	futils.CopyToDir(path.join(fpath, 'microsoft', 'Microsoft.VC80.CRT'), rtdir)
+	futils.CopyTree(path.join(build.third_party, 'poco', 'bin'), rtdir)
+	futils.CopyTree(path.join(build.third_party, 'webkit', 'bin'), rtdir)
+	futils.CopyToDir(path.join(build.third_party, 'microsoft', 'Microsoft.VC80.CRT'), rtdir)
 
-	webkit_tlb = path.join(fpath, 'webkit', 'lib', 'WebKit.tlb')
+	webkit_tlb = path.join(build.third_party, 'webkit', 'lib', 'WebKit.tlb')
 	webkit_manifest = path.join(build.runtime_build_dir, 'WebKit.manifest')
 	t = Command(webkit_manifest, webkit_tlb, 'mt.exe /nologo /tlb:"$SOURCE" /dll:WebKit /out:"$TARGET"')
 	build.mark_build_target(t)
@@ -61,10 +67,10 @@ elif build.is_win32():
 elif build.is_osx():
 	excludes = ['.h', '.defs', 'JavaScriptGlue.framework']
 	targets = []
-	for framework in Glob(path.join(tppath, '*/*.framework')):
+	for framework in Glob(path.join(build.third_party, '*/*.framework')):
 		t = build.utils.CopyToDir(framework, rtdir, exclude=excludes)
 		targets.append(t)
-	for libdir in Glob(path.join(tppath, '*/lib')):
+	for libdir in Glob(path.join(build.third_party, '*/lib')):
 		t = build.utils.CopyTree(libdir, rtdir, exclude=excludes)
 		targets.append(t)
 	build.mark_build_target(targets)

@@ -5,27 +5,33 @@ import sys
 import os
 import time
 
+acctid = None
+secret = None
 if len(sys.argv) < 2:
-	print "Usage: upload_thirdparty.py <file.tgz>"
+	print "Usage: upload_thirdparty.py <file.tgz> [<access key> <secret key>]"
 	exit()
 else:
 	fname = sys.argv[1]
+	if len(sys.argv) >= 4:
+		acctid = sys.argv[2]
+		secret = sys.argv[3]
 
-acctid = raw_input("AWS_ACCESS_KEY_ID: ")
-secret = raw_input("AWS_SECRET_ACCESS_KEY: ")
+if acctid is None:	
+	acctid = raw_input("AWS_ACCESS_KEY_ID: ")
+
+if secret is None:
+	secret = raw_input("AWS_SECRET_ACCESS_KEY: ")
+
 bucket = "kroll.appcelerator.com"
 key = os.path.basename(fname)
 conn = S3Connection(acctid, secret)
 bucket = conn.get_bucket(bucket)
-k = Key(bucket)
-k.key = key
+k = bucket.new_key(key)
 
 pbar = ProgressBar().start()
 try:
 	def progress_callback(current, total):
 		pbar.update(int(100 * (float(current) / float(total))))
-	k.set_contents_from_filename(fname, cb=progress_callback, num_cb=100)
+	k.set_contents_from_filename(fname, cb=progress_callback, num_cb=100, policy='public-read')
 finally:
 	pbar.finish()
-
-k.set_acl('public-read')
