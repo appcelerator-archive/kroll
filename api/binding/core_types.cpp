@@ -79,7 +79,7 @@ namespace kroll
 
 	SharedValue KObjectWrapper::Get(const char *name)
 	{
-		object->Get(name);
+		return object->Get(name);
 	}
 
 	SharedStringList KObjectWrapper::GetPropertyNames()
@@ -109,7 +109,7 @@ namespace kroll
 
 	SharedValue KMethodWrapper::Get(const char *name)
 	{
-		method->Get(name);
+		return method->Get(name);
 	}
 
 	SharedStringList KMethodWrapper::GetPropertyNames()
@@ -122,7 +122,7 @@ namespace kroll
 		return method->DisplayString(levels);
 	}
 
-	KListWrapper::KListWrapper(SharedKList method) :
+	KListWrapper::KListWrapper(SharedKList list) :
 		list(list)
 	{
 	}
