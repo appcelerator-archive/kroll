@@ -23,11 +23,12 @@ namespace kroll
 	bool set_property_cb(JSContextRef, JSObjectRef, JSStringRef, JSValueRef, JSValueRef*);
 	JSValueRef call_as_function_cb(JSContextRef, JSObjectRef, JSObjectRef, size_t, const JSValueRef[], JSValueRef*);
 	void finalize_cb(JSObjectRef);
-
-	void add_special_property_names(SharedValue, SharedStringList, bool);
-	JSValueRef get_special_property(SharedValue, char*, JSContextRef, SharedValue);
 	JSValueRef to_string_cb(JSContextRef, JSObjectRef, JSObjectRef, size_t, const JSValueRef[], JSValueRef*);
 	JSValueRef equals_cb(JSContextRef, JSObjectRef, JSObjectRef, size_t, const JSValueRef[], JSValueRef*);
+
+	void AddSpecialPropertyNames(SharedValue, SharedStringList, bool);
+	JSValueRef GetSpecialProperty(SharedValue, char*, JSContextRef, SharedValue);
+	bool DoSpecialSetBehavior(SharedValue target, char* name, SharedValue newValue);
 
 	SharedValue KJSUtil::ToKrollValue(
 		JSValueRef value,
@@ -318,7 +319,7 @@ namespace kroll
 		free(name);
 
 		SharedStringList names = object->GetPropertyNames();
-		add_special_property_names(*value, names, true);
+		AddSpecialPropertyNames(*value, names, true);
 		for (size_t i = 0; i < names->size(); i++)
 		{
 			if (str_name == *names->at(i))
@@ -347,7 +348,7 @@ namespace kroll
 		try
 		{
 			SharedValue ti_val = object->Get(name);
-			js_val = get_special_property(*value, name, js_context, ti_val);
+			js_val = GetSpecialProperty(*value, name, js_context, ti_val);
 		}
 		catch (ValueException& exception)
 		{
@@ -383,11 +384,17 @@ namespace kroll
 
 		SharedKObject object = (*value)->ToObject();
 		bool success = false;
-		char* prop_name = KJSUtil::ToChars(js_property);
+		char* propertyName = KJSUtil::ToChars(js_property);
 		try
 		{
-			SharedValue ti_val = KJSUtil::ToKrollValue(js_value, js_context, js_object);
-			object->Set(prop_name, ti_val);
+			SharedValue newValue = KJSUtil::ToKrollValue(js_value, js_context, js_object);
+
+			// Arrays in particular have a special behavior when
+			// you do something like set the "length" property
+			if (!DoSpecialSetBehavior(*value, propertyName, newValue))
+			{
+				object->Set(propertyName, newValue);
+			}
 			success = true;
 		}
 		catch (ValueException& exception)
@@ -402,12 +409,12 @@ namespace kroll
 		catch (...)
 		{
 			std::cerr << "KJSUtil.cpp: Caught an unknown exception during set for "
-			          << prop_name << std::endl;
+				<< propertyName << std::endl;
 			SharedValue v = Value::NewString("unknown exception");
 			*js_exception = KJSUtil::ToJSValue(v, js_context);
 		}
 
-		free(prop_name);
+		free(propertyName);
 		return success;
 	}
 
@@ -456,7 +463,7 @@ namespace kroll
 		return js_val;
 	}
 
-	void add_special_property_names(SharedValue value, SharedStringList props, bool showInvisible)
+	void AddSpecialPropertyNames(SharedValue value, SharedStringList props, bool showInvisible)
 	{
 		// Some attributes should be hidden unless the are requested specifically -- 
 		// essentially a has_property(...) versus  get_property_list(...). An example
@@ -472,8 +479,8 @@ namespace kroll
 				foundLength = true;
 			if (strcmp(pn->c_str(), "toString") == 0)
 				foundToString = true;
-			if (strcmp(pn->c_str(), "toString") == 0)
-				foundToString = true;
+			if (strcmp(pn->c_str(), "equals") == 0)
+				foundEquals = true;
 		}
 
 		if (!foundLength && value->IsList())
@@ -492,7 +499,7 @@ namespace kroll
 		}
 	}
 
-	JSValueRef get_special_property(SharedValue value, char* name, JSContextRef ctx, SharedValue objValue)
+	JSValueRef GetSpecialProperty(SharedValue value, char* name, JSContextRef ctx, SharedValue objValue)
 	{
 		// Always override the length property on lists. Some languages
 		// supply their own length property, which might be a method instead
@@ -524,6 +531,18 @@ namespace kroll
 
 		// Otherwise this is just a normal JS value
 		return KJSUtil::ToJSValue(objValue, ctx);
+	}
+
+	bool DoSpecialSetBehavior(SharedValue target, char* name, SharedValue newValue)
+	{
+		// We only do something special if we are trying to set
+		// the length property of a list to a new int value.
+		if (strcmp(name, "length") || !target->IsList() || !newValue->IsInt())
+		{
+			return false;
+		}
+		target->ToList()->ResizeTo(newValue->ToInt());
+		return true;
 	}
 
 	JSValueRef to_string_cb(
@@ -575,7 +594,6 @@ namespace kroll
 		return JSValueMakeBoolean(ctx, (*value)->Equals(*otherValue));
 	}
 
-
 	void get_property_names_cb(
 		JSContextRef js_context,
 		JSObjectRef js_object,
@@ -587,7 +605,7 @@ namespace kroll
 
 		SharedKObject object = (*value)->ToObject();
 		SharedStringList props = object->GetPropertyNames();
-		add_special_property_names(*value, props, false);
+		AddSpecialPropertyNames(*value, props, false);
 		for (size_t i = 0; i < props->size(); i++)
 		{
 			SharedString pn = props->at(i);

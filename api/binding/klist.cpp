@@ -11,15 +11,22 @@
 namespace kroll
 {
 
-	void KList::SetAt(unsigned int index, SharedValue value)
+	void KList::ResizeTo(unsigned int size)
 	{
-		while (index >= this->Size())
+		if (size < 0 || size == this->Size())
 		{
-			// now we need to create entries between current
-			// size and new size  and make the entries undefined.
-			this->Append(Value::Undefined);
+			return;
 		}
 
+		while (size < this->Size())
+		{
+			this->Remove(this->Size() - 1);
+		}
+
+		while (size > this->Size())
+		{
+			this->Append(Value::Undefined);
+		}
 	}
 
 	SharedString KList::DisplayString(int levels)

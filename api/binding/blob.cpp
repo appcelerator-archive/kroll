@@ -13,12 +13,18 @@ namespace kroll
 {
 	Blob::Blob() 
 	{
-		Create(NULL,0);
+		Create(NULL, 0);
+	}
+
+	Blob::Blob(char *buf)
+	{
+		// Assume this guy is null terminated. If not -- oops.
+		Create(buf, strlen(buf));
 	}
 
 	Blob::Blob(char *buf, int len)
 	{
-		Create(static_cast<const char*>(buf), len);
+		Create(buf, len);
 	}
 
 	Blob::Blob(const char *buffer, int len)
@@ -36,20 +42,22 @@ namespace kroll
 		Create(str.c_str(), str.length());
 	}
 
-	void Blob::Create(const char *buf, int len)
+	void Blob::Create(const char *buf, int length)
 	{
-		if (len > 0)
+		if (length > 0)
 		{
-			this->buffer = new char[len + 1];
-			memcpy(this->buffer, buf, len);
-			this->buffer[len]='\0'; // null terminate buffer
+			// Store the buffer with a null terminator so
+			// that we can use it like a string later on.
+			this->buffer = new char[length + 1];
+			memcpy(this->buffer, buf, length);
+			this->buffer[length] = '\0';
 		}
 		else
 		{
 			this->buffer = NULL;
 		}
 
-		this->length = len;
+		this->length = length;
 		this->SetMethod("toString", &Blob::ToString);
 		this->SetMethod("get", &Blob::Get);
 
@@ -64,7 +72,7 @@ namespace kroll
 		this->SetMethod("toLowerCase", &Blob::ToLowerCase);
 		this->SetMethod("toUpperCase", &Blob::ToUpperCase);
 		this->SetMethod("replace", &Blob::Replace);
-		this->Set("length", Value::NewInt(len));
+		this->Set("length", Value::NewInt(length));
 	}
 
 	Blob::~Blob()
@@ -81,8 +89,7 @@ namespace kroll
 	{
 		if (this->length == 0)
 		{
-			std::string s;
-			result->SetString(s);
+			result->SetString("");
 		}
 		else
 		{

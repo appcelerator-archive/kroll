@@ -72,6 +72,15 @@ namespace kroll
 		virtual SharedStringList GetPropertyNames() = 0;
 
 		/**
+		 * Modify this size of this list based. If the size is larger
+		 * than the current length the list will be padded with Undefined.
+		 * If the size is smaller than the current list the list will be
+		 * truncated. If the size is invalid, nothing will happen.
+		 * @arg size the new size of the list.
+		 */
+		void ResizeTo(unsigned int size);
+
+		/**
 		 * @return a string representation of this object
 		 */
 		SharedString DisplayString(int levels=3);

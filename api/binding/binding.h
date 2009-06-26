@@ -25,6 +25,7 @@
 #include "accessor_bound_list.h"
 #include "scope_method_delegate.h"
 #include "blob.h"
+#include "core_types.h"
 
 #include "profiled_bound_object.h"
 #include "profiled_bound_list.h"

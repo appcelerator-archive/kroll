@@ -23,6 +23,7 @@ namespace kroll
 	public:
 
 		Blob();
+		Blob(char *buffer);
 		Blob(char *buffer, int size);
 		Blob(const char *buffer, int size);
 		Blob(std::string);
