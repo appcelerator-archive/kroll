@@ -56,9 +56,7 @@ namespace kroll
 	{
 		instance_ = this;
 
-		// Initialize our global object to be a simple mapped Kroll object
-		this->global_object = new StaticBoundObject();
-
+		this->SetupGlobalObject();
 		this->SetupApplication(argc, argv);
 		this->ParseCommandLineArguments(); // Depends on this->application
 		
@@ -73,6 +71,13 @@ namespace kroll
 
 		this->SetupLogging(); // Depends on command-line arguments and this->debug
 		this->SetupProfiling(); // Depends on logging
+	}
+
+	void Host::SetupGlobalObject()
+	{
+		// Initialize our global object to be a simple mapped Kroll object
+		this->globalObject = new StaticBoundObject();
+		this->globalObject->SetObject("CoreTypes", new CoreTypes());
 	}
 
 	void Host::SetupApplication(int argc, const char* argv[])
@@ -141,8 +146,8 @@ namespace kroll
 			// to use the profiled bound object which will profile all methods
 			// going through this object and it's attached children
 			this->profileStream = new Poco::FileOutputStream(this->profilePath);
-			this->global_object = new ProfiledBoundObject(
-				GLOBAL_NS_VARNAME, this->global_object, this->profileStream);
+			this->globalObject = new ProfiledBoundObject(
+				GLOBAL_NS_VARNAME, this->globalObject, this->profileStream);
 
 			logger->Info("Starting Profiler. Output going to %s", this->profilePath.c_str());
 		}
@@ -691,7 +696,7 @@ namespace kroll
 
 	SharedPtr<KObject> Host::GetGlobalObject() 
 	{
-		return this->global_object;
+		return this->globalObject;
 	}
 
 	bool Host::Start()
@@ -749,7 +754,7 @@ namespace kroll
 		this->UnloadModuleProviders();
 		this->UnloadModules();
 
-		this->global_object = NULL;
+		this->globalObject = NULL;
 
 		// Stop the profiler, if it was enabledk
 		StopProfiling(); 

@@ -194,7 +194,8 @@ namespace kroll
 		Mutex moduleMutex;
 		std::vector<ModuleProvider *> module_providers;
 		std::vector<std::string> module_paths;
-		SharedPtr<KObject> global_object;
+		SharedPtr<KObject> globalObject;
+		SharedPtr<CoreTypes> coreTypes;
 
 		SharedApplication application;
 		bool running;
@@ -295,13 +296,13 @@ namespace kroll
 		static Poco::Timestamp started_;
 
 		// Some initialization methods
+		void SetupGlobalObject();
 		void SetupApplication(int argc, const char* argv[]);
 		void SetupLogging();
 		void SetupProfiling();
 		void StopProfiling();
 
 		DISALLOW_EVIL_CONSTRUCTORS(Host);
-		
 	};
 
 	/**
