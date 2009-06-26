@@ -152,7 +152,9 @@ namespace KrollBoot
 		if (!dll)
 		{
 			char msg[MAX_PATH];
-			sprintf_s(msg,"Couldn't load file: %s, error: %d", khost.c_str(), GetLastError());
+	 		sprintf_s(msg,"Couldn't load file: %s, error: %s", khost.c_str(),
+				KrollUtils::Win32Utils::QuickFormatMessage(GetLastError()).c_str());
+
 			ShowError(msg);
 			return __LINE__;
 		}

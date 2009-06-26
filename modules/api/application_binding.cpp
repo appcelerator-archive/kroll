@@ -22,6 +22,7 @@ namespace kroll
 {
 
 	ApplicationBinding::ApplicationBinding(SharedApplication application, bool current) :
+		StaticBoundObject("Application"),
 		application(application),
 		current(current)
 	{
