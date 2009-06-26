@@ -50,9 +50,9 @@ namespace kroll
 		SharedKMethod evaluator = new RubyEvaluator();
 		/**
 		 * @tiapi(method=True,name=Ruby.evaluate,since=0.2) Evaluates a string as ruby code
-		 * @tiarg(for=Ruby.evaluate,name=code,type=string) ruby script code
-		 * @tiarg(for=Ruby.evaluate,name=scope,type=object) global variable scope
-		 * @tiresult(for=Ruby.evaluate,type=object) result of the evaluation
+		 * @tiarg(for=Ruby.evaluate,name=code,type=String) ruby script code
+		 * @tiarg(for=Ruby.evaluate,name=scope,type=Object) global variable scope
+		 * @tiresult(for=Ruby.evaluate,type=any) result of the evaluation
 		 */
 		binding->Set("evaluate", Value::NewMethod(evaluator));
 
