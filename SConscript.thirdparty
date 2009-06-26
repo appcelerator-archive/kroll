@@ -10,7 +10,7 @@ import distutils.dir_util as dirutil
 from progressbar import ProgressBar
 Import('build')
 
-revision = 3
+revision = 4
 url = 'http://kroll.appcelerator.com.s3.amazonaws.com/kroll-thirdparty-r%s.tgz' % revision
 tpbase = path.join(build.cwd(), 'thirdparty-r%s' % revision)
 tppath = 'thirdparty-r%s/%s-%s' % (revision, build.os, build.arch)
@@ -47,7 +47,6 @@ if not exists(): fetch()
 if build.is_linux():
 	futils.CopyTree(path.join(fpath, 'webkit/lib'), rtdir)
 	futils.CopyTree(path.join(fpath, 'poco/lib'), rtdir)
-	futils.CopyTree(path.join(fpath, 'libcurl/lib'), rtdir)
 
 elif build.is_win32():
 	futils.CopyTree(path.join(fpath, 'poco', 'bin'), rtdir)
