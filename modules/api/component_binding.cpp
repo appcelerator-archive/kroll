@@ -16,49 +16,49 @@ namespace kroll
 		/**
 		 * @tiapi(method=True,name=API.Component.getType,since=0.4)
 		 * @tiapi Get the type of this component
-		 * @tiresult[int] The type of this component (eg API.MODULE)
+		 * @tiresult[Number] The type of this component (eg API.MODULE)
 		 */
 		this->SetMethod("getType", &ComponentBinding::_GetType);
 
 		/**
 		 * @tiapi(method=True,name=API.Component.getName,since=0.4)
 		 * @tiapi Get the name of this component
-		 * @tiresult[string] The name of this component
+		 * @tiresult[String] The name of this component
 		 */
 		this->SetMethod("getName", &ComponentBinding::_GetName);
 
 		/**
 		 * @tiapi(method=True,name=API.Component.getVersion,since=0.4)
 		 * @tiapi Get the version of this component
-		 * @tiresult[string] The version of this component
+		 * @tiresult[String] The version of this component
 		 */
 		this->SetMethod("getVersion", &ComponentBinding::_GetVersion);
 
 		/**
 		 * @tiapi(method=True,name=API.Component.getPath,since=0.4)
 		 * @tiapi Get the path to this component
-		 * @tiresult[string] The path to this component
+		 * @tiresult[String] The path to this component
 		 */
 		this->SetMethod("getPath", &ComponentBinding::_GetPath);
 
 		/**
 		 * @tiapi(method=True,name=API.Component.getManifest,since=0.4)
 		 * @tiapi Get the contents of this components's manifest
-		 * @tiresult[list] The contents of the manifest as an array of key-value strings
+		 * @tiresult[Array<Array<String>>] The contents of the manifest as an array of key-value strings
 		 */
 		this->SetMethod("getManifest", &ComponentBinding::_GetManifest);
 
 		/**
 		 * @tiapi(method=True,name=API.Component.isBundled,since=0.4)
 		 * @tiapi Whether or not this component is bundled with an application
-		 * @tiresult[boolean] True if this is a bundled component, false otherwise
+		 * @tiresult[Boolean] True if this is a bundled component, false otherwise
 		 */
 		this->SetMethod("isBundled", &ComponentBinding::_IsBundled);
 
 		/**
 		 * @tiapi(method=True,name=API.Component.isLoaded,since=0.4)
 		 * @tiapi Whether or not this component is currently loaded
-		 * @tiresult[boolean] True if this is a loaded component, false otherwise
+		 * @tiresult[Boolean] True if this is a loaded component, false otherwise
 		 */
 		this->SetMethod("isLoaded", &ComponentBinding::_IsLoaded);
 	}

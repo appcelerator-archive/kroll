@@ -30,82 +30,82 @@ namespace kroll
 		/**
 		 * @tiapi(method=True,name=API.set,since=0.2)
 		 * @tiapi Set an attribute in the global object
-		 * @tiarg[string, key] Key of the attribute to set
-		 * @tiarg[string, value] New value of the attribute
+		 * @tiarg[String, key] Key of the attribute to set
+		 * @tiarg[String, value] New value of the attribute
 		 */
 		this->SetMethod("set", &APIBinding::_Set);
 
 		/**
 		 * @tiapi(method=True,name=API.get,since=0.2)
 		 * @tiapi Get an attribute in the global object
-		 * @tiarg[string, key] Key of the attribute to get
-		 * @tiresult[value] Attribute at that key
+		 * @tiarg[String, key] Key of the attribute to get
+		 * @tiresult[any] Attribute at that key
 		 */
 		this->SetMethod("get", &APIBinding::_Get);
 
 		/**
 		 * @tiapi(method=True,name=API.register,since=0.2)
 		 * @tiapi Register an event listener
-		 * @tiarg[string, eventName] The event name to listen for
-		 * @tiarg[method, callback] The callback to invoke when this message occurs
-		 * @tiresult[int] An id which represents this registration
+		 * @tiarg[String, eventName] The event name to listen for
+		 * @tiarg[Function, callback] The callback to invoke when this message occurs
+		 * @tiresult[Number] An id which represents this registration
 		 */
 		this->SetMethod("register", &APIBinding::_Register);
 
 		/**
 		 * @tiapi(method=True,name=API.unregister,since=0.2)
 		 * @tiapi Unregister an event listener
-		 * @tiarg[int, id] The id of the registration to unregister
+		 * @tiarg[Number, id] The id of the registration to unregister
 		 */
 		this->SetMethod("unregister", &APIBinding::_Unregister);
 
 		/**
 		 * @tiapi(method=True,name=API.fire,since=0.2)
 		 * @tiapi Fire the event with a given name
-		 * @tiarg[string, name] The name of the event to fire
-		 * @tiarg[value, payload] The payload for this event
+		 * @tiarg[String, name] The name of the event to fire
+		 * @tiarg[any, payload] The payload for this event
 		 */
 		this->SetMethod("fire", &APIBinding::_Fire);
 
 		/**
 		 * @tiapi(method=True,name=API.getApplication,since=0.2)
 		 * @tiapi Get the currently running application
-		 * @tiresult[object] an API.Application that is the running application
+		 * @tiresult[API.Application] an API.Application that is the running application
 		 */
 		this->SetMethod("getApplication", &APIBinding::_GetApplication);
 
 		/**
 		 * @tiapi(method=True,name=API.getInstalledComponents,since=0.4)
 		 * @tiapi Get a list of the currently installed Kroll components
-		 * @tiresult[list] a list of API.Component of installed components of all types
+		 * @tiresult[Array<API.Component>] a list of API.Component of installed components of all types
 		 */
 		this->SetMethod("getInstalledComponents", &APIBinding::_GetInstalledComponents);
 
 		/**
 		 * @tiapi(method=True,name=API.getInstalledSDKs,since=0.4)
 		 * @tiapi Get a list of the currently installed Kroll SDK components
-		 * @tiresult[list] a list of API.Component of installed SDK components
+		 * @tiresult[Array<API.Component>] a list of API.Component of installed SDK components
 		 */
 		this->SetMethod("getInstalledSDKs", &APIBinding::_GetInstalledSDKs);
 
 		/**
 		 * @tiapi(method=True,name=API.getInstalledMobileSDKs,since=0.4)
 		 * @tiapi Get a list of the currently installed Kroll Mobile SDK components
-		 * @tiresult[list] a list of API.Component of installed Mobile SDK components
+		 * @tiresult[Array<API.Component>] a list of API.Component of installed Mobile SDK components
 		 */
 		this->SetMethod("getInstalledMobileSDKs", &APIBinding::_GetInstalledMobileSDKs);
 
 		/**
 		 * @tiapi(method=True,name=API.getInstalledModules,since=0.4)
 		 * @tiapi Get a list of the currently installed Kroll module components
-		 * @tiresult[list] a list of API.Component of installed module components
+		 * @tiresult[Array<API.Component>] a list of API.Component of installed module components
 		 */
 		this->SetMethod("getInstalledModules", &APIBinding::_GetInstalledModules);
 
 		/**
 		 * @tiapi(method=True,name=API.getInstalledRuntimes,since=0.4)
 		 * @tiapi Get a list of the currently installed Kroll runtime components
-		 * @tiresult[list] a list of API.Component of installed runtime components
+		 * @tiresult[Array<API.Component>] a list of API.Component of installed runtime components
 		 */
 		this->SetMethod("getInstalledRuntimes", &APIBinding::_GetInstalledRuntimes);
 
@@ -113,34 +113,34 @@ namespace kroll
 		 * @tiapi(method=True,name=API.getComponentSearchPaths,since=0.4)
 		 * @tiapi Get a list of the paths on which Kroll searches for installed
 		 * @tiapi components. This does not include paths of bundled components.
-		 * @tiresult[list] a list of string of component search paths
+		 * @tiresult[Array<API.Component>] a list of string of component search paths
 		 */
 		this->SetMethod("getComponentSearchPaths", &APIBinding::_GetComponentSearchPaths);
 
 		/**
 		 * @tiapi(method=True,name=API.readApplicationManifest,since=0.4)
 		 * @tiapi Read an application manifest at a given path
-		 * @tiarg[string, manifestPath] the path to the manifest to read
-		 * @tiarg[string, applicationPath,optional=True] an optional application path override
-		 * @tiresult[object] an API.Application which represents the application with given manifest
+		 * @tiarg[String, manifestPath] the path to the manifest to read
+		 * @tiarg[String, applicationPath,optional=True] an optional application path override
+		 * @tiresult[API.Application] an API.Application which represents the application with given manifest
 		 */
 		this->SetMethod("readApplicationManifest", &APIBinding::_ReadApplicationManifest);
 
 		/**
 		 * @tiapi(method=True,name=API.createDependency,since=0.4)
 		 * @tiapi A constructor for dependency objects
-		 * @tiarg[int, type] the type of this dependency (eg API.MODULE)
-		 * @tiarg[string, name] the name of this dependency
-		 * @tiarg[string, version] the version requirement for this dependency
-		 * @tiarg[int, requirement, optional=true] the requirement for this dependency
-		 * @tiresult[object] an API.Application which represents the application with given manifest
+		 * @tiarg[Number, type] the type of this dependency (eg API.MODULE)
+		 * @tiarg[String, name] the name of this dependency
+		 * @tiarg[String, version] the version requirement for this dependency
+		 * @tiarg[Number, requirement, optional=true] the requirement for this dependency
+		 * @tiresult[API.Application] an API.Application which represents the application with given manifest
 		 */
 		this->SetMethod("createDependency", &APIBinding::_CreateDependency);
 
 		/**
 		 * @tiapi(method=True,name=API.installDependencies,since=0.4)
 		 * @tiapi Invoke the installer to find and install a list of dependencies
-		 * @tiarg[list, dependencies] a list of API.Dependency to find and install
+		 * @tiarg[Array<API.Dependency>, dependencies] a list of API.Dependency to find and install
 		 * @tiarg[method, callback] a callback to invoke when the installer is finished (may finish unsuccessfully)
 		 */
 		this->SetMethod("installDependencies", &APIBinding::_InstallDependencies);
@@ -150,64 +150,64 @@ namespace kroll
 		/**
 		 * @tiapi(method=True,name=API.log,since=0.2)
 		 * @tiapi Log a statement with a given severity
-		 * @tiarg[int, type] the severity of this log statement
-		 * @tiarg[string, statement] the statement to log
+		 * @tiarg[Number, type] the severity of this log statement
+		 * @tiarg[String, statement] the statement to log
 		 */
 		this->SetMethod("log", &APIBinding::_Log);
 
 		/**
 		 * @tiapi(method=True,name=API.trace,since=0.4)
 		 * @tiapi Log a statement with TRACE severity
-		 * @tiarg[string, statement] the statement to log
+		 * @tiarg[String, statement] the statement to log
 		 */
 		this->SetMethod("trace", &APIBinding::_LogTrace);
 
 		/**
 		 * @tiapi(method=True,name=API.debug,since=0.4)
 		 * @tiapi Log a statement with DEBUG severity
-		 * @tiarg[string, statement] the statement to log
+		 * @tiarg[String, statement] the statement to log
 		 */
 		this->SetMethod("debug", &APIBinding::_LogDebug);
 
 		/**
 		 * @tiapi(method=True,name=API.info,since=0.4)
 		 * @tiapi Log a statement with INFO severity
-		 * @tiarg[string, statement] the statement to log
+		 * @tiarg[String, statement] the statement to log
 		 */
 		this->SetMethod("info", &APIBinding::_LogInfo);
 
 		/**
 		 * @tiapi(method=True,name=API.notice,since=0.4)
 		 * @tiapi Log a statement with NOTICE severity
-		 * @tiarg[string, statement] the statement to log
+		 * @tiarg[String, statement] the statement to log
 		 */
 		this->SetMethod("notice", &APIBinding::_LogNotice);
 
 		/**
 		 * @tiapi(method=True,name=API.warn,since=0.4)
 		 * @tiapi Log a statement with WARN severity
-		 * @tiarg[string, statement] the statement to log
+		 * @tiarg[String, statement] the statement to log
 		 */
 		this->SetMethod("warn", &APIBinding::_LogWarn);
 
 		/**
 		 * @tiapi(method=True,name=API.error,since=0.4)
 		 * @tiapi Log a statement with ERROR severity
-		 * @tiarg[string, statement] the statement to log
+		 * @tiarg[String, statement] the statement to log
 		 */
 		this->SetMethod("error", &APIBinding::_LogError);
 
 		/**
 		 * @tiapi(method=True,name=API.critical,since=0.4)
 		 * @tiapi Log a statement with CRITICAL severity
-		 * @tiarg[string, statement] the statement to log
+		 * @tiarg[String, statement] the statement to log
 		 */
 		this->SetMethod("critical", &APIBinding::_LogCritical);
 
 		/**
 		 * @tiapi(method=True,name=API.fatal,since=0.4)
 		 * @tiapi Log a statement with FATAL severity
-		 * @tiarg[string, statement] the statement to log
+		 * @tiarg[String, statement] the statement to log
 		 */
 		this->SetMethod("fatal", &APIBinding::_LogFatal);
 

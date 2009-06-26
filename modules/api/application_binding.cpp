@@ -28,70 +28,70 @@ namespace kroll
 		/**
 		 * @tiapi(method=True,name=API.Application.getID,since=0.4)
 		 * @tiapi Get this application's ID
-		 * @tiresult[string] The ID of this application
+		 * @tiresult[String] The ID of this application
 		 */
 		this->SetMethod("getID", &ApplicationBinding::_GetID);
 
 		/**
 		 * @tiapi(method=True,name=API.Application.getGUID,since=0.4)
 		 * @tiapi Get this application's GUID
-		 * @tiresult[string] The GUID of this application
+		 * @tiresult[String] The GUID of this application
 		 */
 		this->SetMethod("getGUID", &ApplicationBinding::_GetGUID);
 
 		/**
 		 * @tiapi(method=True,name=API.Application.getName,since=0.4)
 		 * @tiapi Get this application's name
-		 * @tiresult[string] The name of this application
+		 * @tiresult[String] The name of this application
 		 */
 		this->SetMethod("getName", &ApplicationBinding::_GetName);
 
 		/**
 		 * @tiapi(method=True,name=API.Application.getVersion,since=0.4)
 		 * @tiapi Get this application's version
-		 * @tiresult[string] The version of this application
+		 * @tiresult[String] The version of this application
 		 */
 		this->SetMethod("getVersion", &ApplicationBinding::_GetVersion);
 
 		/**
 		 * @tiapi(method=True,name=API.Application.getPath,since=0.4)
 		 * @tiapi Get this application's path
-		 * @tiresult[string] The path of this application
+		 * @tiresult[String] The path of this application
 		 */
 		this->SetMethod("getPath", &ApplicationBinding::_GetPath);
 
 		/**
 		 * @tiapi(method=True,name=API.Application.getExecutablePath,since=0.4)
 		 * @tiapi Get this application's executable
-		 * @tiresult[string] The executable path of this application
+		 * @tiresult[String] The executable path of this application
 		 */
 		this->SetMethod("getExecutablePath", &ApplicationBinding::_GetExecutablePath);
 
 		/**
 		 * @tiapi(method=True,name=API.Application.getResourcesPath,since=0.4)
 		 * @tiapi Get the path to this application's resources directory
-		 * @tiresult[string] The path to this application's resources directory
+		 * @tiresult[String] The path to this application's resources directory
 		 */
 		this->SetMethod("getResourcesPath", &ApplicationBinding::_GetResourcesPath);
 
 		/**
 		 * @tiapi(method=True,name=API.Application.getDataPath,since=0.4)
 		 * @tiapi Get the path to this application's user data directory
-		 * @tiresult[string] The path to this application's user data directory
+		 * @tiresult[String] The path to this application's user data directory
 		 */
 		this->SetMethod("getDataPath", &ApplicationBinding::_GetDataPath);
 
 		/**
 		 * @tiapi(method=True,name=API.Application.getManifestPath,since=0.4)
 		 * @tiapi Get the path to this application's manifest
-		 * @tiresult[string] The path to this application's manifest
+		 * @tiresult[String] The path to this application's manifest
 		 */
 		this->SetMethod("getManifestPath", &ApplicationBinding::_GetManifestPath);
 
 		/**
 		 * @tiapi(method=True,name=API.Application.getManifest,since=0.4)
 		 * @tiapi Get the contents of this application's manifest
-		 * @tiresult[list] The contents of the manifest as an array of key-value strings
+		 * @tiresult[Array<Array<String>>] The contents of the manifest as an array of key-value strings
 		 */
 		this->SetMethod("getManifest", &ApplicationBinding::_GetManifest);
 
@@ -103,21 +103,21 @@ namespace kroll
 		/**
 		 * @tiapi(method=True,name=API.Application.isCurrent,since=0.4)
 		 * @tiapi Returns whether or not this is the currently running application
-		 * @tiresult[boolean] True if this is the currently running application and false otherwise
+		 * @tiresult[Boolean] True if this is the currently running application and false otherwise
 		 */
 		this->SetMethod("isCurrent", &ApplicationBinding::_IsCurrent);
 
 		/**
 		 * @tiapi(method=True,name=API.Application.getPID,since=0.4)
 		 * @tiapi Retrieve the process identifier of this application
-		 * @tiresult[string] The process identifier of this application if it is the current application or empty string otherwise
+		 * @tiresult[String] The process identifier of this application if it is the current application or empty string otherwise
 		 */
 		this->SetMethod("getPID", &ApplicationBinding::_GetPID);
 
 		/**
 		 * @tiapi(method=True,name=API.Application.getArguments,since=0.4)
 		 * @tiapi Retrieve a list of command-line arguments passed to this application
-		 * @tiresult[list] The list of command-line arguments to this application or an empty array if it is not the currently running application.
+		 * @tiresult[Array<String>] The list of command-line arguments to this application or an empty array if it is not the currently running application.
 		 */
 		this->SetMethod("getArguments", &ApplicationBinding::_GetArguments);
 
@@ -125,7 +125,7 @@ namespace kroll
 		 * @tiapi(method=True,name=API.Application.hasArgument,since=0.4)
 		 * @tiapi Determine if the given argument is in the argument list
 		 * @tiarg[string, argument] The argument to search for
-		 * @tiresult[boolean] True if the argument was found, false otherwise
+		 * @tiresult[Boolean] True if the argument was found, false otherwise
 		 */
 		this->SetMethod("hasArgument", &ApplicationBinding::_HasArgument);
 
@@ -134,8 +134,8 @@ namespace kroll
 		 * @tiapi Find the value for a given argument. This method tries to be
 		 * @tiapi a little smart about finding the argument. If you pass "param"
 		 * @tiapi or "--param" as argument it will find value for --param=<value>
-		 * @tiarg[string, argument] The argument to search for
-		 * @tiresult[string] The value of the given argument or empty string if not found.
+		 * @tiarg[String, argument] The argument to search for
+		 * @tiresult[String] The value of the given argument or empty string if not found.
 		 */
 		this->SetMethod("getArgumentValue", &ApplicationBinding::_GetArgumentValue);
 
@@ -144,7 +144,7 @@ namespace kroll
 		/**
 		 * @tiapi(method=True,name=API.Application.getDependencies,since=0.4)
 		 * @tiapi Get a list of this application's dependencies.
-		 * @tiresult[list] A list of API.Dependency for this application
+		 * @tiresult[Array<API.Dependency>] A list of API.Dependency for this application
 		 */
 		this->SetMethod("getDependencies", &ApplicationBinding::_GetDependencies);
 
@@ -154,7 +154,7 @@ namespace kroll
 		 * @tiapi which should be accessible through API.Application.getComponents
 		 * @tiapi afterward. Note that the currently running applicaiton should 
 		 * @tiapi already have it's dependencies resolved.
-		 * @tiresult[list] A list of unresolved dependencies
+		 * @tiresult[Array<API.Dependency>] A list of unresolved dependencies
 		 */
 		this->SetMethod("resolveDependencies", &ApplicationBinding::_ResolveDependencies);
 
@@ -163,21 +163,21 @@ namespace kroll
 		/**
 		 * @tiapi(method=True,name=API.Application.getComponents,since=0.4)
 		 * @tiapi Return a list of resolved components for this application
-		 * @tiresult[list] A list of API.Component representing all resolved components
+		 * @tiresult[Array<API.Component>] A list of API.Component representing all resolved components
 		 */
 		this->SetMethod("getComponents", &ApplicationBinding::_GetComponents);
 
 		/**
 		 * @tiapi(method=True,name=API.Application.getModules,since=0.4)
 		 * @tiapi Return a list of resolved modules for this application
-		 * @tiresult[list] A list of API.Component representing all resolved modules
+		 * @tiresult[Array<API.Component>] A list of API.Component representing all resolved modules
 		 */
 		this->SetMethod("getModules", &ApplicationBinding::_GetModules);
 
 		/**
 		 * @tiapi(method=True,name=API.Application.getRuntime,since=0.4)
 		 * @tiapi Return the resolved runtime for this application
-		 * @tiresult[object] An API.Component representing the resolved runtime or null if there is no resolved runtime.
+		 * @tiresult[Array<API.Component>] An API.Component representing the resolved runtime or null if there is no resolved runtime.
 		 */
 		this->SetMethod("getRuntime", &ApplicationBinding::_GetRuntime);
 
@@ -186,42 +186,42 @@ namespace kroll
 		/**
 		 * @tiapi(method=True,name=API.Application.getAvailableComponents,since=0.4)
 		 * @tiapi Return a list of all available (installed and bundled) components for this application
-		 * @tiresult[list] A list of API.Components available to this application
+		 * @tiresult[Array<API.Component>] A list of API.Components available to this application
 		 */
 		this->SetMethod("getAvailableComponents", &ApplicationBinding::_GetAvailableComponents);
 
 		/**
 		 * @tiapi(method=True,name=API.Application.getAvailableModules,since=0.4)
 		 * @tiapi Return a list of all available (installed and bundled) modules for this application
-		 * @tiresult[list] A list of API.Component of module type available to this application
+		 * @tiresult[Array<API.Component>] A list of API.Component of module type available to this application
 		 */
 		this->SetMethod("getAvailableModules", &ApplicationBinding::_GetAvailableModules);
 
 		/**
 		 * @tiapi(method=True,name=API.Application.getAvailableRuntimes,since=0.4)
 		 * @tiapi Return a list of all available (installed and bundled) runtimes for this application
-		 * @tiresult[list] A list of API.Component of runtime type available to this application
+		 * @tiresult[Array<API.Component>] A list of API.Component of runtime type available to this application
 		 */
 		this->SetMethod("getAvailableRuntimes", &ApplicationBinding::_GetAvailableRuntimes);
 
 		/**
 		 * @tiapi(method=True,name=API.Application.getBundledComponents,since=0.4)
 		 * @tiapi Return a list of all components bundled with this application
-		 * @tiresult[list] A list of all API.Components bundled with this application
+		 * @tiresult[Array<API.Component>] A list of all API.Components bundled with this application
 		 */
 		this->SetMethod("getBundledComponents", &ApplicationBinding::_GetBundledComponents);
 
 		/**
 		 * @tiapi(method=True,name=API.Application.getBundledModules,since=0.4)
 		 * @tiapi Return a list of all modules bundled with this application
-		 * @tiresult[list] A list of all API.Components of type module bundled with this application
+		 * @tiresult[Array<API.Component>] A list of all API.Components of type module bundled with this application
 		 */
 		this->SetMethod("getBundledModules", &ApplicationBinding::_GetBundledModules);
 
 		/**
 		 * @tiapi(method=True,name=API.Application.getBundledRuntime,since=0.4)
 		 * @tiapi Return a list of all runtimes bundled with this application
-		 * @tiresult[list] A list of all API.Components of type runtime bundled with this application
+		 * @tiresult[Array<API.Component>] A list of all API.Components of type runtime bundled with this application
 		 */
 		this->SetMethod("getBundledRuntimes", &ApplicationBinding::_GetBundledRuntimes);
 	}
