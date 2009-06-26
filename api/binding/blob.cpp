@@ -130,7 +130,8 @@ namespace kroll
 
 	void Blob::CharAt(const ValueList& args, SharedValue result)
 	{
-		args.VerifyException("charAt", "n");
+		// https://developer.mozilla.org/en/core_javascript_1.5_reference/global_objects/string/charat
+		args.VerifyException("Blob.charAt", "n");
 		int position = args.at(0)->ToInt();
 
 		if (position < 0)
@@ -144,58 +145,100 @@ namespace kroll
 		{
 			buf[0] = this->buffer[position];
 		}
-		// Else return an empty string 
-		// https://developer.mozilla.org/en/core_javascript_1.5_reference/global_objects/string/charat
 		result->SetString(buf);
 	}
 
 	void Blob::Split(const ValueList& args, SharedValue result)
 	{
+		// This method now follows the spec located at:
+		// https://developer.mozilla.org/en/Core_JavaScript_1.5_Reference/Global_Objects/String/split
+		// Except support for regular expressions
+		args.VerifyException("Blob.split", "?s,i");
+
 		SharedKList list = new StaticBoundList();
+		result->SetList(list);
+
+		std::string target = "";
 		if (this->length > 0)
 		{
-			std::string str(this->buffer);
-			std::string sep = args.at(0)->ToString();
-			Poco::StringTokenizer tok(str,sep);
-			Poco::StringTokenizer::Iterator i = tok.begin();
-			while(i!=tok.end())
-			{
-				std::string token = (*i++);
-				list->Append(Value::NewString(token));
-			}
+			target = this->buffer;
 		}
-		result->SetList(list);
+		else
+		{
+			list->Append(Value::NewString(target));
+			return;
+		}
+
+		if (args.size() < 0)
+		{
+			list->Append(Value::NewString(target));
+			return;
+		}
+
+		std::string separator = args.GetString(0);
+
+		int limit = -1;
+		if (args.size() > 0)
+		{
+			limit = args.GetInt(1);
+		}
+
+		int current = 0;
+		Poco::StringTokenizer tokens(target, separator);
+		Poco::StringTokenizer::Iterator i = tokens.begin();
+		while (i != tokens.end() && (limit < 0 || current < limit))
+		{
+			list->Append(Value::NewString((*i++)));
+			current++;
+		}
 	}
 
 	void Blob::Substring(const ValueList& args, SharedValue result)
 	{
-		int a = args.at(0)->ToInt();
-		if (this->length > 0 && a < this->length)
+		// This method now follows the spec located at:
+		// https://developer.mozilla.org/en/Core_JavaScript_1.5_Reference/Global_Objects/String/substr
+		args.VerifyException("Blob.substr", "i,?i");
+		std::string target = "";
+		if (this->length > 0)
 		{
-			std::string target = this->buffer;
-			if (args.size()==1)
-			{
-				std::string r = target.substr(a);
-				result->SetString(r);
-				return;
-			}
-			else
-			{
-				int b = args.at(1)->ToInt();
-				if (b < this->length)
-				{
-					std::string r = target.substr(a,b);
-					result->SetString(r);
-					return;
-				}
-			}
+			target = this->buffer;
 		}
-		result->SetNull();
+
+		int start = args.GetInt(0);
+		if (start > 0 && start >= this->length)
+		{
+			result->SetString("");
+			return;
+		}
+
+		if (start < 0 && (-1*start) > this->length)
+		{
+			start = 0;
+		}
+		else if (start < 0)
+		{
+			start = this->length - start;
+		}
+
+		int length = this->length - start;
+		if (args.size() > 1)
+		{
+			length = args.GetInt(1);
+		}
+
+		if (length <= 0)
+		{
+			result->SetString("");
+			return;
+		}
+
+		std::string r = target.substr(start, length);
+		result->SetString(r);
 	}
 
 	void Blob::ToLowerCase(const ValueList& args, SharedValue result)
 	{
-		if (this->length>0)
+		if (this->length > 0)
 		{
 			std::string target = this->buffer;
 			std::string r = Poco::toLower(target);
@@ -209,7 +252,7 @@ namespace kroll
 
 	void Blob::ToUpperCase(const ValueList& args, SharedValue result)
 	{
-		if (this->length>0)
+		if (this->length > 0)
 		{
 			std::string target = this->buffer;
 			std::string r = Poco::toUpper(target);
@@ -223,16 +266,14 @@ namespace kroll
 
 	void Blob::Replace(const ValueList& args, SharedValue result)
 	{
-		if (args.size()!=2)
-		{
-			throw ValueException::FromString("invalid arguments");
-		}
-		if (this->length>0)
+		args.VerifyException("Blob.replace", "s,s");
+
+		if (this->length > 0)
 		{
 			std::string target = this->buffer;
-			std::string find = args.at(0)->ToString();
-			std::string replace = args.at(1)->ToString();
-			std::string r = Poco::replace(target,find,replace);
+			std::string find = args.GetString(0);
+			std::string replace = args.GetString(1);
+			std::string r = Poco::replace(target, find, replace);
 			result->SetString(r);
 		}
 		else
