@@ -40,7 +40,7 @@ namespace kroll
 	class KROLL_API StaticBoundObject : public KObject
 	{
 	public:
-		StaticBoundObject();
+		StaticBoundObject(const char *type = "StaticBoundObject");
 		virtual ~StaticBoundObject();
 
 		virtual SharedValue Get(const char *name);

@@ -9,7 +9,8 @@
 
 namespace kroll
 {
-	StaticBoundObject::StaticBoundObject()
+	StaticBoundObject::StaticBoundObject(const char *type)
+		: KObject(type)
 	{
 	}
 

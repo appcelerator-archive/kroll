@@ -19,9 +19,14 @@ namespace kroll
 	ProfiledBoundObject::~ProfiledBoundObject()
 	{
 	}
-	std::string ProfiledBoundObject::MakeFullPath(ProfiledBoundObject* ref,std::string name)
+	std::string ProfiledBoundObject::MakeFullPath(ProfiledBoundObject* ref, std::string name, bool useParent)
 	{
 		std::string newname(ref->GetFullPath());
+		if (useParent)
+		{
+			newname = newname.substr(0,newname.rfind("."));
+		}
+		
 		if (!name.empty())
 		{
 			newname+=".";
@@ -29,7 +34,7 @@ namespace kroll
 		}
 		return newname;
 	}
-	SharedValue ProfiledBoundObject::Wrap(ProfiledBoundObject* ref, const char *name, SharedValue value, ProfiledBoundObject **out)
+	SharedValue ProfiledBoundObject::Wrap(ProfiledBoundObject* ref, const char *name, SharedValue value, ProfiledBoundObject **out, bool useParent)
 	{
 		if (value->IsMethod())
 		{
@@ -40,7 +45,7 @@ namespace kroll
 				*out = po.get();
 				return value;
 			}
-			std::string newname = MakeFullPath(ref,name);
+			std::string newname = MakeFullPath(ref,name,useParent);
 			ProfiledBoundMethod *p = new ProfiledBoundMethod(newname,source,ref->stream);
 			*out = p;
 			SharedKMethod target = p;
@@ -55,7 +60,7 @@ namespace kroll
 				*out = po.get();
 				return value;
 			}
-			std::string newname = MakeFullPath(ref,name);
+			std::string newname = MakeFullPath(ref,name,useParent);
 			ProfiledBoundList *p = new ProfiledBoundList(newname,source,ref->stream);
 			*out = p;
 			SharedKList target = p;
@@ -70,7 +75,7 @@ namespace kroll
 				*out = po.get();
 				return value;
 			}
-			std::string newname = MakeFullPath(ref,name);
+			std::string newname = MakeFullPath(ref,name,useParent);
 			ProfiledBoundObject *p = new ProfiledBoundObject(newname,source,ref->stream);
 			*out = p;
 			SharedKObject target = p;
@@ -130,6 +135,14 @@ namespace kroll
 		std::ostringstream o;
 		o << "call," << ref->GetFullPath() << "," << sw.elapsed();
 		this->Log(o.str());
+		
+		if (!value.isNull() && value->IsObject())
+		{
+			ProfiledBoundObject *po = NULL;
+			SharedValue newValue = ProfiledBoundObject::Wrap(ref, value->ToObject()->GetType(), value, &po, true);
+			
+			return newValue;
+		}
 		return value;
 	}
 	SharedStringList ProfiledBoundObject::GetPropertyNames()
