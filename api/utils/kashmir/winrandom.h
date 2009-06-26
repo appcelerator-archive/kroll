@@ -48,7 +48,7 @@ public:
 
     void read(char* buffer, std::size_t count)
     {
-        if (!CryptGenRandom(hProv, count, buffer))
+        if (!CryptGenRandom(hProv, count, (BYTE*)buffer))
             throw std::runtime_error("system failed to generate random data.");
     }
 
