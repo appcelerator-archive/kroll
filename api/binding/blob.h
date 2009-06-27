@@ -52,6 +52,7 @@ namespace kroll
 		void LastIndexOf(const ValueList& args, SharedValue result);
 		void CharAt(const ValueList& args, SharedValue result);
 		void Split(const ValueList& args, SharedValue result);
+		void Substr(const ValueList& args, SharedValue result);
 		void Substring(const ValueList& args, SharedValue result);
 		void ToLowerCase(const ValueList& args, SharedValue result);
 		void ToUpperCase(const ValueList& args, SharedValue result);

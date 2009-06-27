@@ -58,20 +58,97 @@ namespace kroll
 		}
 
 		this->length = length;
+
+		/**
+		 * @tiapi(method=True,name=Blob.toString,since=0.3)
+		 * @tiapi Return a string representation of a blob
+		 * @tiresult[String] This blob as a String
+		 */
 		this->SetMethod("toString", &Blob::ToString);
+
+		/**
+		 * @tiapi(method=True,name=Blob.get,since=0.3)
+		 * @tiapi Return a VoidPtr representation of a Blob
+		 * @tiresult[VoidPtr] This blob as a VoidPtr
+		 */
 		this->SetMethod("get", &Blob::Get);
 
 		// mimic some string operations to make it more 
 		// friendly when using a Blob in Javascript
+		/**
+		 * @tiapi(method=True,name=Blob.indexOf,since=0.3)
+		 * @tiapi Return the index of a String within this Blob
+		 * @tiarg[String, needle] The String to search for
+		 * @tiresult[Number] The integer index of the String or -1 if not found
+		 */
 		this->SetMethod("indexOf", &Blob::IndexOf);
+
+		/**
+		 * @tiapi(method=True,name=Blob.lastIndexOf,since=0.3)
+		 * @tiapi Return the last index of a String within this Blob
+		 * @tiarg[String, needle] The String to search for
+		 * @tiresult[Number] The last integer index of the String or -1 if not found
+		 */
 		this->SetMethod("lastIndexOf", &Blob::LastIndexOf);
+
+		/**
+		 * @tiapi(method=True,name=Blob.charAt,since=0.3)
+		 * @tiapi Return a character representing a byte at at given index in a Blob
+		 * @tiarg[Number, index] The index to look for a character at
+		 * @tiresult[String] A String containing a character representing the byte at the given index
+		 */
 		this->SetMethod("charAt", &Blob::CharAt);
+
+		/**
+		 * @tiapi(method=True,name=Blob.split,since=0.3)
+		 * @tiapi Split a blob as if it were a string given a delimiter. 
+		 * @tiapi This method returns empty matches. For instance:
+		 * @tiapi <pre><code>"abc,def,,".split(",") --> ['abc', 'def', '', '']</code></pre>
+		 * @tiarg[String, delimiter] The index to look for a character at
+		 * @tiarg[Number, limit, optional=True] The maximum number of matches to return 
+		 * @tiresult[Array<String>] A array containing the segments
+		 */
 		this->SetMethod("split", &Blob::Split);
+
+		/**
+		 * @tiapi(method=True,name=Blob.substring,since=0.3)
+		 * @tiapi Return a substring of a Blob given a start index and end index
+		 * @tiapi If no end index is given, return all characters from the start index
+		 * @tiapi to the end of the string. If startIndex > endIndex, the indexes are swapped.
+		 * @tiarg[Number, startIndex] The starting index
+		 * @tiarg[Number, endIndex, optional=True] The ending index
+		 * @tiresult[String] The substring between startIndex and endIndex
+		 */
 		this->SetMethod("substring", &Blob::Substring);
-		this->SetMethod("substr", &Blob::Substring);
+
+		/**
+		 * @tiapi(method=True,name=Blob.substr,since=0.3)
+		 * @tiapi Return a substring of a Blob given a start index and a length
+		 * @tiapi If no length is given, all characters from the start to the
+		 * @tiapi end of the string are returned.
+		 * @tiarg[Number, startIndex] The starting index
+		 * @tiarg[Number, length, optional=True] The length of the substring
+		 * @tiresult[String] The substring between startIndex and the given length
+		 */
+		this->SetMethod("substr", &Blob::Substr);
+
+		/**
+		 * @tiapi(method=True,name=Blob.toLowerCase,since=0.3)
+		 * @tiapi Convert characters in the Blob to lower case as if it were a string.
+		 * @tiresult[String] The resulting String
+		 */
 		this->SetMethod("toLowerCase", &Blob::ToLowerCase);
+
+		/**
+		 * @tiapi(method=True,name=Blob.toUpperCase,since=0.3)
+		 * @tiapi Convert characters in the Blob to upper case as if it were a string.
+		 * @tiresult[String] The resulting String
+		 */
 		this->SetMethod("toUpperCase", &Blob::ToUpperCase);
-		this->SetMethod("replace", &Blob::Replace);
+
+		/**
+		 * @tiapi(property=True,name=Blob.length,since=0.3) The number of bytes in this blob
+		 */
 		this->Set("length", Value::NewInt(length));
 	}
 
@@ -201,23 +278,43 @@ namespace kroll
 		}
 
 		std::string separator = args.GetString(0);
-		int limit = -1;
-		if (args.size() > 0)
+		int limit = INT_MAX;
+		if (args.size() > 1)
 		{
 			limit = args.GetInt(1);
 		}
 
-		int current = 0;
-		Poco::StringTokenizer tokens(target, separator);
-		Poco::StringTokenizer::Iterator i = tokens.begin();
-		while (i != tokens.end() && (limit < 0 || current < limit))
+		// We could use Poco's tokenizer here, but it doesn't split strings
+		// like "abc,def,," -> ['abc', 'def', '', ''] correctly. It produces
+		// ['abc', 'def', ''] which is a different behavior than the JS split.
+		// So we roll our own for now -- it's not very efficient right now, but
+		// it should be correct.
+		size_t next = target.find(separator);
+		while (target.size() > 0 && next != std::string::npos)
 		{
-			list->Append(Value::NewString((*i++)));
-			current++;
+			std::string token;
+			if (separator.size() == 0)
+			{
+				token = target.substr(0, 1);
+			}
+			else
+			{
+				token = target.substr(0, next);
+			}
+			target = target.substr(next + 1);
+			next = target.find(separator);
+
+			if ((int) list->Size() >= limit)
+				return;
+
+			list->Append(Value::NewString(token));
 		}
+
+		if ((int) list->Size() < limit && separator.size() != 0)
+			list->Append(Value::NewString(target));
 	}
 
-	void Blob::Substring(const ValueList& args, SharedValue result)
+	void Blob::Substr(const ValueList& args, SharedValue result)
 	{
 		// This method now follows the spec located at:
 		// https://developer.mozilla.org/en/Core_JavaScript_1.5_Reference/Global_Objects/String/substr
@@ -241,7 +338,7 @@ namespace kroll
 		}
 		else if (start < 0)
 		{
-			start = this->length - start;
+			start = this->length + start;
 		}
 
 		int length = this->length - start;
@@ -258,6 +355,52 @@ namespace kroll
 
 		std::string r = target.substr(start, length);
 		result->SetString(r);
+	}
+
+	void Blob::Substring(const ValueList& args, SharedValue result)
+	{
+		// This method now follows the spec located at:
+		// https://developer.mozilla.org/en/Core_JavaScript_1.5_Reference/Global_Objects/String/substring
+		args.VerifyException("Blob.substring", "i,?i");
+		std::string target = "";
+		if (this->length > 0)
+		{
+			target = this->buffer;
+		}
+
+		int indexA = args.GetInt(0);
+		if (indexA < 0)
+			indexA = 0;
+		if (indexA > (int) target.size())
+			indexA = target.size();
+
+		if (args.size() < 2)
+		{
+			std::string r = target.substr(indexA);
+			result->SetString(r);
+		}
+		else
+		{
+			int indexB = args.GetInt(1);
+			if (indexB < 0)
+				indexB = 0;
+			if (indexB > (int) target.size())
+				indexB = target.size();
+
+			if (indexA == indexB)
+			{
+				result->SetString("");
+				return;
+			}
+			if (indexA > indexB)
+			{
+				int temp = indexA;
+				indexA = indexB;
+				indexB = temp;
+			}
+			std::string r = target.substr(indexA, indexB - indexA);
+			result->SetString(r);
+		}
 	}
 
 	void Blob::ToLowerCase(const ValueList& args, SharedValue result)
@@ -280,24 +423,6 @@ namespace kroll
 		{
 			std::string target = this->buffer;
 			std::string r = Poco::toUpper(target);
-			result->SetString(r);
-		}
-		else
-		{
-			result->SetNull();
-		}
-	}
-
-	void Blob::Replace(const ValueList& args, SharedValue result)
-	{
-		args.VerifyException("Blob.replace", "s,s");
-
-		if (this->length > 0)
-		{
-			std::string target = this->buffer;
-			std::string find = args.GetString(0);
-			std::string replace = args.GetString(1);
-			std::string r = Poco::replace(target, find, replace);
 			result->SetString(r);
 		}
 		else
