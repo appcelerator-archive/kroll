@@ -80,11 +80,12 @@ namespace kroll
 
 	bool KKJSList::Remove(unsigned int index)
 	{
-		SharedValue value = this->At(index);
-		if (!value->IsUndefined())
+		if (index >= 0 && index < this->Size())
 		{
-			SharedValue slice_method = this->kjs_bound_object->Get("slice");
-			slice_method->ToMethod()->Call(Value::NewInt(index),Value::NewInt(1));
+			SharedValue spliceMethod = this->kjs_bound_object->Get("splice");
+			spliceMethod->ToMethod()->Call(
+				Value::NewInt(index),
+				Value::NewInt(1));
 			return true;
 		}
 		return false;

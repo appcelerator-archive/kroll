@@ -109,29 +109,53 @@ namespace kroll
 
 	void Blob::IndexOf(const ValueList& args, SharedValue result)
 	{
-		if (this->length > 0)
+		// https://developer.mozilla.org/en/Core_JavaScript_1.5_Reference/Global_Objects/String/indexOf
+		args.VerifyException("Blob.indexOf", "s,?i");
+
+		if (this->length <= 0)
 		{
-			std::string subject = args.at(0)->ToString();
-			std::string target = this->buffer;
-			result->SetInt(target.find(subject));
+			result->SetInt(-1);
 		}
 		else
 		{
-			result->SetInt(-1);
+			std::string target = this->buffer;
+			std::string needle = args.at(0)->ToString();
+			int start = 0;
+			if (args.size() > 1)
+			{
+				start = args.GetNumber(1);
+				if (start < 0)
+				{
+					start = 0;
+				}
+			}
+			result->SetInt(target.find(needle, start));
 		}
 	}
 
 	void Blob::LastIndexOf(const ValueList& args, SharedValue result)
 	{
-		if (this->length > 0)
+		// https://developer.mozilla.org/en/Core_JavaScript_1.5_Reference/Global_Objects/String/lastIndexOf
+		args.VerifyException("Blob.lastIndexOf", "s,?i");
+
+		if (this->length <= 0)
 		{
-			std::string subject = args.at(0)->ToString();
-			std::string target = this->buffer;
-			result->SetInt(target.find_last_of(subject));
+			result->SetInt(-1);
 		}
 		else
 		{
-			result->SetInt(-1);
+			std::string target = this->buffer;
+			std::string needle = args.at(0)->ToString();
+			int start = target.size() + 1;
+			if (args.size() > 1)
+			{
+				start = args.GetNumber(1);
+				if (start < 0)
+				{
+					start = 0;
+				}
+			}
+			result->SetInt(target.rfind(needle, start));
 		}
 	}
 
@@ -140,12 +164,6 @@ namespace kroll
 		// https://developer.mozilla.org/en/core_javascript_1.5_reference/global_objects/string/charat
 		args.VerifyException("Blob.charAt", "n");
 		int position = args.at(0)->ToInt();
-
-		if (position < 0)
-		{
-			result->SetBool(true);
-			return;
-		}
 
 		char buf[2] = {'\0', '\0'};
 		if (position >= 0 && position < this->length)
@@ -176,14 +194,13 @@ namespace kroll
 			return;
 		}
 
-		if (args.size() < 0)
+		if (args.size() <= 0)
 		{
 			list->Append(Value::NewString(target));
 			return;
 		}
 
 		std::string separator = args.GetString(0);
-
 		int limit = -1;
 		if (args.size() > 0)
 		{
