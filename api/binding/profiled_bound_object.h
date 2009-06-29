@@ -14,7 +14,7 @@ namespace kroll
 	 * The ProfiledBoundObject is a wrapped KObject that does profiling on a 
 	 * wrapped KObject
 	 */
-	class ProfiledBoundObject : public KObject
+	class KROLL_API ProfiledBoundObject : public KObject
 	{
 	public:
 		ProfiledBoundObject(std::string name, SharedKObject delegate, Poco::FileOutputStream *stream);
@@ -45,7 +45,17 @@ namespace kroll
 		 * @return a list of this object's property names.
 		 */
 		virtual SharedStringList GetPropertyNames();
-
+		
+		/**
+		 * @return the delegate of this profiled bound object
+		 */
+		SharedKObject GetDelegate() { return delegate; }
+		
+		/**
+		 * The display string for the delegate
+		 */ 
+		virtual SharedString DisplayString(int levels=3);
+		
 	protected:
 		
 		/**

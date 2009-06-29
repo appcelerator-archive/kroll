@@ -13,7 +13,8 @@
 
 namespace kroll
 {
-	ProfiledBoundObject::ProfiledBoundObject(std::string name, SharedKObject delegate, Poco::FileOutputStream *stream) : delegate(delegate), name(name), stream(stream)
+	ProfiledBoundObject::ProfiledBoundObject(std::string name, SharedKObject delegate, Poco::FileOutputStream *stream) :
+		KObject(delegate->GetType()), delegate(delegate), name(name), stream(stream)
 	{
 	}
 	ProfiledBoundObject::~ProfiledBoundObject()
@@ -152,5 +153,9 @@ namespace kroll
 	void ProfiledBoundObject::Log(std::string str)
 	{
 		(*stream) << Host::GetElapsedTime() << "," << str << "\n";
+	}
+	SharedString ProfiledBoundObject::DisplayString(int levels)
+	{
+		return delegate->DisplayString(levels);
 	}
 }
