@@ -9,9 +9,32 @@ namespace kroll
 {
 	CoreTypes::CoreTypes()
 	{
+		/**
+		 * @tiapi(method=True,name=CoreTypes.createKObject,since=0.4) create a kroll object
+		 * @tiarg(for=CoreTypes.createKObject,name=object,type=any,optional=True) an optional object to wrap
+		 * @tiresult(for=CoreTypes.createKObject,type=KObject) returns a kroll object
+		 */
 		this->SetMethod("createKObject", &CoreTypes::CreateKObject);
+		
+		/**
+		 * @tiapi(method=True,name=CoreTypes.createKMethod,since=0.4) create a kroll method
+		 * @tiarg(for=CoreTypes.createKMethod,name=function,type=function) a function object to wrap
+		 * @tiresult(for=CoreTypes.createKMethod,type=KMethod) returns a kroll method
+		 */
 		this->SetMethod("createKMethod", &CoreTypes::CreateKMethod);
+		
+		/**
+		 * @tiapi(method=True,name=CoreTypes.createKList,since=0.4) create a kroll list
+		 * @tiarg(for=CoreTypes.createKList,name=list,type=Array<Any>,optional=True) an optional list to wrap
+		 * @tiresult(for=CoreTypes.createKList,type=KObject) returns a kroll list
+		 */
 		this->SetMethod("createKList", &CoreTypes::CreateKList);
+		
+		/**
+		 * @tiapi(method=True,name=CoreTypes.createBlob,since=0.4) create a blob (binary object)
+		 * @tiarg(for=CoreTypes.createBlob,name=contents,type=string,optional=True) the blob contents
+		 * @tiresult(for=CoreTypes.createBlob,type=Blob) returns a blob
+		 */
 		this->SetMethod("createBlob", &CoreTypes::CreateBlob);
 	}
 

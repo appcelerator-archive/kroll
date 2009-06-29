@@ -11,7 +11,7 @@
 
 namespace kroll
 {
-	Blob::Blob() 
+	Blob::Blob() : StaticBoundObject("Blob")
 	{
 		Create(NULL, 0);
 	}
