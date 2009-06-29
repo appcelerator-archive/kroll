@@ -17,9 +17,11 @@ namespace kroll
 		KObject(delegate->GetType()), delegate(delegate), name(name), stream(stream)
 	{
 	}
+
 	ProfiledBoundObject::~ProfiledBoundObject()
 	{
 	}
+
 	std::string ProfiledBoundObject::MakeFullPath(ProfiledBoundObject* ref, std::string name, bool useParent)
 	{
 		std::string newname(ref->GetFullPath());
@@ -35,10 +37,13 @@ namespace kroll
 		}
 		return newname;
 	}
-	SharedValue ProfiledBoundObject::Wrap(ProfiledBoundObject* ref, const char *name, SharedValue value, ProfiledBoundObject **out, bool useParent)
+
+	SharedValue ProfiledBoundObject::Wrap(ProfiledBoundObject* ref, std::string name, SharedValue value, ProfiledBoundObject **out, bool useParent)
 	{
-		if (value->IsMethod())
-		{
+		std::string newname = MakeFullPath(ref, name, useParent);
+
+		if (value->IsMethod()) {
+
 			SharedKMethod source = value->ToMethod();
 			SharedPtr<ProfiledBoundMethod> po = source.cast<ProfiledBoundMethod>();
 			if (!po.isNull())
@@ -46,14 +51,12 @@ namespace kroll
 				*out = po.get();
 				return value;
 			}
-			std::string newname = MakeFullPath(ref,name,useParent);
 			ProfiledBoundMethod *p = new ProfiledBoundMethod(newname,source,ref->stream);
 			*out = p;
 			SharedKMethod target = p;
 			return Value::NewMethod(target);
-		}
-		else if (value->IsList())
-		{
+
+		} else if (value->IsList()) {
 			SharedKList source = value->ToList();
 			SharedPtr<ProfiledBoundList> po = source.cast<ProfiledBoundList>();
 			if (!po.isNull())
@@ -61,14 +64,12 @@ namespace kroll
 				*out = po.get();
 				return value;
 			}
-			std::string newname = MakeFullPath(ref,name,useParent);
 			ProfiledBoundList *p = new ProfiledBoundList(newname,source,ref->stream);
 			*out = p;
 			SharedKList target = p;
 			return Value::NewList(target);
-		}
-		else if (value->IsObject())
-		{
+
+		} else if (value->IsObject()) {
 			SharedKObject source = value->ToObject();
 			SharedPtr<ProfiledBoundObject> po = source.cast<ProfiledBoundObject>();
 			if (!po.isNull())
@@ -76,7 +77,6 @@ namespace kroll
 				*out = po.get();
 				return value;
 			}
-			std::string newname = MakeFullPath(ref,name,useParent);
 			ProfiledBoundObject *p = new ProfiledBoundObject(newname,source,ref->stream);
 			*out = p;
 			SharedKObject target = p;
@@ -84,6 +84,7 @@ namespace kroll
 		}
 		return value;
 	}
+
 	void ProfiledBoundObject::Set(const char *name, SharedValue value)
 	{
 		ProfiledBoundObject *po = NULL;
@@ -99,6 +100,7 @@ namespace kroll
 			this->Log(o.str());
 		}
 	}
+
 	SharedValue ProfiledBoundObject::Get(const char *name)
 	{
 		Poco::Stopwatch sw;
@@ -115,6 +117,7 @@ namespace kroll
 		}
 		return result;
 	}
+
 	SharedValue ProfiledBoundObject::ProfiledCall(ProfiledBoundObject* ref, SharedKMethod method, const ValueList& args)
 	{
 		Poco::Stopwatch sw;
@@ -140,20 +143,23 @@ namespace kroll
 		if (!value.isNull() && value->IsObject())
 		{
 			ProfiledBoundObject *po = NULL;
-			SharedValue newValue = ProfiledBoundObject::Wrap(ref, value->ToObject()->GetType(), value, &po, true);
+			SharedValue newValue = ProfiledBoundObject::Wrap(ref, value->GetType(), value, &po, true);
 			
 			return newValue;
 		}
 		return value;
 	}
+
 	SharedStringList ProfiledBoundObject::GetPropertyNames()
 	{
 		return delegate->GetPropertyNames();
 	}
+
 	void ProfiledBoundObject::Log(std::string str)
 	{
 		(*stream) << Host::GetElapsedTime() << "," << str << "\n";
 	}
+
 	SharedString ProfiledBoundObject::DisplayString(int levels)
 	{
 		return delegate->DisplayString(levels);

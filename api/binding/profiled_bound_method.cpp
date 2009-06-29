@@ -13,9 +13,11 @@ namespace kroll
 	ProfiledBoundMethod::ProfiledBoundMethod(std::string name, SharedKMethod delegate, Poco::FileOutputStream *stream) : ProfiledBoundObject(name,delegate,stream), method(delegate)
 	{
 	}
+
 	ProfiledBoundMethod::~ProfiledBoundMethod()
 	{
 	}
+
 	/**
 	 * Call this method with the given arguments.
 	 * Errors will result in a thrown ValueException

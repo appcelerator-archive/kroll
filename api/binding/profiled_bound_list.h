@@ -19,6 +19,7 @@ namespace kroll
 		virtual ~ProfiledBoundList();
 	private:
 		SharedKList list;
+
 	public:
 
 		/**
@@ -70,6 +71,11 @@ namespace kroll
 		 * @return a list of this object's property names.
 		 */
 		virtual SharedStringList GetPropertyNames();
+
+		/**
+		 * @return the delegate of this profiled bound object
+		 */
+		SharedKList GetDelegate() { return list; }
 
 	};
 }

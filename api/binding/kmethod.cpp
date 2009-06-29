@@ -88,5 +88,17 @@ namespace kroll
 		return this->Call(args);
 	}
 
+	SharedKMethod KMethod::Unwrap(SharedKMethod o)
+	{
+		SharedPtr<ProfiledBoundMethod> pmeth = o.cast<ProfiledBoundMethod>();
+		if (pmeth.isNull())
+		{
+			return o;
+		}
+		else
+		{
+			return pmeth->GetDelegate();
+		}
+	}
 }
 

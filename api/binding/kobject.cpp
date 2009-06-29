@@ -256,7 +256,7 @@ namespace kroll
 			         && !next_val->IsMethod()
 			         && !next_val->IsList())
 			{
-				std::cerr << "invalid namespace for " << name << ", token: " << token << " was " << next_val->ToTypeString() << std::endl;
+				std::cerr << "invalid namespace for " << name << ", token: " << token << " was " << next_val->GetType() << std::endl;
 				throw Value::NewString("Invalid namespace on setNS");
 			}
 			else
@@ -269,7 +269,7 @@ namespace kroll
 		scope->Set(prop_name, value);
 
 #ifdef DEBUG_BINDING
-		std::cout << "BOUND: " << value->ToTypeString() << " to: " << name << std::endl;
+		std::cout << "BOUND: " << value->GetType() << " to: " << name << std::endl;
 #endif
 	}
 
@@ -340,6 +340,24 @@ namespace kroll
 		}
 
 		return callable_value->ToMethod()->Call(args);
+	}
+
+	std::string& KObject::GetType()
+	{
+		return type;
+	}
+
+	SharedKObject KObject::Unwrap(SharedKObject o)
+	{
+		SharedPtr<ProfiledBoundObject> pobj = o.cast<ProfiledBoundObject>();
+		if (pobj.isNull())
+		{
+			return o;
+		}
+		else
+		{
+			return pobj->GetDelegate();
+		}
 	}
 
 }

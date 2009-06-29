@@ -95,6 +95,11 @@ namespace kroll
 		 */
 		static std::string IntToChars(unsigned int value);
 
+		/**
+		 * Return the unwrapped version of this object
+		 */
+		static SharedKList Unwrap(SharedKList);
+
 	private:
 		DISALLOW_EVIL_CONSTRUCTORS(KList);
 	};

@@ -221,7 +221,7 @@ namespace kroll
 		/**
 		 * @return a string representation of this Value's type
 		 */
-		const char* ToTypeString();
+		std::string& GetType();
 
 		/**
 		 * @param levels the number of nested objects to include in this representation (default: 3)

@@ -53,6 +53,10 @@ namespace kroll
 		 */
 		SharedString DisplayString(int levels);
 
+		/**
+		 * Return the unwrapped version of this object
+		 */
+		static SharedKMethod Unwrap(SharedKMethod);
 
 		/* Convenience methods below */
 		SharedValue Call(SharedValue one);

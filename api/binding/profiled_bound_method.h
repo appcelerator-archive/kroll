@@ -17,8 +17,10 @@ namespace kroll
 	public:
 		ProfiledBoundMethod(std::string name, SharedKMethod delegate, Poco::FileOutputStream *stream);
 		virtual ~ProfiledBoundMethod();
+
 	private:
 		SharedKMethod method;
+
 	public:
 		/**
 		 * Call this method with the given arguments.
@@ -44,6 +46,11 @@ namespace kroll
 		 * @return a list of this object's property names.
 		 */
 		virtual SharedStringList GetPropertyNames();
+
+		/**
+		 * @return the delegate of this profiled bound method
+		 */
+		SharedKMethod GetDelegate() { return method; }
 	};
 }
 

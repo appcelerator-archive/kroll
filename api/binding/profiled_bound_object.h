@@ -45,7 +45,7 @@ namespace kroll
 		 * @return a list of this object's property names.
 		 */
 		virtual SharedStringList GetPropertyNames();
-		
+
 		/**
 		 * @return the delegate of this profiled bound object
 		 */
@@ -68,7 +68,7 @@ namespace kroll
 		static std::string MakeFullPath(ProfiledBoundObject* ref, std::string name, bool useParent);
 		SharedValue ProfiledCall(ProfiledBoundObject* ref, SharedKMethod method, const ValueList& args);
 		void Log(std::string str);
-		static SharedValue Wrap(ProfiledBoundObject* source, const char *name, SharedValue value, ProfiledBoundObject **out, bool useParent=false);
+		static SharedValue Wrap(ProfiledBoundObject* source, std::string name, SharedValue value, ProfiledBoundObject **out, bool useParent=false);
 	};
 }
 

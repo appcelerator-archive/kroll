@@ -28,7 +28,7 @@ namespace kroll
 	class KROLL_API KObject
 	{
 	public:
-		KObject(const char *type = "KObject") : type(type) {}
+		KObject(std::string type = "KObject") : type(type) {}
 		virtual ~KObject() {}
 
 	public:
@@ -295,11 +295,19 @@ namespace kroll
 		 */
 		SharedValue CallNS(const char *name, const ValueList& args);
 
-		const char* GetType() { return type.c_str(); }
-	
+		/**
+		 * Return the type of this object as a string.
+		 */
+		virtual std::string& GetType();
+
+		/**
+		 * Return the unwrapped version of this object
+		 */
+		static SharedKObject Unwrap(SharedKObject);
+
 	protected:
 		std::string type;
-		
+
 	private:
 		DISALLOW_EVIL_CONSTRUCTORS(KObject);
 	};

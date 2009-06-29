@@ -70,7 +70,17 @@ namespace kroll
 		return true;
 	}
 
-
-
+	SharedKList KList::Unwrap(SharedKList o)
+	{
+		SharedPtr<ProfiledBoundList> plist = o.cast<ProfiledBoundList>();
+		if (plist.isNull())
+		{
+			return o;
+		}
+		else
+		{
+			return plist->GetDelegate();
+		}
+	}
 }
 

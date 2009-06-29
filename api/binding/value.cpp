@@ -383,40 +383,40 @@ namespace kroll
 		return new std::string(oss.str());
 	}
 
-	const char* Value::ToTypeString()
+	std::string& Value::GetType()
 	{
-		if (IsInt())
-			return "INT";
+		static std::string numberString = "Number";
+		static std::string booleanString = "Boolean";
+		static std::string stringString = "String";
+		static std::string voidPtrString = "VoidPtr";
+		static std::string nullString = "Null";
+		static std::string undefinedString = "Undefined";
+		static std::string unknownString = "Unknown";
 
-		else if (IsDouble())
-			return "DOUBLE";
+		if (IsInt() || IsDouble()) {
+			return numberString;
 
-		else if (IsBool())
-			return "BOOL";
+		} else if (IsBool()) {
+			return booleanString;
 
-		else if (IsString())
-			return "STRING";
+		} else if (IsString()) {
+			return stringString;
 
-		else if (IsList())
-			return "LIST";
+		} else if (IsList() || IsObject() || IsMethod()) {
+			return this->ToObject()->GetType();
 
-		else if (IsObject())
-			return "OBJECT";
+		} else if (IsVoidPtr()) {
+			return voidPtrString;
 
-		else if (IsMethod())
-			return "METHOD";
+		} else if (IsNull()) {
+			return nullString;
 
-		else if (IsVoidPtr())
-			return "VOIDPTR";
+		} else if (IsUndefined()) {
+			return undefinedString;
 
-		else if (IsNull())
-			return "NULL";
-
-		else if (IsUndefined())
-			return "UNDEFINED";
-
-		fprintf(stderr, "ERROR: unknown type:%d\n",type);
-		return "UNKNOWN";
+		} else {
+			return unknownString;
+		}
 	}
 
 }
