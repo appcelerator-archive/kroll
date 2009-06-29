@@ -169,6 +169,12 @@ namespace kroll
 		this->Set(name, Value::Null);
 	}
 
+	void KObject::SetInt(const char *name, int v)
+	{
+		SharedValue val = Value::NewInt(v);
+		this->Set(name, val);
+	}
+
 	void KObject::SetDouble(const char *name, double v)
 	{
 		SharedValue val = Value::NewDouble(v);
