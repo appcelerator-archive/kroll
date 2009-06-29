@@ -20,7 +20,7 @@ namespace kroll
 
 	public:
 
-		KMethod() {}
+		KMethod(const char *type = "KMethod") : KObject(type) {}
 		virtual ~KMethod() {}
 
 		/**
