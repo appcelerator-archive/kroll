@@ -60,14 +60,14 @@ namespace kroll
 		this->length = length;
 
 		/**
-		 * @tiapi(method=True,name=CoreTypes.Blob.toString,since=0.3)
+		 * @tiapi(method=True,name=Blob.toString,since=0.3)
 		 * @tiapi Return a string representation of a blob
 		 * @tiresult[String] This blob as a String
 		 */
 		this->SetMethod("toString", &Blob::ToString);
 
 		/**
-		 * @tiapi(method=True,name=CoreTypes.Blob.get,since=0.3)
+		 * @tiapi(method=True,name=Blob.get,since=0.3)
 		 * @tiapi Return a VoidPtr representation of a Blob
 		 * @tiresult[VoidPtr] This blob as a VoidPtr
 		 */
@@ -76,7 +76,7 @@ namespace kroll
 		// mimic some string operations to make it more 
 		// friendly when using a Blob in Javascript
 		/**
-		 * @tiapi(method=True,name=CoreTypes.Blob.indexOf,since=0.3)
+		 * @tiapi(method=True,name=Blob.indexOf,since=0.3)
 		 * @tiapi Return the index of a String within this Blob
 		 * @tiarg[String, needle] The String to search for
 		 * @tiresult[Number] The integer index of the String or -1 if not found
@@ -84,7 +84,7 @@ namespace kroll
 		this->SetMethod("indexOf", &Blob::IndexOf);
 
 		/**
-		 * @tiapi(method=True,name=CoreTypes.Blob.lastIndexOf,since=0.3)
+		 * @tiapi(method=True,name=Blob.lastIndexOf,since=0.3)
 		 * @tiapi Return the last index of a String within this Blob
 		 * @tiarg[String, needle] The String to search for
 		 * @tiresult[Number] The last integer index of the String or -1 if not found
@@ -92,7 +92,7 @@ namespace kroll
 		this->SetMethod("lastIndexOf", &Blob::LastIndexOf);
 
 		/**
-		 * @tiapi(method=True,name=CoreTypes.Blob.charAt,since=0.3)
+		 * @tiapi(method=True,name=Blob.charAt,since=0.3)
 		 * @tiapi Return a character representing a byte at at given index in a Blob
 		 * @tiarg[Number, index] The index to look for a character at
 		 * @tiresult[String] A String containing a character representing the byte at the given index
@@ -100,7 +100,7 @@ namespace kroll
 		this->SetMethod("charAt", &Blob::CharAt);
 
 		/**
-		 * @tiapi(method=True,name=CoreTypes.Blob.split,since=0.3)
+		 * @tiapi(method=True,name=Blob.split,since=0.3)
 		 * @tiapi Split a blob as if it were a string given a delimiter. 
 		 * @tiapi This method returns empty matches. For instance:
 		 * @tiapi <pre><code>"abc,def,,".split(",") --> ['abc', 'def', '', '']</code></pre>
@@ -111,7 +111,7 @@ namespace kroll
 		this->SetMethod("split", &Blob::Split);
 
 		/**
-		 * @tiapi(method=True,name=CoreTypes.Blob.substring,since=0.3)
+		 * @tiapi(method=True,name=Blob.substring,since=0.3)
 		 * @tiapi Return a substring of a Blob given a start index and end index
 		 * @tiapi If no end index is given, return all characters from the start index
 		 * @tiapi to the end of the string. If startIndex > endIndex, the indexes are swapped.
@@ -122,7 +122,7 @@ namespace kroll
 		this->SetMethod("substring", &Blob::Substring);
 
 		/**
-		 * @tiapi(method=True,name=CoreTypes.Blob.substr,since=0.3)
+		 * @tiapi(method=True,name=Blob.substr,since=0.3)
 		 * @tiapi Return a substring of a Blob given a start index and a length
 		 * @tiapi If no length is given, all characters from the start to the
 		 * @tiapi end of the string are returned.
@@ -133,21 +133,21 @@ namespace kroll
 		this->SetMethod("substr", &Blob::Substr);
 
 		/**
-		 * @tiapi(method=True,name=CoreTypes.Blob.toLowerCase,since=0.3)
+		 * @tiapi(method=True,name=Blob.toLowerCase,since=0.3)
 		 * @tiapi Convert characters in the Blob to lower case as if it were a string.
 		 * @tiresult[String] The resulting String
 		 */
 		this->SetMethod("toLowerCase", &Blob::ToLowerCase);
 
 		/**
-		 * @tiapi(method=True,name=CoreTypes.Blob.toUpperCase,since=0.3)
+		 * @tiapi(method=True,name=Blob.toUpperCase,since=0.3)
 		 * @tiapi Convert characters in the Blob to upper case as if it were a string.
 		 * @tiresult[String] The resulting String
 		 */
 		this->SetMethod("toUpperCase", &Blob::ToUpperCase);
 
 		/**
-		 * @tiapi(property=True,name=CoreTypes.Blob.length,since=0.3) The number of bytes in this blob
+		 * @tiapi(property=True,name=Blob.length,since=0.3) The number of bytes in this blob
 		 */
 		this->Set("length", Value::NewInt(length));
 	}
