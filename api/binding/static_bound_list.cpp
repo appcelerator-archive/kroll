@@ -11,7 +11,8 @@
 
 namespace kroll
 {
-	StaticBoundList::StaticBoundList() :
+	StaticBoundList::StaticBoundList(const char *type) :
+		KList(type),
 		object(new StaticBoundObject()),
 		length(0)
 	{

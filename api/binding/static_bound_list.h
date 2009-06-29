@@ -14,7 +14,7 @@ namespace kroll
 	{
 	public:
 
-		StaticBoundList();
+		StaticBoundList(const char *type = "StaticBoundList");
 		virtual ~StaticBoundList();
 		static SharedKList FromStringVector(std::vector<std::string>&);
 

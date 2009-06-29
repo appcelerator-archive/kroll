@@ -17,7 +17,7 @@ namespace kroll
 	{
 	public:
 
-		AccessorBoundList();
+		AccessorBoundList(const char *type = "AccesorBoundList");
 
 		/**
 		 * @see KObject::Set

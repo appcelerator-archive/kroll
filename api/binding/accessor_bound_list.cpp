@@ -10,8 +10,8 @@
 
 namespace kroll
 {
-	AccessorBoundList::AccessorBoundList()
-		: StaticBoundList()
+	AccessorBoundList::AccessorBoundList(const char *type)
+		: StaticBoundList(type)
 	{
 	}
 

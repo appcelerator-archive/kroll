@@ -18,7 +18,7 @@ namespace kroll
 	class KROLL_API KList : public KObject
 	{
 	public:
-		KList() {}
+		KList(const char *type = "KList") : KObject(type) {}
 		virtual ~KList() {}
 
 		/**
