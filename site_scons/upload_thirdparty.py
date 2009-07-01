@@ -16,11 +16,11 @@ else:
 		acctid = sys.argv[2]
 		secret = sys.argv[3]
 
-if acctid is None:	
-	acctid = raw_input("AWS_ACCESS_KEY_ID: ")
+if acctid is None:
+	acctid = raw_input("AWS_ACCESS_KEY_ID: ").strip()
 
 if secret is None:
-	secret = raw_input("AWS_SECRET_ACCESS_KEY: ")
+	secret = raw_input("AWS_SECRET_ACCESS_KEY: ").strip()
 
 bucket = "kroll.appcelerator.com"
 key = os.path.basename(fname)
