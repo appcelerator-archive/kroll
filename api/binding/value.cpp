@@ -419,4 +419,25 @@ namespace kroll
 		}
 	}
 
+	void Value::Unwrap(SharedValue value)
+	{
+		if (!Host::GetInstance()->ProfilingEnabled())
+		{
+			return;
+		}
+
+		if (value->IsMethod()) {
+			SharedKMethod list = KMethod::Unwrap(value->ToMethod());
+			value->SetMethod(list);
+
+		} else if (value->IsList()) {
+			SharedKList list = KList::Unwrap(value->ToList());
+			value->SetList(list);
+
+		} else if (value->IsObject()) {
+			SharedKObject obj = KObject::Unwrap(value->ToObject());
+			value->SetObject(obj);
+		}
+	}
+
 }

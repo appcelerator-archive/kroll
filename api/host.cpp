@@ -699,6 +699,11 @@ namespace kroll
 		return this->globalObject;
 	}
 
+	bool Host::ProfilingEnabled()
+	{
+		return this->profile;
+	}
+
 	bool Host::Start()
 	{
 		return true;

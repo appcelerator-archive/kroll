@@ -433,27 +433,24 @@ namespace kroll
 		SharedKMethod method = (*value)->ToMethod();
 		ValueList args;
 		for (size_t i = 0; i < num_args; i++) {
-			SharedValue arg_val = KJSUtil::ToKrollValue(js_args[i], js_context, js_this);
-			args.push_back(arg_val);
+			SharedValue argVal = KJSUtil::ToKrollValue(js_args[i], js_context, js_this);
+			Value::Unwrap(argVal);
+			args.push_back(argVal);
 		}
 
 		JSValueRef js_val = NULL;
-		try
-		{
+		try {
 			SharedValue ti_val = method->Call(args);
 			js_val = KJSUtil::ToJSValue(ti_val, js_context);
-		}
-		catch (ValueException& exception)
-		{
+
+		} catch (ValueException& exception) {
 			*js_exception = KJSUtil::ToJSValue(exception.GetValue(), js_context);
-		}
-		catch (std::exception &e)
-		{
+
+		} catch (std::exception &e) {
 			SharedValue v = Value::NewString(e.what());
 			*js_exception = KJSUtil::ToJSValue(v, js_context);
-		}
-		catch (...)
-		{
+
+		} catch (...) {
 			std::cerr << "KJSUtil.cpp: Caught an unknown exception during call()"
 			          << std::endl;
 			SharedValue v = Value::NewString("unknown exception");

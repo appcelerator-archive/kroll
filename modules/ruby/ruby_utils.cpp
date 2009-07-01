@@ -179,6 +179,7 @@ namespace kroll
 		{
 			VALUE rarg = rb_ary_entry(args, i);
 			SharedValue arg = RubyUtils::ToKrollValue(rarg);
+			Value::Unwrap(arg);
 			kargs.push_back(arg);
 		}
 

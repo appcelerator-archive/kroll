@@ -188,6 +188,11 @@ namespace kroll
 			return started_.elapsed();
 		}
 
+		/**
+		 * Whether or not profiling is enabled for this Host
+		 */
+		bool ProfilingEnabled();
+
 	protected:
 		ModuleList loaded_modules;
 

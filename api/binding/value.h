@@ -311,6 +311,11 @@ namespace kroll
 		 */
 		void SetUndefined();
 
+		/**
+		 * Replace a value wth an unwrapped value
+		 */
+		static void Unwrap(SharedValue value);
+
 	private:
 		Type type;
 		double numberValue;

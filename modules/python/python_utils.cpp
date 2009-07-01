@@ -522,7 +522,9 @@ namespace kroll
 			for (int c=0; c < PyTuple_Size(args); c++)
 			{
 				PyObject* arg = PyTuple_GetItem(args, c);
-				a.push_back(PythonUtils::ToKrollValue(arg));
+				SharedValue kValue = PythonUtils::ToKrollValue(arg);
+				Value::Unwrap(kValue);
+				a.push_back(kValue);
 			}
 			result = kmeth->Call(a);
 		}
