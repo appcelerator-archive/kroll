@@ -57,6 +57,13 @@ namespace kroll
 		virtual bool Equals(SharedKObject other);
 
 		/**
+		 * Determine if this objects has the property with the given name.
+		 * @param name the name of the property to look for
+		 * @return true if the property exists and false otherwise
+		 */
+		virtual bool HasProperty(const char* name);
+
+		/**
 		 * @return a list of this object's property names.
 		 */
 		virtual SharedStringList GetPropertyNames() = 0;

@@ -26,6 +26,7 @@ namespace kroll
 		virtual SharedValue Get(const char *name);
 		virtual SharedStringList GetPropertyNames();
 		virtual void Set(const char *name, SharedValue value);
+		virtual bool HasProperty(const char* name);
 
 
 	private:

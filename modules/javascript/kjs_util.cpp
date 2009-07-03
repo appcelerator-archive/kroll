@@ -315,14 +315,18 @@ namespace kroll
 
 		SharedKObject object = (*value)->ToObject();
 		char *name = KJSUtil::ToChars(js_property);
-		std::string str_name(name);
+		std::string strName(name);
 		free(name);
 
-		SharedStringList names = object->GetPropertyNames();
+		if (object->HasProperty(strName.c_str())) {
+			return true;
+		}
+
+		SharedStringList names(new StringList());
 		AddSpecialPropertyNames(*value, names, true);
 		for (size_t i = 0; i < names->size(); i++)
 		{
-			if (str_name == *names->at(i))
+			if (strName == *names->at(i))
 			{
 				return true;
 			}

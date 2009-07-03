@@ -91,4 +91,9 @@ namespace kroll
 	{
 		return list->GetPropertyNames();
 	}
+
+	bool ProfiledBoundList::HasProperty(const char* name)
+	{
+		return list->HasProperty(name);
+	}
 }

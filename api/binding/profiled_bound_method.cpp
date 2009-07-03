@@ -54,4 +54,9 @@ namespace kroll
 	{
 		return method->GetPropertyNames();
 	}
+
+	bool ProfiledBoundMethod::HasProperty(const char* name)
+	{
+		return method->HasProperty(name);
+	}
 }

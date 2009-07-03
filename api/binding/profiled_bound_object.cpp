@@ -164,4 +164,9 @@ namespace kroll
 	{
 		return delegate->DisplayString(levels);
 	}
+
+	bool ProfiledBoundObject::HasProperty(const char* name)
+	{
+		return delegate->HasProperty(name);
+	}
 }

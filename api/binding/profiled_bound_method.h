@@ -47,6 +47,8 @@ namespace kroll
 		 */
 		virtual SharedStringList GetPropertyNames();
 
+		bool HasProperty(const char* name);
+
 		/**
 		 * @return the delegate of this profiled bound method
 		 */

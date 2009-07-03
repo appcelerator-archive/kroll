@@ -15,6 +15,17 @@ namespace kroll
 		return other.get() == this;
 	}
 
+	bool KObject::HasProperty(const char* name)
+	{
+		SharedStringList names = this->GetPropertyNames();
+		for (size_t i = 0; i < names->size(); i++) {
+			if (!strcmp(name, names->at(i)->c_str())) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	SharedString KObject::DisplayString(int levels)
 	{
 		std::stringstream ss;

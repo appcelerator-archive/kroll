@@ -10,39 +10,74 @@
 
 namespace kroll
 {
-	AccessorBoundObject::AccessorBoundObject()
-		: StaticBoundObject()
+	AccessorBoundObject::AccessorBoundObject(const char* name)
+		: StaticBoundObject(name)
 	{
+	}
+
+	SharedKMethod AccessorBoundObject::FindMethod(std::string& name)
+	{
+		std::string lcname = name;
+		std::transform(lcname.begin(), lcname.end(), lcname.begin(), tolower);
+
+		SharedStringList names = this->GetPropertyNames();
+		for (size_t i = 0; i < names->size(); i++)
+		{
+			std::string other = *names->at(i);
+			SharedValue v = this->RawGet(other.c_str());
+			if (v->IsMethod()) {
+
+				std::transform(other.begin(), other.end(), other.begin(), tolower);
+				if (other == lcname) {
+					return v->ToMethod();
+				}
+
+			}
+		}
+		return 0;
+	}
+
+	bool AccessorBoundObject::HasProperty(const char* name)
+	{
+		std::string styleOne = "get";
+		std::string styleTwo = "is";
+		styleOne.append(name);
+		styleTwo.append(name);
+
+		return StaticBoundObject::HasProperty(name) ||
+			!this->FindMethod(styleOne).isNull() ||
+			!this->FindMethod(styleTwo).isNull();
 	}
 
 	void AccessorBoundObject::Set(const char *name, SharedValue value)
 	{
-		std::string setter_name = "set" + Capitalize(name);
-		SharedValue v = this->RawGet(setter_name.c_str());
-		if (v->IsMethod())
-		{
-			SharedKMethod m = v->ToMethod();
-			ValueList args;
-			args.push_back(value);
-			m->Call(args);
-		}
-		else
-		{
+		std::string methodName = "set";
+		methodName.append(name);
+		SharedKMethod m = this->FindMethod(methodName);
+
+		if (!m.isNull()) {
+			m->Call(value);
+		} else {
 			this->RawSet(name, value);
 		}
 	}
 
 	SharedValue AccessorBoundObject::Get(const char *name)
 	{
-		std::string getter_name = "get" + Capitalize(name);
-		SharedValue v = this->RawGet(getter_name.c_str());
-		if (v->IsMethod())
-		{
-			SharedKMethod m = v->ToMethod();
-			return m->Call(ValueList());
-		}
-		else
-		{
+		std::string styleOne = "get";
+		std::string styleTwo = "is";
+		styleOne.append(name);
+		styleTwo.append(name);
+		SharedKMethod m1 = this->FindMethod(styleOne);
+		SharedKMethod m2 = this->FindMethod(styleTwo);
+
+		if (!m1.isNull()) {
+			return m1->Call();
+
+		} else if (!m2.isNull()) {
+			return m2->Call();
+
+		} else {
 			return this->RawGet(name);
 		}
 	}
@@ -56,19 +91,5 @@ namespace kroll
 	{
 		StaticBoundObject::Set(name, value);
 	}
-
-	std::string AccessorBoundObject::Capitalize(const char *word)
-	{
-		char* cap_word = strdup(word);
-		if (strlen(cap_word) > 0)
-		{
-			cap_word[0] = toupper(cap_word[0]);
-		}
-
-		std::string result = std::string(cap_word);
-		free(cap_word);
-		return result;
-	}
-
 }
 

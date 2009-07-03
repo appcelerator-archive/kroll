@@ -45,6 +45,11 @@ namespace kroll
 		delegate->Set(name, value);
 	}
 
+	bool DelegateStaticBoundObject::HasProperty(const char* name)
+	{
+		return delegate->HasProperty(name) || base->HasProperty(name);
+	}
+
 	SharedStringList DelegateStaticBoundObject::GetPropertyNames()
 	{
 		ScopedLock lock(&mutex);
