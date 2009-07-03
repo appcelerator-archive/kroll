@@ -249,21 +249,33 @@ namespace kroll
 	{
 		reset();
 		this->objectValue = value;
-		type = LIST;
+		if (value.isNull()) {
+			this->type = NULLV;
+		} else {
+			this->type = LIST;
+		}
 	}
 
 	void Value::SetObject(SharedKObject value)
 	{
 		reset();
 		this->objectValue = value;
-		this->type = OBJECT;
+		if (value.isNull()) {
+			this->type = NULLV;
+		} else {
+			this->type = OBJECT;
+		}
 	}
 
 	void Value::SetMethod(SharedKMethod value)
 	{
 		reset();
 		this->objectValue = value;
-		type = METHOD;
+		if (value.isNull()) {
+			this->type = NULLV;
+		} else {
+			this->type = METHOD;
+		}
 	}
 
 	void Value::SetVoidPtr(void *value)
@@ -323,9 +335,8 @@ namespace kroll
 
 	SharedString Value::DisplayString(int levels)
 	{
-
 		std::ostringstream oss;
-		if (this->IsInt() )
+		if (this->IsInt())
 		{
 			oss << this->ToInt() << "i";
 		}
