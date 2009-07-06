@@ -16,35 +16,22 @@ namespace kroll
 	 */
 	class KROLL_API ProfiledBoundObject : public KObject
 	{
-	public:
-		ProfiledBoundObject(std::string name, SharedKObject delegate, Poco::FileOutputStream *stream);
+		public:
+		ProfiledBoundObject(SharedKObject delegate);
 		virtual ~ProfiledBoundObject();
-	protected:
-		SharedKObject delegate;
-		std::string name;
-		Poco::FileOutputStream *stream;
-	public:
-		/**
-		 * Set a property on this object to the given value. Value should be
-		 * heap-allocated as implementors are allowed to keep a reference.
-		 * When an error occurs will throw an exception of type ValueException.
-		 * @param name The property name
-		 * @param value The new property value
-		 */
+		static void SetStream(Poco::FileOutputStream*);
+
+		public:
+		// @see KObject::Set
 		virtual void Set(const char *name, SharedValue value);
-
-		/**
-		 * @param name The property name
-		 * @return the value of the property with the given name or Value::Undefined
-		 * if the property is not found.
-		 * Errors will result in a thrown ValueException
-		 */
+		// @see KObject::Get
 		virtual SharedValue Get(const char *name);
-
-		/**
-		 * @return a list of this object's property names.
-		 */
+		// @see KObject::GetPropertyNames
 		virtual SharedStringList GetPropertyNames();
+		// @see KObject::DisplayString
+		virtual SharedString DisplayString(int levels=3);
+		// @see KObject::Equals
+		virtual bool Equals(SharedKObject other);
 
 		bool HasProperty(const char* name);
 
@@ -53,24 +40,13 @@ namespace kroll
 		 */
 		SharedKObject GetDelegate() { return delegate; }
 		
-		/**
-		 * The display string for the delegate
-		 */ 
-		virtual SharedString DisplayString(int levels=3);
-		
 	protected:
-		
-		/**
-		 * get the full path to this object
-		 */
-		std::string GetFullPath()
-		{
-			return this->name;
-		}
-		static std::string MakeFullPath(ProfiledBoundObject* ref, std::string name, bool useParent);
-		SharedValue ProfiledCall(ProfiledBoundObject* ref, SharedKMethod method, const ValueList& args);
-		void Log(std::string str);
-		static SharedValue Wrap(ProfiledBoundObject* source, std::string name, SharedValue value, ProfiledBoundObject **out, bool useParent=false);
+		SharedKObject delegate;
+		SharedValue Wrap(SharedValue value, std::string type);
+		std::string GetSubType(std::string name);
+		void Log(std::string eventType, std::string& name, Poco::Timestamp::TimeDiff);
+		static bool AlreadyWrapped(SharedValue);
+		static Poco::FileOutputStream *stream;
 	};
 }
 

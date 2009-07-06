@@ -15,61 +15,24 @@ namespace kroll
 	class ProfiledBoundList : public ProfiledBoundObject, public KList
 	{
 	public:
-		ProfiledBoundList(std::string name, SharedKList delegate, Poco::FileOutputStream *stream);
+		ProfiledBoundList(SharedKList delegate);
 		virtual ~ProfiledBoundList();
-	private:
-		SharedKList list;
 
-	public:
-
-		/**
-		 * Append a value to this list
-		 *  Errors will result in a thrown ValueException
-		 */
+		// @see KList::Append
 		virtual void Append(SharedValue value);
-
-		/**
-		 * Get the length of this list.
-		 */
+		// @see KList::Size
 		virtual unsigned int Size();
-
-		/**
-		 * @return the value at the given index.
-		 * Errors will result in a thrown ValueException
-		 */
+		// @see KList::At
 		virtual SharedValue At(unsigned int index);
-
-		/**
-		 * Set the value at the given index. If the index is greater
-		 * than the current list length, the list will be lengenthed
-		 * by appending Value::Undefined;
-		 * Errors will result in a thrown ValueException
-		 */
+		// @see KList::SetAt
 		virtual void SetAt(unsigned int index, SharedValue value);
-
-		/**
-		 * Remove the list entry at the given index. Return true
-		 * if found and removed.
-		 * Errors will result in a thrown ValueException
-		 */
+		// @see KList::Remove
 		virtual bool Remove(unsigned int index);
-
-		/**
-		 * Set a property on this object to the given value
-		 * Errors will result in a thrown ValueException
-		 */
+		// @See KList::Set
 		virtual void Set(const char *name, SharedValue value);
-
-		/**
-		 * @return the property with the given name or Value::Undefined
-		 * if the property is not found.
-		 * Errors will result in a thrown ValueException
-		 */
+		// @see KList::Get
 		virtual SharedValue Get(const char *name);
-
-		/**
-		 * @return a list of this object's property names.
-		 */
+		// @see KList::GetPropertyNames
 		virtual SharedStringList GetPropertyNames();
 
 		bool HasProperty(const char* name);
@@ -78,6 +41,9 @@ namespace kroll
 		 * @return the delegate of this profiled bound object
 		 */
 		SharedKList GetDelegate() { return list; }
+
+	private:
+		SharedKList list;
 
 	};
 }

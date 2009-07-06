@@ -13,8 +13,15 @@
 
 namespace kroll
 {
-	ProfiledBoundObject::ProfiledBoundObject(std::string name, SharedKObject delegate, Poco::FileOutputStream *stream) :
-		KObject(delegate->GetType()), delegate(delegate), name(name), stream(stream)
+	Poco::FileOutputStream* ProfiledBoundObject::stream = 0;
+	void ProfiledBoundObject::SetStream(Poco::FileOutputStream* stream)
+	{
+		ProfiledBoundObject::stream = stream;
+	}
+
+	ProfiledBoundObject::ProfiledBoundObject(SharedKObject delegate) :
+		KObject(delegate->GetType()),
+		delegate(delegate)
 	{
 	}
 
@@ -22,132 +29,75 @@ namespace kroll
 	{
 	}
 
-	std::string ProfiledBoundObject::MakeFullPath(ProfiledBoundObject* ref, std::string name, bool useParent)
+	bool ProfiledBoundObject::AlreadyWrapped(SharedValue value)
 	{
-		std::string newname(ref->GetFullPath());
-		if (useParent)
-		{
-			newname = newname.substr(0,newname.rfind("."));
-		}
-		
-		if (!name.empty())
-		{
-			newname+=".";
-			newname+=std::string(name);
-		}
-		return newname;
-	}
-
-	SharedValue ProfiledBoundObject::Wrap(ProfiledBoundObject* ref, std::string name, SharedValue value, ProfiledBoundObject **out, bool useParent)
-	{
-		std::string newname = MakeFullPath(ref, name, useParent);
-
 		if (value->IsMethod()) {
-
 			SharedKMethod source = value->ToMethod();
 			SharedPtr<ProfiledBoundMethod> po = source.cast<ProfiledBoundMethod>();
-			if (!po.isNull())
-			{
-				*out = po.get();
-				return value;
-			}
-			ProfiledBoundMethod *p = new ProfiledBoundMethod(newname,source,ref->stream);
-			*out = p;
-			SharedKMethod target = p;
-			return Value::NewMethod(target);
+			return !po.isNull();
 
 		} else if (value->IsList()) {
 			SharedKList source = value->ToList();
 			SharedPtr<ProfiledBoundList> po = source.cast<ProfiledBoundList>();
-			if (!po.isNull())
-			{
-				*out = po.get();
-				return value;
-			}
-			ProfiledBoundList *p = new ProfiledBoundList(newname,source,ref->stream);
-			*out = p;
-			SharedKList target = p;
-			return Value::NewList(target);
+			return !po.isNull();
 
 		} else if (value->IsObject()) {
 			SharedKObject source = value->ToObject();
 			SharedPtr<ProfiledBoundObject> po = source.cast<ProfiledBoundObject>();
-			if (!po.isNull())
-			{
-				*out = po.get();
-				return value;
-			}
-			ProfiledBoundObject *p = new ProfiledBoundObject(newname,source,ref->stream);
-			*out = p;
-			SharedKObject target = p;
-			return Value::NewObject(target);
+			return !po.isNull();
+
+		} else {
+			return true;
 		}
-		return value;
+	}
+
+	SharedValue ProfiledBoundObject::Wrap(SharedValue value, std::string type)
+	{
+		if (AlreadyWrapped(value)) {
+			return value;
+
+		} else if (value->IsMethod()) {
+			SharedKMethod toWrap = value->ToMethod();
+			SharedKMethod wrapped = new ProfiledBoundMethod(toWrap, type);
+			return Value::NewMethod(wrapped);
+
+		} else if (value->IsList()) {
+			SharedKList wrapped = new ProfiledBoundList(value->ToList());
+			return Value::NewList(wrapped);
+
+		} else if (value->IsObject()) {
+			SharedKObject wrapped = new ProfiledBoundObject(value->ToObject());
+			return Value::NewObject(wrapped);
+
+		} else {
+			return value;
+		}
 	}
 
 	void ProfiledBoundObject::Set(const char *name, SharedValue value)
 	{
-		ProfiledBoundObject *po = NULL;
-		SharedValue result = ProfiledBoundObject::Wrap(this,name,value,&po);
+		std::string type = this->GetSubType(name);
+		SharedValue result = ProfiledBoundObject::Wrap(value, type);
+
 		Poco::Stopwatch sw;
 		sw.start();
-		delegate->Set(name,result);
+		delegate->Set(name, result);
 		sw.stop();
-		if (po)
-		{
-			std::ostringstream o;
-			o << "set," << po->GetFullPath() << "," << sw.elapsed();
-			this->Log(o.str());
-		}
+
+		this->Log("set", type, sw.elapsed());
 	}
 
 	SharedValue ProfiledBoundObject::Get(const char *name)
 	{
+		std::string type = this->GetSubType(name);
+
 		Poco::Stopwatch sw;
 		sw.start();
 		SharedValue value = delegate->Get(name);
 		sw.stop();
-		ProfiledBoundObject *po = NULL;
-		SharedValue result = ProfiledBoundObject::Wrap(this,name,value,&po);
-		if (po)
-		{
-			std::ostringstream o;
-			o << "get," << po->GetFullPath() << "," << sw.elapsed();
-			this->Log(o.str());
-		}
-		return result;
-	}
 
-	SharedValue ProfiledBoundObject::ProfiledCall(ProfiledBoundObject* ref, SharedKMethod method, const ValueList& args)
-	{
-		Poco::Stopwatch sw;
-		sw.start();
-		SharedValue value;
-		try
-		{
-			value = method->Call(args);
-		}
-		catch(...)
-		{
-			sw.stop();
-			std::ostringstream o;
-			o << "call," << ref->GetFullPath() << "," << sw.elapsed();
-			this->Log(o.str());
-			throw;
-		}
-		sw.stop();
-		std::ostringstream o;
-		o << "call," << ref->GetFullPath() << "," << sw.elapsed();
-		this->Log(o.str());
-		
-		if (!value.isNull() && value->IsObject())
-		{
-			ProfiledBoundObject *po = NULL;
-			SharedValue newValue = ProfiledBoundObject::Wrap(ref, value->GetType(), value, &po, true);
-			
-			return newValue;
-		}
-		return value;
+		this->Log("get", type, sw.elapsed());
+		return ProfiledBoundObject::Wrap(value, type);
 	}
 
 	SharedStringList ProfiledBoundObject::GetPropertyNames()
@@ -155,9 +105,11 @@ namespace kroll
 		return delegate->GetPropertyNames();
 	}
 
-	void ProfiledBoundObject::Log(std::string str)
+	void ProfiledBoundObject::Log(
+		std::string eventType, std::string& name, Poco::Timestamp::TimeDiff elapsedTime)
 	{
-		(*stream) << Host::GetElapsedTime() << "," << str << "\n";
+		(*ProfiledBoundObject::stream) << Host::GetElapsedTime() <<
+			"," << eventType << "," << name << "," << elapsedTime << std::endl;
 	}
 
 	SharedString ProfiledBoundObject::DisplayString(int levels)
@@ -168,5 +120,23 @@ namespace kroll
 	bool ProfiledBoundObject::HasProperty(const char* name)
 	{
 		return delegate->HasProperty(name);
+	}
+
+	bool ProfiledBoundObject::Equals(SharedKObject other)
+	{
+		SharedPtr<ProfiledBoundObject> pother = other.cast<ProfiledBoundObject>();
+		if (!pother.isNull()) {
+			other = pother->GetDelegate();
+		}
+		return other.get() == this->GetDelegate().get();
+	}
+
+	std::string ProfiledBoundObject::GetSubType(std::string name)
+	{
+		if (!this->GetType().empty()) {
+			return this->GetType() + "." + name;
+		} else {
+			return name;
+		}
 	}
 }

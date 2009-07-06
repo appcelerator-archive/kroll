@@ -15,37 +15,19 @@ namespace kroll
 	class ProfiledBoundMethod : public ProfiledBoundObject, public KMethod
 	{
 	public:
-		ProfiledBoundMethod(std::string name, SharedKMethod delegate, Poco::FileOutputStream *stream);
+		ProfiledBoundMethod(SharedKMethod delegate, std::string& parentType);
 		virtual ~ProfiledBoundMethod();
 
-	private:
-		SharedKMethod method;
-
-	public:
-		/**
-		 * Call this method with the given arguments.
-		 * Errors will result in a thrown ValueException
-		 * @return the return value of this method
-		 */
+		// @see KMethod::Call
 		virtual SharedValue Call(const ValueList& args);
-
-		/**
-		 * Set a property on this object to the given value
-		 * Errors will result in a thrown ValueException
-		 */
+		// @see KMethod::Set
 		virtual void Set(const char *name, SharedValue value);
-
-		/**
-		 * @return the property with the given name or Value::Undefined
-		 * if the property is not found.
-		 * Errors will result in a thrown ValueException
-		 */
+		// @see KMethod::Get
 		virtual SharedValue Get(const char *name);
-
-		/**
-		 * @return a list of this object's property names.
-		 */
+		// @see KMethod::GetPropertyNames
 		virtual SharedStringList GetPropertyNames();
+		// @see KObject::GetType
+		virtual std::string& GetType();
 
 		bool HasProperty(const char* name);
 
@@ -53,6 +35,11 @@ namespace kroll
 		 * @return the delegate of this profiled bound method
 		 */
 		SharedKMethod GetDelegate() { return method; }
+
+	private:
+		SharedKMethod method;
+		std::string fullType;
+
 	};
 }
 
