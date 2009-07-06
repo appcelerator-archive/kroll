@@ -7,10 +7,14 @@
 #include "../kroll.h"
 #include <cstdio>
 #include <cstring>
+#include <Poco/Stopwatch.h>
 
 namespace kroll
 {
-	ProfiledBoundMethod::ProfiledBoundMethod(std::string name, SharedKMethod delegate, Poco::FileOutputStream *stream) : ProfiledBoundObject(name,delegate,stream), method(delegate)
+	ProfiledBoundMethod::ProfiledBoundMethod(SharedKMethod delegate, std::string& type) :
+		ProfiledBoundObject(delegate),
+		method(delegate),
+		fullType(type)
 	{
 	}
 
@@ -18,40 +22,43 @@ namespace kroll
 	{
 	}
 
-	/**
-	 * Call this method with the given arguments.
-	 * Errors will result in a thrown ValueException
-	 * @return the return value of this method
-	 */
 	SharedValue ProfiledBoundMethod::Call(const ValueList& args)
 	{
-		return this->ProfiledCall(this,method,args);
+		std::string type = this->GetType();
+
+		SharedValue value;
+		Poco::Stopwatch sw;
+		sw.start();
+		try {
+			value = method->Call(args);
+		} catch (...) {
+			sw.stop();
+			this->Log("call", type, sw.elapsed());
+			throw;
+		}
+
+		sw.stop();
+		this->Log("call", type, sw.elapsed());
+		return this->Wrap(value, type);
 	}
 
-	/**
-	 * Set a property on this object to the given value
-	 * Errors will result in a thrown ValueException
-	 */
 	void ProfiledBoundMethod::Set(const char *name, SharedValue value)
 	{
 		method->Set(name,value);
 	}
 
-	/**
-	 * @return the property with the given name or Value::Undefined
-	 * if the property is not found.
-	 * Errors will result in a thrown ValueException
-	 */
 	SharedValue ProfiledBoundMethod::Get(const char *name)
 	{
 		return method->Get(name);
 	}
 
-	/**
-	 * @return a list of this object's property names.
-	 */
 	SharedStringList ProfiledBoundMethod::GetPropertyNames()
 	{
 		return method->GetPropertyNames();
+	}
+
+	std::string& ProfiledBoundMethod::GetType()
+	{
+		return fullType;
 	}
 }

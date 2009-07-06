@@ -15,13 +15,9 @@ namespace kroll
 	class ProfiledBoundMethod : public ProfiledBoundObject, public KMethod
 	{
 	public:
-		ProfiledBoundMethod(std::string name, SharedKMethod delegate, Poco::FileOutputStream *stream);
+		ProfiledBoundMethod(SharedKMethod delegate, std::string& parentType);
 		virtual ~ProfiledBoundMethod();
 
-	private:
-		SharedKMethod method;
-
-	public:
 		// @see KMethod::Call
 		virtual SharedValue Call(const ValueList& args);
 		// @see KMethod::Set
@@ -30,11 +26,18 @@ namespace kroll
 		virtual SharedValue Get(const char *name);
 		// @see KMethod::GetPropertyNames
 		virtual SharedStringList GetPropertyNames();
+		// @see KObject::GetType
+		virtual std::string& GetType();
 
 		/**
 		 * @return the delegate of this profiled bound method
 		 */
 		SharedKMethod GetDelegate() { return method; }
+
+	private:
+		SharedKMethod method;
+		std::string fullType;
+
 	};
 }
 

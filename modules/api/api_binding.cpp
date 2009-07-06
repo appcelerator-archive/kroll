@@ -17,6 +17,7 @@ using std::map;
 namespace kroll
 {
 	APIBinding::APIBinding(Host* host) :
+		StaticBoundObject("API"),
 		host(host),
 		global(host->GetGlobalObject()),
 		record(0),

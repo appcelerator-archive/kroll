@@ -17,13 +17,9 @@ namespace kroll
 	class KROLL_API ProfiledBoundObject : public KObject
 	{
 		public:
-		ProfiledBoundObject(std::string name, SharedKObject delegate, Poco::FileOutputStream *stream);
+		ProfiledBoundObject(SharedKObject delegate);
 		virtual ~ProfiledBoundObject();
-
-		protected:
-		SharedKObject delegate;
-		std::string name;
-		Poco::FileOutputStream *stream;
+		static void SetStream(Poco::FileOutputStream*);
 
 		public:
 		// @see KObject::Set
@@ -43,18 +39,12 @@ namespace kroll
 		SharedKObject GetDelegate() { return delegate; }
 		
 	protected:
-		
-		/**
-		 * get the full path to this object
-		 */
-		std::string GetFullPath()
-		{
-			return this->name;
-		}
-		static std::string MakeFullPath(ProfiledBoundObject* ref, std::string name, bool useParent);
-		SharedValue ProfiledCall(ProfiledBoundObject* ref, SharedKMethod method, const ValueList& args);
-		void Log(std::string str);
-		static SharedValue Wrap(ProfiledBoundObject* source, std::string name, SharedValue value, ProfiledBoundObject **out, bool useParent=false);
+		SharedKObject delegate;
+		SharedValue Wrap(SharedValue value, std::string type);
+		std::string GetSubType(std::string name);
+		void Log(std::string eventType, std::string& name, Poco::Timestamp::TimeDiff);
+		static bool AlreadyWrapped(SharedValue);
+		static Poco::FileOutputStream *stream;
 	};
 }
 

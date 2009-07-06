@@ -15,12 +15,9 @@ namespace kroll
 	class ProfiledBoundList : public ProfiledBoundObject, public KList
 	{
 	public:
-		ProfiledBoundList(std::string name, SharedKList delegate, Poco::FileOutputStream *stream);
+		ProfiledBoundList(SharedKList delegate);
 		virtual ~ProfiledBoundList();
-	private:
-		SharedKList list;
 
-	public:
 		// @see KList::Append
 		virtual void Append(SharedValue value);
 		// @see KList::Size
@@ -42,6 +39,9 @@ namespace kroll
 		 * @return the delegate of this profiled bound object
 		 */
 		SharedKList GetDelegate() { return list; }
+
+	private:
+		SharedKList list;
 
 	};
 }

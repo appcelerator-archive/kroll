@@ -76,7 +76,7 @@ namespace kroll
 	void Host::SetupGlobalObject()
 	{
 		// Initialize our global object to be a simple mapped Kroll object
-		this->globalObject = new StaticBoundObject();
+		this->globalObject = new StaticBoundObject("");
 		this->globalObject->SetObject("CoreTypes", new CoreTypes());
 	}
 
@@ -146,8 +146,8 @@ namespace kroll
 			// to use the profiled bound object which will profile all methods
 			// going through this object and it's attached children
 			this->profileStream = new Poco::FileOutputStream(this->profilePath);
-			this->globalObject = new ProfiledBoundObject(
-				GLOBAL_NS_VARNAME, this->globalObject, this->profileStream);
+			ProfiledBoundObject::SetStream(this->profileStream);
+			this->globalObject = new ProfiledBoundObject(this->globalObject);
 
 			logger->Info("Starting Profiler. Output going to %s", this->profilePath.c_str());
 		}
