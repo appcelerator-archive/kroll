@@ -164,4 +164,13 @@ namespace kroll
 	{
 		return delegate->DisplayString(levels);
 	}
+
+	bool ProfiledBoundObject::Equals(SharedKObject other)
+	{
+		SharedPtr<ProfiledBoundObject> pother = other.cast<ProfiledBoundObject>();
+		if (!pother.isNull()) {
+			other = pother->GetDelegate();
+		}
+		return other.get() == this->GetDelegate().get();
+	}
 }

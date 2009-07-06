@@ -16,45 +16,31 @@ namespace kroll
 	 */
 	class KROLL_API ProfiledBoundObject : public KObject
 	{
-	public:
+		public:
 		ProfiledBoundObject(std::string name, SharedKObject delegate, Poco::FileOutputStream *stream);
 		virtual ~ProfiledBoundObject();
-	protected:
+
+		protected:
 		SharedKObject delegate;
 		std::string name;
 		Poco::FileOutputStream *stream;
-	public:
-		/**
-		 * Set a property on this object to the given value. Value should be
-		 * heap-allocated as implementors are allowed to keep a reference.
-		 * When an error occurs will throw an exception of type ValueException.
-		 * @param name The property name
-		 * @param value The new property value
-		 */
+
+		public:
+		// @see KObject::Set
 		virtual void Set(const char *name, SharedValue value);
-
-		/**
-		 * @param name The property name
-		 * @return the value of the property with the given name or Value::Undefined
-		 * if the property is not found.
-		 * Errors will result in a thrown ValueException
-		 */
+		// @see KObject::Get
 		virtual SharedValue Get(const char *name);
-
-		/**
-		 * @return a list of this object's property names.
-		 */
+		// @see KObject::GetPropertyNames
 		virtual SharedStringList GetPropertyNames();
+		// @see KObject::DisplayString
+		virtual SharedString DisplayString(int levels=3);
+		// @see KObject::Equals
+		virtual bool Equals(SharedKObject other);
 
 		/**
 		 * @return the delegate of this profiled bound object
 		 */
 		SharedKObject GetDelegate() { return delegate; }
-		
-		/**
-		 * The display string for the delegate
-		 */ 
-		virtual SharedString DisplayString(int levels=3);
 		
 	protected:
 		

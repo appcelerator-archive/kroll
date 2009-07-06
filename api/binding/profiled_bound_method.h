@@ -22,29 +22,13 @@ namespace kroll
 		SharedKMethod method;
 
 	public:
-		/**
-		 * Call this method with the given arguments.
-		 * Errors will result in a thrown ValueException
-		 * @return the return value of this method
-		 */
+		// @see KMethod::Call
 		virtual SharedValue Call(const ValueList& args);
-
-		/**
-		 * Set a property on this object to the given value
-		 * Errors will result in a thrown ValueException
-		 */
+		// @see KMethod::Set
 		virtual void Set(const char *name, SharedValue value);
-
-		/**
-		 * @return the property with the given name or Value::Undefined
-		 * if the property is not found.
-		 * Errors will result in a thrown ValueException
-		 */
+		// @see KMethod::Get
 		virtual SharedValue Get(const char *name);
-
-		/**
-		 * @return a list of this object's property names.
-		 */
+		// @see KMethod::GetPropertyNames
 		virtual SharedStringList GetPropertyNames();
 
 		/**
