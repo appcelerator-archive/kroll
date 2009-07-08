@@ -11,7 +11,7 @@ from progressbar import ProgressBar
 Import('build')
 
 revisions = {
-	"linux-i386": 6,
+	"linux-i386": 7,
 	"linux-x86_64": 5,
 	"osx-universal": 7,
 	"win32-i386": 6
