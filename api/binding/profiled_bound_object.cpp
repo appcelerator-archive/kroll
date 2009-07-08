@@ -10,10 +10,12 @@
 #include <iostream>
 #include <sstream>
 #include <Poco/Stopwatch.h>
+#include <Poco/ScopedLock.h>
 
 namespace kroll
 {
 	Poco::FileOutputStream* ProfiledBoundObject::stream = 0;
+	Poco::Mutex ProfiledBoundObject::logMutex;
 	void ProfiledBoundObject::SetStream(Poco::FileOutputStream* stream)
 	{
 		ProfiledBoundObject::stream = stream;
@@ -106,10 +108,15 @@ namespace kroll
 	}
 
 	void ProfiledBoundObject::Log(
-		std::string eventType, std::string& name, Poco::Timestamp::TimeDiff elapsedTime)
+		const char* eventType, std::string& name, Poco::Timestamp::TimeDiff elapsedTime)
 	{
-		(*ProfiledBoundObject::stream) << Host::GetElapsedTime() <<
-			"," << eventType << "," << name << "," << elapsedTime << std::endl;
+		Poco::ScopedLock<Poco::Mutex> lock(logMutex);
+		if ((*ProfiledBoundObject::stream)) {
+			*ProfiledBoundObject::stream << Host::GetElapsedTime() << ",";
+			*ProfiledBoundObject::stream << eventType << ",";
+			*ProfiledBoundObject::stream << name << ",";
+			*ProfiledBoundObject::stream << elapsedTime << "," << std::endl;
+		}
 	}
 
 	SharedString ProfiledBoundObject::DisplayString(int levels)

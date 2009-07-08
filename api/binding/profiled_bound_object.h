@@ -7,6 +7,7 @@
 #ifndef _KR_PROFILED_BOUND_OBJECT_H_
 #define _KR_PROFILED_BOUND_OBJECT_H_
 #include <Poco/FileStream.h>
+#include <Poco/Mutex.h>
 
 namespace kroll
 {
@@ -39,14 +40,15 @@ namespace kroll
 		 * @return the delegate of this profiled bound object
 		 */
 		SharedKObject GetDelegate() { return delegate; }
-		
+
 	protected:
 		SharedKObject delegate;
 		SharedValue Wrap(SharedValue value, std::string type);
 		std::string GetSubType(std::string name);
-		void Log(std::string eventType, std::string& name, Poco::Timestamp::TimeDiff);
+		void Log(const char* eventType, std::string& name, Poco::Timestamp::TimeDiff);
 		static bool AlreadyWrapped(SharedValue);
 		static Poco::FileOutputStream *stream;
+		static Poco::Mutex logMutex;
 	};
 }
 
