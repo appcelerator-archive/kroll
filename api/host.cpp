@@ -158,6 +158,7 @@ namespace kroll
 		if (this->profile)
 		{
 			logger->Info("Stopping Profiler");
+			ProfiledBoundObject::SetStream(0);
 			profileStream->flush();
 			profileStream->close();
 			profileStream = NULL;
