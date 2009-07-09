@@ -68,6 +68,14 @@ namespace kroll
 		 */
 		this->SetMethod("fire", &APIBinding::_Fire);
 
+    /**
+     * @tiapi(method=True,name=API.runOnMainThread,since=0.5)
+     * @tiapi Execute the method on the main thread
+     * @tiarg[Function, method] The method to execute
+     * @tiarg[any, argument] Argument passed to method
+     */
+     this->SetMethod("runOnMainThread", &APIBinding::_RunOnMainThread);
+
 		/**
 		 * @tiapi(method=True,name=API.getApplication,since=0.2)
 		 * @tiapi Get the currently running application
@@ -499,6 +507,12 @@ namespace kroll
 		this->Fire(event,args.at(1));
 	}
 
+  void APIBinding::_RunOnMainThread(const ValueList& args, SharedValue result)
+  {
+    SharedKMethod method = args.at(0)->ToMethod();
+    this->RunOnMainThread(method,args.at(1));
+  }
+
 	//---------------- IMPLEMENTATION METHODS
 	void APIBinding::Log(int severity, SharedValue value)
 	{
@@ -595,6 +609,12 @@ namespace kroll
 			}
 		}
 	}
+
+  void APIBinding::RunOnMainThread(SharedKMethod method, SharedValue arg)
+  {
+    ScopedLock lock(&mutex);
+    host->InvokeMethodOnMainThread(method,ValueList(arg));
+  }
 
 	void APIBinding::_GetApplication(const ValueList& args, SharedValue result)
 	{
