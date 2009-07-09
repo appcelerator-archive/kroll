@@ -28,6 +28,7 @@ namespace kroll
 	public:
 		static ValueException FromString(const char* s);
 		static ValueException FromString(std::string s);
+		static ValueException FromFormat(const char* format, ...);
 		static ValueException FromObject(SharedKObject o);
 		SharedValue GetValue();
 		SharedString DisplayString();

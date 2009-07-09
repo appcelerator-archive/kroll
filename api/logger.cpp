@@ -182,7 +182,7 @@ namespace kroll
 	std::string Logger::Format(const char* format, va_list args)
 	{
 		// Protect the buffer
-		Poco::Mutex::ScopedLock lock(this->mutex);
+		Poco::Mutex::ScopedLock lock(mutex);
 
 		vsnprintf(Logger::buffer, LOGGER_MAX_ENTRY_SIZE - 1, format, args);
 		Logger::buffer[LOGGER_MAX_ENTRY_SIZE - 1] = '\0';

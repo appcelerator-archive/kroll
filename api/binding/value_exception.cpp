@@ -5,10 +5,10 @@
  */
 
 #include "../kroll.h"
+#include <cstdarg>
 
 namespace kroll
 {
-
 	ValueException::ValueException(SharedValue v) : std::exception(), value(v)
 	{
 	}
@@ -25,6 +25,17 @@ namespace kroll
 	ValueException ValueException::FromString(std::string s)
 	{
 		return ValueException(Value::NewString(s));
+	}
+
+	ValueException ValueException::FromFormat(const char* format, ...)
+	{
+
+		va_list args;
+		va_start(args, format);
+		std::string text = Logger::Format(format, args);
+		va_end(args);
+
+		return ValueException(Value::NewString(text));
 	}
 
 	ValueException ValueException::FromObject(SharedKObject o)

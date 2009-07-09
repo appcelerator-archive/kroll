@@ -59,7 +59,7 @@ namespace kroll
 		void Log(Level, std::string &);
 		void Log(Level, const char*, va_list);
 		void Log(Level, const char*, ...);
-		std::string Format(const char*, va_list);
+		static std::string Format(const char*, va_list);
 
 		void Trace(std::string);
 		void Trace(const char*, ...);
