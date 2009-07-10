@@ -140,7 +140,7 @@ namespace kroll
 		else if (value->IsObject())
 		{
 			SharedKObject obj = value->ToObject();
-			SharedPtr<KKJSObject> kobj = obj.cast<KKJSObject>();
+			AutoPtr<KKJSObject> kobj = obj.cast<KKJSObject>();
 			if (!kobj.isNull() && kobj->SameContextGroup(ctx))
 			{
 				// this object is actually a pure JS object
@@ -155,7 +155,7 @@ namespace kroll
 		else if (value->IsMethod())
 		{
 			SharedKMethod meth = value->ToMethod();
-			SharedPtr<KKJSMethod> kmeth = meth.cast<KKJSMethod>();
+			AutoPtr<KKJSMethod> kmeth = meth.cast<KKJSMethod>();
 			if (!kmeth.isNull() && kmeth->SameContextGroup(ctx))
 			{
 				// this object is actually a pure JS callable object
@@ -170,7 +170,7 @@ namespace kroll
 		else if (value->IsList())
 		{
 			SharedKList list = value->ToList();
-			SharedPtr<KKJSList> klist = list.cast<KKJSList>();
+			AutoPtr<KKJSList> klist = list.cast<KKJSList>();
 			if (!klist.isNull() && klist->SameContextGroup(ctx))
 			{
 				// this object is actually a pure JS array

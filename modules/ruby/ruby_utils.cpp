@@ -125,11 +125,11 @@ namespace kroll
 		}
 		else if (value->IsObject())
 		{
-			SharedPtr<KRubyObject> ro = value->ToObject().cast<KRubyObject>();
+			AutoPtr<KRubyObject> ro = value->ToObject().cast<KRubyObject>();
 			if (!ro.isNull())
 				return ro->ToRuby();
 
-			SharedPtr<KRubyHash> rh = value->ToObject().cast<KRubyHash>();
+			AutoPtr<KRubyHash> rh = value->ToObject().cast<KRubyHash>();
 			if (!rh.isNull())
 				return rh->ToRuby();
 
@@ -137,7 +137,7 @@ namespace kroll
 		}
 		else if (value->IsMethod())
 		{
-			SharedPtr<KRubyMethod> rm = value->ToMethod().cast<KRubyMethod>();
+			AutoPtr<KRubyMethod> rm = value->ToMethod().cast<KRubyMethod>();
 			if (!rm.isNull())
 				return rm->ToRuby();
 			else
@@ -145,7 +145,7 @@ namespace kroll
 		}
 		else if (value->IsList())
 		{
-			SharedPtr<KRubyList> rl = value->ToList().cast<KRubyList>();
+			AutoPtr<KRubyList> rl = value->ToList().cast<KRubyList>();
 			if (!rl.isNull())
 				return rl->ToRuby();
 			else

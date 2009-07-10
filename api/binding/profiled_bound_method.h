@@ -35,10 +35,22 @@ namespace kroll
 		 * @return the delegate of this profiled bound method
 		 */
 		SharedKMethod GetDelegate() { return method; }
+		void duplicate()
+		{
+			referenceCount++;
+		}
+		void release()
+		{
+			referenceCount--;
+			if (referenceCount <= 0) {
+				delete this;
+			}
+		}
 
 	private:
 		SharedKMethod method;
 		std::string fullType;
+		unsigned int referenceCount;
 
 	};
 }

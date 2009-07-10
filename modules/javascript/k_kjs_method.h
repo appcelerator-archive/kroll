@@ -40,7 +40,7 @@ namespace kroll
 		JSGlobalContextRef context;
 		JSObjectRef object;
 		JSObjectRef this_obj;
-		SharedPtr<KKJSObject> kjs_bound_object;
+		AutoPtr<KKJSObject> kjs_bound_object;
 
 		private:
 		DISALLOW_EVIL_CONSTRUCTORS(KKJSMethod);

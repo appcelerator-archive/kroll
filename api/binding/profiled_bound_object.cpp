@@ -23,7 +23,8 @@ namespace kroll
 
 	ProfiledBoundObject::ProfiledBoundObject(SharedKObject delegate) :
 		KObject(delegate->GetType()),
-		delegate(delegate)
+		delegate(delegate),
+		referenceCount(1)
 	{
 	}
 
@@ -35,17 +36,17 @@ namespace kroll
 	{
 		if (value->IsMethod()) {
 			SharedKMethod source = value->ToMethod();
-			SharedPtr<ProfiledBoundMethod> po = source.cast<ProfiledBoundMethod>();
+			AutoPtr<ProfiledBoundMethod> po = source.cast<ProfiledBoundMethod>();
 			return !po.isNull();
 
 		} else if (value->IsList()) {
 			SharedKList source = value->ToList();
-			SharedPtr<ProfiledBoundList> po = source.cast<ProfiledBoundList>();
+			AutoPtr<ProfiledBoundList> po = source.cast<ProfiledBoundList>();
 			return !po.isNull();
 
 		} else if (value->IsObject()) {
 			SharedKObject source = value->ToObject();
-			SharedPtr<ProfiledBoundObject> po = source.cast<ProfiledBoundObject>();
+			AutoPtr<ProfiledBoundObject> po = source.cast<ProfiledBoundObject>();
 			return !po.isNull();
 
 		} else {
@@ -131,7 +132,7 @@ namespace kroll
 
 	bool ProfiledBoundObject::Equals(SharedKObject other)
 	{
-		SharedPtr<ProfiledBoundObject> pother = other.cast<ProfiledBoundObject>();
+		AutoPtr<ProfiledBoundObject> pother = other.cast<ProfiledBoundObject>();
 		if (!pother.isNull()) {
 			other = pother->GetDelegate();
 		}

@@ -108,7 +108,7 @@ namespace kroll
 
 	bool KRubyList::Equals(SharedKObject other)
 	{
-		SharedPtr<KRubyList> listOther = other.cast<KRubyList>();
+		AutoPtr<KRubyList> listOther = other.cast<KRubyList>();
 		if (listOther.isNull())
 			return false;
 		return listOther->ToRuby() == this->ToRuby();

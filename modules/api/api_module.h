@@ -18,7 +18,7 @@ namespace kroll
 
 
 	protected:
-		SharedPtr<APIBinding> binding;
+		AutoPtr<APIBinding> binding;
 	};
 }
 

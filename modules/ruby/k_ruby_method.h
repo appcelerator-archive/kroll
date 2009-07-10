@@ -33,7 +33,7 @@ class KRubyMethod : public KMethod
 	private:
 	VALUE method;
 	VALUE arg;
-	SharedPtr<KRubyObject> object;
+	AutoPtr<KRubyObject> object;
 };
 
 }

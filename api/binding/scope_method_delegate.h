@@ -43,7 +43,7 @@ namespace kroll {
 		 * StaticBoundObject and delegate set/get to the new
 		 * static bound object
 		 */
-		static SharedPtr<StaticBoundObject> CreateDelegate(SharedKObject global, SharedKObject bo);
+		static AutoPtr<StaticBoundObject> CreateDelegate(SharedKObject global, SharedKObject bo);
 
 
 	private:

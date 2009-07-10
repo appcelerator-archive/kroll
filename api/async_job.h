@@ -27,7 +27,7 @@ namespace kroll
 		 * Get a SharedPtr to this AsyncJob. The return value of
 		 * this method will be NULL after the job finishes executing.
 		 */
-		SharedPtr<AsyncJob> GetSharedPtr();
+		AutoPtr<AsyncJob> GetAutoPtr();
 
 		/*
 		 * Run an async job synchronously (on the same thread).
@@ -131,7 +131,7 @@ namespace kroll
 		void _IsComplete(const ValueList& args, SharedValue result);
 
 		private:
-		SharedPtr<AsyncJob> sharedThis;
+		AutoPtr<AsyncJob> sharedThis;
 		std::vector<SharedKMethod> progressCallbacks;
 		std::vector<SharedKMethod> completedCallbacks;
 		std::vector<SharedKMethod> errorCallbacks;

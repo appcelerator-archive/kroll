@@ -21,9 +21,9 @@ namespace kroll
 		static JSValueRef KListToJSValue(SharedValue, JSContextRef);
 		static char* ToChars(JSStringRef);
 		static bool IsArrayLike(JSObjectRef, JSContextRef);
-		static SharedPtr<KKJSObject> ToBoundObject(JSContextRef, JSObjectRef);
-		static SharedPtr<KKJSObject> ToBoundMethod(JSContextRef, JSObjectRef, JSObjectRef);
-		static SharedPtr<KKJSList> ToBoundList(JSContextRef, JSObjectRef);
+		static AutoPtr<KKJSObject> ToBoundObject(JSContextRef, JSObjectRef);
+		static AutoPtr<KKJSObject> ToBoundMethod(JSContextRef, JSObjectRef, JSObjectRef);
+		static AutoPtr<KKJSList> ToBoundList(JSContextRef, JSObjectRef);
 
 		static void RegisterGlobalContext(JSObjectRef, JSGlobalContextRef);
 		static JSGlobalContextRef GetGlobalContext(JSObjectRef);

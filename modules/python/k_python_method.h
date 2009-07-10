@@ -27,7 +27,7 @@ namespace kroll
 
 	private:
 		PyObject* method;
-		SharedPtr<KPythonObject> object;
+		AutoPtr<KPythonObject> object;
 		DISALLOW_EVIL_CONSTRUCTORS(KPythonMethod);
 	};
 }

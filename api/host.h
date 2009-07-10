@@ -105,7 +105,7 @@ namespace kroll
 		/**
 		 * @return the Global context object. In most languages this is known as "Titanium"
 		 */
-		SharedPtr<KObject> GetGlobalObject();
+		SharedKObject GetGlobalObject();
 		
 		/**
 		 * @return the SharedApplication instance for this host
@@ -199,7 +199,7 @@ namespace kroll
 		Mutex moduleMutex;
 		std::vector<ModuleProvider *> module_providers;
 		std::vector<std::string> module_paths;
-		SharedPtr<KObject> globalObject;
+		SharedKObject globalObject;
 		SharedPtr<CoreTypes> coreTypes;
 
 		SharedApplication application;

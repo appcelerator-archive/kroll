@@ -110,7 +110,7 @@ namespace kroll {
 
 	bool KRubyObject::Equals(SharedKObject other)
 	{
-		SharedPtr<KRubyObject> rubyOther = other.cast<KRubyObject>();
+		AutoPtr<KRubyObject> rubyOther = other.cast<KRubyObject>();
 		if (rubyOther.isNull())
 			return false;
 
