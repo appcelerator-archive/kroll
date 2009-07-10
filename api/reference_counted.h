@@ -15,6 +15,7 @@ namespace kroll
 
 		public:
 		ReferenceCounted() : referenceCount(1) { }
+		virtual ~ReferenceCounted() { }
 
 		virtual void duplicate()
 		{

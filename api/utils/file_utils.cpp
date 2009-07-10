@@ -346,7 +346,16 @@ namespace UTILS_NS
 #ifdef OS_OSX
 		NSString *s = [[NSString stringWithCString:filepath.c_str() encoding:NSUTF8StringEncoding] stringByExpandingTildeInPath];
 		NSString *p = [s stringByStandardizingPath];
-		return std::string([p fileSystemRepresentation]);
+		@try
+		{
+			return std::string([p fileSystemRepresentation]);
+		}
+		@catch (NSException *ex)
+		{
+			const char *reason = [[ex reason] UTF8String];
+			printf("[Titanium.FileUtils] [Error] Error in Join: %s, '%s'\n", reason, filepath.c_str());
+			return filepath;
+		}
 #else
 		return filepath;
 #endif
