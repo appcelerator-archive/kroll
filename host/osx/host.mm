@@ -262,7 +262,7 @@ namespace kroll
 			[mainThreadData release];
 		}
 
-		if (isMainThread)
+		if (isMainThread && waitForCompletion)
 		{
 			return method->Call(args);
 		}
