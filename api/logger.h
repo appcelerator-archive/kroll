@@ -41,6 +41,7 @@ namespace kroll
 		Logger(std::string, Level);
 
 		Level GetLevel();
+		void SetLevel(Logger::Level level);
 		std::string& GetName();
 		Logger* GetChild(std::string name);
 		Logger* GetParent();

@@ -212,6 +212,13 @@ namespace kroll
 		 */
 		this->SetMethod("fatal", &APIBinding::_LogFatal);
 
+		/**
+		 * @tiapi(method=True,name=API.setLogLevel,since=1.0)
+		 * @tiapi Set the log level of the root logger
+		 * @tiarg[Number, type] the threshold of severity to log
+		 */
+		this->SetMethod("setLogLevel", &APIBinding::_SetLogLevel);
+	
 		// These are properties for log severity levels
 
 		/**
@@ -389,6 +396,50 @@ namespace kroll
 		result->SetValue(r);
 	}
 
+	Logger::Level APIBinding::GetSeverity(SharedValue arg)
+	{
+		Logger::Level severity = Logger::LINFO;
+		if (arg->IsString())
+		{
+			string type = arg->ToString();
+			if (type == "TRACE")
+				severity = Logger::LTRACE;
+
+			else if (type == "DEBUG")
+				severity = Logger::LDEBUG;
+
+			else if (type == "INFO")
+				severity = Logger::LINFO;
+
+			else if (type == "NOTICE")
+				severity = Logger::LNOTICE;
+
+			else if (type == "WARN")
+				severity = Logger::LWARN;
+
+			else if (type == "ERROR")
+				severity = Logger::LERROR;
+
+			else if (type == "CRITICAL")
+				severity = Logger::LCRITICAL;
+
+			else if (type == "FATAL")
+				severity = Logger::LFATAL;
+		}
+		else if (arg->IsInt())
+		{
+			severity = (Logger::Level)arg->ToInt();
+		}
+		return severity;
+	}
+	
+	void APIBinding::_SetLogLevel(const ValueList& args, SharedValue result)
+	{
+		if (args.size() > 0 && args.at(0)->IsString() || args.at(0)->IsNumber())
+		{
+			Logger::GetRootLogger()->SetLevel(GetSeverity(args.at(0)));
+		}
+	}
 	void APIBinding::_LogTrace(const ValueList& args, SharedValue result)
 	{
 		SharedValue arg1 = args.at(0);
@@ -439,42 +490,10 @@ namespace kroll
 		}
 		else if (args.size() == 2)
 		{
-			int severity = Logger::LINFO;
-
 			SharedValue arg1 = args.at(0);
-			if (arg1->IsString())
-			{
-				string type = arg1->ToString();
-				if (type == "TRACE")
-					severity = Logger::LTRACE;
-
-				else if (type == "DEBUG")
-					severity = Logger::LDEBUG;
-
-				else if (type == "INFO")
-					severity = Logger::LINFO;
-
-				else if (type == "NOTICE")
-					severity = Logger::LNOTICE;
-
-				else if (type == "WARN")
-					severity = Logger::LWARN;
-
-				else if (type == "ERROR")
-					severity = Logger::LERROR;
-
-				else if (type == "CRITICAL")
-					severity = Logger::LCRITICAL;
-
-				else if (type == "FATAL")
-					severity = Logger::LFATAL;
-			}
-			else if (arg1->IsInt())
-			{
-				severity = arg1->ToInt();
-			}
+			
 			SharedValue v = args.at(1);
-			this->Log(severity, v);
+			this->Log(GetSeverity(arg1), v);
 		}
 	}
 

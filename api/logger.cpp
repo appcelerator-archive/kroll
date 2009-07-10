@@ -85,6 +85,11 @@ namespace kroll
 	{
 		return this->level;
 	}
+	
+	void Logger::SetLevel(Logger::Level level)
+	{
+		this->level = level;
+	}
 
 	bool Logger::IsEnabled(Level level)
 	{
