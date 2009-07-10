@@ -34,6 +34,7 @@ namespace kroll
 		int Register(std::string& event, SharedKMethod callback);
 		void Unregister(int ref);
 		void Fire(const char* event, SharedValue data);
+    void RunOnMainThread(SharedKMethod method, SharedValue arg);
 
 		static SharedKList ComponentVectorToKList(
 			vector<SharedComponent>&,
@@ -73,6 +74,8 @@ namespace kroll
 
 		Logger::Level GetSeverity(SharedValue arg);
 		void _SetLogLevel(const ValueList& args, SharedValue result);
+    void _RunOnMainThread(const ValueList& args, SharedValue result);
+
 		void _Log(const ValueList& args, SharedValue result);
 		void _LogTrace(const ValueList& args, SharedValue result);
 		void _LogDebug(const ValueList& args, SharedValue result);
