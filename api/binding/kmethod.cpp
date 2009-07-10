@@ -90,7 +90,7 @@ namespace kroll
 
 	SharedKMethod KMethod::Unwrap(SharedKMethod o)
 	{
-		SharedPtr<ProfiledBoundMethod> pmeth = o.cast<ProfiledBoundMethod>();
+		AutoPtr<ProfiledBoundMethod> pmeth = o.cast<ProfiledBoundMethod>();
 		if (pmeth.isNull())
 		{
 			return o;

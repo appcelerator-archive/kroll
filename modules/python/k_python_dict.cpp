@@ -51,7 +51,7 @@ namespace kroll
 
 	bool KPythonDict::Equals(SharedKObject other)
 	{
-		SharedPtr<KPythonDict> pyOther = other.cast<KPythonDict>();
+		AutoPtr<KPythonDict> pyOther = other.cast<KPythonDict>();
 
 		// This is not a Python object
 		if (pyOther.isNull())

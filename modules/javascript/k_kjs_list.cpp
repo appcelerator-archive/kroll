@@ -104,7 +104,7 @@ namespace kroll
 
 	bool KKJSList::Equals(SharedKObject other)
 	{
-		SharedPtr<KKJSList> kjsOther = other.cast<KKJSList>();
+		AutoPtr<KKJSList> kjsOther = other.cast<KKJSList>();
 		if (kjsOther.isNull())
 			return false;
 		if (!kjsOther->SameContextGroup(this->context))

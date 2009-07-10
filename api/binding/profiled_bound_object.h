@@ -40,6 +40,17 @@ namespace kroll
 		 * @return the delegate of this profiled bound object
 		 */
 		SharedKObject GetDelegate() { return delegate; }
+		void duplicate()
+		{
+			referenceCount++;
+		}
+		void release()
+		{
+			referenceCount--;
+			if (referenceCount <= 0) {
+				delete this;
+			}
+		}
 
 	protected:
 		SharedKObject delegate;
@@ -49,6 +60,7 @@ namespace kroll
 		static bool AlreadyWrapped(SharedValue);
 		static Poco::FileOutputStream *stream;
 		static Poco::Mutex logMutex;
+		unsigned int referenceCount;
 	};
 }
 

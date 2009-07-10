@@ -712,7 +712,7 @@ namespace kroll
 				continue;
 			}
 
-			SharedPtr<DependencyBinding> d =
+			AutoPtr<DependencyBinding> d =
 				dependenciesList->At(i)->ToObject().cast<DependencyBinding>();
 			if (!d.isNull())
 			{

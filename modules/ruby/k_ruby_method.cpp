@@ -97,7 +97,7 @@ namespace kroll {
 
 	bool KRubyMethod::Equals(SharedKObject other)
 	{
-		SharedPtr<KRubyMethod> methodOther = other.cast<KRubyMethod>();
+		AutoPtr<KRubyMethod> methodOther = other.cast<KRubyMethod>();
 		if (methodOther.isNull())
 			return false;
 		return methodOther->ToRuby() == this->ToRuby();

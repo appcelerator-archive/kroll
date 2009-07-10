@@ -150,33 +150,33 @@ namespace kroll
 
 @interface KrollMainThreadCaller : NSObject
 {
-	SharedPtr<kroll::KMethod> *method;
-	SharedPtr<kroll::Value> *result;
-	SharedPtr<kroll::Value> *exception;
+	SharedKMethod *method;
+	SharedValue *result;
+	SharedValue *exception;
 	ValueList *args;
 	bool wait;
 }
-- (id)initWithKMethod:(SharedPtr<kroll::KMethod>)method args:(const ValueList*)args wait:(bool)wait;
+- (id)initWithKMethod:(SharedKMethod)method args:(const ValueList*)args wait:(bool)wait;
 - (void)call;
-- (SharedPtr<kroll::Value>)getResult;
-- (SharedPtr<kroll::Value>)getException;
+- (SharedValue)getResult;
+- (SharedValue)getException;
 @end
 
 @implementation KrollMainThreadCaller
-- (id)initWithKMethod:(SharedPtr<kroll::KMethod>)m args:(const ValueList*)a wait:(bool)w
+- (id)initWithKMethod:(SharedKMethod)m args:(const ValueList*)a wait:(bool)w
 {
 	self = [super init];
 	if (self)
 	{
-		method = new SharedPtr<kroll::KMethod>(m);
+		method = new SharedKMethod(m);
 		args = new ValueList();
 		for (size_t c=0;c<a->size();c++)
 		{
 			args->push_back(a->at(c));
 		}
 		wait = w;
-		result = new SharedPtr<kroll::Value>();
-		exception = new SharedPtr<kroll::Value>();
+		result = new SharedValue();
+		exception = new SharedValue();
 	}
 	return self;
 }
@@ -188,11 +188,11 @@ namespace kroll
 	delete args;
 	[super dealloc];
 }
-- (SharedPtr<kroll::Value>)getResult
+- (SharedValue)getResult
 {
 	return *result;
 }
-- (SharedPtr<kroll::Value>)getException
+- (SharedValue)getException
 {
 	return *exception;
 }

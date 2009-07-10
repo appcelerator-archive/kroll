@@ -12,7 +12,8 @@ namespace kroll
 {
 	ProfiledBoundList::ProfiledBoundList(SharedKList delegate) :
 		ProfiledBoundObject(delegate),
-		list(delegate)
+		list(delegate),
+		referenceCount(1)
 	{
 	}
 

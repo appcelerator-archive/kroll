@@ -32,7 +32,7 @@ namespace kroll
 
 	protected:
 		PyObject *list;
-		SharedPtr<KPythonObject> object;
+		AutoPtr<KPythonObject> object;
 		DISALLOW_EVIL_CONSTRUCTORS(KPythonList);
 	};
 }

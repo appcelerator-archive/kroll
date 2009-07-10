@@ -695,7 +695,7 @@ namespace kroll
 		}
 	}
 
-	SharedPtr<KObject> Host::GetGlobalObject() 
+	SharedKObject Host::GetGlobalObject() 
 	{
 		return this->globalObject;
 	}

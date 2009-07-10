@@ -16,7 +16,7 @@ namespace kroll
 	 * A container for various types.
 	 * Value instances contain a primitive or object value which can be boxed/unboxed based on the type.
 	 */
-	class KROLL_API Value
+	class KROLL_API Value : public ReferenceCounted
 	{
 	public:
 

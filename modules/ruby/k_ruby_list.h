@@ -38,7 +38,7 @@ namespace kroll
 
 	protected:
 		VALUE list;
-		SharedPtr<KRubyObject> object;
+		AutoPtr<KRubyObject> object;
 		DISALLOW_EVIL_CONSTRUCTORS(KRubyList);
 	};
 }

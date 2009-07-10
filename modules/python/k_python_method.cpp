@@ -72,7 +72,7 @@ namespace kroll
 
 	bool KPythonMethod::Equals(SharedKObject other)
 	{
-		SharedPtr<KPythonMethod> pyOther = other.cast<KPythonMethod>();
+		AutoPtr<KPythonMethod> pyOther = other.cast<KPythonMethod>();
 
 		// This is not a Python object
 		if (pyOther.isNull())

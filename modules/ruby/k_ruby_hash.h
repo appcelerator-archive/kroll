@@ -30,7 +30,7 @@ public:
 
 private:
 	VALUE hash;
-	SharedPtr<KRubyObject> object;
+	AutoPtr<KRubyObject> object;
 
 };
 

@@ -14,7 +14,8 @@ namespace kroll
 	ProfiledBoundMethod::ProfiledBoundMethod(SharedKMethod delegate, std::string& type) :
 		ProfiledBoundObject(delegate),
 		method(delegate),
-		fullType(type)
+		fullType(type),
+		referenceCount(1)
 	{
 	}
 
