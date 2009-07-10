@@ -366,7 +366,7 @@ namespace kroll
 
 	SharedKObject KObject::Unwrap(SharedKObject o)
 	{
-		SharedPtr<ProfiledBoundObject> pobj = o.cast<ProfiledBoundObject>();
+		AutoPtr<ProfiledBoundObject> pobj = o.cast<ProfiledBoundObject>();
 		if (pobj.isNull())
 		{
 			return o;

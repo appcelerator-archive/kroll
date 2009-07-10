@@ -69,7 +69,7 @@ namespace kroll
 		virtual SharedStringList GetPropertyNames();
 
 	protected:
-		SharedPtr<StaticBoundObject> object;
+		AutoPtr<StaticBoundObject> object;
 		unsigned int length;
 
 	private:

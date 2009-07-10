@@ -32,7 +32,7 @@ namespace kroll
 
 	protected:
 		PyObject *tuple;
-		SharedPtr<KPythonObject> object;
+		AutoPtr<KPythonObject> object;
 		DISALLOW_EVIL_CONSTRUCTORS(KPythonTuple);
 	};
 }

@@ -33,7 +33,7 @@ namespace kroll
 			this->job = NULL;
 		}
 
-		SharedPtr<AsyncJob> AsyncJob::GetSharedPtr()
+		AutoPtr<AsyncJob> AsyncJob::GetAutoPtr()
 		{
 			return this->sharedThis;
 		}
@@ -118,7 +118,7 @@ namespace kroll
 		{
 			Host* host = Host::GetInstance();
 			ValueList args;
-			args.push_back(Value::NewObject(this->GetSharedPtr()));
+			args.push_back(Value::NewObject(this->GetAutoPtr()));
 			host->InvokeMethodOnMainThread(method, args, false);
 		}
 

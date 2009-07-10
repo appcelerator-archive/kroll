@@ -41,9 +41,21 @@ namespace kroll
 		 * @return the delegate of this profiled bound object
 		 */
 		SharedKList GetDelegate() { return list; }
+		void duplicate()
+		{
+			referenceCount++;
+		}
+		void release()
+		{
+			referenceCount--;
+			if (referenceCount <= 0) {
+				delete this;
+			}
+		}
 
 	private:
 		SharedKList list;
+		unsigned int referenceCount;
 
 	};
 }

@@ -91,7 +91,7 @@ namespace kroll
 
 	bool KPythonTuple::Equals(SharedKObject other)
 	{
-		SharedPtr<KPythonTuple> pyOther = other.cast<KPythonTuple>();
+		AutoPtr<KPythonTuple> pyOther = other.cast<KPythonTuple>();
 		if (pyOther.isNull())
 		{
 			return false;

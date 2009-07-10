@@ -40,7 +40,7 @@ namespace kroll
 
 	protected:
 		SharedPtr<MethodCallback> callback;
-		SharedPtr<StaticBoundObject> object;
+		AutoPtr<StaticBoundObject> object;
 		std::map<std::string, SharedValue > properties;
 
 	private:

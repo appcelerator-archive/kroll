@@ -16,9 +16,11 @@
 
 #include "base.h"
 #include <Poco/SharedPtr.h>
+#include <Poco/AutoPtr.h>
 #include <vector>
 
 using Poco::SharedPtr;
+using Poco::AutoPtr;
 
 #ifndef OS_WIN32
 	// this is important which essentially marks all of
@@ -47,10 +49,14 @@ namespace kroll
 	class Logger;
 	class ArgList;
 
-	typedef SharedPtr<Value, Poco::ReferenceCounter, ValueReleasePolicy> SharedValue;
-	typedef SharedPtr<KObject> SharedKObject;
-	typedef SharedPtr<KMethod> SharedKMethod;
-	typedef SharedPtr<KList> SharedKList;
+	typedef AutoPtr<Value> AutoValue;
+	typedef AutoPtr<KObject> AutoKObject;
+	typedef AutoPtr<KMethod> AutoKMethod;
+	typedef AutoPtr<KList> AutoKList;
+	typedef AutoPtr<Value> SharedValue;
+	typedef AutoPtr<KObject> SharedKObject;
+	typedef AutoPtr<KMethod> SharedKMethod;
+	typedef AutoPtr<KList> SharedKList;
 
 	typedef SharedPtr<std::string> SharedString;
 	typedef std::vector<SharedString> StringList;
@@ -72,6 +78,7 @@ namespace kroll
 	#pragma GCC visibility pop
 #endif
 
+#include "reference_counted.h"
 #include "utils/utils.h"
 #include "logger.h"
 #include "mutex.h"

@@ -164,7 +164,7 @@ namespace kroll
 		}
 		if (value->IsMethod())
 		{
-			SharedPtr<KPythonMethod> pymeth = value->ToMethod().cast<KPythonMethod>();
+			AutoPtr<KPythonMethod> pymeth = value->ToMethod().cast<KPythonMethod>();
 			if (!pymeth.isNull())
 			{
 				return pymeth->ToPython();
@@ -176,13 +176,13 @@ namespace kroll
 		}
 		if (value->IsList())
 		{
-			SharedPtr<KPythonList> pylist = value->ToList().cast<KPythonList>();
+			AutoPtr<KPythonList> pylist = value->ToList().cast<KPythonList>();
 			if (!pylist.isNull())
 			{
 				return pylist->ToPython();
 			}
 
-			SharedPtr<KPythonTuple> pytuple = value->ToList().cast<KPythonTuple>();
+			AutoPtr<KPythonTuple> pytuple = value->ToList().cast<KPythonTuple>();
 			if (!pytuple.isNull())
 			{
 				return pytuple->ToPython();
@@ -194,11 +194,11 @@ namespace kroll
 		{
 			SharedKObject obj = value->ToObject();
 
-			SharedPtr<KPythonObject> pyobj = obj.cast<KPythonObject>();
+			AutoPtr<KPythonObject> pyobj = obj.cast<KPythonObject>();
 			if (!pyobj.isNull())
 				return pyobj->ToPython();
 
-			SharedPtr<KPythonDict> pydict = obj.cast<KPythonDict>();
+			AutoPtr<KPythonDict> pydict = obj.cast<KPythonDict>();
 			if (!pydict.isNull())
 				return pydict->ToPython();
 

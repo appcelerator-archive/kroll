@@ -120,7 +120,7 @@ namespace kroll
 
 	bool KPythonList::Equals(SharedKObject other)
 	{
-		SharedPtr<KPythonList> pyOther = other.cast<KPythonList>();
+		AutoPtr<KPythonList> pyOther = other.cast<KPythonList>();
 
 		// This is not a Python object
 		if (pyOther.isNull())

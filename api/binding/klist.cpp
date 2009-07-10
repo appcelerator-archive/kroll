@@ -72,7 +72,7 @@ namespace kroll
 
 	SharedKList KList::Unwrap(SharedKList o)
 	{
-		SharedPtr<ProfiledBoundList> plist = o.cast<ProfiledBoundList>();
+		AutoPtr<ProfiledBoundList> plist = o.cast<ProfiledBoundList>();
 		if (plist.isNull())
 		{
 			return o;
