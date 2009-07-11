@@ -40,4 +40,6 @@ namespace kroll
     };
 }
 
+#include "php_module_instance.h"
+
 #endif
