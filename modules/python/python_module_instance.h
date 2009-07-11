@@ -24,6 +24,7 @@ namespace kroll
     void Compile();
 	private:
     std::string code;
+    PyObject* module;
 		std::string path;
         DISALLOW_EVIL_CONSTRUCTORS(PythonModuleInstance);
 	};
