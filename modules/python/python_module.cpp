@@ -74,10 +74,6 @@ namespace kroll
 
 	Module* PythonModule::CreateModule(std::string& path)
 	{
-		FILE *file = fopen(path.c_str(), "r");
-
-		PyRun_SimpleFile(file,path.c_str());
-
 		Poco::Path p(path);
 		std::string basename = p.getBaseName();
 		std::string name = basename.substr(0,basename.length()-python_suffix.length()+3);

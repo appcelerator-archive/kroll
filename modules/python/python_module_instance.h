@@ -19,7 +19,11 @@ namespace kroll
 	public:
 		void Initialize ();
 		void Destroy ();
+
+    void Load();
+    void Compile();
 	private:
+    std::string code;
 		std::string path;
         DISALLOW_EVIL_CONSTRUCTORS(PythonModuleInstance);
 	};
