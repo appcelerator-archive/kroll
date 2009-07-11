@@ -54,6 +54,7 @@ namespace kroll
     PyObject* co = Py_CompileString(this->code.c_str(), name, Py_file_input);
     if (co == NULL)
     {
+      PyErr_Print();
       throw ValueException::FromString("Cound not compile Python file");
     }
 
