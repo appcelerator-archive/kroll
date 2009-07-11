@@ -7,13 +7,14 @@ Env = build.env.Clone()
 Env.Append(CPPDEFINES=('KROLL_PHP_API_EXPORT', 1))
 build.add_thirdparty(Env, 'poco')
 
-if build.is_osx():
+
+#if build.is_osx():
 
 
-elif build.is_linux():
+#elif build.is_linux():
 
 
-elif build.is_win32():
+#elif build.is_win32():
 
 
 m = build.add_module('php', env=Env)
