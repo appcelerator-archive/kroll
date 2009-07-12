@@ -73,10 +73,10 @@ namespace kroll
 		*/
 		PyObject* titanium_module = PyImport_AddModule("titanium");
  
-		// Add API
+		// Add global object
 		SharedKObject global = this->host->GetGlobalObject();
 		PyObject* api = PythonUtils::KObjectToPyObject(Value::NewObject(global));
-		PyModule_AddObject(titanium_module, "API", api);
+		PyModule_AddObject(titanium_module, "Titanium", api);
 
 		// Add Module class
 		PyObject* classDict = PyDict_New();
@@ -104,7 +104,9 @@ namespace kroll
 		Logger *logger = Logger::Get("Python");
 		logger->Info("Loading Python path=%s", path.c_str());
 
-		return new PythonModuleInstance(host, path, moduledir, name);
+		PythonModuleInstance* instance = new PythonModuleInstance(host, path, moduledir, name);
+		instance->Initialize();
+		return instance;
 	}
 
 }

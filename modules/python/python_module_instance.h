@@ -24,12 +24,13 @@ namespace kroll
 		virtual ~PythonModuleInstance();
 	public:
 		void Initialize ();
-		void Destroy ();
+		void Stop();
 
     void AppendPath();
     void Load();
 	private:
 		PyObject* module;
+		PyObject* module_class;
 		std::string path;
 		std::string dir;
 		std::string name;

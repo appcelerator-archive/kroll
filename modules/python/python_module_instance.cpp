@@ -50,12 +50,39 @@ namespace kroll
 
 	void PythonModuleInstance::Initialize () 
 	{
+		// get Module class implementation from loaded module
+		PyObject* module_dict = PyModule_GetDict(this->module);
+		std::string class_name = name + "Module";
+		class_name[0] = toupper(class_name[0]);
+		PyObject* module_impl = PyDict_GetItemString(module_dict, class_name.c_str());
+
+		// initialize module
+		this->module_class = NULL;
+		if (PyClass_Check(module_impl) && module_impl != NULL)
+		{
+			this->module_class = PyInstance_New(module_impl, NULL, NULL);
+			if (this->module_class == NULL)
+			{
+				PyErr_Print();
+				throw ValueException::FromString("Could not create instance of module class");
+			}
+		}
+		else
+		{
+			throw ValueException::FromString("no module class found");
+		}
  	}
 
-	void PythonModuleInstance::Destroy () 
+	void PythonModuleInstance::Stop () 
 	{
-		// release module
-		Py_XDECREF(this->module);
+		if (Py_IsInitialized())
+		{
+			// release module class
+			Py_XDECREF(this->module_class);
+
+			// release module
+			Py_XDECREF(this->module);
+		}
 	}
 }
 
