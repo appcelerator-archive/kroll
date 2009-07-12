@@ -9,7 +9,7 @@ Env.Append(CPPDEFINES=('KROLL_PHP_API_EXPORT', 1))
 build.add_thirdparty(Env, 'poco')
 
 if build.is_osx():
-    # Do nothing
+    pass
 
 elif build.is_linux():
     Env.ParseConfig('/opt/php/bin/php-config --includes')
@@ -20,7 +20,7 @@ elif build.is_linux():
     Env.ParseConfig('/opt/php/bin/php-config --ldflags')
 
 elif build.is_win32():
-    # Do nothing
+    pass
 
 m = build.add_module('php', env=Env)
 t = Env.SharedLibrary(m.build_dir + '/phpmodule', Glob('*.cpp'))
