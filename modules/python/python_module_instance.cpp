@@ -67,10 +67,6 @@ namespace kroll
 				throw ValueException::FromString("Could not create instance of module class");
 			}
 		}
-		else
-		{
-			throw ValueException::FromString("no module class found");
-		}
  	}
 
 	void PythonModuleInstance::Stop () 
