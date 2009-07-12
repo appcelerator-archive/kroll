@@ -1,21 +1,26 @@
 #!/usr/bin/env python
 import os
 from os import path
+
 Import('build')
 
 Env = build.env.Clone()
 Env.Append(CPPDEFINES=('KROLL_PHP_API_EXPORT', 1))
 build.add_thirdparty(Env, 'poco')
 
+if build.is_osx():
+    # Do nothing
 
-#if build.is_osx():
+elif build.is_linux():
+    Env.ParseConfig('/opt/php/bin/php-config --includes')
+    Env.Append(CPPPATH=[build.kroll_include_dir])
+    Env.Append(LIBPATH=['/opt/php/lib'])
+    Env.Append(LIBS=['php5'])
+    Env.ParseConfig('/opt/php/bin/php-config --libs')
+    Env.ParseConfig('/opt/php/bin/php-config --ldflags')
 
-
-#elif build.is_linux():
-
-
-#elif build.is_win32():
-
+elif build.is_win32():
+    # Do nothing
 
 m = build.add_module('php', env=Env)
 t = Env.SharedLibrary(m.build_dir + '/phpmodule', Glob('*.cpp'))

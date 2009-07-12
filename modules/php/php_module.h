@@ -6,7 +6,7 @@
 #ifndef _PHP_MODULE_H
 #define _PHP_MODULE_H
 
-//#include <sapi/embed/php_embed.h>
+#include <sapi/embed/php_embed.h>
 #include <kroll/kroll.h>
 
 namespace kroll
