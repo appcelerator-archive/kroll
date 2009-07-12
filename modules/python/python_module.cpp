@@ -76,7 +76,15 @@ namespace kroll
 		// Add API
 		SharedKObject global = this->host->GetGlobalObject();
 		PyObject* api = PythonUtils::KObjectToPyObject(Value::NewObject(global));
-		PyModule_AddObject(titanium_module, "api", api);
+		PyModule_AddObject(titanium_module, "API", api);
+
+		// Add Module class
+		PyObject* classDict = PyDict_New();
+		PyObject* className = PyString_FromString("Module");
+		PyObject* moduleClass = PyClass_New(NULL, classDict, className);
+		PyModule_AddObject(titanium_module, "Module", moduleClass);
+		Py_DECREF(classDict);
+		Py_DECREF(className);
 	}
 
 	const static std::string python_suffix = "module.py";
