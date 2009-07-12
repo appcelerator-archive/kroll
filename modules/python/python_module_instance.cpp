@@ -8,71 +8,50 @@
 namespace kroll
 {
 	PythonModuleInstance::PythonModuleInstance(Host *host, std::string path, std::string dir, std::string name) :
-		Module(host, dir.c_str(), name.c_str(), "0.1"), path(path)
+		Module(host, dir.c_str(), name.c_str(), "0.1"), path(path), dir(dir), name(name)
 	{
+    // add module location to python path
+    this->AppendPath();
+
+    // load module
     try
 		{
-      this->Load();    // load source code from file
-			this->Compile(); // compile code into module
+      this->Load();
 		}
 		catch (ValueException& e)
 		{
 			SharedString ss = e.GetValue()->DisplayString();
 			Logger *logger = Logger::Get("Python");
-			logger->Error("Could not load %s because %s", path.c_str(), (*ss).c_str());
+			logger->Error("Could not load %s because %s", dir.c_str(), (*ss).c_str());
 		}
+
 	}
 
 	PythonModuleInstance::~PythonModuleInstance()
 	{
 	}
 
-  void PythonModuleInstance::Load()
+  void PythonModuleInstance::AppendPath()
   {
-    this->code = "";
-		std::ifstream py_file(this->path.c_str());
-		if (!py_file.is_open())
-		{
-			throw ValueException::FromString("Could not read Python file");
-		}
-
-		std::string line;
-		while (!py_file.eof() )
-		{
-			std::getline(py_file, line);
-			this->code.append(line);
-			this->code.append("\n");
-		}
-		py_file.close();
+    std::string syspath = std::string(Py_GetPath());
+    syspath += PATH_SEPARATOR + dir;
+    PySys_SetPath((char*)syspath.c_str());
   }
 
-  void PythonModuleInstance::Compile()
+  void PythonModuleInstance::Load()
   {
-    const char* name = this->GetName().c_str();
-
-    // compile code string
-    PyObject* co = Py_CompileString(this->code.c_str(), name, Py_file_input);
-    if (co == NULL)
-    {
-      PyErr_Print();
-      throw ValueException::FromString("Cound not compile Python file");
-    }
-
-    // load module
-    this->module = PyImport_ExecCodeModule((char*)name, co);
-    Py_DECREF(co);
+    std::string module_name = name + "module";
+    this->module = PyImport_ImportModule((char*)module_name.c_str());
     if (this->module == NULL)
     {
       PyErr_Print();
-      throw ValueException::FromString("Cound not load Python module");
+      throw ValueException::FromString("Could not load module");
     }
-
-    this->code = "";
   }
 
 	void PythonModuleInstance::Initialize () 
 	{
-	}
+ 	}
 
 	void PythonModuleInstance::Destroy () 
 	{

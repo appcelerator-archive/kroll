@@ -8,6 +8,12 @@
 
 #include "python_module.h"
 
+#ifdef OS_WIN32
+#define PATH_SEPARATOR ";"
+#else
+#define PATH_SEPARATOR ":"
+#endif
+
 namespace kroll
 {
 	class PythonModuleInstance : public Module
@@ -20,12 +26,13 @@ namespace kroll
 		void Initialize ();
 		void Destroy ();
 
+    void AppendPath();
     void Load();
-    void Compile();
 	private:
-    std::string code;
     PyObject* module;
 		std::string path;
+    std::string dir;
+    std::string name;
         DISALLOW_EVIL_CONSTRUCTORS(PythonModuleInstance);
 	};
 }
