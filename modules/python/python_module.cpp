@@ -28,6 +28,7 @@ namespace kroll
 		Py_XDECREF(s);
 
 		this->InitializeBinding();
+    this->InitializeModule();
 		host->AddModuleProvider(this);
 	}
 
@@ -64,6 +65,19 @@ namespace kroll
 		Py_DECREF(api);
 	}
 
+  void PythonModule::InitializeModule()
+  {
+    /*
+      We need to build the titanium module
+      to be imported by python modules.
+    */
+    PyObject* titanium_module = PyImport_AddModule("titanium");
+ 
+    // Add API
+ 		SharedKObject global = this->host->GetGlobalObject();
+    PyObject* api = PythonUtils::KObjectToPyObject(Value::NewObject(global));
+    PyModule_AddObject(titanium_module, "api", api);
+  }
 
 	const static std::string python_suffix = "module.py";
 
