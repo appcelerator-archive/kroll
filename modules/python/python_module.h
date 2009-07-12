@@ -45,6 +45,7 @@ namespace kroll
 		virtual bool IsModule(std::string& path);
 		virtual Module* CreateModule(std::string& path);
 		void InitializeBinding();
+		void InitializeModule();
 
 		virtual const char * GetDescription() 
 		{
