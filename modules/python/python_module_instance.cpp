@@ -10,13 +10,13 @@ namespace kroll
 	PythonModuleInstance::PythonModuleInstance(Host *host, std::string path, std::string dir, std::string name) :
 		Module(host, dir.c_str(), name.c_str(), "0.1"), path(path), dir(dir), name(name)
 	{
-    // add module location to python path
-    this->AppendPath();
+		// add module location to python path
+		this->AppendPath();
 
-    // load module
-    try
+		// load module
+		try
 		{
-      this->Load();
+			this->Load();
 		}
 		catch (ValueException& e)
 		{
@@ -24,30 +24,29 @@ namespace kroll
 			Logger *logger = Logger::Get("Python");
 			logger->Error("Could not load %s because %s", dir.c_str(), (*ss).c_str());
 		}
-
 	}
 
 	PythonModuleInstance::~PythonModuleInstance()
 	{
 	}
 
-  void PythonModuleInstance::AppendPath()
-  {
-    std::string syspath = std::string(Py_GetPath());
-    syspath += PATH_SEPARATOR + dir;
-    PySys_SetPath((char*)syspath.c_str());
-  }
+	void PythonModuleInstance::AppendPath()
+	{
+		std::string syspath = std::string(Py_GetPath());
+		syspath += PATH_SEPARATOR + dir;
+		PySys_SetPath((char*)syspath.c_str());
+	}
 
-  void PythonModuleInstance::Load()
-  {
-    std::string module_name = name + "module";
-    this->module = PyImport_ImportModule((char*)module_name.c_str());
-    if (this->module == NULL)
-    {
-      PyErr_Print();
-      throw ValueException::FromString("Could not load module");
-    }
-  }
+	void PythonModuleInstance::Load()
+	{
+		std::string module_name = name + "module";
+		this->module = PyImport_ImportModule((char*)module_name.c_str());
+		if (this->module == NULL)
+		{
+			PyErr_Print();
+			throw ValueException::FromString("Could not load module");
+		}
+	}
 
 	void PythonModuleInstance::Initialize () 
 	{
@@ -55,8 +54,8 @@ namespace kroll
 
 	void PythonModuleInstance::Destroy () 
 	{
-    // release module
-    Py_XDECREF(this->module);
+		// release module
+		Py_XDECREF(this->module);
 	}
 }
 

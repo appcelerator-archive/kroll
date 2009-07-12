@@ -29,10 +29,10 @@ namespace kroll
     void AppendPath();
     void Load();
 	private:
-    PyObject* module;
+		PyObject* module;
 		std::string path;
-    std::string dir;
-    std::string name;
+		std::string dir;
+		std::string name;
         DISALLOW_EVIL_CONSTRUCTORS(PythonModuleInstance);
 	};
 }
