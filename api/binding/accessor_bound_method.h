@@ -4,20 +4,20 @@
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
 
-#ifndef _KR_ACCESSOR_BOUND_LIST_H_
-#define _KR_ACCESSOR_BOUND_LIST_H_
+#ifndef _KR_ACCESSOR_BOUND_METHOD_H_
+#define _KR_ACCESSOR_BOUND_METHOD_H_
 
 namespace kroll
 {
 	/**
-	 * The AccesorBoundList allows you to expose a list with properties that automatically expose getters and setters
+	 * The AccessorBoundMethod allows you to expose a method with properties that automatically expose getters and setters
 	 * @see AccessorBoundObject
 	 */
-	class KROLL_API AccessorBoundList : public StaticBoundList
+	class KROLL_API AccessorBoundMethod : public StaticBoundMethod
 	{
 	public:
 
-		AccessorBoundList(const char *type = "AccessorBoundList");
+		AccessorBoundMethod(MethodCallback* callback, const char *type = "AccessorBoundMethod");
 
 		/**
 		 * @see KObject::Set
@@ -34,9 +34,8 @@ namespace kroll
 		void RawSet(const char *name, SharedValue value);
 
 	private:
-		DISALLOW_EVIL_CONSTRUCTORS(AccessorBoundList);
+		DISALLOW_EVIL_CONSTRUCTORS(AccessorBoundMethod);
 		static std::string Capitalize(const char *word);
 	};
 }
-
 #endif
