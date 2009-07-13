@@ -228,6 +228,13 @@ namespace kroll
 		 */
 		this->SetMethod("setLogLevel", &APIBinding::_SetLogLevel);
 	
+		/**
+		 * @tiapi(method=True,name=API.print,since=1.0)
+		 * @tiapi print a raw string to stdout (no newlines are appended)
+		 * @tiarg[Any, data] data to print
+		 */
+		this->SetMethod("print", &APIBinding::_Print);
+	
 		// These are properties for log severity levels
 
 		/**
@@ -405,48 +412,23 @@ namespace kroll
 		result->SetValue(r);
 	}
 
-	Logger::Level APIBinding::GetSeverity(SharedValue arg)
-	{
-		Logger::Level severity = Logger::LINFO;
-		if (arg->IsString())
-		{
-			string type = arg->ToString();
-			if (type == "TRACE")
-				severity = Logger::LTRACE;
-
-			else if (type == "DEBUG")
-				severity = Logger::LDEBUG;
-
-			else if (type == "INFO")
-				severity = Logger::LINFO;
-
-			else if (type == "NOTICE")
-				severity = Logger::LNOTICE;
-
-			else if (type == "WARN")
-				severity = Logger::LWARN;
-
-			else if (type == "ERROR")
-				severity = Logger::LERROR;
-
-			else if (type == "CRITICAL")
-				severity = Logger::LCRITICAL;
-
-			else if (type == "FATAL")
-				severity = Logger::LFATAL;
-		}
-		else if (arg->IsInt())
-		{
-			severity = (Logger::Level)arg->ToInt();
-		}
-		return severity;
-	}
-	
 	void APIBinding::_SetLogLevel(const ValueList& args, SharedValue result)
 	{
 		args.VerifyException("setLogLevel", "s|n");
-		Logger::GetRootLogger()->SetLevel(GetSeverity(args.at(0)));
+		Logger::GetRootLogger()->SetLevel(Logger::GetLevel(args.at(0)));
 	}
+	
+	void APIBinding::_Print(const ValueList& args, SharedValue result)
+	{
+		for (size_t c=0;c<args.size();c++)
+		{
+			SharedValue arg = args.at(c);
+			const char *s = arg->ToString();
+			std::cout << s;
+		}
+		std::cout.flush();
+	}
+	
 	void APIBinding::_LogTrace(const ValueList& args, SharedValue result)
 	{
 		SharedValue arg1 = args.at(0);
@@ -500,7 +482,7 @@ namespace kroll
 			SharedValue arg1 = args.at(0);
 			
 			SharedValue v = args.at(1);
-			this->Log(GetSeverity(arg1), v);
+			this->Log(Logger::GetLevel(arg1), v);
 		}
 	}
 
