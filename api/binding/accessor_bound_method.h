@@ -28,14 +28,15 @@ namespace kroll
 		 * @see KObject::Get
 		 */
 		virtual SharedValue Get(const char *name);
-
+		virtual bool HasProperty(const char *name);
+	
 		SharedValue RawGet(const char *name);
-
 		void RawSet(const char *name, SharedValue value);
 
 	private:
+		SharedKMethod FindMethod(std::string& name);
+		
 		DISALLOW_EVIL_CONSTRUCTORS(AccessorBoundMethod);
-		static std::string Capitalize(const char *word);
 	};
 }
 #endif
