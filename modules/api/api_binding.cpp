@@ -68,13 +68,14 @@ namespace kroll
 		 */
 		this->SetMethod("fire", &APIBinding::_Fire);
 
-    /**
-     * @tiapi(method=True,name=API.runOnMainThread,since=0.5)
-     * @tiapi Execute the method on the main thread
-     * @tiarg[Function, method] The method to execute
-     * @tiarg[any, argument] Argument passed to method
-     */
-     this->SetMethod("runOnMainThread", &APIBinding::_RunOnMainThread);
+		/**
+		 * @tiapi(method=True,name=API.runOnMainThread,since=1.0)
+		 * @tiapi Execute the method on the main thread
+		 * @tiarg[Function, method] The method to execute
+		 * @tiarg[any, ...] A variable-length list of arguments to pass to the method
+		 * @tiresult[returnValue] The return value of the method
+		 */
+		this->SetMethod("runOnMainThread", &APIBinding::_RunOnMainThread);
 
 		/**
 		 * @tiapi(method=True,name=API.getApplication,since=0.2)
@@ -413,10 +414,8 @@ namespace kroll
 
 	void APIBinding::_SetLogLevel(const ValueList& args, SharedValue result)
 	{
-		if (args.size() > 0 && args.at(0)->IsString() || args.at(0)->IsNumber())
-		{
-			Logger::GetRootLogger()->SetLevel(Logger::GetLevel(args.at(0)));
-		}
+		args.VerifyException("setLogLevel", "s|n");
+		Logger::GetRootLogger()->SetLevel(Logger::GetLevel(args.at(0)));
 	}
 	
 	void APIBinding::_Print(const ValueList& args, SharedValue result)
@@ -508,11 +507,23 @@ namespace kroll
 		this->Fire(event,args.at(1));
 	}
 
-  void APIBinding::_RunOnMainThread(const ValueList& args, SharedValue result)
-  {
-    SharedKMethod method = args.at(0)->ToMethod();
-    this->RunOnMainThread(method,args.at(1));
-  }
+	void APIBinding::_RunOnMainThread(const ValueList& args, SharedValue result)
+	{
+		if (!args.at(0)->IsMethod()) {
+			throw ValueException::FromString("First argument to runOnMainThread was not a function");
+
+		} else {
+			SharedKMethod method = args.at(0)->ToMethod();
+
+			ValueList outArgs;
+			for (size_t i = 1; i < args.size(); i++) {
+				outArgs.push_back(args.at(i));
+			}
+
+			SharedValue outResult = host->InvokeMethodOnMainThread(args.GetMethod(0), outArgs);
+			result->SetValue(outResult);
+		}
+	}
 
 	//---------------- IMPLEMENTATION METHODS
 	void APIBinding::Log(int severity, SharedValue value)
@@ -610,12 +621,6 @@ namespace kroll
 			}
 		}
 	}
-
-  void APIBinding::RunOnMainThread(SharedKMethod method, SharedValue arg)
-  {
-    ScopedLock lock(&mutex);
-    host->InvokeMethodOnMainThread(method,ValueList(arg));
-  }
 
 	void APIBinding::_GetApplication(const ValueList& args, SharedValue result)
 	{
