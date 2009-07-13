@@ -74,8 +74,9 @@ namespace kroll
 
 		Logger::Level GetSeverity(SharedValue arg);
 		void _SetLogLevel(const ValueList& args, SharedValue result);
-    void _RunOnMainThread(const ValueList& args, SharedValue result);
+		void _RunOnMainThread(const ValueList& args, SharedValue result);
 
+		void _Print(const ValueList& args, SharedValue result);
 		void _Log(const ValueList& args, SharedValue result);
 		void _LogTrace(const ValueList& args, SharedValue result);
 		void _LogDebug(const ValueList& args, SharedValue result);

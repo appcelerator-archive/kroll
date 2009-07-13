@@ -282,23 +282,28 @@ namespace kroll
 		 * args.push_back(value2);
 		 * this->Get("object")->ToObject()->Get("property")->ToObject()->Get("method")->ToMethod()->Call(args);
 		 * \endcode
-		 *
+		 * CallNS is overridden, and can accept up to 3 arguments inline, or a ValueList
 		 * @return The return value of the function, or Value::Undefined if the object or method in the string is undefined
+		 */
+		SharedValue CallNS(const char *name);
+		
+		/**
+		 * @see KObject::CallNS(const char *name);
 		 */
 		SharedValue CallNS(const char *name, SharedValue val1);
 
 		/**
-		 * @see KObject::CallNS(const char *name, SharedValue val1);
+		 * @see KObject::CallNS(const char *name);
 		 */
 		SharedValue CallNS(const char *name, SharedValue val1, SharedValue val2);
 
 		/**
-		 * @see KObject::CallNS(const char *name, SharedValue val1);
+		 * @see KObject::CallNS(const char *name);
 		 */
 		SharedValue CallNS(const char *name, SharedValue val1, SharedValue val2, SharedValue val3);
 
 		/**
-		 * @see KObject::CallNS(const char *name, SharedValue val1);
+		 * @see KObject::CallNS(const char *name);
 		 */
 		SharedValue CallNS(const char *name, const ValueList& args);
 

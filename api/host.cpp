@@ -89,11 +89,13 @@ namespace kroll
 		string applicationHome = Environment::get(HOME_ENV);
 		string runtimePath = Environment::get(RUNTIME_ENV);
 		string modulePaths = Environment::get(MODULES_ENV);
-
+		
+#ifdef DEBUG
 		// Loggin isn't activated yet -- need to just print here
 		printf(">>> %s=%s\n", HOME_ENV, applicationHome.c_str());
 		printf(">>> %s=%s\n", RUNTIME_ENV, runtimePath.c_str());
 		printf(">>> %s=%s\n", MODULES_ENV, modulePaths.c_str());
+#endif
 
 		this->application = Application::NewApplication(applicationHome);
 		if (this->application.isNull())
@@ -130,6 +132,11 @@ namespace kroll
 		}
 
 		Logger::Level level = this->debug ?  Logger::LDEBUG : Logger::LINFO;
+		if (this->application->logLevel.size() > 0)
+		{
+			level = Logger::GetLevel(Value::NewString(this->application->logLevel));
+		}
+		
 		Logger::Initialize(this->consoleLogging, this->logFilePath, level);
 		this->logger = Logger::Get("Host");
 	}
