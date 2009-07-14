@@ -20,7 +20,6 @@ namespace kroll
 		StaticBoundObject("API"),
 		host(host),
 		global(host->GetGlobalObject()),
-		record(0),
 		logger(Logger::Get("API")),
 		installerThread(0),
 		installerThreadAdapter(0)
@@ -45,28 +44,27 @@ namespace kroll
 		this->SetMethod("get", &APIBinding::_Get);
 
 		/**
-		 * @tiapi(method=True,name=API.register,since=0.2)
-		 * @tiapi Register an event listener
+		 * @tiapi(method=True,name=API.addEventListener,since=1.0)
+		 * @tiapi Register a root event listener
 		 * @tiarg[String, eventName] The event name to listen for
 		 * @tiarg[Function, callback] The callback to invoke when this message occurs
-		 * @tiresult[Number] An id which represents this registration
+		 * @tiresult[Number] An id which represents this event listener
 		 */
-		this->SetMethod("register", &APIBinding::_Register);
+		this->SetMethod("addEventListener", &APIBinding::_AddEventListener);
 
 		/**
-		 * @tiapi(method=True,name=API.unregister,since=0.2)
-		 * @tiapi Unregister an event listener
-		 * @tiarg[Number, id] The id of the registration to unregister
+		 * @tiapi(method=True,name=API.removeEventListener,since=1.0)
+		 * @tiapi Remove a root event listener
+		 * @tiarg[Number|Function, id] The id or callback of the event listener to remove
 		 */
-		this->SetMethod("unregister", &APIBinding::_Unregister);
+		this->SetMethod("removeEventListener", &APIBinding::_RemoveEventListener);
 
 		/**
-		 * @tiapi(method=True,name=API.fire,since=0.2)
+		 * @tiapi(method=True,name=API.fireEvent,since=1.0)
 		 * @tiapi Fire the event with a given name
-		 * @tiarg[String, name] The name of the event to fire
-		 * @tiarg[any, payload] The payload for this event
+		 * @tiarg[String|Object, event] The name of the event to fire or the event itself
 		 */
-		this->SetMethod("fire", &APIBinding::_Fire);
+		this->SetMethod("fireEvent", &APIBinding::_FireEvent);
 
 		/**
 		 * @tiapi(method=True,name=API.runOnMainThread,since=1.0)
@@ -366,16 +364,6 @@ namespace kroll
 
 	APIBinding::~APIBinding()
 	{
-		ScopedLock lock(&mutex);
-
-		registrations.clear();
-		registrationsById.clear();
-	}
-
-	int APIBinding::GetNextRecord()
-	{
-		ScopedLock lock(&mutex);
-		return ++this->record;
 	}
 
 	void APIBinding::_Set(const ValueList& args, SharedValue result)
@@ -521,31 +509,35 @@ namespace kroll
 		}
 	}
 
-	void APIBinding::_Register(const ValueList& args, SharedValue result)
+	void APIBinding::_AddEventListener(const ValueList& args, SharedValue result)
 	{
-		string event = args.at(0)->ToString();
-		SharedKMethod method = args.at(1)->ToMethod();
-
-		int id = this->Register(event, method);
-		result->SetInt(id);
+		KEventObject::root->_AddEventListener(args, result);
 	}
 
-	void APIBinding::_Unregister(const ValueList& args, SharedValue result)
+	void APIBinding::_RemoveEventListener(const ValueList& args, SharedValue result)
 	{
-		int id = args.at(0)->ToInt();
-		this->Unregister(id);
+		KEventObject::root->_RemoveEventListener(args, result);
 	}
 
-	void APIBinding::_Fire(const ValueList& args, SharedValue result)
+	void APIBinding::_FireEvent(const ValueList& args, SharedValue result)
 	{
-		const char* event = args.at(0)->ToString();
-		this->Fire(event,args.at(1));
+		args.VerifyException("fireEvent", "s|o");
+		if (args.at(0)->IsString()) {
+			std::string eventName = args.GetString(0);
+			KEventObject::FireRootEvent(eventName);
+
+		} else if (args.at(0)->IsObject()) {
+			AutoPtr<Event> event = args.GetObject(0).cast<Event>();
+			if (!event.isNull())
+				KEventObject::FireRootEvent(event);
+		}
 	}
 
 	void APIBinding::_RunOnMainThread(const ValueList& args, SharedValue result)
 	{
 		if (!args.at(0)->IsMethod()) {
-			throw ValueException::FromString("First argument to runOnMainThread was not a function");
+			throw ValueException::FromString(
+				"First argument to runOnMainThread was not a function");
 
 		} else {
 			SharedKMethod method = args.at(0)->ToMethod();
@@ -555,7 +547,8 @@ namespace kroll
 				outArgs.push_back(args.at(i));
 			}
 
-			SharedValue outResult = host->InvokeMethodOnMainThread(args.GetMethod(0), outArgs);
+			SharedValue outResult =
+				host->InvokeMethodOnMainThread(args.GetMethod(0), outArgs);
 			result->SetValue(outResult);
 		}
 	}
@@ -578,82 +571,6 @@ namespace kroll
 		{
 			SharedString message = value->DisplayString();
 			logger->Log((Logger::Level) severity, *message);
-		}
-	}
-
-	int APIBinding::Register(string& event, SharedKMethod callback)
-	{
-		ScopedLock lock(&mutex);
-		int record = GetNextRecord();
-		/* Fetch the records for this event. If the EventRecords
-		 * doesn't exist in registrations, the STL map
-		 * implementation will insert it into the map */
-		string en(event);
-		EventRecords records = this->registrations[en];
-		records.push_back(callback);
-
-		BoundEventEntry e;
-		e.method = callback;
-		e.event = en;
-		this->registrationsById[record] = e;
-		this->registrations[event] = records;
-
-		logger->Debug("Register called for event: %s\n", event.c_str());
-		return record;
-	}
-
-	void APIBinding::Unregister(int id)
-	{
-		ScopedLock lock(&mutex);
-		map<int, BoundEventEntry>::iterator i = registrationsById.find(id);
-		if (i == registrationsById.end())
-		{
-			return;
-		}
-
-		BoundEventEntry entry = i->second;
-		EventRecords records = this->registrations[entry.event];
-		EventRecords::iterator fi = records.begin();
-		while (fi != records.end())
-		{
-			SharedKMethod callback = (*fi);
-			if (callback.get() == entry.method.get())
-			{
-				records.erase(fi);
-				break;
-			}
-			fi++;
-		}
-		if (records.size()==0)
-		{
-			this->registrations.erase(entry.event);
-		}
-		registrationsById.erase(id);
-	}
-
-	void APIBinding::Fire(const char* event, SharedValue value)
-	{
-		// Lots of debug output really slows down things on Win32,
-		// so log this at the trace level
-		if (logger->IsTraceEnabled())
-		{
-			logger->Trace(string("FIRING: ") + event);
-		}
-
-		if (this->registrations.size() == 0)
-		{
-			return;
-		}
-
-		EventRecords records = this->registrations[event];
-		if (records.size() > 0)
-		{
-			EventRecords::iterator i = records.begin();
-			while (i != records.end())
-			{
-				SharedKMethod method = (*i++);
-				method->Call(event,value);
-			}
 		}
 	}
 

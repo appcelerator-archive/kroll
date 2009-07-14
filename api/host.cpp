@@ -479,10 +479,10 @@ namespace kroll
 			module->SetProvider(provider); // set the provider
 			module->Initialize();
 
-			// loaded_modules keeps track of the Module which is loaded from the
+			// loadedModules keeps track of the Module which is loaded from the
 			// module shared-object, while application->modules holds the KComponent
 			// metadata description of each module.
-			this->loaded_modules.push_back(module);
+			this->loadedModules.push_back(module);
 			this->application->UsingModule(module->GetName(), module->GetVersion(), path);
 
 			logger->Info("Loaded module = %s", module->GetName().c_str());
@@ -518,10 +518,16 @@ namespace kroll
 	{
 		ScopedLock lock(&moduleMutex);
 
-		// Stop all modules
-		while (this->loaded_modules.size() > 0)
+		// Stop all modules before unloading them
+		for (size_t i = 0; i < this->loadedModules.size(); i++)
 		{
-			this->UnregisterModule(this->loaded_modules.at(0));
+			this->loadedModules.at(i)->Stop();
+		}
+
+		// All modules are stopped now unloading them
+		while (this->loadedModules.size() > 0)
+		{
+			this->UnregisterModule(this->loadedModules.at(0));
 		}
 	}
 
@@ -543,7 +549,7 @@ namespace kroll
 		this->ScanInvalidModuleFiles();
 
 		/* All modules are now loaded, so start them all */
-		this->StartModules(this->loaded_modules);
+		this->StartModules(this->loadedModules);
 
 		/* From now on, adding a module provider will trigger
 		 * a rescan of all invalid module files */
@@ -642,8 +648,8 @@ namespace kroll
 	SharedPtr<Module> Host::GetModuleByPath(std::string& path)
 	{
 		ScopedLock lock(&moduleMutex);
-		ModuleList::iterator iter = this->loaded_modules.begin();
-		while (iter != this->loaded_modules.end())
+		ModuleList::iterator iter = this->loadedModules.begin();
+		while (iter != this->loadedModules.end())
 		{
 			SharedPtr<Module> m = (*iter++);
 			if (m->GetPath() == path)
@@ -655,8 +661,8 @@ namespace kroll
 	SharedPtr<Module> Host::GetModuleByName(std::string& name)
 	{
 		ScopedLock lock(&moduleMutex);
-		ModuleList::iterator iter = this->loaded_modules.begin();
-		while (iter != this->loaded_modules.end())
+		ModuleList::iterator iter = this->loadedModules.begin();
+		while (iter != this->loadedModules.end())
 		{
 			SharedPtr<Module> m = (*iter++);
 			if (m->GetName() == name)
@@ -670,14 +676,14 @@ namespace kroll
 		ScopedLock lock(&moduleMutex);
 
 		logger->Notice("Unregistering: %s", module->GetName().c_str());
-		module->Stop(); // Call Stop() lifecycle event
+		module->Unload();
 
-		ModuleList::iterator j = this->loaded_modules.begin();
-		while (j != this->loaded_modules.end())
+		ModuleList::iterator j = this->loadedModules.begin();
+		while (j != this->loadedModules.end())
 		{
 			if (module == (*j).get())
 			{
-				j = this->loaded_modules.erase(j);
+				j = this->loadedModules.erase(j);
 			}
 			else
 			{
@@ -774,7 +780,7 @@ namespace kroll
 		this->globalObject = NULL;
 
 		// Stop the profiler, if it was enabled
-		StopProfiling(); 
+		StopProfiling();
 
 		logger->Notice("Exiting with exit code: %i", exitCode);
 
@@ -785,16 +791,8 @@ namespace kroll
 	void Host::Exit(int exitCode)
 	{
 		logger->Notice("Received exit signal (%d)", exitCode);
-
-		ScopedLock lock(&moduleMutex);
+		KEventObject::FireRootEvent(Event::EXIT);
 		running = false;
 		this->exitCode = exitCode;
-
-		// give our modules a hook for exit
-		ModuleList::iterator iter = this->loaded_modules.begin();
-		while (iter != this->loaded_modules.end())
-		{
-			(*iter++)->Exiting(exitCode);
-		}
 	}
 }
