@@ -414,6 +414,11 @@ namespace kroll
 		{
 			return (Logger::Level) v->ToNumber();
 		}
+		else // return the appropriate default
+		{
+			string levelString = "";
+			return Logger::GetLevel(levelString);
+		}
 	}
 
 	void APIBinding::_Get(const ValueList& args, SharedValue result)

@@ -244,6 +244,7 @@ namespace kroll
 		 * Copy a module's application-specific resources into the currently running app
 		 */
 		void CopyModuleAppResources(std::string& modulePath);
+
 		/**
 		 * Read / process a module's manifest file
 		*/

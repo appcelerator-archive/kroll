@@ -356,9 +356,8 @@ namespace UTILS_NS
 			printf("[Titanium.FileUtils] [Error] Error in Join: %s, '%s'\n", reason, filepath.c_str());
 			return filepath;
 		}
-#else
-		return filepath;
 #endif
+		return filepath;
 	}
 
 	bool FileUtils::IsHidden(std::string &file)
