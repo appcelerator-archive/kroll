@@ -132,12 +132,8 @@ namespace kroll
 			this->logFilePath = FileUtils::Join(dataDir.c_str(), "tiapp.log", NULL);
 		}
 
-		Logger::Level level = this->debug ?  Logger::LDEBUG : Logger::LINFO;
-		if (this->application->logLevel.size() > 0)
-		{
-			level = Logger::GetLevel(Value::NewString(this->application->logLevel));
-		}
-		
+		// If this application has no log level, we'll get a suitable default
+		Logger::Level level = Logger::GetLevel(this->application->logLevel);
 		Logger::Initialize(this->consoleLogging, this->logFilePath, level);
 		this->logger = Logger::Get("Host");
 	}

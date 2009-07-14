@@ -71,8 +71,10 @@ namespace kroll
 		void _Unregister(const ValueList& args, SharedValue result);
 		void _Fire(const ValueList& args, SharedValue result);
 
-		Logger::Level GetSeverity(SharedValue arg);
+		void _LogFatal(const ValueList& args, SharedValue result);
+		Logger::Level ValueToLevel(SharedValue v);
 		void _SetLogLevel(const ValueList& args, SharedValue result);
+		void _GetLogLevel(const ValueList& args, SharedValue result);
 		void _RunOnMainThread(const ValueList& args, SharedValue result);
 
 		void _Print(const ValueList& args, SharedValue result);
@@ -84,7 +86,6 @@ namespace kroll
 		void _LogWarn(const ValueList& args, SharedValue result);
 		void _LogError(const ValueList& args, SharedValue result);
 		void _LogCritical(const ValueList& args, SharedValue result);
-		void _LogFatal(const ValueList& args, SharedValue result);
 
 		void _GetInstalledComponentsImpl(KComponentType type, const ValueList& args, SharedValue result);
 		void _GetApplication(const ValueList& args, SharedValue value);
