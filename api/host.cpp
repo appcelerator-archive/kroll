@@ -78,6 +78,7 @@ namespace kroll
 		// Initialize our global object to be a simple mapped Kroll object
 		this->globalObject = new StaticBoundObject("");
 		this->globalObject->SetObject("CoreTypes", new CoreTypes());
+		Event::SetEventConstants(this->globalObject.get());
 	}
 
 	void Host::SetupApplication(int argc, const char* argv[])
@@ -131,12 +132,8 @@ namespace kroll
 			this->logFilePath = FileUtils::Join(dataDir.c_str(), "tiapp.log", NULL);
 		}
 
-		Logger::Level level = this->debug ?  Logger::LDEBUG : Logger::LINFO;
-		if (this->application->logLevel.size() > 0)
-		{
-			level = Logger::GetLevel(Value::NewString(this->application->logLevel));
-		}
-		
+		// If this application has no log level, we'll get a suitable default
+		Logger::Level level = Logger::GetLevel(this->application->logLevel);
 		Logger::Initialize(this->consoleLogging, this->logFilePath, level);
 		this->logger = Logger::Get("Host");
 	}
@@ -745,21 +742,28 @@ namespace kroll
 			logger->Error(*ss);
 			return 1;
 		}
-		
 
 		// Depending on the implementation of platform-specific host,
 		// it may block in Start() or implement a UI loop which will
 		// be continually called until this->running becomes false.
-		this->running = this->Start();
-		if (this->runUILoop) 
+		try
 		{
-			while (this->running)
+			this->running = this->Start();
+			if (this->runUILoop) 
 			{
-				if (!this->RunLoop())
+				while (this->running)
 				{
-					break;
+					if (!this->RunLoop())
+					{
+						break;
+					}
 				}
 			}
+		}
+		catch (kroll::ValueException& e)
+		{
+			SharedString s = e.GetValue()->DisplayString();
+			logger->Error("Caught exception in main loop: %s", s->c_str());
 		}
 
 		ScopedLock lock(&moduleMutex);
@@ -769,7 +773,7 @@ namespace kroll
 
 		this->globalObject = NULL;
 
-		// Stop the profiler, if it was enabledk
+		// Stop the profiler, if it was enabled
 		StopProfiling(); 
 
 		logger->Notice("Exiting with exit code: %i", exitCode);

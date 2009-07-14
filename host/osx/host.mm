@@ -34,11 +34,18 @@ namespace kroll
 
 	void OSXHost::Exit(int exitcode)
 	{
-		// create an application specific exit event
-		NSEvent *event = [NSEvent otherEventWithType:NSApplicationDefined location:NSZeroPoint modifierFlags:0 timestamp:[[NSDate date] timeIntervalSinceNow] windowNumber:0 context:nil subtype:1022 data1:0 data2:0];
-		NSApplication *app = [NSApplication sharedApplication];
-		// we're going to post our event to our event queue to cause him
+		// We're going to post our event to our event queue to cause him
 		// to wake up (since he'll block waiting for pending events)
+		NSEvent *event = [NSEvent
+			otherEventWithType:NSApplicationDefined
+			location:NSZeroPoint modifierFlags:0
+			timestamp:[[NSDate date] timeIntervalSinceNow]
+			windowNumber:0 
+			context:nil 
+			subtype:1022 
+			data1:exitCode
+			data2:0];
+		NSApplication *app = [NSApplication sharedApplication];
 		[app postEvent:event atStart:YES];
 		Host::Exit(exitCode);
 	}
@@ -53,73 +60,56 @@ namespace kroll
 
 	bool OSXHost::RunLoop()
 	{
-		// number of iterations before we yield back control
+		// Number of iterations before we yield back control
 		// to the main loop driver in the superclass
 		static int iterations = 10;
-		// number of seconds we want to block waiting on a 
+
+		// Number of seconds we want to block waiting on a 
 		// pending event to be visible in the queue
 		// 0.5 seems to be the most optimal based on testing 
 		// on Leopard and using some basic animated JS tests 
 		// like John Resig's processing.js demos. 0.5 seems to
 		// keep the CPU at effectively 0.0% when idle and seems
 		// to give us very good frame rate and CPU during animation
-		static double wait_time_in_seconds = 0.5;
-		// since we call this method a lot, set the app in a static var
+		static double waitTime = 0.5;
+
+		// Since we call this method a lot, set the app in a static var
 		static NSApplication *app = [NSApplication sharedApplication];
 
-		// cache there here since we call these on each iteration
-		static NSMenu *services_menu = [app servicesMenu];
-		static NSMenu *windows_menu = [app windowsMenu];
-		static NSMenu *main_menu = [app mainMenu];
-		
-		// create a pool to sweep memory throught the loop
+		// Create a pool to sweep memory throught the loop
 		NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-		for (int c=0;c<iterations;c++)
+		for (int c = 0; c < iterations; c++)
 		{
 			// we pull out an event from the queue, blocking a little bit before returning
-			try
+			@try
 			{
-				@try
+				NSEvent *event = [app nextEventMatchingMask:NSAnyEventMask 
+					untilDate:[NSDate dateWithTimeIntervalSinceNow:waitTime]
+					inMode:NSDefaultRunLoopMode dequeue:YES];
+
+				if (event)
 				{
-					NSEvent *event = [app nextEventMatchingMask:NSAnyEventMask untilDate:[NSDate dateWithTimeIntervalSinceNow:wait_time_in_seconds] inMode:NSDefaultRunLoopMode dequeue:YES];
-					if (event)
+					NSEventType type = [event type];
+
+					// This is our custom-defined stop event
+					if (type == NSApplicationDefined &&
+						[event subtype] == 1022 && [event data1] == 0)
 					{
-						NSEventType type = [event type];
-						// this is our queued stop event
-						if (type == NSApplicationDefined && [event subtype]==1022 && [event data1]==0)
-						{
-							[pool release];
-							return false;
-						}
-						[app sendEvent:event];
-						// Additional processing that [NSApp run] does after each event
-						if (type != NSPeriodic && type != NSMouseMoved) 
-						{
-							[services_menu update];
-							[windows_menu update];
-							[main_menu update];
-						}
-						[app updateWindows];
+						[pool release];
+						return false;
 					}
-				}
-				@catch(NSException *e)
-				{
-					static Logger* logger = Logger::Get("Host");
-					logger->Error("Caught NSException in main loop: %s",[[e reason] UTF8String]);
-					KrollDumpStackTraceFromException(e);
-				}
-			}
-			catch (std::exception &e)
+					else
+					{
+						[app sendEvent:event];
+					}
+
+					[app updateWindows];
+				} }
+			@catch (NSException *e)
 			{
 				static Logger* logger = Logger::Get("Host");
-				logger->Error("Caught exception in main loop: %s",e.what());
-				KrollDumpStackTrace();
-			}
-			catch (...)
-			{
-				static Logger* logger = Logger::Get("Host");
-			 	logger->Error("Caught unhandled exception in main loop");
-				KrollDumpStackTrace();
+				logger->Error("Caught NSException in main loop: %s",[[e reason] UTF8String]);
+				KrollDumpStackTraceFromException(e);
 			}
 		}
 		[pool release];

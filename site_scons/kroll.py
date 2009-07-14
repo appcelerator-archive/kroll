@@ -190,7 +190,7 @@ class BuildConfig(object):
 			self.env.Append(LINKFLAGS=['-m64'])
 			self.env.Append(CPPDEFINES = ('OS_64', 1))
 		elif self.is_linux() or self.is_osx():
-			self.env.Append(CPPFLAGS=['-m32', '-Wall', '-fno-common','-fvisibility=hidden'])
+			self.env.Append(CPPFLAGS=['-m32', '-Wall', '-Werror', '-fno-common','-fvisibility=hidden'])
 			self.env.Append(LINKFLAGS=['-m32'])
 			self.env.Append(CPPDEFINES = ('OS_32', 1))
 		else:

@@ -223,9 +223,16 @@ namespace kroll
 		/**
 		 * @tiapi(method=True,name=API.setLogLevel,since=1.0)
 		 * @tiapi Set the log level of the root logger
-		 * @tiarg[Number, type] the threshold of severity to log
+		 * @tiarg[Number, level] the threshold of severity to log
 		 */
 		this->SetMethod("setLogLevel", &APIBinding::_SetLogLevel);
+
+		/**
+		 * @tiapi(method=True,name=API.getLogLevel,since=1.0)
+		 * @tiapi Get the log level of the root logger
+		 * @tiresult[Number] the threshold of severity to log
+		 */
+		this->SetMethod("getLogLevel", &APIBinding::_GetLogLevel);
 	
 		/**
 		 * @tiapi(method=True,name=API.print,since=1.0)
@@ -390,6 +397,29 @@ namespace kroll
 		}
 	}
 
+	Logger::Level APIBinding::ValueToLevel(SharedValue v)
+	{
+		if (v->IsString())
+		{
+			string levelString = v->ToString();
+			return Logger::GetLevel(levelString);
+		}
+		else if (v->IsObject())
+		{
+			SharedString ss = v->ToObject()->DisplayString();
+			return Logger::GetLevel(*ss);
+		}
+		else if (v->IsNumber())
+		{
+			return (Logger::Level) v->ToInt();
+		}
+		else // return the appropriate default
+		{
+			string levelString = "";
+			return Logger::GetLevel(levelString);
+		}
+	}
+
 	void APIBinding::_Get(const ValueList& args, SharedValue result)
 	{
 		string s = args.at(0)->ToString();
@@ -414,9 +444,14 @@ namespace kroll
 	void APIBinding::_SetLogLevel(const ValueList& args, SharedValue result)
 	{
 		args.VerifyException("setLogLevel", "s|n");
-		Logger::GetRootLogger()->SetLevel(Logger::GetLevel(args.at(0)));
+		Logger::GetRootLogger()->SetLevel(ValueToLevel(args.at(0)));
 	}
-	
+
+	void APIBinding::_GetLogLevel(const ValueList& args, SharedValue result)
+	{
+		result->SetInt(Logger::GetRootLogger()->GetLevel());
+	}
+
 	void APIBinding::_Print(const ValueList& args, SharedValue result)
 	{
 		for (size_t c=0;c<args.size();c++)
@@ -481,7 +516,7 @@ namespace kroll
 			SharedValue arg1 = args.at(0);
 			
 			SharedValue v = args.at(1);
-			this->Log(Logger::GetLevel(arg1), v);
+			this->Log(ValueToLevel(arg1), v);
 		}
 	}
 

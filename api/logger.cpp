@@ -68,34 +68,29 @@ namespace kroll
 		}
 		return loggers[name];
 	}
-	
-	Logger::Level Logger::GetLevel(SharedValue value)
+
+	Logger::Level Logger::GetLevel(std::string& levelString)
 	{
-		Level level = Logger::LINFO;
-		if (value->IsString() || value->IsObject())
-		{
-			string type;
-			if (value->IsString()) type = value->ToString();
-			else if (value->IsObject() && value->ToObject()->Get("toString") != Value::Undefined)
-			{
-				type = value->ToObject()->CallNS("toString")->ToString();
-			}
-			else return level;
-			
-			if (type == "TRACE") level = Logger::LTRACE;
-			else if (type == "DEBUG") level = Logger::LDEBUG;
-			else if (type == "INFO") level = Logger::LINFO;
-			else if (type == "NOTICE") level = Logger::LNOTICE;
-			else if (type == "WARN") level = Logger::LWARN;
-			else if (type == "ERROR") level = Logger::LERROR;
-			else if (type == "CRITICAL") level = Logger::LCRITICAL;
-			else if (type == "FATAL") level = Logger::LFATAL;
-		}
-		else if (value->IsInt())
-		{
-			level = (Logger::Level)value->ToInt();
-		}
-		return level;
+		if (levelString == "TRACE")
+			return Logger::LTRACE;
+		else if (levelString == "DEBUG") 
+			return Logger::LDEBUG;
+		else if (levelString == "INFO") 
+			return Logger::LINFO;
+		else if (levelString == "NOTICE") 
+			return Logger::LNOTICE;
+		else if (levelString == "WARN") 
+			return Logger::LWARN;
+		else if (levelString == "ERROR") 
+			return Logger::LERROR;
+		else if (levelString == "CRITICAL") 
+			return Logger::LCRITICAL;
+		else if (levelString == "FATAL")
+			return Logger::LFATAL;
+		else if (Host::GetInstance()->IsDebugMode())
+			return Logger::LDEBUG;
+		else
+			return Logger::LINFO;
 	}
 
 	Logger::Logger(std::string name) :
