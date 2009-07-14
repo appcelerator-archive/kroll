@@ -93,18 +93,16 @@ namespace kroll
 		virtual void Start() {};
 
 		/**
-		 * Called by the host when an exit has been requested to
-		 * give modules a hook to perform certain pre-stop capabilities
-		 *
-		 * @param exitcode The code the process is exiting with
-		 */
-		virtual void Exiting(int exitcode) {}
-
-		/**
-		 * Called before the Host unregisters the module.
-		 * Perform all unload cleanup here.
+		 * Called by the host that wants to stop a module. This will happen
+		 * before any pending Unload events;
 		 */
 		virtual void Stop() {};
+
+		/**
+		 * Called before the Host unloads the module.
+		 * Perform all unload cleanup here.
+		 */
+		virtual void Unload() {};
 
 		/**
 		 * Set the provider that created this module

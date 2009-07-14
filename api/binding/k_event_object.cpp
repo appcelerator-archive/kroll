@@ -9,9 +9,22 @@ namespace kroll
 {
 	unsigned int EventListener::currentId = 1;
 	std::map<KEventObject*, std::vector<EventListener*>*> KEventObject::listenerMap;
+	AutoPtr<KEventObject> KEventObject::root = new KEventObject(true, "Host");
 
-	KEventObject::KEventObject(const char *type)
-		: AccessorBoundObject(type)
+	KEventObject::KEventObject(const char *type) :
+		AccessorBoundObject(type),
+		isRoot(false)
+	{
+		std::vector<EventListener*>* listeners = new std::vector<EventListener*>();
+		KEventObject::listenerMap[this] = listeners;
+
+		this->SetMethod("addEventListener", &KEventObject::_AddEventListener);
+		this->SetMethod("removeEventListener", &KEventObject::_RemoveEventListener);
+	}
+
+	KEventObject::KEventObject(bool isRoot, const char *type) :
+		AccessorBoundObject(type),
+		isRoot(isRoot)
 	{
 		std::vector<EventListener*>* listeners = new std::vector<EventListener*>();
 		KEventObject::listenerMap[this] = listeners;
@@ -60,7 +73,7 @@ namespace kroll
 			}
 			else
 			{
-				i = i++;
+				i++;
 			}
 		}
 	}
@@ -82,15 +95,25 @@ namespace kroll
 		return listener->listenerId;
 	}
 
-	void KEventObject::FireEvent(std::string& eventName, bool synchronous)
+	void KEventObject::FireRootEvent(std::string& eventName)
+	{
+		KEventObject::root->FireEvent(eventName);
+	}
+
+	void KEventObject::FireRootEvent(AutoPtr<Event>event)
+	{
+		KEventObject::root->FireEvent(event);
+	}
+
+	void KEventObject::FireEvent(std::string& eventName)
 	{
 		this->duplicate();
 		AutoPtr<KEventObject> target = this;
 		AutoPtr<Event> event = new Event(target, eventName);
-		this->FireEvent(event, synchronous);
+		this->FireEvent(event);
 	}
 
-	void KEventObject::FireEvent(AutoPtr<Event> event, bool synchronous)
+	void KEventObject::FireEvent(AutoPtr<Event> event)
 	{
 		std::vector<EventListener*>* listeners = KEventObject::listenerMap[this];
 		std::vector<EventListener*>::iterator li = listeners->begin();
@@ -98,6 +121,13 @@ namespace kroll
 		{
 			EventListener* listener = *li++;
 			listener->FireEventIfMatches(event);
+
+			if (event->stopped)
+				return;
+		}
+
+		if (!this->isRoot) {
+			KEventObject::root->FireEvent(event);
 		}
 	}
 
@@ -130,7 +160,7 @@ namespace kroll
 		}
 	}
 
-	void EventListener::FireEventIfMatches(AutoPtr<Event> event, bool synchronous)
+	void EventListener::FireEventIfMatches(AutoPtr<Event> event)
 	{
 		if (event->eventName != this->eventName && this->eventName != Event::ALL)
 			return;
@@ -138,7 +168,7 @@ namespace kroll
 		try {
 			Host* host = Host::GetInstance();
 			host->InvokeMethodOnMainThread(
-				callback, ValueList(Value::NewObject(event)), false);
+				callback, ValueList(Value::NewObject(event)));
 
 		} catch (ValueException &e) {
 			Logger* logger = Logger::Get("KEventObject");

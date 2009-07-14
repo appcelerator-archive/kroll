@@ -194,7 +194,7 @@ namespace kroll
 		bool ProfilingEnabled();
 
 	protected:
-		ModuleList loaded_modules;
+		ModuleList loadedModules;
 
 		Mutex moduleMutex;
 		std::vector<ModuleProvider *> module_providers;

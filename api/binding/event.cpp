@@ -27,16 +27,19 @@ namespace kroll
 	std::string Event::CREATED = "create";
 	std::string Event::ACTIVATE = "activate";
 	std::string Event::CLICKED = "clicked";
+	std::string Event::EXIT = "exit";
 
 	Event::Event(AutoPtr<KEventObject> target, std::string& eventName) :
 		AccessorBoundObject("Event"),
 		target(target),
-		eventName(eventName)
+		eventName(eventName),
+		stopped(false)
 	{
 		Event::SetEventConstants(this);
 		this->SetMethod("getTarget", &Event::_GetTarget);
 		this->SetMethod("getType", &Event::_GetType);
 		this->SetMethod("getTimestamp", &Event::_GetTimestamp);
+		this->SetMethod("stopPropagation", &Event::_StopPropagation);
 	}
 
 	void Event::_GetTarget(const ValueList&, SharedValue result)
@@ -52,6 +55,11 @@ namespace kroll
 	void Event::_GetTimestamp(const ValueList&, SharedValue result)
 	{
 		result->SetDouble((int) timestamp.epochMicroseconds() / 1000);
+	}
+
+	void Event::_StopPropagation(const ValueList&, SharedValue result)
+	{
+		this->stopped = true;
 	}
 
 	void Event::SetEventConstants(KObject* target)
@@ -74,6 +82,7 @@ namespace kroll
 		// @tiproperty[String, PAGE_INITIALIZED, since=1.0] The PAGE_INITIALIZED event constant
 		// @tiproperty[String, PAGE_LOADED, since=1.0] The PAGE_LOADED event constant
 		// @tiproperty[String, CREATE, since=1.0] The CREATE event constant
+		// @tiproperty[String, EXIT, since=1.0] The EXIT event constant
 
 		target->Set("ALL", Value::NewString(Event::ALL));
 		target->Set("FOCUSED", Value::NewString(Event::FOCUSED));
@@ -93,6 +102,7 @@ namespace kroll
 		target->Set("PAGE_INITIALIZED", Value::NewString(Event::PAGE_INITIALIZED));
 		target->Set("PAGE_LOADED", Value::NewString(Event::PAGE_LOADED));
 		target->Set("CREATED", Value::NewString(Event::CREATED));
+		target->Set("EXIT", Value::NewString(Event::EXIT));
 	}
 
 }

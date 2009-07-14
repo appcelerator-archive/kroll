@@ -16,7 +16,7 @@ namespace kroll
 			eventName(eventName),
 			callback(callback),
 			listenerId(++EventListener::currentId) {}
-		void FireEventIfMatches(AutoPtr<Event>, bool synchronous = false);
+		void FireEventIfMatches(AutoPtr<Event>);
 		bool Matches(std::string&, unsigned int, SharedKMethod);
 		std::string eventName;
 		SharedKMethod callback;
@@ -29,24 +29,29 @@ namespace kroll
 	{
 		public:
 		KEventObject(const char* name = "");
+		KEventObject(bool root, const char* name = "");
 		~KEventObject();
 
 		unsigned int AddEventListener(std::string& eventName, SharedKMethod listener);
-		unsigned int KEventObject::AddEventListenerForAllEvents(SharedKMethod callback);
+		unsigned int AddEventListenerForAllEvents(SharedKMethod callback);
 		virtual void RemoveEventListener(std::string& eventName, SharedKMethod listener);
 		virtual void RemoveEventListener(std::string& eventName, unsigned int id);
-		virtual void FireEvent(std::string& eventName, bool synchronous = false);
-		virtual void FireEvent(AutoPtr<Event>, bool synchronous = false);
+		virtual void FireEvent(std::string& eventName);
+		virtual void FireEvent(AutoPtr<Event>);
 		void _AddEventListener(const ValueList&, SharedValue result);
 		void _RemoveEventListener(const ValueList&, SharedValue result);
+		static void FireRootEvent(std::string& eventName);
+		static void FireRootEvent(AutoPtr<Event>);
+		static AutoPtr<KEventObject> root;
+
+		protected:
+		bool isRoot;
+		std::vector<EventListener*>& GetListeners();
+		static std::map<KEventObject*, std::vector<EventListener*>*> listenerMap;
 
 		private:
 		void RemoveEventListener(
 			std::string& eventName, unsigned int id, SharedKMethod callback);
-
-		private:
-		std::vector<EventListener*>& GetListeners();
-		static std::map<KEventObject*, std::vector<EventListener*>*> listenerMap;
 	};
 
 }
