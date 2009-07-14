@@ -82,6 +82,11 @@ namespace UTILS_NS
 				application->stream = value;
 				continue;
 			}
+			else if (key == "#loglevel")
+			{
+				application->logLevel = value;
+				continue;
+			}
 			else if (key[0] == '#')
 			{
 				continue;

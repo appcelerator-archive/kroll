@@ -220,7 +220,7 @@ namespace kroll
 		this->SetMethod("getBundledModules", &ApplicationBinding::_GetBundledModules);
 
 		/**
-		 * @tiapi(method=True,name=API.Application.getBundledRuntime,since=0.4)
+		 * @tiapi(method=True,name=API.Application.getBundledRuntimes,since=0.4)
 		 * @tiapi Return a list of all runtimes bundled with this application
 		 * @tiresult[Array<API.Component>] A list of all API.Components of type runtime bundled with this application
 		 */

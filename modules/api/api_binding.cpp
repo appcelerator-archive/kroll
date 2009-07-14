@@ -69,6 +69,15 @@ namespace kroll
 		this->SetMethod("fire", &APIBinding::_Fire);
 
 		/**
+		 * @tiapi(method=True,name=API.runOnMainThread,since=1.0)
+		 * @tiapi Execute the method on the main thread
+		 * @tiarg[Function, method] The method to execute
+		 * @tiarg[any, ...] A variable-length list of arguments to pass to the method
+		 * @tiresult[returnValue] The return value of the method
+		 */
+		this->SetMethod("runOnMainThread", &APIBinding::_RunOnMainThread);
+
+		/**
 		 * @tiapi(method=True,name=API.getApplication,since=0.2)
 		 * @tiapi Get the currently running application
 		 * @tiresult[API.Application] an API.Application that is the running application
@@ -212,6 +221,20 @@ namespace kroll
 		 */
 		this->SetMethod("fatal", &APIBinding::_LogFatal);
 
+		/**
+		 * @tiapi(method=True,name=API.setLogLevel,since=1.0)
+		 * @tiapi Set the log level of the root logger
+		 * @tiarg[Number, type] the threshold of severity to log
+		 */
+		this->SetMethod("setLogLevel", &APIBinding::_SetLogLevel);
+	
+		/**
+		 * @tiapi(method=True,name=API.print,since=1.0)
+		 * @tiapi print a raw string to stdout (no newlines are appended)
+		 * @tiarg[Any, data] data to print
+		 */
+		this->SetMethod("print", &APIBinding::_Print);
+	
 		// These are properties for log severity levels
 
 		/**
@@ -389,6 +412,23 @@ namespace kroll
 		result->SetValue(r);
 	}
 
+	void APIBinding::_SetLogLevel(const ValueList& args, SharedValue result)
+	{
+		args.VerifyException("setLogLevel", "s|n");
+		Logger::GetRootLogger()->SetLevel(Logger::GetLevel(args.at(0)));
+	}
+	
+	void APIBinding::_Print(const ValueList& args, SharedValue result)
+	{
+		for (size_t c=0;c<args.size();c++)
+		{
+			SharedValue arg = args.at(c);
+			const char *s = arg->ToString();
+			std::cout << s;
+		}
+		std::cout.flush();
+	}
+	
 	void APIBinding::_LogTrace(const ValueList& args, SharedValue result)
 	{
 		SharedValue arg1 = args.at(0);
@@ -439,42 +479,10 @@ namespace kroll
 		}
 		else if (args.size() == 2)
 		{
-			int severity = Logger::LINFO;
-
 			SharedValue arg1 = args.at(0);
-			if (arg1->IsString())
-			{
-				string type = arg1->ToString();
-				if (type == "TRACE")
-					severity = Logger::LTRACE;
-
-				else if (type == "DEBUG")
-					severity = Logger::LDEBUG;
-
-				else if (type == "INFO")
-					severity = Logger::LINFO;
-
-				else if (type == "NOTICE")
-					severity = Logger::LNOTICE;
-
-				else if (type == "WARN")
-					severity = Logger::LWARN;
-
-				else if (type == "ERROR")
-					severity = Logger::LERROR;
-
-				else if (type == "CRITICAL")
-					severity = Logger::LCRITICAL;
-
-				else if (type == "FATAL")
-					severity = Logger::LFATAL;
-			}
-			else if (arg1->IsInt())
-			{
-				severity = arg1->ToInt();
-			}
+			
 			SharedValue v = args.at(1);
-			this->Log(severity, v);
+			this->Log(Logger::GetLevel(arg1), v);
 		}
 	}
 
@@ -497,6 +505,24 @@ namespace kroll
 	{
 		const char* event = args.at(0)->ToString();
 		this->Fire(event,args.at(1));
+	}
+
+	void APIBinding::_RunOnMainThread(const ValueList& args, SharedValue result)
+	{
+		if (!args.at(0)->IsMethod()) {
+			throw ValueException::FromString("First argument to runOnMainThread was not a function");
+
+		} else {
+			SharedKMethod method = args.at(0)->ToMethod();
+
+			ValueList outArgs;
+			for (size_t i = 1; i < args.size(); i++) {
+				outArgs.push_back(args.at(i));
+			}
+
+			SharedValue outResult = host->InvokeMethodOnMainThread(args.GetMethod(0), outArgs);
+			result->SetValue(outResult);
+		}
 	}
 
 	//---------------- IMPLEMENTATION METHODS

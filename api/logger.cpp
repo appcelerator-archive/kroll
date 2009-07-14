@@ -52,7 +52,12 @@ namespace kroll
 
 	Logger* Logger::GetRootLogger()
 	{
-		return Logger::GetImpl(PRODUCT_NAME);
+		// sometimes there are requests for Logger creation
+		// when the root logger hasn't been created yet (this seems to be a race condition)
+		// this temporarily solves that problem
+		return RootLogger::instance;
+		
+		//return Logger::GetImpl(PRODUCT_NAME);
 	}
 
 	Logger* Logger::GetImpl(std::string name)
@@ -62,6 +67,35 @@ namespace kroll
 			loggers[name] = new Logger(name);
 		}
 		return loggers[name];
+	}
+	
+	Logger::Level Logger::GetLevel(SharedValue value)
+	{
+		Level level = Logger::LINFO;
+		if (value->IsString() || value->IsObject())
+		{
+			string type;
+			if (value->IsString()) type = value->ToString();
+			else if (value->IsObject() && value->ToObject()->Get("toString") != Value::Undefined)
+			{
+				type = value->ToObject()->CallNS("toString")->ToString();
+			}
+			else return level;
+			
+			if (type == "TRACE") level = Logger::LTRACE;
+			else if (type == "DEBUG") level = Logger::LDEBUG;
+			else if (type == "INFO") level = Logger::LINFO;
+			else if (type == "NOTICE") level = Logger::LNOTICE;
+			else if (type == "WARN") level = Logger::LWARN;
+			else if (type == "ERROR") level = Logger::LERROR;
+			else if (type == "CRITICAL") level = Logger::LCRITICAL;
+			else if (type == "FATAL") level = Logger::LFATAL;
+		}
+		else if (value->IsInt())
+		{
+			level = (Logger::Level)value->ToInt();
+		}
+		return level;
 	}
 
 	Logger::Logger(std::string name) :
@@ -84,6 +118,11 @@ namespace kroll
 	Logger::Level Logger::GetLevel()
 	{
 		return this->level;
+	}
+	
+	void Logger::SetLevel(Logger::Level level)
+	{
+		this->level = level;
 	}
 
 	bool Logger::IsEnabled(Level level)
@@ -142,6 +181,12 @@ namespace kroll
 		size_t lastPeriodPos = this->name.rfind(".");
 		if (lastPeriodPos == std::string::npos)
 		{
+			// in some cases this causes an infinite loop
+			if (RootLogger::instance == NULL)
+			{
+				return NULL;
+			}
+			
 			return Logger::GetRootLogger();
 		}
 		else

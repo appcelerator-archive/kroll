@@ -321,6 +321,12 @@ namespace kroll
 		return current;
 	}
 
+	SharedValue KObject::CallNS(const char *name)
+	{
+		ValueList args;
+		return CallNS(name, args);
+	}
+	
 	SharedValue KObject::CallNS(const char *name, SharedValue val1)
 	{
 		ValueList args;

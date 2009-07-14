@@ -120,7 +120,7 @@ namespace kroll
 		bool synchronous)
 	{
 		Win32Job* job = new Win32Job(method, args, synchronous);
-		if (thread_id == GetCurrentThreadId())
+		if (thread_id == GetCurrentThreadId() && synchronous)
 		{
 			job->Execute();
 		}
