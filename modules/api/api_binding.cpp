@@ -412,7 +412,7 @@ namespace kroll
 		}
 		else if (v->IsNumber())
 		{
-			return (Logger::Level) v->ToNumber();
+			return (Logger::Level) v->ToInt();
 		}
 		else // return the appropriate default
 		{
