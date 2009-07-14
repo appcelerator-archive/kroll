@@ -23,19 +23,19 @@ namespace kroll
 		return this->Call(ValueList());
 	}
 
-	SharedValue KMethod::Call(
-		const char *one,
-		SharedValue two,
-		SharedValue three,
-		SharedValue four)
-	{
-		ValueList args;
-		args.push_back(Value::NewString(one));
-		args.push_back(two);
-		args.push_back(three);
-		args.push_back(four);
-		return this->Call(args);
-	}
+	//SharedValue KMethod::Call(
+	//	const char *one,
+	//	SharedValue two,
+	//	SharedValue three,
+	//	SharedValue four)
+	//{
+	//	ValueList args;
+	//	args.push_back(Value::NewString(one));
+	//	args.push_back(two);
+	//	args.push_back(three);
+	//	args.push_back(four);
+	//	return this->Call(args);
+	//}
 
 	SharedValue KMethod::Call(SharedValue one)
 	{

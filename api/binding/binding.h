@@ -9,6 +9,13 @@
 
 #include "../kroll.h"
 
+namespace kroll
+{
+	class Event;
+	class EventListener;
+	class KEventObject;
+}
+
 #include "kobject.h"
 #include "kmethod.h"
 #include "klist.h"
@@ -26,9 +33,10 @@
 #include "scope_method_delegate.h"
 #include "blob.h"
 #include "core_types.h"
-
 #include "profiled_bound_object.h"
 #include "profiled_bound_list.h"
 #include "profiled_bound_method.h"
+#include "event.h"
+#include "k_event_object.h"
 
 #endif
