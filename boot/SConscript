@@ -49,8 +49,8 @@ if not(build.is_32()) and build.is_linux():
 if breakpad:
 	Env.Append(CPPPATH = ['breakpad'])
 	Env.Append(CPPDEFINES = [['USE_BREAKPAD', 1]])
-	cppflags = Env['CPPFLAGS']
-	if '-Werror' in cppflags: cppflags.remove('-Werror')
+	if 'CPPFLAGS' in Env and '-Werror' in Env['CPPFLAGS']:
+		Env['CPPFLAGS'].remove('-Werror')
 
 if breakpad and build.is_win32():
 	sources += \
