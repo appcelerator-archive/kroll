@@ -73,7 +73,6 @@ namespace kroll
 		 * @tiapi Execute the method on the main thread
 		 * @tiarg[Function, method] The method to execute
 		 * @tiarg[any, ...] A variable-length list of arguments to pass to the method
-		 * @tiresult[returnValue] The return value of the method
 		 */
 		this->SetMethod("runOnMainThread", &APIBinding::_RunOnMainThread);
 
@@ -512,7 +511,9 @@ namespace kroll
 		if (!args.at(0)->IsMethod()) {
 			throw ValueException::FromString("First argument to runOnMainThread was not a function");
 
-		} else {
+		} 
+		else 
+		{
 			SharedKMethod method = args.at(0)->ToMethod();
 
 			ValueList outArgs;
@@ -520,8 +521,9 @@ namespace kroll
 				outArgs.push_back(args.at(i));
 			}
 
-			SharedValue outResult = host->InvokeMethodOnMainThread(args.GetMethod(0), outArgs);
-			result->SetValue(outResult);
+			// Fixme: we should get the return value from the method.
+			// Caution: there is a deadlock issue when setting synchronious to true
+			host->InvokeMethodOnMainThread(method, outArgs, false);
 		}
 	}
 
