@@ -4,3 +4,5 @@
 docs
 *.pyc
 thirdparty-*
+*.swp
+*.swo

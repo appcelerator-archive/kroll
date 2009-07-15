@@ -57,7 +57,7 @@ namespace kroll
 		/**
 		 * @return the path to this module's main directory
 		 */
-		std::string GetPath()
+		virtual std::string GetPath()
 		{
 			return this->path;
 		}
@@ -65,7 +65,7 @@ namespace kroll
 		/*
 		 * @return the name of the module
 		 */
-		std::string GetName()
+		virtual std::string GetName()
 		{
 			return this->name;
 		}
@@ -73,7 +73,7 @@ namespace kroll
 		/*
 		 * @return the version of the module
 		 */
-		std::string GetVersion()
+		virtual std::string GetVersion()
 		{
 			return this->version;
 		}
@@ -93,18 +93,16 @@ namespace kroll
 		virtual void Start() {};
 
 		/**
-		 * Called by the host when an exit has been requested to
-		 * give modules a hook to perform certain pre-stop capabilities
-		 *
-		 * @param exitcode The code the process is exiting with
-		 */
-		virtual void Exiting(int exitcode) {}
-
-		/**
-		 * Called before the Host unregisters the module.
-		 * Perform all unload cleanup here.
+		 * Called by the host that wants to stop a module. This will happen
+		 * before any pending Unload events;
 		 */
 		virtual void Stop() {};
+
+		/**
+		 * Called before the Host unloads the module.
+		 * Perform all unload cleanup here.
+		 */
+		virtual void Unload() {};
 
 		/**
 		 * Set the provider that created this module
@@ -126,11 +124,11 @@ namespace kroll
 	protected:
 		Host *host;
 		ModuleProvider *provider;
-
-	private:
 		std::string path;
 		std::string name;
 		std::string version;
+
+	private:
 		DISALLOW_EVIL_CONSTRUCTORS(Module);
 	};
 }

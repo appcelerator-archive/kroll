@@ -20,7 +20,6 @@ namespace kroll
 		StaticBoundObject("API"),
 		host(host),
 		global(host->GetGlobalObject()),
-		record(0),
 		logger(Logger::Get("API")),
 		installerThread(0),
 		installerThreadAdapter(0)
@@ -45,28 +44,27 @@ namespace kroll
 		this->SetMethod("get", &APIBinding::_Get);
 
 		/**
-		 * @tiapi(method=True,name=API.register,since=0.2)
-		 * @tiapi Register an event listener
+		 * @tiapi(method=True,name=API.addEventListener,since=1.0)
+		 * @tiapi Register a root event listener
 		 * @tiarg[String, eventName] The event name to listen for
 		 * @tiarg[Function, callback] The callback to invoke when this message occurs
-		 * @tiresult[Number] An id which represents this registration
+		 * @tiresult[Number] An id which represents this event listener
 		 */
-		this->SetMethod("register", &APIBinding::_Register);
+		this->SetMethod("addEventListener", &APIBinding::_AddEventListener);
 
 		/**
-		 * @tiapi(method=True,name=API.unregister,since=0.2)
-		 * @tiapi Unregister an event listener
-		 * @tiarg[Number, id] The id of the registration to unregister
+		 * @tiapi(method=True,name=API.removeEventListener,since=1.0)
+		 * @tiapi Remove a root event listener
+		 * @tiarg[Number|Function, id] The id or callback of the event listener to remove
 		 */
-		this->SetMethod("unregister", &APIBinding::_Unregister);
+		this->SetMethod("removeEventListener", &APIBinding::_RemoveEventListener);
 
 		/**
-		 * @tiapi(method=True,name=API.fire,since=0.2)
+		 * @tiapi(method=True,name=API.fireEvent,since=1.0)
 		 * @tiapi Fire the event with a given name
-		 * @tiarg[String, name] The name of the event to fire
-		 * @tiarg[any, payload] The payload for this event
+		 * @tiarg[String|Object, event] The name of the event to fire or the event itself
 		 */
-		this->SetMethod("fire", &APIBinding::_Fire);
+		this->SetMethod("fireEvent", &APIBinding::_FireEvent);
 
 		/**
 		 * @tiapi(method=True,name=API.runOnMainThread,since=1.0)
@@ -224,9 +222,23 @@ namespace kroll
 		/**
 		 * @tiapi(method=True,name=API.setLogLevel,since=1.0)
 		 * @tiapi Set the log level of the root logger
-		 * @tiarg[Number, type] the threshold of severity to log
+		 * @tiarg[Number, level] the threshold of severity to log
 		 */
 		this->SetMethod("setLogLevel", &APIBinding::_SetLogLevel);
+
+		/**
+		 * @tiapi(method=True,name=API.getLogLevel,since=1.0)
+		 * @tiapi Get the log level of the root logger
+		 * @tiresult[Number] the threshold of severity to log
+		 */
+		this->SetMethod("getLogLevel", &APIBinding::_GetLogLevel);
+	
+		/**
+		 * @tiapi(method=True,name=API.print,since=1.0)
+		 * @tiapi print a raw string to stdout (no newlines are appended)
+		 * @tiarg[Any, data] data to print
+		 */
+		this->SetMethod("print", &APIBinding::_Print);
 	
 		// These are properties for log severity levels
 
@@ -352,16 +364,6 @@ namespace kroll
 
 	APIBinding::~APIBinding()
 	{
-		ScopedLock lock(&mutex);
-
-		registrations.clear();
-		registrationsById.clear();
-	}
-
-	int APIBinding::GetNextRecord()
-	{
-		ScopedLock lock(&mutex);
-		return ++this->record;
 	}
 
 	void APIBinding::_Set(const ValueList& args, SharedValue result)
@@ -381,6 +383,29 @@ namespace kroll
 			// global scope such that <module>.<key> would resolve
 			// to the 'module' with key named 'key'
 			global->SetNS(key, value);
+		}
+	}
+
+	Logger::Level APIBinding::ValueToLevel(SharedValue v)
+	{
+		if (v->IsString())
+		{
+			string levelString = v->ToString();
+			return Logger::GetLevel(levelString);
+		}
+		else if (v->IsObject())
+		{
+			SharedString ss = v->ToObject()->DisplayString();
+			return Logger::GetLevel(*ss);
+		}
+		else if (v->IsNumber())
+		{
+			return (Logger::Level) v->ToInt();
+		}
+		else // return the appropriate default
+		{
+			string levelString = "";
+			return Logger::GetLevel(levelString);
 		}
 	}
 
@@ -405,48 +430,28 @@ namespace kroll
 		result->SetValue(r);
 	}
 
-	Logger::Level APIBinding::GetSeverity(SharedValue arg)
-	{
-		Logger::Level severity = Logger::LINFO;
-		if (arg->IsString())
-		{
-			string type = arg->ToString();
-			if (type == "TRACE")
-				severity = Logger::LTRACE;
-
-			else if (type == "DEBUG")
-				severity = Logger::LDEBUG;
-
-			else if (type == "INFO")
-				severity = Logger::LINFO;
-
-			else if (type == "NOTICE")
-				severity = Logger::LNOTICE;
-
-			else if (type == "WARN")
-				severity = Logger::LWARN;
-
-			else if (type == "ERROR")
-				severity = Logger::LERROR;
-
-			else if (type == "CRITICAL")
-				severity = Logger::LCRITICAL;
-
-			else if (type == "FATAL")
-				severity = Logger::LFATAL;
-		}
-		else if (arg->IsInt())
-		{
-			severity = (Logger::Level)arg->ToInt();
-		}
-		return severity;
-	}
-	
 	void APIBinding::_SetLogLevel(const ValueList& args, SharedValue result)
 	{
 		args.VerifyException("setLogLevel", "s|n");
-		Logger::GetRootLogger()->SetLevel(GetSeverity(args.at(0)));
+		Logger::GetRootLogger()->SetLevel(ValueToLevel(args.at(0)));
 	}
+
+	void APIBinding::_GetLogLevel(const ValueList& args, SharedValue result)
+	{
+		result->SetInt(Logger::GetRootLogger()->GetLevel());
+	}
+
+	void APIBinding::_Print(const ValueList& args, SharedValue result)
+	{
+		for (size_t c=0;c<args.size();c++)
+		{
+			SharedValue arg = args.at(c);
+			const char *s = arg->ToString();
+			std::cout << s;
+		}
+		std::cout.flush();
+	}
+	
 	void APIBinding::_LogTrace(const ValueList& args, SharedValue result)
 	{
 		SharedValue arg1 = args.at(0);
@@ -500,35 +505,39 @@ namespace kroll
 			SharedValue arg1 = args.at(0);
 			
 			SharedValue v = args.at(1);
-			this->Log(GetSeverity(arg1), v);
+			this->Log(ValueToLevel(arg1), v);
 		}
 	}
 
-	void APIBinding::_Register(const ValueList& args, SharedValue result)
+	void APIBinding::_AddEventListener(const ValueList& args, SharedValue result)
 	{
-		string event = args.at(0)->ToString();
-		SharedKMethod method = args.at(1)->ToMethod();
-
-		int id = this->Register(event, method);
-		result->SetInt(id);
+		KEventObject::root->_AddEventListener(args, result);
 	}
 
-	void APIBinding::_Unregister(const ValueList& args, SharedValue result)
+	void APIBinding::_RemoveEventListener(const ValueList& args, SharedValue result)
 	{
-		int id = args.at(0)->ToInt();
-		this->Unregister(id);
+		KEventObject::root->_RemoveEventListener(args, result);
 	}
 
-	void APIBinding::_Fire(const ValueList& args, SharedValue result)
+	void APIBinding::_FireEvent(const ValueList& args, SharedValue result)
 	{
-		const char* event = args.at(0)->ToString();
-		this->Fire(event,args.at(1));
+		args.VerifyException("fireEvent", "s|o");
+		if (args.at(0)->IsString()) {
+			std::string eventName = args.GetString(0);
+			KEventObject::FireRootEvent(eventName);
+
+		} else if (args.at(0)->IsObject()) {
+			AutoPtr<Event> event = args.GetObject(0).cast<Event>();
+			if (!event.isNull())
+				KEventObject::FireRootEvent(event);
+		}
 	}
 
 	void APIBinding::_RunOnMainThread(const ValueList& args, SharedValue result)
 	{
 		if (!args.at(0)->IsMethod()) {
-			throw ValueException::FromString("First argument to runOnMainThread was not a function");
+			throw ValueException::FromString(
+				"First argument to runOnMainThread was not a function");
 
 		} else {
 			SharedKMethod method = args.at(0)->ToMethod();
@@ -538,7 +547,8 @@ namespace kroll
 				outArgs.push_back(args.at(i));
 			}
 
-			SharedValue outResult = host->InvokeMethodOnMainThread(args.GetMethod(0), outArgs);
+			SharedValue outResult =
+				host->InvokeMethodOnMainThread(args.GetMethod(0), outArgs);
 			result->SetValue(outResult);
 		}
 	}
@@ -561,82 +571,6 @@ namespace kroll
 		{
 			SharedString message = value->DisplayString();
 			logger->Log((Logger::Level) severity, *message);
-		}
-	}
-
-	int APIBinding::Register(string& event, SharedKMethod callback)
-	{
-		ScopedLock lock(&mutex);
-		int record = GetNextRecord();
-		/* Fetch the records for this event. If the EventRecords
-		 * doesn't exist in registrations, the STL map
-		 * implementation will insert it into the map */
-		string en(event);
-		EventRecords records = this->registrations[en];
-		records.push_back(callback);
-
-		BoundEventEntry e;
-		e.method = callback;
-		e.event = en;
-		this->registrationsById[record] = e;
-		this->registrations[event] = records;
-
-		logger->Debug("Register called for event: %s\n", event.c_str());
-		return record;
-	}
-
-	void APIBinding::Unregister(int id)
-	{
-		ScopedLock lock(&mutex);
-		map<int, BoundEventEntry>::iterator i = registrationsById.find(id);
-		if (i == registrationsById.end())
-		{
-			return;
-		}
-
-		BoundEventEntry entry = i->second;
-		EventRecords records = this->registrations[entry.event];
-		EventRecords::iterator fi = records.begin();
-		while (fi != records.end())
-		{
-			SharedKMethod callback = (*fi);
-			if (callback.get() == entry.method.get())
-			{
-				records.erase(fi);
-				break;
-			}
-			fi++;
-		}
-		if (records.size()==0)
-		{
-			this->registrations.erase(entry.event);
-		}
-		registrationsById.erase(id);
-	}
-
-	void APIBinding::Fire(const char* event, SharedValue value)
-	{
-		// Lots of debug output really slows down things on Win32,
-		// so log this at the trace level
-		if (logger->IsTraceEnabled())
-		{
-			logger->Trace(string("FIRING: ") + event);
-		}
-
-		if (this->registrations.size() == 0)
-		{
-			return;
-		}
-
-		EventRecords records = this->registrations[event];
-		if (records.size() > 0)
-		{
-			EventRecords::iterator i = records.begin();
-			while (i != records.end())
-			{
-				SharedKMethod method = (*i++);
-				method->Call(event,value);
-			}
 		}
 	}
 

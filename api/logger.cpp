@@ -52,7 +52,12 @@ namespace kroll
 
 	Logger* Logger::GetRootLogger()
 	{
-		return Logger::GetImpl(PRODUCT_NAME);
+		// sometimes there are requests for Logger creation
+		// when the root logger hasn't been created yet (this seems to be a race condition)
+		// this temporarily solves that problem
+		return RootLogger::instance;
+		
+		//return Logger::GetImpl(PRODUCT_NAME);
 	}
 
 	Logger* Logger::GetImpl(std::string name)
@@ -62,6 +67,30 @@ namespace kroll
 			loggers[name] = new Logger(name);
 		}
 		return loggers[name];
+	}
+
+	Logger::Level Logger::GetLevel(std::string& levelString)
+	{
+		if (levelString == "TRACE")
+			return Logger::LTRACE;
+		else if (levelString == "DEBUG") 
+			return Logger::LDEBUG;
+		else if (levelString == "INFO") 
+			return Logger::LINFO;
+		else if (levelString == "NOTICE") 
+			return Logger::LNOTICE;
+		else if (levelString == "WARN") 
+			return Logger::LWARN;
+		else if (levelString == "ERROR") 
+			return Logger::LERROR;
+		else if (levelString == "CRITICAL") 
+			return Logger::LCRITICAL;
+		else if (levelString == "FATAL")
+			return Logger::LFATAL;
+		else if (Host::GetInstance()->IsDebugMode())
+			return Logger::LDEBUG;
+		else
+			return Logger::LINFO;
 	}
 
 	Logger::Logger(std::string name) :
@@ -147,6 +176,12 @@ namespace kroll
 		size_t lastPeriodPos = this->name.rfind(".");
 		if (lastPeriodPos == std::string::npos)
 		{
+			// in some cases this causes an infinite loop
+			if (RootLogger::instance == NULL)
+			{
+				return NULL;
+			}
+			
 			return Logger::GetRootLogger();
 		}
 		else

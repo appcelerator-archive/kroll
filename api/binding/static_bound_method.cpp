@@ -8,8 +8,8 @@
 
 namespace kroll
 {
-	StaticBoundMethod::StaticBoundMethod(MethodCallback* callback)
-		: callback(callback)
+	StaticBoundMethod::StaticBoundMethod(MethodCallback* callback, const char *type)
+		: KMethod(type), callback(callback)
 	{
 		this->object = new StaticBoundObject();
 	}
@@ -21,7 +21,10 @@ namespace kroll
 	SharedValue StaticBoundMethod::Call(const ValueList& args)
 	{
 		SharedValue tv = Value::NewUndefined();
-		this->callback->Run(args, tv);
+		if (this->callback)
+		{
+			this->callback->Run(args, tv);
+		}
 		return tv;
 	}
 
