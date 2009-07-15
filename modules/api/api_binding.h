@@ -16,43 +16,26 @@
 
 namespace kroll
 {
-	typedef std::vector<SharedKMethod> EventRecords;
-
-	struct BoundEventEntry
-	{
-		SharedKMethod method;
-		std::string event;
-	};
-
 	class APIBinding : public StaticBoundObject
 	{
-	public:
+		public:
 		APIBinding(Host* host);
 		virtual ~APIBinding();
 
 		void Log(int severity, SharedValue);
-		int Register(std::string& event, SharedKMethod callback);
-		void Unregister(int ref);
-		void Fire(const char* event, SharedValue data);
-
 		static SharedKList ComponentVectorToKList(
 			vector<SharedComponent>&,
 			KComponentType filter = UNKNOWN);
-
 		static SharedKList DependencyVectorToKList(
 			std::vector<SharedDependency>&);
-
 		static SharedKList ManifestToKList(
 			vector<pair<string, string> >&);
 
 
-	private:
+		private:
 		Host* host;
 		SharedKObject global;
-		int record;
 		Logger* logger;
-		std::map<std::string, EventRecords> registrations;
-		std::map<int, BoundEventEntry> registrationsById;
 
 		// Use a FastMutex to protect the installer, because we are
 		// always trying to lock it in the same thread.
@@ -67,12 +50,13 @@ namespace kroll
 
 		void _Set(const ValueList& args, SharedValue result);
 		void _Get(const ValueList& args, SharedValue result);
-		void _Register(const ValueList& args, SharedValue result);
-		void _Unregister(const ValueList& args, SharedValue result);
-		void _Fire(const ValueList& args, SharedValue result);
+		void _AddEventListener(const ValueList& args, SharedValue result);
+		void _RemoveEventListener(const ValueList& args, SharedValue result);
+		void _FireEvent(const ValueList& args, SharedValue result);
 
-		Logger::Level GetSeverity(SharedValue arg);
+		Logger::Level ValueToLevel(SharedValue v);
 		void _SetLogLevel(const ValueList& args, SharedValue result);
+		void _GetLogLevel(const ValueList& args, SharedValue result);
 		void _RunOnMainThread(const ValueList& args, SharedValue result);
 
 		void _Print(const ValueList& args, SharedValue result);
@@ -100,7 +84,6 @@ namespace kroll
 		void _CreateDependency(const ValueList& args, SharedValue value);
 		void _InstallDependencies(const ValueList& args, SharedValue value);
 
-		int GetNextRecord();
 	};
 }
 
