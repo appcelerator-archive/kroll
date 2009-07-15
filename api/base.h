@@ -48,6 +48,8 @@
 #ifndef WINVER
 #define WINVER 0x0501
 #pragma warning(disable: 4005)  // turn off #define redefinition warnings
+#pragma warning(disable: 4996)
+//#define _CRT_SECURE_NO_WARNINGS  // turn off string safe warnings
 #endif
 
 #ifndef _WIN32_WINNT
