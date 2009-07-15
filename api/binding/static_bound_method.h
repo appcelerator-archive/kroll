@@ -51,6 +51,13 @@ namespace kroll
 			this->Set(name, method_value);
 		}
 
+		template <typename T>
+		static AutoPtr<StaticBoundMethod> FromMethod(T* owner, void (T::*method)(const ValueList&, SharedValue))
+		{
+			MethodCallback* callback = NewCallback<T, const ValueList&, SharedValue>(static_cast<T*>(owner), method);
+			return new StaticBoundMethod(callback);
+		}
+
 	protected:
 		SharedPtr<MethodCallback> callback;
 		AutoPtr<StaticBoundObject> object;
