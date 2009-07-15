@@ -194,7 +194,7 @@ namespace kroll
 		bool ProfilingEnabled();
 
 	protected:
-		ModuleList loaded_modules;
+		ModuleList loadedModules;
 
 		Mutex moduleMutex;
 		std::vector<ModuleProvider *> module_providers;
@@ -244,6 +244,7 @@ namespace kroll
 		 * Copy a module's application-specific resources into the currently running app
 		 */
 		void CopyModuleAppResources(std::string& modulePath);
+
 		/**
 		 * Read / process a module's manifest file
 		*/

@@ -18,7 +18,7 @@ namespace kroll
 	class KROLL_API Logger
 	{
 		public:
-		enum Level
+		typedef enum
 		{
 			LFATAL = Poco::Message::PRIO_FATAL,
 			LCRITICAL = Poco::Message::PRIO_CRITICAL,
@@ -28,12 +28,13 @@ namespace kroll
 			LINFO = Poco::Message::PRIO_INFORMATION,
 			LDEBUG = Poco::Message::PRIO_DEBUG,
 			LTRACE = Poco::Message::PRIO_TRACE
-		};
+		} Level;
 
 		static Logger* Get(std::string name);
 		static Logger* GetRootLogger();
 		static void Initialize(bool, std::string, Level);
 		static void Shutdown();
+		static Level GetLevel(std::string& level);
 
 		Logger() {};
 		virtual ~Logger() {};

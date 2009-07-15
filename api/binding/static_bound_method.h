@@ -14,7 +14,7 @@ namespace kroll
 	{
 	public:
 
-		StaticBoundMethod(MethodCallback*);
+		StaticBoundMethod(MethodCallback* callback, const char *type = "StaticBoundMethod");
 		virtual ~StaticBoundMethod();
 
 		/**
@@ -37,6 +37,19 @@ namespace kroll
 		 */
 		virtual SharedStringList GetPropertyNames();
 		
+		/**
+		 * Set a property on this object to the given method. When an error
+		 * occurs will throw an exception of type ValueException.
+		 */
+		template <typename T>
+		void SetMethod(const char *name, void (T::*method)(const ValueList&, SharedValue))
+		{
+			MethodCallback* callback = NewCallback<T, const ValueList&, SharedValue>(static_cast<T*>(this), method);
+
+			SharedKMethod bound_method = new StaticBoundMethod(callback);
+			SharedValue method_value = Value::NewMethod(bound_method);
+			this->Set(name, method_value);
+		}
 
 	protected:
 		SharedPtr<MethodCallback> callback;

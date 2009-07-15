@@ -115,13 +115,13 @@ namespace UTILS_NS
 
 		NSString *tmp = [tempDir stringByAppendingPathComponent:@"kXXXXX"];
 		const char * fsTemplate = [tmp fileSystemRepresentation];
-		NSMutableData * bufferData = [NSMutableData dataWithBytes: fsTemplate
-														   length: strlen(fsTemplate)+1];
+		NSMutableData * bufferData =
+			[NSMutableData dataWithBytes: fsTemplate length: strlen(fsTemplate)+1];
 		char * buffer = (char*)[bufferData mutableBytes];
 		mkdtemp(buffer);
 		NSString * temporaryDirectory = [[NSFileManager defaultManager]
-				stringWithFileSystemRepresentation: buffer
-											length: strlen(buffer)];
+			stringWithFileSystemRepresentation: buffer
+			length: strlen(buffer)];
 		return std::string([temporaryDirectory UTF8String]);
 #elif defined(OS_WIN32)
 #define BUFSIZE 512
@@ -344,11 +344,11 @@ namespace UTILS_NS
 				filepath += KR_PATH_SEP;
 		}
 #ifdef OS_OSX
-		NSString *s = [[NSString stringWithCString:filepath.c_str() encoding:NSUTF8StringEncoding] stringByExpandingTildeInPath];
+		NSString *s = [[NSString stringWithUTF8String:filepath.c_str()] stringByExpandingTildeInPath];
 		NSString *p = [s stringByStandardizingPath];
 		@try
 		{
-			return std::string([p fileSystemRepresentation]);
+			filepath = [p fileSystemRepresentation];
 		}
 		@catch (NSException *ex)
 		{
@@ -356,9 +356,8 @@ namespace UTILS_NS
 			printf("[Titanium.FileUtils] [Error] Error in Join: %s, '%s'\n", reason, filepath.c_str());
 			return filepath;
 		}
-#else
-		return filepath;
 #endif
+		return filepath;
 	}
 
 	bool FileUtils::IsHidden(std::string &file)

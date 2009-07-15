@@ -135,6 +135,8 @@ namespace kroll
 			{
 				if (*t == 's')
 					out << "String";
+				if (*t == 'b')
+					out << "Boolean";
 				else if (*t == 'i')
 					out << "Integer";
 				else if (*t == 'd')
@@ -206,6 +208,7 @@ namespace kroll
 		{
 		// Check if type of value matches current character.
 		if ((*t == 's' && arg->IsString())
+		 || (*t == 'b' && arg->IsBool())
 		 || (*t == 'i' && arg->IsInt())
 		 || (*t == 'd' && arg->IsDouble())
 		 || (*t == 'n' && arg->IsNumber())

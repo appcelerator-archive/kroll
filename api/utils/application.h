@@ -30,6 +30,7 @@ namespace UTILS_NS
 		string url;
 		string image;
 		string stream;
+		string logLevel;
 		vector<SharedDependency> dependencies;
 		vector<SharedComponent> modules;
 		vector<SharedComponent> sdks;
