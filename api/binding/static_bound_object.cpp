@@ -23,7 +23,8 @@ namespace kroll
 
 	SharedValue StaticBoundObject::Get(const char *name)
 	{
-		SharedValue result = Value::Undefined;
+		// referencing global Undefined here is causing invalid access in win32? (need to look into it..)
+		SharedValue result = Value::NewUndefined();
 		{
 			ScopedLock lock(&mutex);
 			std::map<std::string, SharedValue>::iterator iter;
