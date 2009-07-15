@@ -57,7 +57,7 @@ namespace kroll
 		/**
 		 * @return the path to this module's main directory
 		 */
-		std::string GetPath()
+		virtual std::string GetPath()
 		{
 			return this->path;
 		}
@@ -65,7 +65,7 @@ namespace kroll
 		/*
 		 * @return the name of the module
 		 */
-		std::string GetName()
+		virtual std::string GetName()
 		{
 			return this->name;
 		}
@@ -73,7 +73,7 @@ namespace kroll
 		/*
 		 * @return the version of the module
 		 */
-		std::string GetVersion()
+		virtual std::string GetVersion()
 		{
 			return this->version;
 		}
@@ -124,11 +124,11 @@ namespace kroll
 	protected:
 		Host *host;
 		ModuleProvider *provider;
-
-	private:
 		std::string path;
 		std::string name;
 		std::string version;
+
+	private:
 		DISALLOW_EVIL_CONSTRUCTORS(Module);
 	};
 }
