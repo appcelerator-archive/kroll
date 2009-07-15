@@ -11,11 +11,13 @@ namespace kroll
 		tuple(tuple),
 		object(new KPythonObject(tuple, true))
 	{
+		PythonGILState gil();
 		Py_INCREF(this->tuple);
 	}
 
 	KPythonTuple::~KPythonTuple()
 	{
+		PythonGILState gil();
 		Py_DECREF(this->tuple);
 	}
 
@@ -26,6 +28,7 @@ namespace kroll
 
 	unsigned int KPythonTuple::Size()
 	{
+		PythonGILState gil();
 		return PyTuple_Size(this->tuple);
 	}
 
@@ -37,6 +40,7 @@ namespace kroll
 
 	SharedValue KPythonTuple::At(unsigned int index)
 	{
+		PythonGILState gil();
 		if (index >= 0 && index < this->Size())
 		{
 			PyObject *p = PyTuple_GetItem(this->tuple, index);

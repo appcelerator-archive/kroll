@@ -11,6 +11,7 @@ namespace kroll
 		list(list),
 		object(new KPythonObject(list, true))
 	{
+		PythonGILState gil();
 		if (!PyList_Check(list))
 			throw ValueException::FromString("Invalid PyObject passed. Should be a Py_List");
 		else
@@ -19,22 +20,26 @@ namespace kroll
 
 	KPythonList::~KPythonList()
 	{
+		PythonGILState gil();
 		Py_DECREF(this->list);
 	}
 
 	void KPythonList::Append(SharedValue value)
 	{
+		PythonGILState gil();
 		PyObject* py_value = PythonUtils::ToPyObject(value);
 		PyList_Append(this->list, py_value);
 	}
 
 	unsigned int KPythonList::Size()
 	{
+		PythonGILState gil();
 		return PyList_Size(this->list);
 	}
 
 	bool KPythonList::Remove(unsigned int index)
 	{
+		PythonGILState gil();
 		if (index < this->Size())
 		{
 			PyObject* empty_list = PyList_New(0);
@@ -50,6 +55,7 @@ namespace kroll
 
 	SharedValue KPythonList::At(unsigned int index)
 	{
+		PythonGILState gil();
 		if (index >= 0 && index < this->Size())
 		{
 			PyObject *p = PyList_GetItem(this->list, index);
@@ -79,6 +85,7 @@ namespace kroll
 
 	void KPythonList::SetAt(unsigned int index, SharedValue value)
 	{
+		PythonGILState gil();
 		while (index >= this->Size())
 		{
 			// now we need to create entries between current size

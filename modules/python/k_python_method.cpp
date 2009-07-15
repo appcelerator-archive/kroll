@@ -11,16 +11,19 @@ namespace kroll
 		method(method),
 		object(new KPythonObject(method))
 	{
+		PythonGILState gil();
 		Py_INCREF(this->method);
 	}
 
 	KPythonMethod::~KPythonMethod()
 	{
+		PythonGILState gil();
 		Py_DECREF(this->method);
 	}
 
 	SharedValue KPythonMethod::Call(const ValueList& args)
 	{
+		PythonGILState gil();
 		PyObject *arglist = NULL;
 
 		if (args.size() > 0)

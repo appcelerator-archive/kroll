@@ -12,6 +12,7 @@ namespace kroll
 		readOnly(false),
 		delegate(NULL)
 	{
+		PythonGILState gil();
 		Py_INCREF(this->object);
 	}
 
@@ -20,24 +21,27 @@ namespace kroll
 		readOnly(readOnly),
 		delegate(new StaticBoundObject())
 	{
+		PythonGILState gil();
 		Py_INCREF(this->object);
-		
 	}
 
 	KPythonObject::~KPythonObject()
 	{
+		PythonGILState gil();
 		Py_DECREF(this->object);
 		this->object = NULL;
 	}
 
 	PyObject* KPythonObject::ToPython()
 	{
+		PythonGILState gil();
 		Py_INCREF(object);
 		return this->object;
 	}
 
 	void KPythonObject::Set(const char *name, SharedValue value)
 	{
+		PythonGILState gil();
 		PyObject* py_value = PythonUtils::ToPyObject(value);
 
 		if (readOnly)
@@ -58,6 +62,7 @@ namespace kroll
 
 	SharedValue KPythonObject::Get(const char *name)
 	{
+		PythonGILState gil();
 		if (0 == (PyObject_HasAttrString(this->object, (char*)name)))
 		{
 			if (this->readOnly)
@@ -95,6 +100,7 @@ namespace kroll
 
 	SharedStringList KPythonObject::GetPropertyNames()
 	{
+		PythonGILState gil();
 		SharedStringList property_names = new StringList();
 		PyObject *props = PyObject_Dir(this->object);
 		if (props == NULL)

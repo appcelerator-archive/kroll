@@ -64,6 +64,21 @@ namespace kroll
 		static PythonModule *instance_;
 		DISALLOW_EVIL_CONSTRUCTORS(PythonModule);
 	};
+
+	class PythonGILState
+	{
+		PythonGILState()
+		{
+			this->gstate = PyGILState_Ensure();
+		}
+
+		~PythonGILState()
+		{
+			PyGILState_Release(this->gstate);
+		}
+
+		PyGILState_STATE gstate;
+	};
 }
 
 #include "python_module_instance.h"

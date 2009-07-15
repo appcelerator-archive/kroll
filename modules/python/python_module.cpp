@@ -18,17 +18,19 @@ namespace kroll
 		PythonModule::instance_ = this;
 
 		Py_Initialize();
-		PyEval_InitThreads();
+		//PyEval_InitThreads();
 
-		//TODO: maybe we need to setup path to script?
-		//Py_SetProgramName(); 
 		PyObject *path = PySys_GetObject((char*) "path");
-		PyObject *s = PyString_FromString(host->GetApplication()->GetResourcesPath().c_str());
+		PyObject *s = PyString_FromString(
+			host->GetApplication()->GetResourcesPath().c_str());
 		PyList_Insert(path, 0, s);
 		Py_XDECREF(s);
 
 		this->InitializeBinding();
 		host->AddModuleProvider(this);
+
+		//PyThreadState *pts = PyGILState_GetThisThreadState();
+		//PyEval_ReleaseThread(pts);
 	}
 
 	void PythonModule::Stop()
@@ -74,6 +76,7 @@ namespace kroll
 
 	Module* PythonModule::CreateModule(std::string& path)
 	{
+		PythonGILState gil();
 		FILE *file = fopen(path.c_str(), "r");
 
 		PyRun_SimpleFile(file,path.c_str());

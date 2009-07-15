@@ -9,17 +9,20 @@ namespace kroll
 {
 	KPythonDict::KPythonDict(PyObject *obj) : object(obj)
 	{
+		PythonGILState gil();
 		Py_INCREF(this->object);
 	}
 
 	KPythonDict::~KPythonDict()
 	{
+		PythonGILState gil();
 		Py_DECREF(this->object);
 		this->object = NULL;
 	}
 
 	void KPythonDict::Set(const char* name, SharedValue value)
 	{
+		PythonGILState gil();
 		PyObject* pyval = PythonUtils::ToPyObject(value);
 		int result = PyMapping_SetItemString(this->object, (char*)name, pyval);
 
@@ -31,6 +34,7 @@ namespace kroll
 
 	SharedValue KPythonDict::Get(const char *name)
 	{
+		PythonGILState gil();
 		PyObject* item = PyMapping_GetItemString(this->object, (char*) name);
 
 		if (item == NULL)
@@ -62,6 +66,7 @@ namespace kroll
 
 	SharedStringList KPythonDict::GetPropertyNames()
 	{
+		PythonGILState gil();
 		SharedStringList property_names = new StringList();
 
 		// Avoid compiler warnings
@@ -88,6 +93,7 @@ namespace kroll
 
 	PyObject* KPythonDict::ToPython()
 	{
+		PythonGILState gil();
 		Py_INCREF(object);
 		return this->object;
 	}

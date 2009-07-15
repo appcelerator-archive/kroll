@@ -141,6 +141,7 @@ namespace kroll
 
 	PyObject* PythonUtils::ToPyObject(SharedValue value)
 	{
+		PythonGILState gil();
 		if (value->IsBool())
 		{
 			return value->ToBool() ? Py_True : Py_False;
@@ -211,6 +212,7 @@ namespace kroll
 
 	const char* PythonUtils::ToString(PyObject* value)
 	{
+		PythonGILState gil();
 		if (PyString_Check(value))
 		{
 			return PyString_AsString(value);
@@ -223,6 +225,7 @@ namespace kroll
 
 	SharedValue PythonUtils::ToKrollValue(PyObject* value)
 	{
+		PythonGILState gil();
 		if (Py_None == value)
 		{
 			return Value::Null;
@@ -336,6 +339,7 @@ namespace kroll
 
 	static void PyKObject_dealloc(PyObject* self)
 	{
+		PythonGILState gil();
 		PyKObject *pyko = reinterpret_cast<PyKObject*>(self);
 		delete pyko->value;
 		PyObject_Del(self);
@@ -343,6 +347,7 @@ namespace kroll
 
 	static PyObject* PyKObject_getattr(PyObject *self, char *name)
 	{
+		PythonGILState gil();
 		Py_INCREF(self);
 		PyKObject *pyko = reinterpret_cast<PyKObject*>(self);
 		SharedValue result = pyko->value->get()->ToObject()->Get(name);
@@ -352,6 +357,7 @@ namespace kroll
 
 	static int PyKObject_setattr(PyObject *self, char *name, PyObject *value)
 	{
+		PythonGILState gil();
 		PyKObject *pyko = reinterpret_cast<PyKObject*>(self);
 		Py_INCREF(self);
 		SharedValue tiValue = PythonUtils::ToKrollValue(value);
@@ -362,6 +368,7 @@ namespace kroll
 
 	static PyObject* PyKObject_str(PyObject *self)
 	{
+		PythonGILState gil();
 		Py_INCREF(self);
 		PyKObject *pyko = reinterpret_cast<PyKObject*>(self);
 		SharedKObject kobj = pyko->value->get()->ToObject();
@@ -373,6 +380,7 @@ namespace kroll
 
 	PyObject* PythonUtils::KObjectToPyObject(SharedValue v)
 	{
+		PythonGILState gil();
 		if (!initializedPyKObject)
 		{
 			initializedPyKObject = true;
@@ -387,6 +395,7 @@ namespace kroll
 
 	static Py_ssize_t PyKListLength(PyObject* o)
 	{
+		PythonGILState gil();
 		PyKObject *pyko = reinterpret_cast<PyKObject*>(o);
 		SharedKList klist = pyko->value->get()->ToList();
 		return (Py_ssize_t) klist->Size();
@@ -394,6 +403,7 @@ namespace kroll
 
 	static PyObject* PyKListConcat(PyObject* a, PyObject* b)
 	{
+		PythonGILState gil();
 		PyObject* new_list = PyList_New(0);
 		PySequence_Concat(new_list, a);
 		PySequence_Concat(new_list, b);
@@ -402,6 +412,7 @@ namespace kroll
 
 	static PyObject* PyKListRepeat(PyObject *o, Py_ssize_t count)
 	{
+		PythonGILState gil();
 		PyObject* new_list = PyList_New(0);
 		while (count > 0)
 		{
@@ -413,6 +424,7 @@ namespace kroll
 
 	static PyObject* PyKListGetItem(PyObject *o, Py_ssize_t i)
 	{
+		PythonGILState gil();
 		PyKObject *pyko = reinterpret_cast<PyKObject*>(o);
 		SharedKList klist = pyko->value->get()->ToList();
 		if (i < (int) klist->Size())
@@ -427,6 +439,7 @@ namespace kroll
 
 	static int PyKListSetItem(PyObject *o, Py_ssize_t i, PyObject *v)
 	{
+		PythonGILState gil();
 		PyKObject *pyko = reinterpret_cast<PyKObject*>(o);
 		SharedKList klist = pyko->value->get()->ToList();
 		SharedValue kv = PythonUtils::ToKrollValue(v);
@@ -436,6 +449,7 @@ namespace kroll
 
 	static int PyKListContains(PyObject *o, PyObject *value)
 	{
+		PythonGILState gil();
 		PyKObject *pyko = reinterpret_cast<PyKObject*>(o);
 		SharedKList klist = pyko->value->get()->ToList();
 		SharedValue kv = PythonUtils::ToKrollValue(value);
@@ -449,6 +463,7 @@ namespace kroll
 
 	static PyObject* PyKListInPlaceConcat(PyObject *o1, PyObject *o2)
 	{
+		PythonGILState gil();
 		PyKObject *pyko = reinterpret_cast<PyKObject*>(o1);
 		SharedKList klist = pyko->value->get()->ToList();
 		int size = PySequence_Size(o2);
@@ -463,6 +478,7 @@ namespace kroll
 
 	static PyObject* PyKListInPlaceRepeat(PyObject *o, Py_ssize_t count)
 	{
+		PythonGILState gil();
 		PyKObject *pyko = reinterpret_cast<PyKObject*>(o);
 		SharedKList klist = pyko->value->get()->ToList();
 		unsigned int size = klist->Size();
@@ -483,6 +499,7 @@ namespace kroll
 
 	PyObject* PythonUtils::KListToPyObject(SharedValue v)
 	{
+		PythonGILState gil();
 		if (!initializedPyKList)
 		{
 			initializedPyKList = true;
@@ -511,6 +528,7 @@ namespace kroll
 
 	static PyObject* PyKMethod_call(PyObject *o, PyObject *args, PyObject *kw)
 	{
+		PythonGILState gil();
 		Py_INCREF(o);
 		PyKObject *pyko = reinterpret_cast<PyKObject*>(o);
 		SharedKMethod kmeth = pyko->value->get()->ToMethod();
@@ -546,6 +564,7 @@ namespace kroll
 
 	PyObject* PythonUtils::KMethodToPyObject(SharedValue v)
 	{
+		PythonGILState gil();
 		if (!initializedPyKMethod)
 		{
 			initializedPyKMethod = true;
@@ -557,9 +576,6 @@ namespace kroll
 		obj->value = new SharedValue(v);
 		return (PyObject*) obj;
 	}
-
-
-
 }
 
 
