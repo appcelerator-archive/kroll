@@ -6,8 +6,17 @@
 #ifndef _PHP_MODULE_H
 #define _PHP_MODULE_H
 
+#include <string>
+#include <vector>
+#include <iostream>
 #include <sapi/embed/php_embed.h>
 #include <kroll/kroll.h>
+
+#include "php_api.h"
+
+#ifdef ZTS
+void ***tsrm_ls;
+#endif
 
 namespace kroll
 {
