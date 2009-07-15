@@ -16,11 +16,15 @@ namespace kroll
     void PhpModule::Initialize()
     {
         PhpModule::instance_ = this;
+
+        php_embed_init(argc, argv PTSRMLS_CC);
     }
 
     void PhpModule::Stop()
     {
         PhpModule::instance_ = NULL;
+
+        php_embed_shutdown(TSRMLS_C);
     }
 
     void PhpModule::InitializeBinding()
