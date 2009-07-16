@@ -8,6 +8,8 @@
 
 	SharedValue PythonEvaluator::Call(const ValueList& args)
 	{
+		PythonGILState gil();
+
 		if (args.size() != 3
 			|| !args.at(1)->IsString()
 			|| !args.at(2)->IsObject())
@@ -21,47 +23,37 @@
 		PythonEvaluator::ConvertLineEndings(code);
 
 		// Insert all the js global properties into a copy of globals()
-		SharedKObject window_global;
-		PyObject *main_module, *globals, *compiled;
+		SharedKObject window_global = args.at(2)->ToObject();
+		PyObject* main_module = PyImport_AddModule("__main__");
+		PyObject* globals = PyDict_Copy(PyModule_GetDict(main_module));
+		KObjectPropsToDict(window_global, globals);
 
+		// Another way to do this is to use a Python sub-interpreter,
+		// but that seems to put us into restricted execution mode
+		// sometimes. So we're going to try to isolate the variables
+		// in this script by compiling it and supplying our own copy
+		// of the globals.
+		PyObject* compiled = Py_CompileStringFlags(code.c_str(), "<window>", Py_file_input, NULL);
+		if (compiled == NULL)
 		{
-			PythonGILState gil();
-			window_global = args.at(2)->ToObject();
-			main_module = PyImport_AddModule("__main__");
-			globals = PyDict_Copy(PyModule_GetDict(main_module));
-			KObjectPropsToDict(window_global, globals);
-
-			// Another way to do this is to use a Python sub-interpreter,
-			// but that seems to put us into restricted execution mode
-			// sometimes. So we're going to try to isolate the variables
-			// in this script by compiling it and supplying our own copy
-			// of the globals.
-			compiled =
-				Py_CompileStringFlags(code.c_str(), "<window>", Py_file_input, NULL);
+			Logger *logger = Logger::Get("Python");
+			logger->Error("An error occured while parsing Python on the page: ");
+			PyErr_Print();
+			// log to the console to give the user a better indication
+			// of what's going on down in python
+			SharedValue value = window_global->GetNS("console.error");
+			if (value->IsMethod())
+			{
+				SharedKMethod m = value->ToMethod();
+				std::string msg = "An error occured while parsing Python on the page";
+				m->Call(Value::NewString(msg));
+			}
+			Py_DECREF(globals);
+			return Value::Undefined;
 		}
 
-		//if (compiled == NULL)
-		//{
-		//	Logger *logger = Logger::Get("Python");
-		//	logger->Error("An error occured while parsing Python on the page: ");
-		//	PyErr_Print();
-		//	// log to the console to give the user a better indication
-		//	// of what's going on down in python
-		//	SharedValue value = window_global->GetNS("console.error");
-		//	if (value->IsMethod())
-		//	{
-		//		SharedKMethod m = value->ToMethod();
-		//		std::string msg = "An error occured while parsing Python on the page";
-		//		m->Call(Value::NewString(msg));
-		//	}
-		//	Py_DECREF(globals);
-		//	return Value::Undefined;
-		//}
+		PyObject *return_value = PyEval_EvalCode((PyCodeObject*) compiled, globals, globals);
 
-		PyObject *return_value =
-			PyEval_EvalCode((PyCodeObject*) compiled, globals, globals);
-
-		PythonGILState gil();
 		// Clear the error indicator before doing anything else. It might
 		// cause a a false positive for errors in other bits of Python.
 		// TODO: Logging
