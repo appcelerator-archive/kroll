@@ -14,10 +14,6 @@
 
 #include "php_api.h"
 
-#ifdef ZTS
-void ***tsrm_ls;
-#endif
-
 namespace kroll
 {
     class PhpModule : public Module, public ModuleProvider

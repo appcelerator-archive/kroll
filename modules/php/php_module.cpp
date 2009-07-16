@@ -7,6 +7,10 @@
 #include "php_module.h"
 #include <Poco/Path.h>
 
+#ifdef ZTS
+void ***tsrm_ls;
+#endif
+
 namespace kroll
 {
     KROLL_MODULE(PhpModule, STRING(MODULE_NAME), STRING(MODULE_VERSION));
@@ -17,6 +21,8 @@ namespace kroll
     {
         PhpModule::instance_ = this;
 
+        int argc = 1;
+        char *argv[] = { NULL };
         php_embed_init(argc, argv PTSRMLS_CC);
     }
 
