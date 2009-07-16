@@ -8,6 +8,9 @@ Env = build.env.Clone()
 Env.Append(CPPDEFINES=('KROLL_PHP_API_EXPORT', 1))
 build.add_thirdparty(Env, 'poco')
 
+if 'CPPFLAGS' in Env and '-Werror' in Env['CPPFLAGS']:
+    Env['CPPFLAGS'].remove('-Werror')
+
 if build.is_osx():
     pass
 
