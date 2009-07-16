@@ -71,8 +71,17 @@ namespace kroll
 		 * @tiapi Execute the method on the main thread
 		 * @tiarg[Function, method] The method to execute
 		 * @tiarg[any, ...] A variable-length list of arguments to pass to the method
+		 * @tiresult[returnValue] The return value of the method
 		 */
 		this->SetMethod("runOnMainThread", &APIBinding::_RunOnMainThread);
+
+		/**
+		 * @tiapi(method=True,name=API.runOnMainThreadAsync,since=1.0)
+		 * @tiapi Execute the method asynchronously on the main thread
+		 * @tiarg[Function, method] The method to execute
+		 * @tiarg[any, ...] A variable-length list of arguments to pass to the method
+		 */
+		this->SetMethod("runOnMainThreadAsync", &APIBinding::_RunOnMainThreadAsync);
 
 		/**
 		 * @tiapi(method=True,name=API.getApplication,since=0.2)
@@ -547,8 +556,25 @@ namespace kroll
 			}
 
 			SharedValue outResult =
-				host->InvokeMethodOnMainThread(args.GetMethod(0), outArgs);
+				host->InvokeMethodOnMainThread(method, outArgs);
 			result->SetValue(outResult);
+		}
+	}
+
+	void APIBinding::_RunOnMainThreadAsync(const ValueList& args, SharedValue result)
+	{
+		if (!args.at(0)->IsMethod()) {
+			throw ValueException::FromString(
+				"First argument to runOnMainThreadAsync was not a function");
+		} else {
+			SharedKMethod method = args.at(0)->ToMethod();
+
+			ValueList outArgs;
+			for (size_t i = 1; i < args.size(); i++) {
+				outArgs.push_back(args.at(i));
+			}
+
+			host->InvokeMethodOnMainThread(method, outArgs, false);
 		}
 	}
 
