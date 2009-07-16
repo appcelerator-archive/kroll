@@ -538,9 +538,7 @@ namespace kroll
 			throw ValueException::FromString(
 				"First argument to runOnMainThread was not a function");
 
-		} 
-		else 
-		{
+		} else {
 			SharedKMethod method = args.at(0)->ToMethod();
 
 			ValueList outArgs;
@@ -548,9 +546,9 @@ namespace kroll
 				outArgs.push_back(args.at(i));
 			}
 
-			// Fixme: we should get the return value from the method.
-			// Caution: there is a deadlock issue when setting synchronious to true
-			host->InvokeMethodOnMainThread(method, outArgs, false);
+			SharedValue outResult =
+				host->InvokeMethodOnMainThread(args.GetMethod(0), outArgs);
+			result->SetValue(outResult);
 		}
 	}
 
