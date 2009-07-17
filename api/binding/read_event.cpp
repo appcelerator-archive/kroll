@@ -8,7 +8,7 @@
 namespace kroll
 {
 	ReadEvent::ReadEvent(AutoPtr<KEventObject> target, AutoBlob data) :
-		Event::Event(target, Event::READ),
+		Event(target, Event::READ),
 		data(data)
 	{
 		this->SetMethod("getData", &ReadEvent::_GetData);
