@@ -38,6 +38,7 @@ namespace kroll
 #include "profiled_bound_list.h"
 #include "profiled_bound_method.h"
 #include "event.h"
+#include "read_event.h"
 #include "k_event_object.h"
 
 #endif

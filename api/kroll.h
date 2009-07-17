@@ -57,6 +57,7 @@ namespace kroll
 	typedef AutoPtr<KObject> SharedKObject;
 	typedef AutoPtr<KMethod> SharedKMethod;
 	typedef AutoPtr<KList> SharedKList;
+	typedef AutoPtr<Blob> AutoBlob;
 
 	typedef SharedPtr<std::string> SharedString;
 	typedef std::vector<SharedString> StringList;
