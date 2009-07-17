@@ -1,7 +1,7 @@
 /*
  * Appcelerator Kroll - licensed under the Apache Public License 2
  * see LICENSE in the root folder for details on the license.
- * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
+ * Copyright (c) 2009 Appcelerator, Inc. All Rights Reserved.
  */
 
 #include "../kroll.h"
@@ -28,6 +28,7 @@ namespace kroll
 	std::string Event::ACTIVATE = "activate";
 	std::string Event::CLICKED = "clicked";
 	std::string Event::EXIT = "exit";
+	std::string Event::READ = "read";
 
 	Event::Event(AutoPtr<KEventObject> target, std::string& eventName) :
 		AccessorBoundObject("Event"),
@@ -83,6 +84,7 @@ namespace kroll
 		// @tiproperty[String, PAGE_LOADED, since=1.0] The PAGE_LOADED event constant
 		// @tiproperty[String, CREATE, since=1.0] The CREATE event constant
 		// @tiproperty[String, EXIT, since=1.0] The EXIT event constant
+		// @tiproperty[String, READ, since=1.0] The READ event constant
 
 		target->Set("ALL", Value::NewString(Event::ALL));
 		target->Set("FOCUSED", Value::NewString(Event::FOCUSED));
@@ -103,6 +105,7 @@ namespace kroll
 		target->Set("PAGE_LOADED", Value::NewString(Event::PAGE_LOADED));
 		target->Set("CREATED", Value::NewString(Event::CREATED));
 		target->Set("EXIT", Value::NewString(Event::EXIT));
+		target->Set("READ", Value::NewString(Event::READ));
 	}
 
 }

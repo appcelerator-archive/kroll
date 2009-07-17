@@ -44,6 +44,7 @@ namespace kroll
 		static std::string ACTIVATE;
 		static std::string CLICKED;
 		static std::string EXIT;
+		static std::string READ;
 	};
 }
 #endif
