@@ -85,7 +85,7 @@ namespace UTILS_NS
 		LPTCH env = GetEnvironmentStrings();
 		while (env[0] != '\0')
 		{
-			std::string entry = env;
+			std::string entry = (char*)env;
 			std::string key = entry.substr(0, entry.find("="));
 			std::string val = entry.substr(entry.find("=")+1);
 			environment[key] = val;
