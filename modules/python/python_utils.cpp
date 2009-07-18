@@ -341,7 +341,11 @@ namespace kroll
 	{
 		PythonGILState gil();
 		PyKObject *pyko = reinterpret_cast<PyKObject*>(self);
+
+		Py_BEGIN_ALLOW_THREADS
 		delete pyko->value;
+		Py_END_ALLOW_THREADS
+
 		PyObject_Del(self);
 	}
 
@@ -350,7 +354,12 @@ namespace kroll
 		PythonGILState gil();
 		Py_INCREF(self);
 		PyKObject *pyko = reinterpret_cast<PyKObject*>(self);
-		SharedValue result = pyko->value->get()->ToObject()->Get(name);
+
+		SharedValue result = 0;
+		Py_BEGIN_ALLOW_THREADS
+		result = pyko->value->get()->ToObject()->Get(name);
+		Py_END_ALLOW_THREADS
+
 		Py_DECREF(self);
 		return PythonUtils::ToPyObject(result);
 	}
@@ -361,7 +370,11 @@ namespace kroll
 		PyKObject *pyko = reinterpret_cast<PyKObject*>(self);
 		Py_INCREF(self);
 		SharedValue tiValue = PythonUtils::ToKrollValue(value);
+
+		Py_BEGIN_ALLOW_THREADS
 		pyko->value->get()->ToObject()->Set(name, tiValue);
+		Py_END_ALLOW_THREADS
+
 		Py_DECREF(self);
 		return 0;
 	}
@@ -374,7 +387,11 @@ namespace kroll
 		SharedKObject kobj = pyko->value->get()->ToObject();
 		Py_DECREF(self);
 
-		SharedString ss = kobj->DisplayString();
+		SharedString ss = 0;
+		Py_BEGIN_ALLOW_THREADS
+		ss = kobj->DisplayString();
+		Py_END_ALLOW_THREADS
+
 		return PyString_FromString(ss->c_str());
 	}
 
@@ -398,7 +415,13 @@ namespace kroll
 		PythonGILState gil();
 		PyKObject *pyko = reinterpret_cast<PyKObject*>(o);
 		SharedKList klist = pyko->value->get()->ToList();
-		return (Py_ssize_t) klist->Size();
+
+		unsigned int size = 0;
+		Py_BEGIN_ALLOW_THREADS
+		size = klist->Size();
+		Py_END_ALLOW_THREADS
+
+		return (Py_ssize_t) size;
 	}
 
 	static PyObject* PyKListConcat(PyObject* a, PyObject* b)
@@ -427,14 +450,19 @@ namespace kroll
 		PythonGILState gil();
 		PyKObject *pyko = reinterpret_cast<PyKObject*>(o);
 		SharedKList klist = pyko->value->get()->ToList();
+
+		SharedValue listVal = 0;
+		Py_BEGIN_ALLOW_THREADS
 		if (i < (int) klist->Size())
 		{
-			return PythonUtils::ToPyObject(klist->At(i));
+			SharedValue listVal = klist->At(i);
 		}
+		Py_END_ALLOW_THREADS
+
+		if (!listVal.isNull())
+			return PythonUtils::ToPyObject(listVal);
 		else
-		{
 			return NULL;
-		}
 	}
 
 	static int PyKListSetItem(PyObject *o, Py_ssize_t i, PyObject *v)
@@ -443,7 +471,11 @@ namespace kroll
 		PyKObject *pyko = reinterpret_cast<PyKObject*>(o);
 		SharedKList klist = pyko->value->get()->ToList();
 		SharedValue kv = PythonUtils::ToKrollValue(v);
+
+		Py_BEGIN_ALLOW_THREADS
 		klist->SetAt((unsigned int) i, kv);
+		Py_END_ALLOW_THREADS
+
 		return 1;
 	}
 
@@ -453,11 +485,15 @@ namespace kroll
 		PyKObject *pyko = reinterpret_cast<PyKObject*>(o);
 		SharedKList klist = pyko->value->get()->ToList();
 		SharedValue kv = PythonUtils::ToKrollValue(value);
+
+		Py_BEGIN_ALLOW_THREADS
 		for (unsigned int i = 0; i < klist->Size(); i++)
 		{
 			if (kv == klist->At(i))
 				return 1;
 		}
+		Py_END_ALLOW_THREADS
+
 		return 0;
 	}
 
@@ -471,7 +507,11 @@ namespace kroll
 		{
 			PyObject* v = PySequence_GetItem(o2, i);
 			SharedValue kv = PythonUtils::ToKrollValue(v);
+
+			Py_BEGIN_ALLOW_THREADS
 			klist->Append(kv);
+			Py_END_ALLOW_THREADS
+
 		}
 		return o1;
 	}
@@ -481,6 +521,8 @@ namespace kroll
 		PythonGILState gil();
 		PyKObject *pyko = reinterpret_cast<PyKObject*>(o);
 		SharedKList klist = pyko->value->get()->ToList();
+
+		Py_BEGIN_ALLOW_THREADS
 		unsigned int size = klist->Size();
 		while (count > 0)
 		{
@@ -490,6 +532,8 @@ namespace kroll
 			}
 			count--;
 		}
+		Py_END_ALLOW_THREADS
+
 		return o;
 	}
 
@@ -544,7 +588,11 @@ namespace kroll
 				Value::Unwrap(kValue);
 				a.push_back(kValue);
 			}
+
+			Py_BEGIN_ALLOW_THREADS
 			result = kmeth->Call(a);
+			Py_END_ALLOW_THREADS
+
 		}
 		catch (ValueException& e)
 		{

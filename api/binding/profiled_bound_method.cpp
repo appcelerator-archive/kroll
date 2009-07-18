@@ -15,7 +15,7 @@ namespace kroll
 		ProfiledBoundObject(delegate),
 		method(delegate),
 		fullType(type),
-		referenceCount(1)
+		count(1)
 	{
 	}
 
