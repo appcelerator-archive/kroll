@@ -11,7 +11,7 @@ namespace kroll
 	class KROLL_API ReferenceCounted
 	{
 		private:
-		unsigned int referenceCount;
+		Poco::AtomicCounter referenceCount;
 
 		public:
 		ReferenceCounted() : referenceCount(1) { }
@@ -25,7 +25,7 @@ namespace kroll
 		virtual void release()
 		{
 			referenceCount--;
-			if (referenceCount <= 0) {
+			if (referenceCount.value() <= 0) {
 				delete this;
 			}
 		}
