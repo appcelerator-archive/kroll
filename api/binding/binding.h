@@ -40,5 +40,6 @@ namespace kroll
 #include "event.h"
 #include "read_event.h"
 #include "k_event_object.h"
+#include "k_event_method.h"
 
 #endif
