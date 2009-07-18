@@ -14,7 +14,7 @@ namespace kroll
 		public:
 		KEventMethod(const char* name = "") :
 			KEventObject(name),
-			referenceCount(1) {}
+			count(1) {}
 
 		// @see KMethod::Call
 		virtual SharedValue Call(const ValueList& args) = 0;
@@ -59,19 +59,24 @@ namespace kroll
 
 		virtual void duplicate()
 		{
-			referenceCount++;
+			++count;
 		}
 
 		virtual void release()
 		{
-			referenceCount--;
-			if (referenceCount.value() <= 0) {
+			int value = --count;
+			if (value <= 0) {
 				delete this;
 			}
 		}
 
+		virtual int referenceCount() const
+		{
+			return count.value();
+		}
+
 		private:
-		Poco::AtomicCounter referenceCount;
+		Poco::AtomicCounter count;
 
 	};
 

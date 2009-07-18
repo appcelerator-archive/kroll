@@ -42,15 +42,20 @@ namespace kroll
 		SharedKObject GetDelegate() { return delegate; }
 		virtual void duplicate()
 		{
-			referenceCount++;
+			++count;
 		}
 
 		virtual void release()
 		{
-			referenceCount--;
-			if (referenceCount.value() <= 0) {
+			int value = --count;
+			if (value <= 0) {
 				delete this;
 			}
+		}
+
+		virtual int referenceCount() const
+		{
+			return count.value();
 		}
 
 	protected:
@@ -61,7 +66,7 @@ namespace kroll
 		static bool AlreadyWrapped(SharedValue);
 		static Poco::FileOutputStream *stream;
 		static Poco::Mutex logMutex;
-		Poco::AtomicCounter referenceCount;
+		Poco::AtomicCounter count;
 	};
 }
 

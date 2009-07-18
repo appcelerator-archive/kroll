@@ -43,20 +43,25 @@ namespace kroll
 		SharedKList GetDelegate() { return list; }
 		virtual void duplicate()
 		{
-			referenceCount++;
+			++count;
 		}
 
 		virtual void release()
 		{
-			referenceCount--;
-			if (referenceCount.value() <= 0) {
+			int value = --count;
+			if (value <= 0) {
 				delete this;
 			}
 		}
 
+		virtual int referenceCount() const
+		{
+			return count.value();
+		}
+
 	private:
 		SharedKList list;
-		Poco::AtomicCounter referenceCount;
+		Poco::AtomicCounter count;
 
 	};
 }

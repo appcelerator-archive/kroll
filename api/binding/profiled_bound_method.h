@@ -37,21 +37,26 @@ namespace kroll
 		SharedKMethod GetDelegate() { return method; }
 		virtual void duplicate()
 		{
-			referenceCount++;
+			++count;
 		}
 
 		virtual void release()
 		{
-			referenceCount--;
-			if (referenceCount.value() <= 0) {
+			int value = --count;
+			if (value <= 0) {
 				delete this;
 			}
+		}
+
+		virtual int referenceCount() const
+		{
+			return count.value();
 		}
 
 	private:
 		SharedKMethod method;
 		std::string fullType;
-		Poco::AtomicCounter referenceCount;
+		Poco::AtomicCounter count;
 
 	};
 }

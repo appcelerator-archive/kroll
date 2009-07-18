@@ -93,7 +93,7 @@ namespace UTILS_NS
 		}
 #else
 		char** current = environ;
-		while (current)
+		while (*current)
 		{
 			std::string entry = *current;
 			std::string key = entry.substr(0, entry.find("="));
