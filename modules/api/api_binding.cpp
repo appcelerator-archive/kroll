@@ -7,6 +7,7 @@
 #include "application_binding.h"
 #include "component_binding.h"
 #include "dependency_binding.h"
+#include "environment_binding.h"
 #include <algorithm>
 
 using std::string;
@@ -155,6 +156,13 @@ namespace kroll
 
 		this->SetMethod("componentGUIDToComponentType", &APIBinding::_ComponentGUIDToComponentType);
 
+		/**
+		 * @tiapi(method=True,name=API.getEnvironment,since=0.5)
+		 * @tiapi Get the system environment
+		 * @tiresult[API.Environment] an key/value pair object that is mutable. Setting an environment variable is the same as setting a property, i.e. env["HOME"] = "/myhome"
+		 */
+		this->SetMethod("getEnvironment", &APIBinding::_GetEnvironment);
+		
 		/**
 		 * @tiapi(method=True,name=API.log,since=0.2)
 		 * @tiapi Log a statement with a given severity
@@ -745,7 +753,13 @@ namespace kroll
 			result->SetInt(UNKNOWN);
 		}
 	}
-
+	
+	void APIBinding::_GetEnvironment(const ValueList& args, SharedValue result)
+	{
+		AutoPtr<EnvironmentBinding> env = new EnvironmentBinding();
+		result->SetObject(env);
+	}
+	
 	void APIBinding::RunInstaller()
 	{
 		SharedApplication app = host->GetApplication();
