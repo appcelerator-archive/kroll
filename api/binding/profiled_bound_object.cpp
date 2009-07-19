@@ -24,7 +24,7 @@ namespace kroll
 	ProfiledBoundObject::ProfiledBoundObject(SharedKObject delegate) :
 		KObject(delegate->GetType()),
 		delegate(delegate),
-		referenceCount(1)
+		count(1)
 	{
 	}
 

@@ -9,14 +9,18 @@ namespace kroll
 {
 	unsigned int EventListener::currentId = 1;
 	std::map<KEventObject*, std::vector<EventListener*>*> KEventObject::listenerMap;
+	Poco::Mutex KEventObject::listenerMapMutex;
 	AutoPtr<KEventObject> KEventObject::root = new KEventObject(true, "Host");
 
 	KEventObject::KEventObject(const char *type) :
 		AccessorBoundObject(type),
 		isRoot(false)
 	{
-		std::vector<EventListener*>* listeners = new std::vector<EventListener*>();
-		KEventObject::listenerMap[this] = listeners;
+		{
+			Poco::Mutex::ScopedLock lock(listenerMapMutex);
+			std::vector<EventListener*>* listeners = new std::vector<EventListener*>();
+			KEventObject::listenerMap[this] = listeners;
+		}
 
 		this->SetMethod("addEventListener", &KEventObject::_AddEventListener);
 		this->SetMethod("removeEventListener", &KEventObject::_RemoveEventListener);
@@ -26,8 +30,11 @@ namespace kroll
 		AccessorBoundObject(type),
 		isRoot(isRoot)
 	{
-		std::vector<EventListener*>* listeners = new std::vector<EventListener*>();
-		KEventObject::listenerMap[this] = listeners;
+		{
+			Poco::Mutex::ScopedLock lock(listenerMapMutex);
+			std::vector<EventListener*>* listeners = new std::vector<EventListener*>();
+			KEventObject::listenerMap[this] = listeners;
+		}
 
 		this->SetMethod("addEventListener", &KEventObject::_AddEventListener);
 		this->SetMethod("removeEventListener", &KEventObject::_RemoveEventListener);
@@ -35,6 +42,7 @@ namespace kroll
 
 	KEventObject::~KEventObject()
 	{
+		Poco::Mutex::ScopedLock lock(listenerMapMutex);
 		std::vector<EventListener*>* listeners = KEventObject::listenerMap[this];
 		std::vector<EventListener*>::iterator i = listeners->begin();
 		while (i != listeners->end())
@@ -61,6 +69,7 @@ namespace kroll
 	void KEventObject::RemoveEventListener(
 		std::string& eventName, unsigned int listenerId, SharedKMethod callback)
 	{
+		Poco::Mutex::ScopedLock lock(listenerMapMutex);
 		std::vector<EventListener*>* listeners = KEventObject::listenerMap[this];
 		std::vector<EventListener*>::iterator i = listeners->begin();
 		while (i != listeners->end())
@@ -81,6 +90,7 @@ namespace kroll
 	unsigned int KEventObject::AddEventListener(
 		std::string& eventName, SharedKMethod callback)
 	{
+		Poco::Mutex::ScopedLock lock(listenerMapMutex);
 		EventListener* listener = new EventListener(eventName, callback);
 		std::vector<EventListener*>* listeners = KEventObject::listenerMap[this];
 		listeners->push_back(listener);
@@ -89,6 +99,7 @@ namespace kroll
 
 	unsigned int KEventObject::AddEventListenerForAllEvents(SharedKMethod callback)
 	{
+		Poco::Mutex::ScopedLock lock(listenerMapMutex);
 		EventListener* listener = new EventListener(Event::ALL, callback);
 		std::vector<EventListener*>* listeners = KEventObject::listenerMap[this];
 		listeners->push_back(listener);
@@ -115,6 +126,7 @@ namespace kroll
 
 	void KEventObject::FireEvent(AutoPtr<Event> event)
 	{
+		Poco::Mutex::ScopedLock lock(listenerMapMutex);
 		std::vector<EventListener*>* listeners = KEventObject::listenerMap[this];
 		std::vector<EventListener*>::iterator li = listeners->begin();
 		while (li != listeners->end())

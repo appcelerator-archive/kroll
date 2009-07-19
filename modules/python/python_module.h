@@ -65,6 +65,32 @@ namespace kroll
 		static PythonModule *instance_;
 		DISALLOW_EVIL_CONSTRUCTORS(PythonModule);
 	};
+
+	struct PyLockGIL
+	{
+		PyLockGIL() : gstate(PyGILState_Ensure())
+		{ }
+
+		~PyLockGIL()
+		{
+			PyGILState_Release(gstate);
+		}
+
+		PyGILState_STATE gstate;
+	};
+
+	struct PyAllowThreads
+	{
+		PyAllowThreads() : threadState(PyEval_SaveThread())
+		{ }
+
+		~PyAllowThreads()
+		{
+			PyEval_RestoreThread(threadState);
+		}
+
+		PyThreadState* threadState;
+	};
 }
 
 #include "python_module_instance.h"

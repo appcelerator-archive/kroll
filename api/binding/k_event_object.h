@@ -46,7 +46,7 @@ namespace kroll
 
 		protected:
 		bool isRoot;
-		std::vector<EventListener*>& GetListeners();
+		static Poco::Mutex listenerMapMutex;
 		static std::map<KEventObject*, std::vector<EventListener*>*> listenerMap;
 
 		private:

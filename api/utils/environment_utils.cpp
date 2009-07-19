@@ -9,6 +9,11 @@
 
 #ifdef OS_WIN32
 #include <windows.h>
+#elif OS_OSX
+#include <crt_externs.h>
+#define environ (*_NSGetEnviron())
+#else
+extern char** environ;
 #endif
 
 namespace UTILS_NS
@@ -71,6 +76,32 @@ namespace UTILS_NS
 #else
 		unsetenv(name.c_str());
 #endif
+	}
 
+	std::map<std::string, std::string> EnvironmentUtils::GetEnvironment()
+	{
+		std::map<std::string, std::string> environment;
+#ifdef OS_WIN32
+		LPTCH env = GetEnvironmentStrings();
+		while (env[0] != '\0')
+		{
+			std::string entry = (char*)env;
+			std::string key = entry.substr(0, entry.find("="));
+			std::string val = entry.substr(entry.find("=")+1);
+			environment[key] = val;
+			env += entry.size() + 1;
+		}
+#else
+		char** current = environ;
+		while (*current)
+		{
+			std::string entry = *current;
+			std::string key = entry.substr(0, entry.find("="));
+			std::string val = entry.substr(entry.find("=")+1);
+			environment[key] = val;
+			current++;
+		}
+#endif
+		return environment;
 	}
 }
