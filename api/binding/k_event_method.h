@@ -37,6 +37,12 @@ namespace kroll
 			return KEventObject::GetPropertyNames();
 		}
 
+		// @see KMethod::HasProperty
+		virtual bool HasProperty(const char *name)
+		{
+			return KEventObject::HasProperty(name);
+		}
+		
 		// @see KMethod::DisplayString
 		SharedString DisplayString(int levels)
 		{
