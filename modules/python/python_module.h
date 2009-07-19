@@ -65,19 +65,30 @@ namespace kroll
 		DISALLOW_EVIL_CONSTRUCTORS(PythonModule);
 	};
 
-	class PythonGILState
+	struct PyLockGIL
 	{
-		PythonGILState()
-		{
-			this->gstate = PyGILState_Ensure();
-		}
+		PyLockGIL() : gstate(PyGILState_Ensure())
+		{ }
 
-		~PythonGILState()
+		~PyLockGIL()
 		{
-			PyGILState_Release(this->gstate);
+			PyGILState_Release(gstate);
 		}
 
 		PyGILState_STATE gstate;
+	};
+
+	struct PyAllowThreads
+	{
+		PyAllowThreads() : threadState(PyEval_SaveThread())
+		{ }
+
+		~PyAllowThreads()
+		{
+			PyEval_RestoreThread(threadState);
+		}
+
+		PyThreadState* threadState;
 	};
 }
 

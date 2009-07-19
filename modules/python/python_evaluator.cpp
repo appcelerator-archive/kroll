@@ -8,7 +8,7 @@
 
 	SharedValue PythonEvaluator::Call(const ValueList& args)
 	{
-		PythonGILState gil();
+		PyLockGIL lock;
 
 		if (args.size() != 3
 			|| !args.at(1)->IsString()
