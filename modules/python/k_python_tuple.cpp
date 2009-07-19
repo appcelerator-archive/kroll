@@ -66,7 +66,6 @@ namespace kroll
 
 	SharedValue KPythonTuple::Get(const char *name)
 	{
-		PyAllowThreads allow;
 		if (KList::IsInt(name))
 		{
 			unsigned int index = (unsigned int) atoi(name);
