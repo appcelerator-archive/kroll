@@ -45,7 +45,7 @@ namespace kroll
 		this->SetMethod("get", &APIBinding::_Get);
 
 		/**
-		 * @tiapi(method=True,name=API.addEventListener,since=1.0)
+		 * @tiapi(method=True,name=API.addEventListener,since=0.5)
 		 * @tiapi Register a root event listener
 		 * @tiarg[String, eventName] The event name to listen for
 		 * @tiarg[Function, callback] The callback to invoke when this message occurs
@@ -54,27 +54,35 @@ namespace kroll
 		this->SetMethod("addEventListener", &APIBinding::_AddEventListener);
 
 		/**
-		 * @tiapi(method=True,name=API.removeEventListener,since=1.0)
+		 * @tiapi(method=True,name=API.removeEventListener,since=0.5)
 		 * @tiapi Remove a root event listener
 		 * @tiarg[Number|Function, id] The id or callback of the event listener to remove
 		 */
 		this->SetMethod("removeEventListener", &APIBinding::_RemoveEventListener);
 
 		/**
-		 * @tiapi(method=True,name=API.fireEvent,since=1.0)
+		 * @tiapi(method=True,name=API.fireEvent,since=0.5)
 		 * @tiapi Fire the event with a given name
 		 * @tiarg[String|Object, event] The name of the event to fire or the event itself
 		 */
 		this->SetMethod("fireEvent", &APIBinding::_FireEvent);
 
 		/**
-		 * @tiapi(method=True,name=API.runOnMainThread,since=1.0)
+		 * @tiapi(method=True,name=API.runOnMainThread,since=0.5)
 		 * @tiapi Execute the method on the main thread
 		 * @tiarg[Function, method] The method to execute
 		 * @tiarg[any, ...] A variable-length list of arguments to pass to the method
 		 * @tiresult[returnValue] The return value of the method
 		 */
 		this->SetMethod("runOnMainThread", &APIBinding::_RunOnMainThread);
+
+		/**
+		 * @tiapi(method=True,name=API.runOnMainThreadAsync,since=0.5)
+		 * @tiapi Execute the method asynchronously on the main thread
+		 * @tiarg[Function, method] The method to execute
+		 * @tiarg[any, ...] A variable-length list of arguments to pass to the method
+		 */
+		this->SetMethod("runOnMainThreadAsync", &APIBinding::_RunOnMainThreadAsync);
 
 		/**
 		 * @tiapi(method=True,name=API.getApplication,since=0.2)
@@ -228,14 +236,14 @@ namespace kroll
 		this->SetMethod("fatal", &APIBinding::_LogFatal);
 
 		/**
-		 * @tiapi(method=True,name=API.setLogLevel,since=1.0)
+		 * @tiapi(method=True,name=API.setLogLevel,since=0.5)
 		 * @tiapi Set the log level of the root logger
 		 * @tiarg[Number, level] the threshold of severity to log
 		 */
 		this->SetMethod("setLogLevel", &APIBinding::_SetLogLevel);
 
 		/**
-		 * @tiapi(method=True,name=API.getLogLevel,since=1.0)
+		 * @tiapi(method=True,name=API.getLogLevel,since=0.5)
 		 * @tiapi Get the log level of the root logger
 		 * @tiresult[Number] the threshold of severity to log
 		 */
@@ -451,7 +459,7 @@ namespace kroll
 
 	void APIBinding::_Print(const ValueList& args, SharedValue result)
 	{
-		for (size_t c=0;c<args.size();c++)
+		for (size_t c=0; c < args.size(); c++)
 		{
 			SharedValue arg = args.at(c);
 			const char *s = arg->ToString();
@@ -530,11 +538,14 @@ namespace kroll
 	void APIBinding::_FireEvent(const ValueList& args, SharedValue result)
 	{
 		args.VerifyException("fireEvent", "s|o");
-		if (args.at(0)->IsString()) {
+		if (args.at(0)->IsString())
+		{
 			std::string eventName = args.GetString(0);
 			KEventObject::FireRootEvent(eventName);
 
-		} else if (args.at(0)->IsObject()) {
+		}
+		else if (args.at(0)->IsObject())
+		{
 			AutoPtr<Event> event = args.GetObject(0).cast<Event>();
 			if (!event.isNull())
 				KEventObject::FireRootEvent(event);
@@ -543,21 +554,39 @@ namespace kroll
 
 	void APIBinding::_RunOnMainThread(const ValueList& args, SharedValue result)
 	{
-		if (!args.at(0)->IsMethod()) {
+		if (!args.at(0)->IsMethod())
+		{
 			throw ValueException::FromString(
 				"First argument to runOnMainThread was not a function");
 
-		} else {
-			SharedKMethod method = args.at(0)->ToMethod();
-
+		}
+		else
+		{
 			ValueList outArgs;
-			for (size_t i = 1; i < args.size(); i++) {
+			for (size_t i = 1; i < args.size(); i++)
 				outArgs.push_back(args.at(i));
-			}
 
 			SharedValue outResult =
 				host->InvokeMethodOnMainThread(args.GetMethod(0), outArgs);
 			result->SetValue(outResult);
+		}
+	}
+
+	void APIBinding::_RunOnMainThreadAsync(const ValueList& args, SharedValue result)
+	{
+		if (!args.at(0)->IsMethod())
+		{
+			throw ValueException::FromString(
+				"First argument to runOnMainThread was not a function");
+
+		}
+		else
+		{
+			ValueList outArgs;
+			for (size_t i = 1; i < args.size(); i++)
+				outArgs.push_back(args.at(i));
+
+			host->InvokeMethodOnMainThread(args.GetMethod(0), outArgs, false);
 		}
 	}
 

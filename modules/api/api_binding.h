@@ -57,6 +57,7 @@ namespace kroll
 		void _SetLogLevel(const ValueList& args, SharedValue result);
 		void _GetLogLevel(const ValueList& args, SharedValue result);
 		void _RunOnMainThread(const ValueList& args, SharedValue result);
+		void _RunOnMainThreadAsync(const ValueList& args, SharedValue result);
 
 		void _Print(const ValueList& args, SharedValue result);
 		void _Log(const ValueList& args, SharedValue result);
