@@ -258,7 +258,13 @@ namespace kroll
 			free(mod_name);
 			return argv[1];
 		}
-		else if (value->IsMethod())
+		else if (value->IsUndefined()) // raise a method missing error
+		{
+			VALUE selfString = rb_obj_as_string(self);
+			rb_raise(rb_eNoMethodError, "undefined method `%s' for %s",
+				name, RubyUtils::ToString(selfString));
+		}
+		else if (value->IsMethod()) // actually call a method
 		{
 			return RubyUtils::GenericKMethodCall(value->ToMethod(), args);
 		}
