@@ -358,18 +358,18 @@ namespace kroll
 		{
 			*js_exception = KJSUtil::ToJSValue(exception.GetValue(), js_context);
 		}
-		//catch (std::exception &e)
-		//{
-		//	SharedValue v = Value::NewString(e.what());
-		//	*js_exception = KJSUtil::ToJSValue(v, js_context);
-		//}
-		//catch (...)
-		//{
-		//	std::cerr << "KJSUtil.cpp: Caught an unknown exception during get for "
-		//	          << name << std::endl;
-		//	SharedValue v = Value::NewString("unknown exception");
-		//	*js_exception = KJSUtil::ToJSValue(v, js_context);
-		//}
+		catch (std::exception &e)
+		{
+			SharedValue v = Value::NewString(e.what());
+			*js_exception = KJSUtil::ToJSValue(v, js_context);
+		}
+		catch (...)
+		{
+			std::cerr << "KJSUtil.cpp: Caught an unknown exception during get for "
+			          << name << std::endl;
+			SharedValue v = Value::NewString("unknown exception");
+			*js_exception = KJSUtil::ToJSValue(v, js_context);
+		}
 
 		free(name);
 		return js_val;
@@ -405,18 +405,18 @@ namespace kroll
 		{
 			*js_exception = KJSUtil::ToJSValue(exception.GetValue(), js_context);
 		}
-		//catch (std::exception &e)
-		//{
-		//	SharedValue v = Value::NewString(e.what());
-		//	*js_exception = KJSUtil::ToJSValue(v, js_context);
-		//}
-		//catch (...)
-		//{
-		//	std::cerr << "KJSUtil.cpp: Caught an unknown exception during set for "
-		//		<< propertyName << std::endl;
-		//	SharedValue v = Value::NewString("unknown exception");
-		//	*js_exception = KJSUtil::ToJSValue(v, js_context);
-		//}
+		catch (std::exception &e)
+		{
+			SharedValue v = Value::NewString(e.what());
+			*js_exception = KJSUtil::ToJSValue(v, js_context);
+		}
+		catch (...)
+		{
+			std::cerr << "KJSUtil.cpp: Caught an unknown exception during set for "
+				<< propertyName << std::endl;
+			SharedValue v = Value::NewString("unknown exception");
+			*js_exception = KJSUtil::ToJSValue(v, js_context);
+		}
 
 		free(propertyName);
 		return success;
@@ -443,23 +443,27 @@ namespace kroll
 		}
 
 		JSValueRef js_val = NULL;
-		try {
+		try
+		{
 			SharedValue ti_val = method->Call(args);
 			js_val = KJSUtil::ToJSValue(ti_val, js_context);
 
-		} catch (ValueException& exception) {
+		}
+		catch (ValueException& exception) {
 			*js_exception = KJSUtil::ToJSValue(exception.GetValue(), js_context);
-
-		} //catch (std::exception &e) {
-		//	SharedValue v = Value::NewString(e.what());
-		//	*js_exception = KJSUtil::ToJSValue(v, js_context);
-
-		//} catch (...) {
-		//	std::cerr << "KJSUtil.cpp: Caught an unknown exception during call()"
-		//	          << std::endl;
-		//	SharedValue v = Value::NewString("unknown exception");
-		//	*js_exception = KJSUtil::ToJSValue(v, js_context);
-		//}
+		} 
+		catch (std::exception &e)
+		{
+			SharedValue v = Value::NewString(e.what());
+			*js_exception = KJSUtil::ToJSValue(v, js_context);
+		}
+		catch (...)
+		{
+			std::cerr << "KJSUtil.cpp: Caught an unknown exception during call()"
+			          << std::endl;
+			SharedValue v = Value::NewString("unknown exception");
+			*js_exception = KJSUtil::ToJSValue(v, js_context);
+		}
 
 		return js_val;
 	}
