@@ -35,7 +35,7 @@ namespace kroll
 		JSContextRef ctx,
 		JSObjectRef this_obj)
 	{
-		SharedValue kr_val;
+		SharedValue kr_val = kroll::Value::Null;
 		JSValueRef exception = NULL;
 
 		if (value == NULL)
@@ -54,7 +54,6 @@ namespace kroll
 		}
 		else if (JSValueIsString(ctx, value))
 		{
-
 			JSStringRef string_ref = JSValueToStringCopy(ctx, value, &exception);
 			if (string_ref)
 			{
@@ -105,20 +104,20 @@ namespace kroll
 		{
 			kr_val = kroll::Value::Undefined;
 		}
-
 		if (!kr_val.isNull() && exception == NULL)
 		{
 			return kr_val;
 		}
 		else
 		{
+			printf("-->ToKrollValue exception thrown\n");
 			throw KJSUtil::ToKrollValue(exception, ctx, NULL);
 		}
 	}
 
 	JSValueRef KJSUtil::ToJSValue(SharedValue value, JSContextRef ctx)
 	{
-		JSValueRef js_val;
+		JSValueRef js_val = NULL;
 		if (value->IsInt())
 		{
 			js_val = JSValueMakeNumber(ctx, value->ToInt());
@@ -450,11 +449,13 @@ namespace kroll
 		} catch (ValueException& exception) {
 			*js_exception = KJSUtil::ToJSValue(exception.GetValue(), js_context);
 
-		} catch (std::exception &e) {
+		} 
+		catch (std::exception &e) {
 			SharedValue v = Value::NewString(e.what());
 			*js_exception = KJSUtil::ToJSValue(v, js_context);
 
-		} catch (...) {
+		} 
+		catch (...) {
 			std::cerr << "KJSUtil.cpp: Caught an unknown exception during call()"
 			          << std::endl;
 			SharedValue v = Value::NewString("unknown exception");

@@ -17,6 +17,11 @@ namespace kroll
 		ReferenceCounted() : referenceCount(1) { }
 		virtual ~ReferenceCounted() { }
 
+		virtual unsigned int getReferenceCount()
+		{
+			return referenceCount;
+		}
+
 		virtual void duplicate()
 		{
 			referenceCount++;
