@@ -32,7 +32,6 @@ namespace kroll
 		}
 
 		this->InitializeBinding();
-		this->InitializeModule();
 		host->AddModuleProvider(this);
 	}
 
@@ -76,28 +75,6 @@ namespace kroll
 		}
 	}
 
-	void PythonModule::InitializeModule()
-	{
-		PyLockGIL lock;
-		/*
-		We need to build the titanium module
-		to be imported by python modules.
-		*/
-		PyObject* titanium_module = PyImport_AddModule("titanium");
- 
-		// Add global object
-		SharedKObject global = this->host->GetGlobalObject();
-		PyObject* api = PythonUtils::KObjectToPyObject(Value::NewObject(global));
-		PyModule_AddObject(titanium_module, "Titanium", api);
-
-		// Add Module class
-		PyObject* classDict = PyDict_New();
-		PyObject* className = PyString_FromString("Module");
-		PyObject* moduleClass = PyClass_New(NULL, classDict, className);
-		PyModule_AddObject(titanium_module, "Module", moduleClass);
-		Py_DECREF(classDict);
-		Py_DECREF(className);
-	}
 
 	const static std::string python_suffix = "module.py";
 
@@ -109,6 +86,10 @@ namespace kroll
 	Module* PythonModule::CreateModule(std::string& path)
 	{
 		PyLockGIL lock;
+		FILE *file = fopen(path.c_str(), "r");
+
+		PyRun_SimpleFile(file,path.c_str());
+
 		Poco::Path p(path);
 		std::string basename = p.getBaseName();
 		std::string name = basename.substr(0,basename.length()-python_suffix.length()+3);
@@ -117,9 +98,7 @@ namespace kroll
 		Logger *logger = Logger::Get("Python");
 		logger->Info("Loading Python path=%s", path.c_str());
 
-		PythonModuleInstance* instance = new PythonModuleInstance(host, path, moduledir, name);
-		instance->Initialize();
-		return instance;
+		return new PythonModuleInstance(host, path, moduledir, name);
 	}
 
 }
