@@ -471,7 +471,7 @@ namespace kroll
 			if (blob->Length() > 0)
 			{
 				memcpy(current, blob->Get(), blob->Length());
-				current += blob->Length() + 1;
+				current += blob->Length();
 			}
 		}
 
