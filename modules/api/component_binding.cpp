@@ -106,13 +106,17 @@ namespace kroll
 			result->SetBool(true);
 		}
 
-		std::vector<SharedComponent>::iterator i = app->modules.begin();
-		while (i != app->modules.end())
+		else
 		{
-			SharedComponent c = *i++;
-			if (c.get() == this->component.get())
+			std::vector<SharedComponent>::iterator i = app->modules.begin();
+			while (i != app->modules.end())
 			{
-				result->SetBool(true);
+				SharedComponent c = *i++;
+				if (c.get() == this->component.get())
+				{
+					result->SetBool(true);
+					break;
+				}
 			}
 		}
 	}
