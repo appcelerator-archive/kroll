@@ -45,7 +45,6 @@ namespace kroll
 		vector<SharedDependency> installerDependencies;
 		SharedKMethod installerCallback;
 
-
 		void RunInstaller();
 
 		void _Set(const ValueList& args, SharedValue result);
@@ -58,6 +57,7 @@ namespace kroll
 		void _SetLogLevel(const ValueList& args, SharedValue result);
 		void _GetLogLevel(const ValueList& args, SharedValue result);
 		void _RunOnMainThread(const ValueList& args, SharedValue result);
+		void _RunOnMainThreadAsync(const ValueList& args, SharedValue result);
 
 		void _Print(const ValueList& args, SharedValue result);
 		void _Log(const ValueList& args, SharedValue result);
@@ -80,10 +80,10 @@ namespace kroll
 		void _GetComponentSearchPaths(const ValueList& args, SharedValue value);
 		void _ReadApplicationManifest(const ValueList& args, SharedValue value);
 		void _ComponentGUIDToComponentType(const ValueList& args, SharedValue value);
-
+		void _GetEnvironment(const ValueList& args, SharedValue value);
+		
 		void _CreateDependency(const ValueList& args, SharedValue value);
 		void _InstallDependencies(const ValueList& args, SharedValue value);
-
 	};
 }
 

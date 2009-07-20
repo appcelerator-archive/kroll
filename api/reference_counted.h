@@ -11,10 +11,10 @@ namespace kroll
 	class KROLL_API ReferenceCounted
 	{
 		private:
-		unsigned int referenceCount;
+		Poco::AtomicCounter count;
 
 		public:
-		ReferenceCounted() : referenceCount(1) { }
+		ReferenceCounted() : count(1) { }
 		virtual ~ReferenceCounted() { }
 
 		virtual unsigned int getReferenceCount()
@@ -24,15 +24,20 @@ namespace kroll
 
 		virtual void duplicate()
 		{
-			referenceCount++;
+			++count;
 		}
 
 		virtual void release()
 		{
-			referenceCount--;
-			if (referenceCount <= 0) {
+			int value = --count;
+			if (value <= 0) {
 				delete this;
 			}
+		}
+
+		virtual int referenceCount() const
+		{
+			return count.value();
 		}
 	};
 }

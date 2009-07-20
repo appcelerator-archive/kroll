@@ -21,14 +21,21 @@ namespace kroll
 	class KROLL_API Blob : public StaticBoundObject
 	{
 	public:
-
+		/**
+		 * if makeCopy is false: create a Blob from a heap-allocated
+		 * pointer. The blob * will keep the pointer to this string,
+		 * so do not free it afterward. The buffer should be size+1
+		 * bytes long and NULL terminated.
+		 */
 		Blob();
-		Blob(char *buffer);
-		Blob(char *buffer, int size);
-		Blob(const char *buffer, int size);
+		Blob(char *buffer, bool makeCopy=true);
+		Blob(char *buffer, int size, bool makeCopy=true);
+		Blob(const char *buffer, int size, bool makeCopy=true);
 		Blob(std::string);
 		Blob(std::string&);
 		virtual ~Blob();
+		void SetupBinding();
+		static AutoBlob GlobBlobs(std::vector<AutoBlob>& blobs);
 
 		/**
 		 * @return The buffer as a const char *
@@ -38,7 +45,7 @@ namespace kroll
 		/**
 		 * @return the length of the underlying buffer§
 		 */
-		const int Length () { return length; }
+		const int Length() { return length; }
 
 	private:
 		char *buffer;
@@ -58,8 +65,8 @@ namespace kroll
 		void ToUpperCase(const ValueList& args, SharedValue result);
 		void Replace(const ValueList& args, SharedValue result);
 
-		void Create(const char *buf, int len);
-
+		void CreateWithCopy(const char *buf, int len);
+		void CreateWithReference(char *buf, int len);
 	};
 }
 

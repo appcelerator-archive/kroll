@@ -13,50 +13,72 @@ namespace kroll
 {
 	Blob::Blob() : StaticBoundObject("Blob")
 	{
-		Create(NULL, 0);
+		CreateWithCopy(NULL, 0);
 	}
 
-	Blob::Blob(char *buf) : StaticBoundObject("Blob")
+	Blob::Blob(char *buf, bool makeCopy) : 
+		StaticBoundObject("Blob")
 	{
 		// Assume this guy is null terminated. If not -- oops.
-		Create(buf, strlen(buf));
+		if (makeCopy)
+		{
+			CreateWithCopy(buf, strlen(buf));
+		}
+		else
+		{
+			CreateWithReference(buf, strlen(buf));
+		}
 	}
 
-	Blob::Blob(char *buf, int len) : StaticBoundObject("Blob")
+	Blob::Blob(char *bufferIn, int len, bool makeCopy) :
+		StaticBoundObject("Blob")
 	{
-		Create(buf, len);
+		if (makeCopy)
+		{
+			CreateWithCopy(bufferIn, len);
+		}
+		else
+		{
+			CreateWithReference(bufferIn, len);
+		}
 	}
 
-	Blob::Blob(const char *buffer, int len) : StaticBoundObject("Blob")
+	Blob::Blob(const char *bufferIn, int len, bool makeCopy) :
+		StaticBoundObject("Blob")
 	{
-		Create(buffer, len);
+		CreateWithCopy(bufferIn, len);
 	}
 
 	Blob::Blob(std::string str) : StaticBoundObject("Blob")
 	{
-		Create(str.c_str(), str.length());
+		CreateWithCopy(str.c_str(), str.length());
 	}
 
 	Blob::Blob(std::string& str) : StaticBoundObject("Blob")
 	{
-		Create(str.c_str(), str.length());
+		CreateWithCopy(str.c_str(), str.length());
 	}
 
-	void Blob::Create(const char *buf, int length)
+	void Blob::CreateWithCopy(const char *bufferIn, int length)
 	{
 		if (length > 0)
 		{
 			// Store the buffer with a null terminator so
 			// that we can use it like a string later on.
-			this->buffer = new char[length + 1];
-			memcpy(this->buffer, buf, length);
-			this->buffer[length] = '\0';
+			char* bufferCopy = new char[length + 1];
+			memcpy(bufferCopy, bufferIn, length);
+			bufferCopy[length] = '\0';
+			this->CreateWithReference(bufferCopy, length);
 		}
 		else
 		{
-			this->buffer = NULL;
+			this->CreateWithReference(NULL, length);
 		}
+	}
 
+	void Blob::CreateWithReference(char* buffer, int length)
+	{
+		this->buffer = buffer;
 		this->length = length;
 
 		/**
@@ -429,5 +451,30 @@ namespace kroll
 		{
 			result->SetNull();
 		}
+	}
+
+	AutoBlob Blob::GlobBlobs(std::vector<AutoBlob>& blobs)
+	{
+		int size = 0;
+		for (size_t i = 0; i < blobs.size(); i++)
+		{
+			size += blobs.at(i)->Length();
+		}
+
+		char* buffer = new char[size+1];
+		buffer[size] = '\0';
+
+		char* current = buffer;
+		for (size_t i = 0; i < blobs.size(); i++)
+		{
+			AutoBlob blob = blobs.at(i);
+			if (blob->Length() > 0)
+			{
+				memcpy(current, blob->Get(), blob->Length());
+				current += blob->Length();
+			}
+		}
+
+		return new Blob(buffer, size, false);
 	}
 }
