@@ -183,15 +183,18 @@ namespace kroll
 		if (event->eventName != this->eventName && this->eventName != Event::ALL)
 			return;
 
-		try {
+		try
+		{
 			Host* host = Host::GetInstance();
 			host->InvokeMethodOnMainThread(
 				callback, ValueList(Value::NewObject(event)));
-
-		} catch (ValueException &e) {
+		}
+		catch (ValueException& e)
+		{
 			Logger* logger = Logger::Get("KEventObject");
 			SharedString ss = e.DisplayString();
 			logger->Error("Exception caught during window event callback: %s", ss->c_str());
+
 		}
 	}
 
