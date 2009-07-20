@@ -78,6 +78,7 @@ namespace kroll
 
 	void PythonModule::InitializeModule()
 	{
+		PyLockGIL lock;
 		/*
 		We need to build the titanium module
 		to be imported by python modules.
