@@ -567,7 +567,7 @@ namespace kroll
 				outArgs.push_back(args.at(i));
 
 			SharedValue outResult =
-				host->InvokeMethodOnMainThread(method, outArgs);
+				host->InvokeMethodOnMainThread(args.GetMethod(0), outArgs);
 			result->SetValue(outResult);
 		}
 	}
