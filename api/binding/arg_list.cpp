@@ -110,6 +110,9 @@ namespace kroll
 			}
 			*sig++;
 		}
+
+		if (!types.empty())
+			sig_vector->push_back(types);
 		return sig_vector;
 	}
 
@@ -188,15 +191,21 @@ namespace kroll
 			// Not enough args given, but we're in
 			// optional mode.
 			if (this->size() < i + 1 && optional)
+			{
 				return true;
+			}
 
 			// Not enough args given.
 			if (this->size() < i + 1)
+			{
 				return false;
+			}
 
 			// Arg doesn't conform to arg string
 			if (!ArgList::VerifyArg(this->at(i), t))
+			{
 				return false;
+			}
 		}
 		return true;
 	}

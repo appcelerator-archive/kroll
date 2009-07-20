@@ -126,10 +126,17 @@ namespace kroll
 
 	void KEventObject::FireEvent(AutoPtr<Event> event)
 	{
-		Poco::Mutex::ScopedLock lock(listenerMapMutex);
-		std::vector<EventListener*>* listeners = KEventObject::listenerMap[this];
-		std::vector<EventListener*>::iterator li = listeners->begin();
-		while (li != listeners->end())
+		std::vector<EventListener*> listeners;
+		{
+			// We cannot block any threads wile we handle callbacks, so
+			// we must make a copy of this map while we handle callbacks. Always
+			// remember: premature optimization is the root of all evil.
+			Poco::Mutex::ScopedLock lock(listenerMapMutex);
+			listeners = *(KEventObject::listenerMap[this]);
+		}
+
+		std::vector<EventListener*>::iterator li = listeners.begin();
+		while (li != listeners.end())
 		{
 			EventListener* listener = *li++;
 			listener->FireEventIfMatches(event);
@@ -138,9 +145,8 @@ namespace kroll
 				return;
 		}
 
-		if (!this->isRoot) {
+		if (!this->isRoot)
 			KEventObject::root->FireEvent(event);
-		}
 	}
 
 	void KEventObject::_AddEventListener(const ValueList& args, SharedValue result)
@@ -177,15 +183,18 @@ namespace kroll
 		if (event->eventName != this->eventName && this->eventName != Event::ALL)
 			return;
 
-		try {
+		try
+		{
 			Host* host = Host::GetInstance();
 			host->InvokeMethodOnMainThread(
 				callback, ValueList(Value::NewObject(event)));
-
-		} catch (ValueException &e) {
+		}
+		catch (ValueException& e)
+		{
 			Logger* logger = Logger::Get("KEventObject");
 			SharedString ss = e.DisplayString();
 			logger->Error("Exception caught during window event callback: %s", ss->c_str());
+
 		}
 	}
 

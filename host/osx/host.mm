@@ -204,6 +204,7 @@ namespace kroll
 	{
 		exception->assign(Value::NewString("unhandled exception"));
 	}
+
 	if (!wait)
 	{
 		// on non-blocking we own ourselves and need to release
@@ -274,7 +275,7 @@ namespace kroll
 		}
 		[caller release];
 		[pool release];
-		throw exception;
+		throw ValueException(exception);
 		return Value::Undefined;
 	}
 }

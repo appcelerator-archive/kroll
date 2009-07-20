@@ -443,18 +443,22 @@ namespace kroll
 		}
 
 		JSValueRef js_val = NULL;
-		try {
+		try
+		{
 			SharedValue ti_val = method->Call(args);
 			js_val = KJSUtil::ToJSValue(ti_val, js_context);
 
-		} catch (ValueException& exception) {
+		}
+		catch (ValueException& exception) {
 			*js_exception = KJSUtil::ToJSValue(exception.GetValue(), js_context);
-
-		} catch (std::exception &e) {
+		} 
+		catch (std::exception &e)
+		{
 			SharedValue v = Value::NewString(e.what());
 			*js_exception = KJSUtil::ToJSValue(v, js_context);
-
-		} catch (...) {
+		}
+		catch (...)
+		{
 			std::cerr << "KJSUtil.cpp: Caught an unknown exception during call()"
 			          << std::endl;
 			SharedValue v = Value::NewString("unknown exception");
