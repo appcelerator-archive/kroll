@@ -12,9 +12,9 @@
 
 namespace kroll
 {
-	VALUE RubyUtils::kobj_class = Qnil;
-	VALUE RubyUtils::kmethod_class = Qnil;
-	VALUE RubyUtils::klist_class = Qnil;
+	VALUE RubyUtils::KObjectClass = Qnil;
+	VALUE RubyUtils::KMethodClass = Qnil;
+	VALUE RubyUtils::KListClass = Qnil;
 
 	const char* RubyUtils::ToString(VALUE value)
 	{
@@ -73,19 +73,19 @@ namespace kroll
 			SharedKList klist = new KRubyList(value);
 			kvalue = Value::NewList(klist);
 		}
-		else if (T_DATA == t && kobj_class != Qnil && c == kobj_class)
+		else if (T_DATA == t && KObjectClass != Qnil && c == KObjectClass)
 		{
 			SharedValue* kval = NULL;
 			Data_Get_Struct(value, SharedValue, kval);
 			kvalue = Value::NewObject((*kval)->ToObject());
 		}
-		else if (T_DATA == t && kmethod_class != Qnil && c == kmethod_class)
+		else if (T_DATA == t && KMethodClass != Qnil && c == KMethodClass)
 		{
 			SharedValue* kval = NULL;
 			Data_Get_Struct(value, SharedValue, kval);
 			kvalue = Value::NewMethod((*kval)->ToMethod());
 		}
-		else if (T_DATA == t && klist_class != Qnil && c == klist_class)
+		else if (T_DATA == t && KListClass != Qnil && c == KListClass)
 		{
 			SharedValue* kval = NULL;
 			Data_Get_Struct(value, SharedValue, kval);
@@ -154,7 +154,7 @@ namespace kroll
 		return Qnil;
 	}
 
-	static VALUE ruby_kobject_methods(VALUE self)
+	static VALUE RubyKObjectMethods(VALUE self)
 	{
 		SharedValue* value = NULL;
 		Data_Get_Struct(self, SharedValue, value);
@@ -199,7 +199,7 @@ namespace kroll
 	}
 
 	// A :method method for pulling methods off of KObjects in Ruby
-	static VALUE ruby_kobject_method(int argc, VALUE *argv, VALUE self)
+	static VALUE RubyKObjectMethod(int argc, VALUE *argv, VALUE self)
 	{
 		SharedValue* dval = NULL;
 		Data_Get_Struct(self, SharedValue, dval);
@@ -225,7 +225,7 @@ namespace kroll
 	}
 
 	// A :method_missing method for finding KObject properties in Ruby
-	static VALUE ruby_kobject_method_missing(int argc, VALUE *argv, VALUE self)
+	static VALUE RubyKObjectMethodMissing(int argc, VALUE *argv, VALUE self)
 	{
 		SharedValue* dval = NULL;
 		Data_Get_Struct(self, SharedValue, dval);
@@ -234,6 +234,12 @@ namespace kroll
 		// TODO: We should raise an exception instead
 		if (object.isNull())
 			return Qnil;
+
+		// This is the same error that ruby throws
+		if (argc == 0 || !SYMBOL_P(argv[0]))
+		{
+			rb_raise(rb_eArgError, "no id given");
+		}
 
 		// We need to determine the method that was invoked:
 		// store the method name and arguments in separate variables
@@ -252,7 +258,13 @@ namespace kroll
 			free(mod_name);
 			return argv[1];
 		}
-		else if (value->IsMethod())
+		else if (value->IsUndefined()) // raise a method missing error
+		{
+			VALUE selfString = rb_obj_as_string(self);
+			rb_raise(rb_eNoMethodError, "undefined method `%s' for %s",
+				name, RubyUtils::ToString(selfString));
+		}
+		else if (value->IsMethod()) // actually call a method
 		{
 			return RubyUtils::GenericKMethodCall(value->ToMethod(), args);
 		}
@@ -262,13 +274,27 @@ namespace kroll
 		}
 	}
 
-	static void ruby_kobject_free(void *p)
+	// A :responds_to? method for finding KObject properties in Ruby
+	static VALUE RubyKObjectRespondTo(int argc, VALUE *argv, VALUE self)
+	{
+		SharedValue* dval = NULL;
+		Data_Get_Struct(self, SharedValue, dval);
+		SharedKObject object = (*dval)->ToObject();
+		VALUE mid, priv; // We ignore the priv argument
+
+		rb_scan_args(argc, argv, "11", &mid, &priv);
+		const char* name = rb_id2name(rb_to_id(mid));
+		SharedValue value = object->Get(name);
+		return value->IsUndefined() ? Qfalse : Qtrue;
+	}
+
+	static void RubyKObjectFree(void *p)
 	{
 		SharedValue* kval = static_cast<SharedValue*>(p);
 		delete kval;
 	}
 
-	static VALUE ruby_kmethod_call(VALUE self, VALUE args)
+	static VALUE RubyKMethodCall(VALUE self, VALUE args)
 	{
 		SharedValue* dval = NULL;
 		Data_Get_Struct(self, SharedValue, dval);
@@ -284,18 +310,20 @@ namespace kroll
 	VALUE RubyUtils::KObjectToRubyValue(SharedValue obj)
 	{
 		// Lazily initialize the KObject wrapper class
-		if (kobj_class == Qnil)
+		if (KObjectClass == Qnil)
 		{
-			kobj_class = rb_define_class("RubyKObject", rb_cObject);
-			rb_define_method(kobj_class, "method_missing",
-				RUBY_METHOD_FUNC(ruby_kobject_method_missing), -1);
-			rb_define_method(kobj_class, "method",
-				RUBY_METHOD_FUNC(ruby_kobject_method), -1);
-			rb_define_method(kobj_class, "methods",
-				RUBY_METHOD_FUNC(ruby_kobject_methods), 0);
+			KObjectClass = rb_define_class("RubyKObject", rb_cObject);
+			rb_define_method(KObjectClass, "method_missing",
+				RUBY_METHOD_FUNC(RubyKObjectMethodMissing), -1);
+			rb_define_method(KObjectClass, "method",
+				RUBY_METHOD_FUNC(RubyKObjectMethod), -1);
+			rb_define_method(KObjectClass, "methods",
+				RUBY_METHOD_FUNC(RubyKObjectMethods), 0);
+			rb_define_method(KObjectClass, "respond_to?",
+				RUBY_METHOD_FUNC(RubyKObjectRespondTo), -1);
 		}
 
-		VALUE wrapper = Data_Wrap_Struct(kobj_class, 0, ruby_kobject_free, new SharedValue(obj));
+		VALUE wrapper = Data_Wrap_Struct(KObjectClass, 0, RubyKObjectFree, new SharedValue(obj));
 		rb_obj_call_init(wrapper, 0, 0);
 		return wrapper;
 	}
@@ -303,25 +331,27 @@ namespace kroll
 	VALUE RubyUtils::KMethodToRubyValue(SharedValue obj)
 	{
 		// Lazily initialize the KMethod wrapper class
-		if (kmethod_class == Qnil)
+		if (KMethodClass == Qnil)
 		{
-			kmethod_class = rb_define_class("RubyKMethod", rb_cObject);
-			rb_define_method(kmethod_class, "method_missing",
-				RUBY_METHOD_FUNC(ruby_kobject_method_missing), -1);
-			rb_define_method(kobj_class, "method",
-				RUBY_METHOD_FUNC(ruby_kobject_method), -1);
-			rb_define_method(kmethod_class, "methods",
-				RUBY_METHOD_FUNC(ruby_kobject_methods), 0);
-			rb_define_method(kmethod_class, "call",
-				RUBY_METHOD_FUNC(ruby_kmethod_call), -2);
+			KMethodClass = rb_define_class("RubyKMethod", rb_cObject);
+			rb_define_method(KMethodClass, "method_missing",
+				RUBY_METHOD_FUNC(RubyKObjectMethodMissing), -1);
+			rb_define_method(KMethodClass, "method",
+				RUBY_METHOD_FUNC(RubyKObjectMethod), -1);
+			rb_define_method(KMethodClass, "methods",
+				RUBY_METHOD_FUNC(RubyKObjectMethods), 0);
+			rb_define_method(KMethodClass, "respond_to?",
+				RUBY_METHOD_FUNC(RubyKObjectRespondTo), -1);
+			rb_define_method(KMethodClass, "call",
+				RUBY_METHOD_FUNC(RubyKMethodCall), -2);
 		}
 
-		VALUE wrapper = Data_Wrap_Struct(kmethod_class, 0, ruby_kobject_free, new SharedValue(obj));
+		VALUE wrapper = Data_Wrap_Struct(KMethodClass, 0, RubyKObjectFree, new SharedValue(obj));
 		rb_obj_call_init(wrapper, 0, 0);
 		return wrapper;
 	}
 
-	static VALUE ruby_klist_getelt(int argc, VALUE *argv, VALUE self)
+	static VALUE RubyKListGetElt(int argc, VALUE *argv, VALUE self)
 	{
 		SharedValue* dval = NULL;
 		Data_Get_Struct(self, SharedValue, dval);
@@ -346,7 +376,7 @@ namespace kroll
 		}
 	}
 
-	static VALUE ruby_klist_setelt(int argc, VALUE *argv, VALUE self)
+	static VALUE RubyKListSetElt(int argc, VALUE *argv, VALUE self)
 	{
 		SharedValue* dval = NULL;
 		Data_Get_Struct(self, SharedValue, dval);
@@ -369,7 +399,7 @@ namespace kroll
 		return argv[1];
 	}
 
-	static VALUE ruby_klist_each(VALUE self)
+	static VALUE RubyKListEach(VALUE self)
 	{
 		SharedValue* dval = NULL;
 		Data_Get_Struct(self, SharedValue, dval);
@@ -391,24 +421,26 @@ namespace kroll
 	VALUE RubyUtils::KListToRubyValue(SharedValue obj)
 	{
 		// Lazily initialize the KMethod wrapper class
-		if (klist_class == Qnil)
+		if (KListClass == Qnil)
 		{
-			klist_class = rb_define_class("RubyKList", rb_cObject);
-			rb_define_method(klist_class, "method_missing",
-				RUBY_METHOD_FUNC(ruby_kobject_method_missing), -1);
-			rb_define_method(kobj_class, "method",
-				RUBY_METHOD_FUNC(ruby_kobject_method), -1);
-			rb_define_method(klist_class, "methods",
-				RUBY_METHOD_FUNC(ruby_kobject_methods), 0);
-			rb_define_method(klist_class, "[]",
-				RUBY_METHOD_FUNC(ruby_klist_getelt), -1);
-			rb_define_method(klist_class, "[]=",
-				RUBY_METHOD_FUNC(ruby_klist_setelt), -1);
-			rb_define_method(klist_class, "each",
-				RUBY_METHOD_FUNC(ruby_klist_each), 0);
+			KListClass = rb_define_class("RubyKList", rb_cObject);
+			rb_define_method(KListClass, "method_missing",
+				RUBY_METHOD_FUNC(RubyKObjectMethodMissing), -1);
+			rb_define_method(KListClass, "method",
+				RUBY_METHOD_FUNC(RubyKObjectMethod), -1);
+			rb_define_method(KListClass, "methods",
+				RUBY_METHOD_FUNC(RubyKObjectMethods), 0);
+			rb_define_method(KListClass, "respond_to?",
+				RUBY_METHOD_FUNC(RubyKObjectRespondTo), -1);
+			rb_define_method(KListClass, "[]",
+				RUBY_METHOD_FUNC(RubyKListGetElt), -1);
+			rb_define_method(KListClass, "[]=",
+				RUBY_METHOD_FUNC(RubyKListSetElt), -1);
+			rb_define_method(KListClass, "each",
+				RUBY_METHOD_FUNC(RubyKListEach), 0);
 		}
 
-		VALUE wrapper = Data_Wrap_Struct(klist_class, 0, ruby_kobject_free, new SharedValue(obj));
+		VALUE wrapper = Data_Wrap_Struct(KListClass, 0, RubyKObjectFree, new SharedValue(obj));
 		rb_obj_call_init(wrapper, 0, 0);
 		return wrapper;
 	}

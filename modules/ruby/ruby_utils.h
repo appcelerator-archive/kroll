@@ -25,9 +25,9 @@ namespace kroll
 		static VALUE GenericKMethodCall(SharedKMethod method, VALUE args);
 
 	private:
-		static VALUE kobj_class;
-		static VALUE kmethod_class;
-		static VALUE klist_class;
+		static VALUE KObjectClass;
+		static VALUE KMethodClass;
+		static VALUE KListClass;
 		RubyUtils(){}
 		~RubyUtils(){}
 	};
