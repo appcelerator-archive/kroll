@@ -40,7 +40,7 @@ namespace kroll
 
 		if (value == NULL)
 		{
-			std::cerr << "Trying to convert NULL JSValueRef!" << std::endl;
+			std::cerr << "KJSUtil::ToKrollValue() Trying to convert NULL JSValueRef!" << std::endl;
 			return Value::Undefined;
 		}
 
@@ -110,7 +110,7 @@ namespace kroll
 		}
 		else
 		{
-			std::cerr << "KJSUtil.cpp: Caught a value exception during call()" << std::endl;
+			std::cerr << "KJSUtil::ToKrollValue Caught a value exception during call() "<< std::endl;
 			throw KJSUtil::ToKrollValue(exception, ctx, NULL);
 		}
 	}
@@ -449,18 +449,19 @@ namespace kroll
 
 		}
 		catch (ValueException& exception) {
-			std::cerr << "KJSUtil.cpp: Caught a value exception during call() -" << exception.GetValue() << std::endl;
+			SharedString str = exception.DisplayString();
+			std::cerr << "KJSUtil.cpp::call_as_function_cb() Caught a value exception during call() -" << exception.GetValue() << " exception is " <<*str << std::endl;
 			*js_exception = KJSUtil::ToJSValue(exception.GetValue(), js_context);
 		} 
 		catch (std::exception &e)
 		{
-			std::cerr << "KJSUtil.cpp: Caught an exception during call() - " << e.what() << std::endl;
+			std::cerr << "KJSUtil::call_as_function_cb() Caught an exception during call() - " << e.what() << std::endl;
 			SharedValue v = Value::NewString(e.what());
 			*js_exception = KJSUtil::ToJSValue(v, js_context);
 		}
 		catch (...)
 		{
-			std::cerr << "KJSUtil.cpp: Caught an unknown exception during call()" << std::endl;
+			std::cerr << "KJSUtil::call_as_function_cb() Caught an unknown exception during call()" << std::endl;
 			SharedValue v = Value::NewString("unknown exception");
 			*js_exception = KJSUtil::ToJSValue(v, js_context);
 		}
