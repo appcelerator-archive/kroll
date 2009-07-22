@@ -41,22 +41,18 @@ namespace kroll
 		}
 		catch (ValueException& e)
 		{
-			printf("<-->Win32Job, ValueExcpetion caught\n");
 			this->exception = e;
 		}
 		catch (Poco::SystemException& e)
 		{
-			printf("<-->Win32Job, Poco::SystemException caught\n");
 			this->exception = ValueException::FromString(e.displayText());
 		}
 		catch (std::exception& e)
 		{
-			printf("<-->Win32Job, std::exception caught\n");
 			this->exception = ValueException::FromString(e.what());
 		}
 		catch (...)
 		{
-			printf("<-->Win32Job, default exception caught\n");
 			this->exception = ValueException::FromString("Unknown Exception from job queue");
 		}
 
