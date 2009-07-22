@@ -462,8 +462,16 @@ namespace kroll
 		for (size_t c=0; c < args.size(); c++)
 		{
 			SharedValue arg = args.at(c);
-			const char *s = arg->ToString();
-			std::cout << s;
+			if (arg->IsString())
+			{
+				const char *s = arg->ToString();
+				std::cout << s;
+			}
+			else
+			{
+				SharedString ss = arg->DisplayString();
+				std::cout << *ss;
+			}
 		}
 		std::cout.flush();
 	}
@@ -598,7 +606,7 @@ namespace kroll
 		{
 			return;
 		}
-		
+
 		if (value->IsString())
 		{
 			string message = value->ToString();
