@@ -13,44 +13,48 @@
 
 namespace kroll
 {
-
+	/**
+	 * The DelegateStaticBoundObject lets you wrap a globally accessible
+	 * object in such a way as it appears to have special properties in
+	 * in local contexts. When a Get(...) occurs, the object searches a local
+	 * delegate and then a global one. When a Set(...) occurs, the object
+	 * performs it on both the local and the global version. Thus this object
+	 * is most useful if the local properties are assigned to the local object
+	 * in an initial setup phase.
+	 */
 	class KROLL_API DelegateStaticBoundObject : public KObject
 	{
-	public:
-
-		DelegateStaticBoundObject(SharedKObject base);
-		DelegateStaticBoundObject(SharedKObject base, SharedKObject delegate);
+		public:
+		DelegateStaticBoundObject(SharedKObject global);
+		DelegateStaticBoundObject(SharedKObject global, SharedKObject local);
 		virtual ~DelegateStaticBoundObject();
-
-
 		virtual SharedValue Get(const char *name);
 		virtual SharedStringList GetPropertyNames();
 		virtual void Set(const char *name, SharedValue value);
 		virtual bool HasProperty(const char* name);
 
+		virtual inline SharedKObject GetGlobal() { return this->global; }
+		virtual inline SharedKObject GetLocal() { return this->local; }
 
-	private:
+		private:
+		/**
+		 * The global part of this delegate object. This object
+		 * is used to find properties if they are not found in
+		 * the local object.
+		 */
+		SharedKObject global;
 
 		/**
-		 * The base part of this delegate object. This object
-		 * is the first object searched for properties and also
-		 * the targets of property assignments.
+		 * The local part of this delegate object. This object
+		 * is the first in line for property retrieval. 
 		 */
-		SharedKObject base;
-
-		/**
-		 * The delegate part of this delegate object. This object
-		 * is used to find properties if they are not found in the base.
-		 */
-		SharedKObject delegate;
+		SharedKObject local;
 
 		DISALLOW_EVIL_CONSTRUCTORS(DelegateStaticBoundObject);
 
 	protected:
 		Mutex mutex;
-
 	};
-
 }
 
 #endif
