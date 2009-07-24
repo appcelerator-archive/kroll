@@ -61,7 +61,7 @@ namespace KrollBoot
 		string currentPath = EnvironmentUtils::Get("PATH");
 		if (!currentPath.empty())
 		{
-			path = path + ":" + currentPath;
+			path = path + ";" + currentPath;
 		}
 		EnvironmentUtils::Set("PATH", path);
 	}
