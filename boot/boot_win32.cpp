@@ -26,7 +26,9 @@ namespace KrollBoot
 	extern SharedApplication app;
 	extern int argc;
 	extern const char** argv;
-
+	const char *preload[] = { "zlib1.dll", "ssleay32.dll", "libeay32.dll", "libpng13.dll", "libxml2.dll", "libxslt.dll" };
+	const int preloadSize = sizeof(preload)/sizeof(preload[0]);
+	
 	inline void ShowError(string msg, bool fatal)
 	{
 		std::cerr << "Error: " << msg << std::endl;
@@ -134,34 +136,48 @@ namespace KrollBoot
 			return "Could not retrieve the exit code.";
 		}
 	}
-
-	typedef int Executor(HINSTANCE, int, const char **);
-	int StartHost()
+	
+	bool SafeLoadRuntimeDLL(const char *name, HMODULE *module)
 	{
 		string runtimePath = EnvironmentUtils::Get("KR_RUNTIME");
-		std::string khost = FileUtils::Join(runtimePath.c_str(), "khost.dll", NULL);
-
-		// now we need to load the host and get 'er booted
-		if (!FileUtils::IsFile(khost))
+		std::string dll = FileUtils::Join(runtimePath.c_str(), name, NULL);
+		if (!FileUtils::IsFile(dll))
 		{
-			ShowError(string("Couldn't find required file: ") + khost);
-			return __LINE__;
+			ShowError(string("Couldn't find required file: ") + dll);
+			return false;
 		}
-	
-		HMODULE dll = LoadLibraryA(khost.c_str());
-		if (!dll)
+		
+		*module = LoadLibraryA(dll.c_str());
+		if (!(*module))
 		{
 			char msg[MAX_PATH];
-	 		sprintf_s(msg,"Couldn't load file: %s, error: %s", khost.c_str(),
-				KrollUtils::Win32Utils::QuickFormatMessage(GetLastError()).c_str());
+			sprintf_s(msg,"Couldn't load file: %s, error: %s",
+				dll.c_str(), KrollUtils::Win32Utils::QuickFormatMessage(GetLastError()).c_str());
 
 			ShowError(msg);
-			return __LINE__;
+			return false;
 		}
-		Executor *executor = (Executor*)GetProcAddress(dll, "Execute");
+		
+		return true;
+	}
+	
+	typedef int Executor(HINSTANCE, int, const char **);
+	int StartHost()
+	{	
+		// preload some of the troublesome common runtime DLLs
+		for (int i = 0; i < preloadSize; i++)
+		{
+			HMODULE module;
+			if (!SafeLoadRuntimeDLL(preload[i], &module)) return __LINE__;
+		}
+		
+		HMODULE khost;	
+		if (!SafeLoadRuntimeDLL("khost.dll", &khost)) return __LINE__;
+		
+		Executor *executor = (Executor*)GetProcAddress(khost, "Execute");
 		if (!executor)
 		{
-			ShowError(string("Invalid entry point for") + khost);
+			ShowError(string("Invalid entry point 'Execute' in khost.dll"));
 			return __LINE__;
 		}
 
