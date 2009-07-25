@@ -399,6 +399,27 @@ namespace kroll
 		return argv[1];
 	}
 
+	static VALUE RubyKListLength(int argc, VALUE *argv, VALUE self)
+	{
+		SharedValue* dval = NULL;
+		Data_Get_Struct(self, SharedValue, dval);
+		SharedKList klist = (*dval)->ToList();
+
+		// TODO: We should raise an exception instead
+		if (klist.isNull())
+			return Qnil;
+
+		if (argc > 0)
+		{
+			rb_raise(rb_eNoMethodError, "wrong number of arguments (%d for 0)", argc);
+			return Qnil;
+		}
+		else
+		{
+			return INT2NUM(klist->Size());
+		}
+	}
+
 	static VALUE RubyKListEach(VALUE self)
 	{
 		SharedValue* dval = NULL;
@@ -410,10 +431,8 @@ namespace kroll
 
 		for (unsigned int i = 0; i < list->Size(); i++)
 		{
-			VALUE v = RubyUtils::ToRubyValue(list->At(i));
-			VALUE args = rb_ary_new();
-			rb_ary_push(args, v);
-			rb_yield(args);
+			VALUE rubyValue = RubyUtils::ToRubyValue(list->At(i));
+			rb_yield(rubyValue);
 		}
 		return self;
 	}
@@ -436,6 +455,8 @@ namespace kroll
 				RUBY_METHOD_FUNC(RubyKListGetElt), -1);
 			rb_define_method(KListClass, "[]=",
 				RUBY_METHOD_FUNC(RubyKListSetElt), -1);
+			rb_define_method(KListClass, "length",
+				RUBY_METHOD_FUNC(RubyKListLength), -1);
 			rb_define_method(KListClass, "each",
 				RUBY_METHOD_FUNC(RubyKListEach), 0);
 		}
