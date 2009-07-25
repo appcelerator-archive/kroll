@@ -33,12 +33,15 @@ namespace UTILS_NS
 		 */
 		static std::string GetMachineId();
 
+		private:
 		/**
 		 * Create a machine ID for this machine and write it to the .PRODUCT_NAME file
 		 * in the user runtime home directory. The machine id is specific to a particular
 		 * user on a particular OS install and does not uniquely identify a machine.
 		 */
-		static std::string CreateMachineId();
+		static std::string CreateMachineId(std::string& midFileName);
+		static std::string GetOldMachineId(std::string& midFileName);
+		static std::string ReadMIDFromFile(std::string& path);
 	};
 }
 #endif

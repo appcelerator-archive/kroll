@@ -31,6 +31,7 @@
 #include "utils.h"
 #include <iostream>
 #include <fstream>
+#define MID_PREFIX "v2:"
 
 namespace UTILS_NS
 {
@@ -61,60 +62,89 @@ namespace UTILS_NS
 
 	std::string PlatformUtils::GetMachineId()
 	{
+
+		std::string midFileName = std::string(".") + PRODUCT_NAME;
+		std::transform(midFileName.begin(), midFileName.end(), midFileName.begin(), tolower);
+
+		std::string midFilePath = FileUtils::GetUserRuntimeHomeDirectory();
+		midFilePath = FileUtils::Join(midFilePath.c_str(), midFileName.c_str(), NULL);
+		std::string mid = ReadMIDFromFile(midFilePath);
+
+		// If we couldn't read the MID or this is an old MID,
+		// create a new one and return it.
+		if (mid.empty() || mid.find(MID_PREFIX) != 0)
+		{
+			mid = CreateMachineId(midFileName);
+		}
+
+		return mid;
+	}
+
+	std::string PlatformUtils::CreateMachineId(std::string& midFileName)
+	{
+		std::string newMID = MID_PREFIX;
+		newMID.append(DataUtils::GenerateUUID());
+		newMID.append("|");
+		newMID.append(GetOldMachineId(midFileName));
+
+		std::string midFilePath = FileUtils::GetUserRuntimeHomeDirectory();
+		midFilePath = FileUtils::Join(midFilePath.c_str(), midFileName.c_str(), NULL);
+		std::ofstream myfile;
+		myfile.open(midFilePath.c_str());
+		myfile << newMID << std::endl;
+		myfile.close();
+
+		return newMID;
+	}
+
+	std::string PlatformUtils::GetOldMachineId(std::string& midFileName)
+	{
+		// Search for an old MID stored in a file
 		std::vector<std::string> possibleMIDFiles;
-
-		std::string product = std::string(".") + PRODUCT_NAME;
-		std::transform(product.begin(), product.end(), product.begin(), tolower);
-
 		std::string path;
  		if (EnvironmentUtils::Has("KR_RUNTIME"))
 		{
 			path = EnvironmentUtils::Get("KR_RUNTIME");
-			path = FileUtils::Join(path.c_str(), "..", "..", "..", product.c_str(), NULL);
+			path = FileUtils::Join(path.c_str(), "..", "..", "..", midFileName.c_str(), NULL);
 			possibleMIDFiles.push_back(path);
 		}
 
 		path = FileUtils::GetUserRuntimeHomeDirectory();
-		path = FileUtils::Join(path.c_str(), product.c_str(), NULL);
+		path = FileUtils::Join(path.c_str(), midFileName.c_str(), NULL);
 		possibleMIDFiles.push_back(path);
 
 		path = FileUtils::GetSystemRuntimeHomeDirectory();
-		path = FileUtils::Join(path.c_str(), product.c_str(), NULL);
+		path = FileUtils::Join(path.c_str(), midFileName.c_str(), NULL);
 		possibleMIDFiles.push_back(path);
 
+		std::string mid;
 		for (size_t i = 0; i < possibleMIDFiles.size(); i++)
 		{
-			path = possibleMIDFiles.at(i);
-			if (FileUtils::IsFile(path))
-			{
-				std::ifstream file(path.c_str());
-				if (!file.bad() && !file.fail() && ! file.eof())
-				{
-					std::string line;
-					std::getline(file, line);
-					FileUtils::Trim(line);
-					file.close();
-					return line;
-				}
-			}
+			std::string& currentPath = possibleMIDFiles[i];
+			mid = ReadMIDFromFile(currentPath);
+			if (!mid.empty())
+				return mid;
 		}
 
-		return CreateMachineId();
+		// Alternatively hash the MAC address and use that as the old MID
+		std::string MACAddress = PlatformUtils::GetFirstMACAddress();
+		return DataUtils::HexMD5(MACAddress);
 	}
 
-	std::string PlatformUtils::CreateMachineId()
+	std::string PlatformUtils::ReadMIDFromFile(std::string& path)
 	{
-		std::string product = std::string(".") + PRODUCT_NAME;
-		std::transform(product.begin(), product.end(), product.begin(), tolower);
-		std::string uuidFilePath = FileUtils::GetUserRuntimeHomeDirectory();
-		uuidFilePath = FileUtils::Join(uuidFilePath.c_str(), product.c_str(), NULL);
-
-		std::string newUUID = DataUtils::GenerateUUID();
-		std::ofstream myfile;
-		myfile.open(uuidFilePath.c_str());
-		myfile << newUUID << std::endl;
-		myfile.close();
-
-		return newUUID;
+		if (FileUtils::IsFile(path))
+		{
+			std::ifstream file(path.c_str());
+			if (!file.bad() && !file.fail() && ! file.eof())
+			{
+				std::string line;
+				std::getline(file, line);
+				FileUtils::Trim(line);
+				file.close();
+				return line;
+			}
+		}
+		return std::string();
 	}
 }

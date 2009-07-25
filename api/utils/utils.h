@@ -12,6 +12,7 @@
 // of SharedPtr -- if not use Poco's which is thread-safe.
 #if defined(KROLL_HOST_EXPORT) || defined(KROLL_API_EXPORT) || defined(_KROLL_H_)
 	#ifdef OS_WIN32
+		#include <winsock2.h>
 		#include <windows.h>
 	#endif
 
