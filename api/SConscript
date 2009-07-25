@@ -7,7 +7,7 @@ Env.Append(CPPDEFINES=[('KROLL_API_EXPORT', 1)])
 build.add_thirdparty(Env, 'poco')
 
 if build.is_win32():
-	Env.Append(LIBS=['shell32', 'user32', 'Advapi32', 'iphlpapi'])
+	Env.Append(LIBS=['shell32', 'user32', 'Advapi32', 'iphlpapi', 'winhttp'])
 elif build.is_linux():
 	if os.environ.has_key('PKG_CONFIG_PATH'):
 		Env.AppendENVPath('PKG_CONFIG_PATH', os.environ['PKG_CONFIG_PATH'])
@@ -22,6 +22,8 @@ sources.extend(Glob('binding/*.cpp'))
 sources.extend(Glob('utils/*.cpp'))
 sources.extend(Glob('utils/poco/*.cpp'))
 sources.extend(Glob('utils/%s/*.cpp' % build.os))
+sources.extend(Glob('net/proxy_config.cpp'))
+sources.extend(Glob('net/*_%s.cpp' % build.os))
 if build.is_win32():
 	sources.extend(Glob('utils/unzip/*.cpp'))
 if build.is_osx():

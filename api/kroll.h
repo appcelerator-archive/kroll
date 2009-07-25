@@ -79,6 +79,7 @@ namespace kroll
 	#pragma GCC visibility pop
 #endif
 
+#include "net/net.h"
 #include "reference_counted.h"
 #include "utils/utils.h"
 #include "logger.h"
