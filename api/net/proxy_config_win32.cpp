@@ -30,9 +30,9 @@ namespace kroll
 				L"Mozilla/5.0 (Windows; U; Windows NT 5.1; en) "
 				L"AppleWebKit/526.9 (KHTML, like Gecko) "
 				L"Version/4.0dp1 Safari/526.8",
-                WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
-                WINHTTP_NO_PROXY_NAME, 
-                WINHTTP_NO_PROXY_BYPASS, 0);
+				WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
+				WINHTTP_NO_PROXY_NAME, 
+				WINHTTP_NO_PROXY_BYPASS, 0);
 		}
 
 		inline HINTERNET GetHandle()
@@ -60,16 +60,16 @@ namespace kroll
 		
 		if (WinHttpGetIEProxyConfigForCurrentUser(&ieProxyConfig))
 		{
-		    if (ieProxyConfig.fAutoDetect)
-	    	{
-	        	this->useAutoProxy = true;
-	    	}
+			if (ieProxyConfig.fAutoDetect)
+			{
+				this->useAutoProxy = true;
+			}
 	
-	    	if (ieProxyConfig.lpszAutoConfigUrl != NULL)
-	    	{
+			if (ieProxyConfig.lpszAutoConfigUrl != NULL)
+			{
 				// Not only are we using an auto proxy configuration, but this one
 				// has a URL which we must contact to get the configuration info.
-	        	this->useAutoProxy = true;
+				this->useAutoProxy = true;
 
 				std::wstring autoConfigURLW = ieProxyConfig.lpszAutoConfigUrl;
 				this->autoConfigURL = string(autoConfigURLW.begin(), autoConfigURLW.end());
@@ -95,7 +95,7 @@ namespace kroll
 		{
 			// If there is no IE configuration information, we default to
 			// attempting to get auto proxy information.
-		    useAutoProxy = true;
+			useAutoProxy = true;
 		}
 
 		if (this->useAutoProxy)
@@ -262,7 +262,7 @@ namespace kroll
 			std::string entry = tokenizer[i];
 			if (entry.at(0) == '*' && entry.size() == 1)
 			{
-				// Null URI everything means always bypass
+				// Null URI means always bypass
 				bypassVector.push_back(0);
 				continue;
 			}
