@@ -20,6 +20,7 @@ namespace kroll
 		static VALUE KMethodToRubyValue(SharedValue value);
 		static VALUE KListToRubyValue(SharedValue value);
 		static const char* ToString(VALUE value);
+		static bool KindOf(VALUE value, VALUE klass);
 
 		static ValueException GetException();
 		static VALUE GenericKMethodCall(SharedKMethod method, VALUE args);

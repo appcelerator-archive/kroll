@@ -26,12 +26,16 @@ namespace kroll
 		return NULL;
 	}
 
+	bool RubyUtils::KindOf(VALUE value, VALUE klass)
+	{
+		return rb_obj_is_kind_of(value, klass) == Qtrue;
+	}
+
 	SharedValue RubyUtils::ToKrollValue(VALUE value)
 	{
 		SharedValue kvalue = Value::Undefined;
 
 		int t = TYPE(value);
-		VALUE c = rb_obj_class(value);
 		if (T_NIL == t)
 		{
 			kvalue = Value::Null;
@@ -73,25 +77,30 @@ namespace kroll
 			SharedKList klist = new KRubyList(value);
 			kvalue = Value::NewList(klist);
 		}
-		else if (T_DATA == t && KObjectClass != Qnil && c == KObjectClass)
+		else if (T_DATA == t && KObjectClass != Qnil && KindOf(value, KObjectClass))
 		{
 			SharedValue* kval = NULL;
 			Data_Get_Struct(value, SharedValue, kval);
 			kvalue = Value::NewObject((*kval)->ToObject());
 		}
-		else if (T_DATA == t && KMethodClass != Qnil && c == KMethodClass)
+		else if (T_DATA == t && KMethodClass != Qnil && KindOf(value, KMethodClass))
 		{
 			SharedValue* kval = NULL;
 			Data_Get_Struct(value, SharedValue, kval);
 			kvalue = Value::NewMethod((*kval)->ToMethod());
 		}
-		else if (T_DATA == t && KListClass != Qnil && c == KListClass)
+		else if (T_DATA == t && KListClass != Qnil && KindOf(value, KListClass))
 		{
 			SharedValue* kval = NULL;
 			Data_Get_Struct(value, SharedValue, kval);
 			kvalue = Value::NewList((*kval)->ToList());
 		}
-		else if (T_DATA == t && c == rb_cMethod)
+		else if (T_DATA == t && KindOf(value, rb_cMethod))
+		{
+			SharedKMethod method = new KRubyMethod(value);
+			return Value::NewMethod(method);
+		}
+		else if (T_DATA == t && KindOf(value, rb_cProc))
 		{
 			SharedKMethod method = new KRubyMethod(value);
 			return Value::NewMethod(method);
