@@ -165,6 +165,13 @@ class BuildConfig(object):
 		Alias('stage', [])
 		Alias('dist', [])
 
+		# SCons can't read the Visual Studio settings yet so we
+		# have to force it to use the Platform SDK directories
+		if self.is_win32():
+			self.env.Prepend(PATH=['C:\Program Files\Microsoft Platform SDK for Windows Server 2003 R2'])
+			self.env.Prepend(CPPPATH=['C:\Program Files\Microsoft Platform SDK for Windows Server 2003 R2\include'])
+			self.env.Prepend(LIBPATH=['C:\Program Files\Microsoft Platform SDK for Windows Server 2003 R2\lib'])
+
 	def set_kroll_source_dir(self, dir):
 		self.kroll_source_dir = path.abspath(dir)
 		self.kroll_include_dir = path.join(self.dir, 'include')
