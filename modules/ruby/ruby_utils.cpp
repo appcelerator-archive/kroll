@@ -431,10 +431,8 @@ namespace kroll
 
 		for (unsigned int i = 0; i < list->Size(); i++)
 		{
-			VALUE v = RubyUtils::ToRubyValue(list->At(i));
-			VALUE args = rb_ary_new();
-			rb_ary_push(args, v);
-			rb_yield(args);
+			VALUE rubyValue = RubyUtils::ToRubyValue(list->At(i));
+			rb_yield(rubyValue);
 		}
 		return self;
 	}
