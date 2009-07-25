@@ -149,11 +149,12 @@ namespace kroll
 		for (int i = 0; i < ieProxies.size(); i++)
 		{
 			SharedProxy proxy = ieProxies.at(i);
+			std::string proxyScheme = proxy->info->getScheme();
 			if (proxy->ShouldBypass(uri))
 			{
 				return 0;
 			}
-			else if (proxy->info->getScheme() == uri.getScheme())
+			else if (proxyScheme.empty() || proxyScheme == uri.getScheme())
 			{
 				return proxy;
 			}
