@@ -22,6 +22,7 @@ namespace kroll
 		public:
 		static SharedProxy GetProxyForURL(std::string& url);
 		virtual SharedProxy GetProxyForURLImpl(std::string& url) = 0;
+		virtual ~ProxyConfig(){}
 	
 		private:
 		static SharedProxyConfig instance;
