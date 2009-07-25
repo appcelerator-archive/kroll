@@ -35,26 +35,25 @@ namespace kroll
 		JSContextRef ctx,
 		JSObjectRef this_obj)
 	{
-		SharedValue kr_val;
+		SharedValue krollValue = 0;
 		JSValueRef exception = NULL;
 
 		if (value == NULL)
 		{
-			std::cerr << "Trying to convert NULL JSValueRef!" << std::endl;
+			Logger::Get("JavaScript.KJSUtil")->Error("Trying to convert NULL JSValueRef");
 			return Value::Undefined;
 		}
 
 		if (JSValueIsNumber(ctx, value))
 		{
-			kr_val = Value::NewDouble(JSValueToNumber(ctx, value, &exception));
+			krollValue = Value::NewDouble(JSValueToNumber(ctx, value, &exception));
 		}
 		else if (JSValueIsBoolean(ctx, value))
 		{
-			kr_val = Value::NewBool(JSValueToBoolean(ctx, value));
+			krollValue = Value::NewBool(JSValueToBoolean(ctx, value));
 		}
 		else if (JSValueIsString(ctx, value))
 		{
-
 			JSStringRef string_ref = JSValueToStringCopy(ctx, value, &exception);
 			if (string_ref)
 			{
@@ -62,7 +61,7 @@ namespace kroll
 				std::string to_ret = std::string(chars);
 				JSStringRelease(string_ref);
 				free(chars);
-				kr_val = Value::NewString(to_ret);
+				krollValue = Value::NewString(to_ret);
 			}
 
 		}
@@ -81,60 +80,64 @@ namespace kroll
 				{
 					// this is a pure JS method: proxy it
 					SharedKMethod tibm = new KKJSMethod(ctx, o, this_obj);
-					kr_val = Value::NewMethod(tibm);
+					krollValue = Value::NewMethod(tibm);
 				}
 				else if (IsArrayLike(o, ctx))
 				{
 					// this is a pure JS array: proxy it
 					SharedKList tibl = new KKJSList(ctx, o);
-					kr_val = Value::NewList(tibl);
+					krollValue = Value::NewList(tibl);
 				}
 				else
 				{
 					// this is a pure JS object: proxy it
 					SharedKObject tibo = new KKJSObject(ctx, o);
-					kr_val = Value::NewObject(tibo);
+					krollValue = Value::NewObject(tibo);
 				}
 			}
 		}
 		else if (JSValueIsNull(ctx, value))
 		{
-			kr_val = kroll::Value::Null;
+			krollValue = kroll::Value::Null;
 		}
 		else
 		{
-			kr_val = kroll::Value::Undefined;
+			krollValue = kroll::Value::Undefined;
 		}
-
-		if (!kr_val.isNull() && exception == NULL)
+		if (!krollValue.isNull() && exception == NULL)
 		{
-			return kr_val;
+			return krollValue;
 		}
-		else
+		else if (exception != NULL)
 		{
 			throw KJSUtil::ToKrollValue(exception, ctx, NULL);
+		}
+		else
+		{
+			Logger::Get("JavaScript.KJSUtil")->Error("Failed Kroll->JS conversion with no exception!");
+			throw ValueException::FromString("Conversion from Kroll value to JS value failed");
 		}
 	}
 
 	JSValueRef KJSUtil::ToJSValue(SharedValue value, JSContextRef ctx)
 	{
-		JSValueRef js_val;
+		JSValueRef jsValue = NULL;
 		if (value->IsInt())
 		{
-			js_val = JSValueMakeNumber(ctx, value->ToInt());
+			jsValue = JSValueMakeNumber(ctx, value->ToInt());
 		}
 		else if (value->IsDouble())
 		{
-			js_val = JSValueMakeNumber(ctx, value->ToDouble());
+			jsValue = JSValueMakeNumber(ctx, value->ToDouble());
 		}
 		else if (value->IsBool())
 		{
-			js_val = JSValueMakeBoolean(ctx, value->ToBool());
+			jsValue = JSValueMakeBoolean(ctx, value->ToBool());
 		}
 		else if (value->IsString())
 		{
 			JSStringRef s = JSStringCreateWithUTF8CString(value->ToString());
-			js_val = JSValueMakeString(ctx, s);
+			jsValue = JSValueMakeString(ctx, s);
 			JSStringRelease(s);
 		}
 		else if (value->IsObject())
@@ -144,12 +147,12 @@ namespace kroll
 			if (!kobj.isNull() && kobj->SameContextGroup(ctx))
 			{
 				// this object is actually a pure JS object
-				js_val = kobj->GetJSObject();
+				jsValue = kobj->GetJSObject();
 			}
 			else
 			{
 				// this is a KObject that needs to be proxied
-				js_val = KJSUtil::KObjectToJSValue(value, ctx);
+				jsValue = KJSUtil::KObjectToJSValue(value, ctx);
 			}
 		}
 		else if (value->IsMethod())
@@ -159,12 +162,12 @@ namespace kroll
 			if (!kmeth.isNull() && kmeth->SameContextGroup(ctx))
 			{
 				// this object is actually a pure JS callable object
-				js_val = kmeth->GetJSObject();
+				jsValue = kmeth->GetJSObject();
 			}
 			else
 			{
 				// this is a KMethod that needs to be proxied
-				js_val = KJSUtil::KMethodToJSValue(value, ctx);
+				jsValue = KJSUtil::KMethodToJSValue(value, ctx);
 			}
 		}
 		else if (value->IsList())
@@ -174,28 +177,28 @@ namespace kroll
 			if (!klist.isNull() && klist->SameContextGroup(ctx))
 			{
 				// this object is actually a pure JS array
-				js_val = klist->GetJSObject();
+				jsValue = klist->GetJSObject();
 			}
 			else
 			{
 				// this is a KList that needs to be proxied
-				js_val = KJSUtil::KListToJSValue(value, ctx);
+				jsValue = KJSUtil::KListToJSValue(value, ctx);
 			}
 		}
 		else if (value->IsNull())
 		{
-			js_val = JSValueMakeNull(ctx);
+			jsValue = JSValueMakeNull(ctx);
 		}
 		else if (value->IsUndefined())
 		{
-			js_val = JSValueMakeUndefined(ctx);
+			jsValue = JSValueMakeUndefined(ctx);
 		}
 		else
 		{
-			js_val = JSValueMakeUndefined(ctx);
+			jsValue = JSValueMakeUndefined(ctx);
 		}
 
-		return js_val;
+		return jsValue;
 
 	}
 
@@ -348,11 +351,11 @@ namespace kroll
 
 		SharedKObject object = (*value)->ToObject();
 		char* name = KJSUtil::ToChars(js_property);
-		JSValueRef js_val = NULL;
+		JSValueRef jsValue = NULL;
 		try
 		{
 			SharedValue ti_val = object->Get(name);
-			js_val = GetSpecialProperty(*value, name, js_context, ti_val);
+			jsValue = GetSpecialProperty(*value, name, js_context, ti_val);
 		}
 		catch (ValueException& exception)
 		{
@@ -365,14 +368,14 @@ namespace kroll
 		}
 		catch (...)
 		{
-			std::cerr << "KJSUtil.cpp: Caught an unknown exception during get for "
-			          << name << std::endl;
-			SharedValue v = Value::NewString("unknown exception");
+			std::string error = "Unknown exception trying to get property: ";
+			error.append(name);
+			SharedValue v = Value::NewString(error);
 			*js_exception = KJSUtil::ToJSValue(v, js_context);
 		}
 
 		free(name);
-		return js_val;
+		return jsValue;
 	}
 
 	bool set_property_cb(
@@ -412,9 +415,9 @@ namespace kroll
 		}
 		catch (...)
 		{
-			std::cerr << "KJSUtil.cpp: Caught an unknown exception during set for "
-				<< propertyName << std::endl;
-			SharedValue v = Value::NewString("unknown exception");
+			std::string error = "Unknown exception trying to set property: ";
+			error.append(propertyName);
+			SharedValue v = Value::NewString(error);
 			*js_exception = KJSUtil::ToJSValue(v, js_context);
 		}
 
@@ -447,9 +450,10 @@ namespace kroll
 		{
 			SharedValue ti_val = method->Call(args);
 			js_val = KJSUtil::ToJSValue(ti_val, js_context);
-
 		}
-		catch (ValueException& exception) {
+		catch (ValueException& exception)
+		 {
+			SharedString str = exception.DisplayString();
 			*js_exception = KJSUtil::ToJSValue(exception.GetValue(), js_context);
 		} 
 		catch (std::exception &e)
@@ -459,9 +463,7 @@ namespace kroll
 		}
 		catch (...)
 		{
-			std::cerr << "KJSUtil.cpp: Caught an unknown exception during call()"
-			          << std::endl;
-			SharedValue v = Value::NewString("unknown exception");
+			SharedValue v = Value::NewString("Unknown exception during Kroll method call");
 			*js_exception = KJSUtil::ToJSValue(v, js_context);
 		}
 
@@ -661,8 +663,7 @@ namespace kroll
 
 		if (i == contextRefCounts.end())
 		{
-			std::cerr << 
-				"Tried to unprotect an unprotected global context!" << std::endl;
+			Logger::Get("JavaScript.KJSUtil")->Error("Tried to unprotect an unprotected context!");
 		}
 		else if (i->second == 1)
 		{

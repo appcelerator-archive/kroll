@@ -10,7 +10,6 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <linux/if.h>
 #include <sys/utsname.h>
 #include <libgen.h>
 
