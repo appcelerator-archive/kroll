@@ -73,17 +73,16 @@ namespace kroll
 			uri->setScheme(entry.substr(0, endScheme));
 			entry = entry.substr(endScheme + 3);
 		}
-		
-		std::string::const_iterator begin = entry.begin();
-		std::string::const_iterator scan = entry.end() - 1;
-		while (scan > begin && isdigit(*scan))
+
+		size_t scan = entry.size() - 1;
+		while (scan > 0 && isdigit(entry[scan]))
 			scan--;
 
-		if (*scan == ':' && scan != entry.end())
+		if (entry[scan] == ':' && scan != entry.size() - 1)
 		{
-				string portString = string(scan + 1, entry.end());
-				uri->setPort(atoi(portString.c_str()));
-				entry = string(begin, scan);	
+			string portString = entry.substr(scan + 1);
+			uri->setPort(atoi(portString.c_str()));
+			entry = entry.substr(0, scan);
 		}
 		else
 		{
