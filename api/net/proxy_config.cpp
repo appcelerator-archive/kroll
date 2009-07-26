@@ -16,9 +16,7 @@ namespace kroll
 	{
 		inline bool EndsWith(string haystack, string needle)
 		{
-			return std::mismatch(
-				needle.rbegin(), needle.rend(),
-				haystack.rbegin()).first != needle.rend();
+			return haystack.find(needle) == (haystack.size() - needle.size());
 		}
 	}
 
