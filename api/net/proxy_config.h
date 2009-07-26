@@ -7,7 +7,7 @@
 #define _KR_PROXY_CONFIG_H_
 namespace kroll
 {
-	class Proxy
+	class KROLL_API Proxy
 	{
 		public:
 		SharedURI info;
@@ -17,7 +17,7 @@ namespace kroll
 		static SharedURI ProxyEntryToURI(std::string& entry);
 	};
 
-	class ProxyConfig
+	class KROLL_API ProxyConfig
 	{
 		public:
 		static SharedProxy GetProxyForURL(std::string& url);
