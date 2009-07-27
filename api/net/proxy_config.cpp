@@ -5,6 +5,12 @@
  */
 #include "../kroll.h"
 #include "net.h"
+#ifdef OS_WIN32
+#include "proxy_config_win32.h"
+#elif defined(OS_LINUX)
+#include "proxy_config_linux.h"
+#endif
+
 using std::string;
 using std::vector;
 using Poco::Net::IPAddress;
