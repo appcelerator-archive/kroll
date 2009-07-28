@@ -630,42 +630,5 @@ namespace UTILS_NS
 #endif
 	}
 #endif
-
-	std::string FileUtils::FileURLToPath(std::string url)
-	{
-		size_t fileLength = 7; // file://
-		if (url.find("file://") == 0)
-		{
-			url = url.substr(fileLength);
-		}
-
-		if ('/' != KR_PATH_SEP_CHAR)
-		{
-			for (size_t i = 0; i < url.size(); i++)
-			{
-				if (url[i] == '/')
-				{
-						url[i] = KR_PATH_SEP_CHAR;
-				}
-			}
-		}
-		return url;
-	}
-
-	std::string FileUtils::PathToFileURL(std::string path)
-	{
-		if ('\\' == KR_PATH_SEP_CHAR)
-		{
-			for (size_t i = 0; i < path.size(); i++)
-			{
-				if (path[i] == '\\')
-				{
-					path[i] = '/';
-				}
-			}
-		}
-		return string("file://") + path;
-	}
-
 }
 
