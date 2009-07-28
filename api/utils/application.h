@@ -137,6 +137,12 @@ namespace UTILS_NS
 		 */
 		string GetComponentPath(string name);
 
+		/**
+		 * Get all resolved components for this application including
+		 * runtimes, sdks and modules.
+		 */
+		vector<SharedComponent> GetResolvedComponents();
+
 		private:
 		SharedComponent ResolveDependency(SharedDependency dep, std::vector<SharedComponent>&);
 	};

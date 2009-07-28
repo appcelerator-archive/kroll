@@ -117,6 +117,9 @@ namespace UTILS_NS
 
 	string Application::GetExecutablePath()
 	{
+		// TODO:
+		// If this application has arguments, it's probably the currently running
+		// application, so we can try to get the executable path based on argv[0]
 		string exeName = this->name + ".exe";
 		string path = FileUtils::Join(this->path.c_str(), exeName.c_str(), NULL);
 		if (FileUtils::IsFile(path))
@@ -447,5 +450,19 @@ namespace UTILS_NS
 			}
 		}
 		return string();
+	}
+
+	vector<SharedComponent> Application::GetResolvedComponents()
+	{
+		vector<SharedComponent> resolved;
+
+		if (this->runtime)
+			resolved.push_back(this->runtime);
+
+		resolved.reserve(resolved.size() + this->modules.size() + this->sdks.size());
+		resolved.insert(resolved.end(), this->modules.begin(), this->modules.end());
+		resolved.insert(resolved.end(), this->sdks.begin(), this->sdks.end());
+
+		return resolved;
 	}
 }

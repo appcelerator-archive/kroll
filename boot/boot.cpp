@@ -87,10 +87,21 @@ namespace KrollBoot
 		FindUpdate();
 	
 		vector<SharedDependency> missing = app->ResolveDependencies();
-		for (size_t i = 0; i < missing.size(); i++)
+		if (app->HasArgument("debug"))
 		{
-			SharedDependency d = missing.at(i);
-			std::cerr << "Unresolved: " << d->name << " " << d->version << std::endl;
+			vector<SharedComponent> resolved = app->GetResolvedComponents();
+			for (int i = 0; i < resolved.size(); i++)
+			{
+				SharedComponent c = resolved[i];
+				std::cout << "Resolved: (" << c->name << " " 
+					<< c->version << ") " << c->path << std::endl;
+			}
+			for (size_t i = 0; i < missing.size(); i++)
+			{
+				SharedDependency d = missing.at(i);
+				std::cerr << "Unresolved: " << d->name << " " 
+					<< d->version << std::endl;
+			}
 		}
 
 		bool forceInstall = app->HasArgument("--force-install");
