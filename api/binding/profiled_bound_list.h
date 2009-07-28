@@ -41,21 +41,27 @@ namespace kroll
 		 * @return the delegate of this profiled bound object
 		 */
 		SharedKList GetDelegate() { return list; }
-		void duplicate()
+		virtual void duplicate()
 		{
-			referenceCount++;
+			++count;
 		}
-		void release()
+
+		virtual void release()
 		{
-			referenceCount--;
-			if (referenceCount <= 0) {
+			int value = --count;
+			if (value <= 0) {
 				delete this;
 			}
 		}
 
+		virtual int referenceCount() const
+		{
+			return count.value();
+		}
+
 	private:
 		SharedKList list;
-		unsigned int referenceCount;
+		Poco::AtomicCounter count;
 
 	};
 }

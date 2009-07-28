@@ -57,6 +57,7 @@ namespace kroll
 	typedef AutoPtr<KObject> SharedKObject;
 	typedef AutoPtr<KMethod> SharedKMethod;
 	typedef AutoPtr<KList> SharedKList;
+	typedef AutoPtr<Blob> AutoBlob;
 
 	typedef SharedPtr<std::string> SharedString;
 	typedef std::vector<SharedString> StringList;
@@ -78,6 +79,7 @@ namespace kroll
 	#pragma GCC visibility pop
 #endif
 
+#include "net/net.h"
 #include "reference_counted.h"
 #include "utils/utils.h"
 #include "logger.h"

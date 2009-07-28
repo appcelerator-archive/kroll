@@ -141,6 +141,7 @@ namespace kroll
 
 	PyObject* PythonUtils::ToPyObject(SharedValue value)
 	{
+		PyLockGIL lock;
 		if (value->IsBool())
 		{
 			return value->ToBool() ? Py_True : Py_False;
@@ -211,6 +212,7 @@ namespace kroll
 
 	const char* PythonUtils::ToString(PyObject* value)
 	{
+		PyLockGIL lock;
 		if (PyString_Check(value))
 		{
 			return PyString_AsString(value);
@@ -223,6 +225,7 @@ namespace kroll
 
 	SharedValue PythonUtils::ToKrollValue(PyObject* value)
 	{
+		PyLockGIL lock;
 		if (Py_None == value)
 		{
 			return Value::Null;
@@ -337,42 +340,67 @@ namespace kroll
 	static void PyKObject_dealloc(PyObject* self)
 	{
 		PyKObject *pyko = reinterpret_cast<PyKObject*>(self);
-		delete pyko->value;
+
+		{
+			PyAllowThreads allow;
+			delete pyko->value;
+		}
+
 		PyObject_Del(self);
 	}
 
 	static PyObject* PyKObject_getattr(PyObject *self, char *name)
 	{
+		PyLockGIL lock;
 		Py_INCREF(self);
 		PyKObject *pyko = reinterpret_cast<PyKObject*>(self);
-		SharedValue result = pyko->value->get()->ToObject()->Get(name);
+
+		SharedValue result = 0;
+		{
+			PyAllowThreads allow;
+			result = pyko->value->get()->ToObject()->Get(name);
+		}
+
 		Py_DECREF(self);
 		return PythonUtils::ToPyObject(result);
 	}
 
 	static int PyKObject_setattr(PyObject *self, char *name, PyObject *value)
 	{
+		PyLockGIL lock;
 		PyKObject *pyko = reinterpret_cast<PyKObject*>(self);
 		Py_INCREF(self);
 		SharedValue tiValue = PythonUtils::ToKrollValue(value);
-		pyko->value->get()->ToObject()->Set(name, tiValue);
+
+		{
+			PyAllowThreads allow;
+			pyko->value->get()->ToObject()->Set(name, tiValue);
+		}
+
 		Py_DECREF(self);
 		return 0;
 	}
 
 	static PyObject* PyKObject_str(PyObject *self)
 	{
+		PyLockGIL lock;
 		Py_INCREF(self);
 		PyKObject *pyko = reinterpret_cast<PyKObject*>(self);
 		SharedKObject kobj = pyko->value->get()->ToObject();
 		Py_DECREF(self);
 
-		SharedString ss = kobj->DisplayString();
+		SharedString ss = 0;
+		{
+			PyAllowThreads allow;
+			ss = kobj->DisplayString();
+		}
+
 		return PyString_FromString(ss->c_str());
 	}
 
 	PyObject* PythonUtils::KObjectToPyObject(SharedValue v)
 	{
+		PyLockGIL lock;
 		if (!initializedPyKObject)
 		{
 			initializedPyKObject = true;
@@ -387,13 +415,22 @@ namespace kroll
 
 	static Py_ssize_t PyKListLength(PyObject* o)
 	{
+		PyLockGIL lock;
 		PyKObject *pyko = reinterpret_cast<PyKObject*>(o);
 		SharedKList klist = pyko->value->get()->ToList();
-		return (Py_ssize_t) klist->Size();
+
+		unsigned int size = 0;
+		{
+			PyAllowThreads allow;
+			size = klist->Size();
+		}
+
+		return (Py_ssize_t) size;
 	}
 
 	static PyObject* PyKListConcat(PyObject* a, PyObject* b)
 	{
+		PyLockGIL lock;
 		PyObject* new_list = PyList_New(0);
 		PySequence_Concat(new_list, a);
 		PySequence_Concat(new_list, b);
@@ -402,6 +439,7 @@ namespace kroll
 
 	static PyObject* PyKListRepeat(PyObject *o, Py_ssize_t count)
 	{
+		PyLockGIL lock;
 		PyObject* new_list = PyList_New(0);
 		while (count > 0)
 		{
@@ -413,42 +451,62 @@ namespace kroll
 
 	static PyObject* PyKListGetItem(PyObject *o, Py_ssize_t i)
 	{
+		PyLockGIL lock;
 		PyKObject *pyko = reinterpret_cast<PyKObject*>(o);
 		SharedKList klist = pyko->value->get()->ToList();
-		if (i < (int) klist->Size())
+
+		SharedValue listVal = 0;
 		{
-			return PythonUtils::ToPyObject(klist->At(i));
+			PyAllowThreads allow;
+			if (i < (int) klist->Size())
+			{
+				SharedValue listVal = klist->At(i);
+			}
 		}
+
+		if (!listVal.isNull())
+			return PythonUtils::ToPyObject(listVal);
 		else
-		{
 			return NULL;
-		}
 	}
 
 	static int PyKListSetItem(PyObject *o, Py_ssize_t i, PyObject *v)
 	{
+		PyLockGIL lock;
 		PyKObject *pyko = reinterpret_cast<PyKObject*>(o);
 		SharedKList klist = pyko->value->get()->ToList();
 		SharedValue kv = PythonUtils::ToKrollValue(v);
-		klist->SetAt((unsigned int) i, kv);
+
+		{
+			PyAllowThreads allow;
+			klist->SetAt((unsigned int) i, kv);
+		}
+
 		return 1;
 	}
 
 	static int PyKListContains(PyObject *o, PyObject *value)
 	{
+		PyLockGIL lock;
 		PyKObject *pyko = reinterpret_cast<PyKObject*>(o);
 		SharedKList klist = pyko->value->get()->ToList();
 		SharedValue kv = PythonUtils::ToKrollValue(value);
-		for (unsigned int i = 0; i < klist->Size(); i++)
+
 		{
-			if (kv == klist->At(i))
-				return 1;
+			PyAllowThreads allow;
+			for (unsigned int i = 0; i < klist->Size(); i++)
+			{
+				if (kv == klist->At(i))
+					return 1;
+			}
 		}
+
 		return 0;
 	}
 
 	static PyObject* PyKListInPlaceConcat(PyObject *o1, PyObject *o2)
 	{
+		PyLockGIL lock;
 		PyKObject *pyko = reinterpret_cast<PyKObject*>(o1);
 		SharedKList klist = pyko->value->get()->ToList();
 		int size = PySequence_Size(o2);
@@ -456,24 +514,35 @@ namespace kroll
 		{
 			PyObject* v = PySequence_GetItem(o2, i);
 			SharedValue kv = PythonUtils::ToKrollValue(v);
-			klist->Append(kv);
+
+			{
+				PyAllowThreads allow;
+				klist->Append(kv);
+			}
+
 		}
 		return o1;
 	}
 
 	static PyObject* PyKListInPlaceRepeat(PyObject *o, Py_ssize_t count)
 	{
+		PyLockGIL lock;
 		PyKObject *pyko = reinterpret_cast<PyKObject*>(o);
 		SharedKList klist = pyko->value->get()->ToList();
-		unsigned int size = klist->Size();
-		while (count > 0)
+
 		{
-			for (unsigned int i = 0; i < size; i++)
+			PyAllowThreads allow;
+			unsigned int size = klist->Size();
+			while (count > 0)
 			{
-				klist->Append(klist->At(i));
+				for (unsigned int i = 0; i < size; i++)
+				{
+					klist->Append(klist->At(i));
+				}
+				count--;
 			}
-			count--;
 		}
+
 		return o;
 	}
 
@@ -483,6 +552,7 @@ namespace kroll
 
 	PyObject* PythonUtils::KListToPyObject(SharedValue v)
 	{
+		PyLockGIL lock;
 		if (!initializedPyKList)
 		{
 			initializedPyKList = true;
@@ -511,6 +581,7 @@ namespace kroll
 
 	static PyObject* PyKMethod_call(PyObject *o, PyObject *args, PyObject *kw)
 	{
+		PyLockGIL lock;
 		Py_INCREF(o);
 		PyKObject *pyko = reinterpret_cast<PyKObject*>(o);
 		SharedKMethod kmeth = pyko->value->get()->ToMethod();
@@ -526,7 +597,12 @@ namespace kroll
 				Value::Unwrap(kValue);
 				a.push_back(kValue);
 			}
-			result = kmeth->Call(a);
+
+			{
+				PyAllowThreads allow;
+				result = kmeth->Call(a);
+			}
+
 		}
 		catch (ValueException& e)
 		{
@@ -546,6 +622,7 @@ namespace kroll
 
 	PyObject* PythonUtils::KMethodToPyObject(SharedValue v)
 	{
+		PyLockGIL lock;
 		if (!initializedPyKMethod)
 		{
 			initializedPyKMethod = true;
@@ -557,9 +634,6 @@ namespace kroll
 		obj->value = new SharedValue(v);
 		return (PyObject*) obj;
 	}
-
-
-
 }
 
 

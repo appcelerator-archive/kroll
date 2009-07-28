@@ -33,6 +33,11 @@ namespace UTILS_NS
 		 * Unset an environment variable given a name
 		 */
 		static void Unset(std::string name);
+
+		/*
+		 * Get the environment
+		 */
+		static std::map<std::string, std::string> GetEnvironment();
 	};
 }
 #endif

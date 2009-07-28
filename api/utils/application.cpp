@@ -264,14 +264,14 @@ namespace UTILS_NS
 			string osver = FileUtils::GetOSVersion();
 			string osarch = FileUtils::GetOSArchitecture();
 
-			this->queryString += "?os=" + DataUtils::EncodeURIComponent(os);
-			this->queryString += "&osver=" + DataUtils::EncodeURIComponent(osver);
-			this->queryString += "&tiver=" + DataUtils::EncodeURIComponent(STRING(_PRODUCT_VERSION));
-			this->queryString += "&mid=" + DataUtils::EncodeURIComponent(mid);
-			this->queryString += "&aid=" + DataUtils::EncodeURIComponent(this->id);
-			this->queryString += "&guid=" + DataUtils::EncodeURIComponent(this->guid);
-			this->queryString += "&ostype=" + DataUtils::EncodeURIComponent(OS_TYPE);
-			this->queryString += "&osarch=" + DataUtils::EncodeURIComponent(osarch);
+			this->queryString += "?os=" + URLUtils::EncodeURIComponent(os);
+			this->queryString += "&osver=" + URLUtils::EncodeURIComponent(osver);
+			this->queryString += "&tiver=" + URLUtils::EncodeURIComponent(STRING(_PRODUCT_VERSION));
+			this->queryString += "&mid=" + URLUtils::EncodeURIComponent(mid);
+			this->queryString += "&aid=" + URLUtils::EncodeURIComponent(this->id);
+			this->queryString += "&guid=" + URLUtils::EncodeURIComponent(this->guid);
+			this->queryString += "&ostype=" + URLUtils::EncodeURIComponent(OS_TYPE);
+			this->queryString += "&osarch=" + URLUtils::EncodeURIComponent(osarch);
 		}
 
 		string url = this->queryString;

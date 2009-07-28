@@ -12,6 +12,7 @@ namespace kroll
 		readOnly(false),
 		delegate(NULL)
 	{
+		PyLockGIL lock;
 		Py_INCREF(this->object);
 	}
 
@@ -20,30 +21,34 @@ namespace kroll
 		readOnly(readOnly),
 		delegate(new StaticBoundObject())
 	{
+		PyLockGIL lock;
 		Py_INCREF(this->object);
-		
 	}
 
 	KPythonObject::~KPythonObject()
 	{
+		PyLockGIL lock;
 		Py_DECREF(this->object);
 		this->object = NULL;
 	}
 
 	PyObject* KPythonObject::ToPython()
 	{
+		PyLockGIL lock;
 		Py_INCREF(object);
 		return this->object;
 	}
 
 	void KPythonObject::Set(const char *name, SharedValue value)
 	{
+		PyLockGIL lock;
 		PyObject* py_value = PythonUtils::ToPyObject(value);
 
 		if (readOnly)
 		{
 			// This object is likely read-only, allow for binding
 			// layer-only properties, even though this isn't a great idea.
+			PyAllowThreads allow;
 			delegate->Set(name, value);
 		}
 		else
@@ -58,11 +63,13 @@ namespace kroll
 
 	SharedValue KPythonObject::Get(const char *name)
 	{
+		PyLockGIL lock;
 		if (0 == (PyObject_HasAttrString(this->object, (char*)name)))
 		{
 			if (this->readOnly)
 			{
 				// Read-only objects can have binding layer properties
+				PyAllowThreads allow;
 				return delegate->Get(name);
 			}
 			else
@@ -95,6 +102,7 @@ namespace kroll
 
 	SharedStringList KPythonObject::GetPropertyNames()
 	{
+		PyLockGIL lock;
 		SharedStringList property_names = new StringList();
 		PyObject *props = PyObject_Dir(this->object);
 		if (props == NULL)

@@ -35,20 +35,26 @@ namespace system {
 class WinRandom : public user::randomstream<WinRandom>, noncopyable
 {
 public:
-    WinRandom()
+	WinRandom()
     {
-        if (!CryptAcquireContext(&hProv, NULL, NULL, PROV_RSA_FULL, 0))
+		//always initialize member variables.
+		hProv = NULL;
+
+		// grab the default cryptographic context to verify the machine.  
+		// we don't need access to the private keys, so we use CRYPT_VERIFYCONTEXT
+        if (!CryptAcquireContext(&hProv, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT))
             throw std::runtime_error("failed to acquire cryptographic context.");
     }
 
     ~WinRandom()
     {
-        CryptReleaseContext(hProv, 0);
+		if ( hProv )
+	        CryptReleaseContext(hProv, 0);
     }
 
     void read(char* buffer, std::size_t count)
     {
-        if (!CryptGenRandom(hProv, count, (BYTE*)buffer))
+        if (hProv && !CryptGenRandom(hProv, count, (BYTE*)buffer))
             throw std::runtime_error("system failed to generate random data.");
     }
 

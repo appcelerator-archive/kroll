@@ -26,7 +26,9 @@ namespace KrollBoot
 	extern SharedApplication app;
 	extern int argc;
 	extern const char** argv;
-
+	const char *preload[] = { "zlib1.dll", "ssleay32.dll", "libeay32.dll", "libpng13.dll", "libxml2.dll", "libxslt.dll" };
+	const int preloadSize = sizeof(preload)/sizeof(preload[0]);
+	
 	inline void ShowError(string msg, bool fatal)
 	{
 		std::cerr << "Error: " << msg << std::endl;
@@ -61,107 +63,60 @@ namespace KrollBoot
 		string currentPath = EnvironmentUtils::Get("PATH");
 		if (!currentPath.empty())
 		{
-			path = path + ":" + currentPath;
+			path = path + ";" + currentPath;
 		}
 		EnvironmentUtils::Set("PATH", path);
 	}
 
 	string Blastoff()
 	{
-		if (!IsWindowsXP())
-		{
-			// Windows boot does not normally need to restart itself,  so just
-			// launch the host here and exit with the appropriate return value.
-			EnvironmentUtils::Unset(BOOTSTRAP_ENV);
-			exit(KrollBoot::StartHost());
-		}
-
-		// TODO: Fix manual activation context setup for Windows XP so we don't need
-		// to do the thing below any longer.
-
-		// We are on Windows XP. We need to reboot ourselves, but using the kboot.exe
-		// that is included with the runtime. The manifest embedded in kboot points
-		// to a DLL named "WebKit.dll" relative to the exe -- we need that path to
-		// resolve for registration-free COM to work.
-		string allArgs;
-		for (int i = 0; i < argc; i++)
-		{
-			string arg = argv[i];
-			size_t quotePos = arg.find('\"');
-			if (quotePos == string::npos)
-			{
-				allArgs.append("\"");
-				allArgs.append(arg);
-				allArgs.append("\" ");
-			}
-			else
-			{
-				allArgs.append(arg + " ");
-			}
-		}
-		string appName = app->runtime->path + "\\kboot.exe";
-
-		STARTUPINFOA startupInfo = {0};
-		startupInfo.cb = sizeof(startupInfo);
-		PROCESS_INFORMATION processInformation;
-		
-		char* applicationName = _strdup(appName.c_str());
-		char* allArguments = _strdup(allArgs.c_str());
-		int success = CreateProcessA(
-			applicationName, allArguments,
-			NULL, NULL, FALSE, 0, NULL, NULL,
-			&startupInfo, &processInformation);
-		free(applicationName);
-		free(allArguments);
-
-		if (success == 0)
-		{
-			string errorString = string("Could not bootstrap into ");
-			errorString.append(appName);
-			errorString.append(": ");
-			errorString.append(KrollUtils::Win32Utils::QuickFormatMessage(GetLastError()));
-			ShowError(errorString);
-		}
-		else
-		{
-			CloseHandle(processInformation.hThread);
-			WaitForSingleObject(processInformation.hProcess, INFINITE);
-			DWORD retCode;
-			if (GetExitCodeProcess(processInformation.hProcess, &retCode))
-			{
-				exit(retCode);
-			}
-			return "Could not retrieve the exit code.";
-		}
+		// Windows boot does not normally need to restart itself,  so just
+		// launch the host here and exit with the appropriate return value.
+		EnvironmentUtils::Unset(BOOTSTRAP_ENV);
+		exit(KrollBoot::StartHost());
 	}
-
-	typedef int Executor(HINSTANCE, int, const char **);
-	int StartHost()
+	
+	bool SafeLoadRuntimeDLL(const char *name, HMODULE *module)
 	{
 		string runtimePath = EnvironmentUtils::Get("KR_RUNTIME");
-		std::string khost = FileUtils::Join(runtimePath.c_str(), "khost.dll", NULL);
-
-		// now we need to load the host and get 'er booted
-		if (!FileUtils::IsFile(khost))
+		std::string dll = FileUtils::Join(runtimePath.c_str(), name, NULL);
+		if (!FileUtils::IsFile(dll))
 		{
-			ShowError(string("Couldn't find required file: ") + khost);
-			return __LINE__;
+			ShowError(string("Couldn't find required file: ") + dll);
+			return false;
 		}
-	
-		HMODULE dll = LoadLibraryA(khost.c_str());
-		if (!dll)
+		
+		*module = LoadLibraryA(dll.c_str());
+		if (!(*module))
 		{
 			char msg[MAX_PATH];
-	 		sprintf_s(msg,"Couldn't load file: %s, error: %s", khost.c_str(),
-				KrollUtils::Win32Utils::QuickFormatMessage(GetLastError()).c_str());
+			sprintf_s(msg,"Couldn't load file: %s, error: %s",
+				dll.c_str(), KrollUtils::Win32Utils::QuickFormatMessage(GetLastError()).c_str());
 
 			ShowError(msg);
-			return __LINE__;
+			return false;
 		}
-		Executor *executor = (Executor*)GetProcAddress(dll, "Execute");
+		
+		return true;
+	}
+	
+	typedef int Executor(HINSTANCE, int, const char **);
+	int StartHost()
+	{	
+		// preload some of the troublesome common runtime DLLs
+		for (int i = 0; i < preloadSize; i++)
+		{
+			HMODULE module;
+			if (!SafeLoadRuntimeDLL(preload[i], &module)) return __LINE__;
+		}
+		
+		HMODULE khost;	
+		if (!SafeLoadRuntimeDLL("khost.dll", &khost)) return __LINE__;
+		
+		Executor *executor = (Executor*)GetProcAddress(khost, "Execute");
 		if (!executor)
 		{
-			ShowError(string("Invalid entry point for") + khost);
+			ShowError(string("Invalid entry point 'Execute' in khost.dll"));
 			return __LINE__;
 		}
 

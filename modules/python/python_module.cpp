@@ -19,13 +19,17 @@ namespace kroll
 
 		Py_Initialize();
 		PyEval_InitThreads();
+		PyEval_SaveThread();
 
-		//TODO: maybe we need to setup path to script?
-		//Py_SetProgramName(); 
+		{
+		PyLockGIL lock;
+
 		PyObject *path = PySys_GetObject((char*) "path");
-		PyObject *s = PyString_FromString(host->GetApplication()->GetResourcesPath().c_str());
+		PyObject *s = PyString_FromString(
+			host->GetApplication()->GetResourcesPath().c_str());
 		PyList_Insert(path, 0, s);
 		Py_XDECREF(s);
+		}
 
 		this->InitializeBinding();
 		host->AddModuleProvider(this);
@@ -33,17 +37,22 @@ namespace kroll
 
 	void PythonModule::Stop()
 	{
+		// Don't release this GIL state because by the time we're 
+		// done here, the interpreter will have bitten the dust
+		PyGILState_STATE gstate;
+		gstate = PyGILState_Ensure();
+
 		SharedKObject global = this->host->GetGlobalObject();
 		global->Set("Python", Value::Undefined);
 		this->binding->Set("evaluate", Value::Undefined);
 		this->binding = NULL;
 		PythonModule::instance_ = NULL;
-
 		Py_Finalize();
 	}
 
 	void PythonModule::InitializeBinding()
 	{
+		PyLockGIL lock;
 		SharedKObject global = this->host->GetGlobalObject();
 		this->binding = new StaticBoundObject();
 		global->Set("Python", Value::NewObject(this->binding));
@@ -57,11 +66,13 @@ namespace kroll
 		 */
 		this->binding->Set("evaluate", Value::NewMethod(evaluator));
 
-		PyObject* main_module = PyImport_AddModule("__main__");
-		PyObject* main_dict = PyModule_GetDict(main_module);
-		PyObject* api = PythonUtils::KObjectToPyObject(Value::NewObject(global));
-		PyDict_SetItemString(main_dict, PRODUCT_NAME, api);
-		Py_DECREF(api);
+		{
+			PyObject* main_module = PyImport_AddModule("__main__");
+			PyObject* main_dict = PyModule_GetDict(main_module);
+			PyObject* api = PythonUtils::KObjectToPyObject(Value::NewObject(global));
+			PyDict_SetItemString(main_dict, PRODUCT_NAME, api);
+			Py_DECREF(api);
+		}
 	}
 
 
@@ -74,6 +85,7 @@ namespace kroll
 
 	Module* PythonModule::CreateModule(std::string& path)
 	{
+		PyLockGIL lock;
 		FILE *file = fopen(path.c_str(), "r");
 
 		PyRun_SimpleFile(file,path.c_str());
