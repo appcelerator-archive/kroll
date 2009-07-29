@@ -72,6 +72,9 @@ namespace KrollBoot
 	{
 		// Windows boot does not normally need to restart itself,  so just
 		// launch the host here and exit with the appropriate return value.
+
+		// This may have been an install, so ensure that KR_HOME is correct
+		EnvironmentUtils::Set("KR_HOME", app->path);
 		exit(KrollBoot::StartHost());
 	}
 	
