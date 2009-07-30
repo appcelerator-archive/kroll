@@ -4,20 +4,122 @@
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
 #include "../utils.h"
-
 #include <windows.h>
 #include <shlobj.h>
 #include <Iphlpapi.h>
 #include <process.h>
+#include <shellapi.h>
 
 namespace UTILS_NS
 {
+	bool FileHasAttributes(std::string& path, DWORD attributes)
+	{
+		std::wstring widePath = UTILS_NS::UTF8ToWide(path);
+
+		WIN32_FIND_DATA findFileData;
+		ZeroMemory(&findFileData, sizeof(WIN32_FIND_DATA));
+
+		HANDLE hFind = FindFirstFile(widePath.c_str(), &findFileData);
+		if (hFind != INVALID_HANDLE_VALUE)
+		{
+			FindClose(hFind);
+
+			// We do this check, because we may have passed in 0 for attributse
+			// in which case the callee just wants to know if the path exists.
+			return (findFileData.dwFileAttributes & attributes) == attributes;
+		}
+		else
+		{
+			return false;
+		}
+
+	}
+
+	std::string FileUtils::GetExecutableDirectory()
+	{
+		wchar_t path[MAX_PATH];
+		path[MAX_PATH-1] = '\0';
+		GetModuleFileNameW(NULL, path, MAX_PATH - 1);
+		std::string fullPath = UTILS_NS::WideToUTF8(path);
+		return Dirname(fullPath);
+	}
+
+	std::string FileUtils::GetTempDirectory()
+	{
+		wchar_t tempDirectory[MAX_PATH];
+		tempDirectory[MAX_PATH-1] = '\0';
+		GetTempPathW(MAX_PATH - 1, tempDirectory);
+
+		// This function seem to return Windows stubby paths, so
+		// let's convert it to a full path name.
+		std::wstring dir(tempDirectory);
+		GetLongPathNameW(dir.c_str(), tempDirectory, MAX_PATH - 1);
+		std::string out = UTILS_NS::WideToUTF8(tempDirectory);
+
+		srand(GetTickCount()); // initialize seed
+		std::ostringstream s;
+		s << "k" << (double) rand();
+		std::string end = s.str();
+		return FileUtils::Join(out.c_str(), end.c_str(), NULL);
+	}
+
+	bool FileUtils::IsFile(std::string &file)
+	{
+		return FileHasAttributes(file, 0);
+	}
+
+	std::string FileUtils::Dirname(std::string path)
+	{
+		wchar_t pathBuffer[_MAX_PATH];
+		wchar_t drive[_MAX_DRIVE];
+		wchar_t dir[_MAX_DIR];
+		wchar_t fname[_MAX_FNAME];
+		wchar_t ext[_MAX_EXT];
+
+		std::wstring widePath = UTILS_NS::UTF8ToWide(path);
+		wcsncpy(pathBuffer, widePath.c_str(), MAX_PATH - 1);
+		pathBuffer[MAX_PATH - 1] = '\0';
+
+		_wsplitpath(pathBuffer, drive, dir, fname, ext);
+		if (dir[wcslen(dir)-1] == '\\')
+			dir[wcslen(dir)-1] = '\0';
+
+		std::wstring dirname = drive;
+		dirname += std::wstring(dir);
+		return UTILS_NS::WideToUTF8(dirname);
+	}
+
+	bool FileUtils::CreateDirectoryImpl(std::string& dir)
+	{
+		std::wstring wideDir = UTILS_NS::UTF8ToWide(dir);
+		return (::CreateDirectoryW(wideDir.c_str(), NULL) == TRUE);
+	}
+
+	bool FileUtils::DeleteDirectory(std::string &dir)
+	{
+		std::wstring wideDir = UTILS_NS::UTF8ToWide(dir);
+		SHFILEOPSTRUCT op;
+		op.hwnd = NULL;
+		op.wFunc = FO_DELETE;
+		op.pFrom = wideDir.c_str();
+		op.pTo = NULL;
+		op.fFlags = FOF_NOCONFIRMATION | FOF_SILENT | FOF_NOERRORUI;
+		int rc = SHFileOperation(&op);
+		return (rc == 0);
+	}
+
+	bool FileUtils::IsDirectory(std::string &path)
+	{
+		return FileHasAttributes(path, FILE_ATTRIBUTE_DIRECTORY);
+	}
+
 	std::string FileUtils::GetUserRuntimeHomeDirectory()
 	{
-		char path[MAX_PATH];
-		if (SHGetSpecialFolderPathA(NULL, path, CSIDL_APPDATA, FALSE))
+		wchar_t widePath[MAX_PATH];
+		if (SHGetSpecialFolderPath(NULL, widePath, CSIDL_APPDATA, FALSE))
 		{
-			return Join(path, PRODUCT_NAME, NULL);
+			std::string path = UTILS_NS::WideToUTF8(widePath);
+			return Join(path.c_str(), PRODUCT_NAME, NULL);
 		}
 		else
 		{
@@ -29,69 +131,199 @@ namespace UTILS_NS
 	
 	std::string FileUtils::GetSystemRuntimeHomeDirectory()
 	{
-		char path[MAX_PATH];
-		if (SHGetSpecialFolderPathA(NULL, path, CSIDL_COMMON_APPDATA, FALSE))
+		wchar_t widePath[MAX_PATH];
+		if (SHGetSpecialFolderPath(NULL, widePath, CSIDL_COMMON_APPDATA, FALSE))
 		{
-			return Join(path, PRODUCT_NAME, NULL);
+			std::string path = UTILS_NS::WideToUTF8(widePath);
+			return Join(path.c_str(), PRODUCT_NAME, NULL);
 		}
 		else
 		{
 			return GetUserRuntimeHomeDirectory();
 		}
 	}
-	
-	// TODO: implement this for other platforms
-	void FileUtils::CopyRecursive(std::string &dir, std::string &dest)
+
+	bool FileUtils::IsHidden(std::string &path)
 	{
-		if (!IsDirectory(dest))
-		{
-			CreateDirectory(dest);
-		}
-	
-		std::cout << "\n>Recursive copy " << dir << " to " << dest << std::endl;
-		WIN32_FIND_DATAA findFileData;
-		std::string q(dir+"\\*");
-		HANDLE hFind = FindFirstFileA(q.c_str(), &findFileData);
+		return FileHasAttributes(path, FILE_ATTRIBUTE_HIDDEN);
+	}
+
+	void FileUtils::ListDir(std::string& path, std::vector<std::string> &files)
+	{
+		if (!IsDirectory(path))
+			return;
+
+		files.clear();
+
+		WIN32_FIND_DATA findFileData;
+		ZeroMemory(&findFileData, sizeof(WIN32_FIND_DATA));
+
+		std::wstring widePath = UTILS_NS::UTF8ToWide(path);
+		std::wstring searchString(widePath + L"\\*");
+
+		HANDLE hFind = FindFirstFile(searchString.c_str(), &findFileData);
 		if (hFind != INVALID_HANDLE_VALUE)
 		{
 			do
 			{
-				std::string filename = findFileData.cFileName;
-				if (filename == "." || filename == "..") continue;
-	
-				std::string srcName = dir + "\\" + filename;
-				std::string destName = dest + "\\" + filename;
-	
-				if (IsDirectory(srcName))
+				std::wstring wideFilename(findFileData.cFileName);
+				if (wideFilename != L"." && wideFilename != L"..")
 				{
-					std::cout << "create dir: " << destName << std::endl;
-					FileUtils::CreateDirectory(destName);
-					CopyRecursive(srcName, destName);
+					std::string filename = UTILS_NS::WideToUTF8(wideFilename);
+					files.push_back(filename);
 				}
-				else
-				{
-					//std::cout << "> copy file " << srcName << " to " << destName << std::endl;
-					CopyFileA(srcName.c_str(), destName.c_str(), FALSE);
-				}
-			} while (FindNextFileA(hFind, &findFileData));
+
+			} while (FindNextFile(hFind, &findFileData));
 			FindClose(hFind);
+		}
+	}
+
+	int FileUtils::RunAndWait(std::string &path, std::vector<std::string> &args)
+	{
+		std::string cmdLine = "\"" + path + "\"";
+		for (size_t i = 0; i < args.size(); i++)
+		{
+			cmdLine += " \"" + args.at(i) + "\"";
+		}
+
+#ifdef DEBUG
+		std::cout << "running: " << cmdLine << std::endl;
+#endif
+
+		STARTUPINFO startupInfo;
+		ZeroMemory(&startupInfo, sizeof(STARTUPINFO));
+		PROCESS_INFORMATION processInfo;
+		ZeroMemory(&processInfo, sizeof(PROCESS_INFORMATION));
+		startupInfo.cb = sizeof(STARTUPINFO);
+
+		// Get the current working directory
+		wchar_t cwd[MAX_PATH];
+		DWORD size = GetCurrentDirectoryW(MAX_PATH, (wchar_t*) cwd);
+		std::wstring wideCmdLine = UTILS_NS::UTF8ToWide(cmdLine);
+
+		DWORD rc = -1;
+		if (CreateProcessW(
+			NULL,                           // No module name (use command line)
+			(wchar_t*) wideCmdLine.c_str(), // Command line
+			NULL,                           // Process handle not inheritable
+			NULL,                           // Thread handle not inheritable
+			FALSE,                          // Set handle inheritance to FALSE
+			0,                              // No creation flags
+			NULL,                           // Use parent's environment block
+			(wchar_t*) cwd,                 // Use parent's starting directory
+			&startupInfo,                     // Pointer to STARTUPINFO structure
+			&processInfo))                  // Pointer to PROCESS_INFORMATION structure
+		{
+			// Wait until child process exits.
+			WaitForSingleObject(processInfo.hProcess, INFINITE);
+
+			// set the exit code
+			GetExitCodeProcess(processInfo.hProcess, &rc);
+
+			// Close process and thread handles.
+			CloseHandle(processInfo.hProcess);
+			CloseHandle(processInfo.hThread);
+		}
+		return rc;
+	}
+
+#ifndef NO_UNZIP
+	void FileUtils::Unzip(std::string& source, std::string& destination, 
+		UnzipCallback callback, void *data)
+	{
+		std::wstring wideSource = UTILS_NS::UTF8ToWide(source);
+		std::wstring wideDestination = UTILS_NS::UTF8ToWide(destination);
+
+		HZIP handle = OpenZip(wideSource.c_str(), 0);
+		SetUnzipBaseDir(handle, wideDestination.c_str());
+
+		ZIPENTRY zipEntry; ZeroMemory(&zipEntry, sizeof(ZIPENTRY));
+
+		GetZipItem(handle, -1, &zipEntry);
+		int numItems = zipEntry.index;
+		if (callback != NULL)
+		{ 
+			std::ostringstream message;
+			message << "Starting extraction of " << numItems 
+				<< " items from " << source << "to " << destination;
+			std::string messageString = message.str();
+			callback((char*) messageString.c_str(), 0, numItems, data);
+		}
+		
+		for (int zi = 0; zi < numItems; zi++) 
+		{ 
+			ZeroMemory(&zipEntry, sizeof(ZIPENTRY));
+			GetZipItem(handle, zi, &zipEntry);
+			
+			if (callback != NULL)
+			{
+				std::string name = WideToUTF8(zipEntry.name);
+				std::string message = "Extracting ";
+				message.append(name);
+				message.append("...");
+				callback((char*) message.c_str(), zi, numItems, data);
+			}
+			
+			UnzipItem(handle, zi, zipEntry.name);
+		}
+		CloseZip(handle);
+	}
+#endif
+	
+	// TODO: implement this for other platforms
+	void FileUtils::CopyRecursive(std::string &dir, std::string &dest, std::string exclude)
+	{ 
+		if (!IsDirectory(dest)) 
+		{
+			CreateDirectory(dest);
+		}
+
+#ifdef DEBUG
+std::cout << "\n>Recursive copy " << dir << " to " << dest << std::endl;
+#endif
+		std::vector<std::string> files;
+		ListDir(dir, files);
+		for (size_t i = 0; i < files.size(); i++)
+		{
+			std::string& filename = files[i];
+			if (!exclude.empty() && exclude == filename)
+				continue;
+
+			std::string srcName = Join(dir.c_str(), filename.c_str(), NULL);
+			std::string destName = Join(dest.c_str(), filename.c_str(), NULL);
+
+			if (IsDirectory(srcName))
+			{
+#ifdef DEBUG
+				std::cout << "create dir: " << destName << std::endl;
+#endif
+				CreateDirectory(destName);
+				CopyRecursive(srcName, destName);
+			}
+			else
+			{
+				std::wstring wideSrcName = UTILS_NS::UTF8ToWide(srcName);
+				std::wstring wideDestName = UTILS_NS::UTF8ToWide(destName);
+				CopyFileW(wideSrcName.c_str(), wideDestName.c_str(), FALSE);
+			}
 		}
 	}
 
 	std::string FileUtils::GetUsername()
 	{
-		char buf[MAX_PATH];
-		DWORD size = MAX_PATH;
-		if (::GetUserNameA(buf,&size))
+		wchar_t buf[MAX_PATH];
+		DWORD size = MAX_PATH - 1;
+		if (::GetUserNameW(buf, &size))
 		{
-			buf[size]='\0';
+			buf[size] = '\0';
+			return UTILS_NS::WideToUTF8(buf);
 		}
 		else
 		{
-			sprintf(buf,"Unknown");
+			return "Unknown";
 		}
-		return std::string(buf);
 	}
+
 
 }
 

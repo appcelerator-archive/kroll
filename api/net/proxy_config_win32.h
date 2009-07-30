@@ -25,6 +25,7 @@ namespace kroll
 			 std::vector<SharedURI>& bypassVector);
 		static void ParseProxyList(std::string proxyList, std::string bypassList,
 			std::vector<SharedProxy>& ieProxyList);
+		static std::string ErrorCodeToString(DWORD code);
 	};
 }
 #endif

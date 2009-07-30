@@ -7,7 +7,8 @@
 #define _KR_FILE_UTILS_H_
 
 #ifdef OS_WIN32
-# include <windows.h>
+#include <windows.h>
+#undef CreateDirectory
 #endif
 
 #include <iostream>
@@ -89,13 +90,8 @@ namespace UTILS_NS
 		 *
 		 */
 		static bool CreateDirectory(std::string &dir, bool recursive=false);
+		static bool CreateDirectoryImpl(std::string &dir);
 
-		// TODO - remove this - had to add it to get modules/ti.Database/databases.cpp to link successfully
-		static bool CreateDirectory2(std::string &dir);
-#if defined(OS_WIN32)
-		// TODO: implement this for other platforms
-		static void CopyRecursive(std::string &dir, std::string &dest);
-#endif
 		/**
 		 *
 		 */
@@ -188,6 +184,12 @@ namespace UTILS_NS
 		 *
 		 */
 		static std::string GetUsername();
+
+#ifdef OS_WIN32
+		static void CopyRecursive(std::string &dir, std::string &dest,
+			std::string exclude = "");
+#endif
+
 	private:
 		FileUtils() {}
 		~FileUtils() {}
