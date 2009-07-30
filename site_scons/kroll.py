@@ -190,7 +190,7 @@ class BuildConfig(object):
 		if self.is_osx():
 			sources.extend(Glob('%s/utils/%s/*.mm' % (dir, self.os)))
 		if self.is_osx() or self.is_linux():
-			sources.extend(Glob('%s/utils/posix/*.cpp'))
+			sources.extend(Glob('%s/utils/posix/*.cpp' % dir))
 		return sources
 
 	def init_os_arch(self):

@@ -3,7 +3,7 @@
  * see LICENSE in the root folder for details on the license.
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
-#include "utils.h"
+#include "../utils.h"
 
 #ifdef OS_OSX
 #include <Cocoa/Cocoa.h>
@@ -142,90 +142,11 @@ namespace UTILS_NS
 #endif
 	}
 
-	std::string FileUtils::Join(const char* inpart, ...)
-	{
-		va_list ap;
-		va_start(ap, inpart);
-		std::vector<std::string> parts;
-		while (inpart != NULL)
-		{
-			if (strcmp(inpart, ""))
-				parts.push_back(inpart);
-			inpart = va_arg(ap, const char*);
-		}
-		va_end(ap);
-
-		std::string filepath;
-		std::vector<std::string>::iterator iter = parts.begin();
-		while (iter != parts.end())
-		{
-			std::string part = *iter;
-			bool first = (iter == parts.begin());
-			bool last = (iter == parts.end()-1);
-			iter++;
-
-			part = Trim(part);
-			if (part[part.size()-1] == KR_PATH_SEP_CHAR)
-				part = part.erase(part.size() - 1, 1);
-			if (!first && part[0] == KR_PATH_SEP_CHAR)
-				part = part.erase(0, 1);
-			filepath += part;
-
-			if (!last)
-				filepath += KR_PATH_SEP;
-		}
-#ifdef OS_OSX
-		NSString *s = [[NSString stringWithUTF8String:filepath.c_str()] stringByExpandingTildeInPath];
-		NSString *p = [s stringByStandardizingPath];
-		@try
-		{
-			filepath = [p fileSystemRepresentation];
-		}
-		@catch (NSException *ex)
-		{
-			const char *reason = [[ex reason] UTF8String];
-			printf("[Titanium.FileUtils] [Error] Error in Join: %s, '%s'\n", reason, filepath.c_str());
-			return filepath;
-		}
-#endif
-		return filepath;
-	}
-
 	bool FileUtils::IsHidden(std::string &file)
 	{
 		// TODO: OS X can also include a 'hidden' flag in file
 		// attributes. We should attempt to read this.
 		return (file.size() > 0 && file.at(0) == '.');
-	}
-
-	std::string FileUtils::GetOSVersion()
-	{
-#ifdef OS_WIN32
-		OSVERSIONINFO vi;
-		vi.dwOSVersionInfoSize = sizeof(vi);
-		if (GetVersionEx(&vi) == 0) return "?";
-
-		std::ostringstream str;
-		str << vi.dwMajorVersion << "." << vi.dwMinorVersion << " (Build " << (vi.dwBuildNumber & 0xFFFF);
-		if (vi.szCSDVersion[0]) str << ": " << vi.szCSDVersion;
-		str << ")";
-		return str.str();
-#elif OS_OSX || OS_LINUX
-		struct utsname uts;
-		uname(&uts);
-		return uts.release;
-#endif
-	}
-
-	std::string FileUtils::GetOSArchitecture()
-	{
-#ifdef OS_WIN32
-		return std::string("win32");
-#elif OS_OSX || OS_LINUX
-		struct utsname uts;
-		uname(&uts);
-		return uts.machine;
-#endif
 	}
 
 	void FileUtils::ListDir(std::string& path, std::vector<std::string> &files)
@@ -272,6 +193,7 @@ namespace UTILS_NS
 		return WEXITSTATUS(status);
 	}
 
+#ifndef NO_UNZIP
 	void FileUtils::Unzip(std::string& source, std::string& destination, 
 		UnzipCallback callback, void *data)
 	{
@@ -300,5 +222,6 @@ namespace UTILS_NS
 		RunAndWait(cmdline,args);
 #endif
 	}
+#endif
 }
 
