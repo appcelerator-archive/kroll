@@ -5,6 +5,7 @@
  */
 #include "../kroll.h"
 #include "net.h"
+#include "proxy_config_win32.h"
 #define _WINSOCKAPI_
 #include <winsock2.h>
 #include <windows.h>

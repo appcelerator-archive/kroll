@@ -12,7 +12,14 @@ elif build.is_linux():
 	if os.environ.has_key('PKG_CONFIG_PATH'):
 		Env.AppendENVPath('PKG_CONFIG_PATH', os.environ['PKG_CONFIG_PATH'])
 	Env.ParseConfig('pkg-config --cflags --libs libxml-2.0')
-	Env.Append(LIBS=['pthread'])
+	Env.Append(LIBS=['pthread', 'libsoup-2.4'])
+
+	# We need to add the webkit directories because they include libsoup
+	webkit_tp = path.join(build.third_party, 'webkit')
+	webkit_lib = path.join(webkit_tp, 'lib')
+	webkit_inc = path.join(webkit_tp, 'include')
+	Env.Append(LIBPATH=[webkit_lib])
+	Env.Append(CPPPATH=[webkit_inc])
 elif build.is_osx():
 	Env.Append(LINKFLAGS='-install_name libkroll.dylib')
 

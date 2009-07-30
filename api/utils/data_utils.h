@@ -17,16 +17,6 @@ namespace UTILS_NS
 		static std::string HexMD5(std::string);
 
 		/**
-		 * Encodes a URI value
-		 */
-		static std::string EncodeURIComponent(std::string value);
-
-		/**
-		 * Decodes a URI value
-		 */
-		static std::string DecodeURIComponent(std::string value);
-
-		/**
 		 * Generate a new UUID
 		 * @returns a new UUID as a string
 		 */

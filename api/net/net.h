@@ -8,7 +8,6 @@
 #include <Poco/StringTokenizer.h>
 #include <Poco/Net/IPAddress.h>
 #include <Poco/URI.h>
-
 namespace kroll
 {
 	class Proxy;
@@ -17,11 +16,6 @@ namespace kroll
 	typedef SharedPtr<ProxyConfig> SharedProxyConfig;
 	typedef SharedPtr<Poco::URI> SharedURI;
 }
-
 #include "proxy_config.h"
-#ifdef OS_WIN32
-#include "proxy_config_win32.h"
-#endif
-
 #endif
 

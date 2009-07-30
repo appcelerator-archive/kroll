@@ -117,6 +117,9 @@ namespace UTILS_NS
 
 	string Application::GetExecutablePath()
 	{
+		// TODO:
+		// If this application has arguments, it's probably the currently running
+		// application, so we can try to get the executable path based on argv[0]
 		string exeName = this->name + ".exe";
 		string path = FileUtils::Join(this->path.c_str(), exeName.c_str(), NULL);
 		if (FileUtils::IsFile(path))
@@ -256,7 +259,23 @@ namespace UTILS_NS
 		if (this->queryString.empty()) // Lazy caching of app query string
 		{
 			this->queryString = DISTRIBUTION_URL;
-			this->queryString += "/" + this->stream.substr(0,1);
+			if (EnvironmentUtils::Has("TITANIUM_STREAM"))
+			{
+				string stream = EnvironmentUtils::Get("TITANIUM_STREAM");
+				// support localhost only testing
+				if (stream == "local" || stream == "l")
+				{
+					this->queryString = "http://localhost";
+				}
+				else
+				{
+					this->queryString += "/" + stream.substr(0,1);
+				}
+			}
+			else
+			{
+				this->queryString += "/" + this->stream.substr(0,1);
+			}
 			this->queryString += "/v1/release-download";
 
 			string mid = PlatformUtils::GetMachineId();
@@ -264,14 +283,14 @@ namespace UTILS_NS
 			string osver = FileUtils::GetOSVersion();
 			string osarch = FileUtils::GetOSArchitecture();
 
-			this->queryString += "?os=" + DataUtils::EncodeURIComponent(os);
-			this->queryString += "&osver=" + DataUtils::EncodeURIComponent(osver);
-			this->queryString += "&tiver=" + DataUtils::EncodeURIComponent(STRING(_PRODUCT_VERSION));
-			this->queryString += "&mid=" + DataUtils::EncodeURIComponent(mid);
-			this->queryString += "&aid=" + DataUtils::EncodeURIComponent(this->id);
-			this->queryString += "&guid=" + DataUtils::EncodeURIComponent(this->guid);
-			this->queryString += "&ostype=" + DataUtils::EncodeURIComponent(OS_TYPE);
-			this->queryString += "&osarch=" + DataUtils::EncodeURIComponent(osarch);
+			this->queryString += "?os=" + URLUtils::EncodeURIComponent(os);
+			this->queryString += "&osver=" + URLUtils::EncodeURIComponent(osver);
+			this->queryString += "&tiver=" + URLUtils::EncodeURIComponent(STRING(_PRODUCT_VERSION));
+			this->queryString += "&mid=" + URLUtils::EncodeURIComponent(mid);
+			this->queryString += "&aid=" + URLUtils::EncodeURIComponent(this->id);
+			this->queryString += "&guid=" + URLUtils::EncodeURIComponent(this->guid);
+			this->queryString += "&ostype=" + URLUtils::EncodeURIComponent(OS_TYPE);
+			this->queryString += "&osarch=" + URLUtils::EncodeURIComponent(osarch);
 		}
 
 		string url = this->queryString;
@@ -447,5 +466,19 @@ namespace UTILS_NS
 			}
 		}
 		return string();
+	}
+
+	vector<SharedComponent> Application::GetResolvedComponents()
+	{
+		vector<SharedComponent> resolved;
+
+		if (this->runtime)
+			resolved.push_back(this->runtime);
+
+		resolved.reserve(resolved.size() + this->modules.size() + this->sdks.size());
+		resolved.insert(resolved.end(), this->modules.begin(), this->modules.end());
+		resolved.insert(resolved.end(), this->sdks.begin(), this->sdks.end());
+
+		return resolved;
 	}
 }

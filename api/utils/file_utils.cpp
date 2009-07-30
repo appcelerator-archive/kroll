@@ -123,10 +123,16 @@ namespace UTILS_NS
 			length: strlen(buffer)];
 		return std::string([temporaryDirectory UTF8String]);
 #elif defined(OS_WIN32)
-#define BUFSIZE 512
-		char szTempName[BUFSIZE];
-		GetTempPathA(BUFSIZE, szTempName);
-		std::string dir(szTempName);
+		char tempDirectory[MAX_PATH];
+		GetTempPathA(MAX_PATH, tempDirectory);
+
+		// This function seem to return Windows stubby paths, so
+		// let's convert it to a full path name.
+		std::string dir(tempDirectory);
+		GetLongPathNameA(dir.c_str(), tempDirectory, MAX_PATH);
+		tempDirectory[MAX_PATH-1] = '\0';
+		dir = tempDirectory;
+
 		srand(GetTickCount()); // initialize seed
 		std::ostringstream s;
 		s << "k" << (double)rand();
@@ -226,7 +232,7 @@ namespace UTILS_NS
 #ifdef OS_OSX
 		return [[NSFileManager defaultManager] createDirectoryAtPath:[NSString stringWithCString:dir.c_str() encoding:NSUTF8StringEncoding] attributes:nil];
 #elif OS_WIN32
-		return ::CreateDirectoryA(dir.c_str(),NULL);
+		return (::CreateDirectoryA(dir.c_str(), NULL) == TRUE);
 #elif OS_LINUX
 		return mkdir(dir.c_str(),0755) == 0;
 #endif
@@ -529,7 +535,7 @@ namespace UTILS_NS
 		return WEXITSTATUS(status);
 #elif defined(OS_WIN32)
 		std::string cmdLine = "\"" + path + "\"";
-		for (int i = 0; i < args.size(); i++)
+		for (size_t i = 0; i < args.size(); i++)
 		{
 			cmdLine += " \"" + args.at(i) + "\"";
 		}
@@ -630,42 +636,5 @@ namespace UTILS_NS
 #endif
 	}
 #endif
-
-	std::string FileUtils::FileURLToPath(std::string url)
-	{
-		size_t fileLength = 7; // file://
-		if (url.find("file://") == 0)
-		{
-			url = url.substr(fileLength);
-		}
-
-		if ('/' != KR_PATH_SEP_CHAR)
-		{
-			for (size_t i = 0; i < url.size(); i++)
-			{
-				if (url[i] == '/')
-				{
-						url[i] = KR_PATH_SEP_CHAR;
-				}
-			}
-		}
-		return url;
-	}
-
-	std::string FileUtils::PathToFileURL(std::string path)
-	{
-		if ('\\' == KR_PATH_SEP_CHAR)
-		{
-			for (size_t i = 0; i < path.size(); i++)
-			{
-				if (path[i] == '\\')
-				{
-					path[i] = '/';
-				}
-			}
-		}
-		return string("file://") + path;
-	}
-
 }
 
