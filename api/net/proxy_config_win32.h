@@ -14,8 +14,8 @@ namespace kroll
 		Win32ProxyConfig();
 
 		protected:
-		bool useAutoProxy;	
-		std::string autoConfigURL;
+		bool useProxyAutoConfig;
+		std::wstring autoConfigURL;
 		std::vector<SharedProxy> ieProxies;
 		SharedPtr<WinHTTPSession> session;
 

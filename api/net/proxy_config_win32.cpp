@@ -52,8 +52,8 @@ namespace kroll
 	};
 
 	Win32ProxyConfig::Win32ProxyConfig() :
-		useAutoProxy(false),
-		autoConfigURL(""),
+		useProxyAutoConfig(false),
+		autoConfigURL(L""),
 		session(0)
 	{
 		WINHTTP_CURRENT_USER_IE_PROXY_CONFIG ieProxyConfig;
@@ -63,17 +63,14 @@ namespace kroll
 		{
 			if (ieProxyConfig.fAutoDetect)
 			{
-				this->useAutoProxy = true;
+				this->useProxyAutoConfig = true;
 			}
 	
 			if (ieProxyConfig.lpszAutoConfigUrl != NULL)
 			{
-				// Not only are we using an auto proxy configuration, but this one
+				// We using an auto proxy configuration, but this one
 				// has a URL which we must contact to get the configuration info.
-				this->useAutoProxy = true;
-
-				std::wstring autoConfigURLW = ieProxyConfig.lpszAutoConfigUrl;
-				this->autoConfigURL = string(autoConfigURLW.begin(), autoConfigURLW.end());
+				this->autoConfigURL = ieProxyConfig.lpszAutoConfigUrl;
 			}
 
 			// We always keep IE proxy information in case auto proxy
@@ -96,17 +93,21 @@ namespace kroll
 		{
 			// If there is no IE configuration information, we default to
 			// attempting to get auto proxy information.
-			useAutoProxy = true;
+			useProxyAutoConfig = true;
 		}
 
-		if (this->useAutoProxy)
+		if (this->useProxyAutoConfig || !autoConfigURL.empty())
 		{
+			// Initialize a WinHTTP session so that we can do lookup for auto proxy
 			session = new WinHTTPSession();
 
 			// We failed to open an HINTERNET handle! WTF. We'll have to have
 			// disable auto proxy support, because we can't do a lookup.
 			if (!session->GetHandle())
-				this->useAutoProxy = false;
+			{
+				this->useProxyAutoConfig = false;
+				this->autoConfigURL = L"";
+			}
 		}
 
 		if (ieProxyConfig.lpszProxy)
@@ -124,7 +125,7 @@ namespace kroll
 		// The auto proxy configuration might tell us to simply use
 		// a direct connection, which should cause us to just return
 		// null. Otherwise we should try to use the IE proxy list (next block)
-		if (useAutoProxy)
+		if (useProxyAutoConfig || !autoConfigURL.empty())
 		{
 			std::vector<SharedProxy> autoProxies;
 			bool shouldUseIEProxy = GetAutoProxiesForURL(url, autoProxies);
@@ -136,7 +137,8 @@ namespace kroll
 				{
 					return 0;
 				}
-				else if (proxy->info->getScheme() == uri.getScheme())
+				else if (proxy->info->getScheme().empty() ||
+					proxy->info->getScheme() == uri.getScheme())
 				{
 					return proxy;
 				}
@@ -177,17 +179,20 @@ namespace kroll
 		WINHTTP_AUTOPROXY_OPTIONS autoProxyOptions;
 		ZeroMemory(&autoProxyOptions, sizeof(WINHTTP_AUTOPROXY_OPTIONS)); 
 		
-		if (this->autoConfigURL.empty())
+		// This type of detection might take several seconds. If the user specified
+		// an autoconfiguration URL. TODO: Maybe we should fall back to auto-configuration
+		// later -- it's *very* expensive though.
+		if (this->autoConfigURL.empty() && this->useProxyAutoConfig)
 		{
 			autoProxyOptions.dwFlags = WINHTTP_AUTOPROXY_AUTO_DETECT;
 			autoProxyOptions.dwAutoDetectFlags = 
 				WINHTTP_AUTO_DETECT_TYPE_DHCP | WINHTTP_AUTO_DETECT_TYPE_DNS_A;
 		}
-		else
+
+		if (!this->autoConfigURL.empty())
 		{
 			autoProxyOptions.dwFlags |= WINHTTP_AUTOPROXY_CONFIG_URL;
-			wstring autoConfigURLW = wstring(autoConfigURL.begin(), autoConfigURL.end());
-			autoProxyOptions.lpszAutoConfigUrl = autoConfigURLW.c_str();
+			autoProxyOptions.lpszAutoConfigUrl = this->autoConfigURL.c_str();
 		}
 		
 		// From Chromium:
@@ -196,16 +201,16 @@ namespace kroll
 		// Otherwise, we fail over to trying it with a value of true.  This way we
 		// get good performance in the case where WinHTTP uses an out-of-process
 		// resolver.  This is important for Vista and Win2k3.
-		wstring urlw = wstring(url.begin(), url.end());
+		wstring wideURL = UTF8ToWide(url);
 		autoProxyOptions.fAutoLogonIfChallenged = FALSE;
 		BOOL ok = WinHttpGetProxyForUrl(
-			session->GetHandle(), urlw.c_str(), &autoProxyOptions, &autoProxyInfo);
+			session->GetHandle(), wideURL.c_str(), &autoProxyOptions, &autoProxyInfo);
 
 		if (!ok && ERROR_WINHTTP_LOGIN_FAILURE == GetLastError())
 		{
 			autoProxyOptions.fAutoLogonIfChallenged = TRUE;
 			ok = WinHttpGetProxyForUrl(
-				session->GetHandle(), urlw.c_str(), &autoProxyOptions, &autoProxyInfo);
+				session->GetHandle(), wideURL.c_str(), &autoProxyOptions, &autoProxyInfo);
 		}
 		
 		if (ok && autoProxyInfo.dwAccessType == WINHTTP_ACCESS_TYPE_NAMED_PROXY &&
@@ -232,7 +237,6 @@ namespace kroll
 		else
 		{
 			// Auto proxy failed, so try another method
-			useAutoProxy = false;
 			string error = "Could not get proxy for url=";
 			error.append(url);
 			error.append(": ");
