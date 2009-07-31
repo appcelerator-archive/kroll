@@ -179,9 +179,9 @@ namespace kroll
 		WINHTTP_AUTOPROXY_OPTIONS autoProxyOptions;
 		ZeroMemory(&autoProxyOptions, sizeof(WINHTTP_AUTOPROXY_OPTIONS)); 
 		
-		// This type of detection might take several seconds. If the user specified
-		// an autoconfiguration URL. TODO: Maybe we should fall back to auto-configuration
-		// later -- it's *very* expensive though.
+		// This type of auto-detection might take several seconds, so
+		// if the user specified  an autoconfiguration URL don't do it.
+		// TODO: Maybe we should use this as a fallback later, but it's *very* expensive.
 		if (this->autoConfigURL.empty() && this->useProxyAutoConfig)
 		{
 			autoProxyOptions.dwFlags = WINHTTP_AUTOPROXY_AUTO_DETECT;
