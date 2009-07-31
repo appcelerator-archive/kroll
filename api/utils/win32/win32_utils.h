@@ -22,5 +22,10 @@ namespace UTILS_NS
    				 |FORMAT_MESSAGE_ALLOCATE_BUFFER
    				 |FORMAT_MESSAGE_IGNORE_INSERTS);
 	};
+
+	KROLL_API std::wstring UTF8ToWide(std::string& in);
+	KROLL_API std::string WideToUTF8(std::wstring& in);
+	KROLL_API std::wstring UTF8ToWide(const char* in);
+	KROLL_API std::string WideToUTF8(const wchar_t* in);
 }
 #endif

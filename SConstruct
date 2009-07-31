@@ -31,33 +31,24 @@ build.env.Append(CPPPATH=[
 	build.kroll_include_dir])
 
 # debug build flags
-if ARGUMENTS.get('debug', 0) or debug:
+debug = ARGUMENTS.get('debug', 0)
+if debug:
 	build.env.Append(CPPDEFINES = ('DEBUG', 1))
-	build.debug = True
-	debug = 1
-	if not build.is_win32():
-		build.env.Append(CCFLAGS = ['-g'])  # debug
+	if build.is_win32():
+		build.env.Append(CCFLAGS=['/Z7'])  # max debug
+		build.env.Append(CPPDEFINES=('WIN32_CONSOLE', 1))
 	else:
-		build.env.Append(CCFLAGS = ['/Z7','/GR'])  # max debug, C++ RTTI
+		build.env.Append(CCFLAGS=['-g'])  # debug
 else:
-	build.env.Append(CPPDEFINES = ('NDEBUG', 1))
-	debug = 0
+	build.env.Append(CPPDEFINES = ('NDEBUG', 1 ))
 	if not build.is_win32():
 		build.env.Append(CCFLAGS = ['-O9']) # max optimizations
-	else:
-		build.env.Append(CCFLAGS = ['/GR']) # C++ RTTI
-		
-
-# turn on special debug printouts for reference counting
-if ARGUMENTS.get('debug_refcount', 0):
-	build.env.Append(CPPDEFINES = ('DEBUG_REFCOUNT', 1))
 
 if build.is_win32():
-	execfile('site_scons/win32.py')
-
+	build.env.Append(CCFLAGS=['/EHsc', '/GR', '/MD'])
+	build.env.Append(LINKFLAGS=['/DEBUG', '/PDB:${TARGET}.pdb'])
 
 Export('build')
-
 if 'docs' in COMMAND_LINE_TARGETS:
 	SConscript('SConscript.docs')
 else:

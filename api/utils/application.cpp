@@ -259,7 +259,23 @@ namespace UTILS_NS
 		if (this->queryString.empty()) // Lazy caching of app query string
 		{
 			this->queryString = DISTRIBUTION_URL;
-			this->queryString += "/" + this->stream.substr(0,1);
+			if (EnvironmentUtils::Has("TITANIUM_STREAM"))
+			{
+				string stream = EnvironmentUtils::Get("TITANIUM_STREAM");
+				// support localhost only testing
+				if (stream == "local" || stream == "l")
+				{
+					this->queryString = "http://localhost";
+				}
+				else
+				{
+					this->queryString += "/" + stream.substr(0,1);
+				}
+			}
+			else
+			{
+				this->queryString += "/" + this->stream.substr(0,1);
+			}
 			this->queryString += "/v1/release-download";
 
 			string mid = PlatformUtils::GetMachineId();

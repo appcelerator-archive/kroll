@@ -94,6 +94,8 @@ namespace kroll
 
 #ifdef OS_OSX
 #include "osx/osx.h"
+#elif defined(OS_WIN32)
+#include "win32/win32.h"
 #endif
 
 #endif

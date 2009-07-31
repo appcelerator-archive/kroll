@@ -13,13 +13,6 @@
 #include <IOKit/network/IOEthernetController.h>
 #include <sys/utsname.h>
 #include <libgen.h>
-#elif defined(OS_WIN32)
-#include "../base.h"
-#include <windows.h>
-#include <shlobj.h>
-#include <Iphlpapi.h>
-#include <process.h>
-#include <shellapi.h>
 #elif defined(OS_LINUX)
 #include <cstdarg>
 #include <unistd.h>
@@ -67,35 +60,6 @@ static std::string safe_encode(std::string &str)
 
 namespace UTILS_NS
 {
-	std::string FileUtils::GetExecutableDirectory()
-	{
-#ifdef OS_OSX
-		NSString* bundlePath = [[NSBundle mainBundle] bundlePath];
-		NSString* contents = [NSString stringWithFormat:@"%@/Contents",bundlePath];
-		return std::string([contents UTF8String]);
-#elif OS_WIN32
-		char path[MAX_PATH];
-		GetModuleFileNameA(NULL,path,MAX_PATH);
-		std::string p(path);
-		std::string::size_type pos = p.rfind("\\");
-		if (pos!=std::string::npos)
-		{
-		  return p.substr(0,pos);
-		}
-	  	return p;
-#elif OS_LINUX
-		char tmp[100];
-		sprintf(tmp,"/proc/%d/exe",getpid());
-		char pbuf[255];
-		int c = readlink(tmp,pbuf,255);
-		pbuf[c]='\0';
-		std::string str(pbuf);
-		size_t pos = str.rfind("/");
-		if (pos==std::string::npos) return str;
-		return str.substr(0,pos);
-#endif
-	}
-
 	std::string FileUtils::GetApplicationDataDirectory(std::string &appid)
 	{
 		std::string dir = GetUserRuntimeHomeDirectory();
@@ -103,110 +67,6 @@ namespace UTILS_NS
 		CreateDirectory(dir, true);
 
 		return dir;
-	}
-
-	std::string FileUtils::GetTempDirectory()
-	{
-#ifdef OS_OSX
-		NSString * tempDir = NSTemporaryDirectory();
-		if (tempDir == nil)
-			tempDir = @"/tmp";
-
-		NSString *tmp = [tempDir stringByAppendingPathComponent:@"kXXXXX"];
-		const char * fsTemplate = [tmp fileSystemRepresentation];
-		NSMutableData * bufferData =
-			[NSMutableData dataWithBytes: fsTemplate length: strlen(fsTemplate)+1];
-		char * buffer = (char*)[bufferData mutableBytes];
-		mkdtemp(buffer);
-		NSString * temporaryDirectory = [[NSFileManager defaultManager]
-			stringWithFileSystemRepresentation: buffer
-			length: strlen(buffer)];
-		return std::string([temporaryDirectory UTF8String]);
-#elif defined(OS_WIN32)
-		char tempDirectory[MAX_PATH];
-		GetTempPathA(MAX_PATH, tempDirectory);
-
-		// This function seem to return Windows stubby paths, so
-		// let's convert it to a full path name.
-		std::string dir(tempDirectory);
-		GetLongPathNameA(dir.c_str(), tempDirectory, MAX_PATH);
-		tempDirectory[MAX_PATH-1] = '\0';
-		dir = tempDirectory;
-
-		srand(GetTickCount()); // initialize seed
-		std::ostringstream s;
-		s << "k" << (double)rand();
-		std::string end = s.str();
-		return FileUtils::Join(dir.c_str(), end.c_str(), NULL);
-#else
-		std::ostringstream dir;
-		const char* tmp = getenv("TMPDIR");
-		const char* tmp2 = getenv("TEMP");
-		if (tmp)
-			dir << std::string(tmp);
-		else if (tmp2)
-			dir << std::string(tmp2);
-		else
-			dir << std::string("/tmp");
-
-		std::string tmp_str = dir.str();
-		if (tmp_str.at(tmp_str.length()-1) != '/')
-			dir << "/";
-		dir << "kXXXXXX";
-		char* tempdir = strdup(dir.str().c_str());
-		tempdir = mkdtemp(tempdir);
-		tmp_str = std::string(tempdir);
-		free(tempdir);
-		return tmp_str;
-#endif
-	}
-
-	bool FileUtils::IsFile(std::string &file)
-	{
-#ifdef OS_OSX
-		BOOL isDir = NO;
-		NSString *f = [NSString stringWithCString:file.c_str()  encoding:NSUTF8StringEncoding];
-		NSString *p = [f stringByStandardizingPath];
-		BOOL found = [[NSFileManager defaultManager] fileExistsAtPath:p isDirectory:&isDir];
-		return found && !isDir;
-#elif OS_WIN32
-		WIN32_FIND_DATAA findFileData;
-		HANDLE hFind = FindFirstFileA(file.c_str(), &findFileData);
-		if (hFind != INVALID_HANDLE_VALUE)
-		{
-			bool yesno = (findFileData.dwFileAttributes & 0x00000000) == 0x00000000;
-			FindClose(hFind);
-			return yesno;
-		}
-		return false;
-#elif OS_LINUX
-		struct stat st;
-		return (stat(file.c_str(),&st)==0) && S_ISREG(st.st_mode);
-#endif
-	}
-
-	std::string FileUtils::Dirname(std::string path)
-	{
-#ifdef OS_WIN32
-	char path_buffer[_MAX_PATH];
-	char drive[_MAX_DRIVE];
-	char dir[_MAX_DIR];
-	char fname[_MAX_FNAME];
-	char ext[_MAX_EXT];
-	strncpy(path_buffer, path.c_str(), _MAX_PATH);
-	path_buffer[_MAX_PATH - 1] = '\0';
-	_splitpath(path_buffer, drive, dir, fname, ext );
-	if (dir[strlen(dir)-1] == '\\')
-		dir[strlen(dir)-1] = '\0';
-	std::string dirname = drive;
-	dirname += std::string(dir);
-	return dirname;
-#else
-	char* pathCopy = strdup(path.c_str());
-	std::string toReturn = dirname(pathCopy);
-	free(pathCopy);
-	return toReturn;
-#endif
 	}
 
 	std::string FileUtils::Basename(std::string path)
@@ -220,81 +80,21 @@ namespace UTILS_NS
 
 	bool FileUtils::CreateDirectory(std::string &dir, bool recursive)
 	{
-		if (IsDirectory(dir)) {
+		if (IsDirectory(dir))
+		{
 			return true;
 		}
 		
 		string parent = Dirname(dir);
 		if (recursive && parent.size() > 0 && !IsDirectory(parent))
 		{
-			CreateDirectory(parent, true);
-		}
-#ifdef OS_OSX
-		return [[NSFileManager defaultManager] createDirectoryAtPath:[NSString stringWithCString:dir.c_str() encoding:NSUTF8StringEncoding] attributes:nil];
-#elif OS_WIN32
-		return (::CreateDirectoryA(dir.c_str(), NULL) == TRUE);
-#elif OS_LINUX
-		return mkdir(dir.c_str(),0755) == 0;
-#endif
-		return false;
-	}
-
-	bool FileUtils::CreateDirectory2(std::string &dir)
-	{
-		return FileUtils::CreateDirectory(dir);
-	}
-
-	bool FileUtils::DeleteDirectory(std::string &dir)
-	{
-#ifdef OS_OSX
-		[[NSFileManager defaultManager] removeFileAtPath:[NSString stringWithCString:dir.c_str() encoding:NSUTF8StringEncoding] handler:nil];
-#elif OS_WIN32
-		SHFILEOPSTRUCTA op;
-		op.hwnd = NULL;
-		op.wFunc = FO_DELETE;
-		op.pFrom = dir.c_str();
-		op.pTo = NULL;
-		op.fFlags = FOF_NOCONFIRMATION | FOF_SILENT | FOF_NOERRORUI;
-		int rc = SHFileOperationA(&op);
-		return (rc == 0);
-#elif OS_LINUX
-		return unlink(dir.c_str()) == 0;
-#endif
-		return false;
-	}
-
-	bool FileUtils::IsDirectory(std::string &dir)
-	{
-#ifdef OS_OSX
-		BOOL isDir = NO;
-		BOOL found = [[NSFileManager defaultManager] fileExistsAtPath:[NSString stringWithCString:dir.c_str() encoding:NSUTF8StringEncoding] isDirectory:&isDir];
-		return found && isDir;
-#elif OS_WIN32
-		WIN32_FIND_DATAA findFileData;
-		HANDLE hFind = FindFirstFileA(dir.c_str(), &findFileData);
-		if (hFind == INVALID_HANDLE_VALUE)
-		{
-			return false;
-		}
-		else
-		{
-			if ((findFileData.dwFileAttributes & 0x00000010) == 0x00000010)
-			{
-				FindClose(hFind);
-				return true;
-			}
-			else
-			{
-				FindClose(hFind);
+			if (!CreateDirectory(parent, true))
 				return false;
-			}
 		}
 
-#elif OS_LINUX
-		struct stat st;
-		return (stat(dir.c_str(),&st)==0) && S_ISDIR(st.st_mode);
-#endif
+		return CreateDirectoryImpl(dir);
 	}
+
 
 	std::string FileUtils::GetDirectory(std::string &file)
 	{
@@ -304,7 +104,7 @@ namespace UTILS_NS
 			pos = file.find_last_of(KR_PATH_SEP_OTHER);
 			if (pos == std::string::npos)
 			{
-				return "."KR_PATH_SEP; //??
+				return "."KR_PATH_SEP;
 			}
 		}
 #ifdef OS_OSX
@@ -314,7 +114,6 @@ namespace UTILS_NS
 		return file.substr(0, pos);
 #endif
 	}
-
 
 	std::string FileUtils::Join(const char* inpart, ...)
 	{
@@ -363,26 +162,6 @@ namespace UTILS_NS
 		}
 #endif
 		return filepath;
-	}
-
-	bool FileUtils::IsHidden(std::string &file)
-	{
-#ifdef OS_OSX
-		// TODO finish this
-		return false;
-#elif OS_WIN32
-		WIN32_FIND_DATAA findFileData;
-		HANDLE hFind = FindFirstFileA(file.c_str(), &findFileData);
-		if (hFind != INVALID_HANDLE_VALUE)
-		{
-			bool yesno = (findFileData.dwFileAttributes & 0x00000002) == 0x00000002;
-			FindClose(hFind);
-			return yesno;
-		}
-		return false;
-#elif OS_LINUX
-		return (file.size() > 0 && file.at(0) == '.');
-#endif
 	}
 
 	std::string FileUtils::GetOSVersion()
@@ -472,169 +251,5 @@ namespace UTILS_NS
 		}
 		return c;
 	}
-
-	void FileUtils::ListDir(std::string& path, std::vector<std::string> &files)
-	{
-		if (!IsDirectory(path))
-			return;
-		files.clear();
-
-	#if defined(OS_WIN32)
-		WIN32_FIND_DATAA findFileData;
-		std::string q(path+"\\*");
-		HANDLE hFind = FindFirstFileA(q.c_str(), &findFileData);
-		if (hFind != INVALID_HANDLE_VALUE)
-		{
-			do
-			{
-				std::string fn = std::string(findFileData.cFileName);
-				if (fn.substr(0,1) == "." || fn.substr(0,2) == "..") {
-					continue;
-				}
-				files.push_back(fn);
-			} while (FindNextFileA(hFind, &findFileData));
-			FindClose(hFind);
-		}
-	#else
-		DIR *dp;
-		struct dirent *dirp;
-		if ((dp = opendir(path.c_str()))!=NULL)
-		{
-			while ((dirp = readdir(dp))!=NULL)
-			{
-				std::string fn = std::string(dirp->d_name);
-				if (fn.substr(0,1)=="." || fn.substr(0,2)=="..")
-				{
-					continue;
-				}
-				files.push_back(fn);
-			}
-			closedir(dp);
-		}
-	#endif
-	}
-
-	int FileUtils::RunAndWait(std::string &path, std::vector<std::string> &args)
-	{
-#ifndef OS_WIN32
-		std::string p;
-		p+="\"";
-		p+=path;
-		p+="\" ";
-		std::vector<std::string>::iterator i = args.begin();
-		while (i!=args.end())
-		{
-			p+="\"";
-			p+=(*i++);
-			p+="\" ";
-		}
-#ifdef DEBUG
-		std::cout << "running: " << p << std::endl;
-#endif
-		int status = system(p.c_str());
-		return WEXITSTATUS(status);
-#elif defined(OS_WIN32)
-		std::string cmdLine = "\"" + path + "\"";
-		for (size_t i = 0; i < args.size(); i++)
-		{
-			cmdLine += " \"" + args.at(i) + "\"";
-		}
-		printf("cmd: %s\n", cmdLine.c_str());
-
-		DWORD rc=0;
-		STARTUPINFOA si;
-		PROCESS_INFORMATION pi;
-		ZeroMemory( &si, sizeof(si) );
-		si.cb = sizeof(si);
-		ZeroMemory( &pi, sizeof(pi) );
-		char cwd[MAX_PATH];
-		DWORD size = GetCurrentDirectoryA(MAX_PATH, (char*)cwd);
-		if (!CreateProcessA(
-			NULL,                    // No module name (use command line)
-			(char*) cmdLine.c_str(), // Command line
-			NULL,                    // Process handle not inheritable
-			NULL,                    // Thread handle not inheritable
-			FALSE,                   // Set handle inheritance to FALSE
-			0,                       // No creation flags
-			NULL,                    // Use parent's environment block
-			(char*)cwd,              // Use parent's starting directory
-			&si,                     // Pointer to STARTUPINFO structure
-			&pi )                    // Pointer to PROCESS_INFORMATION structure
-		)
-		{
-			rc = -1;
-		}
-		else
-		{
-			// Wait until child process exits.
-			WaitForSingleObject( pi.hProcess, INFINITE );
-
-			// set the exit code
-			GetExitCodeProcess(pi.hProcess,&rc);
-
-			// Close process and thread handles.
-			CloseHandle( pi.hProcess );
-			CloseHandle( pi.hThread );
-		}
-
-		return rc;
-#endif
-	}
-
-#ifndef NO_UNZIP
-	void FileUtils::Unzip(std::string& source, std::string& destination, UnzipCallback callback, void *data)
-	{
-#ifdef OS_OSX
-		//
-		// we don't include gzip since we're on OSX
-		// we just let the built-in OS handle extraction for us
-		//
-		std::vector<std::string> args;
-		args.push_back("--noqtn");
-		args.push_back("-x");
-		args.push_back("-k");
-		args.push_back("--rsrc");
-		args.push_back(source);
-		args.push_back(destination);
-		std::string cmdline = "/usr/bin/ditto";
-		RunAndWait(cmdline,args);
-#elif OS_LINUX
-		std::vector<std::string> args;
-		args.push_back("-qq");
-		args.push_back("-o");
-		args.push_back(source);
-		args.push_back("-d");
-		args.push_back(destination);
-		std::string cmdline("/usr/bin/unzip");
-		RunAndWait(cmdline,args);
-#elif OS_WIN32
-		HZIP hz = OpenZip(source.c_str(),0);
-		SetUnzipBaseDir(hz,destination.c_str());
-		ZIPENTRY ze;
-		GetZipItem(hz,-1,&ze);
-		int numitems=ze.index;
-		char message[1024];
-			
-		if (callback != NULL) {
-			sprintf(message, "Starting extraction of %d items from %s to %s", numitems, source.c_str(), destination.c_str());
-			
-			callback(message, 0, numitems, data);
-		}
-		
-		for (int zi=0; zi < numitems; zi++)
-		{
-			GetZipItem(hz,zi,&ze);
-			
-			if (callback != NULL) {
-				sprintf(message, "Extracting %s...", ze.name);
-				callback(message, zi, numitems, data);
-			}
-			
-			UnzipItem(hz,zi,ze.name);
-		}
-		CloseZip(hz);
-#endif
-	}
-#endif
 }
 

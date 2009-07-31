@@ -80,7 +80,7 @@ namespace UTILS_NS
 		bool bundled;
 
 		static SharedComponent NewComponent(
-			KComponentType, std::string, std::string, std::string, bool bundled=false);
+			KComponentType type, std::string name, std::string version, std::string path, bool bundled=false);
 
 		/**
 		 * Read a component's manifest. If there is no manifest
