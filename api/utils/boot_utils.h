@@ -6,9 +6,9 @@
 #ifndef _KR_BOOT_UTILS_H_
 #define _KR_BOOT_UTILS_H_
 
+// These UUIDs should never change and uniquely identify a package type
 #define DISTRIBUTION_URL "http://api.appcelerator.net"
 #define DISTRIBUTION_UUID "7F7FA377-E695-4280-9F1F-96126F3D2C2A"
-// these UUIDs should never change and uniquely identify a package type
 #define RUNTIME_UUID "A2AC5CB5-8C52-456C-9525-601A5B0725DA"
 #define MODULE_UUID "1ACE5D3A-2B52-43FB-A136-007BD166CFD0"
 #define SDK_UUID "FF71038E-3CD6-40EA-A1C2-CFEE1D284CEA"
@@ -36,7 +36,8 @@ namespace UTILS_NS
 	};
 
 	/**
-	 * Represents a single component dependency -- one line in the application manifest
+	 * Represents a single component dependency -- 
+	 * one line in the application manifest
 	 */
 	class KROLL_API Dependency
 	{
@@ -79,8 +80,9 @@ namespace UTILS_NS
 		std::string path;
 		bool bundled;
 
-		static SharedComponent NewComponent(
-			KComponentType type, std::string name, std::string version, std::string path, bool bundled=false);
+		static SharedComponent NewComponent(KComponentType type,
+			std::string name, std::string version,
+			std::string path, bool bundled=false);
 
 		/**
 		 * Read a component's manifest. If there is no manifest

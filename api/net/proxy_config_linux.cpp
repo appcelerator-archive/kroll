@@ -23,7 +23,7 @@ namespace kroll
 	LinuxProxyConfig::~LinuxProxyConfig()
 	{
 		if (proxyFactory)
-			px_proxy_factory_free(proxyFactory);	
+			px_proxy_factory_free(proxyFactory);
 	}
 
 	SharedPtr<Proxy> LinuxProxyConfig::GetProxyForURLImpl(string& url)

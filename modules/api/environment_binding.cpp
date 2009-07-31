@@ -8,7 +8,6 @@
 
 namespace kroll
 {
-	
 	SharedValue EnvironmentBinding::Get(const char *name)
 	{
 		return Value::NewString(EnvironmentUtils::Get(name));

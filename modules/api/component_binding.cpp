@@ -11,7 +11,7 @@ namespace kroll
 {
 
 	ComponentBinding::ComponentBinding(SharedComponent component) :
-		StaticBoundObject("API.Component"),
+		AccessorBoundObject("API.Component"),
 		component(component)
 	{
 		/**
