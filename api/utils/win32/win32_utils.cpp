@@ -35,14 +35,14 @@ namespace UTILS_NS
 
 	std::wstring UTF8ToWide(const char* in)
 	{
-		int size = strlen(in);
+		size_t size = strlen(in);
 		if (size == 0)
 			return L"";
 
 	 	wchar_t* buffer = new wchar_t[size + 1];
 	 	buffer[size] = '\0';
 	
-	 	MultiByteToWideChar(CP_UTF8, 0, in, -1, buffer, size);
+	 	MultiByteToWideChar(CP_UTF8, 0, in, -1, buffer, (int) size);
 	 	std::wstring out = buffer;
 	 	delete [] buffer;
 	 	return out; 
@@ -56,7 +56,7 @@ namespace UTILS_NS
 
 	std::string WideToUTF8(const wchar_t* in)
 	{
-		int size = wcslen(in);
+		size_t size = wcslen(in);
 		if (size == 0)
 			return "";
 
@@ -64,7 +64,7 @@ namespace UTILS_NS
 		char* buffer = new char[4 * size + 1];
 		buffer[4 * size] = '\0';
 	
-		WideCharToMultiByte(CP_UTF8, 0, in, -1, buffer, bufferSize - 1, NULL, NULL);
+		WideCharToMultiByte(CP_UTF8, 0, in, -1, buffer, (int) (bufferSize - 1), NULL, NULL);
 		std::string out = buffer;
 		delete [] buffer;
 		return out; 
