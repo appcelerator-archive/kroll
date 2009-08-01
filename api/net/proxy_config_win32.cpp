@@ -31,7 +31,7 @@ namespace kroll
 				L"Mozilla/5.0 (Windows; U; Windows NT 5.1; en) "
 				L"AppleWebKit/526.9 (KHTML, like Gecko) "
 				L"Version/4.0dp1 Safari/526.8",
-				WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
+				WINHTTP_ACCESS_TYPE_NO_PROXY,
 				WINHTTP_NO_PROXY_NAME, 
 				WINHTTP_NO_PROXY_BYPASS, 0);
 		}
@@ -52,8 +52,8 @@ namespace kroll
 	};
 
 	Win32ProxyConfig::Win32ProxyConfig() :
-		useAutoProxy(false),
-		autoConfigURL(""),
+		useProxyAutoConfig(false),
+		autoConfigURL(L""),
 		session(0)
 	{
 		WINHTTP_CURRENT_USER_IE_PROXY_CONFIG ieProxyConfig;
@@ -63,17 +63,14 @@ namespace kroll
 		{
 			if (ieProxyConfig.fAutoDetect)
 			{
-				this->useAutoProxy = true;
+				this->useProxyAutoConfig = true;
 			}
 	
 			if (ieProxyConfig.lpszAutoConfigUrl != NULL)
 			{
-				// Not only are we using an auto proxy configuration, but this one
+				// We using an auto proxy configuration, but this one
 				// has a URL which we must contact to get the configuration info.
-				this->useAutoProxy = true;
-
-				std::wstring autoConfigURLW = ieProxyConfig.lpszAutoConfigUrl;
-				this->autoConfigURL = string(autoConfigURLW.begin(), autoConfigURLW.end());
+				this->autoConfigURL = ieProxyConfig.lpszAutoConfigUrl;
 			}
 
 			// We always keep IE proxy information in case auto proxy
@@ -96,17 +93,21 @@ namespace kroll
 		{
 			// If there is no IE configuration information, we default to
 			// attempting to get auto proxy information.
-			useAutoProxy = true;
+			useProxyAutoConfig = true;
 		}
 
-		if (this->useAutoProxy)
+		if (this->useProxyAutoConfig || !autoConfigURL.empty())
 		{
+			// Initialize a WinHTTP session so that we can do lookup for auto proxy
 			session = new WinHTTPSession();
 
 			// We failed to open an HINTERNET handle! WTF. We'll have to have
 			// disable auto proxy support, because we can't do a lookup.
 			if (!session->GetHandle())
-				this->useAutoProxy = false;
+			{
+				this->useProxyAutoConfig = false;
+				this->autoConfigURL = L"";
+			}
 		}
 
 		if (ieProxyConfig.lpszProxy)
@@ -124,7 +125,7 @@ namespace kroll
 		// The auto proxy configuration might tell us to simply use
 		// a direct connection, which should cause us to just return
 		// null. Otherwise we should try to use the IE proxy list (next block)
-		if (useAutoProxy)
+		if (useProxyAutoConfig || !autoConfigURL.empty())
 		{
 			std::vector<SharedProxy> autoProxies;
 			bool shouldUseIEProxy = GetAutoProxiesForURL(url, autoProxies);
@@ -136,7 +137,8 @@ namespace kroll
 				{
 					return 0;
 				}
-				else if (proxy->info->getScheme() == uri.getScheme())
+				else if (proxy->info->getScheme().empty() ||
+					proxy->info->getScheme() == uri.getScheme())
 				{
 					return proxy;
 				}
@@ -177,18 +179,20 @@ namespace kroll
 		WINHTTP_AUTOPROXY_OPTIONS autoProxyOptions;
 		ZeroMemory(&autoProxyOptions, sizeof(WINHTTP_AUTOPROXY_OPTIONS)); 
 		
-		if (this->autoConfigURL.empty())
+		// This type of auto-detection might take several seconds, so
+		// if the user specified  an autoconfiguration URL don't do it.
+		// TODO: Maybe we should use this as a fallback later, but it's *very* expensive.
+		if (this->autoConfigURL.empty() && this->useProxyAutoConfig)
 		{
 			autoProxyOptions.dwFlags = WINHTTP_AUTOPROXY_AUTO_DETECT;
 			autoProxyOptions.dwAutoDetectFlags = 
 				WINHTTP_AUTO_DETECT_TYPE_DHCP | WINHTTP_AUTO_DETECT_TYPE_DNS_A;
 		}
-		else
+
+		if (!this->autoConfigURL.empty())
 		{
 			autoProxyOptions.dwFlags |= WINHTTP_AUTOPROXY_CONFIG_URL;
-
-			wstring autoConfigURLW = wstring(autoConfigURL.begin(), autoConfigURL.end());
-			autoProxyOptions.lpszAutoConfigUrl = autoConfigURLW.c_str();
+			autoProxyOptions.lpszAutoConfigUrl = this->autoConfigURL.c_str();
 		}
 		
 		// From Chromium:
@@ -197,16 +201,16 @@ namespace kroll
 		// Otherwise, we fail over to trying it with a value of true.  This way we
 		// get good performance in the case where WinHTTP uses an out-of-process
 		// resolver.  This is important for Vista and Win2k3.
-		wstring urlw = wstring(url.begin(), url.end());
+		wstring wideURL = UTF8ToWide(url);
 		autoProxyOptions.fAutoLogonIfChallenged = FALSE;
 		BOOL ok = WinHttpGetProxyForUrl(
-			session->GetHandle(), urlw.c_str(), &autoProxyOptions, &autoProxyInfo);
-		
+			session->GetHandle(), wideURL.c_str(), &autoProxyOptions, &autoProxyInfo);
+
 		if (!ok && ERROR_WINHTTP_LOGIN_FAILURE == GetLastError())
 		{
 			autoProxyOptions.fAutoLogonIfChallenged = TRUE;
 			ok = WinHttpGetProxyForUrl(
-				session->GetHandle(), urlw.c_str(), &autoProxyOptions, &autoProxyInfo);
+				session->GetHandle(), wideURL.c_str(), &autoProxyOptions, &autoProxyInfo);
 		}
 		
 		if (ok && autoProxyInfo.dwAccessType == WINHTTP_ACCESS_TYPE_NAMED_PROXY &&
@@ -233,11 +237,10 @@ namespace kroll
 		else
 		{
 			// Auto proxy failed, so try another method
-			useAutoProxy = false;
 			string error = "Could not get proxy for url=";
 			error.append(url);
 			error.append(": ");
-			error.append(Win32Utils::QuickFormatMessage(GetLastError()));
+			error.append(ErrorCodeToString(GetLastError()));
 			Logger::Get("Proxy")->Error(error);
 		}
 		
@@ -314,5 +317,113 @@ namespace kroll
 			SharedPtr<Proxy> proxy = ieProxyList.at(0);
 			ParseBypassList(bypassList, proxy->bypassList);
 		}
+	}
+
+	std::string Win32ProxyConfig::ErrorCodeToString(DWORD code)
+	{
+		// Okay. This is a little bit compulsive, but we really, really
+		// want to get good debugging information for proxy lookup failures.
+		if (code == ERROR_WINHTTP_AUTO_PROXY_SERVICE_ERROR)
+			return "ERROR_WINHTTP_AUTO_PROXY_SERVICE_ERROR";
+		else if (code == ERROR_WINHTTP_AUTODETECTION_FAILED)
+			return "ERROR_WINHTTP_AUTODETECTION_FAILED";
+		else if (code == ERROR_WINHTTP_BAD_AUTO_PROXY_SCRIPT)
+			return "ERROR_WINHTTP_BAD_AUTO_PROXY_SCRIPT";
+		else if (code == ERROR_WINHTTP_CANNOT_CALL_AFTER_OPEN)
+			return "ERROR_WINHTTP_CANNOT_CALL_AFTER_OPEN";
+		else if (code == ERROR_WINHTTP_CANNOT_CALL_AFTER_SEND)
+			return "ERROR_WINHTTP_CANNOT_CALL_AFTER_SEND";
+		else if (code == ERROR_WINHTTP_CANNOT_CALL_BEFORE_OPEN)
+			return "ERROR_WINHTTP_CANNOT_CALL_BEFORE_OPEN";
+		else if (code == ERROR_WINHTTP_CANNOT_CALL_BEFORE_SEND)
+			return "ERROR_WINHTTP_CANNOT_CALL_BEFORE_OPEN";
+		else if (code == ERROR_WINHTTP_CANNOT_CONNECT)
+			return "ERROR_WINHTTP_CANNOT_CONNECT";
+		else if (code == ERROR_WINHTTP_CLIENT_AUTH_CERT_NEEDED)
+			return "ERROR_WINHTTP_CLIENT_AUTH_CERT_NEEDED";
+		else if (code == ERROR_WINHTTP_CHUNKED_ENCODING_HEADER_SIZE_OVERFLOW)
+			return "ERROR_WINHTTP_CHUNKED_ENCODING_HEADER_SIZE_OVERFLOW";
+		else if (code == ERROR_WINHTTP_CLIENT_AUTH_CERT_NEEDED)
+			return "ERROR_WINHTTP_CLIENT_AUTH_CERT_NEEDED";
+		else if (code == ERROR_WINHTTP_CONNECTION_ERROR)
+			return "ERROR_WINHTTP_CONNECTION_ERROR";
+		else if (code == ERROR_WINHTTP_HEADER_ALREADY_EXISTS)
+			return "ERROR_WINHTTP_HEADER_ALREADY_EXISTS";
+		else if (code == ERROR_WINHTTP_HEADER_COUNT_EXCEEDED)
+			return "ERROR_WINHTTP_HEADER_COUNT_EXCEEDED";
+		else if (code == ERROR_WINHTTP_HEADER_NOT_FOUND)
+			return "ERROR_WINHTTP_HEADER_NOT_FOUND";
+		else if (code == ERROR_WINHTTP_HEADER_SIZE_OVERFLOW)
+			return "ERROR_WINHTTP_HEADER_SIZE_OVERFLOW";
+		else if (code == ERROR_WINHTTP_INCORRECT_HANDLE_STATE)
+			return "ERROR_WINHTTP_INCORRECT_HANDLE_STATE";
+		else if (code == ERROR_WINHTTP_INCORRECT_HANDLE_TYPE)
+			return "ERROR_WINHTTP_INCORRECT_HANDLE_TYPE";
+		else if (code == ERROR_WINHTTP_INTERNAL_ERROR)
+			return "ERROR_WINHTTP_INTERNAL_ERROR";
+		else if (code == ERROR_WINHTTP_INVALID_OPTION)
+			return "ERROR_WINHTTP_INVALID_OPTION";
+		else if (code == ERROR_WINHTTP_INVALID_QUERY_REQUEST)
+			return "ERROR_WINHTTP_INVALID_QUERY_REQUEST";
+		else if (code == ERROR_WINHTTP_INVALID_SERVER_RESPONSE)
+			return "ERROR_WINHTTP_INVALID_SERVER_RESPONSE";
+		else if (ERROR_WINHTTP_INVALID_URL)
+			return "ERROR_WINHTTP_INVALID_URL";
+		else if (ERROR_WINHTTP_LOGIN_FAILURE)
+			return "ERROR_WINHTTP_LOGIN_FAILURE";
+		else if (ERROR_WINHTTP_NAME_NOT_RESOLVED)
+			return "ERROR_WINHTTP_NAME_NOT_RESOLVED";
+		else if (ERROR_WINHTTP_NOT_INITIALIZED)
+			return "ERROR_WINHTTP_NOT_INITIALIZED";
+		else if (ERROR_WINHTTP_OPERATION_CANCELLED)
+			return "ERROR_WINHTTP_OPERATION_CANCELLED";
+		else if (ERROR_WINHTTP_OPTION_NOT_SETTABLE)
+			return "ERROR_WINHTTP_OPTION_NOT_SETTABLE";
+		else if (ERROR_WINHTTP_OUT_OF_HANDLES)
+			return "ERROR_WINHTTP_OUT_OF_HANDLES";
+		else if (ERROR_WINHTTP_REDIRECT_FAILED)
+			return "ERROR_WINHTTP_REDIRECT_FAILED";
+		else if (ERROR_WINHTTP_RESEND_REQUEST)
+			return "ERROR_WINHTTP_RESEND_REQUEST";
+		else if (ERROR_WINHTTP_RESPONSE_DRAIN_OVERFLOW)
+			return "ERROR_WINHTTP_RESPONSE_DRAIN_OVERFLOW";
+		else if (ERROR_WINHTTP_SECURE_CERT_CN_INVALID)
+			return "ERROR_WINHTTP_SECURE_CERT_CN_INVALID";
+		else if (ERROR_WINHTTP_SECURE_CERT_DATE_INVALID)
+			return "ERROR_WINHTTP_SECURE_CERT_DATE_INVALID";
+		else if (ERROR_WINHTTP_SECURE_CERT_REV_FAILED)
+			return "ERROR_WINHTTP_SECURE_CERT_REV_FAILED";
+		else if (ERROR_WINHTTP_SECURE_CERT_REVOKED)
+			return "ERROR_WINHTTP_SECURE_CERT_REVOKED";
+		else if (ERROR_WINHTTP_SECURE_CERT_WRONG_USAGE)
+			return "ERROR_WINHTTP_SECURE_CERT_WRONG_USAGE";
+		else if (ERROR_WINHTTP_SECURE_CHANNEL_ERROR)
+			return "ERROR_WINHTTP_SECURE_CHANNEL_ERROR";
+		else if (ERROR_WINHTTP_SECURE_FAILURE)
+			return "ERROR_WINHTTP_SECURE_FAILURE";
+		else if (ERROR_WINHTTP_SECURE_INVALID_CA)
+			return "ERROR_WINHTTP_SECURE_INVALID_CA";
+		else if (ERROR_WINHTTP_SECURE_INVALID_CERT)
+			return "ERROR_WINHTTP_SECURE_INVALID_CERT";
+		else if (ERROR_WINHTTP_SHUTDOWN)
+			return "ERROR_WINHTTP_SHUTDOWN";
+		else if (ERROR_WINHTTP_TIMEOUT)
+			return "ERROR_WINHTTP_TIMEOUT";
+		else if (ERROR_WINHTTP_UNABLE_TO_DOWNLOAD_SCRIPT)
+			return "ERROR_WINHTTP_UNABLE_TO_DOWNLOAD_SCRIPT";
+		else if (ERROR_WINHTTP_UNRECOGNIZED_SCHEME)
+			return "ERROR_WINHTTP_UNRECOGNIZED_SCHEME";
+		else if (ERROR_NOT_ENOUGH_MEMORY)
+			return "ERROR_NOT_ENOUGH_MEMORY";
+		else if (ERROR_INSUFFICIENT_BUFFER)
+			return "ERROR_INSUFFICIENT_BUFFER";
+		else if (ERROR_INVALID_HANDLE)
+			return "ERROR_INVALID_HANDLE";
+		else if (ERROR_NO_MORE_FILES)
+			return "ERROR_NO_MORE_FILES";
+		else if (ERROR_NO_MORE_ITEMS)
+			return "ERROR_NO_MORE_ITEMS";
+		else
+			return "UNKNOWN ERROR";
 	}
 }

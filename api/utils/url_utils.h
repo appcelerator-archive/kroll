@@ -45,9 +45,10 @@ namespace UTILS_NS
 		 */
 		static std::string URLToPath(string& url);
 
-		private:
 		static std::string TiURLToPath(std::string& url);
 		static std::string AppURLToPath(std::string& url);
+
+		protected:
 		static std::string NormalizeAppURL(std::string& url);
 #endif
 	};

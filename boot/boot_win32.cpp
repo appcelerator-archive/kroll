@@ -26,7 +26,7 @@ namespace KrollBoot
 	extern SharedApplication app;
 	extern int argc;
 	extern const char** argv;
-	const char *preload[] = { "zlib1.dll", "ssleay32.dll", "libeay32.dll", "libpng13.dll", "libxml2.dll", "libxslt.dll" };
+	const char *preload[] = { "zlib1.dll", "libeay32.dll", "ssleay32.dll", "libpng13.dll", "libxml2.dll", "libxslt.dll" };
 	const int preloadSize = sizeof(preload)/sizeof(preload[0]);
 	
 	inline void ShowError(string msg, bool fatal)
@@ -72,7 +72,9 @@ namespace KrollBoot
 	{
 		// Windows boot does not normally need to restart itself,  so just
 		// launch the host here and exit with the appropriate return value.
-		EnvironmentUtils::Unset(BOOTSTRAP_ENV);
+
+		// This may have been an install, so ensure that KR_HOME is correct
+		EnvironmentUtils::Set("KR_HOME", app->path);
 		exit(KrollBoot::StartHost());
 	}
 	
@@ -323,14 +325,5 @@ int main(int __argc, const char* __argv[])
 		google_breakpad::ExceptionHandler::HANDLER_ALL);
 #endif
 
-	// Only Windows XP systems will need to restart the host.
-	if (EnvironmentUtils::Has(BOOTSTRAP_ENV))
-	{
-			EnvironmentUtils::Unset(BOOTSTRAP_ENV);
-			return KrollBoot::StartHost();
-	}
-	else
-	{
-		return KrollBoot::Bootstrap();
-	}
+	return KrollBoot::Bootstrap();
 }
