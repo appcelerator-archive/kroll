@@ -22,7 +22,7 @@ namespace kroll
         PhpModule::instance_ = this;
 
         int argc = 1;
-        char *argv[] = { NULL };
+        char *argv[2] = { "php_kroll", NULL };
         php_embed_init(argc, argv PTSRMLS_CC);
     }
 
@@ -46,7 +46,12 @@ namespace kroll
 
     Module* PhpModule::CreateModule(std::string& path)
     {
-        // TODO: Open and load the file path with PHP
+        zend_first_try {
+            char *include_script;
+            spprintf(&include_script, 0, "include '%s';", path.c_str());
+            zend_eval_string(include_script, NULL, (char *) path.c_str() TSRMLS_CC);
+            efree(include_script);
+        } zend_end_try();
 
         Poco::Path p(path);
         std::string basename = p.getBaseName();
