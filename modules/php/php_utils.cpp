@@ -28,6 +28,15 @@ namespace kroll
                 std::string s = Z_STRVAL_P(value);
                 return Value::NewString(s);
                 }
+            case IS_RESOURCE:
+                // TODO: Implement
+                break;
+            case IS_ARRAY:
+                // TODO: Implement
+                break;
+            case IS_OBJECT:
+                // TODO: Implement
+                break;
             default:
                 return Value::Null;
         }
