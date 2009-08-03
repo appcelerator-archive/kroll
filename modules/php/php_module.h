@@ -13,6 +13,8 @@
 #include <kroll/kroll.h>
 
 #include "php_api.h"
+#include "php_utils.h"
+#include "php_evaluator.h"
 
 namespace kroll
 {

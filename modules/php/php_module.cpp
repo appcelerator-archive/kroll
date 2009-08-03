@@ -24,10 +24,19 @@ namespace kroll
         int argc = 1;
         char *argv[2] = { "php_kroll", NULL };
         php_embed_init(argc, argv PTSRMLS_CC);
+
+        this->InitializeBinding();
+        host->AddModuleProvider(this);
     }
 
     void PhpModule::Stop()
     {
+        PhpModule::instance_ = NULL;
+
+        SharedKObject global = this->host->GetGlobalObject();
+        global->Set("PHP", Value::Undefined);
+        this->binding->Set("evaluate", Value::Undefined);
+        this->binding = NULL;
         PhpModule::instance_ = NULL;
 
         php_embed_shutdown(TSRMLS_C);
@@ -35,6 +44,18 @@ namespace kroll
 
     void PhpModule::InitializeBinding()
     {
+        SharedKObject global = this->host->GetGlobalObject();
+        this->binding = new StaticBoundObject();
+        global->Set("PHP", Value::NewObject(this->binding));
+
+        SharedKMethod evaluator = new PhpEvaluator();
+        /**
+         * @tiapi(method=True,name=Php.evaluate,since=0.1) Evaluates a string as ruby code
+         * @tiarg(for=Php.evaluate,name=code,type=String) ruby script code
+         * @tiarg(for=Php.evaluate,name=scope,type=Object) global variable scope
+         * @tiresult(for=Php.evaluate,type=any) result of the evaluation
+         */
+        this->binding->Set("evaluate", Value::NewMethod(evaluator));
     }
 
     const static std::string php_suffix = "module.php";
