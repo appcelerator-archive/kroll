@@ -1,11 +1,11 @@
 /**
  * Appcelerator Kroll - licensed under the Apache Public License 2
  * see LICENSE in the root folder for details on the license.
- * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
+ * Copyright (c) 2009 Appcelerator, Inc. All Rights Reserved.
  */
 
-#ifndef PHPAPI_H_
-#define PHPAPI_H_
+#ifndef _PHPAPI_H_
+#define _PHPAPI_H_
 
 #if defined(OS_OSX) || defined(OS_LINUX)
 #define EXPORT __attribute__((visibility("default")))
