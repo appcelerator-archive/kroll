@@ -9,6 +9,7 @@
 #include <Iphlpapi.h>
 #include <process.h>
 #include <shellapi.h>
+#include <sstream>
 
 namespace UTILS_NS
 {
