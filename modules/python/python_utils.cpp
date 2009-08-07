@@ -217,10 +217,17 @@ namespace kroll
 		{
 			return PyString_AsString(value);
 		}
-		PyObject *o = PyObject_Str(value);
-		const char *result = PythonUtils::ToString(o);
-		Py_DECREF(o);
-		return result;
+		else
+		{
+			PyObject *o = PyObject_Str(value);
+			const char* result = PyString_AsString(o);
+			Py_DECREF(o);
+
+			if (result)
+				return result;
+			else
+				return "<python string failure>";
+		}
 	}
 
 	SharedValue PythonUtils::ToKrollValue(PyObject* value)

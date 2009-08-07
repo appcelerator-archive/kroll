@@ -41,11 +41,11 @@ namespace UTILS_NS
 			/*      0 1 2 3  4 5 6 7  8 9 A B  C D E F */
 			/* 0 */ 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
 			/* 1 */ 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
-			/* 2 */ 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
+			/* 2 */ 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,1,0,
 			/* 3 */ 1,1,1,1, 1,1,1,1, 1,1,0,0, 0,0,0,0,
 	
 			/* 4 */ 0,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1,
-			/* 5 */ 1,1,1,1, 1,1,1,1, 1,1,1,0, 0,0,0,0,
+			/* 5 */ 1,1,1,1, 1,1,1,1, 1,1,1,0, 0,0,0,1,
 			/* 6 */ 0,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1,
 			/* 7 */ 1,1,1,1, 1,1,1,1, 1,1,1,0, 0,0,0,0,
 	
@@ -165,7 +165,24 @@ namespace UTILS_NS
 				}
 			}
 		}
-		return std::string("file://") + path;
+
+		std::string url("file:/");
+		std::vector<std::string> pieces;
+		std::string delim = "/";
+		FileUtils::Tokenize(path, pieces, delim);
+		for (size_t i = 0; i < pieces.size(); i++)
+		{
+#if OS_WIN32
+			// Don't encode the C:
+			if (i != 0)
+#endif
+			{
+				pieces[i] = EncodeURIComponent(pieces[i]);
+			}
+			url.append("/");
+			url.append(pieces[i]);
+		}
+		return url;
 	}
 
 #if defined(KROLL_HOST_EXPORT) || defined(KROLL_API_EXPORT) || defined(_KROLL_H_)

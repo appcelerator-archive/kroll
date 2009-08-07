@@ -22,7 +22,7 @@ namespace kroll
 {
 
 	ApplicationBinding::ApplicationBinding(SharedApplication application, bool current) :
-		StaticBoundObject("API.Application"),
+		AccessorBoundObject("API.Application"),
 		application(application),
 		current(current)
 	{
