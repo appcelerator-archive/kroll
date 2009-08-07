@@ -77,7 +77,6 @@ namespace kroll
 	{
 		// Initialize our global object to be a simple mapped Kroll object
 		this->globalObject = new StaticBoundObject("");
-		this->globalObject->SetObject("CoreTypes", new CoreTypes());
 		Event::SetEventConstants(this->globalObject.get());
 	}
 
