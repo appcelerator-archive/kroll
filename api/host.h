@@ -200,7 +200,6 @@ namespace kroll
 		std::vector<ModuleProvider *> module_providers;
 		std::vector<std::string> module_paths;
 		SharedKObject globalObject;
-		SharedPtr<CoreTypes> coreTypes;
 
 		SharedApplication application;
 		bool running;

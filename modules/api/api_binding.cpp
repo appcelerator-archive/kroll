@@ -167,10 +167,41 @@ namespace kroll
 		/**
 		 * @tiapi(method=True,name=API.getEnvironment,since=0.5)
 		 * @tiapi Get the system environment
-		 * @tiresult[API.Environment] an key/value pair object that is mutable. Setting an environment variable is the same as setting a property, i.e. env["HOME"] = "/myhome"
+		 * @tiresult[API.Environment] An object representing the current environment. 
+		 * @tiresult Setting an environment variable is the same as setting a property.
+		 * @tiresult e.g env["HOME"] = "/myhome"
 		 */
 		this->SetMethod("getEnvironment", &APIBinding::_GetEnvironment);
+
+		/**
+		 * @tiapi(method=True,name=API.createKObject,since=0.5) Create a Kroll object.
+		 * @tiarg[Object, toWrap, optional=true] An object to wrap in a new KObject.
+		 * @tiresult[Object] A new KObject.
+		 */
+		this->SetMethod("createKObject", &APIBinding::_CreateKObject);
+
+		/**
+		 * @tiapi(method=True,name=API.createKMethod,since=0.5) create a Kroll method.
+		 * @tiarg[Function, toWrap, optional=true] A function to wrap in a new KMethod
+		 * @tiresult[Function] A new KMethod.
+		 */
+		this->SetMethod("createKMethod", &APIBinding::_CreateKMethod);
 		
+		/**
+		 * @tiapi(method=True,name=API.createKList,since=0.5) create a Kroll list.
+		 * @tiarg[Array, toWrap, optional=true] A function to wrap in a new KMethod
+		 * @tiresult[Array] A new KList.
+		 */
+		this->SetMethod("createKList", &APIBinding::_CreateKList);
+
+		/**
+		 * @tiapi(method=True,name=API.createBlob,since=0.5) Create a Kroll Blob object.
+		 * @tiarg[String, contents, optional=true] The contents of the new Blob.
+		 * @tiarg The blob will be empty if none are given.
+		 * @tiresult[Blob] A new Blob.
+		 */
+		this->SetMethod("createBlob", &APIBinding::_CreateBlob);
+
 		/**
 		 * @tiapi(method=True,name=API.log,since=0.2)
 		 * @tiapi Log a statement with a given severity
@@ -856,5 +887,159 @@ namespace kroll
 		}
 		return list;
 	}
+
+	void APIBinding::_CreateKObject(const ValueList& args, SharedValue result)
+	{
+		args.VerifyException("createKObject", "?o");
+		if (args.size() <= 0)
+		{
+			result->SetObject(new StaticBoundObject());
+		}
+		else
+		{
+			SharedKObject wrapped = args.GetObject(0);
+			result->SetObject(new KObjectWrapper(wrapped));
+		}
+	}
+
+	void APIBinding::_CreateKMethod(const ValueList& args, SharedValue result)
+	{
+		args.VerifyException("createKMethod", "m");
+		SharedKMethod wrapped = args.GetMethod(0);
+		result->SetMethod(new KMethodWrapper(args.GetMethod(0)));
+	}
+
+	void APIBinding::_CreateKList(const ValueList& args, SharedValue result)
+	{
+		args.VerifyException("createKList", "?l");
+		if (args.size() <= 0)
+		{
+			result->SetList(new StaticBoundList());
+		}
+		else
+		{
+			SharedKList wrapped = args.GetList(0);
+			result->SetList(new KListWrapper(wrapped));
+		}
+	}
+
+	void APIBinding::_CreateBlob(const ValueList& args, SharedValue result)
+	{
+		args.VerifyException("createBlob", "?s");
+		if (args.size() > 0)
+		{
+			result->SetObject(new Blob(args.GetString(0)));
+		}
+		else
+		{
+			result->SetObject(new Blob());
+		}
+	}
+
+	KObjectWrapper::KObjectWrapper(SharedKObject object) :
+		object(object)
+	{
+	}
+
+	void KObjectWrapper::Set(const char *name, SharedValue value)
+	{
+		object->Set(name, value);
+	}
+
+	SharedValue KObjectWrapper::Get(const char *name)
+	{
+		return object->Get(name);
+	}
+
+	SharedStringList KObjectWrapper::GetPropertyNames()
+	{
+		return object->GetPropertyNames();
+	}
+
+	SharedString KObjectWrapper::DisplayString(int levels)
+	{
+		return object->DisplayString(levels);
+	}
+
+	KMethodWrapper::KMethodWrapper(SharedKMethod method) :
+		method(method)
+	{
+	}
+
+	SharedValue KMethodWrapper::Call(const ValueList& args)
+	{
+		return method->Call(args);
+	}
+
+	void KMethodWrapper::Set(const char *name, SharedValue value)
+	{
+		method->Set(name, value);
+	}
+
+	SharedValue KMethodWrapper::Get(const char *name)
+	{
+		return method->Get(name);
+	}
+
+	SharedStringList KMethodWrapper::GetPropertyNames()
+	{
+		return method->GetPropertyNames();
+	}
+
+	SharedString KMethodWrapper::DisplayString(int levels)
+	{
+		return method->DisplayString(levels);
+	}
+
+	KListWrapper::KListWrapper(SharedKList list) :
+		list(list)
+	{
+	}
+
+	void KListWrapper::Append(SharedValue value)
+	{
+		list->Append(value);
+	}
+
+	unsigned int KListWrapper::Size()
+	{
+		return list->Size();
+	}
+
+	SharedValue KListWrapper::At(unsigned int index)
+	{
+		return list->At(index);
+	}
+
+	void KListWrapper::SetAt(unsigned int index, SharedValue value)
+	{
+		list->SetAt(index, value);
+	}
+
+	bool KListWrapper::Remove(unsigned int index)
+	{
+		return list->Remove(index);
+	}
+
+	void KListWrapper::Set(const char *name, SharedValue value)
+	{
+		list->Set(name, value);
+	}
+
+	SharedValue KListWrapper::Get(const char *name)
+	{
+		return list->Get(name);
+	}
+
+	SharedStringList KListWrapper::GetPropertyNames()
+	{
+		return list->GetPropertyNames();
+	}
+
+	SharedString KListWrapper::DisplayString(int levels)
+	{
+		return list->DisplayString(levels);
+	}
+
 
 }
