@@ -78,14 +78,16 @@ namespace UTILS_NS
 #endif
 	}
 
+#if defined(KROLL_HOST_EXPORT) || defined(KROLL_API_EXPORT) || defined(_KROLL_H_)
 	std::map<std::string, std::string> EnvironmentUtils::GetEnvironment()
 	{
 		std::map<std::string, std::string> environment;
 #ifdef OS_WIN32
-		LPTCH env = GetEnvironmentStrings();
+		LPWCH env = GetEnvironmentStringsW();
 		while (env[0] != '\0')
 		{
-			std::string entry = (char*)env;
+			std::wstring entryW = env;
+			std::string entry = WideToUTF8(entryW);
 			std::string key = entry.substr(0, entry.find("="));
 			std::string val = entry.substr(entry.find("=")+1);
 			environment[key] = val;
@@ -104,4 +106,5 @@ namespace UTILS_NS
 #endif
 		return environment;
 	}
+#endif
 }

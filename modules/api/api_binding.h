@@ -16,7 +16,7 @@
 
 namespace kroll
 {
-	class APIBinding : public StaticBoundObject
+	class APIBinding : public AccessorBoundObject
 	{
 		public:
 		APIBinding(Host* host);

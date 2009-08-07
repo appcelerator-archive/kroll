@@ -25,7 +25,7 @@ namespace KrollBoot
 
 			void AlignToDword()
 			{
-				if (v.size() % 4) Write(NULL, 4 - (v.size() % 4));
+				if (v.size() % 4) Write(NULL, (DWORD) (4 - (v.size() % 4)));
 			}
 
 			void Write(LPCVOID pvWrite, DWORD cbWrite)

@@ -14,8 +14,8 @@ namespace kroll
 		Win32ProxyConfig();
 
 		protected:
-		bool useAutoProxy;	
-		std::string autoConfigURL;
+		bool useProxyAutoConfig;
+		std::wstring autoConfigURL;
 		std::vector<SharedProxy> ieProxies;
 		SharedPtr<WinHTTPSession> session;
 
@@ -25,6 +25,7 @@ namespace kroll
 			 std::vector<SharedURI>& bypassVector);
 		static void ParseProxyList(std::string proxyList, std::string bypassList,
 			std::vector<SharedProxy>& ieProxyList);
+		static std::string ErrorCodeToString(DWORD code);
 	};
 }
 #endif

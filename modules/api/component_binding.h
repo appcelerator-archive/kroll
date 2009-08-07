@@ -14,7 +14,7 @@
 
 namespace kroll
 {
-	class ComponentBinding : public StaticBoundObject
+	class ComponentBinding : public AccessorBoundObject
 	{
 		public:
 		ComponentBinding(SharedComponent component);

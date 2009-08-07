@@ -171,6 +171,10 @@ class BuildConfig(object):
 			self.env.Prepend(PATH=['C:\Program Files\Microsoft Platform SDK for Windows Server 2003 R2'])
 			self.env.Prepend(CPPPATH=['C:\Program Files\Microsoft Platform SDK for Windows Server 2003 R2\include'])
 			self.env.Prepend(LIBPATH=['C:\Program Files\Microsoft Platform SDK for Windows Server 2003 R2\lib'])
+			atlmfc_path = 'C:\\Program Files\\Microsoft Visual Studio 8\\VC\\atlmfc'
+			if not path.exists(atlmfc_path):
+				atlmfc_path = 'C:\\Program Files (x86)\\Microsoft Visual Studio 8\\VC\\atlmfc'
+			self.env.Prepend(CPPPATH=[path.join(atlmfc_path, 'include')])
 
 	def set_kroll_source_dir(self, dir):
 		self.kroll_source_dir = path.abspath(dir)
@@ -189,6 +193,8 @@ class BuildConfig(object):
 			sources.extend(Glob('%s/utils/unzip/*.cpp' % dir))
 		if self.is_osx():
 			sources.extend(Glob('%s/utils/%s/*.mm' % (dir, self.os)))
+		if self.is_osx() or self.is_linux():
+			sources.extend(Glob('%s/utils/posix/*.cpp' % dir))
 		return sources
 
 	def init_os_arch(self):

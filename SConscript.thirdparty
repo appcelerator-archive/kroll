@@ -11,10 +11,10 @@ from progressbar import ProgressBar
 Import('build')
 
 revisions = {
-	"linux-i386": 8,
+	"linux-i386": 9,
 	"linux-x86_64": 8,
 	"osx-universal": 8,
-	"win32-i386": 8
+	"win32-i386": 9
 }
 
 thirdparty_name = 'thirdparty-%s-%s-r%s' % (build.os, build.arch, revisions[build.os+'-'+build.arch])
