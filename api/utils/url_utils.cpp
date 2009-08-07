@@ -170,7 +170,7 @@ namespace UTILS_NS
 		std::vector<std::string> pieces;
 		std::string delim = "/";
 		FileUtils::Tokenize(path, pieces, delim);
-		for (int i = 0; i < pieces.size(); i++)
+		for (size_t i = 0; i < pieces.size(); i++)
 		{
 #if OS_WIN32
 			// Don't encode the C:
