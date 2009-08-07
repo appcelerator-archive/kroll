@@ -25,7 +25,9 @@ namespace kroll
 		static AutoPtr<KKJSObject> ToBoundMethod(JSContextRef, JSObjectRef, JSObjectRef);
 		static AutoPtr<KKJSList> ToBoundList(JSContextRef, JSObjectRef);
 
+		static JSObjectRef CreateNewGlobalContext(Host*, bool add_global_object=true);
 		static void RegisterGlobalContext(JSObjectRef, JSGlobalContextRef);
+		static void UnregisterGlobalContext(JSObjectRef);
 		static JSGlobalContextRef GetGlobalContext(JSObjectRef);
 
 		static void ProtectGlobalContext(JSGlobalContextRef);
@@ -36,6 +38,9 @@ namespace kroll
 
 		static JSValueRef GetFunctionPrototype(JSContextRef jsContext, JSValueRef* exception);
 		static JSValueRef GetArrayPrototype(JSContextRef jsContext, JSValueRef* exception);
+		
+		static void BindProperties(JSObjectRef, SharedKObject);
+		static SharedValue GetProperty(JSObjectRef, std::string name);
 
 	private:
 		static std::map<JSObjectRef, JSGlobalContextRef> contextMap;

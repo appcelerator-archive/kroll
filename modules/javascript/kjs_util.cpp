@@ -621,7 +621,33 @@ namespace kroll
 			JSStringRelease(name);
 		}
 	}
+	
+	JSObjectRef KJSUtil::CreateNewGlobalContext(Host *host, bool add_global_object)
+	{
+		JSGlobalContextRef context = JSGlobalContextCreate(NULL);
+		JSObjectRef global_object = JSContextGetGlobalObject(context);
+		KJSUtil::RegisterGlobalContext(global_object, context);
+		
+		if (add_global_object)
+		{
 
+			/* Take some steps to insert the API into the Javascript context */
+			/* Create a crazy, crunktown delegate hybrid object for Javascript */
+			SharedValue global_value = Value::NewObject(host->GetGlobalObject());
+
+			/* convert JS API to a KJS object */
+			JSValueRef js_api = KJSUtil::ToJSValue(global_value, context);
+
+			/* set the API as a property of the global object */
+			JSStringRef prop_name = JSStringCreateWithUTF8CString(PRODUCT_NAME);
+			JSObjectSetProperty(context, global_object, prop_name,
+			                    js_api, kJSPropertyAttributeNone, NULL);
+
+		}
+		
+		return global_object;
+	}
+	
 	std::map<JSObjectRef, JSGlobalContextRef> KJSUtil::contextMap;
 	void KJSUtil::RegisterGlobalContext(
 		JSObjectRef object,
@@ -629,6 +655,16 @@ namespace kroll
 	{
 		contextMap[object] = globalContext;
 	}
+	
+	void KJSUtil::UnregisterGlobalContext(JSObjectRef object)
+	{
+		std::map<JSObjectRef, JSGlobalContextRef>::iterator i = contextMap.find(object);
+		if (i!=contextMap.end())
+		{
+			contextMap.erase(i);
+		}
+	}
+	
 
 	JSGlobalContextRef KJSUtil::GetGlobalContext(JSObjectRef object)
 	{
@@ -817,4 +853,29 @@ namespace kroll
 
 		return fnPrototype;
 	}
+	
+	void KJSUtil::BindProperties(JSObjectRef global_object, SharedKObject obj)
+	{
+		JSGlobalContextRef context = GetGlobalContext(global_object);
+
+		SharedStringList names = obj->GetPropertyNames();
+		for (size_t i = 0; i < names->size(); i++)
+		{
+			std::string other = *names->at(i);
+			SharedValue v = obj->Get(other.c_str());
+			JSValueRef js = KJSUtil::ToJSValue(v, context);
+			JSStringRef prop_name = JSStringCreateWithUTF8CString(other.c_str());
+			JSObjectSetProperty(context, global_object, prop_name, js, kJSPropertyAttributeNone, NULL);
+		}
+	}
+	
+	SharedValue KJSUtil::GetProperty(JSObjectRef global_object, std::string name)
+	{
+		JSGlobalContextRef context = GetGlobalContext(global_object);
+		JSStringRef prop_name_str = JSStringCreateWithUTF8CString(name.c_str());
+		JSValueRef prop = JSObjectGetProperty(context, global_object, prop_name_str, NULL);
+		JSStringRelease(prop_name_str);
+		return KJSUtil::ToKrollValue(prop, context, global_object);
+	}
+	
 }
