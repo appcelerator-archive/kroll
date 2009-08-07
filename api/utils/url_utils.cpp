@@ -166,7 +166,7 @@ namespace UTILS_NS
 			}
 		}
 
-		std::string url("file:/");
+		std::string url("file://");
 		std::vector<std::string> pieces;
 		std::string delim = "/";
 		FileUtils::Tokenize(path, pieces, delim);
@@ -177,9 +177,10 @@ namespace UTILS_NS
 			if (i != 0)
 #endif
 			{
+				url.append("/");
 				pieces[i] = EncodeURIComponent(pieces[i]);
 			}
-			url.append("/");
+
 			url.append(pieces[i]);
 		}
 		return url;
