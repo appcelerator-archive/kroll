@@ -15,6 +15,11 @@ namespace kroll
 	{
 	public:
 		static SharedValue ToKrollValue(zval* value);
+		static zval* ToPhpValue(SharedValue value);
+		static zval* KListToPhpValue(SharedValue value);
+		static void AddKrollValueToPhpArray(SharedValue value, zval *phpArray, const char *key);
+		static void AddKrollValueToPhpArray(SharedValue value, zval *phpArray, unsigned int index);
+		static void AddKrollValueToPhpArray(SharedValue value, zval *phpArray);
 
 	private:
 		PhpUtils() {}

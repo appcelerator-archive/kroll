@@ -14,6 +14,7 @@
 
 #include "php_api.h"
 #include "php_utils.h"
+#include "k_php_list.h"
 #include "php_evaluator.h"
 
 namespace kroll
