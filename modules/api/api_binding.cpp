@@ -72,7 +72,7 @@ namespace kroll
 		 * @tiapi Execute the method on the main thread
 		 * @tiarg[Function, method] The method to execute
 		 * @tiarg[any, ...] A variable-length list of arguments to pass to the method
-		 * @tiresult[returnValue] The return value of the method
+		 * @tiresult[any] The return value of the method
 		 */
 		this->SetMethod("runOnMainThread", &APIBinding::_RunOnMainThread);
 
