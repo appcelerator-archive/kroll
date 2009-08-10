@@ -31,21 +31,29 @@ namespace KrollBoot
 	
 	inline void ShowError(string msg, bool fatal)
 	{
-		std::cerr << "Error: " << msg << std::endl;
-		MessageBoxA(NULL, msg.c_str(), GetApplicationName().c_str(), MB_OK|MB_ICONERROR|MB_SYSTEMMODAL);
+		std::wstring wideMsg(L"Error: ");
+		wideMsg.append(KrollUtils::UTF8ToWide(msg));
+		std::wstring wideAppName = KrollUtils::UTF8ToWide(GetApplicationName());
+
+		MessageBoxW(NULL, wideMsg.c_str(), wideAppName.c_str(), MB_OK|MB_ICONERROR|MB_SYSTEMMODAL);
 		if (fatal)
 			exit(1);
 	}
 
 	std::string GetApplicationHomePath()
 	{
-		char path[MAX_PATH];
-		int size = GetModuleFileNameA(GetModuleHandle(NULL), (char*)path, MAX_PATH);
-		if (size>0)
+		wchar_t widePath[MAX_PATH];
+		int size = GetModuleFileNameW(GetModuleHandle(NULL), widePath, MAX_PATH - 1);
+		if (size > 0)
 		{
-			path[size] = '\0';
+			widePath[size] = '\0';
+			std::string path = KrollUtils::WideToUTF8(widePath);
+			return FileUtils::Dirname(path);
 		}
-		return FileUtils::Dirname(string(path));
+		else
+		{
+			ShowError("Could not determine application path.", true);
+		}
 	}
 
 	bool IsWindowsXP()
@@ -88,13 +96,14 @@ namespace KrollBoot
 			return false;
 		}
 		
-		*module = LoadLibraryA(dll.c_str());
+		std::wstring wideDLL = KrollUtils::UTF8ToWide(dll);
+		*module = LoadLibraryW(wideDLL.c_str());
 		if (!(*module))
 		{
-			char msg[MAX_PATH];
-			sprintf_s(msg,"Couldn't load file: %s, error: %s",
-				dll.c_str(), KrollUtils::Win32Utils::QuickFormatMessage(GetLastError()).c_str());
-
+			std::string msg("Couldn't load file (");
+			msg.append(dll);
+			msg.append("): ");
+			msg.append(KrollUtils::Win32Utils::QuickFormatMessage(GetLastError()));
 			ShowError(msg);
 			return false;
 		}
@@ -111,11 +120,10 @@ namespace KrollBoot
 			HMODULE module;
 			if (!SafeLoadRuntimeDLL(preload[i], &module)) return __LINE__;
 		}
-		
 		HMODULE khost;	
 		if (!SafeLoadRuntimeDLL("khost.dll", &khost)) return __LINE__;
 		
-		Executor *executor = (Executor*)GetProcAddress(khost, "Execute");
+		Executor *executor = (Executor*) GetProcAddress(khost, "Execute");
 		if (!executor)
 		{
 			ShowError(string("Invalid entry point 'Execute' in khost.dll"));
@@ -143,6 +151,7 @@ namespace KrollBoot
 		if (!app->IsInstalled())
 		{
 			string installedToFile = FileUtils::Join(app->GetDataPath().c_str(), ".installedto", NULL);
+			wstring wideInstalledToFile = KrollUtils::UTF8ToWide(installedToFile);
 			// The user probably cancelled -- don't show an error
 			if (!FileUtils::IsFile(installedToFile))
 				return true;
@@ -150,7 +159,7 @@ namespace KrollBoot
 			std::ifstream file(installedToFile.c_str());
 			if (file.bad() || file.fail() || file.eof())
 			{
-				DeleteFileA(installedToFile.c_str());
+				DeleteFileW(wideInstalledToFile.c_str());
 				ShowError("Could not determine where installer installed application.");
 				return false; // Don't show further errors
 			}
@@ -167,7 +176,7 @@ namespace KrollBoot
 			{
 				app = newapp;
 			}
-			DeleteFileA(installedToFile.c_str());
+			DeleteFileW(wideInstalledToFile.c_str());
 		}
 		return result;
 	}
@@ -185,7 +194,7 @@ namespace KrollBoot
 	static google_breakpad::ExceptionHandler* breakpad;
 	extern string dumpFilePath;
 
-	char breakpadCallBuffer[MAX_PATH];
+	wchar_t breakpadCallBuffer[MAX_PATH];
 	bool HandleCrash(
 		const wchar_t* dumpPath,
 		const wchar_t* id,
@@ -196,14 +205,14 @@ namespace KrollBoot
 	{
 		if (succeeded)
 		{
-			STARTUPINFOA startupInfo = {0};
+			STARTUPINFOW startupInfo = {0};
 			startupInfo.cb = sizeof(startupInfo);
 			PROCESS_INFORMATION processInformation;
 			
-			_snprintf_s(breakpadCallBuffer, MAX_PATH, MAX_PATH - 1,
-				 "\"%s\" \"%s\" %S %S", argv[0], CRASH_REPORT_OPT, dumpPath, id);
+			_snwprintf(breakpadCallBuffer, MAX_PATH - 1, L"\"%S\" \"%S\" %s %s",
+				argv[0], CRASH_REPORT_OPT, dumpPath, id);
 
-			CreateProcessA(
+			CreateProcessW(
 				NULL,
 				breakpadCallBuffer,
 				NULL,

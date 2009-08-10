@@ -94,7 +94,8 @@ namespace kroll
 
 	Module* Win32Host::CreateModule(std::string& path)
 	{
-		HMODULE module = LoadLibraryA(path.c_str());
+		std::wstring widePath = UTF8ToWide(path);
+		HMODULE module = LoadLibraryW(widePath.c_str());
 
 		if (!module)
 		{
