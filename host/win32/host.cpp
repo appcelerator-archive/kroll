@@ -19,27 +19,31 @@ using Poco::Mutex;
 
 namespace kroll
 {
-	bool Win32Host::ole_initialized = false;
-	UINT Win32Host::tickleRequestMessage = ::RegisterWindowMessage(PRODUCT_NAME "TickleRequest");
-		
+	bool Win32Host::oleInitialized = false;
+	UINT Win32Host::tickleRequestMessage =
+		::RegisterWindowMessageA(PRODUCT_NAME"TickleRequest");
+
 	/*static*/
 	void Win32Host::InitOLE()
 	{
-		if (!ole_initialized)
+		if (!oleInitialized)
 		{
 			OleInitialize(NULL);
-			ole_initialized = true;
+			oleInitialized = true;
 		}
 	}
 
-	Win32Host::Win32Host(HINSTANCE hInstance, int _argc, const char** _argv) : Host(_argc,_argv), instance_handle(hInstance)
+	Win32Host::Win32Host(HINSTANCE hInstance, int _argc, const char** _argv) :
+		Host(_argc,_argv),
+		instanceHandle(hInstance),
+		eventWindow(hInstance)
 	{
 		InitOLE();
 	}
 
 	Win32Host::~Win32Host()
 	{
-		if (ole_initialized)
+		if (oleInitialized)
 		{
 			OleUninitialize();
 		}
@@ -58,13 +62,13 @@ namespace kroll
 	bool Win32Host::Start()
 	{
 		Host::Start();
-		thread_id = GetCurrentThreadId();
+		threadId = GetCurrentThreadId();
 		return true;
 	}
 
 	Poco::Mutex& Win32Host::GetJobQueueMutex()
 	{
-		return this->job_queue_mutex;
+		return this->jobQueueMutex;
 	}
 
 	std::vector<Win32Job*>& Win32Host::GetJobs()
@@ -78,7 +82,7 @@ namespace kroll
 		MSG message;
 		if (GetMessage(&message, NULL, 0, 0))
 		{
-			if(message.message == tickleRequestMessage)
+			if (message.message == tickleRequestMessage)
 			{
 				this->InvokeMethods();
 			}
@@ -94,7 +98,8 @@ namespace kroll
 
 	Module* Win32Host::CreateModule(std::string& path)
 	{
-		HMODULE module = LoadLibraryA(path.c_str());
+		std::wstring widePath = UTF8ToWide(path);
+		HMODULE module = LoadLibraryW(widePath.c_str());
 
 		if (!module)
 		{
@@ -120,7 +125,7 @@ namespace kroll
 		bool synchronous)
 	{
 		Win32Job* job = new Win32Job(method, args, synchronous);
-		if (thread_id == GetCurrentThreadId() && synchronous)
+		if (threadId == GetCurrentThreadId() && synchronous)
 		{
 			job->Execute();
 		}
@@ -131,7 +136,7 @@ namespace kroll
 		}
 
 		// send a message to tickle the windows message queue
-		PostThreadMessage(thread_id, tickleRequestMessage, 0, 0);
+		PostThreadMessage(threadId, tickleRequestMessage, 0, 0);
 
 		if (!synchronous)
 		{
@@ -244,5 +249,10 @@ extern "C"
 		}
 #endif
 		return host->Run();
+	}
+
+	HWND Win32Host::AddMessageHandler(MessageHandler handler)
+	{
+		return eventWindow.AddMessageHandler(handler);
 	}
 }

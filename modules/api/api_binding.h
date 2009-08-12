@@ -84,6 +84,65 @@ namespace kroll
 		
 		void _CreateDependency(const ValueList& args, SharedValue value);
 		void _InstallDependencies(const ValueList& args, SharedValue value);
+
+		void _CreateKObject(const ValueList& args, SharedValue result);
+		void _CreateKMethod(const ValueList& args, SharedValue result);
+		void _CreateKList(const ValueList& args, SharedValue result);
+		void _CreateBlob(const ValueList& args, SharedValue result);
+	};
+
+	/**
+	 * An wrapper for a KObject which encapsulates another one for testing
+	 */
+	class KObjectWrapper : public KObject
+	{
+	public:
+		KObjectWrapper(SharedKObject object);
+		void Set(const char *name, SharedValue value);
+		SharedValue Get(const char *name);
+		SharedStringList GetPropertyNames();
+		SharedString DisplayString(int levels);
+
+	private:
+		SharedKObject object;
+	};
+
+	/**
+	 * An wrapper for a KMethod which encapsulates another one for testing
+	 */
+	class KMethodWrapper : public KMethod
+	{
+	public:
+		KMethodWrapper(SharedKMethod method);
+		SharedValue Call(const ValueList& args);
+		void Set(const char *name, SharedValue value);
+		SharedValue Get(const char *name);
+		SharedStringList GetPropertyNames();
+		SharedString DisplayString(int levels);
+
+	private:
+		SharedKMethod method;
+	};
+
+	/**
+	 * An wrapper for a KList which encapsulates another one for testing
+	 */
+	class KListWrapper : public KList
+	{
+	public:
+		KListWrapper(SharedKList list);
+		void Append(SharedValue value);
+		unsigned int Size();
+		SharedValue At(unsigned int index);
+		void SetAt(unsigned int index, SharedValue value);
+		bool Remove(unsigned int index);
+		void Set(const char *name, SharedValue value);
+		SharedValue Get(const char *name);
+		SharedStringList GetPropertyNames();
+		SharedString DisplayString(int levels=3);
+
+	private:
+		SharedKList list;
 	};
 }
 

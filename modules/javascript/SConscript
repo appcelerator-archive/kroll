@@ -23,10 +23,7 @@ elif build.is_linux():
 
 elif build.is_win32():
 	Env.Append(LIBPATH=[webkit_lib])
-	Env.Append(CPPPATH=[path.join(webkit_inc, 'webkit'),
-                        path.join(webkit_inc, 'JavaScriptCore'),
-                        path.join(build.third_party, 'icu', 'include'),
-                        build.kroll_include_dir])
+	Env.Append(CPPPATH=[webkit_inc, build.kroll_include_dir])
 
 	Env.Append(LIBS=['WebKitGUID', 'WebKit',
                      'kernel32', 'shell32',

@@ -10,19 +10,19 @@ namespace UTILS_NS
 	std::string Win32Utils::QuickFormatMessage(DWORD errorCode, DWORD flags)
 	{
 		std::string result;
-		LPSTR errorText = NULL;
-		FormatMessageA(
+		LPWSTR errorText = NULL;
+		FormatMessageW(
 			flags,
 			NULL, // unused with FORMAT_MESSAGE_FROM_SYSTEM
 			errorCode,
 			MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-			(LPSTR) &errorText,
+			(LPWSTR) &errorText,
 			0, // minimum size for output buffer
 			NULL);
 
 		if (errorText)
 		{
-			result = errorText;
+			result = WideToUTF8(errorText);
 	   		LocalFree(errorText);
 		}
 		return result;

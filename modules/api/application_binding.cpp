@@ -125,7 +125,7 @@ namespace kroll
 		/**
 		 * @tiapi(method=True,name=API.Application.hasArgument,since=0.4)
 		 * @tiapi Determine if the given argument is in the argument list
-		 * @tiarg[string, argument] The argument to search for
+		 * @tiarg[String, argument] The argument to search for
 		 * @tiresult[Boolean] True if the argument was found, false otherwise
 		 */
 		this->SetMethod("hasArgument", &ApplicationBinding::_HasArgument);
