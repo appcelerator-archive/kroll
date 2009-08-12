@@ -4,7 +4,6 @@
  * Copyright (c) 2009 Appcelerator, Inc. All Rights Reserved.
  */
 #include "kroll.h"
-
 #include <cstdarg>
 #include <cstdio>
 #include <iostream>
@@ -27,18 +26,21 @@ namespace kroll
 	char Logger::buffer[LOGGER_MAX_ENTRY_SIZE];
 	Poco::Mutex Logger::mutex;
 
+	/*static*/
 	Logger* Logger::Get(std::string name)
 	{
 		name = std::string(PRODUCT_NAME) + "." + name;
 		return Logger::GetImpl(name);
 	}
 
+	/*static*/
 	void Logger::Initialize(bool console, std::string logFilePath, Level level)
 	{
 		Logger::loggers[PRODUCT_NAME] = 
 			new RootLogger(console, logFilePath, level);
 	}
 
+	/*static*/
 	void Logger::Shutdown()
 	{
 		std::map<std::string, Logger*>::iterator i = loggers.begin();
@@ -50,16 +52,21 @@ namespace kroll
 		loggers.clear();
 	}
 
+	/*static*/
 	Logger* Logger::GetRootLogger()
 	{
-		// sometimes there are requests for Logger creation
-		// when the root logger hasn't been created yet (this seems to be a race condition)
-		// this temporarily solves that problem
 		return RootLogger::instance;
-		
-		//return Logger::GetImpl(PRODUCT_NAME);
 	}
 
+	/*static*/
+	void Logger::AddLoggerCallback(LoggerCallback callback)
+	{
+		RootLogger* rootLogger = 
+			reinterpret_cast<RootLogger*>(GetRootLogger());
+		rootLogger->AddLoggerCallback(callback);
+	}
+
+	/*static*/
 	Logger* Logger::GetImpl(std::string name)
 	{
 		if (loggers.find(name) == loggers.end())
@@ -219,6 +226,7 @@ namespace kroll
 		}
 	}
 
+	/*static*/
 	std::string Logger::Format(const char* format, va_list args)
 	{
 		// Protect the buffer
@@ -430,6 +438,7 @@ namespace kroll
 	void RootLogger::LogImpl(Poco::Message& m)
 	{
 		Poco::Mutex::ScopedLock lock(mutex);
+		Level level = (Level) m.getPriority();
 		std::string line;
 		this->formatter->format(m, line);
 
@@ -443,5 +452,17 @@ namespace kroll
 		{
 			printf("%s\n", line.c_str());
 		}
+
+		for (size_t i = 0; i < callbacks.size(); i++)
+		{
+			LoggerCallback c = callbacks[i];
+			c(level, line);
+		}
+	}
+
+	void RootLogger::AddLoggerCallback(LoggerCallback callback)
+	{
+		Poco::Mutex::ScopedLock lock(mutex);
+		callbacks.push_back(callback);
 	}
 }

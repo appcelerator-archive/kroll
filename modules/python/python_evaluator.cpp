@@ -39,15 +39,7 @@
 			Logger *logger = Logger::Get("Python");
 			logger->Error("An error occured while parsing Python on the page: ");
 			PyErr_Print();
-			// log to the console to give the user a better indication
-			// of what's going on down in python
-			SharedValue value = window_global->GetNS("console.error");
-			if (value->IsMethod())
-			{
-				SharedKMethod m = value->ToMethod();
-				std::string msg = "An error occured while parsing Python on the page";
-				m->Call(Value::NewString(msg));
-			}
+
 			Py_DECREF(globals);
 			return Value::Undefined;
 		}
@@ -63,15 +55,6 @@
 			Logger *logger = Logger::Get("Python");
 			logger->Error("An error occured while parsing Python on the page");
 			PyErr_Print();
-			// log to the console to give the user a better indication
-			// of what's going on down in python
-			SharedValue value = window_global->GetNS("console.log");
-			if (value->IsMethod())
-			{
-				SharedKMethod m = value->ToMethod();
-				std::string msg = "An error occured while parsing Python on the page";
-				m->Call(Value::NewString(msg));
-			}
 		}
 		else
 		{

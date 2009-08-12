@@ -133,18 +133,8 @@ namespace kroll
 			ValueException e = RubyUtils::GetException();
 			SharedString ss = e.DisplayString();
 			Logger *logger = Logger::Get("Ruby");
-			logger->Error("An error occured while parsing Ruby on the page: %s",(*ss).c_str());
-			
-			// log to the console to give the user a better indication
-			// of what's going on down in rubyland
-			SharedValue value = global_object->GetNS("console.error");
-			if (value->IsMethod())
-			{
-				SharedKMethod m = value->ToMethod();
-				std::string msg = "An error occured while parsing Ruby on the page: " + (*ss);
-				m->Call(Value::NewString(msg));
-			}
-			
+			logger->Error("An error occured while parsing Ruby on the page: %s", ss->c_str());
+
 			return Value::Undefined;
 		}
 
