@@ -10,18 +10,18 @@
 
 namespace kroll
 {
-	class PhpModuleInstance : public Module
+	class PHPModuleInstance : public Module
 	{
 	public:
-		PhpModuleInstance(Host *host, std::string path, std::string dir, std::string name);
+		PHPModuleInstance(Host *host, std::string path, std::string dir, std::string name);
 	protected:
-		virtual ~PhpModuleInstance();
+		virtual ~PHPModuleInstance();
 	public:
 		void Initialize ();
 		void Destroy ();
 	private:
 		std::string path;
-		DISALLOW_EVIL_CONSTRUCTORS(PhpModuleInstance);
+		DISALLOW_EVIL_CONSTRUCTORS(PHPModuleInstance);
 	};
 }
 

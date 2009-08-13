@@ -19,9 +19,9 @@
 
 namespace kroll
 {
-	class PhpModule : public Module, public ModuleProvider
+	class PHPModule : public Module, public ModuleProvider
 	{
-		KROLL_MODULE_CLASS(PhpModule)
+		KROLL_MODULE_CLASS(PHPModule)
 
 		public:
 			virtual bool IsModule(std::string& path);
@@ -36,15 +36,15 @@ namespace kroll
 			{
 				return host;
 			}
-			static PhpModule* Instance()
+			static PHPModule* Instance()
 			{
 				return instance_;
 			}
 
 		private:
 			SharedKObject binding;
-			static PhpModule *instance_;
-			DISALLOW_EVIL_CONSTRUCTORS(PhpModule);
+			static PHPModule *instance_;
+			DISALLOW_EVIL_CONSTRUCTORS(PHPModule);
 		};
 	}
 

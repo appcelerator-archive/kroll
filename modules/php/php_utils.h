@@ -11,19 +11,19 @@
 
 namespace kroll
 {
-	class PhpUtils
+	class PHPUtils
 	{
 	public:
 		static SharedValue ToKrollValue(zval* value);
-		static zval* ToPhpValue(SharedValue value);
-		static zval* KListToPhpValue(SharedValue value);
-		static void AddKrollValueToPhpArray(SharedValue value, zval *phpArray, const char *key);
-		static void AddKrollValueToPhpArray(SharedValue value, zval *phpArray, unsigned int index);
-		static void AddKrollValueToPhpArray(SharedValue value, zval *phpArray);
+		static zval* ToPHPValue(SharedValue value);
+		static zval* KListToPHPValue(SharedValue value);
+		static void AddKrollValueToPHPArray(SharedValue value, zval *phpArray, const char *key);
+		static void AddKrollValueToPHPArray(SharedValue value, zval *phpArray, unsigned int index);
+		static void AddKrollValueToPHPArray(SharedValue value, zval *phpArray);
 
 	private:
-		PhpUtils() {}
-		~PhpUtils () {}
+		PHPUtils() {}
+		~PHPUtils () {}
 	};
 }
 

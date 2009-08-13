@@ -11,11 +11,11 @@
 
 namespace kroll
 {
-	class KPhpList : public KList
+	class KPHPList : public KList
 	{
 	public:
-		KPhpList(zval *list);
-		virtual ~KPhpList();
+		KPHPList(zval *list);
+		virtual ~KPHPList();
 
 		SharedValue Get(const char *name);
 		void Set(const char *name, SharedValue value);
@@ -28,11 +28,11 @@ namespace kroll
 		bool Remove(unsigned int index);
 		SharedValue At(unsigned int index);
 
-		zval* ToPhp();
+		zval* ToPHP();
 
 	protected:
 		zval *list;
-		DISALLOW_EVIL_CONSTRUCTORS(KPhpList);
+		DISALLOW_EVIL_CONSTRUCTORS(KPHPList);
 	};
 }
 #endif

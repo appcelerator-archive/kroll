@@ -8,7 +8,7 @@
 
 namespace kroll
 {
-	class PhpEvaluator : public KMethod
+	class PHPEvaluator : public KMethod
 	{
 	public:
 		virtual SharedValue Call(const ValueList& args);

@@ -8,7 +8,7 @@
 
 namespace kroll
 {
-	SharedValue PhpEvaluator::Call(const ValueList& args)
+	SharedValue PHPEvaluator::Call(const ValueList& args)
 	{
 		if (args.size() != 3
 			|| !args.at(1)->IsString()
@@ -19,7 +19,7 @@ namespace kroll
 
 		const char* code = args[1]->ToString();
 		SharedKObject window_global = args.at(2)->ToObject();
-		const char* name = "PhpEvaluator::Call";
+		const char* name = "PHPEvaluator::Call";
 		SharedValue kv = Value::Undefined;
 
 		// Execute the PHP code
@@ -32,7 +32,7 @@ namespace kroll
 			php_ob_get_buffer(return_value TSRMLS_CC);
 			php_end_ob_buffer(0, 0 TSRMLS_CC);
 
-			SharedValue kv = PhpUtils::ToKrollValue(return_value);
+			SharedValue kv = PHPUtils::ToKrollValue(return_value);
 
 			zval_dtor(return_value);
 			FREE_ZVAL(return_value);
@@ -41,16 +41,16 @@ namespace kroll
 		return kv;
 	}
 
-	void PhpEvaluator::Set(const char *name, SharedValue value)
+	void PHPEvaluator::Set(const char *name, SharedValue value)
 	{
 	}
 
-	SharedValue PhpEvaluator::Get(const char *name)
+	SharedValue PHPEvaluator::Get(const char *name)
 	{
 		return Value::Undefined;
 	}
 
-	SharedStringList PhpEvaluator::GetPropertyNames()
+	SharedStringList PHPEvaluator::GetPropertyNames()
 	{
 		return SharedStringList();
 	}

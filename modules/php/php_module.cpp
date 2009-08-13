@@ -13,13 +13,13 @@ void ***tsrm_ls;
 
 namespace kroll
 {
-	KROLL_MODULE(PhpModule, STRING(MODULE_NAME), STRING(MODULE_VERSION));
+	KROLL_MODULE(PHPModule, STRING(MODULE_NAME), STRING(MODULE_VERSION));
 
-	PhpModule* PhpModule::instance_ = NULL;
+	PHPModule* PHPModule::instance_ = NULL;
 
-	void PhpModule::Initialize()
+	void PHPModule::Initialize()
 	{
-		PhpModule::instance_ = this;
+		PHPModule::instance_ = this;
 
 		int argc = 1;
 		char *argv[2] = { "php_kroll", NULL };
@@ -29,43 +29,43 @@ namespace kroll
 		host->AddModuleProvider(this);
 	}
 
-	void PhpModule::Stop()
+	void PHPModule::Stop()
 	{
-		PhpModule::instance_ = NULL;
+		PHPModule::instance_ = NULL;
 
 		SharedKObject global = this->host->GetGlobalObject();
 		global->Set("PHP", Value::Undefined);
 		this->binding->Set("evaluate", Value::Undefined);
 		this->binding = NULL;
-		PhpModule::instance_ = NULL;
+		PHPModule::instance_ = NULL;
 
 		php_embed_shutdown(TSRMLS_C);
 	}
 
-	void PhpModule::InitializeBinding()
+	void PHPModule::InitializeBinding()
 	{
 		SharedKObject global = this->host->GetGlobalObject();
 		this->binding = new StaticBoundObject();
 		global->Set("PHP", Value::NewObject(this->binding));
 
-		SharedKMethod evaluator = new PhpEvaluator();
+		SharedKMethod evaluator = new PHPEvaluator();
 		/**
-		* @tiapi(method=True,name=Php.evaluate,since=0.1) Evaluates a string as ruby code
-		* @tiarg(for=Php.evaluate,name=code,type=String) ruby script code
-		* @tiarg(for=Php.evaluate,name=scope,type=Object) global variable scope
-		* @tiresult(for=Php.evaluate,type=any) result of the evaluation
+		* @tiapi(method=True,name=PHP.evaluate,since=0.1) Evaluates a string as ruby code
+		* @tiarg(for=PHP.evaluate,name=code,type=String) ruby script code
+		* @tiarg(for=PHP.evaluate,name=scope,type=Object) global variable scope
+		* @tiresult(for=PHP.evaluate,type=any) result of the evaluation
 		*/
 		this->binding->Set("evaluate", Value::NewMethod(evaluator));
 	}
 
 	const static std::string php_suffix = "module.php";
 
-	bool PhpModule::IsModule(std::string& path)
+	bool PHPModule::IsModule(std::string& path)
 	{
 		return (path.substr(path.length()-php_suffix.length()) == php_suffix);
 	}
 
-	Module* PhpModule::CreateModule(std::string& path)
+	Module* PHPModule::CreateModule(std::string& path)
 	{
 		zend_first_try {
 			std::string includeScript = "include '" + path + "'";
@@ -80,6 +80,6 @@ namespace kroll
 		Logger *logger = Logger::Get("PHP");
 		logger->Info("Loading PHP path=%s", path.c_str());
 
-		return new PhpModuleInstance(host, path, moduledir, name);
+		return new PHPModuleInstance(host, path, moduledir, name);
 	}
 }

@@ -7,18 +7,18 @@
 
 namespace kroll
 {
-	KPhpList::KPhpList(zval *list) :
+	KPHPList::KPHPList(zval *list) :
 		list(list)
 	{
 		if (Z_TYPE_P(list) != IS_ARRAY)
 			throw ValueException::FromString("Invalid zval passed. Should be an array type.");
 	}
 
-	KPhpList::~KPhpList()
+	KPHPList::~KPHPList()
 	{
 	}
 
-	SharedValue KPhpList::Get(const char *name)
+	SharedValue KPHPList::Get(const char *name)
 	{
 		if (KList::IsInt(name))
 		{
@@ -39,11 +39,11 @@ namespace kroll
 			return Value::Undefined;
 		}
 
-		SharedValue v = PhpUtils::ToKrollValue((zval *) copyval);
+		SharedValue v = PHPUtils::ToKrollValue((zval *) copyval);
 		return v;
 	}
 
-	void KPhpList::Set(const char *name, SharedValue value)
+	void KPHPList::Set(const char *name, SharedValue value)
 	{
 		// Check for integer value as name
 		int index = -1;
@@ -53,22 +53,22 @@ namespace kroll
 		}
 		else
 		{
-			PhpUtils::AddKrollValueToPhpArray(value, this->list, name);
+			PHPUtils::AddKrollValueToPHPArray(value, this->list, name);
 		}
 	}
 
-	bool KPhpList::Equals(SharedKObject other)
+	bool KPHPList::Equals(SharedKObject other)
 	{
-		AutoPtr<KPhpList> phpOther = other.cast<KPhpList>();
+		AutoPtr<KPHPList> phpOther = other.cast<KPHPList>();
 
 		// This is not a PHP object
 		if (phpOther.isNull())
 			return false;
 
-		return phpOther->ToPhp() == this->ToPhp();
+		return phpOther->ToPHP() == this->ToPHP();
 	}
 
-	SharedStringList KPhpList::GetPropertyNames()
+	SharedStringList KPHPList::GetPropertyNames()
 	{
 		SharedStringList property_names = new StringList();
 		HashPosition pos;
@@ -93,35 +93,35 @@ namespace kroll
 		return property_names;
 	}
 
-	unsigned int KPhpList::Size()
+	unsigned int KPHPList::Size()
 	{
 		/*TODO: Implement*/
 		return 0;
 	}
 
-	void KPhpList::Append(SharedValue value)
+	void KPHPList::Append(SharedValue value)
 	{
 		/*TODO: Implement*/
 	}
 
-	void KPhpList::SetAt(unsigned int index, SharedValue value)
+	void KPHPList::SetAt(unsigned int index, SharedValue value)
 	{
 		/*TODO: Implement*/
 	}
 
-	bool KPhpList::Remove(unsigned int index)
+	bool KPHPList::Remove(unsigned int index)
 	{
 		/*TODO: Implement*/
 		return true;
 	}
 
-	SharedValue KPhpList::At(unsigned int index)
+	SharedValue KPHPList::At(unsigned int index)
 	{
 		/*TODO: Implement*/
 		return Value::Null;
 	}
 
-	zval* KPhpList::ToPhp()
+	zval* KPHPList::ToPHP()
 	{
 		return this->list;
 	}

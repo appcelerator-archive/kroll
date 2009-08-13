@@ -7,7 +7,7 @@
 
 namespace kroll
 {
-	SharedValue PhpUtils::ToKrollValue(zval *value)
+	SharedValue PHPUtils::ToKrollValue(zval *value)
 	{
 		switch (Z_TYPE_P(value))
 		{
@@ -22,7 +22,7 @@ namespace kroll
 			};
 			case IS_ARRAY:
 			{
-				SharedKList l = new KPhpList(value);
+				SharedKList l = new KPHPList(value);
 				return Value::NewList(l);
 			};
 			case IS_RESOURCE: /*TODO: Implement*/
@@ -31,7 +31,7 @@ namespace kroll
 		}
 	}
 
-	zval* PhpUtils::ToPhpValue(SharedValue value)
+	zval* PHPUtils::ToPHPValue(SharedValue value)
 	{
 		zval *retval;
 		ALLOC_INIT_ZVAL(retval);
@@ -74,17 +74,17 @@ namespace kroll
 		}
 		else if (value->IsList())
 		{
-			AutoPtr<KPhpList> pl = value->ToList().cast<KPhpList>();
+			AutoPtr<KPHPList> pl = value->ToList().cast<KPHPList>();
 			if (!pl.isNull())
-				return pl->ToPhp();
+				return pl->ToPHP();
 			else
-				return PhpUtils::KListToPhpValue(value);
+				return PHPUtils::KListToPHPValue(value);
 		}
 
 		return retval;
 	}
 
-	zval* PhpUtils::KListToPhpValue(SharedValue value)
+	zval* PHPUtils::KListToPHPValue(SharedValue value)
 	{
 		zval* phpArray;
 		MAKE_STD_ZVAL(phpArray);
@@ -95,7 +95,7 @@ namespace kroll
 		return phpArray;
 	}
 
-	void PhpUtils::AddKrollValueToPhpArray(SharedValue value, zval *phpArray, const char *key)
+	void PHPUtils::AddKrollValueToPHPArray(SharedValue value, zval *phpArray, const char *key)
 	{
 		if (value->IsNull() || value->IsUndefined())
 		{
@@ -132,17 +132,17 @@ namespace kroll
 		else if (value->IsList())
 		{
 			zval *phpValue;
-			AutoPtr<KPhpList> pl = value->ToList().cast<KPhpList>();
+			AutoPtr<KPHPList> pl = value->ToList().cast<KPHPList>();
 			if (!pl.isNull())
-				phpValue = pl->ToPhp();
+				phpValue = pl->ToPHP();
 			else
-				phpValue = PhpUtils::KListToPhpValue(value);
+				phpValue = PHPUtils::KListToPHPValue(value);
 
 			add_assoc_zval(phpArray, (char *) key, phpValue);
 		}
 	}
 
-	void PhpUtils::AddKrollValueToPhpArray(SharedValue value, zval *phpArray, unsigned int index)
+	void PHPUtils::AddKrollValueToPHPArray(SharedValue value, zval *phpArray, unsigned int index)
 	{
 		if (value->IsNull() || value->IsUndefined())
 		{
@@ -179,17 +179,17 @@ namespace kroll
 		else if (value->IsList())
 		{
 			zval *phpValue;
-			AutoPtr<KPhpList> pl = value->ToList().cast<KPhpList>();
+			AutoPtr<KPHPList> pl = value->ToList().cast<KPHPList>();
 			if (!pl.isNull())
-				phpValue = pl->ToPhp();
+				phpValue = pl->ToPHP();
 			else
-				phpValue = PhpUtils::KListToPhpValue(value);
+				phpValue = PHPUtils::KListToPHPValue(value);
 
 			add_index_zval(phpArray, (unsigned long) index, phpValue);
 		}
 	}
 
-	void PhpUtils::AddKrollValueToPhpArray(SharedValue value, zval *phpArray)
+	void PHPUtils::AddKrollValueToPHPArray(SharedValue value, zval *phpArray)
 	{
 		if (value->IsNull() || value->IsUndefined())
 		{
@@ -226,11 +226,11 @@ namespace kroll
 		else if (value->IsList())
 		{
 			zval *phpValue;
-			AutoPtr<KPhpList> pl = value->ToList().cast<KPhpList>();
+			AutoPtr<KPHPList> pl = value->ToList().cast<KPHPList>();
 			if (!pl.isNull())
-				phpValue = pl->ToPhp();
+				phpValue = pl->ToPHP();
 			else
-				phpValue = PhpUtils::KListToPhpValue(value);
+				phpValue = PHPUtils::KListToPHPValue(value);
 
 			add_next_index_zval(phpArray, phpValue);
 		}

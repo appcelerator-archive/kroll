@@ -7,20 +7,20 @@
 
 namespace kroll
 {
-	PhpModuleInstance::PhpModuleInstance(Host *host, std::string path, std::string dir, std::string name) :
+	PHPModuleInstance::PHPModuleInstance(Host *host, std::string path, std::string dir, std::string name) :
 		Module(host, dir.c_str(), name.c_str(), "0.1"), path(path)
 	{
 	}
 
-	PhpModuleInstance::~PhpModuleInstance()
+	PHPModuleInstance::~PHPModuleInstance()
 	{
 	}
 
-	void PhpModuleInstance::Initialize ()
+	void PHPModuleInstance::Initialize ()
 	{
 	}
 
-	void PhpModuleInstance::Destroy ()
+	void PHPModuleInstance::Destroy ()
 	{
 	}
 }
