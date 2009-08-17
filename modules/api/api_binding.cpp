@@ -281,7 +281,7 @@ namespace kroll
 		this->SetMethod("getLogLevel", &APIBinding::_GetLogLevel);
 	
 		/**
-		 * @tiapi(method=True,name=API.print,since=1.0)
+		 * @tiapi(method=True,name=API.print,since=0.6)
 		 * @tiapi print a raw string to stdout (no newlines are appended)
 		 * @tiarg[Any, data] data to print
 		 */
