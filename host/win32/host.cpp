@@ -103,16 +103,15 @@ namespace kroll
 
 		if (!module)
 		{
-			fprintf(stderr, "Error loading module (%d): %s\n", GetLastError(), path.c_str());
-			return 0;
+			throw ValueException::FromFormat("Error loading module (%d): %s: %s\n",
+				GetLastError(), path.c_str(), kroll::Win32Utils::QuickFormatMessage(GetLastError()).c_str());
 		}
 
 		// get the module factory
 		ModuleCreator* create = (ModuleCreator*)GetProcAddress(module, "CreateModule");
 		if (!create)
 		{
-			fprintf(stderr, "Couldn't find ModuleCreator entry point for %s\n", path.c_str());
-			return 0;
+			throw ValueException::FromFormat("Couldn't find ModuleCreator entry point for %s\n", path.c_str());
 		}
 
 		std::string dir = FileUtils::GetDirectory(path);
