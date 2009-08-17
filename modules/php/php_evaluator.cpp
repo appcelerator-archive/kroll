@@ -23,6 +23,7 @@ namespace kroll
 		SharedValue kv = Value::Undefined;
 
 		// Execute the PHP code
+		TSRMLS_FETCH();
 		zend_first_try {
 			zval* return_value;
 
