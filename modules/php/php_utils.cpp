@@ -235,4 +235,139 @@ namespace kroll
 			add_next_index_zval(phpArray, phpValue);
 		}
 	}
+
+	// These are the class entries for all our Kroll objects in PHP
+	zend_class_entry *PHPKObjectClassEntry;
+	zend_class_entry *PHPKMethodClassEntry;
+	zend_class_entry *PHPKListClassEntry;
+
+	// These function declaration correspond to our PHPKObject handlers.
+	zend_object_value PHPKObjectCreateObject(zend_class_entry *ce TSRMLS_DC);
+	static void PHPKObjectFreeStorage(void *object TSRMLS_DC);
+	zval* PHPKObjectReadProperty(zval* object, zval* property, int type TSRMLS_DC);
+	void PHPKObjectWriteProperty(zval* object, zval* property, zval* value TSRMLS_DC);
+	int PHPKObjectHasProperty(zval* object, zval* property, int chk_type TSRMLS_DC);
+	int PHPKObjectHasDimension(zval* object, zval* property, int chk_type TSRMLS_DC);
+
+	// This is our class "function" table. It's empty, because right now
+	// we just override the class handlers which operate at a lower level.
+	static function_entry PHPKObjectMethods[] =
+	{
+		{NULL, NULL, NULL}
+	};
+
+	typedef struct {
+		zend_object std;
+		SharedValue kvalue;
+	} PHPKObject;
+
+	// This structure keeps track of the custom handlers
+	static zend_object_handlers PHPKObjectHandlers;
+
+	PHP_MINIT_FUNCTION(InitializePHPKrollClasses)
+	{
+		zend_class_entry ce;
+
+		// Initialize the class entry for our classes
+		INIT_CLASS_ENTRY(ce, "KObject", PHPKObjectMethods);
+		PHPKObjectClassEntry = zend_register_internal_class(&ce TSRMLS_CC);
+		PHPKObjectClassEntry->create_object = PHPKObjectCreateObject;
+
+		// Create our custom handlers table to override the
+		// default behaviour of our PHP objects.
+		PHPKObjectHandlers = *zend_get_std_object_handlers();
+		PHPKObjectHandlers.read_property = PHPKObjectReadProperty;
+		PHPKObjectHandlers.write_property = PHPKObjectWriteProperty;
+		PHPKObjectHandlers.read_dimension = PHPKObjectReadProperty;
+		PHPKObjectHandlers.write_dimension = PHPKObjectWriteProperty;
+		PHPKObjectHandlers.has_property = PHPKObjectHasProperty;;
+		PHPKObjectHandlers.has_dimension = PHPKObjectHasDimension;;
+
+		return SUCCESS;
+	}
+
+	zend_object_value PHPKObjectCreateObject(zend_class_entry *ce TSRMLS_DC)
+	{
+		PHPKObject* intern;
+		zend_object_value retval;
+
+		// We're using a custom zend_object* (PHPKObject*) so we
+		// need to do the things done by zend_objects_new manually.
+		intern = (PHPKObject*) emalloc(sizeof(PHPKObject));
+		memset(intern, 0, sizeof(PHPKObject));
+
+		zend_object_std_init(&intern->std, ce TSRMLS_CC);
+
+		// We don't have any default properties in our object
+		// so just start out with a blank properties hash.
+		ALLOC_HASHTABLE(intern->std.properties);
+		zend_hash_init(intern->std.properties,
+			0, NULL, ZVAL_PTR_DTOR, 0);
+
+		// Use the standard object destructor, but we want to use a
+		// custom memory free so that we can deference the internal
+		// Kroll value.
+		retval.handle = zend_objects_store_put(intern,
+			(zend_objects_store_dtor_t) zend_objects_destroy_object,
+			(zend_objects_free_object_storage_t) PHPKObjectFreeStorage,
+			NULL TSRMLS_CC);
+
+		// Use our special handlers for doing common object operations.
+		retval.handlers = &PHPKObjectHandlers;
+		return retval;
+	}
+
+	static void PHPKObjectFreeStorage(void *object TSRMLS_DC)
+	{
+		PHPKObject* phpkobject = static_cast<PHPKObject*>(object);
+		phpkobject->kvalue = 0;
+
+		zend_object_std_dtor(&phpkobject->std TSRMLS_CC);
+		efree(object);
+	}
+
+	zval* PHPKObjectReadProperty(zval* object, zval* property, int type TSRMLS_DC)
+	{
+		return NULL;
+		// Future implementation:
+		//SharedKObject kobject = static_cast<PHPKObject*>(object)->kvalue->ToObject();
+		//std::string propertyName = PHPUtils::ZvalToString(property);
+
+		//try
+		//{
+		//	SharedValue value = kobject->Get(propertyName);
+		//	return ToPHPValue(value);
+		//}
+		//catch (ValueException& e)
+		//{
+		//	// TODO: Convert to PHP exception
+		//}
+	}
+
+	void PHPKObjectWriteProperty(zval* object, zval* property, zval* value TSRMLS_DC)
+	{
+		// Future implementation:
+		//SharedKObject kobject = static_cast<PHPKObject*>(object)->kvalue->ToObject();
+		//std::string propertyName = PHPUtils::ZvalToString(property);
+		//SharedValue krollValue = PHPUtils::ToKrollValue(value);
+
+		//try
+		//{
+		//	kobject->Set(propertyName, krollValue);
+		//}
+		//catch (ValueException& e)
+		//{
+		//	// TODO: Convert to PHP exception
+		//}
+	}
+
+	int PHPKObjectHasProperty(zval* object, zval* property, int chk_type TSRMLS_DC)
+	{
+		return 0;
+	}
+
+	int PHPKObjectHasDimension(zval* object, zval* property, int chk_type TSRMLS_DC)
+	{
+		return 0;
+	}
 }
