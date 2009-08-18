@@ -2,7 +2,7 @@
 Import('build')
 import os
 
-modules = ['api', 'python', 'javascript' ,'ruby']
+modules = ['api', 'python', 'javascript' ,'ruby', 'php']
 
 for module in modules:
 	module_dir = os.path.join(build.dir, 'objs', 'modules', module)

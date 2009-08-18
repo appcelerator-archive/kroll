@@ -167,7 +167,14 @@ namespace kroll
 		 * @tiresult[String] The resulting String
 		 */
 		this->SetMethod("toUpperCase", &Blob::ToUpperCase);
-
+		
+		/**
+		 * @tiapi(method=True,name=Blob.concat,since=0.7)
+		 * @tiapi Concatenate multiple Blob and/or strings into one Blob
+		 * @tiresult[Blob] The resulting Blob
+		 */
+		this->SetMethod("concat", &Blob::Concat);
+		
 		/**
 		 * @tiapi(property=True,name=Blob.length,since=0.3) The number of bytes in this blob
 		 */
@@ -452,10 +459,15 @@ namespace kroll
 			result->SetNull();
 		}
 	}
-
-	AutoBlob Blob::GlobBlobs(std::vector<AutoBlob>& blobs)
+	
+	AutoBlob Blob::Concat(std::vector<AutoBlob>& blobs)
 	{
-		int size = 0;
+		if (blobs.size() == 0) {
+			this->duplicate();
+			return this;
+		}
+		
+		int size = this->Length();
 		for (size_t i = 0; i < blobs.size(); i++)
 		{
 			size += blobs.at(i)->Length();
@@ -465,6 +477,9 @@ namespace kroll
 		buffer[size] = '\0';
 
 		char* current = buffer;
+		memcpy(current, this->Get(), this->Length());
+		current += this->Length();
+		
 		for (size_t i = 0; i < blobs.size(); i++)
 		{
 			AutoBlob blob = blobs.at(i);
@@ -474,7 +489,38 @@ namespace kroll
 				current += blob->Length();
 			}
 		}
-
+		
 		return new Blob(buffer, size, false);
+	}
+	
+	void Blob::Concat(const ValueList& args, SharedValue result)
+	{
+		std::vector<AutoBlob> blobs;
+		for (size_t i = 0; i < args.size(); i++)
+		{
+			if (args.at(i)->IsObject())
+			{
+				AutoBlob blob = args.GetObject(i).cast<Blob>();
+				if (!blob.isNull())
+				{
+					blobs.push_back(blob);
+				}
+			}
+			else if (args.at(i)->IsString())
+			{
+				blobs.push_back(new Blob(args.GetString(i)));
+			}
+		}
+		
+		AutoBlob newBlob = this->Concat(blobs);
+		result->SetObject(newBlob);
+	}
+
+	/*static*/
+	AutoBlob Blob::GlobBlobs(std::vector<AutoBlob>& blobs)
+	{
+		AutoBlob blob = new Blob();
+		blob = blob->Concat(blobs);
+		return blob;
 	}
 }
