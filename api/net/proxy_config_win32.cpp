@@ -120,7 +120,7 @@ namespace kroll
 
 	SharedPtr<Proxy> Win32ProxyConfig::GetProxyForURLImpl(string& url)
 	{
-		URI uri = URI(url);
+		URI uri(url);
 
 		// The auto proxy configuration might tell us to simply use
 		// a direct connection, which should cause us to just return

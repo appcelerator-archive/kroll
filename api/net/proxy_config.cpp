@@ -103,10 +103,25 @@ namespace kroll
 	SharedProxyConfig ProxyConfig::instance = 0;
 	SharedProxy ProxyConfig::GetProxyForURL(string& url)
 	{
+		// TODO: Only convert this to a Poco::URI once, instead of doing
+		// it here and then again in the impls.
+		URI uri(url);
+
+		// Don't try to detect proxy settings for URLs we know are local
+		std::string scheme(uri.getScheme());
+		if (scheme == "app" || scheme == "ti" || scheme == "file")
+			return 0;
+
 #ifdef OS_WIN32
 		if (instance.isNull())
 		{
 			instance = new Win32ProxyConfig();
+		}
+		return instance->GetProxyForURLImpl(url);
+#elif defined(OS_LINUX)
+		if (instance.isNull())
+		{
+			instance = new LinuxProxyConfig();
 		}
 		return instance->GetProxyForURLImpl(url);
 #else
