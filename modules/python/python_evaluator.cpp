@@ -37,17 +37,11 @@
 		if (compiled == NULL)
 		{
 			Logger *logger = Logger::Get("Python");
-			logger->Error("An error occured while parsing Python on the page: ");
+			std::string error("An error occured while parsing Python on the page: ");
+			error.append(PythonUtils::PythonErrorToString());
+			logger->Error(error);
+
 			PyErr_Print();
-			// log to the console to give the user a better indication
-			// of what's going on down in python
-			SharedValue value = window_global->GetNS("console.error");
-			if (value->IsMethod())
-			{
-				SharedKMethod m = value->ToMethod();
-				std::string msg = "An error occured while parsing Python on the page";
-				m->Call(Value::NewString(msg));
-			}
 			Py_DECREF(globals);
 			return Value::Undefined;
 		}
@@ -61,17 +55,11 @@
 		if (return_value == NULL && PyErr_Occurred())
 		{
 			Logger *logger = Logger::Get("Python");
-			logger->Error("An error occured while parsing Python on the page");
+			std::string error("An error occured while parsing Python on the page: ");
+			error.append(PythonUtils::PythonErrorToString());
+			logger->Error(error);
+
 			PyErr_Print();
-			// log to the console to give the user a better indication
-			// of what's going on down in python
-			SharedValue value = window_global->GetNS("console.log");
-			if (value->IsMethod())
-			{
-				SharedKMethod m = value->ToMethod();
-				std::string msg = "An error occured while parsing Python on the page";
-				m->Call(Value::NewString(msg));
-			}
 		}
 		else
 		{

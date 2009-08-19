@@ -14,7 +14,6 @@
 namespace kroll
 {
 	class RootLogger;
-
 	class KROLL_API Logger
 	{
 		public:
@@ -29,12 +28,14 @@ namespace kroll
 			LDEBUG = Poco::Message::PRIO_DEBUG,
 			LTRACE = Poco::Message::PRIO_TRACE
 		} Level;
+		typedef void (*LoggerCallback)(Level, std::string&);
 
 		static Logger* Get(std::string name);
 		static Logger* GetRootLogger();
 		static void Initialize(bool, std::string, Level);
 		static void Shutdown();
 		static Level GetLevel(std::string& level);
+		static void AddLoggerCallback(LoggerCallback callback);
 
 		Logger() {};
 		virtual ~Logger() {};
@@ -104,6 +105,7 @@ namespace kroll
 		~RootLogger();
 		static RootLogger* instance;
 		virtual void LogImpl(Poco::Message& m);
+		void AddLoggerCallback(LoggerCallback callback);
 
 		protected:
 		bool consoleLogging;
@@ -112,7 +114,7 @@ namespace kroll
 		std::string logFilePath;
 		std::ofstream logFile;
 		Poco::Mutex mutex;
-
+		std::vector<LoggerCallback> callbacks;
 	};
 
 }

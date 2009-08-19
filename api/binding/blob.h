@@ -35,6 +35,7 @@ namespace kroll
 		Blob(std::string&);
 		virtual ~Blob();
 		void SetupBinding();
+		AutoBlob Concat(std::vector<AutoBlob>& blobs);
 		static AutoBlob GlobBlobs(std::vector<AutoBlob>& blobs);
 
 		/**
@@ -64,6 +65,7 @@ namespace kroll
 		void ToLowerCase(const ValueList& args, SharedValue result);
 		void ToUpperCase(const ValueList& args, SharedValue result);
 		void Replace(const ValueList& args, SharedValue result);
+		void Concat(const ValueList& args, SharedValue result);
 
 		void CreateWithCopy(const char *buf, int len);
 		void CreateWithReference(char *buf, int len);

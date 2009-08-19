@@ -641,6 +641,39 @@ namespace kroll
 		obj->value = new SharedValue(v);
 		return (PyObject*) obj;
 	}
+
+	std::string PythonUtils::PythonErrorToString()
+	{
+		std::string fullTraceString("");
+		PyObject *type, *value, *traceback;
+		PyErr_Fetch(&type, &value, &traceback);
+
+		PyObject* mod = PyImport_ImportModule("traceback");
+		if (!mod)
+		{
+			return "";
+		}
+		else
+		{
+			PyObject* list = PyObject_CallMethod(mod,
+				(char*) "format_exception", (char*) "OOO", type, value, traceback);
+
+			PyObject* newline = PyString_FromString("\n");
+			PyObject* fullTrace = PyObject_CallMethod(newline,
+				(char*) "join", (char*) "O", list);
+
+			char* fullTraceCString = PyString_AsString(fullTrace);
+			if (fullTraceCString)
+			{
+				fullTraceString.append(fullTraceCString);
+			}
+
+			Py_DECREF(list);
+			Py_DECREF(newline);
+			Py_DECREF(fullTrace);
+		}
+		return fullTraceString;
+	}
 }
 
 

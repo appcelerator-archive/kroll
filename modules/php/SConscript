@@ -1,0 +1,59 @@
+#!/usr/bin/env python
+import os
+from os import path
+
+Import('build')
+
+Env = build.env.Clone()
+Env.Append(CPPDEFINES=('KROLL_PHP_API_EXPORT', 1))
+build.add_thirdparty(Env, 'poco')
+
+# PHP's headers are so messy that they flood the build with warnings 
+# unless we turn off -Werror and try to suprress most warnings. This
+# is bad news. At some point we should turn warnings back on.
+if 'CPPFLAGS' in Env:
+	Env['CPPFLAGS'] = Env['CPPFLAGS'][:]
+	if '-Werror' in Env['CPPFLAGS']:
+		Env['CPPFLAGS'].remove('-Werror')
+	if '-Wall' in Env['CPPFLAGS']:
+		Env['CPPFLAGS'].remove('-Wall')
+	Env['CPPFLAGS'].append('-w')
+
+if build.is_osx() or build.is_linux():
+	Env.Append(LIBS=['php5'])
+	Env.Append(CPPPATH=[
+		path.join(build.third_party, 'php', 'include'),
+		path.join(build.third_party, 'php', 'include', 'TSRM'),
+		path.join(build.third_party, 'php', 'include', 'Zend'),
+		path.join(build.third_party, 'php', 'include', 'ext'),
+		path.join(build.third_party, 'php', 'include', 'main'),
+		path.join(build.third_party, 'php', 'include', 'sapi'),
+	])
+	#Env.ParseConfig('/opt/php/bin/php-config --includes')
+	#Env.Append(LIBPATH=['/opt/php/lib'])
+	##if build.is_linux():
+	##if build.is_osx():
+	##	Env.Append(LINKFLAGS=['-bundle'])
+	#Env.ParseConfig('/opt/php/bin/php-config --libs')
+	#Env.ParseConfig('/opt/php/bin/php-config --ldflags')
+
+elif build.is_win32():
+	Env.Append(CPPDEFINES=('PHP_WIN32', 1))
+	Env.Append(CPPDEFINES=('ZEND_WIN32', 1))
+	Env.Append(CPPDEFINES=('_USE_32BIT_TIME_T', 1))
+	Env.Append(CPPDEFINES=('TSRM_WIN32', 1))
+	#Env.Append(CPPDEFINES=('ZEND_DEBUG', 0))
+	Env.Append(CPPDEFINES=('ZTS', 1))
+	Env.Append(CPPPATH=[path.join(build.third_party, 'php', 'include'),
+		path.join(build.third_party, 'php', 'include', 'main'),
+		path.join(build.third_party, 'php', 'include', 'Zend'),
+		path.join(build.third_party, 'php', 'include', 'TSRM')])
+	Env.Append(LIBPATH=[path.join(build.third_party, 'php', 'lib')])
+	Env.Append(LIBS=['php5embed', 'php5ts'])
+
+m = build.add_module('php', env=Env)
+t = Env.SharedLibrary(m.build_dir + '/phpmodule', Glob('*.cpp'))
+build.mark_build_target(t)
+
+if build.is_win32():
+	m.light_weight_copy('#php-win32-resources', path.join(build.third_party, 'php', 'bin'), m.build_dir)

@@ -60,5 +60,11 @@ namespace kroll
 			return s;
 		}
 	}
+
+	std::string& ValueException::AsString()
+	{
+		this->displayString = *this->DisplayString();
+		return this->displayString;
+	}
 }
 

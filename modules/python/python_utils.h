@@ -21,6 +21,7 @@ namespace kroll
 		static PyObject* KObjectToPyObject(SharedValue o);
 		static PyObject* KMethodToPyObject(SharedValue o);
 		static PyObject* KListToPyObject(SharedValue o);
+		static std::string PythonErrorToString();
 
 	private:
 		PythonUtils() {}

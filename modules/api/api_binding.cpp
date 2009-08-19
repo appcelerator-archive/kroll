@@ -281,7 +281,7 @@ namespace kroll
 		this->SetMethod("getLogLevel", &APIBinding::_GetLogLevel);
 	
 		/**
-		 * @tiapi(method=True,name=API.print,since=1.0)
+		 * @tiapi(method=True,name=API.print,since=0.6)
 		 * @tiapi print a raw string to stdout (no newlines are appended)
 		 * @tiarg[Any, data] data to print
 		 */
@@ -925,15 +925,24 @@ namespace kroll
 
 	void APIBinding::_CreateBlob(const ValueList& args, SharedValue result)
 	{
-		args.VerifyException("createBlob", "?s");
-		if (args.size() > 0)
+		args.VerifyException("createBlob", "?s|o");
+		std::vector<AutoBlob> blobs;
+		for (size_t i = 0; i < args.size(); i++)
 		{
-			result->SetObject(new Blob(args.GetString(0)));
+			if (args.at(i)->IsObject())
+			{
+				AutoBlob blob = args.GetObject(i).cast<Blob>();
+				if (!blob.isNull())
+				{
+					blobs.push_back(blob);
+				}
+			}
+			else if (args.at(i)->IsString())
+			{
+				blobs.push_back(new Blob(args.GetString(i)));
+			}
 		}
-		else
-		{
-			result->SetObject(new Blob());
-		}
+		result->SetObject(Blob::GlobBlobs(blobs));
 	}
 
 	KObjectWrapper::KObjectWrapper(SharedKObject object) :
