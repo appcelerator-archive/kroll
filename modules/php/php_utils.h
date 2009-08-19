@@ -16,10 +16,12 @@ namespace kroll
 	public:
 		static SharedValue ToKrollValue(zval* value);
 		static zval* ToPHPValue(SharedValue value);
+		static void ToPHPValue(SharedValue value, zval** returnValue);
 		static zval* KListToPHPValue(SharedValue value);
 		static void AddKrollValueToPHPArray(SharedValue value, zval *phpArray, const char *key);
 		static void AddKrollValueToPHPArray(SharedValue value, zval *phpArray, unsigned int index);
 		static void AddKrollValueToPHPArray(SharedValue value, zval *phpArray);
+		static std::string ZValToPropertyName(zval* property);
 
 	private:
 		PHPUtils() {}

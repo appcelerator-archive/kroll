@@ -20,21 +20,22 @@ namespace kroll
 
 	class KROLL_API ValueException : public std::exception
 	{
-	public:
-
+		public:
 		ValueException(SharedValue v);
 		~ValueException() throw ();
 
-	public:
+		public:
 		static ValueException FromString(const char* s);
 		static ValueException FromString(std::string s);
 		static ValueException FromFormat(const char* format, ...);
 		static ValueException FromObject(SharedKObject o);
 		SharedValue GetValue();
 		SharedString DisplayString();
+		std::string& AsString();
 
-	private:
+		private:
 		SharedValue value;
+		std::string displayString;
 	};
 
 #ifndef OS_WIN32

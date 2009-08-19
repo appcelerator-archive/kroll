@@ -10,19 +10,22 @@
 #include <vector>
 #include <iostream>
 
+/* 
+ * PHP wreaks havoc on all kinds of cdecl/export/inline/god knows what macros,
+ * causing math functions to be exported into each object file. _INC_MATH is
+ * the math inclusion macro; defining it here seems to fix this issue for now,
+ * but there's probably a better way. Also, undef inline and va_copy so we make
+ * sure to get the win32 versions of those for Poco. This is why preprocessor
+ * magic == evil
+ */
 #if defined(OS_WIN32)
-// PHP wreaks havoc on all kinds of cdecl/export/inline/god knows what macros, causing
-// math functions to be exported into each object file. _INC_MATH is the math inclusion macro;
-// defining it here seems to fix this issue for now, but there's probably a better way.
-// Also, undef inline and va_copy so we make sure to get the win32 versions of those for Poco.
-// This is why preprocessor magic == evil
-# define _INC_MATH
-# include <zend_config.w32.h>
-# include <sapi/embed/php_embed.h>
-# undef inline
-# undef va_copy
+#define _INC_MATH
+#include <zend_config.w32.h>
+#include <sapi/embed/php_embed.h>
+#undef inline
+#undef va_copy
 #else
-# include <sapi/embed/php_embed.h>
+#include <sapi/embed/php_embed.h>
 #endif
 
 #include <kroll/kroll.h>
@@ -31,6 +34,8 @@
 #include "php_utils.h"
 #include "k_php_list.h"
 #include "php_evaluator.h"
+#include <zend/zend_exceptions.h>
+#include <zend/zend_compile.h>
 
 namespace kroll
 {

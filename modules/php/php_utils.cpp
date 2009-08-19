@@ -33,22 +33,26 @@ namespace kroll
 
 	zval* PHPUtils::ToPHPValue(SharedValue value)
 	{
-		zval *retval;
-		ALLOC_INIT_ZVAL(retval);
+		zval *returnValue;
+		ALLOC_INIT_ZVAL(returnValue);
+		ToPHPValue(value, &returnValue);
+	}
 
+	void PHPUtils::ToPHPValue(SharedValue value, zval** returnValue)
+	{
 		if (value->IsNull() || value->IsUndefined())
 		{
-			ZVAL_NULL(retval);
+			ZVAL_NULL(*returnValue);
 		}
 		else if (value->IsBool())
 		{
 			if (value->ToBool())
 			{
-				ZVAL_TRUE(retval);
+				ZVAL_TRUE(*returnValue);
 			}
 			else
 			{
-				ZVAL_FALSE(retval);
+				ZVAL_FALSE(*returnValue);
 			}
 		}
 		else if (value->IsNumber())
@@ -58,11 +62,11 @@ namespace kroll
 			   are doubles, so return a double. This could
 			   cause some PHP to function incorrectly if it's
 			   doing strict type checking. */
-			ZVAL_DOUBLE(retval, value->ToNumber());
+			ZVAL_DOUBLE(*returnValue, value->ToNumber());
 		}
 		else if (value->IsString())
 		{
-			ZVAL_STRINGL(retval, (char *) value->ToString(), strlen(value->ToString()), 1);
+			ZVAL_STRINGL(*returnValue, (char *) value->ToString(), strlen(value->ToString()), 1);
 		}
 		else if (value->IsObject())
 		{
@@ -74,14 +78,18 @@ namespace kroll
 		}
 		else if (value->IsList())
 		{
-			AutoPtr<KPHPList> pl = value->ToList().cast<KPHPList>();
-			if (!pl.isNull())
-				return pl->ToPHP();
-			else
-				return PHPUtils::KListToPHPValue(value);
-		}
+			// TODO: We need to figure out how to put this object
+			// into the incomming zval*.
+			// zval* list = NULL;
 
-		return retval;
+			// AutoPtr<KPHPList> pl = value->ToList().cast<KPHPList>();
+			// if (!pl.isNull())
+			// 	list = pl->ToPHP();
+			// else
+			// 	list = PHPUtils::KListToPHPValue(value);
+
+			// ZVAL_RESOURCE(*returnValue, list);
+		}
 	}
 
 	zval* PHPUtils::KListToPHPValue(SharedValue value)
@@ -236,6 +244,22 @@ namespace kroll
 		}
 	}
 
+	std::string PHPUtils::ZValToPropertyName(zval* phpPropertyName)
+	{
+		// This will destroy the original value.
+		convert_to_string(phpPropertyName);
+
+		if (IS_STRING == Z_TYPE_P(phpPropertyName))
+		{
+			return Z_STRVAL_P(phpPropertyName);
+		}
+		else
+		{
+			throw ValueException::FromString(
+				"Could not convert property name to string.");
+		}
+	}
+
 	// These are the class entries for all our Kroll objects in PHP
 	zend_class_entry *PHPKObjectClassEntry;
 	zend_class_entry *PHPKMethodClassEntry;
@@ -246,13 +270,21 @@ namespace kroll
 	static void PHPKObjectFreeStorage(void *object TSRMLS_DC);
 	zval* PHPKObjectReadProperty(zval* object, zval* property, int type TSRMLS_DC);
 	void PHPKObjectWriteProperty(zval* object, zval* property, zval* value TSRMLS_DC);
+	void PHPKObjectUnsetProperty(zval* object, zval* property TSRMLS_DC);
 	int PHPKObjectHasProperty(zval* object, zval* property, int chk_type TSRMLS_DC);
 	int PHPKObjectHasDimension(zval* object, zval* property, int chk_type TSRMLS_DC);
+	PHP_METHOD(PHPKObject, __call);
 
-	// This is our class "function" table. It's empty, because right now
-	// we just override the class handlers which operate at a lower level.
+	// This is our class "function" table. Right now we only implement
+	// __call, because that seems to be preferred over the handler version.
+	ZEND_BEGIN_ARG_INFO_EX(PHPKObjectCallArgInfo, 0, 0, 2)
+	ZEND_ARG_INFO(0, methodName)
+	ZEND_ARG_INFO(0, arguments)
+	ZEND_END_ARG_INFO()
+
 	static function_entry PHPKObjectMethods[] =
 	{
+		PHP_ME(PHPKObject, __call, PHPKObjectCallArgInfo, ZEND_ACC_PUBLIC)
 		{NULL, NULL, NULL}
 	};
 
@@ -279,6 +311,8 @@ namespace kroll
 		PHPKObjectHandlers.read_property = PHPKObjectReadProperty;
 		PHPKObjectHandlers.write_property = PHPKObjectWriteProperty;
 		PHPKObjectHandlers.read_dimension = PHPKObjectReadProperty;
+		PHPKObjectHandlers.unset_property = PHPKObjectUnsetProperty;
+		PHPKObjectHandlers.unset_dimension = PHPKObjectUnsetProperty;
 		PHPKObjectHandlers.write_dimension = PHPKObjectWriteProperty;
 		PHPKObjectHandlers.has_property = PHPKObjectHasProperty;;
 		PHPKObjectHandlers.has_dimension = PHPKObjectHasDimension;;
@@ -326,48 +360,202 @@ namespace kroll
 		efree(object);
 	}
 
-	zval* PHPKObjectReadProperty(zval* object, zval* property, int type TSRMLS_DC)
+	zval* PHPKObjectReadProperty(zval* zthis, zval* property, int type TSRMLS_DC)
 	{
-		return NULL;
-		// Future implementation:
-		//SharedKObject kobject = static_cast<PHPKObject*>(object)->kvalue->ToObject();
-		//std::string propertyName = PHPUtils::ZvalToString(property);
+		PHPKObject* kthis = reinterpret_cast<PHPKObject*>(
+			zend_object_store_get_object(zthis TSRMLS_CC));
+		SharedKObject kobject = kthis->kvalue->ToObject();
+		std::string propertyName = PHPUtils::ZValToPropertyName(property);
 
-		//try
-		//{
-		//	SharedValue value = kobject->Get(propertyName);
-		//	return ToPHPValue(value);
-		//}
-		//catch (ValueException& e)
-		//{
-		//	// TODO: Convert to PHP exception
-		//}
+		try
+		{
+			SharedValue value = kobject->Get(propertyName.c_str());
+			return PHPUtils::ToPHPValue(value);
+		}
+		catch (ValueException& e)
+		{
+			zend_throw_exception(zend_exception_get_default(TSRMLS_C), 
+				(char*) e.AsString().c_str(), 666);
+			zval* retval = NULL;
+			ZVAL_NULL(retval);
+			return retval;
+		}
 	}
 
-	void PHPKObjectWriteProperty(zval* object, zval* property, zval* value TSRMLS_DC)
+	void PHPKObjectWriteProperty(zval* zthis, zval* property, zval* value TSRMLS_DC)
 	{
-		// Future implementation:
-		//SharedKObject kobject = static_cast<PHPKObject*>(object)->kvalue->ToObject();
-		//std::string propertyName = PHPUtils::ZvalToString(property);
-		//SharedValue krollValue = PHPUtils::ToKrollValue(value);
+		PHPKObject* kthis = reinterpret_cast<PHPKObject*>(
+			zend_object_store_get_object(zthis TSRMLS_CC));
+		SharedKObject kobject = kthis->kvalue->ToObject();
 
-		//try
-		//{
-		//	kobject->Set(propertyName, krollValue);
-		//}
-		//catch (ValueException& e)
-		//{
-		//	// TODO: Convert to PHP exception
-		//}
+		std::string propertyName = PHPUtils::ZValToPropertyName(property);
+		SharedValue krollValue = PHPUtils::ToKrollValue(value);
+
+		try
+		{
+			kobject->Set(propertyName.c_str(), krollValue);
+		}
+		catch (ValueException& e)
+		{
+			zend_throw_exception(
+				zend_exception_get_default(TSRMLS_C), (char*) e.AsString().c_str(), 666);
+		}
 	}
 
-	int PHPKObjectHasProperty(zval* object, zval* property, int chk_type TSRMLS_DC)
+	/* Extending and Embedding PHP pg. 153
+	 * When isset() is called against an object property, this handler is invoked.
+	 * By default the standard handler will check for the property named by
+	 * 'property', if it's not found and -- as of PHP 4.1.0 -- if an __isset()
+	 * method is defined it will call that. The checkType parameter will be one of
+	 * three possible values. If the value is 2 the property need only exist to
+	 * qualify as a success. If the checkType is 0, it must exist and be of any
+	 * type except IS_NULL. If the value of checkType is 1, the value msut both
+	 * eist and evaluate to a non-false value. Note: In PHP 4.0.x the meaning of
+	 * checkType matched has_dimension's version of checkType (Martin: but not any
+	 * longer!).
+	 */
+	int PHPKObjectHasProperty(zval* zthis, zval* property, int checkType TSRMLS_DC)
 	{
-		return 0;
+		PHPKObject* kthis = reinterpret_cast<PHPKObject*>(
+			zend_object_store_get_object(zthis TSRMLS_CC));
+		SharedKObject kobject = kthis->kvalue->ToObject();
+		std::string propertyName = PHPUtils::ZValToPropertyName(property);
+
+		if (checkType == 0)
+		{
+			SharedValue value = kobject->Get(propertyName.c_str());
+			return !value->IsUndefined() && !value->IsNull();
+		}
+		else if (checkType == 1)
+		{
+			SharedValue value = kobject->Get(propertyName.c_str());
+			zval* phpValue = PHPUtils::ToPHPValue(value);
+			convert_to_boolean(phpValue);
+			return Z_BVAL_P(phpValue);
+		}
+		else // Generally this should be checkType == 2
+		{
+			return kobject->HasProperty(propertyName.c_str());
+		}
 	}
 
-	int PHPKObjectHasDimension(zval* object, zval* property, int chk_type TSRMLS_DC)
+	/* Extending and Embedding PHP pg. 154
+	 * When isset() is called against an object that is being treated like an
+	 * array, such as isset($obj['idx']), this handler is used. The standard
+	 * handler, if the object implements the ArrayAccess interface, will call the
+	 * offsetexists($idx) method first. If not found, it returns failure in the
+	 * form of a 0. Otherwise, if checkType is 0 it returns true (1) immediately.
+	 * A checkType of 1 indicates that it must also check that the value is
+	 * non-false by invoking the object's offsetget($idx) method as well and
+	 * examining the returned value.
+	 */
+	int PHPKObjectHasDimension(zval* zthis, zval* property, int checkType TSRMLS_DC)
 	{
-		return 0;
+		PHPKObject* kthis = reinterpret_cast<PHPKObject*>(
+			zend_object_store_get_object(zthis TSRMLS_CC));
+		SharedKObject kobject = kthis->kvalue->ToObject();
+		std::string propertyName = PHPUtils::ZValToPropertyName(property);
+
+		if (checkType == 0)
+		{
+			return kobject->HasProperty(propertyName.c_str());
+		}
+		else
+		{
+			if (!kobject->HasProperty(propertyName.c_str()))
+			{
+				return false;
+			}
+			else
+			{
+				SharedValue value = kobject->Get(propertyName.c_str());
+				zval* phpValue = PHPUtils::ToPHPValue(value);
+				convert_to_boolean(phpValue);
+				return Z_BVAL_P(phpValue);
+			}
+		}
+	}
+
+	void PHPKObjectUnsetProperty(zval* zthis, zval* property TSRMLS_DC)
+	{
+		PHPKObject* kthis = reinterpret_cast<PHPKObject*>(
+			zend_object_store_get_object(zthis TSRMLS_CC));
+		SharedKObject kobject = kthis->kvalue->ToObject();
+		std::string propertyName = PHPUtils::ZValToPropertyName(property);
+
+		try
+		{
+			kobject->Set(propertyName.c_str(), Value::Undefined);
+		}
+		catch (ValueException& e)
+		{
+			zend_throw_exception(
+				zend_exception_get_default(TSRMLS_C), (char*) e.AsString().c_str(), 666);
+		}
+	}
+
+	PHP_METHOD(PHPKObject, __call)
+	{
+		char* methodName;
+		int methodNameLength;
+		zval* zargs;
+
+		if (!zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sa",
+			&methodName, &methodNameLength, &zargs) == FAILURE)
+		{
+			zend_throw_exception(zend_exception_get_default(TSRMLS_C),
+				(char*) "Wrong arguments passed to __call", 666);
+			RETVAL_NULL();
+			return;
+		}
+
+		PHPKObject* kthis = reinterpret_cast<PHPKObject*>(
+			zend_object_store_get_object(getThis() TSRMLS_CC));
+		SharedKObject kobject = kthis->kvalue->ToObject();
+		SharedKMethod method = kobject->GetMethod(methodName, 0);
+
+		// Find the method by its name.
+		if (method.isNull())
+		{
+			std::string error("Could not find method named '");
+			error.append(methodName);
+			error.append("'");
+			zend_throw_exception(zend_exception_get_default(TSRMLS_C),
+				(char*) error.c_str(), 666);
+			RETVAL_NULL();
+			return;
+		}
+
+		// Pull out the arguments from the argument array.
+		ArgList kargs;
+		int numArgs = zend_hash_num_elements(Z_ARRVAL_P(zargs));
+		if (numArgs > 0)
+		{
+			HashPosition position;
+			zval** parameter;
+			zend_hash_internal_pointer_reset_ex(Z_ARRVAL_P(zargs), &position);
+
+			while (zend_hash_get_current_data_ex(Z_ARRVAL_P(zargs),
+				(void **) &parameter, &position) == SUCCESS)
+			{
+				kargs.push_back(PHPUtils::ToKrollValue(*parameter));
+				zend_hash_move_forward_ex(Z_ARRVAL_P(zargs), &position);
+			}
+		}
+
+		// Do the method invocation.
+		try
+		{
+			SharedValue returnValue = method->Call(kargs);
+			PHPUtils::ToPHPValue(returnValue, &return_value);
+		}
+		catch (ValueException& e)
+		{
+			zend_throw_exception(zend_exception_get_default(TSRMLS_C), 
+				(char*) e.AsString().c_str(), 666);
+			RETVAL_NULL();
+			return;
+		}
+
 	}
 }
