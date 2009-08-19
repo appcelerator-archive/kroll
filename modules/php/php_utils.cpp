@@ -9,25 +9,45 @@ namespace kroll
 {
 	SharedValue PHPUtils::ToKrollValue(zval *value)
 	{
-		switch (Z_TYPE_P(value))
+		SharedValue returnValue;
+		int type = Z_TYPE_P(value);
+
+		if (IS_NULL == type)
 		{
-			case IS_NULL: return Value::Null;
-			case IS_BOOL: return Value::NewBool(Z_BVAL_P(value));
-			case IS_LONG: return Value::NewInt((int) Z_LVAL_P(value));
-			case IS_DOUBLE: return Value::NewDouble(Z_DVAL_P(value));
-			case IS_STRING:
-			{
-				std::string s = Z_STRVAL_P(value);
-				return Value::NewString(s);
-			};
-			case IS_ARRAY:
-			{
-				SharedKList l = new KPHPList(value);
-				return Value::NewList(l);
-			};
-			case IS_RESOURCE: /*TODO: Implement*/
-			case IS_OBJECT: /*TODO: Implement*/
-			default: return Value::Null;
+			returnValue = Value::Null;
+		}
+		else if (IS_BOOL == type)
+		{
+			returnValue = Value::NewBool(Z_BVAL_P(value));
+		}
+		else if (IS_LONG == type)
+		{
+			returnValue = Value::NewDouble(Z_LVAL_P(value));
+		}
+		else if (IS_DOUBLE == type)
+		{
+			returnValue = Value::NewDouble(Z_DVAL_P(value));
+		}
+		else if (IS_STRING == type)
+		{
+			returnValue = Value::NewString(Z_STRVAL_P(value));
+		}
+		else if (IS_ARRAY)
+		{
+			return Value::NewList(new KPHPList(value));
+		}
+		else if (IS_OBJECT)
+		{
+			// TODO: Implement
+			// return Value::NewObject(new KPHPObject(value));
+		}
+		else if (IS_RESOURCE)
+		{
+			// TODO: Implement
+		}
+		else
+		{
+			return Value::Null;
 		}
 	}
 
@@ -58,190 +78,32 @@ namespace kroll
 		}
 		else if (value->IsNumber())
 		{
-			/* No way to check whether the number is an
-			   integer or a double here. All Kroll numbers
-			   are doubles, so return a double. This could
-			   cause some PHP to function incorrectly if it's
-			   doing strict type checking. */
+			// All numbers passing between Kroll and and PHP will be implicitly
+			// converted into floating point. This could cause some PHP to
+			// function incorrectly if it's doing strict type checking. We
+			// need to clearly document this.
 			ZVAL_DOUBLE(*returnValue, value->ToNumber());
 		}
 		else if (value->IsString())
 		{
-			ZVAL_STRINGL(*returnValue, (char *) value->ToString(), strlen(value->ToString()), 1);
+			const char* cstr = value->ToString();
+			ZVAL_STRINGL(*returnValue, (char *) cstr, strlen(cstr), 1);
 		}
 		else if (value->IsObject())
 		{
-			/*TODO: Implement*/
+			CreatePHPKObject(value, returnValue);
 		}
 		else if (value->IsMethod())
 		{
-			/*TODO: Implement*/
+			// TODO: Implement
 		}
 		else if (value->IsList())
 		{
-			// TODO: We need to figure out how to put this object
-			// into the incomming zval*.
-			// zval* list = NULL;
-
-			// AutoPtr<KPHPList> pl = value->ToList().cast<KPHPList>();
-			// if (!pl.isNull())
-			// 	list = pl->ToPHP();
-			// else
-			// 	list = PHPUtils::KListToPHPValue(value);
-
-			// ZVAL_RESOURCE(*returnValue, list);
+			// TODO: Turn this list into a ArrayObject-style object
 		}
-	}
-
-	zval* PHPUtils::KListToPHPValue(SharedValue value)
-	{
-		zval* phpArray;
-		MAKE_STD_ZVAL(phpArray);
-		array_init(phpArray);
-
-		/*TODO: Flesh out with full implementation.*/
-
-		return phpArray;
-	}
-
-	void PHPUtils::AddKrollValueToPHPArray(SharedValue value, zval *phpArray, const char *key)
-	{
-		if (value->IsNull() || value->IsUndefined())
+		else
 		{
-			add_assoc_null(phpArray, (char *) key);
-		}
-		else if (value->IsBool())
-		{
-			if (value->ToBool())
-				add_assoc_bool(phpArray, (char *) key, 1);
-			else
-				add_assoc_bool(phpArray, (char *) key, 0);
-		}
-		else if (value->IsNumber())
-		{
-			/* No way to check whether the number is an
-			   integer or a double here. All Kroll numbers
-			   are doubles, so return a double. This could
-			   cause some PHP to function incorrectly if it's
-			   doing strict type checking. */
-			add_assoc_double(phpArray, (char *) key, value->ToNumber());
-		}
-		else if (value->IsString())
-		{
-			add_assoc_stringl(phpArray, (char *) key, (char *) value->ToString(), strlen(value->ToString()), 1);
-		}
-		else if (value->IsObject())
-		{
-			/*TODO: Implement*/
-		}
-		else if (value->IsMethod())
-		{
-			/*TODO: Implement*/
-		}
-		else if (value->IsList())
-		{
-			zval *phpValue;
-			AutoPtr<KPHPList> pl = value->ToList().cast<KPHPList>();
-			if (!pl.isNull())
-				phpValue = pl->ToPHP();
-			else
-				phpValue = PHPUtils::KListToPHPValue(value);
-
-			add_assoc_zval(phpArray, (char *) key, phpValue);
-		}
-	}
-
-	void PHPUtils::AddKrollValueToPHPArray(SharedValue value, zval *phpArray, unsigned int index)
-	{
-		if (value->IsNull() || value->IsUndefined())
-		{
-			add_index_null(phpArray, (unsigned long) index);
-		}
-		else if (value->IsBool())
-		{
-			if (value->ToBool())
-				add_index_bool(phpArray, (unsigned long) index, 1);
-			else
-				add_index_bool(phpArray, (unsigned long) index, 0);
-		}
-		else if (value->IsNumber())
-		{
-			/* No way to check whether the number is an
-			   integer or a double here. All Kroll numbers
-			   are doubles, so return a double. This could
-			   cause some PHP to function incorrectly if it's
-			   doing strict type checking. */
-			add_index_double(phpArray, (unsigned long) index, value->ToNumber());
-		}
-		else if (value->IsString())
-		{
-			add_index_stringl(phpArray, (unsigned long) index, (char *) value->ToString(), strlen(value->ToString()), 1);
-		}
-		else if (value->IsObject())
-		{
-			/*TODO: Implement*/
-		}
-		else if (value->IsMethod())
-		{
-			/*TODO: Implement*/
-		}
-		else if (value->IsList())
-		{
-			zval *phpValue;
-			AutoPtr<KPHPList> pl = value->ToList().cast<KPHPList>();
-			if (!pl.isNull())
-				phpValue = pl->ToPHP();
-			else
-				phpValue = PHPUtils::KListToPHPValue(value);
-
-			add_index_zval(phpArray, (unsigned long) index, phpValue);
-		}
-	}
-
-	void PHPUtils::AddKrollValueToPHPArray(SharedValue value, zval *phpArray)
-	{
-		if (value->IsNull() || value->IsUndefined())
-		{
-			add_next_index_null(phpArray);
-		}
-		else if (value->IsBool())
-		{
-			if (value->ToBool())
-				add_next_index_bool(phpArray, 1);
-			else
-				add_next_index_bool(phpArray, 0);
-		}
-		else if (value->IsNumber())
-		{
-			/* No way to check whether the number is an
-			   integer or a double here. All Kroll numbers
-			   are doubles, so return a double. This could
-			   cause some PHP to function incorrectly if it's
-			   doing strict type checking. */
-			add_next_index_double(phpArray, value->ToNumber());
-		}
-		else if (value->IsString())
-		{
-			add_next_index_stringl(phpArray, (char *) value->ToString(), strlen(value->ToString()), 1);
-		}
-		else if (value->IsObject())
-		{
-			/*TODO: Implement*/
-		}
-		else if (value->IsMethod())
-		{
-			/*TODO: Implement*/
-		}
-		else if (value->IsList())
-		{
-			zval *phpValue;
-			AutoPtr<KPHPList> pl = value->ToList().cast<KPHPList>();
-			if (!pl.isNull())
-				phpValue = pl->ToPHP();
-			else
-				phpValue = PHPUtils::KListToPHPValue(value);
-
-			add_next_index_zval(phpArray, phpValue);
+			ZVAL_NULL(*returnValue);
 		}
 	}
 
@@ -557,6 +419,17 @@ namespace kroll
 			RETVAL_NULL();
 			return;
 		}
+	}
 
+	void PHPUtils::CreatePHPKObject(SharedValue objectValue, zval** returnValue)
+	{
+		// Initialize our object with our pre-defined KObject class entry.
+		TSRMLS_FETCH();
+		object_init_ex(*returnValue, PHPKObjectClassEntry);
+
+		// Place the KValue into the internal struct.
+		PHPKObject* internal = reinterpret_cast<PHPKObject*>(
+			zend_object_store_get_object(*returnValue TSRMLS_CC));
+		internal->kvalue = objectValue;
 	}
 }

@@ -32,6 +32,10 @@ namespace kroll
 
 	protected:
 		zval *list;
+
+		static void AddKrollValueToPHPArray(SharedValue value, zval *phpArray, const char *key);
+		static void AddKrollValueToPHPArray(SharedValue value, zval *phpArray, unsigned int index);
+		static void AddKrollValueToPHPArray(SharedValue value, zval *phpArray);
 		DISALLOW_EVIL_CONSTRUCTORS(KPHPList);
 	};
 }
