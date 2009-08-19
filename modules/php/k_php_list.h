@@ -13,7 +13,7 @@ namespace kroll
 {
 	class KPHPList : public KList
 	{
-	public:
+		public:
 		KPHPList(zval *list);
 		virtual ~KPHPList();
 
@@ -30,7 +30,7 @@ namespace kroll
 
 		zval* ToPHP();
 
-	protected:
+		protected:
 		zval *list;
 
 		static void AddKrollValueToPHPArray(SharedValue value, zval *phpArray, const char *key);

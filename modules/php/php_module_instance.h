@@ -12,14 +12,15 @@ namespace kroll
 {
 	class PHPModuleInstance : public Module
 	{
-	public:
+		public:
 		PHPModuleInstance(Host *host, std::string path, std::string dir, std::string name);
-	protected:
+		void Initialize();
+		void Destroy();
+
+		protected:
 		virtual ~PHPModuleInstance();
-	public:
-		void Initialize ();
-		void Destroy ();
-	private:
+
+		private:
 		std::string path;
 		DISALLOW_EVIL_CONSTRUCTORS(PHPModuleInstance);
 	};
