@@ -8,6 +8,9 @@ Env = build.env.Clone()
 Env.Append(CPPDEFINES=('KROLL_PHP_API_EXPORT', 1))
 build.add_thirdparty(Env, 'poco')
 
+# PHP's headers are so messy that they flood the build with warnings 
+# unless we turn off -Werror and try to suprress most warnings. This
+# is bad news. At some point we should turn warnings back on.
 if 'CPPFLAGS' in Env:
 	Env['CPPFLAGS'] = Env['CPPFLAGS'][:]
 	if '-Werror' in Env['CPPFLAGS']:
