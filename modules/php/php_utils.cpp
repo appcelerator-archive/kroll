@@ -56,6 +56,7 @@ namespace kroll
 		zval *returnValue;
 		ALLOC_INIT_ZVAL(returnValue);
 		ToPHPValue(value, &returnValue);
+		return returnValue;
 	}
 
 	void PHPUtils::ToPHPValue(SharedValue value, zval** returnValue)
@@ -237,7 +238,7 @@ namespace kroll
 		catch (ValueException& e)
 		{
 			zend_throw_exception(zend_exception_get_default(TSRMLS_C), 
-				(char*) e.AsString().c_str(), 666);
+				(char*) e.AsString().c_str(), 666 TSRMLS_CC);
 			zval* retval = NULL;
 			ZVAL_NULL(retval);
 			return retval;
@@ -260,7 +261,7 @@ namespace kroll
 		catch (ValueException& e)
 		{
 			zend_throw_exception(
-				zend_exception_get_default(TSRMLS_C), (char*) e.AsString().c_str(), 666);
+				zend_exception_get_default(TSRMLS_C), (char*) e.AsString().c_str(), 666 TSRMLS_CC);
 		}
 	}
 
@@ -352,7 +353,7 @@ namespace kroll
 		catch (ValueException& e)
 		{
 			zend_throw_exception(
-				zend_exception_get_default(TSRMLS_C), (char*) e.AsString().c_str(), 666);
+				zend_exception_get_default(TSRMLS_C), (char*) e.AsString().c_str(), 666 TSRMLS_CC);
 		}
 	}
 
@@ -366,7 +367,7 @@ namespace kroll
 			&methodName, &methodNameLength, &zargs) == FAILURE)
 		{
 			zend_throw_exception(zend_exception_get_default(TSRMLS_C),
-				(char*) "Wrong arguments passed to __call", 666);
+				(char*) "Wrong arguments passed to __call", 666 TSRMLS_CC);
 			RETVAL_NULL();
 			return;
 		}
@@ -383,7 +384,7 @@ namespace kroll
 			error.append(methodName);
 			error.append("'");
 			zend_throw_exception(zend_exception_get_default(TSRMLS_C),
-				(char*) error.c_str(), 666);
+				(char*) error.c_str(), 666 TSRMLS_CC);
 			RETVAL_NULL();
 			return;
 		}
@@ -414,7 +415,7 @@ namespace kroll
 		catch (ValueException& e)
 		{
 			zend_throw_exception(zend_exception_get_default(TSRMLS_C), 
-				(char*) e.AsString().c_str(), 666);
+				(char*) e.AsString().c_str(), 666 TSRMLS_CC);
 			RETVAL_NULL();
 			return;
 		}
@@ -423,6 +424,7 @@ namespace kroll
 	void PHPUtils::CreatePHPKObject(SharedValue objectValue, zval** returnValue)
 	{
 		// Initialize our object with our pre-defined KObject class entry.
+		TSRMLS_FETCH();
 		object_init_ex(*returnValue, PHPKObjectClassEntry);
 
 		// Place the KValue into the internal struct.
