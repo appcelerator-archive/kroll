@@ -10,6 +10,8 @@ namespace kroll
 {
 	SharedValue PHPEvaluator::Call(const ValueList& args)
 	{
+		TSRMLS_FETCH();
+		
 		if (args.size() != 3
 			|| !args.at(1)->IsString()
 			|| !args.at(2)->IsObject())
@@ -23,20 +25,21 @@ namespace kroll
 		SharedValue kv = Value::Undefined;
 
 		// Execute the PHP code
-		TSRMLS_FETCH();
 		zend_first_try {
-			zval* return_value;
+			//zval* return_value;
 
 			// TODO: Need to implement error reporting here
-			php_start_ob_buffer(NULL, 0, 1 TSRMLS_CC);
+			// Output buffering should be used in templating logic, not runtime evaluation (right?)
+			//php_start_ob_buffer(NULL, 0, 1 TSRMLS_CC);
+			//php_ob_get_buffer(return_value TSRMLS_CC);
+			//php_end_ob_buffer(0, 0 TSRMLS_CC);
+
+			//SharedValue kv = PHPUtils::ToKrollValue(return_value TSRMLS_CC);
+
+			//zval_dtor(return_value);
+			//FREE_ZVAL(return_value);
+			
 			zend_eval_string((char *) code, NULL, (char *) name TSRMLS_CC);
-			php_ob_get_buffer(return_value TSRMLS_CC);
-			php_end_ob_buffer(0, 0 TSRMLS_CC);
-
-			SharedValue kv = PHPUtils::ToKrollValue(return_value TSRMLS_CC);
-
-			zval_dtor(return_value);
-			FREE_ZVAL(return_value);
 		} zend_end_try();
 
 		return kv;

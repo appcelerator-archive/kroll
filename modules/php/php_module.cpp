@@ -61,8 +61,8 @@ namespace kroll
 
 		SharedKMethod evaluator = new PHPEvaluator();
 		/**
-		* @tiapi(method=True,name=PHP.evaluate,since=0.1) Evaluates a string as ruby code
-		* @tiarg(for=PHP.evaluate,name=code,type=String) ruby script code
+		* @tiapi(method=True,name=PHP.evaluate,since=0.7) Evaluates a string as PHP code
+		* @tiarg(for=PHP.evaluate,name=code,type=String) PHP script code
 		* @tiarg(for=PHP.evaluate,name=scope,type=Object) global variable scope
 		* @tiresult(for=PHP.evaluate,type=any) result of the evaluation
 		*/
