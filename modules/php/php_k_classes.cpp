@@ -328,17 +328,17 @@ namespace kroll
 			PHPKObjectHandlers.has_property = PHPKObjectHasProperty;
 			PHPKObjectHandlers.has_dimension = PHPKObjectHasDimension;
 		}
-	}
+		
+		void KObjectToKPHPObject(SharedValue objectValue, zval** returnValue)
+		{
+			// Initialize our object with our pre-defined KObject class entry.
+			TSRMLS_FETCH();
+			object_init_ex(*returnValue, PHPKObjectClassEntry);
 
-	void KObjectToKPHPObject(SharedValue objectValue, zval** returnValue)
-	{
-		// Initialize our object with our pre-defined KObject class entry.
-		TSRMLS_FETCH();
-		object_init_ex(*returnValue, PHPKObjectClassEntry);
-
-		// Place the KValue into the internal struct.
-		PHPKObject* internal = reinterpret_cast<PHPKObject*>(
-			zend_object_store_get_object(*returnValue TSRMLS_CC));
-		internal->kvalue = objectValue;
+			// Place the KValue into the internal struct.
+			PHPKObject* internal = reinterpret_cast<PHPKObject*>(
+				zend_object_store_get_object(*returnValue TSRMLS_CC));
+			internal->kvalue = objectValue;
+		}
 	}
 }
