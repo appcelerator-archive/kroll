@@ -8,9 +8,9 @@
 namespace kroll
 {
 	/*static*/
-	SharedValue PHPUtils::ToKrollValue(zval *value)
+	SharedValue PHPUtils::ToKrollValue(zval *value TSRMLS_DC)
 	{
-		SharedValue returnValue;
+		SharedValue returnValue = Value::NewNull();
 		int type = Z_TYPE_P(value);
 
 		if (IS_NULL == type)
@@ -33,21 +33,26 @@ namespace kroll
 		{
 			returnValue = Value::NewString(Z_STRVAL_P(value));
 		}
-		else if (IS_ARRAY)
+		else if (IS_ARRAY == type)
 		{
 			returnValue = Value::NewList(new KPHPList(value));
 		}
-		else if (IS_OBJECT)
+		else if (IS_OBJECT == type)
+		{
+			PHPKObject* phpKObject = reinterpret_cast<PHPKObject*>(
+				zend_object_store_get_object(value TSRMLS_CC));
+			if (phpKObject)
+			{
+				returnValue = phpKObject->kvalue;
+			}
+			else
+			{
+				returnValue = Value::NewObject(new KPHPObject(value));
+			}
+		}
+		else if (IS_RESOURCE == type)
 		{
 			// TODO: Implement
-			// return Value::NewObject(new KPHPObject(value));
-		}
-		else if (IS_RESOURCE)
-		{
-			// TODO: Implement
-		}
-		else
-		{
 		}
 		return returnValue;
 	}
@@ -147,11 +152,6 @@ namespace kroll
 		{NULL, NULL, NULL}
 	};
 
-	typedef struct {
-		zend_object std;
-		SharedValue kvalue;
-	} PHPKObject;
-
 	// This structure keeps track of the custom handlers
 	static zend_object_handlers PHPKObjectHandlers;
 
@@ -199,7 +199,7 @@ namespace kroll
 			while (zend_hash_get_current_data_ex(Z_ARRVAL_P(zargs),
 				(void **) &parameter, &position) == SUCCESS)
 			{
-				kargs.push_back(PHPUtils::ToKrollValue(*parameter));
+				kargs.push_back(PHPUtils::ToKrollValue(*parameter TSRMLS_CC));
 				zend_hash_move_forward_ex(Z_ARRVAL_P(zargs), &position);
 			}
 		}
@@ -316,7 +316,7 @@ namespace kroll
 		SharedKObject kobject = kthis->kvalue->ToObject();
 
 		std::string propertyName = PHPUtils::ZValToPropertyName(property);
-		SharedValue krollValue = PHPUtils::ToKrollValue(value);
+		SharedValue krollValue = PHPUtils::ToKrollValue(value TSRMLS_CC);
 
 		try
 		{

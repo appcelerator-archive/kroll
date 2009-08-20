@@ -39,7 +39,8 @@ namespace kroll
 			return Value::Undefined;
 		}
 
-		SharedValue v = PHPUtils::ToKrollValue((zval *) copyval);
+		TSRMLS_FETCH();
+		SharedValue v = PHPUtils::ToKrollValue((zval *) copyval TSRMLS_CC);
 		return v;
 	}
 

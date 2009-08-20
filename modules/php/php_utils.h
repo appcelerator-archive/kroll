@@ -11,10 +11,15 @@
 
 namespace kroll
 {
+	typedef struct {
+		zend_object std;
+		SharedValue kvalue;
+	} PHPKObject;
+		
 	class PHPUtils
 	{
 		public:
-		static SharedValue ToKrollValue(zval* value);
+		static SharedValue ToKrollValue(zval* value TSRMLS_DC);
 		static zval* ToPHPValue(SharedValue value);
 		static void ToPHPValue(SharedValue value, zval** returnValue);
 		static std::string ZValToPropertyName(zval* property);

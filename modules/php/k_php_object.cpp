@@ -58,7 +58,7 @@ namespace kroll {
 			zval* zProperty = Z_OBJ_HANDLER_P(object, read_property)(
 				object, &zname, 2 TSRMLS_CC);
 
-			return PHPUtils::ToKrollValue(zProperty);
+			return PHPUtils::ToKrollValue(zProperty TSRMLS_CC);
 		}
 
 		// Next just try reading it from the properties hash.
@@ -66,7 +66,7 @@ namespace kroll {
 		if (zend_hash_find(Z_OBJPROP_P(object),
 				name, nameLength, (void**) &zPropertyPtr) != FAILURE)
 		{
-			return PHPUtils::ToKrollValue(*zPropertyPtr);
+			return PHPUtils::ToKrollValue(*zPropertyPtr TSRMLS_CC);
 		}
 		else
 		{

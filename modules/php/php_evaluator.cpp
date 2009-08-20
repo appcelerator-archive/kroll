@@ -33,7 +33,7 @@ namespace kroll
 			php_ob_get_buffer(return_value TSRMLS_CC);
 			php_end_ob_buffer(0, 0 TSRMLS_CC);
 
-			SharedValue kv = PHPUtils::ToKrollValue(return_value);
+			SharedValue kv = PHPUtils::ToKrollValue(return_value TSRMLS_CC);
 
 			zval_dtor(return_value);
 			FREE_ZVAL(return_value);
