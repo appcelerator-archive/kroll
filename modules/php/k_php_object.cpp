@@ -33,6 +33,7 @@ namespace kroll {
 		if (Z_OBJ_HANDLER_P(object, write_property))
 		{
 			zval* zvalue = PHPUtils::ToPHPValue(value);
+			TSRMLS_FETCH();
 			add_property_zval_ex(object, name, strlen(name), zvalue TSRMLS_CC);
 		}
 		else
@@ -45,7 +46,8 @@ namespace kroll {
 	SharedValue KPHPObject::Get(const char *name)
 	{
 		unsigned int nameLength = strlen(name);
-
+		TSRMLS_FETCH();
+			
 		// First try to get the property via the read_property handler.
 		if (this->PropertyExists(name) && Z_OBJ_HANDLER_P(object, read_property))
 		{
@@ -97,7 +99,7 @@ namespace kroll {
 	SharedStringList KPHPObject::GetPropertyNames()
 	{
 		SharedStringList names(new StringList());
-
+		TSRMLS_FETCH();
 		// If there is no get_properties handler, return. Why this would
 		// happen, I have no idea -- from zend_builtin_functions.c:2363
 		if (Z_OBJ_HT_P(object)->get_properties == NULL)
@@ -148,6 +150,7 @@ namespace kroll {
 	bool KPHPObject::PropertyExists(const char* property)
 	{
 		unsigned int propertyLength = strlen(property);
+		TSRMLS_FETCH();
 		zend_class_entry* classEntry = Z_OBJCE_P(object);
 
 		// Check in the class entry for the property.

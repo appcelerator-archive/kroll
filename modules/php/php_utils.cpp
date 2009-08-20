@@ -40,10 +40,12 @@ namespace kroll
 		{
 			// TODO: Implement
 			// return Value::NewObject(new KPHPObject(value));
+			return Value::Null;
 		}
 		else if (IS_RESOURCE)
 		{
 			// TODO: Implement
+			return Value::Null;
 		}
 		else
 		{
