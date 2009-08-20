@@ -300,6 +300,12 @@ class BuildConfig(object):
 		env.Append(LIBPATH=[libpath])
 		env.Append(LIBS=[libs])
 
+	def tp(self, *parts):
+		full_path = self.third_party
+		for part in parts:
+			full_path = path.join(full_path, part)
+		return full_path
+
 	def cwd(self, depth=1):
 		return path.dirname(sys._getframe(depth).f_code.co_filename)
 
