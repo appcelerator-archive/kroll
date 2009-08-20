@@ -45,11 +45,12 @@ namespace kroll {
 
 	SharedValue KPHPObject::Get(const char *name)
 	{
+		zval** zPropertyPtr;
 		unsigned int nameLength = strlen(name);
 		TSRMLS_FETCH();
-			
+
 		// First try to get the property via the read_property handler.
-		if (this->PropertyExists(name) && Z_OBJ_HANDLER_P(object, read_property))
+		if (this->PropertyExists(name TSRMLS_CC) && Z_OBJ_HANDLER_P(object, read_property))
 		{
 			zval zname;
 			ZVAL_STRINGL(&zname, name, nameLength, 0);
@@ -59,14 +60,17 @@ namespace kroll {
 				object, &zname, 2 TSRMLS_CC);
 
 			return PHPUtils::ToKrollValue(zProperty TSRMLS_CC);
-		}
 
-		// Next just try reading it from the properties hash.
-		zval** zPropertyPtr;
-		if (zend_hash_find(Z_OBJPROP_P(object),
-				name, nameLength, (void**) &zPropertyPtr) != FAILURE)
+		} // Next just try reading it from the properties hash.
+		else if (zend_hash_find(Z_OBJPROP_P(object),
+			name, nameLength, (void**) &zPropertyPtr) != FAILURE)
 		{
 			return PHPUtils::ToKrollValue(*zPropertyPtr TSRMLS_CC);
+
+		} // Check if the method exists on the object
+		else if (this->MethodExists(name TSRMLS_CC))
+		{
+			return Value::NewMethod(new KPHPMethod(object, name));
 		}
 		else
 		{
@@ -147,10 +151,9 @@ namespace kroll {
 		return this->object;
 	}
 
-	bool KPHPObject::PropertyExists(const char* property)
+	bool KPHPObject::PropertyExists(const char* property TSRMLS_DC)
 	{
 		unsigned int propertyLength = strlen(property);
-		TSRMLS_FETCH();
 		zend_class_entry* classEntry = Z_OBJCE_P(object);
 
 		// Check in the class entry for the property.
@@ -168,5 +171,36 @@ namespace kroll {
 		ZVAL_STRINGL(&zPropertyName, property, propertyLength, 0);
 		return (Z_OBJ_HANDLER_P(object, has_property) &&
 			Z_OBJ_HANDLER_P(object, has_property)(object, &zPropertyName, 2 TSRMLS_CC));
+	}
+
+	bool KPHPObject::MethodExists(const char* methodName TSRMLS_DC)
+	{
+		unsigned int methodNameLength = strlen(methodName);
+		char* lcMethodName = zend_str_tolower_dup(methodName, strlen(methodName));
+		char *lcname;
+		bool hasMethod = false;
+		zend_class_entry* classEntry = Z_OBJCE_P(object);
+
+		// First check the class "function" table.
+		if (zend_hash_exists(&classEntry->function_table, lcMethodName, methodNameLength+1))
+		{
+			hasMethod = true;
+		}
+		else if (Z_OBJ_HT_P(object)->get_method != NULL)
+		{
+			// This method exists if get_method returns non-null method pointer
+			// which is not the standard __call method handler.
+			union _zend_function *func = Z_OBJ_HT_P(object)->get_method(
+				&object, (char*) methodName, methodNameLength TSRMLS_CC);
+
+			if (func != NULL && (func->type != ZEND_INTERNAL_FUNCTION ||
+				((zend_internal_function*)func)->handler == zend_std_call_user_call))
+			{
+				hasMethod = true;
+			}
+		}
+
+		efree(lcMethodName);
+		return hasMethod;
 	}
 }
