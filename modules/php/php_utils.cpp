@@ -35,23 +35,21 @@ namespace kroll
 		}
 		else if (IS_ARRAY)
 		{
-			return Value::NewList(new KPHPList(value));
+			returnValue = Value::NewList(new KPHPList(value));
 		}
 		else if (IS_OBJECT)
 		{
 			// TODO: Implement
 			// return Value::NewObject(new KPHPObject(value));
-			return Value::Null;
 		}
 		else if (IS_RESOURCE)
 		{
 			// TODO: Implement
-			return Value::Null;
 		}
 		else
 		{
-			return Value::Null;
 		}
+		return returnValue;
 	}
 
 	/*static*/
