@@ -28,13 +28,13 @@ namespace kroll
 		// These function declaration correspond to our PHPKObject handlers.
 		static void InitializePHPKrollClasses();
 		static zend_object_value PHPKObjectCreateObject(zend_class_entry *ce TSRMLS_DC);
-		static void PHPKObjectFreeStorage(void *object TSRMLS_DC);
-		static zval* PHPKObjectReadProperty(zval* object, zval* property, int type TSRMLS_DC);
-		static void PHPKObjectWriteProperty(zval* object, zval* property, zval* value TSRMLS_DC);
-		static HashTable* PHPUtils::PHPKObjectGetProperties(zval *zthis TSRMLS_DC);
-		static void PHPKObjectUnsetProperty(zval* object, zval* property TSRMLS_DC);
-		static int PHPKObjectHasProperty(zval* object, zval* property, int chk_type TSRMLS_DC);
-		static int PHPKObjectHasDimension(zval* object, zval* property, int chk_type TSRMLS_DC);
+		static void PHPKObjectFreeStorage(void* zthis TSRMLS_DC);
+		static zval* PHPKObjectReadProperty(zval* zthis, zval* property, int type TSRMLS_DC);
+		static void PHPKObjectWriteProperty(zval* zthis, zval* property, zval* value TSRMLS_DC);
+		static HashTable* PHPKObjectGetProperties(zval* zthis TSRMLS_DC);
+		static void PHPKObjectUnsetProperty(zval* zthis, zval* property TSRMLS_DC);
+		static int PHPKObjectHasProperty(zval* zthis, zval* property, int type TSRMLS_DC);
+		static int PHPKObjectHasDimension(zval* zthis, zval* property, int type TSRMLS_DC);
 
 		private:
 		PHPUtils() {}

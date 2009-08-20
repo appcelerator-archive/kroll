@@ -276,13 +276,13 @@ namespace kroll
 	}
 
 	/*static*/
-	void PHPUtils::PHPKObjectFreeStorage(void *object TSRMLS_DC)
+	void PHPUtils::PHPKObjectFreeStorage(void *zthis TSRMLS_DC)
 	{
-		PHPKObject* phpkobject = static_cast<PHPKObject*>(object);
+		PHPKObject* phpkobject = static_cast<PHPKObject*>(zthis);
 		phpkobject->kvalue = 0;
 
 		zend_object_std_dtor(&phpkobject->std TSRMLS_CC);
-		efree(object);
+		efree(zthis);
 	}
 
 	/*static*/

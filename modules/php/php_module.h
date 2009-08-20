@@ -35,8 +35,8 @@
 #include "k_php_object.h"
 #include "k_php_list.h"
 #include "php_evaluator.h"
-#include <zend/zend_exceptions.h>
-#include <zend/zend_compile.h>
+#include <Zend/zend_exceptions.h>
+#include <Zend/zend_compile.h>
 
 namespace kroll
 {
