@@ -26,7 +26,8 @@ namespace kroll
 		
 		php_embed_module.ub_write = PHPModule::UBWrite;
 		php_embed_init(argc, argv PTSRMLS_CC);
-
+		PHPUtils::InitializePHPKrollClasses();
+		
 		this->InitializeBinding();
 		host->AddModuleProvider(this);
 	}
