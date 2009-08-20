@@ -61,8 +61,12 @@ namespace kroll
 				return instance_;
 			}
 
+			static int UBWrite(const char *str, unsigned int len TSRMLS_DC);
+			
 		private:
 			SharedKObject binding;
+			Logger *logger;
+			
 			static PHPModule *instance_;
 			DISALLOW_EVIL_CONSTRUCTORS(PHPModule);
 		};

@@ -20,13 +20,23 @@ namespace kroll
 	void PHPModule::Initialize()
 	{
 		PHPModule::instance_ = this;
-
+		logger = Logger::Get("PHP");
 		int argc = 1;
 		char *argv[2] = { "php_kroll", NULL };
+		
+		php_embed_module.ub_write = PHPModule::UBWrite;
 		php_embed_init(argc, argv PTSRMLS_CC);
 
 		this->InitializeBinding();
 		host->AddModuleProvider(this);
+	}
+	
+	/*static*/
+	int PHPModule::UBWrite(const char *str, unsigned int length TSRMLS_DC)
+	{
+		std::string string(str,length);
+		PHPModule::Instance()->logger->Debug(string.c_str());
+		return length;
 	}
 
 	void PHPModule::Stop()
@@ -56,6 +66,9 @@ namespace kroll
 		* @tiresult(for=PHP.evaluate,type=any) result of the evaluation
 		*/
 		this->binding->Set("evaluate", Value::NewMethod(evaluator));
+		
+		zval *titaniumValue = PHPUtils::ToPHPValue(Value::NewObject(global));
+		ZEND_SET_SYMBOL(&EG(symbol_table), "Titanium", titaniumValue);
 	}
 
 	const static std::string php_suffix = "module.php";
@@ -67,9 +80,15 @@ namespace kroll
 
 	Module* PHPModule::CreateModule(std::string& path)
 	{
+		Logger *logger = Logger::Get("PHP");
 		zend_first_try {
-			std::string includeScript = "include '" + path + "'";
-			zend_eval_string((char *)includeScript.c_str(), NULL, (char *) path.c_str() TSRMLS_CC);
+			std::string includeScript = "include '" + path + "';";
+			if (SUCCESS != zend_eval_string((char *)includeScript.c_str(), NULL, (char *) path.c_str() TSRMLS_CC))
+			{
+				logger->Error("Error evaluating module at path: %s", path.c_str());
+			}
+		} zend_catch {
+			logger->Error("Error evaluating module at path: %s", path.c_str());
 		} zend_end_try();
 
 		Poco::Path p(path);
@@ -77,7 +96,6 @@ namespace kroll
 		std::string name = basename.substr(0,basename.length()-php_suffix.length()+4);
 		std::string moduledir = path.substr(0,path.length()-basename.length()-4);
 
-		Logger *logger = Logger::Get("PHP");
 		logger->Info("Loading PHP path=%s", path.c_str());
 
 		return new PHPModuleInstance(host, path, moduledir, name);
