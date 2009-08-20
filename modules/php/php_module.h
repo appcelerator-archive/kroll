@@ -32,6 +32,7 @@
 
 #include "php_api.h"
 #include "php_utils.h"
+#include "k_php_object.h"
 #include "k_php_list.h"
 #include "php_evaluator.h"
 #include <zend/zend_exceptions.h>
@@ -43,7 +44,7 @@ namespace kroll
 	{
 		KROLL_MODULE_CLASS(PHPModule)
 
-		public:
+			public:
 			virtual bool IsModule(std::string& path);
 			virtual Module* CreateModule(std::string& path);
 			void InitializeBinding();
@@ -63,7 +64,7 @@ namespace kroll
 
 			static int UBWrite(const char *str, unsigned int len TSRMLS_DC);
 			
-		private:
+			private:
 			SharedKObject binding;
 			Logger *logger;
 			
