@@ -229,19 +229,20 @@ namespace kroll
 		// Initialize the class entry for our classes
 		INIT_CLASS_ENTRY(ce, "KObject", PHPKObjectMethods);
 		PHPKObjectClassEntry = zend_register_internal_class(&ce TSRMLS_CC);
-		PHPKObjectClassEntry->create_object = kroll::PHPUtils::PHPKObjectCreateObject;
+		PHPKObjectClassEntry->create_object = PHPUtils::PHPKObjectCreateObject;
 
 		// Create our custom handlers table to override the
 		// default behaviour of our PHP objects.
 		PHPKObjectHandlers = *zend_get_std_object_handlers();
-		PHPKObjectHandlers.read_property = kroll::PHPUtils::PHPKObjectReadProperty;
-		PHPKObjectHandlers.write_property = kroll::PHPUtils::PHPKObjectWriteProperty;
-		PHPKObjectHandlers.read_dimension = kroll::PHPUtils::PHPKObjectReadProperty;
-		PHPKObjectHandlers.unset_property = kroll::PHPUtils::PHPKObjectUnsetProperty;
-		PHPKObjectHandlers.unset_dimension = kroll::PHPUtils::PHPKObjectUnsetProperty;
-		PHPKObjectHandlers.write_dimension = kroll::PHPUtils::PHPKObjectWriteProperty;
-		PHPKObjectHandlers.has_property = kroll::PHPUtils::PHPKObjectHasProperty;
-		PHPKObjectHandlers.has_dimension = kroll::PHPUtils::PHPKObjectHasDimension;
+		PHPKObjectHandlers.read_property = PHPUtils::PHPKObjectReadProperty;
+		PHPKObjectHandlers.write_property = PHPUtils::PHPKObjectWriteProperty;
+		PHPKObjectHandlers.get_properties = PHPUtils::PHPKObjectGetProperties;
+		PHPKObjectHandlers.read_dimension = PHPUtils::PHPKObjectReadProperty;
+		PHPKObjectHandlers.unset_property = PHPUtils::PHPKObjectUnsetProperty;
+		PHPKObjectHandlers.unset_dimension = PHPUtils::PHPKObjectUnsetProperty;
+		PHPKObjectHandlers.write_dimension = PHPUtils::PHPKObjectWriteProperty;
+		PHPKObjectHandlers.has_property = PHPUtils::PHPKObjectHasProperty;
+		PHPKObjectHandlers.has_dimension = PHPUtils::PHPKObjectHasDimension;
 	}
 	
 	/*static*/
@@ -328,6 +329,38 @@ namespace kroll
 			zend_throw_exception(
 				zend_exception_get_default(TSRMLS_C), (char*) e.AsString().c_str(), 666 TSRMLS_CC);
 		}
+	}
+	
+	/*static*/
+	HashTable* PHPUtils::PHPKObjectGetProperties(zval *zthis TSRMLS_DC)
+	{
+		PHPKObject *kthis = reinterpret_cast<PHPKObject*>(
+			zend_object_store_get_object(zthis TSRMLS_CC));
+		SharedKObject kobject = kthis->kvalue->ToObject();
+		
+		try
+		{
+			SharedStringList propertyNames = kobject->GetPropertyNames();
+			HashTable *properties;
+			ALLOC_HASHTABLE(properties);
+			zend_hash_init(properties, propertyNames->size(), NULL, ZVAL_PTR_DTOR, 0);
+			
+			for (size_t i = 0; i < propertyNames->size(); i++)
+			{
+				const char *key = propertyNames->at(i)->c_str();
+				SharedValue value = kobject->Get(key);
+				zval* zvalue = ToPHPValue(value);
+				zend_hash_add(properties, (char *)key, strlen(key)+1, &zvalue, sizeof(zval*), NULL);
+			}
+			return properties;
+		}
+		catch (ValueException& e)
+		{
+			zend_throw_exception(
+				zend_exception_get_default(TSRMLS_C), (char *) e.AsString().c_str(), 666 TSRMLS_CC);
+		}
+		
+		return 0;
 	}
 
 	/* Extending and Embedding PHP pg. 153

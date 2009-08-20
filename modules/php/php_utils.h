@@ -26,6 +26,7 @@ namespace kroll
 		static void PHPKObjectFreeStorage(void *object TSRMLS_DC);
 		static zval* PHPKObjectReadProperty(zval* object, zval* property, int type TSRMLS_DC);
 		static void PHPKObjectWriteProperty(zval* object, zval* property, zval* value TSRMLS_DC);
+		static HashTable* PHPUtils::PHPKObjectGetProperties(zval *zthis TSRMLS_DC);
 		static void PHPKObjectUnsetProperty(zval* object, zval* property TSRMLS_DC);
 		static int PHPKObjectHasProperty(zval* object, zval* property, int chk_type TSRMLS_DC);
 		static int PHPKObjectHasDimension(zval* object, zval* property, int chk_type TSRMLS_DC);
