@@ -161,7 +161,7 @@ namespace kroll
 		int methodNameLength;
 		zval* zargs;
 
-		if (!zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sa",
+		if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sa",
 			&methodName, &methodNameLength, &zargs) == FAILURE)
 		{
 			zend_throw_exception(zend_exception_get_default(TSRMLS_C),
