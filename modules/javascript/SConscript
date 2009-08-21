@@ -12,7 +12,7 @@ webkit_lib = build.tp('webkit', 'lib')
 webkit_inc = build.tp('webkit', 'include')
 
 if build.is_osx():
-	Env.Append(FRAMEWORKPATH=[webkit_tp])
+	Env.Append(FRAMEWORKPATH=[build.tp('webkit')])
 	Env.Append(FRAMEWORKS=['Cocoa','JavaScriptCore'])
 
 elif build.is_linux():
