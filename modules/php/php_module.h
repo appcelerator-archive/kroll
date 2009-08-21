@@ -24,6 +24,7 @@
 #include <sapi/embed/php_embed.h>
 #undef inline
 #undef va_copy
+#undef PARSE_SERVER
 #else
 #include <sapi/embed/php_embed.h>
 #endif
@@ -35,8 +36,10 @@
 #include "k_php_object.h"
 #include "k_php_list.h"
 #include "php_evaluator.h"
+
 #include <Zend/zend_exceptions.h>
 #include <Zend/zend_compile.h>
+
 
 namespace kroll
 {
