@@ -36,7 +36,11 @@ namespace kroll
 			}
 			else if (IS_ARRAY == type)
 			{
-				returnValue = Value::NewList(new KPHPList(value));
+				// PHP arrays are almost always passed by value, which means
+				// they are all just copies of each other. To emulate this
+				// behavior we might as well just make a copy of the array
+				// here and turn it into a StaticBoundList.
+				returnValue = Value::NewList(PHPArrayToStaticBoundList(value TSRMLS_CC));
 			}
 			else if (IS_OBJECT == type)
 			{
@@ -128,6 +132,32 @@ namespace kroll
 				throw ValueException::FromString(
 					"Could not convert property name to string.");
 			}
+		}
+
+		SharedKList PHPArrayToStaticBoundList(zval* array TSRMLS_DC)
+		{
+			SharedKList list = new StaticBoundList();
+
+			HashTable *arrayHash = Z_ARRVAL_P(array);
+			for (zend_hash_internal_pointer_reset(arrayHash);
+				zend_hash_has_more_elements(arrayHash) == SUCCESS;
+				zend_hash_move_forward(arrayHash))
+			{
+
+				char* key;
+				unsigned int keyLength;
+				unsigned long index;
+				int type = zend_hash_get_current_key_ex(
+					arrayHash, &key, &keyLength, &index, 0, NULL);
+
+				zval** value;
+				if (zend_hash_get_current_data(arrayHash, (void**) &value) == FAILURE)
+					continue;
+
+				list->Append(ToKrollValue(*value TSRMLS_CC));
+			}
+
+			return list;
 		}
 	}
 }
