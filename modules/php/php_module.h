@@ -34,11 +34,13 @@
 #include "php_api.h"
 #include "php_utils.h"
 #include "k_php_object.h"
+#include "k_php_method.h"
 #include "k_php_list.h"
 #include "php_evaluator.h"
 
 #include <Zend/zend_exceptions.h>
 #include <Zend/zend_compile.h>
+#include <Zend/zend_API.h>
 
 
 namespace kroll
