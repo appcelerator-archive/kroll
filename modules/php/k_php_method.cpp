@@ -88,6 +88,7 @@ namespace kroll {
 	{
 		// TODO: PHP methods do not have properties. Should we should get
 		// them from a StaticBoundObject here?
+		return Value::Undefined;
 	}
 
 	bool KPHPMethod::Equals(SharedKObject other)
