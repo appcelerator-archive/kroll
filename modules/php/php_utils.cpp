@@ -163,7 +163,14 @@ namespace kroll
 				if (zend_hash_get_current_data(arrayHash, (void**) &value) == FAILURE)
 					continue;
 
-				list->Set(key, ToKrollValue(*value TSRMLS_CC));
+				if (type == HASH_KEY_IS_STRING)
+				{
+					list->Set(key, ToKrollValue(*value TSRMLS_CC));
+				}
+				else // Numeric key
+				{
+					list->SetAt(index, ToKrollValue(*value TSRMLS_CC));
+				}
 			}
 
 			return list;

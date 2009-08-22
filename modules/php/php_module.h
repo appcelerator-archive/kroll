@@ -43,6 +43,7 @@
 #include <Zend/zend_compile.h>
 #include <Zend/zend_API.h>
 #include <Zend/zend_closures.h>
+#include <Zend/zend_hash.h>
 
 namespace kroll
 {
