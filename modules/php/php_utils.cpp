@@ -191,7 +191,7 @@ namespace kroll
 			return keys;
 		}
 
-		bool AreObjectsEqual(zval* val1, zval* val2 TSRMLS_DC)
+		bool PHPObjectsEqual(zval* val1, zval* val2 TSRMLS_DC)
 		{
 			zval result;
 			ZVAL_LONG(&result, 1);

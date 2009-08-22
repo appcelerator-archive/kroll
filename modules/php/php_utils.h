@@ -32,7 +32,7 @@ namespace kroll
 		void KObjectToKPHPObject(SharedValue objectValue, zval** returnValue);
 		void KMethodToKPHPMethod(SharedValue methodValue, zval** returnValue);
 		void InitializePHPKrollClasses();
-		bool AreObjectsEqual(zval* val1, zval* val2 TSRMLS_DC);
+		bool PHPObjectsEqual(zval* val1, zval* val2 TSRMLS_DC);
 	}
 }
 

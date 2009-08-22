@@ -85,7 +85,7 @@ namespace kroll {
 			return false;
 		
 		TSRMLS_FETCH();
-		return PHPUtils::AreObjectsEqual(this->ToPHP(), phpOther->ToPHP() TSRMLS_CC);
+		return PHPUtils::PHPObjectsEqual(this->ToPHP(), phpOther->ToPHP() TSRMLS_CC);
 	}
 
 	SharedString KPHPObject::DisplayString(int levels)
