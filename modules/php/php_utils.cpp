@@ -205,5 +205,45 @@ namespace kroll
 			zend_compare_objects(&result, val1, val2 TSRMLS_CC);
 			return Z_LVAL_P(&result) == 0;
 		}
+		
+		SharedStringList GetClassMethods(zend_class_entry *ce TSRMLS_DC)
+		{
+			/* copied from internal impl of get_class_methods, (zend_builtin_functions.c, line 1062)
+			 * this doesn't work if we just pass a user defined class name in.
+			 * could be scope related? */
+			HashPosition pos;
+			zend_function *mptr;
+			SharedStringList methods(new StringList());
+			zend_hash_internal_pointer_reset_ex(&ce->function_table, &pos);
+
+			while (zend_hash_get_current_data_ex(&ce->function_table, (void **) &mptr, &pos) == SUCCESS)
+			{
+				if ((mptr->common.fn_flags & ZEND_ACC_PUBLIC)
+					|| (EG(scope) &&
+						(((mptr->common.fn_flags & ZEND_ACC_PROTECTED) &&
+							zend_check_protected(mptr->common.scope, EG(scope)))
+						|| ((mptr->common.fn_flags & ZEND_ACC_PRIVATE) &&
+							EG(scope) == mptr->common.scope))))
+				{
+					char *key;
+					uint key_len;
+					ulong num_index;
+					uint len = strlen(mptr->common.function_name);
+
+					/* Do not display old-style inherited constructors */
+					if ((mptr->common.fn_flags & ZEND_ACC_CTOR) == 0 ||
+						mptr->common.scope == ce ||
+						zend_hash_get_current_key_ex(&ce->function_table, &key, &key_len, &num_index, 0, &pos) != HASH_KEY_IS_STRING ||
+						zend_binary_strcasecmp(key, key_len-1, mptr->common.function_name, len) == 0)
+					{
+						methods->push_back(new std::string(mptr->common.function_name));
+					}
+				}
+			
+				zend_hash_move_forward_ex(&ce->function_table, &pos);
+			}
+			
+			return methods;
+		}
 	}
 }

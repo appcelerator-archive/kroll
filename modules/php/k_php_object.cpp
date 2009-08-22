@@ -133,9 +133,15 @@ namespace kroll {
 			char* className;
 			zend_unmangle_property_name((char*) name.c_str(), nameLength-1, 
 				&className, &unmangledPropertyName);
-			names->push_back(new std::string(unmangledPropertyName));
+			filteredNames->push_back(new std::string(unmangledPropertyName));
 		}
 
+		SharedStringList methods(PHPUtils::GetClassMethods(Z_OBJCE_P(object) TSRMLS_CC));
+		for (size_t i = 0; i < methods->size(); i++)
+		{
+			filteredNames->push_back(methods->at(i));
+		}
+		
 		return filteredNames;
 	}
 

@@ -33,6 +33,7 @@ namespace kroll
 		void KMethodToKPHPMethod(SharedValue methodValue, zval** returnValue);
 		void InitializePHPKrollClasses();
 		bool PHPObjectsEqual(zval* val1, zval* val2 TSRMLS_DC);
+		SharedStringList GetClassMethods(zend_class_entry *ce TSRMLS_DC);
 	}
 }
 
