@@ -172,7 +172,7 @@ namespace kroll {
 		return (Z_OBJ_HANDLER_P(object, has_property) &&
 			Z_OBJ_HANDLER_P(object, has_property)(object, &zPropertyName, 2 TSRMLS_CC));
 	}
-
+	
 	bool KPHPObject::MethodExists(const char* methodName TSRMLS_DC)
 	{
 		unsigned int methodNameLength = strlen(methodName);
