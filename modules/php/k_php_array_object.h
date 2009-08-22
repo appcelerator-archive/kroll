@@ -1,0 +1,42 @@
+/**
+ * Appcelerator Kroll - licensed under the Apache Public License 2
+ * see LICENSE in the root folder for details on the license.
+ * Copyright (c) 2009 Appcelerator, Inc. All Rights Reserved.
+ */
+
+#ifndef _K_PHP_ARRAY_OBJECT_H_
+#define _K_PHP_ARRAY_OBJECT_H_
+
+#include "php_module.h"
+
+namespace kroll
+{
+	class KPHPArrayObject : public KList
+	{
+		public:
+		KPHPArrayObject(zval *list);
+		virtual ~KPHPArrayObject();
+
+		SharedValue Get(const char *name);
+		void Set(const char *name, SharedValue value);
+		virtual bool Equals(SharedKObject);
+		SharedStringList GetPropertyNames();
+
+		unsigned int Size();
+		void Append(SharedValue value);
+		virtual void SetAt(unsigned int index, SharedValue value);
+		bool Remove(unsigned int index);
+		SharedValue At(unsigned int index);
+
+		zval* ToPHP();
+
+		protected:
+		zval *list;
+
+		static void AddKrollValueToPHPArray(SharedValue value, zval *phpArray, const char *key);
+		static void AddKrollValueToPHPArray(SharedValue value, zval *phpArray, unsigned int index);
+		static void AddKrollValueToPHPArray(SharedValue value, zval *phpArray);
+		DISALLOW_EVIL_CONSTRUCTORS(KPHPArrayObject);
+	};
+}
+#endif

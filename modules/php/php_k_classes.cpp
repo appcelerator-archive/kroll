@@ -22,6 +22,7 @@ namespace kroll
 	static int PHPKObjectHasProperty(zval* zthis, zval* property, int type TSRMLS_DC);
 	static int PHPKObjectHasDimension(zval* zthis, zval* property, int type TSRMLS_DC);
 	PHP_METHOD(PHPKObject, __call);
+	PHP_METHOD(PHPKMethod, __invoke);
 
 	// This is our class "function" table. Right now we only implement
 	// __call, because that seems to be preferred over the handler version.
@@ -31,6 +32,13 @@ namespace kroll
 	ZEND_END_ARG_INFO()
 	static function_entry PHPKObjectMethods[] =
 	{
+		PHP_ME(PHPKObject, __call, PHPKObjectCallArgInfo, ZEND_ACC_PUBLIC)
+		{NULL, NULL, NULL}
+	};
+
+	static function_entry PHPKMethodMethods[] =
+	{
+		PHP_ME(PHPKMethod, __invoke, NULL, ZEND_ACC_PUBLIC)
 		PHP_ME(PHPKObject, __call, PHPKObjectCallArgInfo, ZEND_ACC_PUBLIC)
 		{NULL, NULL, NULL}
 	};
@@ -304,16 +312,67 @@ namespace kroll
 		}
 	}
 
+	PHP_METHOD(PHPKMethod, __invoke)
+	{
+		PHPKObject* kthis = reinterpret_cast<PHPKObject*>(
+			zend_object_store_get_object(getThis() TSRMLS_CC));
+		SharedKMethod kmethod = kthis->kvalue->ToMethod();
+
+		zend_function *func = EG(current_execute_data)->function_state.function;
+		zval*** arguments = (zval***) emalloc(sizeof(zval**) * ZEND_NUM_ARGS());
+
+		if (zend_get_parameters_array_ex(ZEND_NUM_ARGS(), arguments) == FAILURE)
+		{
+			efree(arguments);
+			zend_error(E_RECOVERABLE_ERROR, "Cannot get arguments for calling closure");
+			RETVAL_FALSE;
+			return;
+		}
+
+		ArgList kargs;
+		for (int i = 0; i < ZEND_NUM_ARGS(); i++)
+		{
+			zval** zargValue = arguments[i];
+			SharedValue argValue = PHPUtils::ToKrollValue(*zargValue);
+			kargs.push_back(argValue);
+		}
+		efree(arguments);
+
+		// CAUTION: FRIGGIN SWEET METHOD INVOCATION COMING UP.
+		try
+		{
+			SharedValue returnValue = kmethod->Call(kargs);
+			PHPUtils::ToPHPValue(returnValue, &return_value);
+		}
+		catch (ValueException& e)
+		{
+			// TODO: Create an exception class that can hold a SharedValue.
+			zend_throw_exception(zend_exception_get_default(TSRMLS_C),
+				(char*) e.AsString().c_str(), 666 TSRMLS_CC);
+			RETVAL_NULL();
+			return;
+		}
+	}
+
 	namespace PHPUtils
 	{
 		void InitializePHPKrollClasses()
 		{
-			zend_class_entry ce;
 			TSRMLS_FETCH();
+
 			// Initialize the class entry for our classes
-			INIT_CLASS_ENTRY(ce, "KObject", PHPKObjectMethods);
-			PHPKObjectClassEntry = zend_register_internal_class(&ce TSRMLS_CC);
+			zend_class_entry kobjectClassEntry;
+			INIT_CLASS_ENTRY(kobjectClassEntry, "KObject", PHPKObjectMethods);
+			PHPKObjectClassEntry = zend_register_internal_class(&kobjectClassEntry TSRMLS_CC);
 			PHPKObjectClassEntry->create_object = PHPKObjectCreateObject;
+
+			zend_class_entry kmethodClassEntry;
+			INIT_CLASS_ENTRY(kmethodClassEntry, "KMethod", PHPKMethodMethods);
+			PHPKMethodClassEntry = zend_register_internal_class(&kmethodClassEntry TSRMLS_CC);
+
+			// PHPKMethod has enough of the same behavior that we can use the same
+			// handler table that PHPKObject uses. This may change in the future.
+			PHPKMethodClassEntry->create_object = PHPKObjectCreateObject;
 
 			// Create our custom handlers table to override the
 			// default behaviour of our PHP objects.
@@ -327,6 +386,7 @@ namespace kroll
 			PHPKObjectHandlers.write_dimension = PHPKObjectWriteProperty;
 			PHPKObjectHandlers.has_property = PHPKObjectHasProperty;
 			PHPKObjectHandlers.has_dimension = PHPKObjectHasDimension;
+
 		}
 		
 		void KObjectToKPHPObject(SharedValue objectValue, zval** returnValue)
