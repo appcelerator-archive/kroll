@@ -41,7 +41,7 @@
 #include <Zend/zend_exceptions.h>
 #include <Zend/zend_compile.h>
 #include <Zend/zend_API.h>
-
+#include <Zend/zend_closures.h>
 
 namespace kroll
 {

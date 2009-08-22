@@ -23,7 +23,7 @@ namespace kroll
 		bool PropertyExists(const char* property TSRMLS_DC);
 		bool MethodExists(const char* methodName TSRMLS_DC);
 		zval* ToPHP();
-
+		
 		private:
 		zval* object;
 

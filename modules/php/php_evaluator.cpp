@@ -38,6 +38,8 @@ namespace kroll
 
 			//zval_dtor(return_value);
 			//FREE_ZVAL(return_value);
+			zval *windowValue = PHPUtils::ToPHPValue(args.at(2));
+			ZEND_SET_SYMBOL(&EG(symbol_table), "window", windowValue);
 			
 			zend_eval_string((char *) code, NULL, (char *) name TSRMLS_CC);
 		} zend_end_try();

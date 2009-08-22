@@ -8,11 +8,6 @@
 namespace kroll
 {
 	// Private data and function declarations below here
-	static zend_class_entry *PHPKObjectClassEntry;
-	static zend_class_entry *PHPKMethodClassEntry;
-	static zend_class_entry *PHPKListClassEntry;
-	static zend_object_handlers PHPKObjectHandlers;
-
 	static zend_object_value PHPKObjectCreateObject(zend_class_entry *ce TSRMLS_DC);
 	static void PHPKObjectFreeStorage(void* zthis TSRMLS_DC);
 	static zval* PHPKObjectReadProperty(zval* zthis, zval* property, int type TSRMLS_DC);
@@ -21,6 +16,8 @@ namespace kroll
 	static void PHPKObjectUnsetProperty(zval* zthis, zval* property TSRMLS_DC);
 	static int PHPKObjectHasProperty(zval* zthis, zval* property, int type TSRMLS_DC);
 	static int PHPKObjectHasDimension(zval* zthis, zval* property, int type TSRMLS_DC);
+	static zend_class_entry* PHPKObjectGetClassEntry(const zval* zthis TSRMLS_DC);
+	
 	PHP_METHOD(PHPKObject, __call);
 
 	// This is our class "function" table. Right now we only implement
@@ -285,6 +282,11 @@ namespace kroll
 			}
 		}
 	}
+	
+	zend_class_entry* PHPKObjectGetClassEntry(const zval* zthis TSRMLS_DC)
+	{
+		return PHPKObjectClassEntry;
+	}
 
 	void PHPKObjectUnsetProperty(zval* zthis, zval* property TSRMLS_DC)
 	{
@@ -327,6 +329,7 @@ namespace kroll
 			PHPKObjectHandlers.write_dimension = PHPKObjectWriteProperty;
 			PHPKObjectHandlers.has_property = PHPKObjectHasProperty;
 			PHPKObjectHandlers.has_dimension = PHPKObjectHasDimension;
+			PHPKObjectHandlers.get_class_entry = PHPKObjectGetClassEntry;
 		}
 		
 		void KObjectToKPHPObject(SharedValue objectValue, zval** returnValue)

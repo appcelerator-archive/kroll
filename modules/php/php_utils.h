@@ -16,6 +16,10 @@ namespace kroll
 		zend_object std;
 		SharedValue kvalue;
 	} PHPKObject;
+	static zend_class_entry *PHPKObjectClassEntry;
+	static zend_class_entry *PHPKMethodClassEntry;
+	static zend_class_entry *PHPKListClassEntry;
+	static zend_object_handlers PHPKObjectHandlers;
 
 	namespace PHPUtils
 	{
