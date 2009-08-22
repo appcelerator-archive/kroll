@@ -25,6 +25,7 @@ namespace kroll
 		std::string ZValToPropertyName(zval* property);
 		SharedKList PHPArrayToStaticBoundList(zval* array TSRMLS_DC);
 		void KObjectToKPHPObject(SharedValue objectValue, zval** returnValue);
+		void KMethodToKPHPMethod(SharedValue methodValue, zval** returnValue);
 		void InitializePHPKrollClasses();
 	}
 }

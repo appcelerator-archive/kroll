@@ -106,7 +106,7 @@ namespace kroll
 			}
 			else if (value->IsMethod())
 			{
-				// TODO: Implement
+				KMethodToKPHPMethod(value, returnValue);
 			}
 			else if (value->IsList())
 			{
