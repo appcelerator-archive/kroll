@@ -102,48 +102,40 @@ namespace kroll {
 
 	SharedStringList KPHPObject::GetPropertyNames()
 	{
-		SharedStringList names(new StringList());
 		TSRMLS_FETCH();
+		SharedStringList filteredNames(new StringList());
+
 		// If there is no get_properties handler, return. Why this would
 		// happen, I have no idea -- from zend_builtin_functions.c:2363
 		if (Z_OBJ_HT_P(object)->get_properties == NULL)
-			return names;
+			return filteredNames;
 
 		HashTable* properties = Z_OBJ_HT_P(object)->get_properties(object TSRMLS_CC);
 		if (properties == NULL)
-			return names;
+			return filteredNames;
+
+		SharedStringList names(PHPUtils::GetHashKeys(properties));
 
 		// Get the internal zend_object*.
 		zend_object* internal = reinterpret_cast<zend_object*>(
 			zend_object_store_get_object(object TSRMLS_CC));
-
-		HashPosition position;
-		zval** zvalue;
-		zend_hash_internal_pointer_reset_ex(properties, &position);
-		while (zend_hash_get_current_data_ex(
-			properties, (void **) &zvalue, &position) == SUCCESS)
+		for (int i = 0; i < names->size(); i++)
 		{
-			char* key;
-			unsigned int keyLength;
-			ulong index;
+			std::string& name = *names->at(i);
+			unsigned int nameLength = name.size();
 
-			if (!zend_hash_get_current_key_ex(properties, &key, &keyLength,
-				&index, 0, &position) == HASH_KEY_IS_STRING)
+			if (!zend_check_property_access(internal, (char*) name.c_str(),
+				 nameLength-1 TSRMLS_CC) == SUCCESS)
 				continue;
 
-			if (!zend_check_property_access(
-				internal, key, keyLength-1 TSRMLS_CC) == SUCCESS)
-				continue;
-
-			char* propertyName;
+			char* unmangledPropertyName;
 			char* className;
-			zend_unmangle_property_name(key, keyLength-1, &className, &propertyName);
-			names->push_back(new std::string(propertyName));
-
-			zend_hash_move_forward_ex(properties, &position);
+			zend_unmangle_property_name((char*) name.c_str(), nameLength-1, 
+				&className, &unmangledPropertyName);
+			names->push_back(new std::string(unmangledPropertyName));
 		}
 
-		return names;
+		return filteredNames;
 	}
 
 	zval* KPHPObject::ToPHP()

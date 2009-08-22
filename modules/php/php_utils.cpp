@@ -168,5 +168,27 @@ namespace kroll
 
 			return list;
 		}
+
+		SharedStringList GetHashKeys(HashTable *hash)
+		{
+			SharedStringList keys(new StringList());
+			HashPosition position;
+
+			for (zend_hash_internal_pointer_reset_ex(hash, &position);
+				zend_hash_has_more_elements_ex(hash, &position) == SUCCESS;
+				zend_hash_move_forward_ex(hash, &position))
+			{
+
+				char *key;
+				unsigned int keyLength;
+				unsigned long index;
+
+				zend_hash_get_current_key_ex(hash, &key, 
+					&keyLength, &index, 0, &position);
+				keys->push_back(new std::string(key));
+			}
+
+			return keys;
+		}
 	}
 }

@@ -28,6 +28,7 @@ namespace kroll
 		void ToPHPValue(SharedValue value, zval** returnValue);
 		std::string ZValToPropertyName(zval* property);
 		SharedKList PHPArrayToStaticBoundList(zval* array TSRMLS_DC);
+		SharedStringList GetHashKeys(HashTable *hash);
 		void KObjectToKPHPObject(SharedValue objectValue, zval** returnValue);
 		void KMethodToKPHPMethod(SharedValue methodValue, zval** returnValue);
 		void InitializePHPKrollClasses();

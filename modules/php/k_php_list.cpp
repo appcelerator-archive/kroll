@@ -71,27 +71,7 @@ namespace kroll
 
 	SharedStringList KPHPList::GetPropertyNames()
 	{
-		SharedStringList property_names = new StringList();
-		HashPosition pos;
-		HashTable *ht = Z_ARRVAL_P(this->list);
-
-		for (zend_hash_internal_pointer_reset_ex(ht, &pos);
-				zend_hash_has_more_elements_ex(ht, &pos) == SUCCESS;
-				zend_hash_move_forward_ex(ht, &pos))
-		{
-			char *key;
-			unsigned int keylen;
-			unsigned long index;
-
-			zend_hash_get_current_key_ex(ht, &key, &keylen, &index, 0, &pos);
-
-			property_names->push_back(new std::string(key));
-		}
-
-		zend_hash_destroy(ht);
-		FREE_HASHTABLE(ht);
-
-		return property_names;
+		return PHPUtils::GetHashKeys(Z_ARRVAL_P(this->list));
 	}
 
 	unsigned int KPHPList::Size()
