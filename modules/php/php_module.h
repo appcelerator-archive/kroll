@@ -36,6 +36,7 @@
 #include "k_php_object.h"
 #include "k_php_method.h"
 #include "k_php_list.h"
+#include "k_php_array_object.h"
 #include "php_evaluator.h"
 
 #include <Zend/zend_exceptions.h>
