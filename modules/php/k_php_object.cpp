@@ -83,8 +83,9 @@ namespace kroll {
 		AutoPtr<KPHPObject> phpOther = other.cast<KPHPObject>();
 		if (phpOther.isNull())
 			return false;
-
-		return this->ToPHP() == phpOther->ToPHP();
+		
+		TSRMLS_FETCH();
+		return PHPUtils::AreObjectsEqual(this->ToPHP(), phpOther->ToPHP() TSRMLS_CC);
 	}
 
 	SharedString KPHPObject::DisplayString(int levels)

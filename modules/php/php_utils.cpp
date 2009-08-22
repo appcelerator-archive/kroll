@@ -168,5 +168,13 @@ namespace kroll
 
 			return list;
 		}
+		
+		bool AreObjectsEqual(zval* val1, zval* val2 TSRMLS_DC)
+		{
+			zval result;
+			ZVAL_LONG(&result, 1);
+			zend_compare_objects(&result, val1, val2 TSRMLS_CC);
+			return Z_LVAL_P(&result) == 0;
+		}
 	}
 }
