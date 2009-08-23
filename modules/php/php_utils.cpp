@@ -44,10 +44,8 @@ namespace kroll
 			}
 			else if (IS_OBJECT == type)
 			{
-				Logger::Get("PHP")->Debug("transforming PHP object to Kroll Value");
 				if (HAS_CLASS_ENTRY(*value) && Z_OBJCE_P(value) == zend_ce_closure)
 				{
-					Logger::Get("PHP")->Debug("i'm a method");
 					returnValue = Value::NewMethod(new KPHPMethod(value, "__invoke"));
 				}
 				else

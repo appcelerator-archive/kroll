@@ -21,7 +21,7 @@ namespace kroll
 
 		const char* code = args[1]->ToString();
 		SharedKObject window_global = args.at(2)->ToObject();
-		const char* name = "PHPEvaluator::Call";
+		const char* name = "<embedded PHP>";
 		SharedValue kv = Value::Undefined;
 
 		// Execute the PHP code
@@ -38,10 +38,19 @@ namespace kroll
 
 			//zval_dtor(return_value);
 			//FREE_ZVAL(return_value);
+			
+			/* This seems to be needed to make PHP actually give us errors at parse/compile time
+			 * See: main/main.c line 969 */
+			PG(during_request_startup) = 0;
+			
 			zval *windowValue = PHPUtils::ToPHPValue(args.at(2));
 			ZEND_SET_SYMBOL(&EG(symbol_table), "window", windowValue);
+			zval *documentValue = PHPUtils::ToPHPValue(args.at(2)->ToObject()->Get("document"));
+			ZEND_SET_SYMBOL(&EG(symbol_table), "document", documentValue);
 			
 			zend_eval_string((char *) code, NULL, (char *) name TSRMLS_CC);
+		} zend_catch {
+			
 		} zend_end_try();
 
 		return kv;
