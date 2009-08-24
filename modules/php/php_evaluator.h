@@ -15,6 +15,10 @@ namespace kroll
 		virtual void Set(const char *, SharedValue);
 		virtual SharedValue Get(const char *);
 		virtual SharedStringList GetPropertyNames();
+		
+		protected:
+		std::string CreateContextName();
+		
 	};
 }
 

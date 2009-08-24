@@ -20,13 +20,26 @@ namespace kroll
 	
 	PHP_METHOD(PHPKObject, __call);
 	PHP_METHOD(PHPKMethod, __invoke);
-
+	
+	static ZEND_FUNCTION(kroll_add_function);
+	
+	ZEND_BEGIN_ARG_INFO_EX(arginfo_kroll_add_function, 0, 0, 2)
+		ZEND_ARG_INFO(0, object)
+		ZEND_ARG_INFO(0, fname)
+	ZEND_END_ARG_INFO()
+	
+	static const zend_function_entry PHPFunctions[] = {
+		ZEND_FE(kroll_add_function, arginfo_kroll_add_function)
+		{ NULL, NULL, NULL, NULL }
+	};
+	
 	// This is our class "function" table. Right now we only implement
 	// __call, because that seems to be preferred over the handler version.
 	ZEND_BEGIN_ARG_INFO_EX(PHPKObjectCallArgInfo, 0, 0, 2)
 	ZEND_ARG_INFO(0, methodName)
 	ZEND_ARG_INFO(0, arguments)
 	ZEND_END_ARG_INFO()
+	
 	static function_entry PHPKObjectMethods[] =
 	{
 		PHP_ME(PHPKObject, __call, PHPKObjectCallArgInfo, ZEND_ACC_PUBLIC)
@@ -356,6 +369,25 @@ namespace kroll
 		}
 	}
 
+	ZEND_FUNCTION(kroll_add_function)
+	{
+		zval *phpWindowContext;
+		char *fname;
+		int fnameLength;
+		if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zs",
+			&phpWindowContext, &fname, &fnameLength) == FAILURE)
+		{
+			return;
+		}
+		
+		PHPKObject* object = reinterpret_cast<PHPKObject*>(
+			zend_object_store_get_object(phpWindowContext TSRMLS_CC));
+			
+		SharedKObject window = object->kvalue->ToObject();
+		std::string functionName(fname, fnameLength);
+		window->Set(functionName.c_str(), Value::NewMethod(new KPHPMethod(functionName.c_str() TSRMLS_CC)));
+	}
+	
 	namespace PHPUtils
 	{
 		void InitializePHPKrollClasses()
@@ -389,6 +421,9 @@ namespace kroll
 			PHPKObjectHandlers.has_property = PHPKObjectHasProperty;
 			PHPKObjectHandlers.has_dimension = PHPKObjectHasDimension;
 			PHPKObjectHandlers.get_class_entry = PHPKObjectGetClassEntry;
+			
+			//initialize static functions
+			zend_register_functions(NULL, PHPFunctions, NULL, MODULE_PERSISTENT TSRMLS_CC);
 		}
 
 		void KObjectToKPHPObject(SharedValue objectValue, zval** returnValue)

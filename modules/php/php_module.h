@@ -69,7 +69,9 @@ namespace kroll
 				return instance_;
 			}
 
-			static int UBWrite(const char *str, unsigned int len TSRMLS_DC);
+			static int UnbufferedWrite(const char *str, unsigned int len TSRMLS_DC);
+			static void LogMessage(char *message);
+			static void IniDefaults(HashTable *configuration);
 			
 			private:
 			SharedKObject binding;

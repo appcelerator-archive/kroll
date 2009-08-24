@@ -44,10 +44,8 @@ namespace kroll
 			}
 			else if (IS_OBJECT == type)
 			{
-				Logger::Get("PHP")->Debug("transforming PHP object to Kroll Value");
 				if (HAS_CLASS_ENTRY(*value) && Z_OBJCE_P(value) == zend_ce_closure)
 				{
-					Logger::Get("PHP")->Debug("i'm a method");
 					returnValue = Value::NewMethod(new KPHPMethod(value, "__invoke"));
 				}
 				else
@@ -204,6 +202,131 @@ namespace kroll
 			ZVAL_LONG(&result, 1);
 			zend_compare_objects(&result, val1, val2 TSRMLS_CC);
 			return Z_LVAL_P(&result) == 0;
+		}
+		
+		SharedStringList GetClassMethods(zend_class_entry *ce TSRMLS_DC)
+		{
+			/* copied from internal impl of get_class_methods, (zend_builtin_functions.c, line 1062)
+			 * this doesn't work if we just pass a user defined class name in.
+			 * could be scope related? */
+			HashPosition pos;
+			zend_function *mptr;
+			SharedStringList methods(new StringList());
+			zend_hash_internal_pointer_reset_ex(&ce->function_table, &pos);
+
+			while (zend_hash_get_current_data_ex(&ce->function_table, (void **) &mptr, &pos) == SUCCESS)
+			{
+				if ((mptr->common.fn_flags & ZEND_ACC_PUBLIC)
+					|| (EG(scope) &&
+						(((mptr->common.fn_flags & ZEND_ACC_PROTECTED) &&
+							zend_check_protected(mptr->common.scope, EG(scope)))
+						|| ((mptr->common.fn_flags & ZEND_ACC_PRIVATE) &&
+							EG(scope) == mptr->common.scope))))
+				{
+					char *key;
+					uint key_len;
+					ulong num_index;
+					uint len = strlen(mptr->common.function_name);
+
+					/* Do not display old-style inherited constructors */
+					if ((mptr->common.fn_flags & ZEND_ACC_CTOR) == 0 ||
+						mptr->common.scope == ce ||
+						zend_hash_get_current_key_ex(&ce->function_table, &key, &key_len, &num_index, 0, &pos) != HASH_KEY_IS_STRING ||
+						zend_binary_strcasecmp(key, key_len-1, mptr->common.function_name, len) == 0)
+					{
+						methods->push_back(new std::string(mptr->common.function_name));
+					}
+				}
+			
+				zend_hash_move_forward_ex(&ce->function_table, &pos);
+			}
+			
+			return methods;
+		}
+		
+		/* (zend_builtin_functions.c, line 962 */
+		static void add_class_vars(zend_class_entry *ce, HashTable *properties, zval *return_value TSRMLS_DC)
+		{
+			if (zend_hash_num_elements(properties) > 0) {
+				HashPosition pos;
+				zval **prop;
+
+				zend_hash_internal_pointer_reset_ex(properties, &pos);
+				while (zend_hash_get_current_data_ex(properties, (void **) &prop, &pos) == SUCCESS) {
+					char *key, *class_name, *prop_name;
+					uint key_len;
+					ulong num_index;
+					int prop_name_len = 0;
+					zval *prop_copy;
+					zend_property_info *property_info;
+					zval zprop_name;
+
+					zend_hash_get_current_key_ex(properties, &key, &key_len, &num_index, 0, &pos);
+					zend_hash_move_forward_ex(properties, &pos);
+
+					zend_unmangle_property_name(key, key_len-1, &class_name, &prop_name);
+					prop_name_len = strlen(prop_name);
+
+					ZVAL_STRINGL(&zprop_name, prop_name, prop_name_len, 0);
+					property_info = zend_get_property_info(ce, &zprop_name, 1 TSRMLS_CC);
+
+					if (!property_info || property_info == &EG(std_property_info)) {
+						continue;
+					}
+
+					/* copy: enforce read only access */
+					ALLOC_ZVAL(prop_copy);
+					*prop_copy = **prop;
+					zval_copy_ctor(prop_copy);
+					INIT_PZVAL(prop_copy);
+
+					/* this is necessary to make it able to work with default array
+				* properties, returned to user */
+					if (Z_TYPE_P(prop_copy) == IS_CONSTANT_ARRAY || (Z_TYPE_P(prop_copy) & IS_CONSTANT_TYPE_MASK) == IS_CONSTANT) {
+						zval_update_constant(&prop_copy, 0 TSRMLS_CC);
+					}
+
+					add_assoc_zval(return_value, prop_name, prop_copy);
+				}
+			}
+		}
+		
+		SharedKList GetClassVars(zend_class_entry *ce TSRMLS_DC)
+		{
+			zval classVars;
+			array_init(&classVars);
+			zend_update_class_constants(ce TSRMLS_CC);
+			add_class_vars(ce, &ce->default_properties, &classVars TSRMLS_CC);
+			add_class_vars(ce, CE_STATIC_MEMBERS(ce), &classVars TSRMLS_CC);
+			
+			return PHPArrayToStaticBoundList(&classVars TSRMLS_CC);
+		}
+		
+		zend_function* GetGlobalFunction(const char *name TSRMLS_DC)
+		{
+			zend_function *function;
+			if (zend_hash_find(EG(function_table), (char*)name, strlen(name)+1, (void **) &function) == SUCCESS)
+			{
+				Logger::Get("PHP")->Debug("Succeeded finding Global function: %s", name);
+				return function;
+			}
+			
+			Logger::Get("PHP")->Debug("Failed to find Global function: %s", name);
+			return 0;
+		}
+		
+		void PopulateContext(SharedKObject windowGlobal, HashTable *symbol_table TSRMLS_DC)
+		{
+			SharedStringList keys = GetHashKeys(symbol_table);
+			
+			for (int i = 0; i < keys->size(); i++)
+			{
+				const char *name = keys->at(i)->c_str();
+				zval *value;
+				zend_hash_find(symbol_table, (char*)name, strlen(name)+1, (void **) &value);
+				
+				windowGlobal->Set(name, ToKrollValue(value TSRMLS_CC));
+			}
 		}
 	}
 }
