@@ -13,10 +13,20 @@ namespace kroll {
 	{
 		zval_addref_p(object);
 	}
+	
+	KPHPMethod::KPHPMethod(HashTable functionTable, const char *functionName) :
+		functionTable(functionTable),
+		methodName(strdup(functionName))
+	{
+	}
 
 	KPHPMethod::~KPHPMethod()
 	{
-		zval_delref_p(object);
+		if (object)
+		{
+			zval_delref_p(object);
+		}
+		
 		free(methodName);
 	}
 
@@ -25,7 +35,12 @@ namespace kroll {
 		TSRMLS_FETCH();
 
 		zval* zReturnValue = NULL;
-		zend_class_entry* classEntry = Z_OBJCE_P(object);
+		zend_class_entry* classEntry = NULL;
+		
+		if (object)
+		{
+			classEntry = Z_OBJCE_P(object);
+		}
 
 		// Zendify method name.
 		zval zMethodName;
@@ -43,14 +58,24 @@ namespace kroll {
 		// the method call we are about to invoke.
 		zend_fcall_info callInfo;
 		callInfo.size = sizeof(zend_fcall_info);
-		callInfo.object_ptr = object;
+		if (object)
+		{
+			callInfo.object_ptr = object;
+		}
 		callInfo.function_name = &zMethodName;
 		callInfo.retval_ptr_ptr = &zReturnValue;
 		callInfo.param_count = args.size();;
 		callInfo.params = &zargs;
 		callInfo.no_separation = 1;
 		callInfo.symbol_table = NULL;
-		callInfo.function_table = &classEntry->function_table;
+		if (object)
+		{
+			callInfo.function_table = &classEntry->function_table;
+		}
+		else
+		{
+			callInfo.function_table = &functionTable;
+		}
 
 		int result = zend_call_function(&callInfo, NULL TSRMLS_CC);
 

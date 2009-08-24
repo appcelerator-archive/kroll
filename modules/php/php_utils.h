@@ -20,7 +20,7 @@ namespace kroll
 	static zend_class_entry *PHPKMethodClassEntry;
 	static zend_class_entry *PHPKListClassEntry;
 	static zend_object_handlers PHPKObjectHandlers;
-
+	
 	namespace PHPUtils
 	{
 		SharedValue ToKrollValue(zval* value TSRMLS_DC);
@@ -34,6 +34,9 @@ namespace kroll
 		void InitializePHPKrollClasses();
 		bool PHPObjectsEqual(zval* val1, zval* val2 TSRMLS_DC);
 		SharedStringList GetClassMethods(zend_class_entry *ce TSRMLS_DC);
+		SharedKList GetClassVars(zend_class_entry *ce TSRMLS_DC);
+		zend_function* GetGlobalFunction(const char *name TSRMLS_DC);
+		void PopulateContext(SharedKObject windowGlobal, HashTable *symbol_table TSRMLS_DC);
 	}
 }
 
