@@ -65,26 +65,26 @@ namespace kroll
 
 	void Event::SetEventConstants(KObject* target)
 	{
-		// @tiproperty[String, ALL, since=1.0] The ALL event constant
-		// @tiproperty[String, FOCUSED, since=1.0] The FOCUSED event constant
-		// @tiproperty[String, UNFOCUSED, since=1.0] The UNFOCUSED event constant
-		// @tiproperty[String, OPEN, since=1.0] The OPEN event constant
-		// @tiproperty[String, OPENED, since=1.0] The OPENED event constant
-		// @tiproperty[String, CLOSE, since=1.0] The CLOSE event constant
-		// @tiproperty[String, CLOSED, since=1.0] The CLOSED event constant
-		// @tiproperty[String, HIDDEN, since=1.0] The HIDDEN event constant
-		// @tiproperty[String, SHOWN, since=1.0] The SHOWN event constant
-		// @tiproperty[String, FULLSCREENED, since=1.0] The FULLSCREENED event constant
-		// @tiproperty[String, UNFULLSCREENED, since=1.0] The UNFULLSCREENED event constant
-		// @tiproperty[String, MAXIMIZED, since=1.0] The MAXIMIZED event constant
-		// @tiproperty[String, MINIMIZED, since=1.0] The MINIMIZED event constant
-		// @tiproperty[String, RESIZED, since=1.0] The RESIZED event constant
-		// @tiproperty[String, MOVED, since=1.0] The MOVED event constant
-		// @tiproperty[String, PAGE_INITIALIZED, since=1.0] The PAGE_INITIALIZED event constant
-		// @tiproperty[String, PAGE_LOADED, since=1.0] The PAGE_LOADED event constant
-		// @tiproperty[String, CREATE, since=1.0] The CREATE event constant
-		// @tiproperty[String, EXIT, since=1.0] The EXIT event constant
-		// @tiproperty[String, READ, since=1.0] The READ event constant
+		// @tiproperty[String, ALL, since=0.6] The ALL event constant
+		// @tiproperty[String, FOCUSED, since=0.6] The FOCUSED event constant
+		// @tiproperty[String, UNFOCUSED, since=0.6] The UNFOCUSED event constant
+		// @tiproperty[String, OPEN, since=0.6] The OPEN event constant
+		// @tiproperty[String, OPENED, since=0.6] The OPENED event constant
+		// @tiproperty[String, CLOSE, since=0.6] The CLOSE event constant
+		// @tiproperty[String, CLOSED, since=0.6] The CLOSED event constant
+		// @tiproperty[String, HIDDEN, since=0.6] The HIDDEN event constant
+		// @tiproperty[String, SHOWN, since=0.6] The SHOWN event constant
+		// @tiproperty[String, FULLSCREENED, since=0.6] The FULLSCREENED event constant
+		// @tiproperty[String, UNFULLSCREENED, since=0.6] The UNFULLSCREENED event constant
+		// @tiproperty[String, MAXIMIZED, since=0.6] The MAXIMIZED event constant
+		// @tiproperty[String, MINIMIZED, since=0.6] The MINIMIZED event constant
+		// @tiproperty[String, RESIZED, since=0.6] The RESIZED event constant
+		// @tiproperty[String, MOVED, since=0.6] The MOVED event constant
+		// @tiproperty[String, PAGE_INITIALIZED, since=0.6] The PAGE_INITIALIZED event constant
+		// @tiproperty[String, PAGE_LOADED, since=0.6] The PAGE_LOADED event constant
+		// @tiproperty[String, CREATE, since=0.6] The CREATE event constant
+		// @tiproperty[String, EXIT, since=0.6] The EXIT event constant
+		// @tiproperty[String, READ, since=0.6] The READ event constant
 
 		target->Set("ALL", Value::NewString(Event::ALL));
 		target->Set("FOCUSED", Value::NewString(Event::FOCUSED));
