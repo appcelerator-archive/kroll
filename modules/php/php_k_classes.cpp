@@ -21,14 +21,15 @@ namespace kroll
 	PHP_METHOD(PHPKObject, __call);
 	PHP_METHOD(PHPKMethod, __invoke);
 	
-	static ZEND_FUNCTION(kroll_populate_context);
+	static ZEND_FUNCTION(kroll_add_function);
 	
-	ZEND_BEGIN_ARG_INFO_EX(arginfo_kroll_populate_context, 0, 0, 1)
+	ZEND_BEGIN_ARG_INFO_EX(arginfo_kroll_add_function, 0, 0, 2)
 		ZEND_ARG_INFO(0, object)
+		ZEND_ARG_INFO(0, fname)
 	ZEND_END_ARG_INFO()
 	
 	static const zend_function_entry PHPFunctions[] = {
-		ZEND_FE(kroll_populate_context, arginfo_kroll_populate_context)
+		ZEND_FE(kroll_add_function, arginfo_kroll_add_function)
 		{ NULL, NULL, NULL, NULL }
 	};
 	
@@ -368,11 +369,13 @@ namespace kroll
 		}
 	}
 
-	ZEND_FUNCTION(kroll_populate_context)
+	ZEND_FUNCTION(kroll_add_function)
 	{
 		zval *phpWindowContext;
-		//zval *closure;
-		if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &phpWindowContext) == FAILURE)
+		char *fname;
+		int fnameLength;
+		if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zs",
+			&phpWindowContext, &fname, &fnameLength) == FAILURE)
 		{
 			return;
 		}
@@ -381,8 +384,8 @@ namespace kroll
 			zend_object_store_get_object(phpWindowContext TSRMLS_CC));
 			
 		SharedKObject window = object->kvalue->ToObject();
-		//const zend_function *context = zend_get_closure_method_def(closure TSRMLS_CC);
-		PHPUtils::PopulateContext(window, EG(active_symbol_table) TSRMLS_CC);
+		std::string functionName(fname, fnameLength);
+		window->Set(functionName.c_str(), Value::NewMethod(new KPHPMethod(functionName.c_str() TSRMLS_CC)));
 	}
 	
 	namespace PHPUtils

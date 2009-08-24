@@ -9,14 +9,23 @@ namespace kroll {
 
 	KPHPMethod::KPHPMethod(zval* object, const char* methodName) :
 		object(object),
+		functionTable(0),
 		methodName(strdup(methodName))
 	{
 		zval_addref_p(object);
 	}
 	
-	KPHPMethod::KPHPMethod(HashTable functionTable, const char *functionName) :
+	KPHPMethod::KPHPMethod(HashTable* functionTable, const char *functionName) :
+		object(0),
 		functionTable(functionTable),
 		methodName(strdup(functionName))
+	{
+	}
+	
+	KPHPMethod::KPHPMethod(const char *globalFunctionName TSRMLS_DC) :
+		object(0),
+		functionTable(EG(function_table)),
+		methodName(strdup(globalFunctionName))
 	{
 	}
 
@@ -74,7 +83,7 @@ namespace kroll {
 		}
 		else
 		{
-			callInfo.function_table = &functionTable;
+			callInfo.function_table = functionTable;
 		}
 
 		int result = zend_call_function(&callInfo, NULL TSRMLS_CC);

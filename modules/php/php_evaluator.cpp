@@ -26,12 +26,26 @@ namespace kroll
 
 		std::string contextName = CreateContextName();
 		std::ostringstream codeString, callString;
-		codeString << "$" << contextName << " = function() {";
-		codeString << "global $Titanium, $window, $document, $" << contextName << ";";
+		codeString << "function " << contextName << "() {\n";
+		codeString << " global $Titanium, $window, $document;\n";
 		codeString << code;
-		codeString << "kroll_populate_context($window);\n";
+		codeString << " foreach (get_defined_vars() as $var=>$val) {\n";
+		codeString << "  if ($var != 'Titanium' && $var != 'window' && $var != 'document') {\n";
+		codeString << "    $window->$var = $val;\n";
+		codeString << "  }\n";
+		codeString << " }\n ";
+		codeString << " $__fns = get_defined_functions();\n";
+		codeString << " if (array_key_exists(\"user\", $__fns)) {\n";
+		codeString << "  foreach($__fns[\"user\"] as $fname) {\n";
+		codeString << "   if ($fname != \"" << contextName << "\" && !$window->$fname) {";
+		codeString << "     kroll_add_function($window, $fname);\n";
+		codeString << "   }\n";
+		codeString << "  }\n";
+		codeString << " }\n";
+		
+		//kroll_populate_context($window);\n";
 		codeString << "};\n";
-		codeString << "$" << contextName << "();";
+		codeString << contextName << "();";
 		zend_first_try {
 			/* This seems to be needed to make PHP actually give us errors at parse/compile time
 			 * See: main/main.c line 969 */
