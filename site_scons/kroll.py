@@ -210,23 +210,37 @@ class BuildConfig(object):
 			self.env.Append(CPPDEFINES = ('OS_32', 1))
 
 		if self.is_osx():
-			if ARGUMENTS.get('osx_10_4', 0):
-				OSX_SDK = '/Developer/SDKs/MacOSX10.4u.sdk'
-				OSX_MINVERS = '-mmacosx-version-min=10.4'
-				self.env['GCC_VERSION'] = '4.0'
-				self.env['MACOSX_DEPLOYMENT_TARGET'] = '10.4'
-			else:
-				OSX_SDK = '/Developer/SDKs/MacOSX10.5.sdk'
-				OSX_MINVERS = '-mmacosx-version-min=10.5'
-				self.env['MACOSX_DEPLOYMENT_TARGET'] = '10.5'
+			# These are the necessarily options for building on a 10.4 machine.
+			#if ARGUMENTS.get('osx_10_4', 0):
+			#	sdk_version = '10.4'
+			#	sdk_path = '/Developer/SDKs/MacOSX10.4u.sdk'
+			#	sdk_minversion_arg = '-mmacosx-version-min=10.4'
+			#	self.env['GCC_VERSION'] = '4.0'
+			#	self.env['MACOSX_DEPLOYMENT_TARGET'] = '10.4'
 
-			OSX_UNIV_LINKER = '-isysroot '+OSX_SDK+' -syslibroot,'+OSX_SDK+' -arch i386 -arch ppc -lstdc++ ' + OSX_MINVERS 
-			self.env.Append(CXXFLAGS=['-isysroot',OSX_SDK,'-arch','i386',OSX_MINVERS,'-x','objective-c++'])
-			self.env.Append(CPPFLAGS=['-arch','i386'])
-			self.env.Append(CPPFLAGS=['-arch','ppc'])
-			self.env.Append(LINKFLAGS=OSX_UNIV_LINKER)
+			sdk_dir = '/Developer/SDKs/MacOSX10.5.sdk'
+			sdk_version = '10.5'
+			self.env['MACOSX_DEPLOYMENT_TARGET'] = sdk_version
+			min_version_string = '-mmacosx-version-min=' + sdk_version
+			#OSX_MINVERS = '-mmacosx-version-min=10.5'
+
+			# Force building for i386 + ppc architectures
+			self.env.Replace(CC=['gcc', '-arch', 'i386', '-arch', 'ppc'])
+			self.env.Replace(CXX=['g++', '-arch', 'i386', '-arch', 'ppc'])
 			self.env.Append(FRAMEWORKS=['Foundation'])
-			self.env.Append(CPPFLAGS=['-Wall', '-fno-common','-fvisibility=hidden','-DMACOSX_DEPLOYMENT_TARGET='+self.env['MACOSX_DEPLOYMENT_TARGET']])
+
+			# Preprocessor flags - for both C and C++ code
+			self.env.Append(CPPFLAGS=['-Wall'])
+			self.env.Append(CPPFLAGS=['-fno-common'])
+			self.env.Append(CPPFLAGS=['-fvisibility=hidden'])
+			self.env.Append(CPPFLAGS=['-DMACOSX_DEPLOYMENT_TARGET=' + sdk_version])
+			self.env.Append(CPPFLAGS=['-isysroot', sdk_dir])
+			self.env.Append(CPPFLAGS=[min_version_string])
+
+			self.env.Append(CXXFLAGS=['-x', 'objective-c++'])
+
+			self.env.Append(LINKFLAGS=['-syslibroot,' + sdk_dir])
+			self.env.Append(LINKFLAGS=['-stdc++'])
 
 	def matches(self, n): return bool(re.match(os.uname()[0], n))
 	def is_linux(self): return self.os == 'linux'
