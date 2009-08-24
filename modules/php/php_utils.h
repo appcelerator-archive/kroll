@@ -11,20 +11,33 @@
 
 namespace kroll
 {
-	class PHPUtils
+	typedef struct
 	{
-	public:
-		static SharedValue ToKrollValue(zval* value);
-		static zval* ToPHPValue(SharedValue value);
-		static zval* KListToPHPValue(SharedValue value);
-		static void AddKrollValueToPHPArray(SharedValue value, zval *phpArray, const char *key);
-		static void AddKrollValueToPHPArray(SharedValue value, zval *phpArray, unsigned int index);
-		static void AddKrollValueToPHPArray(SharedValue value, zval *phpArray);
-
-	private:
-		PHPUtils() {}
-		~PHPUtils () {}
-	};
+		zend_object std;
+		SharedValue kvalue;
+	} PHPKObject;
+	static zend_class_entry *PHPKObjectClassEntry;
+	static zend_class_entry *PHPKMethodClassEntry;
+	static zend_class_entry *PHPKListClassEntry;
+	static zend_object_handlers PHPKObjectHandlers;
+	
+	namespace PHPUtils
+	{
+		SharedValue ToKrollValue(zval* value TSRMLS_DC);
+		zval* ToPHPValue(SharedValue value);
+		void ToPHPValue(SharedValue value, zval** returnValue);
+		std::string ZValToPropertyName(zval* property);
+		SharedKList PHPArrayToStaticBoundList(zval* array TSRMLS_DC);
+		SharedStringList GetHashKeys(HashTable *hash);
+		void KObjectToKPHPObject(SharedValue objectValue, zval** returnValue);
+		void KMethodToKPHPMethod(SharedValue methodValue, zval** returnValue);
+		void InitializePHPKrollClasses();
+		bool PHPObjectsEqual(zval* val1, zval* val2 TSRMLS_DC);
+		SharedStringList GetClassMethods(zend_class_entry *ce TSRMLS_DC);
+		SharedKList GetClassVars(zend_class_entry *ce TSRMLS_DC);
+		zend_function* GetGlobalFunction(const char *name TSRMLS_DC);
+		void PopulateContext(SharedKObject windowGlobal, HashTable *symbol_table TSRMLS_DC);
+	}
 }
 
 #endif

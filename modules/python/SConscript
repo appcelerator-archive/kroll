@@ -31,4 +31,4 @@ t = Env.SharedLibrary(m.build_dir + '/pythonmodule', Glob('*.cpp'))
 build.mark_build_target(t)
 
 if build.is_win32():
-	m.light_weight_copy('#python-win32-resources', path.join(build.third_party, 'python'), m.build_dir)
+	m.light_weight_copy('#python-win32-resources', build.tp('python'), m.build_dir)

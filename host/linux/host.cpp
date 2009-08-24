@@ -61,20 +61,20 @@ namespace kroll
 
 	Module* LinuxHost::CreateModule(std::string& path)
 	{
-		void* lib_handle = dlopen(path.c_str(), RTLD_LAZY | RTLD_GLOBAL);
-		if (!lib_handle)
+		void* handle = dlopen(path.c_str(), RTLD_LAZY | RTLD_GLOBAL);
+		if (!handle)
 		{
-			std::cerr << "Error load module: " << path << std::endl;
-			std::cerr << "Error: " << dlerror()  << std::endl;
+			throw ValueException::FromFormat("Error loading module (%s): %s\n", path.c_str(), dlerror());
 			return 0;
 		}
 
 		// get the module factory
-		ModuleCreator* create = (ModuleCreator*)dlsym(lib_handle, "CreateModule");
+		ModuleCreator* create = (ModuleCreator*) dlsym(handle, "CreateModule");
 		if (!create)
 		{
-			std::cerr << "Error load create entry from module: " << path << std::endl;
-			return 0;
+			throw ValueException::FromFormat(
+				"Cannot load CreateModule symbol from module (%s): %s\n",
+				path.c_str(), dlerror());
 		}
 
 		std::string dir = FileUtils::GetDirectory(path);

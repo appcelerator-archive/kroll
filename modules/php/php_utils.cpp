@@ -7,232 +7,326 @@
 
 namespace kroll
 {
-	SharedValue PHPUtils::ToKrollValue(zval *value)
+	namespace PHPUtils
 	{
-		switch (Z_TYPE_P(value))
+		SharedValue ToKrollValue(zval *value TSRMLS_DC)
 		{
-			case IS_NULL: return Value::Null;
-			case IS_BOOL: return Value::NewBool(Z_BVAL_P(value));
-			case IS_LONG: return Value::NewInt((int) Z_LVAL_P(value));
-			case IS_DOUBLE: return Value::NewDouble(Z_DVAL_P(value));
-			case IS_STRING:
-			{
-				std::string s = Z_STRVAL_P(value);
-				return Value::NewString(s);
-			};
-			case IS_ARRAY:
-			{
-				SharedKList l = new KPHPList(value);
-				return Value::NewList(l);
-			};
-			case IS_RESOURCE: /*TODO: Implement*/
-			case IS_OBJECT: /*TODO: Implement*/
-			default: return Value::Null;
-		}
-	}
+			SharedValue returnValue = Value::NewNull();
+			int type = Z_TYPE_P(value);
 
-	zval* PHPUtils::ToPHPValue(SharedValue value)
-	{
-		zval *retval;
-		ALLOC_INIT_ZVAL(retval);
-
-		if (value->IsNull() || value->IsUndefined())
-		{
-			ZVAL_NULL(retval);
-		}
-		else if (value->IsBool())
-		{
-			if (value->ToBool())
+			if (IS_NULL == type)
 			{
-				ZVAL_TRUE(retval);
+				returnValue = Value::Null;
+			}
+			else if (IS_BOOL == type)
+			{
+				returnValue = Value::NewBool(Z_BVAL_P(value));
+			}
+			else if (IS_LONG == type)
+			{
+				returnValue = Value::NewDouble(Z_LVAL_P(value));
+			}
+			else if (IS_DOUBLE == type)
+			{
+				returnValue = Value::NewDouble(Z_DVAL_P(value));
+			}
+			else if (IS_STRING == type)
+			{
+				returnValue = Value::NewString(Z_STRVAL_P(value));
+			}
+			else if (IS_ARRAY == type)
+			{
+				// PHP arrays are almost always passed by value, which means
+				// they are all just copies of each other. To emulate this
+				// behavior we might as well just make a copy of the array
+				// here and turn it into a StaticBoundList.
+				returnValue = Value::NewList(PHPArrayToStaticBoundList(value TSRMLS_CC));
+			}
+			else if (IS_OBJECT == type)
+			{
+				if (HAS_CLASS_ENTRY(*value) && Z_OBJCE_P(value) == zend_ce_closure)
+				{
+					returnValue = Value::NewMethod(new KPHPMethod(value, "__invoke"));
+				}
+				else
+				{
+					if (HAS_CLASS_ENTRY(*value) && Z_OBJCE_P(value) == PHPKObjectClassEntry)
+					{
+						PHPKObject* phpKObject = reinterpret_cast<PHPKObject*>(
+							zend_object_store_get_object(value TSRMLS_CC));
+						returnValue = phpKObject->kvalue;
+					}
+					else
+					{
+						returnValue = Value::NewObject(new KPHPObject(value));
+					}
+				}
+			}
+			else if (IS_RESOURCE == type)
+			{
+				// TODO: Implement
+			}
+			return returnValue;
+		}
+
+		zval* ToPHPValue(SharedValue value)
+		{
+			zval *returnValue;
+			ALLOC_INIT_ZVAL(returnValue);
+			ToPHPValue(value, &returnValue);
+			return returnValue;
+		}
+
+		void ToPHPValue(SharedValue value, zval** returnValue)
+		{
+			if (value->IsNull() || value->IsUndefined())
+			{
+				ZVAL_NULL(*returnValue);
+			}
+			else if (value->IsBool())
+			{
+				if (value->ToBool())
+				{
+					ZVAL_TRUE(*returnValue);
+				}
+				else
+				{
+					ZVAL_FALSE(*returnValue);
+				}
+			}
+			else if (value->IsNumber())
+			{
+				// All numbers passing between Kroll and and PHP will be implicitly
+				// converted into floating point. This could cause some PHP to
+				// function incorrectly if it's doing strict type checking. We
+				// need to clearly document this.
+				ZVAL_DOUBLE(*returnValue, value->ToNumber());
+			}
+			else if (value->IsString())
+			{
+				const char* cstr = value->ToString();
+				ZVAL_STRINGL(*returnValue, (char *) cstr, strlen(cstr), 1);
+			}
+			else if (value->IsObject())
+			{
+				KObjectToKPHPObject(value, returnValue);
+			}
+			else if (value->IsMethod())
+			{
+				KMethodToKPHPMethod(value, returnValue);
+			}
+			else if (value->IsList())
+			{
+				// TODO: Turn this list into a ArrayObject-style object
 			}
 			else
 			{
-				ZVAL_FALSE(retval);
+				ZVAL_NULL(*returnValue);
 			}
 		}
-		else if (value->IsNumber())
+
+		std::string ZValToPropertyName(zval* phpPropertyName)
 		{
-			/* No way to check whether the number is an
-			   integer or a double here. All Kroll numbers
-			   are doubles, so return a double. This could
-			   cause some PHP to function incorrectly if it's
-			   doing strict type checking. */
-			ZVAL_DOUBLE(retval, value->ToNumber());
-		}
-		else if (value->IsString())
-		{
-			ZVAL_STRINGL(retval, (char *) value->ToString(), strlen(value->ToString()), 1);
-		}
-		else if (value->IsObject())
-		{
-			/*TODO: Implement*/
-		}
-		else if (value->IsMethod())
-		{
-			/*TODO: Implement*/
-		}
-		else if (value->IsList())
-		{
-			AutoPtr<KPHPList> pl = value->ToList().cast<KPHPList>();
-			if (!pl.isNull())
-				return pl->ToPHP();
+			// This will destroy the original value.
+			convert_to_string(phpPropertyName);
+
+			if (IS_STRING == Z_TYPE_P(phpPropertyName))
+			{
+				return Z_STRVAL_P(phpPropertyName);
+			}
 			else
-				return PHPUtils::KListToPHPValue(value);
+			{
+				throw ValueException::FromString(
+					"Could not convert property name to string.");
+			}
 		}
 
-		return retval;
-	}
+		SharedKList PHPArrayToStaticBoundList(zval* array TSRMLS_DC)
+		{
+			SharedKList list = new StaticBoundList();
 
-	zval* PHPUtils::KListToPHPValue(SharedValue value)
-	{
-		zval* phpArray;
-		MAKE_STD_ZVAL(phpArray);
-		array_init(phpArray);
+			HashTable *arrayHash = Z_ARRVAL_P(array);
+			for (zend_hash_internal_pointer_reset(arrayHash);
+				zend_hash_has_more_elements(arrayHash) == SUCCESS;
+				zend_hash_move_forward(arrayHash))
+			{
 
-		/*TODO: Flesh out with full implementation.*/
+				char* key;
+				unsigned int keyLength;
+				unsigned long index;
+				int type = zend_hash_get_current_key_ex(
+					arrayHash, &key, &keyLength, &index, 0, NULL);
 
-		return phpArray;
-	}
+				zval** value;
+				if (zend_hash_get_current_data(arrayHash, (void**) &value) == FAILURE)
+					continue;
 
-	void PHPUtils::AddKrollValueToPHPArray(SharedValue value, zval *phpArray, const char *key)
-	{
-		if (value->IsNull() || value->IsUndefined())
-		{
-			add_assoc_null(phpArray, (char *) key);
-		}
-		else if (value->IsBool())
-		{
-			if (value->ToBool())
-				add_assoc_bool(phpArray, (char *) key, 1);
-			else
-				add_assoc_bool(phpArray, (char *) key, 0);
-		}
-		else if (value->IsNumber())
-		{
-			/* No way to check whether the number is an
-			   integer or a double here. All Kroll numbers
-			   are doubles, so return a double. This could
-			   cause some PHP to function incorrectly if it's
-			   doing strict type checking. */
-			add_assoc_double(phpArray, (char *) key, value->ToNumber());
-		}
-		else if (value->IsString())
-		{
-			add_assoc_stringl(phpArray, (char *) key, (char *) value->ToString(), strlen(value->ToString()), 1);
-		}
-		else if (value->IsObject())
-		{
-			/*TODO: Implement*/
-		}
-		else if (value->IsMethod())
-		{
-			/*TODO: Implement*/
-		}
-		else if (value->IsList())
-		{
-			zval *phpValue;
-			AutoPtr<KPHPList> pl = value->ToList().cast<KPHPList>();
-			if (!pl.isNull())
-				phpValue = pl->ToPHP();
-			else
-				phpValue = PHPUtils::KListToPHPValue(value);
+				if (type == HASH_KEY_IS_STRING)
+				{
+					list->Set(key, ToKrollValue(*value TSRMLS_CC));
+				}
+				else // Numeric key
+				{
+					list->SetAt(index, ToKrollValue(*value TSRMLS_CC));
+				}
+			}
 
-			add_assoc_zval(phpArray, (char *) key, phpValue);
+			return list;
 		}
-	}
 
-	void PHPUtils::AddKrollValueToPHPArray(SharedValue value, zval *phpArray, unsigned int index)
-	{
-		if (value->IsNull() || value->IsUndefined())
+		SharedStringList GetHashKeys(HashTable *hash)
 		{
-			add_index_null(phpArray, (unsigned long) index);
-		}
-		else if (value->IsBool())
-		{
-			if (value->ToBool())
-				add_index_bool(phpArray, (unsigned long) index, 1);
-			else
-				add_index_bool(phpArray, (unsigned long) index, 0);
-		}
-		else if (value->IsNumber())
-		{
-			/* No way to check whether the number is an
-			   integer or a double here. All Kroll numbers
-			   are doubles, so return a double. This could
-			   cause some PHP to function incorrectly if it's
-			   doing strict type checking. */
-			add_index_double(phpArray, (unsigned long) index, value->ToNumber());
-		}
-		else if (value->IsString())
-		{
-			add_index_stringl(phpArray, (unsigned long) index, (char *) value->ToString(), strlen(value->ToString()), 1);
-		}
-		else if (value->IsObject())
-		{
-			/*TODO: Implement*/
-		}
-		else if (value->IsMethod())
-		{
-			/*TODO: Implement*/
-		}
-		else if (value->IsList())
-		{
-			zval *phpValue;
-			AutoPtr<KPHPList> pl = value->ToList().cast<KPHPList>();
-			if (!pl.isNull())
-				phpValue = pl->ToPHP();
-			else
-				phpValue = PHPUtils::KListToPHPValue(value);
+			SharedStringList keys(new StringList());
+			HashPosition position;
 
-			add_index_zval(phpArray, (unsigned long) index, phpValue);
-		}
-	}
+			for (zend_hash_internal_pointer_reset_ex(hash, &position);
+				zend_hash_has_more_elements_ex(hash, &position) == SUCCESS;
+				zend_hash_move_forward_ex(hash, &position))
+			{
 
-	void PHPUtils::AddKrollValueToPHPArray(SharedValue value, zval *phpArray)
-	{
-		if (value->IsNull() || value->IsUndefined())
-		{
-			add_next_index_null(phpArray);
-		}
-		else if (value->IsBool())
-		{
-			if (value->ToBool())
-				add_next_index_bool(phpArray, 1);
-			else
-				add_next_index_bool(phpArray, 0);
-		}
-		else if (value->IsNumber())
-		{
-			/* No way to check whether the number is an
-			   integer or a double here. All Kroll numbers
-			   are doubles, so return a double. This could
-			   cause some PHP to function incorrectly if it's
-			   doing strict type checking. */
-			add_next_index_double(phpArray, value->ToNumber());
-		}
-		else if (value->IsString())
-		{
-			add_next_index_stringl(phpArray, (char *) value->ToString(), strlen(value->ToString()), 1);
-		}
-		else if (value->IsObject())
-		{
-			/*TODO: Implement*/
-		}
-		else if (value->IsMethod())
-		{
-			/*TODO: Implement*/
-		}
-		else if (value->IsList())
-		{
-			zval *phpValue;
-			AutoPtr<KPHPList> pl = value->ToList().cast<KPHPList>();
-			if (!pl.isNull())
-				phpValue = pl->ToPHP();
-			else
-				phpValue = PHPUtils::KListToPHPValue(value);
+				char *key;
+				unsigned int keyLength;
+				unsigned long index;
 
-			add_next_index_zval(phpArray, phpValue);
+				zend_hash_get_current_key_ex(hash, &key, 
+					&keyLength, &index, 0, &position);
+				keys->push_back(new std::string(key));
+			}
+
+			return keys;
+		}
+
+		bool PHPObjectsEqual(zval* val1, zval* val2 TSRMLS_DC)
+		{
+			zval result;
+			ZVAL_LONG(&result, 1);
+			zend_compare_objects(&result, val1, val2 TSRMLS_CC);
+			return Z_LVAL_P(&result) == 0;
+		}
+		
+		SharedStringList GetClassMethods(zend_class_entry *ce TSRMLS_DC)
+		{
+			/* copied from internal impl of get_class_methods, (zend_builtin_functions.c, line 1062)
+			 * this doesn't work if we just pass a user defined class name in.
+			 * could be scope related? */
+			HashPosition pos;
+			zend_function *mptr;
+			SharedStringList methods(new StringList());
+			zend_hash_internal_pointer_reset_ex(&ce->function_table, &pos);
+
+			while (zend_hash_get_current_data_ex(&ce->function_table, (void **) &mptr, &pos) == SUCCESS)
+			{
+				if ((mptr->common.fn_flags & ZEND_ACC_PUBLIC)
+					|| (EG(scope) &&
+						(((mptr->common.fn_flags & ZEND_ACC_PROTECTED) &&
+							zend_check_protected(mptr->common.scope, EG(scope)))
+						|| ((mptr->common.fn_flags & ZEND_ACC_PRIVATE) &&
+							EG(scope) == mptr->common.scope))))
+				{
+					char *key;
+					uint key_len;
+					ulong num_index;
+					uint len = strlen(mptr->common.function_name);
+
+					/* Do not display old-style inherited constructors */
+					if ((mptr->common.fn_flags & ZEND_ACC_CTOR) == 0 ||
+						mptr->common.scope == ce ||
+						zend_hash_get_current_key_ex(&ce->function_table, &key, &key_len, &num_index, 0, &pos) != HASH_KEY_IS_STRING ||
+						zend_binary_strcasecmp(key, key_len-1, mptr->common.function_name, len) == 0)
+					{
+						methods->push_back(new std::string(mptr->common.function_name));
+					}
+				}
+			
+				zend_hash_move_forward_ex(&ce->function_table, &pos);
+			}
+			
+			return methods;
+		}
+		
+		/* (zend_builtin_functions.c, line 962 */
+		static void add_class_vars(zend_class_entry *ce, HashTable *properties, zval *return_value TSRMLS_DC)
+		{
+			if (zend_hash_num_elements(properties) > 0) {
+				HashPosition pos;
+				zval **prop;
+
+				zend_hash_internal_pointer_reset_ex(properties, &pos);
+				while (zend_hash_get_current_data_ex(properties, (void **) &prop, &pos) == SUCCESS) {
+					char *key, *class_name, *prop_name;
+					uint key_len;
+					ulong num_index;
+					int prop_name_len = 0;
+					zval *prop_copy;
+					zend_property_info *property_info;
+					zval zprop_name;
+
+					zend_hash_get_current_key_ex(properties, &key, &key_len, &num_index, 0, &pos);
+					zend_hash_move_forward_ex(properties, &pos);
+
+					zend_unmangle_property_name(key, key_len-1, &class_name, &prop_name);
+					prop_name_len = strlen(prop_name);
+
+					ZVAL_STRINGL(&zprop_name, prop_name, prop_name_len, 0);
+					property_info = zend_get_property_info(ce, &zprop_name, 1 TSRMLS_CC);
+
+					if (!property_info || property_info == &EG(std_property_info)) {
+						continue;
+					}
+
+					/* copy: enforce read only access */
+					ALLOC_ZVAL(prop_copy);
+					*prop_copy = **prop;
+					zval_copy_ctor(prop_copy);
+					INIT_PZVAL(prop_copy);
+
+					/* this is necessary to make it able to work with default array
+				* properties, returned to user */
+					if (Z_TYPE_P(prop_copy) == IS_CONSTANT_ARRAY || (Z_TYPE_P(prop_copy) & IS_CONSTANT_TYPE_MASK) == IS_CONSTANT) {
+						zval_update_constant(&prop_copy, 0 TSRMLS_CC);
+					}
+
+					add_assoc_zval(return_value, prop_name, prop_copy);
+				}
+			}
+		}
+		
+		SharedKList GetClassVars(zend_class_entry *ce TSRMLS_DC)
+		{
+			zval classVars;
+			array_init(&classVars);
+			zend_update_class_constants(ce TSRMLS_CC);
+			add_class_vars(ce, &ce->default_properties, &classVars TSRMLS_CC);
+			add_class_vars(ce, CE_STATIC_MEMBERS(ce), &classVars TSRMLS_CC);
+			
+			return PHPArrayToStaticBoundList(&classVars TSRMLS_CC);
+		}
+		
+		zend_function* GetGlobalFunction(const char *name TSRMLS_DC)
+		{
+			zend_function *function;
+			if (zend_hash_find(EG(function_table), (char*)name, strlen(name)+1, (void **) &function) == SUCCESS)
+			{
+				Logger::Get("PHP")->Debug("Succeeded finding Global function: %s", name);
+				return function;
+			}
+			
+			Logger::Get("PHP")->Debug("Failed to find Global function: %s", name);
+			return 0;
+		}
+		
+		void PopulateContext(SharedKObject windowGlobal, HashTable *symbol_table TSRMLS_DC)
+		{
+			SharedStringList keys = GetHashKeys(symbol_table);
+			
+			for (int i = 0; i < keys->size(); i++)
+			{
+				const char *name = keys->at(i)->c_str();
+				zval *value;
+				zend_hash_find(symbol_table, (char*)name, strlen(name)+1, (void **) &value);
+				
+				windowGlobal->Set(name, ToKrollValue(value TSRMLS_CC));
+			}
 		}
 	}
 }

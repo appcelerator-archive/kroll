@@ -10,11 +10,15 @@ namespace kroll
 {
 	class PHPEvaluator : public KMethod
 	{
-	public:
+		public:
 		virtual SharedValue Call(const ValueList& args);
 		virtual void Set(const char *, SharedValue);
 		virtual SharedValue Get(const char *);
 		virtual SharedStringList GetPropertyNames();
+		
+		protected:
+		std::string CreateContextName();
+		
 	};
 }
 
