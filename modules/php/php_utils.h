@@ -16,11 +16,11 @@ namespace kroll
 		zend_object std;
 		SharedValue kvalue;
 	} PHPKObject;
-	static zend_class_entry *PHPKObjectClassEntry;
-	static zend_class_entry *PHPKMethodClassEntry;
-	static zend_class_entry *PHPKListClassEntry;
-	static zend_object_handlers PHPKObjectHandlers;
-	
+	extern zend_class_entry *PHPKObjectClassEntry;
+	extern zend_class_entry *PHPKMethodClassEntry;
+	extern zend_class_entry *PHPKListClassEntry;
+	extern zend_object_handlers PHPKObjectHandlers;
+
 	namespace PHPUtils
 	{
 		SharedValue ToKrollValue(zval* value TSRMLS_DC);

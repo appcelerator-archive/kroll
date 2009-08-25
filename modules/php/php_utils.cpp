@@ -44,22 +44,21 @@ namespace kroll
 			}
 			else if (IS_OBJECT == type)
 			{
-				if (HAS_CLASS_ENTRY(*value) && Z_OBJCE_P(value) == zend_ce_closure)
+				if (HAS_CLASS_ENTRY(*value) &&
+					Z_OBJCE_P(value) == PHPKObjectClassEntry ||
+					Z_OBJCE_P(value) == PHPKMethodClassEntry)
+				{
+					PHPKObject* phpKObject = reinterpret_cast<PHPKObject*>(
+						zend_object_store_get_object(value TSRMLS_CC));
+					returnValue = phpKObject->kvalue;
+				}
+				else if (HAS_CLASS_ENTRY(*value) && Z_OBJCE_P(value) == zend_ce_closure)
 				{
 					returnValue = Value::NewMethod(new KPHPMethod(value, "__invoke"));
 				}
 				else
 				{
-					if (HAS_CLASS_ENTRY(*value) && Z_OBJCE_P(value) == PHPKObjectClassEntry)
-					{
-						PHPKObject* phpKObject = reinterpret_cast<PHPKObject*>(
-							zend_object_store_get_object(value TSRMLS_CC));
-						returnValue = phpKObject->kvalue;
-					}
-					else
-					{
-						returnValue = Value::NewObject(new KPHPObject(value));
-					}
+					returnValue = Value::NewObject(new KPHPObject(value));
 				}
 			}
 			else if (IS_RESOURCE == type)

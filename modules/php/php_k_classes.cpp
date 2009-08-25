@@ -7,6 +7,11 @@
 
 namespace kroll
 {
+	zend_class_entry *PHPKObjectClassEntry = NULL;
+	zend_class_entry *PHPKMethodClassEntry = NULL;
+	zend_class_entry *PHPKListClassEntry = NULL;
+	zend_object_handlers PHPKObjectHandlers;
+
 	// Private data and function declarations below here
 	static zend_object_value PHPKObjectCreateObject(zend_class_entry *ce TSRMLS_DC);
 	static void PHPKObjectFreeStorage(void* zthis TSRMLS_DC);
@@ -303,7 +308,7 @@ namespace kroll
 			}
 		}
 	}
-	
+
 	zend_class_entry* PHPKObjectGetClassEntry(const zval* zthis TSRMLS_DC)
 	{
 		return PHPKObjectClassEntry;
@@ -385,7 +390,7 @@ namespace kroll
 			
 		SharedKObject window = object->kvalue->ToObject();
 		std::string functionName(fname, fnameLength);
-		window->Set(functionName.c_str(), Value::NewMethod(new KPHPMethod(functionName.c_str() TSRMLS_CC)));
+		window->Set(functionName.c_str(), Value::NewMethod(new KPHPFunction(functionName.c_str())));
 	}
 	
 	namespace PHPUtils
@@ -421,7 +426,7 @@ namespace kroll
 			PHPKObjectHandlers.has_property = PHPKObjectHasProperty;
 			PHPKObjectHandlers.has_dimension = PHPKObjectHasDimension;
 			PHPKObjectHandlers.get_class_entry = PHPKObjectGetClassEntry;
-			
+
 			//initialize static functions
 			zend_register_functions(NULL, PHPFunctions, NULL, MODULE_PERSISTENT TSRMLS_CC);
 		}

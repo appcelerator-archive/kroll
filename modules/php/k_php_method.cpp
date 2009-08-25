@@ -14,14 +14,14 @@ namespace kroll {
 	{
 		zval_addref_p(object);
 	}
-	
+
 	KPHPMethod::KPHPMethod(HashTable* functionTable, const char *functionName) :
 		object(0),
 		functionTable(functionTable),
 		methodName(strdup(functionName))
 	{
 	}
-	
+
 	KPHPMethod::KPHPMethod(const char *globalFunctionName TSRMLS_DC) :
 		object(0),
 		functionTable(EG(function_table)),
@@ -56,16 +56,18 @@ namespace kroll {
 		ZVAL_STRINGL(&zMethodName, methodName, strlen(methodName), 0);
 
 		// Convert the arguments to PHP zvals.
-		zval** zargs = new zval*[args.size()];
+		zval*** zargs = new zval**[args.size()];
+		zval** zargsStore = new zval*[args.size()];
 		for (int i = 0; i < args.size(); i++)
 		{
 			SharedValue value = args.at(i);
 
 			zval *zargument;
-			ALLOC_INIT_ZVAL(zargument);
-			zargs[i] = zargument;
+			ALLOC_INIT_ZVAL(zargsStore[i]);
+			zargs[i] = &zargsStore[i];
 
-			PHPUtils::ToPHPValue(args[i], zargs + i);
+			PHPUtils::ToPHPValue(args[i], zargs[i]);
+			printf("argument %i: %lx '%s'\n", i, (long int) zargs[i], value->DisplayString()->c_str());
 		}
 
 		// Construct a zend_fcall_info structure which describes
@@ -79,7 +81,7 @@ namespace kroll {
 		callInfo.function_name = &zMethodName;
 		callInfo.retval_ptr_ptr = &zReturnValue;
 		callInfo.param_count = args.size();
-		callInfo.params = &zargs;
+		callInfo.params = zargs;
 		callInfo.no_separation = 1;
 		callInfo.symbol_table = NULL;
 		if (object)
@@ -95,9 +97,10 @@ namespace kroll {
 
 		for (int i = 0; i < args.size(); i++)
 		{
-			Z_DELREF_P(zargs[i]);
+			Z_DELREF_P(zargsStore[i]);
 		}
 		delete [] zargs;
+		delete [] zargsStore;
 
 		if (result == FAILURE)
 		{
