@@ -60,7 +60,11 @@ namespace kroll {
 		for (int i = 0; i < args.size(); i++)
 		{
 			SharedValue value = args.at(i);
-			zargs[i] = new zval;
+
+			zval *zargument;
+			ALLOC_INIT_ZVAL(zargument);
+			zargs[i] = zargument;
+
 			PHPUtils::ToPHPValue(args[i], zargs + i);
 		}
 
@@ -89,8 +93,10 @@ namespace kroll {
 
 		int result = zend_call_function(&callInfo, NULL TSRMLS_CC);
 
-		// Zend will free all the pointers in zargs, presumably
-		// because it decreases their reference count.
+		for (int i = 0; i < args.size(); i++)
+		{
+			Z_DELREF_P(zargs[i]);
+		}
 		delete [] zargs;
 
 		if (result == FAILURE)

@@ -39,6 +39,7 @@
 #include "k_php_array_object.h"
 #include "php_evaluator.h"
 
+#include <Zend/zend.h>
 #include <Zend/zend_exceptions.h>
 #include <Zend/zend_compile.h>
 #include <Zend/zend_API.h>
