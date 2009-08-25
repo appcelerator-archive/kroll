@@ -34,7 +34,7 @@ namespace kroll {
 		{
 			zval* zvalue = PHPUtils::ToPHPValue(value);
 			TSRMLS_FETCH();
-			add_property_zval_ex(object, name, strlen(name), zvalue TSRMLS_CC);
+			add_property_zval_ex(object, name, strlen(name)+1, zvalue TSRMLS_CC);
 		}
 		else
 		{
@@ -63,7 +63,7 @@ namespace kroll {
 
 		} // Next just try reading it from the properties hash.
 		else if (zend_hash_find(Z_OBJPROP_P(object),
-			name, nameLength, (void**) &zPropertyPtr) != FAILURE)
+			name, nameLength + 1, (void**) &zPropertyPtr) != FAILURE)
 		{
 			return PHPUtils::ToKrollValue(*zPropertyPtr TSRMLS_CC);
 
@@ -181,7 +181,7 @@ namespace kroll {
 		zend_class_entry* classEntry = Z_OBJCE_P(object);
 
 		// First check the class "function" table.
-		if (zend_hash_exists(&classEntry->function_table, lcMethodName, methodNameLength+1))
+		if (zend_hash_exists(&classEntry->function_table, lcMethodName, methodNameLength + 1))
 		{
 			hasMethod = true;
 		}
