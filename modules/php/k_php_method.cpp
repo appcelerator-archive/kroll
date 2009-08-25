@@ -45,7 +45,7 @@ namespace kroll {
 
 		zval* zReturnValue = NULL;
 		zend_class_entry* classEntry = NULL;
-		
+
 		if (object)
 		{
 			classEntry = Z_OBJCE_P(object);
@@ -59,6 +59,7 @@ namespace kroll {
 		zval** zargs = new zval*[args.size()];
 		for (int i = 0; i < args.size(); i++)
 		{
+			SharedValue value = args.at(i);
 			zargs[i] = new zval;
 			PHPUtils::ToPHPValue(args[i], zargs + i);
 		}
@@ -73,7 +74,7 @@ namespace kroll {
 		}
 		callInfo.function_name = &zMethodName;
 		callInfo.retval_ptr_ptr = &zReturnValue;
-		callInfo.param_count = args.size();;
+		callInfo.param_count = args.size();
 		callInfo.params = &zargs;
 		callInfo.no_separation = 1;
 		callInfo.symbol_table = NULL;
@@ -88,10 +89,8 @@ namespace kroll {
 
 		int result = zend_call_function(&callInfo, NULL TSRMLS_CC);
 
-		for (int i = 0; i < args.size(); i++)
-		{
-			delete zargs[i];
-		}
+		// Zend will free all the pointers in zargs, presumably
+		// because it decreases their reference count.
 		delete [] zargs;
 
 		if (result == FAILURE)
