@@ -24,6 +24,7 @@
 #include <sapi/embed/php_embed.h>
 #undef inline
 #undef va_copy
+#undef PARSE_SERVER
 #else
 #include <sapi/embed/php_embed.h>
 #endif
@@ -32,10 +33,19 @@
 
 #include "php_api.h"
 #include "php_utils.h"
+#include "k_php_object.h"
+#include "k_php_method.h"
+#include "k_php_function.h"
 #include "k_php_list.h"
+#include "k_php_array_object.h"
 #include "php_evaluator.h"
-#include <zend/zend_exceptions.h>
-#include <zend/zend_compile.h>
+
+#include <Zend/zend.h>
+#include <Zend/zend_exceptions.h>
+#include <Zend/zend_compile.h>
+#include <Zend/zend_API.h>
+#include <Zend/zend_closures.h>
+#include <Zend/zend_hash.h>
 
 namespace kroll
 {
@@ -43,7 +53,7 @@ namespace kroll
 	{
 		KROLL_MODULE_CLASS(PHPModule)
 
-		public:
+			public:
 			virtual bool IsModule(std::string& path);
 			virtual Module* CreateModule(std::string& path);
 			void InitializeBinding();
@@ -61,8 +71,14 @@ namespace kroll
 				return instance_;
 			}
 
-		private:
+			static int UnbufferedWrite(const char *str, unsigned int len TSRMLS_DC);
+			static void LogMessage(char *message);
+			static void IniDefaults(HashTable *configuration);
+			
+			private:
 			SharedKObject binding;
+			Logger *logger;
+			
 			static PHPModule *instance_;
 			DISALLOW_EVIL_CONSTRUCTORS(PHPModule);
 		};

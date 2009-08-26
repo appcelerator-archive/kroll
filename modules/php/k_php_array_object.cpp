@@ -7,18 +7,18 @@
 
 namespace kroll
 {
-	KPHPList::KPHPList(zval *list) :
+	KPHPArrayObject::KPHPArrayObject(zval *list) :
 		list(list)
 	{
 		if (Z_TYPE_P(list) != IS_ARRAY)
 			throw ValueException::FromString("Invalid zval passed. Should be an array type.");
 	}
 
-	KPHPList::~KPHPList()
+	KPHPArrayObject::~KPHPArrayObject()
 	{
 	}
 
-	SharedValue KPHPList::Get(const char *name)
+	SharedValue KPHPArrayObject::Get(const char *name)
 	{
 		if (KList::IsInt(name))
 		{
@@ -44,7 +44,7 @@ namespace kroll
 		return v;
 	}
 
-	void KPHPList::Set(const char *name, SharedValue value)
+	void KPHPArrayObject::Set(const char *name, SharedValue value)
 	{
 		// Check for integer value as name
 		int index = -1;
@@ -58,9 +58,9 @@ namespace kroll
 		}
 	}
 
-	bool KPHPList::Equals(SharedKObject other)
+	bool KPHPArrayObject::Equals(SharedKObject other)
 	{
-		AutoPtr<KPHPList> phpOther = other.cast<KPHPList>();
+		AutoPtr<KPHPArrayObject> phpOther = other.cast<KPHPArrayObject>();
 
 		// This is not a PHP object
 		if (phpOther.isNull())
@@ -69,45 +69,65 @@ namespace kroll
 		return phpOther->ToPHP() == this->ToPHP();
 	}
 
-	SharedStringList KPHPList::GetPropertyNames()
+	SharedStringList KPHPArrayObject::GetPropertyNames()
 	{
-		return PHPUtils::GetHashKeys(Z_ARRVAL_P(this->list));
+		SharedStringList property_names = new StringList();
+		HashPosition pos;
+		HashTable *ht = Z_ARRVAL_P(this->list);
+
+		for (zend_hash_internal_pointer_reset_ex(ht, &pos);
+				zend_hash_has_more_elements_ex(ht, &pos) == SUCCESS;
+				zend_hash_move_forward_ex(ht, &pos))
+		{
+			char *key;
+			unsigned int keylen;
+			unsigned long index;
+
+			zend_hash_get_current_key_ex(ht, &key, &keylen, &index, 0, &pos);
+
+			property_names->push_back(new std::string(key));
+		}
+
+		zend_hash_destroy(ht);
+		FREE_HASHTABLE(ht);
+
+		return property_names;
 	}
 
-	unsigned int KPHPList::Size()
+	unsigned int KPHPArrayObject::Size()
 	{
 		/*TODO: Implement*/
 		return 0;
 	}
 
-	void KPHPList::Append(SharedValue value)
+	void KPHPArrayObject::Append(SharedValue value)
 	{
 		/*TODO: Implement*/
 	}
 
-	void KPHPList::SetAt(unsigned int index, SharedValue value)
+	void KPHPArrayObject::SetAt(unsigned int index, SharedValue value)
 	{
 		/*TODO: Implement*/
 	}
 
-	bool KPHPList::Remove(unsigned int index)
+	bool KPHPArrayObject::Remove(unsigned int index)
 	{
 		/*TODO: Implement*/
 		return true;
 	}
 
-	SharedValue KPHPList::At(unsigned int index)
+	SharedValue KPHPArrayObject::At(unsigned int index)
 	{
 		/*TODO: Implement*/
 		return Value::Null;
 	}
 
-	zval* KPHPList::ToPHP()
+	zval* KPHPArrayObject::ToPHP()
 	{
 		return this->list;
 	}
 
-	void KPHPList::AddKrollValueToPHPArray(SharedValue value, zval *phpArray, const char *key)
+	void KPHPArrayObject::AddKrollValueToPHPArray(SharedValue value, zval *phpArray, const char *key)
 	{
 		if (value->IsNull() || value->IsUndefined())
 		{
@@ -144,7 +164,7 @@ namespace kroll
 		else if (value->IsList())
 		{
 			zval *phpValue;
-			AutoPtr<KPHPList> pl = value->ToList().cast<KPHPList>();
+			AutoPtr<KPHPArrayObject> pl = value->ToList().cast<KPHPArrayObject>();
 			if (!pl.isNull())
 				phpValue = pl->ToPHP();
 			else
@@ -154,7 +174,7 @@ namespace kroll
 		}
 	}
 
-	void KPHPList::AddKrollValueToPHPArray(SharedValue value, zval *phpArray, unsigned int index)
+	void KPHPArrayObject::AddKrollValueToPHPArray(SharedValue value, zval *phpArray, unsigned int index)
 	{
 		if (value->IsNull() || value->IsUndefined())
 		{
@@ -191,7 +211,7 @@ namespace kroll
 		else if (value->IsList())
 		{
 			zval *phpValue;
-			AutoPtr<KPHPList> pl = value->ToList().cast<KPHPList>();
+			AutoPtr<KPHPArrayObject> pl = value->ToList().cast<KPHPArrayObject>();
 			if (!pl.isNull())
 				phpValue = pl->ToPHP();
 			else
@@ -201,7 +221,7 @@ namespace kroll
 		}
 	}
 
-	void KPHPList::AddKrollValueToPHPArray(SharedValue value, zval *phpArray)
+	void KPHPArrayObject::AddKrollValueToPHPArray(SharedValue value, zval *phpArray)
 	{
 		if (value->IsNull() || value->IsUndefined())
 		{
@@ -238,7 +258,7 @@ namespace kroll
 		else if (value->IsList())
 		{
 			zval *phpValue;
-			AutoPtr<KPHPList> pl = value->ToList().cast<KPHPList>();
+			AutoPtr<KPHPArrayObject> pl = value->ToList().cast<KPHPArrayObject>();
 			if (!pl.isNull())
 				phpValue = pl->ToPHP();
 			else

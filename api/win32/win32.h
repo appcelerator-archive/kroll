@@ -10,5 +10,6 @@
 #include "string16.h"
 #include "string_util.h"
 #include "string_util_win.h"
+#include "com_reference_counted.h"
 #endif
 

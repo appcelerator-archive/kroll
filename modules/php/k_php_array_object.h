@@ -4,18 +4,18 @@
  * Copyright (c) 2009 Appcelerator, Inc. All Rights Reserved.
  */
 
-#ifndef _K_PHP_LIST_H_
-#define _K_PHP_LIST_H_
+#ifndef _K_PHP_ARRAY_OBJECT_H_
+#define _K_PHP_ARRAY_OBJECT_H_
 
 #include "php_module.h"
 
 namespace kroll
 {
-	class KPHPList : public KList
+	class KPHPArrayObject : public KList
 	{
 		public:
-		KPHPList(zval *list);
-		virtual ~KPHPList();
+		KPHPArrayObject(zval *list);
+		virtual ~KPHPArrayObject();
 
 		SharedValue Get(const char *name);
 		void Set(const char *name, SharedValue value);
@@ -36,7 +36,7 @@ namespace kroll
 		static void AddKrollValueToPHPArray(SharedValue value, zval *phpArray, const char *key);
 		static void AddKrollValueToPHPArray(SharedValue value, zval *phpArray, unsigned int index);
 		static void AddKrollValueToPHPArray(SharedValue value, zval *phpArray);
-		DISALLOW_EVIL_CONSTRUCTORS(KPHPList);
+		DISALLOW_EVIL_CONSTRUCTORS(KPHPArrayObject);
 	};
 }
 #endif

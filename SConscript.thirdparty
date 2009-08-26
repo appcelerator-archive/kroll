@@ -11,9 +11,9 @@ from progressbar import ProgressBar
 Import('build')
 
 revisions = {
-	"linux-i386": 10,
-	"linux-x86_64": 9,
-	"osx-universal": 9,
+	"linux-i386": 13,
+	"linux-x86_64": 12,
+	"osx-universal": 11,
 	"win32-i386": 14
 }
 
@@ -51,8 +51,8 @@ def fetch():
 if not exists(): fetch()
 
 if build.is_linux():
-	futils.CopyTree(path.join(build.third_party, 'webkit/lib'), rtdir)
-	futils.CopyTree(path.join(build.third_party, 'poco/lib'), rtdir)
+	futils.CopyTree(path.join(build.third_party, 'webkit', 'lib'), rtdir)
+	futils.CopyTree(path.join(build.third_party, 'poco', 'lib'), rtdir)
 
 elif build.is_win32():
 	futils.CopyTree(path.join(build.third_party, 'poco', 'bin'), rtdir)
