@@ -9,103 +9,81 @@ namespace kroll {
 
 	KPHPMethod::KPHPMethod(zval* object, const char* methodName) :
 		object(object),
-		functionTable(0),
-		methodName(strdup(methodName))
+		methodName(strdup(methodName)),
+		zMethodName(0)
 	{
 		zval_addref_p(object);
+
+		MAKE_STD_ZVAL(zMethodName);
+		ZVAL_STRINGL(zMethodName, methodName, strlen(methodName), 0);
 	}
 
-	KPHPMethod::KPHPMethod(HashTable* functionTable, const char *functionName) :
+	KPHPMethod::KPHPMethod(const char *functionName) :
 		object(0),
-		functionTable(functionTable),
-		methodName(strdup(functionName))
+		methodName(strdup(functionName)),
+		zMethodName(0)
 	{
-	}
-
-	KPHPMethod::KPHPMethod(const char *globalFunctionName TSRMLS_DC) :
-		object(0),
-		functionTable(EG(function_table)),
-		methodName(strdup(globalFunctionName))
-	{
+		MAKE_STD_ZVAL(zMethodName);
+		ZVAL_STRINGL(zMethodName, methodName, strlen(methodName), 0);
 	}
 
 	KPHPMethod::~KPHPMethod()
 	{
 		if (object)
-		{
 			zval_delref_p(object);
-		}
-		
+
 		free(methodName);
+		zval_ptr_dtor(&zMethodName);
 	}
 
 	SharedValue KPHPMethod::Call(const ValueList& args)
 	{
 		TSRMLS_FETCH();
 
-		zval* zReturnValue = NULL;
-		zend_class_entry* classEntry = NULL;
-
+		HashTable* functionTable = 0;
+		zend_class_entry* classEntry = 0;
+		zval** passObject = 0;
 		if (object)
 		{
+			passObject = &object;
 			classEntry = Z_OBJCE_P(object);
-		}
-
-		// Zendify method name.
-		zval zMethodName;
-		ZVAL_STRINGL(&zMethodName, methodName, strlen(methodName), 0);
-
-		// Convert the arguments to PHP zvals.
-		zval*** zargs = new zval**[args.size()];
-		zval** zargsStore = new zval*[args.size()];
-		for (int i = 0; i < args.size(); i++)
-		{
-			SharedValue value = args.at(i);
-
-			zval *zargument;
-			ALLOC_INIT_ZVAL(zargsStore[i]);
-			zargs[i] = &zargsStore[i];
-
-			PHPUtils::ToPHPValue(args[i], zargs[i]);
-			printf("argument %i: %lx '%s'\n", i, (long int) zargs[i], value->DisplayString()->c_str());
-		}
-
-		// Construct a zend_fcall_info structure which describes
-		// the method call we are about to invoke.
-		zend_fcall_info callInfo;
-		callInfo.size = sizeof(zend_fcall_info);
-		if (object)
-		{
-			callInfo.object_ptr = object;
-		}
-		callInfo.function_name = &zMethodName;
-		callInfo.retval_ptr_ptr = &zReturnValue;
-		callInfo.param_count = args.size();
-		callInfo.params = zargs;
-		callInfo.no_separation = 1;
-		callInfo.symbol_table = NULL;
-		if (object)
-		{
-			callInfo.function_table = &classEntry->function_table;
+			functionTable = &classEntry->function_table;
 		}
 		else
 		{
-			callInfo.function_table = functionTable;
+			functionTable = EG(function_table);
 		}
 
-		int result = zend_call_function(&callInfo, NULL TSRMLS_CC);
-
+        // Convert arguments
+		zval** pzargs = (zval**) emalloc(sizeof(zval*) * args.size());
 		for (int i = 0; i < args.size(); i++)
 		{
-			Z_DELREF_P(zargsStore[i]);
+			MAKE_STD_ZVAL(pzargs[i]);
+			PHPUtils::ToPHPValue(args.at(i), &pzargs[i]);
 		}
-		delete [] zargs;
-		delete [] zargsStore;
+
+		zval* zReturnValue;
+		MAKE_STD_ZVAL(zReturnValue);
+		int result = call_user_function(functionTable, passObject,
+			zMethodName, zReturnValue, args.size(), (zval**) pzargs TSRMLS_CC);
+
+		// Cleanup the arguments.
+		for (int i = 0; i < args.size(); i++)
+			zval_ptr_dtor(&pzargs[i]);
+		efree(pzargs);
 
 		if (result == FAILURE)
 		{
-			throw ValueException::FromFormat("Couldn't execute method %s::%s", 
-				classEntry->name, methodName);
+			if (classEntry)
+			{
+				throw ValueException::FromFormat("Couldn't execute method %s::%s", 
+					classEntry->name, methodName);
+			}
+			else
+			{
+				throw ValueException::FromFormat("Couldn't execute function %s\n",
+					methodName);
+			}
 			return Value::Undefined;
 		}
 		else if (zReturnValue)
