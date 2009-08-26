@@ -9,6 +9,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include <sstream>
 
 /* 
  * PHP wreaks havoc on all kinds of cdecl/export/inline/god knows what macros,
