@@ -401,12 +401,12 @@ namespace kroll
 
 			// Initialize the class entry for our classes
 			zend_class_entry kobjectClassEntry;
-			INIT_CLASS_ENTRY(kobjectClassEntry, "KObject", PHPKObjectMethods);
+			INIT_CLASS_ENTRY(kobjectClassEntry, "PHPKObject", PHPKObjectMethods);
 			PHPKObjectClassEntry = zend_register_internal_class(&kobjectClassEntry TSRMLS_CC);
 			PHPKObjectClassEntry->create_object = PHPKObjectCreateObject;
 
 			zend_class_entry kmethodClassEntry;
-			INIT_CLASS_ENTRY(kmethodClassEntry, "KMethod", PHPKMethodMethods);
+			INIT_CLASS_ENTRY(kmethodClassEntry, "PHPKMethod", PHPKMethodMethods);
 			PHPKMethodClassEntry = zend_register_internal_class(&kmethodClassEntry TSRMLS_CC);
 
 			// PHPKMethod has enough of the same behavior that we can use the same
