@@ -167,7 +167,7 @@ namespace kroll
 		PHPKObject* kthis = reinterpret_cast<PHPKObject*>(
 			zend_object_store_get_object(zthis TSRMLS_CC));
 		SharedKObject kobject = kthis->kvalue->ToObject();
-		std::string propertyName = PHPUtils::ZValToPropertyName(property);
+		std::string propertyName = PHPUtils::ZvalToPropertyName(property);
 
 		try
 		{
@@ -190,7 +190,7 @@ namespace kroll
 			zend_object_store_get_object(zthis TSRMLS_CC));
 		SharedKObject kobject = kthis->kvalue->ToObject();
 
-		std::string propertyName = PHPUtils::ZValToPropertyName(property);
+		std::string propertyName = PHPUtils::ZvalToPropertyName(property);
 		SharedValue krollValue = PHPUtils::ToKrollValue(value TSRMLS_CC);
 
 		try
@@ -252,7 +252,7 @@ namespace kroll
 		PHPKObject* kthis = reinterpret_cast<PHPKObject*>(
 			zend_object_store_get_object(zthis TSRMLS_CC));
 		SharedKObject kobject = kthis->kvalue->ToObject();
-		std::string propertyName = PHPUtils::ZValToPropertyName(property);
+		std::string propertyName = PHPUtils::ZvalToPropertyName(property);
 
 		if (checkType == 0)
 		{
@@ -287,7 +287,7 @@ namespace kroll
 		PHPKObject* kthis = reinterpret_cast<PHPKObject*>(
 			zend_object_store_get_object(zthis TSRMLS_CC));
 		SharedKObject kobject = kthis->kvalue->ToObject();
-		std::string propertyName = PHPUtils::ZValToPropertyName(property);
+		std::string propertyName = PHPUtils::ZvalToPropertyName(property);
 
 		if (checkType == 0)
 		{
@@ -319,7 +319,7 @@ namespace kroll
 		PHPKObject* kthis = reinterpret_cast<PHPKObject*>(
 			zend_object_store_get_object(zthis TSRMLS_CC));
 		SharedKObject kobject = kthis->kvalue->ToObject();
-		std::string propertyName = PHPUtils::ZValToPropertyName(property);
+		std::string propertyName = PHPUtils::ZvalToPropertyName(property);
 
 		try
 		{
