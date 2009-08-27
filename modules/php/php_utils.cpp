@@ -116,7 +116,7 @@ namespace kroll
 			}
 			else if (value->IsList())
 			{
-				// TODO: Turn this list into a ArrayObject-style object
+				KListToKPHPArray(value, returnValue);
 			}
 			else
 			{

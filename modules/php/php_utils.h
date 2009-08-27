@@ -31,6 +31,7 @@ namespace kroll
 		SharedStringList GetHashKeys(HashTable *hash);
 		void KObjectToKPHPObject(SharedValue objectValue, zval** returnValue);
 		void KMethodToKPHPMethod(SharedValue methodValue, zval** returnValue);
+		void KListToKPHPArray(SharedValue listValue, zval** returnValue);
 		void InitializePHPKrollClasses();
 		bool PHPObjectsEqual(zval* val1, zval* val2 TSRMLS_DC);
 		int HashZvalCompareCallback(const zval **one, const zval **two TSRMLS_DC);
