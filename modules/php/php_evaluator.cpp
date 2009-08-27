@@ -166,7 +166,7 @@ namespace kroll
 		} zend_catch {
 		} zend_end_try();
 		
-		result->SetString(PHPModule::GetBuffer().str());
+		result->SetString(PHPModule::GetBuffer().str().c_str());
 		PHPModule::SetBuffering(false);
 	}
 	
