@@ -38,7 +38,7 @@ namespace kroll
 		codeString << " if (array_key_exists(\"user\", $__fns)) {\n";
 		codeString << "  foreach($__fns[\"user\"] as $fname) {\n";
 		codeString << "   if ($fname != \"" << contextName << "\" && !$window->$fname) {";
-		codeString << "     kroll_add_function($window, $fname);\n";
+		codeString << "     krollAddFunction($window, $fname);\n";
 		codeString << "   }\n";
 		codeString << "  }\n";
 		codeString << " }\n";

@@ -43,15 +43,15 @@ namespace kroll
 	PHP_METHOD(PHPKList, getArrayCopy);
 	PHP_METHOD(PHPKList, exchangeArray);
 
-	static ZEND_FUNCTION(kroll_add_function);
+	static ZEND_FUNCTION(krollAddFunction);
 
-	ZEND_BEGIN_ARG_INFO_EX(arginfo_kroll_add_function, 0, 0, 2)
+	ZEND_BEGIN_ARG_INFO_EX(KrollAddFunctionArgInfo, 0, 0, 2)
 		ZEND_ARG_INFO(0, object)
 		ZEND_ARG_INFO(0, fname)
 	ZEND_END_ARG_INFO()
 	
 	static const zend_function_entry PHPFunctions[] = {
-		ZEND_FE(kroll_add_function, arginfo_kroll_add_function)
+		ZEND_FE(krollAddFunction, KrollAddFunctionArgInfo)
 		{ NULL, NULL, NULL, NULL }
 	};
 
@@ -543,7 +543,7 @@ namespace kroll
 		// TODO: Implement
 	}
 
-	ZEND_FUNCTION(kroll_add_function)
+	ZEND_FUNCTION(krollAddFunction)
 	{
 		zval *phpWindowContext;
 		char *fname;
