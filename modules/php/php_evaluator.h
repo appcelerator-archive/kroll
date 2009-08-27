@@ -8,16 +8,16 @@
 
 namespace kroll
 {
-	class PHPEvaluator : public KMethod
+	class PHPEvaluator : public StaticBoundObject
 	{
 		public:
-		virtual SharedValue Call(const ValueList& args);
-		virtual void Set(const char *, SharedValue);
-		virtual SharedValue Get(const char *);
-		virtual SharedStringList GetPropertyNames();
+		PHPEvaluator();
+		void Evaluate(const ValueList& args, SharedValue result);
+		void Preprocess(const ValueList& args, SharedValue result);
 		
 		protected:
 		std::string CreateContextName();
+		void FillServerVars(Poco::URI& uri, SharedKObject headers, std::string& httpMethod TSRMLS_DC);
 		
 	};
 }
