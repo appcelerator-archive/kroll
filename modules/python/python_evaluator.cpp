@@ -78,7 +78,7 @@
 		PyObject* builtins = PyDict_GetItemString(pyobj, "__builtins__");
 
 		SharedStringList props = o->GetPropertyNames();
-		for (size_t i = 0; i < props->size() / 2; i++)
+		for (size_t i = 0; i < props->size(); i++)
 		{
 			const char* k = props->at(i)->c_str();
 
