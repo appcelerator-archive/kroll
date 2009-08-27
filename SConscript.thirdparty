@@ -12,7 +12,7 @@ Import('build')
 
 revisions = {
 	"linux-i386": 13,
-	"linux-x86_64": 13,
+	"linux-x86_64": 14,
 	"osx-universal": 11,
 	"win32-i386": 15
 }
