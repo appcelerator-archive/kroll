@@ -5,10 +5,28 @@
 */
 #include "php_module.h"
 
+extern "C" {
+#include <spl/spl_array.h>
+}
+
+#define GET_MY_KLIST() \
+	reinterpret_cast<PHPKObject*>( \
+	 zend_object_store_get_object(getThis() TSRMLS_CC))->kvalue->ToList()
+
 namespace kroll
 {
+	zend_class_entry *PHPKObjectClassEntry = NULL;
+	zend_class_entry *PHPKMethodClassEntry = NULL;
+	zend_class_entry *PHPKListClassEntry = NULL;
+	zend_object_handlers PHPKObjectHandlers;
+	zend_object_handlers PHPKMethodHandlers;
+	zend_object_handlers PHPKListHandlers;
+
 	// Private data and function declarations below here
 	static zend_object_value PHPKObjectCreateObject(zend_class_entry *ce TSRMLS_DC);
+	static zend_class_entry* PHPKObjectGetClassEntry(const zval* zthis TSRMLS_DC);
+	static zend_class_entry* PHPKMethodGetClassEntry(const zval* zthis TSRMLS_DC);
+	static zend_class_entry* PHPKListGetClassEntry(const zval* zthis TSRMLS_DC);
 	static void PHPKObjectFreeStorage(void* zthis TSRMLS_DC);
 	static zval* PHPKObjectReadProperty(zval* zthis, zval* property, int type TSRMLS_DC);
 	static void PHPKObjectWriteProperty(zval* zthis, zval* property, zval* value TSRMLS_DC);
@@ -16,30 +34,37 @@ namespace kroll
 	static void PHPKObjectUnsetProperty(zval* zthis, zval* property TSRMLS_DC);
 	static int PHPKObjectHasProperty(zval* zthis, zval* property, int type TSRMLS_DC);
 	static int PHPKObjectHasDimension(zval* zthis, zval* property, int type TSRMLS_DC);
-	static zend_class_entry* PHPKObjectGetClassEntry(const zval* zthis TSRMLS_DC);
-	
+
 	PHP_METHOD(PHPKObject, __call);
 	PHP_METHOD(PHPKMethod, __invoke);
-	
-	static ZEND_FUNCTION(kroll_add_function);
-	
-	ZEND_BEGIN_ARG_INFO_EX(arginfo_kroll_add_function, 0, 0, 2)
+	PHP_METHOD(PHPKList, offsetExists);
+	PHP_METHOD(PHPKList, offsetGet);
+	PHP_METHOD(PHPKList, offsetUnset);
+	PHP_METHOD(PHPKList, offsetSet);
+	PHP_METHOD(PHPKList, count);
+	PHP_METHOD(PHPKList, append);
+	PHP_METHOD(PHPKList, getArrayCopy);
+	PHP_METHOD(PHPKList, exchangeArray);
+
+	static ZEND_FUNCTION(krollAddFunction);
+
+	ZEND_BEGIN_ARG_INFO_EX(KrollAddFunctionArgInfo, 0, 0, 2)
 		ZEND_ARG_INFO(0, object)
 		ZEND_ARG_INFO(0, fname)
 	ZEND_END_ARG_INFO()
 	
 	static const zend_function_entry PHPFunctions[] = {
-		ZEND_FE(kroll_add_function, arginfo_kroll_add_function)
+		ZEND_FE(krollAddFunction, KrollAddFunctionArgInfo)
 		{ NULL, NULL, NULL, NULL }
 	};
-	
+
 	// This is our class "function" table. Right now we only implement
 	// __call, because that seems to be preferred over the handler version.
 	ZEND_BEGIN_ARG_INFO_EX(PHPKObjectCallArgInfo, 0, 0, 2)
 	ZEND_ARG_INFO(0, methodName)
 	ZEND_ARG_INFO(0, arguments)
 	ZEND_END_ARG_INFO()
-	
+
 	static function_entry PHPKObjectMethods[] =
 	{
 		PHP_ME(PHPKObject, __call, PHPKObjectCallArgInfo, ZEND_ACC_PUBLIC)
@@ -50,6 +75,34 @@ namespace kroll
 	{
 		PHP_ME(PHPKMethod, __invoke, NULL, ZEND_ACC_PUBLIC)
 		PHP_ME(PHPKObject, __call, PHPKObjectCallArgInfo, ZEND_ACC_PUBLIC)
+		{NULL, NULL, NULL}
+	};
+
+	ZEND_BEGIN_ARG_INFO_EX(PHPKListOffsetGetArgInfo, 0, 0, 1)
+		ZEND_ARG_INFO(0, index)
+	ZEND_END_ARG_INFO()
+	ZEND_BEGIN_ARG_INFO_EX(PHPKListOffsetSetArgInfo, 0, 0, 2)
+		ZEND_ARG_INFO(0, index)
+		ZEND_ARG_INFO(0, newval)
+	ZEND_END_ARG_INFO()
+	ZEND_BEGIN_ARG_INFO(PHPKListAppendArgInfo, 0)
+		ZEND_ARG_INFO(0, value)
+	ZEND_END_ARG_INFO()
+	ZEND_BEGIN_ARG_INFO(PHPKListExchangeArrayArgInfo, 0)
+		ZEND_ARG_INFO(0, array)
+	ZEND_END_ARG_INFO()
+	ZEND_BEGIN_ARG_INFO(PHPKListVoidArgInfo, 0)
+	ZEND_END_ARG_INFO()
+
+	static function_entry PHPKListMethods[] =
+	{
+		PHP_ME(PHPKList, offsetExists, PHPKListOffsetGetArgInfo, ZEND_ACC_PUBLIC)
+		PHP_ME(PHPKList, offsetGet, PHPKListOffsetGetArgInfo, ZEND_ACC_PUBLIC)
+		PHP_ME(PHPKList, offsetSet, PHPKListOffsetSetArgInfo, ZEND_ACC_PUBLIC)
+		PHP_ME(PHPKList, offsetUnset, PHPKListOffsetGetArgInfo, ZEND_ACC_PUBLIC)
+		PHP_ME(PHPKList, count, PHPKListVoidArgInfo, ZEND_ACC_PUBLIC)
+		PHP_ME(PHPKList, exchangeArray, PHPKListExchangeArrayArgInfo, ZEND_ACC_PUBLIC)
+		PHP_ME(PHPKList, getArrayCopy, PHPKListVoidArgInfo, ZEND_ACC_PUBLIC)
 		{NULL, NULL, NULL}
 	};
 
@@ -117,7 +170,7 @@ namespace kroll
 		}
 	}
 
-	zend_object_value PHPKObjectCreateObject(zend_class_entry *ce TSRMLS_DC)
+	zend_object_value PHPKObjectCreateObject(zend_class_entry *classEntry TSRMLS_DC)
 	{
 		PHPKObject* intern;
 		zend_object_value retval;
@@ -127,7 +180,7 @@ namespace kroll
 		intern = (PHPKObject*) emalloc(sizeof(PHPKObject));
 		memset(intern, 0, sizeof(PHPKObject));
 
-		zend_object_std_init(&intern->std, ce TSRMLS_CC);
+		zend_object_std_init(&intern->std, classEntry TSRMLS_CC);
 
 		// We don't have any default properties in our object
 		// so just start out with a blank properties hash.
@@ -144,7 +197,13 @@ namespace kroll
 			NULL TSRMLS_CC);
 
 		// Use our special handlers for doing common object operations.
-		retval.handlers = &PHPKObjectHandlers;
+		if (classEntry == PHPKListClassEntry)
+			retval.handlers = &PHPKListHandlers;
+		else if (classEntry == PHPKMethodClassEntry)
+			retval.handlers = &PHPKMethodHandlers;
+		else
+			retval.handlers = &PHPKObjectHandlers;
+
 		return retval;
 	}
 
@@ -162,7 +221,7 @@ namespace kroll
 		PHPKObject* kthis = reinterpret_cast<PHPKObject*>(
 			zend_object_store_get_object(zthis TSRMLS_CC));
 		SharedKObject kobject = kthis->kvalue->ToObject();
-		std::string propertyName = PHPUtils::ZValToPropertyName(property);
+		std::string propertyName = PHPUtils::ZvalToPropertyName(property);
 
 		try
 		{
@@ -185,7 +244,7 @@ namespace kroll
 			zend_object_store_get_object(zthis TSRMLS_CC));
 		SharedKObject kobject = kthis->kvalue->ToObject();
 
-		std::string propertyName = PHPUtils::ZValToPropertyName(property);
+		std::string propertyName = PHPUtils::ZvalToPropertyName(property);
 		SharedValue krollValue = PHPUtils::ToKrollValue(value TSRMLS_CC);
 
 		try
@@ -247,7 +306,7 @@ namespace kroll
 		PHPKObject* kthis = reinterpret_cast<PHPKObject*>(
 			zend_object_store_get_object(zthis TSRMLS_CC));
 		SharedKObject kobject = kthis->kvalue->ToObject();
-		std::string propertyName = PHPUtils::ZValToPropertyName(property);
+		std::string propertyName = PHPUtils::ZvalToPropertyName(property);
 
 		if (checkType == 0)
 		{
@@ -282,7 +341,7 @@ namespace kroll
 		PHPKObject* kthis = reinterpret_cast<PHPKObject*>(
 			zend_object_store_get_object(zthis TSRMLS_CC));
 		SharedKObject kobject = kthis->kvalue->ToObject();
-		std::string propertyName = PHPUtils::ZValToPropertyName(property);
+		std::string propertyName = PHPUtils::ZvalToPropertyName(property);
 
 		if (checkType == 0)
 		{
@@ -303,10 +362,20 @@ namespace kroll
 			}
 		}
 	}
-	
+
 	zend_class_entry* PHPKObjectGetClassEntry(const zval* zthis TSRMLS_DC)
 	{
 		return PHPKObjectClassEntry;
+	}
+
+	zend_class_entry* PHPKMethodGetClassEntry(const zval* zthis TSRMLS_DC)
+	{
+		return PHPKMethodClassEntry;
+	}
+
+	zend_class_entry* PHPKListGetClassEntry(const zval* zthis TSRMLS_DC)
+	{
+		return PHPKListClassEntry;
 	}
 
 	void PHPKObjectUnsetProperty(zval* zthis, zval* property TSRMLS_DC)
@@ -314,7 +383,7 @@ namespace kroll
 		PHPKObject* kthis = reinterpret_cast<PHPKObject*>(
 			zend_object_store_get_object(zthis TSRMLS_CC));
 		SharedKObject kobject = kthis->kvalue->ToObject();
-		std::string propertyName = PHPUtils::ZValToPropertyName(property);
+		std::string propertyName = PHPUtils::ZvalToPropertyName(property);
 
 		try
 		{
@@ -369,7 +438,115 @@ namespace kroll
 		}
 	}
 
-	ZEND_FUNCTION(kroll_add_function)
+	PHP_METHOD(PHPKList, offsetExists)
+	{
+		zval *index;
+		if (zend_parse_parameters(ZEND_NUM_ARGS()
+			TSRMLS_CC, "z", &index) == FAILURE) {
+			return;
+		}
+
+		SharedKList klist(GET_MY_KLIST());
+		std::string name(PHPUtils::ZvalToPropertyName(index));
+		RETURN_BOOL((!name.empty() && klist->HasProperty(name.c_str())));
+	}
+
+	PHP_METHOD(PHPKList, offsetGet)
+	{
+		zval *index;
+		if (zend_parse_parameters(ZEND_NUM_ARGS()
+			TSRMLS_CC, "z", &index) == FAILURE)
+		 {
+			return;
+			
+		}
+
+		SharedKList klist(GET_MY_KLIST());
+		std::string name(PHPUtils::ZvalToPropertyName(index));
+		SharedValue returnValue(klist->Get(name.c_str()));
+		PHPUtils::ToPHPValue(returnValue, &return_value);
+	}
+
+	PHP_METHOD(PHPKList, offsetSet)
+	{
+		zval *zindexString, *zvalue;
+		if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz",
+			&zindexString, &zvalue) == FAILURE)
+		{
+			return;
+		}
+
+		SharedKList klist(GET_MY_KLIST());
+		std::string indexString(PHPUtils::ZvalToPropertyName(zindexString));
+		SharedValue value(PHPUtils::ToKrollValue(zvalue TSRMLS_CC));
+
+		int index = 0;
+		if (KList::IsInt(indexString) &&
+			((index = atoi(indexString.c_str())) >= 0))
+		{
+			klist->SetAt((unsigned int) index, value);
+		}
+		else
+		{
+			klist->Set(indexString.c_str(), value);
+		}
+	}
+
+	PHP_METHOD(PHPKList, offsetUnset)
+	{
+		zval *zindex;
+		if (zend_parse_parameters(ZEND_NUM_ARGS()
+			TSRMLS_CC, "z", &zindex) == FAILURE) {
+			return;
+		}
+
+		SharedKList klist(GET_MY_KLIST());
+		std::string indexString(PHPUtils::ZvalToPropertyName(zindex));
+		klist->Set(indexString.c_str(), Value::Undefined);
+	}
+
+	PHP_METHOD(PHPKList, count)
+	{
+		SharedKList klist(GET_MY_KLIST());
+		SharedStringList propertyList = klist->GetPropertyNames();
+		RETVAL_LONG(propertyList->size());
+	}
+
+	PHP_METHOD(PHPKList, append)
+	{
+		zval *zvalue;
+		if (zend_parse_parameters(ZEND_NUM_ARGS()
+			TSRMLS_CC, "z", &zvalue) == FAILURE)
+		{
+			return;
+		}
+
+		SharedKList klist(GET_MY_KLIST());
+		SharedValue value(PHPUtils::ToKrollValue(zvalue TSRMLS_CC));
+		klist->Append(value);
+	} 
+
+	PHP_METHOD(PHPKList, getArrayCopy)
+	{
+		SharedKList klist(GET_MY_KLIST());
+		SharedStringList propertyList = klist->GetPropertyNames();
+
+		array_init(return_value);
+		for (size_t i = 0; i <= propertyList->size(); i++)
+		{
+			SharedString ss(propertyList->at(i));
+			zval* newValue = PHPUtils::ToPHPValue(klist->Get(ss->c_str()));
+			zend_hash_add(HASH_OF(return_value), ss->c_str(), strlen(ss->c_str()) - 1,
+				&newValue, sizeof(zval*), NULL);
+		}
+	}
+
+	PHP_METHOD(PHPKList, exchangeArray)
+	{
+		// TODO: Implement
+	}
+
+	ZEND_FUNCTION(krollAddFunction)
 	{
 		zval *phpWindowContext;
 		char *fname;
@@ -385,9 +562,9 @@ namespace kroll
 			
 		SharedKObject window = object->kvalue->ToObject();
 		std::string functionName(fname, fnameLength);
-		window->Set(functionName.c_str(), Value::NewMethod(new KPHPMethod(functionName.c_str() TSRMLS_CC)));
+		window->Set(functionName.c_str(), Value::NewMethod(new KPHPMethod(functionName.c_str())));
 	}
-	
+
 	namespace PHPUtils
 	{
 		void InitializePHPKrollClasses()
@@ -396,17 +573,21 @@ namespace kroll
 
 			// Initialize the class entry for our classes
 			zend_class_entry kobjectClassEntry;
-			INIT_CLASS_ENTRY(kobjectClassEntry, "KObject", PHPKObjectMethods);
+			INIT_CLASS_ENTRY(kobjectClassEntry, "PHPKObject", PHPKObjectMethods);
 			PHPKObjectClassEntry = zend_register_internal_class(&kobjectClassEntry TSRMLS_CC);
-			PHPKObjectClassEntry->create_object = PHPKObjectCreateObject;
-
 			zend_class_entry kmethodClassEntry;
-			INIT_CLASS_ENTRY(kmethodClassEntry, "KMethod", PHPKMethodMethods);
+			INIT_CLASS_ENTRY(kmethodClassEntry, "PHPKMethod", PHPKMethodMethods);
 			PHPKMethodClassEntry = zend_register_internal_class(&kmethodClassEntry TSRMLS_CC);
+			zend_class_entry klistClassEntry;
+			INIT_CLASS_ENTRY(klistClassEntry, "PHPKList", PHPKListMethods);
+			PHPKListClassEntry = zend_register_internal_class_ex(
+				&klistClassEntry, spl_ce_ArrayObject, "ArrayObject" TSRMLS_CC);
 
 			// PHPKMethod has enough of the same behavior that we can use the same
 			// handler table that PHPKObject uses. This may change in the future.
+			PHPKObjectClassEntry->create_object = PHPKObjectCreateObject;
 			PHPKMethodClassEntry->create_object = PHPKObjectCreateObject;
+			PHPKListClassEntry->create_object = PHPKObjectCreateObject;
 
 			// Create our custom handlers table to override the
 			// default behaviour of our PHP objects.
@@ -421,8 +602,15 @@ namespace kroll
 			PHPKObjectHandlers.has_property = PHPKObjectHasProperty;
 			PHPKObjectHandlers.has_dimension = PHPKObjectHasDimension;
 			PHPKObjectHandlers.get_class_entry = PHPKObjectGetClassEntry;
-			
-			//initialize static functions
+
+			PHPKListHandlers = PHPKObjectHandlers;
+			PHPKListHandlers.get_class_entry = PHPKListGetClassEntry;
+
+			// PHPKList mostly uses the standard handlers.
+			PHPKMethodHandlers = *zend_get_std_object_handlers();
+			PHPKMethodHandlers.get_class_entry = PHPKMethodGetClassEntry;
+
+			// Initialize static functions
 			zend_register_functions(NULL, PHPFunctions, NULL, MODULE_PERSISTENT TSRMLS_CC);
 		}
 
@@ -448,6 +636,18 @@ namespace kroll
 			PHPKObject* internal = reinterpret_cast<PHPKObject*>(
 				zend_object_store_get_object(*returnValue TSRMLS_CC));
 			internal->kvalue = methodValue;
+		}
+
+		void KListToKPHPArray(SharedValue listValue, zval** returnValue)
+		{
+			// Initialize our object with our pre-defined KObject class entry.
+			TSRMLS_FETCH();
+			object_init_ex(*returnValue, PHPKListClassEntry);
+
+			// Place the KValue into the internal struct.
+			PHPKObject* internal = reinterpret_cast<PHPKObject*>(
+				zend_object_store_get_object(*returnValue TSRMLS_CC));
+			internal->kvalue = listValue;
 		}
 	}
 }

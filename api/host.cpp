@@ -730,7 +730,7 @@ namespace kroll
 #ifdef OS_WIN32
 			DebugBreak();
 #else
-			printf("Waiting for debugger (Press Any Key to Continue)...\n");
+			printf("Waiting for debugger (Press Any Key to Continue pid=%i)...\n", getpid());
 			getchar();
 #endif
 		}

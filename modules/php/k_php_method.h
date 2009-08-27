@@ -13,9 +13,8 @@ namespace kroll
 	{
 		public:
 		KPHPMethod(zval* object, const char* methodName);
-		KPHPMethod(HashTable* functionTable, const char *functionName);
-		KPHPMethod(const char *globalFunction TSRMLS_DC);
-		
+		KPHPMethod(const char *functionName);
+
 		virtual ~KPHPMethod();
 		SharedValue Call(const ValueList& args);
 		virtual void Set(const char *name, SharedValue value);
@@ -28,8 +27,8 @@ namespace kroll
 
 		private:
 		zval* object;
-		HashTable* functionTable;
 		char* methodName;
+        zval* zMethodName;
 
 	};
 }
