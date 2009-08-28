@@ -173,21 +173,16 @@ namespace kroll
 
 	void KPHPList::AddKrollValueToPHPArray(SharedValue value, zval *phpArray, unsigned int index)
 	{
-		AddKrollValueToPHPArray(value, phpArray, (unsigned int) zend_hash_num_elements(Z_ARRVAL_P(phpArray)));
-	}
-
-	void KPHPList::AddKrollValueToPHPArray(SharedValue value, zval *phpArray)
-	{
 		if (value->IsNull() || value->IsUndefined())
 		{
-			add_next_index_null(phpArray);
+			add_index_null(phpArray, (unsigned long) index);
 		}
 		else if (value->IsBool())
 		{
 			if (value->ToBool())
-				add_next_index_bool(phpArray, 1);
+				add_index_bool(phpArray, (unsigned long) index, 1);
 			else
-				add_next_index_bool(phpArray, 0);
+				add_index_bool(phpArray, (unsigned long) index, 0);
 		}
 		else if (value->IsNumber())
 		{
@@ -196,11 +191,11 @@ namespace kroll
 			   are doubles, so return a double. This could
 			   cause some PHP to function incorrectly if it's
 			   doing strict type checking. */
-			add_next_index_double(phpArray, value->ToNumber());
+			add_index_double(phpArray, (unsigned long) index, value->ToNumber());
 		}
 		else if (value->IsString())
 		{
-			add_next_index_stringl(phpArray, (char *) value->ToString(), strlen(value->ToString()), 1);
+			add_index_stringl(phpArray, (unsigned long) index, (char *) value->ToString(), strlen(value->ToString()), 1);
 		}
 		else if (value->IsObject())
 		{
@@ -219,8 +214,13 @@ namespace kroll
 			else
 				phpValue = PHPUtils::ToPHPValue(value);
 
-			add_next_index_zval(phpArray, phpValue);
+			add_index_zval(phpArray, (unsigned long) index, phpValue);
 		}
+	}
+
+	void KPHPList::AddKrollValueToPHPArray(SharedValue value, zval *phpArray)
+	{
+		AddKrollValueToPHPArray(value, phpArray, (unsigned int) zend_hash_num_elements(Z_ARRVAL_P(phpArray)));
 	}
 
 }
