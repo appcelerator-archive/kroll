@@ -562,7 +562,7 @@ namespace kroll
 			
 		SharedKObject window = object->kvalue->ToObject();
 		std::string functionName(fname, fnameLength);
-		window->Set(functionName.c_str(), Value::NewMethod(new KPHPMethod(functionName.c_str())));
+		window->Set(functionName.c_str(), Value::NewMethod(new KPHPFunction(functionName.c_str())));
 	}
 
 	namespace PHPUtils
