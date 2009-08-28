@@ -78,6 +78,7 @@ namespace kroll
 		// Initialize our global object to be a simple mapped Kroll object
 		this->globalObject = new StaticBoundObject("");
 		Event::SetEventConstants(this->globalObject.get());
+		Script::Initialize();
 	}
 
 	void Host::SetupApplication(int argc, const char* argv[])

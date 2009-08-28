@@ -12,12 +12,14 @@ namespace kroll
 	{
 		public:
 		PHPEvaluator();
+		void CanEvaluate(const ValueList& args, SharedValue result);
+		void CanPreprocess(const ValueList& args, SharedValue result);
 		void Evaluate(const ValueList& args, SharedValue result);
 		void Preprocess(const ValueList& args, SharedValue result);
 		
 		protected:
 		std::string CreateContextName();
-		void FillServerVars(Poco::URI& uri, SharedKObject headers, std::string& httpMethod TSRMLS_DC);
+		void FillServerVars(Poco::URI& uri, SharedKObject scope TSRMLS_DC);
 		
 	};
 }

@@ -13,8 +13,24 @@ namespace kroll
 {
 
 	RubyEvaluator::RubyEvaluator() :
-		next_id(0)
+		StaticBoundObject("Ruby"), next_id(0)
 	{
+		/**
+		 * @tiapi(method=True,name=Ruby.canEvaluate,since=0.7)
+		 * @tiarg[String, mimeType] Code mime type
+		 * @tiresult[bool] whether or not the mimetype is understood by Ruby
+		 */
+		SetMethod("canEvaluate", &RubyEvaluator::CanEvaluate);
+		
+		/**
+		 * @tiapi(method=Ruby,name=Ruby.evaluate,since=0.2) Evaluates a string as Ruby code
+		 * @tiarg[String, mimeType] Code mime type (normally "text/ruby")
+		 * @tiarg[String, name] name of the script source
+		 * @tiarg[String, code] Ruby script code
+		 * @tiarg[Object, scope] global variable scope
+		 * @tiresult[Any] result of the evaluation
+		 */
+		SetMethod("evaluate", &RubyEvaluator::Evaluate);
 	}
 
 	RubyEvaluator::~RubyEvaluator()
@@ -109,28 +125,43 @@ namespace kroll
 		VALUE code = rb_ary_shift(args);
 		return rb_funcall(ctx, rb_intern("instance_eval"), 1, code);
 	}
-
-	SharedValue RubyEvaluator::Call(const ValueList& args)
+	
+	void RubyEvaluator::CanEvaluate(const ValueList& args, SharedValue result)
 	{
-		if (args.size() != 3
-			|| !args.at(1)->IsString()
-			|| !args.at(2)->IsObject())
-			return Value::Undefined;
-		const char* code = args.at(1)->ToString();
-		global_object = args.at(2)->ToObject();
+		args.VerifyException("canEvaluate", "s");
+		
+		result->SetBool(false);
+		std::string mimeType = args.GetString(0);
+		if (mimeType == "text/ruby")
+		{
+			result->SetBool(true);
+		}
+	}
+
+	void RubyEvaluator::Evaluate(const ValueList& args, SharedValue result)
+	{
+		args.VerifyException("evaluate", "s s s o");
+		
+		//const char *mimeType = args.GetString(0).c_str();
+		std::string name = args.GetString(1);
+		std::string code = args.GetString(2);
+		global_object = args.GetObject(3);
+
 		VALUE ctx = this->GetContext(global_object);
 
 		VALUE rargs = rb_ary_new();
 		rb_ary_push(rargs, ctx);
-		rb_ary_push(rargs, rb_str_new2(code));
+		rb_ary_push(rargs, rb_str_new2(code.c_str()));
 
 		int error;
-		VALUE result = rb_protect(reval_do_call, rargs, &error);
+		VALUE returnValue = rb_protect(reval_do_call, rargs, &error);
 		RubyEvaluator::ContextToGlobal(ctx, global_object);
 
 		if (error != 0)
 		{
-			std::string error("An error occured while parsing Ruby on the page: ");
+			std::string error("An error occured while parsing Ruby (");
+			error += name;
+			error += "): ";
 
 			// Display a stringified version of the exception.
 			VALUE exception = rb_gv_get("$!");
@@ -152,10 +183,11 @@ namespace kroll
 			Logger *logger = Logger::Get("Ruby");
 			logger->Error(error);
 
-			return Value::Undefined;
+			result->SetUndefined();
+			return;
 		}
 
-		return RubyUtils::ToKrollValue(result);
+		result->SetValue(RubyUtils::ToKrollValue(returnValue));
 	}
 
 	void RubyEvaluator::ContextToGlobal(VALUE ctx, SharedKObject o)
@@ -178,19 +210,5 @@ namespace kroll
 			SharedValue meth = Value::NewMethod(new KRubyMethod(rmeth));
 			o->Set(meth_name, meth);
 		}
-	}
-
-	void RubyEvaluator::Set(const char *name, SharedValue value)
-	{
-	}
-
-	SharedValue RubyEvaluator::Get(const char *name)
-	{
-		return Value::Undefined;
-	}
-
-	SharedStringList RubyEvaluator::GetPropertyNames()
-	{
-		return SharedStringList();
 	}
 }

@@ -88,6 +88,7 @@ namespace kroll
 		PHPModule::instance_ = NULL;
 
 		SharedKObject global = this->host->GetGlobalObject();
+		Script::GetInstance()->RemoveScriptEvaluator(this->binding);
 		global->Set("PHP", Value::Undefined);
 		this->binding->Set("evaluate", Value::Undefined);
 		this->binding = NULL;
@@ -101,6 +102,7 @@ namespace kroll
 		SharedKObject global = this->host->GetGlobalObject();
 		this->binding = new PHPEvaluator();
 		global->Set("PHP", Value::NewObject(this->binding));
+		Script::GetInstance()->AddScriptEvaluator(this->binding);
 		
 		zval *titaniumValue = PHPUtils::ToPHPValue(Value::NewObject(global));
 		ZEND_SET_SYMBOL(&EG(symbol_table), "Titanium", titaniumValue);
