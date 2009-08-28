@@ -43,6 +43,7 @@ namespace kroll
 		static std::string CREATED;
 		static std::string ACTIVATE;
 		static std::string CLICKED;
+		static std::string DOUBLE_CLICKED;
 		static std::string EXIT;
 		static std::string READ;
 	};
