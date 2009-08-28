@@ -61,9 +61,9 @@ namespace kroll
 		args.VerifyException("evaluate", "s s s o");
 		
 		TSRMLS_FETCH();
-		const char *mimeType = args.GetString(0).c_str();
-		const char *name = args.GetString(1).c_str();
-		const char* code = args.GetString(2).c_str();
+		std::string mimeType = args.GetString(0);
+		std::string name = args.GetString(1);
+		std::string code = args.GetString(2);
 		SharedKObject windowGlobal = args.GetObject(3);
 		SharedValue kv = Value::Undefined;
 
@@ -92,13 +92,13 @@ namespace kroll
 			 * See: main/main.c line 969 */
 			PG(during_request_startup) = 0;
 			
-			zval *windowValue = PHPUtils::ToPHPValue(args.at(2));
+			zval *windowValue = PHPUtils::ToPHPValue(args.at(3));
 			ZEND_SET_SYMBOL(&EG(symbol_table), "window", windowValue);
 			SharedValue document = windowGlobal->Get("document");
 			zval *documentValue = PHPUtils::ToPHPValue(document);
 			ZEND_SET_SYMBOL(&EG(symbol_table), "document", documentValue);
 			
-			zend_eval_string((char *) codeString.str().c_str(), NULL, (char *) name TSRMLS_CC);
+			zend_eval_string((char *) codeString.str().c_str(), NULL, (char *) name.c_str() TSRMLS_CC);
 		} zend_catch {
 		} zend_end_try();
 
