@@ -111,7 +111,7 @@ namespace kroll
 
 		result->SetBool(false);
 		std::string url = args.GetString(0);
-		if (url.substr(url.size()-6) == ".phtml")
+		if (url.substr(url.size()-6) == ".php")
 		{
 			result->SetBool(true);
 		}
