@@ -62,10 +62,16 @@ namespace kroll {
 			PHPUtils::ToPHPValue(args.at(i), &pzargs[i]);
 		}
 
+		int result;
 		zval* zReturnValue;
 		MAKE_STD_ZVAL(zReturnValue);
-		int result = call_user_function(functionTable, passObject,
+
+		zend_try {
+			result = call_user_function(functionTable, passObject,
 			zMethodName, zReturnValue, args.size(), (zval**) pzargs TSRMLS_CC);
+		} zend_catch {
+			result = FAILURE;
+		} zend_end_try();
 
 		// Cleanup the arguments.
 		for (int i = 0; i < args.size(); i++)
