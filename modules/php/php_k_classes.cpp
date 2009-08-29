@@ -35,6 +35,7 @@ namespace kroll
 	static int PHPKObjectHasProperty(zval* zthis, zval* property, int type TSRMLS_DC);
 	static int PHPKObjectHasDimension(zval* zthis, zval* property, int type TSRMLS_DC);
 
+	PHP_METHOD(PHPKObject, __toString);
 	PHP_METHOD(PHPKObject, __call);
 	PHP_METHOD(PHPKMethod, __invoke);
 	PHP_METHOD(PHPKList, offsetExists);
@@ -68,6 +69,7 @@ namespace kroll
 	static function_entry PHPKObjectMethods[] =
 	{
 		PHP_ME(PHPKObject, __call, PHPKObjectCallArgInfo, ZEND_ACC_PUBLIC)
+		PHP_ME(PHPKObject, __toString, NULL, ZEND_ACC_PUBLIC)
 		{NULL, NULL, NULL}
 	};
 
@@ -75,6 +77,7 @@ namespace kroll
 	{
 		PHP_ME(PHPKMethod, __invoke, NULL, ZEND_ACC_PUBLIC)
 		PHP_ME(PHPKObject, __call, PHPKObjectCallArgInfo, ZEND_ACC_PUBLIC)
+		PHP_ME(PHPKObject, __toString, NULL, ZEND_ACC_PUBLIC)
 		{NULL, NULL, NULL}
 	};
 
@@ -96,6 +99,8 @@ namespace kroll
 
 	static function_entry PHPKListMethods[] =
 	{
+		PHP_ME(PHPKObject, __call, PHPKObjectCallArgInfo, ZEND_ACC_PUBLIC)
+		PHP_ME(PHPKObject, __toString, NULL, ZEND_ACC_PUBLIC)
 		PHP_ME(PHPKList, offsetExists, PHPKListOffsetGetArgInfo, ZEND_ACC_PUBLIC)
 		PHP_ME(PHPKList, offsetGet, PHPKListOffsetGetArgInfo, ZEND_ACC_PUBLIC)
 		PHP_ME(PHPKList, offsetSet, PHPKListOffsetSetArgInfo, ZEND_ACC_PUBLIC)
@@ -105,6 +110,14 @@ namespace kroll
 		PHP_ME(PHPKList, getArrayCopy, PHPKListVoidArgInfo, ZEND_ACC_PUBLIC)
 		{NULL, NULL, NULL}
 	};
+
+	PHP_METHOD(PHPKObject, __toString)
+	{
+		SharedValue kvalue(reinterpret_cast<PHPKObject*>(
+			zend_object_store_get_object(getThis() TSRMLS_CC))->kvalue);
+		SharedString ss = kvalue->DisplayString();
+		ZVAL_STRINGL(return_value, (char *) ss->c_str(), ss->size(), 1);
+	}
 
 	PHP_METHOD(PHPKObject, __call)
 	{
