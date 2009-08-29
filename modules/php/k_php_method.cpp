@@ -63,11 +63,7 @@ namespace kroll {
 		callInfo.function_table = &classEntry->function_table;
 
 		int result;
-		zend_try {
-			zend_call_function(&callInfo, NULL TSRMLS_CC);
-		} zend_catch {
-			result = FAILURE;
-		} zend_end_try();
+		zend_call_function(&callInfo, NULL TSRMLS_CC);
 
 		for (int i = 0; i < args.size(); i++)
 		{
