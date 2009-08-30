@@ -8,16 +8,14 @@
 
 namespace kroll
 {
-	class RubyEvaluator : public KMethod
+	class RubyEvaluator : public StaticBoundObject
 	{
 		public:
 		RubyEvaluator();
 		~RubyEvaluator();
 
-		virtual SharedValue Call(const ValueList& args);
-		virtual void Set(const char *, SharedValue);
-		virtual SharedValue Get(const char *);
-		virtual SharedStringList GetPropertyNames();
+		void CanEvaluate(const ValueList& args, SharedValue result);
+		void Evaluate(const ValueList& args, SharedValue result);
 
 		private:
 		int next_id;

@@ -14,7 +14,7 @@
 #include <Poco/Path.h>
 #include <Poco/File.h>
 
-#define LOGGER_MAX_ENTRY_SIZE 512
+#define LOGGER_MAX_ENTRY_SIZE 2048
 
 using Poco::PatternFormatter;
 using Poco::Path;

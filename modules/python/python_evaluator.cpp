@@ -6,34 +6,66 @@
 
 #include "python_module.h"
 
-	SharedValue PythonEvaluator::Call(const ValueList& args)
+namespace kroll
+{
+	PythonEvaluator::PythonEvaluator()
+		: StaticBoundObject("Python")
+	{
+		/**
+		 * @tiapi(method=True,name=Python.canEvaluate,since=0.7)
+		 * @tiarg[String, mimeType] Code mime type
+		 * @tiresult[bool] whether or not the mimetype is understood by Python
+		 */
+		SetMethod("canEvaluate", &PythonEvaluator::CanEvaluate);
+		
+		/**
+		 * @tiapi(method=True,name=Python.evaluate,since=0.2) Evaluates a string as Python code
+		 * @tiarg[String, mimeType] Code mime type (normally "text/python")
+		 * @tiarg[String, name] name of the script source
+		 * @tiarg[String, code] Python script code
+		 * @tiarg[Object, scope] global variable scope
+		 * @tiresult[Any] result of the evaluation
+		 */
+		SetMethod("evaluate", &PythonEvaluator::Evaluate);
+	}
+	
+	void PythonEvaluator::CanEvaluate(const ValueList& args, SharedValue result)
+	{
+		args.VerifyException("canEvaluate", "s");
+		
+		result->SetBool(false);
+		std::string mimeType = args.GetString(0);
+		if (mimeType == "text/python")
+		{
+			result->SetBool(true);
+		}
+	}
+	
+	void PythonEvaluator::Evaluate(const ValueList& args, SharedValue result)
 	{
 		PyLockGIL lock;
+		args.VerifyException("evaluate", "s s s o");
 
-		if (args.size() != 3
-			|| !args.at(1)->IsString()
-			|| !args.at(2)->IsObject())
-		{
-			return Value::Undefined;
-		}
-
+		//const char *mimeType = args.GetString(0).c_str();
+		const char *name = args.GetString(1).c_str();
+		std::string code = args.GetString(2);
+		SharedKObject windowGlobal = args.GetObject(3);
+		
 		// Normalize tabs and convert line-feeds
-		std::string code = args[1]->ToString();
 		PythonEvaluator::Strip(code);
 		PythonEvaluator::ConvertLineEndings(code);
 
 		// Insert all the js global properties into a copy of globals()
-		SharedKObject window_global = args.at(2)->ToObject();
-		PyObject* main_module = PyImport_AddModule("__main__");
-		PyObject* globals = PyDict_Copy(PyModule_GetDict(main_module));
-		KObjectPropsToDict(window_global, globals);
+		PyObject* mainModule = PyImport_AddModule("__main__");
+		PyObject* globals = PyDict_Copy(PyModule_GetDict(mainModule));
+		KObjectPropsToDict(windowGlobal, globals);
 
 		// Another way to do this is to use a Python sub-interpreter,
 		// but that seems to put us into restricted execution mode
 		// sometimes. So we're going to try to isolate the variables
 		// in this script by compiling it and supplying our own copy
 		// of the globals.
-		PyObject* compiled = Py_CompileStringFlags(code.c_str(), "<window>", Py_file_input, NULL);
+		PyObject* compiled = Py_CompileStringFlags(code.c_str(), name, Py_file_input, NULL);
 		if (compiled == NULL)
 		{
 			Logger *logger = Logger::Get("Python");
@@ -43,16 +75,17 @@
 
 			PyErr_Print();
 			Py_DECREF(globals);
-			return Value::Undefined;
+			result->SetUndefined();
+			return;
 		}
 
-		PyObject *return_value = PyEval_EvalCode((PyCodeObject*) compiled, globals, globals);
+		PyObject *returnValue = PyEval_EvalCode((PyCodeObject*) compiled, globals, globals);
 
 		// Clear the error indicator before doing anything else. It might
 		// cause a a false positive for errors in other bits of Python.
 		// TODO: Logging
 		SharedValue kv = Value::Undefined;
-		if (return_value == NULL && PyErr_Occurred())
+		if (returnValue == NULL && PyErr_Occurred())
 		{
 			Logger *logger = Logger::Get("Python");
 			std::string error("An error occured while parsing Python on the page: ");
@@ -63,14 +96,14 @@
 		}
 		else
 		{
-			SharedValue kv = PythonUtils::ToKrollValue(return_value);
-			Py_DECREF(return_value);
+			SharedValue kv = PythonUtils::ToKrollValue(returnValue);
+			Py_DECREF(returnValue);
 		}
 
 		// Move all the new variables in globals() to the window context.
 		// These are things that are now defined globally in JS.
-		DictToKObjectProps(globals, window_global);
-		return kv;
+		DictToKObjectProps(globals, windowGlobal);
+		result->SetValue(kv);
 	}
 
 	void PythonEvaluator::KObjectPropsToDict(SharedKObject o, PyObject* pyobj)
@@ -78,7 +111,7 @@
 		PyObject* builtins = PyDict_GetItemString(pyobj, "__builtins__");
 
 		SharedStringList props = o->GetPropertyNames();
-		for (size_t i = 0; i < props->size() / 2; i++)
+		for (size_t i = 0; i < props->size(); i++)
 		{
 			const char* k = props->at(i)->c_str();
 
@@ -126,20 +159,6 @@
 		}
 	}
 
-	void PythonEvaluator::Set(const char *name, SharedValue value)
-	{
-	}
-
-	SharedValue PythonEvaluator::Get(const char *name)
-	{
-		return Value::Undefined;
-	}
-
-	SharedStringList PythonEvaluator::GetPropertyNames()
-	{
-		return SharedStringList();
-	}
-
 	void PythonEvaluator::Strip(std::string &code)
 	{
 		size_t startpos = code.find_first_not_of(" \t\n");
@@ -160,3 +179,4 @@
 			loc = code.find("\r\n");
 		}
 	}
+}

@@ -44,22 +44,21 @@ namespace kroll
 			}
 			else if (IS_OBJECT == type)
 			{
-				if (HAS_CLASS_ENTRY(*value) && Z_OBJCE_P(value) == zend_ce_closure)
+				if (HAS_CLASS_ENTRY(*value) &&
+					Z_OBJCE_P(value) == PHPKObjectClassEntry ||
+					Z_OBJCE_P(value) == PHPKMethodClassEntry)
+				{
+					PHPKObject* phpKObject = reinterpret_cast<PHPKObject*>(
+						zend_object_store_get_object(value TSRMLS_CC));
+					returnValue = phpKObject->kvalue;
+				}
+				else if (HAS_CLASS_ENTRY(*value) && Z_OBJCE_P(value) == zend_ce_closure)
 				{
 					returnValue = Value::NewMethod(new KPHPMethod(value, "__invoke"));
 				}
 				else
 				{
-					if (HAS_CLASS_ENTRY(*value) && Z_OBJCE_P(value) == PHPKObjectClassEntry)
-					{
-						PHPKObject* phpKObject = reinterpret_cast<PHPKObject*>(
-							zend_object_store_get_object(value TSRMLS_CC));
-						returnValue = phpKObject->kvalue;
-					}
-					else
-					{
-						returnValue = Value::NewObject(new KPHPObject(value));
-					}
+					returnValue = Value::NewObject(new KPHPObject(value));
 				}
 			}
 			else if (IS_RESOURCE == type)
@@ -117,7 +116,7 @@ namespace kroll
 			}
 			else if (value->IsList())
 			{
-				// TODO: Turn this list into a ArrayObject-style object
+				KListToKPHPArray(value, returnValue);
 			}
 			else
 			{
@@ -125,7 +124,7 @@ namespace kroll
 			}
 		}
 
-		std::string ZValToPropertyName(zval* phpPropertyName)
+		std::string ZvalToPropertyName(zval* phpPropertyName)
 		{
 			// This will destroy the original value.
 			convert_to_string(phpPropertyName);
@@ -203,7 +202,19 @@ namespace kroll
 			zend_compare_objects(&result, val1, val2 TSRMLS_CC);
 			return Z_LVAL_P(&result) == 0;
 		}
-		
+
+		int HashZvalCompareCallback(const zval **z1, const zval **z2 TSRMLS_DC)
+		{
+			zval result;
+
+			if (compare_function(&result, (zval *) *z1, (zval *) *z2 TSRMLS_CC) == FAILURE)
+			{
+				return 1;
+			}
+
+			return Z_LVAL(result);
+		}
+
 		SharedStringList GetClassMethods(zend_class_entry *ce TSRMLS_DC)
 		{
 			/* copied from internal impl of get_class_methods, (zend_builtin_functions.c, line 1062)

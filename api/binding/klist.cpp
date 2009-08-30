@@ -60,9 +60,9 @@ namespace kroll
 		return ss.str();
 	}
 
-	bool KList::IsInt(const char* name)
+	bool KList::IsInt(const std::string& name)
 	{
-		for (size_t i = 0; i < strlen(name); i++)
+		for (size_t i = 0; i < strlen(name.c_str()); i++)
 		{
 			if (!isdigit(name[i]))
 				return false;

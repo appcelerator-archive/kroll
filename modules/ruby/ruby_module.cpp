@@ -34,7 +34,7 @@ namespace kroll
 	{
 		SharedKObject global = this->host->GetGlobalObject();
 		global->Set("Ruby", Value::Undefined);
-		this->binding->Set("evaluate", Value::Undefined);
+		Script::GetInstance()->RemoveScriptEvaluator(this->binding);
 		this->binding = NULL;
 		RubyModule::instance_ = NULL;
 
@@ -45,17 +45,10 @@ namespace kroll
 	{
 		// Expose the Ruby evaluator into Kroll
 		SharedKObject global = this->host->GetGlobalObject();
-		this->binding = new StaticBoundObject();
+		this->binding = new RubyEvaluator();
 		global->Set("Ruby", Value::NewObject(binding));
-		SharedKMethod evaluator = new RubyEvaluator();
-		/**
-		 * @tiapi(method=True,name=Ruby.evaluate,since=0.2) Evaluates a string as ruby code
-		 * @tiarg(for=Ruby.evaluate,name=code,type=String) ruby script code
-		 * @tiarg(for=Ruby.evaluate,name=scope,type=Object) global variable scope
-		 * @tiresult(for=Ruby.evaluate,type=any) result of the evaluation
-		 */
-		binding->Set("evaluate", Value::NewMethod(evaluator));
-
+		Script::GetInstance()->AddScriptEvaluator(this->binding);
+		
 		// Bind the API global constant
 		VALUE ruby_api_val = RubyUtils::KObjectToRubyValue(Value::NewObject(global));
 		rb_define_global_const(PRODUCT_NAME, ruby_api_val);

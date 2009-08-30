@@ -27,6 +27,7 @@ namespace kroll
 	std::string Event::CREATED = "create";
 	std::string Event::ACTIVATE = "activate";
 	std::string Event::CLICKED = "clicked";
+	std::string Event::DOUBLE_CLICKED = "double.clicked";
 	std::string Event::EXIT = "exit";
 	std::string Event::READ = "read";
 

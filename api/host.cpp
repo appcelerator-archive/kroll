@@ -78,6 +78,7 @@ namespace kroll
 		// Initialize our global object to be a simple mapped Kroll object
 		this->globalObject = new StaticBoundObject("");
 		Event::SetEventConstants(this->globalObject.get());
+		Script::Initialize();
 	}
 
 	void Host::SetupApplication(int argc, const char* argv[])
@@ -730,7 +731,7 @@ namespace kroll
 #ifdef OS_WIN32
 			DebugBreak();
 #else
-			printf("Waiting for debugger (Press Any Key to Continue)...\n");
+			printf("Waiting for debugger (Press Any Key to Continue pid=%i)...\n", getpid());
 			getchar();
 #endif
 		}
