@@ -76,11 +76,11 @@ namespace kroll
 
 		/* check script syntax */
 		bool syntax = JSCheckScriptSyntax(context, js_code, NULL, 0, &exception);
-		JSStringRelease(js_code);
 		
 		if (!syntax)
 		{
 			SharedValue e = KJSUtil::ToKrollValue(exception, context, NULL);
+			JSStringRelease(js_code);
 			throw ValueException(e);
 		}
 
@@ -88,6 +88,9 @@ namespace kroll
 		JSValueRef ret = JSEvaluateScript(context, js_code,
 		                                  NULL, NULL,
 		                                  1, &exception);
+		
+		JSStringRelease(js_code);
+		
 		if (ret == NULL)
 		{
 			SharedValue e = KJSUtil::ToKrollValue(exception, context, NULL);
