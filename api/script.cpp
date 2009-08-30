@@ -5,6 +5,8 @@
  */
 
 #include "script.h"
+#include <Poco/File.h>
+#include <Poco/TemporaryFile.h>
 
 namespace kroll
 {
@@ -21,6 +23,16 @@ namespace kroll
 	void Script::Initialize()
 	{
 		instance = new Script();
+	}
+	
+	/*static*/
+	bool Script::HasExtension(const char *script, const char *extension)
+	{
+		std::string scriptStr(script);
+		std::string extStr(".");
+		extStr += extension;
+		
+		return scriptStr.size() >= extStr.size() && scriptStr.substr(scriptStr.size()-extStr.size()) == extStr;
 	}
 	
 	void Script::AddScriptEvaluator(SharedKObject evaluator)
@@ -115,9 +127,22 @@ namespace kroll
 				args.push_back(Value::NewObject(scope));
 				
 				SharedValue result = preprocess->Call(args);
+				
 				if (result->IsString())
 				{
-					return new std::string(result->ToString());
+					// TODO : have the preprocessor return mime type?
+					std::string extension = url;
+					extension = extension.substr(extension.rfind("."));
+					
+					Poco::File tempFile(Poco::TemporaryFile::tempName()+extension);
+					Poco::TemporaryFile::registerForDeletion(tempFile.path());
+					tempFile.createFile();
+ 
+					std::ofstream ostream(tempFile.path().c_str());
+					ostream << result->ToString();
+					ostream.close();
+				
+					return new std::string(URLUtils::PathToFileURL(tempFile.path()));
 				}
 			}
 			else

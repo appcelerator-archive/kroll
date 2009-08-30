@@ -109,9 +109,9 @@ namespace kroll
 	{
 		args.VerifyException("canPreprocess", "s");
 
-		result->SetBool(false);
 		std::string url = args.GetString(0);
-		if (url.substr(url.size()-6) == ".php")
+		result->SetBool(false);
+		if (Script::HasExtension(url.c_str(), "php"))
 		{
 			result->SetBool(true);
 		}
@@ -174,7 +174,7 @@ namespace kroll
 		
 		std::string url = args.GetString(0);
 		Poco::URI uri(url);
-		const char *path = URLUtils::URLToPath(url).c_str();
+		std::string path = URLUtils::URLToPath(url);
 		
 		SharedKObject scope = args.GetObject(1);
 		TSRMLS_FETCH();
@@ -185,11 +185,11 @@ namespace kroll
 			 * See: main/main.c line 969 */
 			PG(during_request_startup) = 0;
 			
-			FillServerVars(uri, scope TSRMLS_CC);
+			//FillServerVars(uri, scope TSRMLS_CC);
 			
 			zend_file_handle script;
 			script.type = ZEND_HANDLE_FP;
-			script.filename = (char*)path;
+			script.filename = (char*)path.c_str();
 			script.opened_path = NULL;
 			script.free_filename = 0;
 			script.handle.fp = fopen(script.filename, "rb");

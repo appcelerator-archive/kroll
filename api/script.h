@@ -16,6 +16,7 @@ namespace kroll
 	public:
 		static SharedPtr<Script> GetInstance();
 		static void Initialize();
+		static bool HasExtension(const char *url, const char *ext);
 		
 		void AddScriptEvaluator(SharedKObject evaluator);
 		void RemoveScriptEvaluator(SharedKObject evaluator);
