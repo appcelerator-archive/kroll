@@ -174,6 +174,8 @@ namespace kroll
 		args.VerifyException("preprocess", "s o");
 		
 		std::string url = args.GetString(0);
+		Logger::Get("PHP")->Debug("preprocessing php => %s", url.c_str());
+		
 		Poco::URI uri(url);
 		std::string path = URLUtils::URLToPath(url);
 		

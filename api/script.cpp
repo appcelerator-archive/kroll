@@ -131,8 +131,10 @@ namespace kroll
 				if (result->IsString())
 				{
 					// TODO : have the preprocessor return mime type?
+					// Forcing to HTML extension makes pages display correctly, but scripts fail to execute
 					std::string extension = url;
 					extension = extension.substr(extension.rfind("."));
+					//std::string extension = "html";
 					
 					Poco::File tempFile(Poco::TemporaryFile::tempName()+extension);
 					Poco::TemporaryFile::registerForDeletion(tempFile.path());
