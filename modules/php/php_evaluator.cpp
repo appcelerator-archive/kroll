@@ -5,6 +5,7 @@
  */
 
 #include "php_module.h"
+#include <sstream>
  
 namespace kroll
 {	

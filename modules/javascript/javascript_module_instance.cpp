@@ -69,12 +69,15 @@ namespace kroll
 		JSStringRef prop_name = JSStringCreateWithUTF8CString(PRODUCT_NAME);
 		JSObjectSetProperty(context, global_object, prop_name,
 		                    js_api, kJSPropertyAttributeNone, NULL);
+		JSStringRelease(prop_name);
 
 		/* Try to run the script */
 		JSStringRef js_code = JSStringCreateWithUTF8CString(this->code.c_str());
 
 		/* check script syntax */
 		bool syntax = JSCheckScriptSyntax(context, js_code, NULL, 0, &exception);
+		JSStringRelease(js_code);
+		
 		if (!syntax)
 		{
 			SharedValue e = KJSUtil::ToKrollValue(exception, context, NULL);
