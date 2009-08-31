@@ -177,7 +177,7 @@ namespace kroll
 		catch (ValueException& e)
 		{
 			zend_throw_exception(zend_exception_get_default(TSRMLS_C),
-				(char*) e.AsString().c_str(), 666 TSRMLS_CC);
+				(char*) e.ToString().c_str(), 666 TSRMLS_CC);
 			RETVAL_NULL();
 			return;
 		}
@@ -244,7 +244,7 @@ namespace kroll
 		catch (ValueException& e)
 		{
 			zend_throw_exception(zend_exception_get_default(TSRMLS_C),
-				(char*) e.AsString().c_str(), 666 TSRMLS_CC);
+				(char*) e.ToString().c_str(), 666 TSRMLS_CC);
 			zval* retval = NULL;
 			ZVAL_NULL(retval);
 			return retval;
@@ -267,7 +267,7 @@ namespace kroll
 		catch (ValueException& e)
 		{
 			zend_throw_exception(
-				zend_exception_get_default(TSRMLS_C), (char*) e.AsString().c_str(), 666 TSRMLS_CC);
+				zend_exception_get_default(TSRMLS_C), (char*) e.ToString().c_str(), 666 TSRMLS_CC);
 		}
 	}
 
@@ -296,7 +296,7 @@ namespace kroll
 		catch (ValueException& e)
 		{
 			zend_throw_exception(zend_exception_get_default(TSRMLS_C),
-				(char *) e.AsString().c_str(), 666 TSRMLS_CC);
+				(char *) e.ToString().c_str(), 666 TSRMLS_CC);
 		}
 
 		return 0;
@@ -405,7 +405,7 @@ namespace kroll
 		catch (ValueException& e)
 		{
 			zend_throw_exception(
-				zend_exception_get_default(TSRMLS_C), (char*) e.AsString().c_str(), 666 TSRMLS_CC);
+				zend_exception_get_default(TSRMLS_C), (char*) e.ToString().c_str(), 666 TSRMLS_CC);
 		}
 	}
 
@@ -445,7 +445,7 @@ namespace kroll
 		{
 			// TODO: Create an exception class that can hold a SharedValue.
 			zend_throw_exception(zend_exception_get_default(TSRMLS_C),
-				(char*) e.AsString().c_str(), 666 TSRMLS_CC);
+				(char*) e.ToString().c_str(), 666 TSRMLS_CC);
 			RETVAL_NULL();
 			return;
 		}

@@ -61,7 +61,7 @@ namespace kroll
 		}
 	}
 
-	std::string& ValueException::AsString()
+	std::string& ValueException::ToString()
 	{
 		this->displayString = *this->DisplayString();
 		return this->displayString;
