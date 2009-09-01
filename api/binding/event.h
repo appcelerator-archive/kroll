@@ -17,12 +17,14 @@ namespace kroll
 		void _GetType(const ValueList&, SharedValue result);
 		void _GetTimestamp(const ValueList&, SharedValue result);
 		void _StopPropagation(const ValueList&, SharedValue result);
+		void _PreventDefault(const ValueList&, SharedValue result);
 		static void SetEventConstants(KObject* target);
 
 		AutoPtr<KEventObject> target;
 		std::string& eventName;
 		Poco::Timestamp timestamp;
 		bool stopped;
+		bool preventedDefault;
 		static std::string ALL;
 		static std::string FOCUSED;
 		static std::string UNFOCUSED;

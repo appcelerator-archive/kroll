@@ -116,15 +116,15 @@ namespace kroll
 		KEventObject::root->FireEvent(event);
 	}
 
-	void KEventObject::FireEvent(std::string& eventName)
+	bool KEventObject::FireEvent(std::string& eventName)
 	{
 		this->duplicate();
 		AutoPtr<KEventObject> target = this;
 		AutoPtr<Event> event = new Event(target, eventName);
-		this->FireEvent(event);
+		return this->FireEvent(event);
 	}
 
-	void KEventObject::FireEvent(AutoPtr<Event> event)
+	bool KEventObject::FireEvent(AutoPtr<Event> event)
 	{
 		std::vector<EventListener*> listeners;
 		{
@@ -142,11 +142,13 @@ namespace kroll
 			listener->FireEventIfMatches(event);
 
 			if (event->stopped)
-				return;
+				return !event->preventedDefault;
 		}
 
 		if (!this->isRoot)
 			KEventObject::root->FireEvent(event);
+
+		return !event->preventedDefault;
 	}
 
 	void KEventObject::_AddEventListener(const ValueList& args, SharedValue result)

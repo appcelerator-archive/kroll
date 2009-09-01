@@ -36,8 +36,8 @@ namespace kroll
 		unsigned int AddEventListenerForAllEvents(SharedKMethod callback);
 		virtual void RemoveEventListener(std::string& eventName, SharedKMethod listener);
 		virtual void RemoveEventListener(std::string& eventName, unsigned int id);
-		virtual void FireEvent(std::string& eventName);
-		virtual void FireEvent(AutoPtr<Event>);
+		virtual bool FireEvent(std::string& eventName);
+		virtual bool FireEvent(AutoPtr<Event>);
 		void _AddEventListener(const ValueList&, SharedValue result);
 		void _RemoveEventListener(const ValueList&, SharedValue result);
 		static void FireRootEvent(std::string& eventName);

@@ -35,13 +35,15 @@ namespace kroll
 		AccessorBoundObject("Event"),
 		target(target),
 		eventName(eventName),
-		stopped(false)
+		stopped(false),
+		preventedDefault(false)
 	{
 		Event::SetEventConstants(this);
 		this->SetMethod("getTarget", &Event::_GetTarget);
 		this->SetMethod("getType", &Event::_GetType);
 		this->SetMethod("getTimestamp", &Event::_GetTimestamp);
 		this->SetMethod("stopPropagation", &Event::_StopPropagation);
+		this->SetMethod("preventDefault", &Event::_PreventDefault);
 	}
 
 	void Event::_GetTarget(const ValueList&, SharedValue result)
@@ -62,6 +64,12 @@ namespace kroll
 	void Event::_StopPropagation(const ValueList&, SharedValue result)
 	{
 		this->stopped = true;
+		this->preventedDefault = true;
+	}
+
+	void Event::_PreventDefault(const ValueList&, SharedValue result)
+	{
+		this->preventedDefault = true;
 	}
 
 	void Event::SetEventConstants(KObject* target)
