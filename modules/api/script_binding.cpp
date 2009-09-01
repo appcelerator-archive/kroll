@@ -116,6 +116,11 @@ namespace kroll
 		
 		const char *url = args.GetString(0).c_str();
 		SharedKObject scope = args.GetObject(1);
-		result->SetString(Script::GetInstance()->Preprocess(url, scope));
+		
+		AutoPtr<PreprocessData> data = Script::GetInstance()->Preprocess(url, scope);
+		SharedKObject o = new StaticBoundObject();
+		o->Set("mimeType", Value::NewString(data->mimeType.c_str()));
+		o->Set("data", Value::NewObject(data->data));
+		result->SetObject(o);
 	}
 }

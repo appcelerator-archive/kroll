@@ -35,6 +35,13 @@ namespace kroll
 		return scriptStr.size() >= extStr.size() && scriptStr.substr(scriptStr.size()-extStr.size()) == extStr;
 	}
 	
+	/*static*/
+ 	std::string Script::GetExtension(const char *script)
+	{
+		std::string scriptStr(script);
+		return scriptStr.substr(scriptStr.rfind("."));
+	}
+	
 	void Script::AddScriptEvaluator(SharedKObject evaluator)
 	{
 		evaluators->Append(Value::NewObject(evaluator));
@@ -114,7 +121,7 @@ namespace kroll
 		}
 	}
 	
-	SharedString Script::Preprocess(const char *url, SharedKObject scope)
+	AutoPtr<PreprocessData> Script::Preprocess(const char *url, SharedKObject scope)
 	{
 		SharedKObject evaluator = this->FindEvaluatorWithMethod("canPreprocess", url);
 		if (!evaluator.isNull())
@@ -128,23 +135,40 @@ namespace kroll
 				
 				SharedValue result = preprocess->Call(args);
 				
-				if (result->IsString())
+				if (result->IsObject())
 				{
-					// TODO : have the preprocessor return mime type?
-					// Forcing to HTML extension makes pages display correctly, but scripts fail to execute
-					std::string extension = url;
-					extension = extension.substr(extension.rfind("."));
-					//std::string extension = "html";
+					SharedKObject object = result->ToObject();
+					AutoPtr<PreprocessData> data = new PreprocessData();
+					if (object->HasProperty("data"))
+					{
+						SharedValue objectData = object->Get("data");
+						if (objectData->IsObject())
+						{
+							AutoBlob blobData = objectData->ToObject().cast<Blob>();
+							if (!blobData.isNull())
+							{
+								data->data = blobData;
+							}
+						}
+						else if (objectData->IsString())
+						{
+							data->data = new Blob(objectData->ToString(), strlen(objectData->ToString()));
+						}
+					}
+					else
+					{
+						throw ValueException::FromString("Preprocessor didn't return any data");
+					}
+					if (object->HasProperty("mimeType"))
+					{
+						data->mimeType = object->Get("mimeType")->ToString();
+					}
+					else
+					{
+						throw ValueException::FromString("Preprocessor didn't return a mimeType");
+					}
 					
-					Poco::File tempFile(Poco::TemporaryFile::tempName()+extension);
-					Poco::TemporaryFile::registerForDeletion(tempFile.path());
-					tempFile.createFile();
- 
-					std::ofstream ostream(tempFile.path().c_str());
-					ostream << result->ToString();
-					ostream.close();
-				
-					return new std::string(URLUtils::PathToFileURL(tempFile.path()));
+					return data;
 				}
 			}
 			else
