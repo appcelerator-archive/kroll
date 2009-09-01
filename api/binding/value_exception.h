@@ -31,7 +31,7 @@ namespace kroll
 		static ValueException FromObject(SharedKObject o);
 		SharedValue GetValue();
 		SharedString DisplayString();
-		std::string& AsString();
+		std::string& ToString();
 
 		private:
 		SharedValue value;

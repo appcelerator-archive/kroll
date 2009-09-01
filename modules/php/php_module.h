@@ -9,6 +9,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include <sstream>
 
 /* 
  * PHP wreaks havoc on all kinds of cdecl/export/inline/god knows what macros,
@@ -30,6 +31,7 @@
 #endif
 
 #include <kroll/kroll.h>
+#include <sstream>
 
 #include "php_api.h"
 #include "php_utils.h"
@@ -74,10 +76,18 @@ namespace kroll
 			static int UnbufferedWrite(const char *str, unsigned int len TSRMLS_DC);
 			static void LogMessage(char *message);
 			static void IniDefaults(HashTable *configuration);
+			static int HeaderHandler(sapi_header_struct *sapiHeader, sapi_header_op_enum op, sapi_headers_struct *sapi_headers TSRMLS_DC);
+			
+			static void SetBuffering(bool buffering);
+			static std::ostringstream& GetBuffer() { return buffer; }
+			static std::string& GetMimeType() { return mimeType; }
 			
 			private:
 			SharedKObject binding;
 			Logger *logger;
+			static bool buffering;
+			static std::ostringstream buffer;
+			static std::string mimeType;
 			
 			static PHPModule *instance_;
 			DISALLOW_EVIL_CONSTRUCTORS(PHPModule);

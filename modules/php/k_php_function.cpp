@@ -7,52 +7,100 @@
 
 namespace kroll {
 
-	KPHPFunction::KPHPFunction(const char* functionName) :
-		functionName(strdup(functionName))
+	KPHPFunction::KPHPFunction(zval* object, const char* methodName) :
+		object(object),
+		methodName(strdup(methodName)),
+		zMethodName(0)
 	{
-		ZVAL_STRING(&zFunctionName, this->functionName, 1);
+		zval_addref_p(object);
+
+		MAKE_STD_ZVAL(zMethodName);
+		ZVAL_STRINGL(zMethodName, methodName, strlen(methodName), 0);
+	}
+
+	KPHPFunction::KPHPFunction(const char *functionName) :
+		object(0),
+		methodName(strdup(functionName)),
+		zMethodName(0)
+	{
+		MAKE_STD_ZVAL(zMethodName);
+		ZVAL_STRINGL(zMethodName, methodName, strlen(methodName), 0);
 	}
 
 	KPHPFunction::~KPHPFunction()
 	{
-		free(functionName);
-		zval_dtor(&zFunctionName);
+		if (object)
+			zval_delref_p(object);
+
+		free(methodName);
+		zval_ptr_dtor(&zMethodName);
 	}
 
 	SharedValue KPHPFunction::Call(const ValueList& args)
 	{
 		TSRMLS_FETCH();
 
-		zval* zargs = new zval[args.size()];
-		for (int i = 0; i < args.size(); i++)
+		HashTable* functionTable = 0;
+		zend_class_entry* classEntry = 0;
+		zval** passObject = 0;
+		if (object)
 		{
-			SharedValue value = args.at(i);
-			zval *zargument = zargs + i;
-			PHPUtils::ToPHPValue(args[i], &zargument);
-		}
-
-		zval* zReturnValue;
-		ALLOC_INIT_ZVAL(zReturnValue);
-		int result = call_user_function(EG(function_table), NULL,
-			&zFunctionName, zReturnValue, args.size(), &zargs TSRMLS_CC);
-
-		for (int i = 0; i < args.size(); i++)
-		{
-			zval_dtor(zargs + i);
-		}
-		delete [] zargs;
-
-		if (result == FAILURE)
-		{
-			throw ValueException::FromFormat(
-				"Failed to call PHP function: %s", functionName);
-			return Value::Undefined;
+			passObject = &object;
+			classEntry = Z_OBJCE_P(object);
+			functionTable = &classEntry->function_table;
 		}
 		else
 		{
+			functionTable = EG(function_table);
+		}
+
+        // Convert arguments
+		zval** pzargs = (zval**) emalloc(sizeof(zval*) * args.size());
+		for (int i = 0; i < args.size(); i++)
+		{
+			MAKE_STD_ZVAL(pzargs[i]);
+			PHPUtils::ToPHPValue(args.at(i), &pzargs[i]);
+		}
+
+		int result;
+		zval* zReturnValue;
+		MAKE_STD_ZVAL(zReturnValue);
+
+		zend_try {
+			result = call_user_function(functionTable, passObject,
+			zMethodName, zReturnValue, args.size(), (zval**) pzargs TSRMLS_CC);
+		} zend_catch {
+			result = FAILURE;
+		} zend_end_try();
+
+		// Cleanup the arguments.
+		for (int i = 0; i < args.size(); i++)
+			zval_ptr_dtor(&pzargs[i]);
+		efree(pzargs);
+
+		if (result == FAILURE)
+		{
+			if (classEntry)
+			{
+				throw ValueException::FromFormat("Couldn't execute method %s::%s", 
+					classEntry->name, methodName);
+			}
+			else
+			{
+				throw ValueException::FromFormat("Couldn't execute function %s\n",
+					methodName);
+			}
+			return Value::Undefined;
+		}
+		else if (zReturnValue)
+		{
 			SharedValue returnValue(PHPUtils::ToKrollValue(zReturnValue TSRMLS_CC));
-			zval_dtor(zReturnValue);
+			zval_ptr_dtor(&zReturnValue);
 			return returnValue;
+		}
+		else
+		{
+			return Value::Undefined;
 		}
 	}
 
@@ -71,18 +119,28 @@ namespace kroll {
 
 	bool KPHPFunction::Equals(SharedKObject other)
 	{
-		return false;
+		AutoPtr<KPHPFunction> phpOther = other.cast<KPHPFunction>();
+		if (phpOther.isNull())
+			return false;
+		
+		TSRMLS_FETCH();
+		return PHPUtils::PHPObjectsEqual(this->ToPHP(), phpOther->ToPHP() TSRMLS_CC);
 	}
 
 	SharedString KPHPFunction::DisplayString(int levels)
 	{
 		std::string* displayString = new std::string("KPHPFunction: ");
-		displayString->append(functionName);
+		displayString->append(methodName);
 		return displayString;
 	}
 
 	SharedStringList KPHPFunction::GetPropertyNames()
 	{
 		return new StringList();
+	}
+
+	zval* KPHPFunction::ToPHP()
+	{
+		return this->object;
 	}
 }

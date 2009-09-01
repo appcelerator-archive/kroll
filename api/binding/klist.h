@@ -88,7 +88,7 @@ namespace kroll
 		/**
 		 * @return whether or not the passed-in string is an integer
 		 */
-		static bool IsInt(const char *name);
+		static bool IsInt(const std::string& name);
 
 		/**
 		 * @return the passed-in value as a string

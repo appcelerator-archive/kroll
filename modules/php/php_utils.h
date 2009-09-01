@@ -26,13 +26,15 @@ namespace kroll
 		SharedValue ToKrollValue(zval* value TSRMLS_DC);
 		zval* ToPHPValue(SharedValue value);
 		void ToPHPValue(SharedValue value, zval** returnValue);
-		std::string ZValToPropertyName(zval* property);
+		std::string ZvalToPropertyName(zval* property);
 		SharedKList PHPArrayToStaticBoundList(zval* array TSRMLS_DC);
 		SharedStringList GetHashKeys(HashTable *hash);
 		void KObjectToKPHPObject(SharedValue objectValue, zval** returnValue);
 		void KMethodToKPHPMethod(SharedValue methodValue, zval** returnValue);
+		void KListToKPHPArray(SharedValue listValue, zval** returnValue);
 		void InitializePHPKrollClasses();
 		bool PHPObjectsEqual(zval* val1, zval* val2 TSRMLS_DC);
+		int HashZvalCompareCallback(const zval **one, const zval **two TSRMLS_DC);
 		SharedStringList GetClassMethods(zend_class_entry *ce TSRMLS_DC);
 		SharedKList GetClassVars(zend_class_entry *ce TSRMLS_DC);
 		zend_function* GetGlobalFunction(const char *name TSRMLS_DC);

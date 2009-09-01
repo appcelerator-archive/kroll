@@ -16,7 +16,10 @@ namespace kroll
 	KROLL_MODULE(PHPModule, STRING(MODULE_NAME), STRING(MODULE_VERSION));
 
 	PHPModule* PHPModule::instance_ = NULL;
-
+	bool PHPModule::buffering = false;
+	std::ostringstream PHPModule::buffer;
+	std::string PHPModule::mimeType("text/html");
+	
 	void PHPModule::Initialize()
 	{
 		PHPModule::instance_ = this;
@@ -25,9 +28,9 @@ namespace kroll
 		char *argv[2] = { "php_kroll", NULL };
 		
 		php_embed_module.ub_write = PHPModule::UnbufferedWrite;
-		//php_embed_module.sapi_error = PHPModule::SAPIError;
 		php_embed_module.log_message = PHPModule::LogMessage;
 		php_embed_module.ini_defaults = PHPModule::IniDefaults;
+		php_embed_module.header_handler = PHPModule::HeaderHandler;
 		
 		php_embed_init(argc, argv PTSRMLS_CC);
 		PHPUtils::InitializePHPKrollClasses();
@@ -37,22 +40,31 @@ namespace kroll
 	}
 	
 	/*static*/
-	int PHPModule::UnbufferedWrite(const char *str, unsigned int length TSRMLS_DC)
+	void PHPModule::SetBuffering(bool buffering_)
 	{
-		std::string string(str,length);
-		PHPModule::Instance()->logger->Debug(string.c_str());
-		return length;
+		if (buffering)
+		{
+			buffer.str("");
+		}
+		buffering = buffering_;
 	}
 	
 	/*static*/
-	/*void PHPModule::SAPIError(int type, const char *format, ...)
+	int PHPModule::UnbufferedWrite(const char *str, unsigned int length TSRMLS_DC)
 	{
-		va_list args;
-		va_start(args, format);
-		PHPModule::Instance()->logger->Log(Logger::LERROR, args);
-		PHPModule::Instance()->logger->Debug("in SAPIError");
-		va_end(args);
-	}*/
+		std::string string(str,length);
+		
+		// This shouldn't need to be thread safe right?
+		if (buffering)
+		{
+			buffer << string;
+		}
+		else
+		{
+			PHPModule::Instance()->logger->Info(string.c_str());
+		}
+		return length;
+	}
 	
 	// Forgive me Martin, borrowed from php_cli.c line 409
 	#define INI_DEFAULT(name,value)\
@@ -74,11 +86,23 @@ namespace kroll
 		PHPModule::Instance()->logger->Debug(message);
 	}
 
+	/*static*/
+	int PHPModule::HeaderHandler(sapi_header_struct *sapiHeader,
+		sapi_header_op_enum op, sapi_headers_struct *sapi_headers TSRMLS_DC)
+	{
+		if (sapi_headers && sapi_headers->mimetype)
+		{
+			PHPModule::mimeType = sapi_headers->mimetype;
+		}
+		return op;
+	}
+	
 	void PHPModule::Stop()
 	{
 		PHPModule::instance_ = NULL;
 
 		SharedKObject global = this->host->GetGlobalObject();
+		Script::GetInstance()->RemoveScriptEvaluator(this->binding);
 		global->Set("PHP", Value::Undefined);
 		this->binding->Set("evaluate", Value::Undefined);
 		this->binding = NULL;
@@ -89,18 +113,12 @@ namespace kroll
 
 	void PHPModule::InitializeBinding()
 	{
+		PHPModule::mimeType = SG(default_mimetype);
+	
 		SharedKObject global = this->host->GetGlobalObject();
-		this->binding = new StaticBoundObject();
+		this->binding = new PHPEvaluator();
 		global->Set("PHP", Value::NewObject(this->binding));
-
-		SharedKMethod evaluator = new PHPEvaluator();
-		/**
- 		 * @tiapi(method=True,name=PHP.evaluate,since=0.7) Evaluates a string as PHP code
-		 * @tiarg(for=PHP.evaluate,name=code,type=String) PHP script code
-		 * @tiarg(for=PHP.evaluate,name=scope,type=Object) global variable scope
-		 * @tiresult(for=PHP.evaluate,type=any) result of the evaluation
-		 */
-		this->binding->Set("evaluate", Value::NewMethod(evaluator));
+		Script::GetInstance()->AddScriptEvaluator(this->binding);
 		
 		zval *titaniumValue = PHPUtils::ToPHPValue(Value::NewObject(global));
 		ZEND_SET_SYMBOL(&EG(symbol_table), "Titanium", titaniumValue);

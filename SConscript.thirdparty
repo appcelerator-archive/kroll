@@ -11,10 +11,10 @@ from progressbar import ProgressBar
 Import('build')
 
 revisions = {
-	"linux-i386": 13,
-	"linux-x86_64": 12,
-	"osx-universal": 11,
-	"win32-i386": 14
+	"linux-i386": 14,
+	"linux-x86_64": 14,
+	"osx-universal": 17,
+	"win32-i386": 15
 }
 
 thirdparty_name = 'thirdparty-%s-%s-r%s' % (build.os, build.arch, revisions[build.os+'-'+build.arch])
@@ -70,7 +70,9 @@ elif build.is_osx():
 	for framework in Glob(path.join(build.third_party, '*/*.framework')):
 		t = build.utils.CopyToDir(framework, rtdir, exclude=excludes)
 		targets.append(t)
-	for libdir in Glob(path.join(build.third_party, '*/lib')):
-		t = build.utils.CopyTree(libdir, rtdir, exclude=excludes)
-		targets.append(t)
+
+	# PHP dependencies don't aren't distributed with the runtime, only Poco's.
+	# for libdir in Glob(path.join(build.third_party, '*/lib')):
+	libdir = path.join(build.third_party, "poco", "lib");
+	targets.append(build.utils.CopyTree(libdir, rtdir, exclude=excludes))
 	build.mark_build_target(targets)

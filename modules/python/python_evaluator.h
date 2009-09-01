@@ -8,13 +8,12 @@
 
 namespace kroll
 {
-	class PythonEvaluator : public KMethod
+	class PythonEvaluator : public StaticBoundObject
 	{
 		public:
-		virtual SharedValue Call(const ValueList& args);
-		virtual void Set(const char *, SharedValue);
-		virtual SharedValue Get(const char *);
-		virtual SharedStringList GetPropertyNames();
+		PythonEvaluator();
+		void Evaluate(const ValueList& args, SharedValue result);
+		void CanEvaluate(const ValueList& args, SharedValue result);
 
 		private:
 		static void Strip(std::string &);

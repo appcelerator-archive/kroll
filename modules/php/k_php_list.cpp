@@ -66,7 +66,11 @@ namespace kroll
 		if (phpOther.isNull())
 			return false;
 
-		return phpOther->ToPHP() == this->ToPHP();
+		// Do an identity (===) comparison on the two hashes
+		TSRMLS_FETCH();
+		return zend_hash_compare(
+			Z_ARRVAL_P(phpOther->ToPHP()), Z_ARRVAL_P(this->ToPHP()), 
+			(compare_func_t) PHPUtils::HashZvalCompareCallback, 1 TSRMLS_CC) == 0;
 	}
 
 	SharedStringList KPHPList::GetPropertyNames()
@@ -76,30 +80,43 @@ namespace kroll
 
 	unsigned int KPHPList::Size()
 	{
-		/*TODO: Implement*/
-		return 0;
+		return (unsigned int) zend_hash_num_elements(Z_ARRVAL_P(this->list));
 	}
 
 	void KPHPList::Append(SharedValue value)
 	{
-		/*TODO: Implement*/
+		AddKrollValueToPHPArray(value, this->list);
 	}
 
 	void KPHPList::SetAt(unsigned int index, SharedValue value)
 	{
-		/*TODO: Implement*/
+		AddKrollValueToPHPArray(value, this->list, index);
 	}
 
 	bool KPHPList::Remove(unsigned int index)
 	{
-		/*TODO: Implement*/
-		return true;
+		if (index < this->Size())
+		{
+			if (zend_hash_index_del(Z_ARRVAL_P(this->list), (unsigned long) index) == SUCCESS)
+				return true;
+		}
+
+		return false;
 	}
 
 	SharedValue KPHPList::At(unsigned int index)
 	{
-		/*TODO: Implement*/
-		return Value::Null;
+		zval **copyval;
+
+		if (zend_hash_index_find(Z_ARRVAL_P(this->list),
+				index, (void**)&copyval) == FAILURE)
+		{
+			return Value::Undefined;
+		}
+
+		TSRMLS_FETCH();
+		SharedValue v = PHPUtils::ToKrollValue((zval *) copyval TSRMLS_CC);
+		return v;
 	}
 
 	zval* KPHPList::ToPHP()
@@ -203,49 +220,7 @@ namespace kroll
 
 	void KPHPList::AddKrollValueToPHPArray(SharedValue value, zval *phpArray)
 	{
-		if (value->IsNull() || value->IsUndefined())
-		{
-			add_next_index_null(phpArray);
-		}
-		else if (value->IsBool())
-		{
-			if (value->ToBool())
-				add_next_index_bool(phpArray, 1);
-			else
-				add_next_index_bool(phpArray, 0);
-		}
-		else if (value->IsNumber())
-		{
-			/* No way to check whether the number is an
-			   integer or a double here. All Kroll numbers
-			   are doubles, so return a double. This could
-			   cause some PHP to function incorrectly if it's
-			   doing strict type checking. */
-			add_next_index_double(phpArray, value->ToNumber());
-		}
-		else if (value->IsString())
-		{
-			add_next_index_stringl(phpArray, (char *) value->ToString(), strlen(value->ToString()), 1);
-		}
-		else if (value->IsObject())
-		{
-			/*TODO: Implement*/
-		}
-		else if (value->IsMethod())
-		{
-			/*TODO: Implement*/
-		}
-		else if (value->IsList())
-		{
-			zval *phpValue;
-			AutoPtr<KPHPList> pl = value->ToList().cast<KPHPList>();
-			if (!pl.isNull())
-				phpValue = pl->ToPHP();
-			else
-				phpValue = PHPUtils::ToPHPValue(value);
-
-			add_next_index_zval(phpArray, phpValue);
-		}
+		AddKrollValueToPHPArray(value, phpArray, (unsigned int) zend_hash_num_elements(Z_ARRVAL_P(phpArray)));
 	}
 
 }

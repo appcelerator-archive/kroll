@@ -5,23 +5,67 @@
  */
 
 #include "php_module.h"
+#include <sstream>
  
 namespace kroll
 {	
-	SharedValue PHPEvaluator::Call(const ValueList& args)
+	PHPEvaluator::PHPEvaluator()
+		: StaticBoundObject("PHPEvaluator")
 	{
-		TSRMLS_FETCH();
+		/**
+		 * @tiapi(method=True,name=PHP.canEvaluate,since=0.7)
+		 * @tiarg[String, mimeType] Code mime type
+		 * @tiresult[bool] whether or not the mimetype is understood by PHP
+		 */
+		SetMethod("canEvaluate", &PHPEvaluator::CanEvaluate);
 		
-		if (args.size() != 3
-			|| !args.at(1)->IsString()
-			|| !args.at(2)->IsObject())
+		/**
+		 * @tiapi(method=True,name=PHP.evaluate,since=0.7) Evaluates a string as PHP code
+		 * @tiarg[String, mimeType] Code mime type (normally "text/php")
+		 * @tiarg[String, name] name of the script source
+		 * @tiarg[String, code] PHP script code
+		 * @tiarg[Object, scope] global variable scope
+		 * @tiresult[Any] result of the evaluation
+		 */
+		SetMethod("evaluate", &PHPEvaluator::Evaluate);
+		
+		/**
+		 * @tiapi(method=True,name=PHP.canPreprocess,since=0.7)
+		 * @tiarg[String, url] URL to preprocess
+		 * @tiresult[bool] whether or not the mimetype is understood by PHP
+		 */
+		SetMethod("canPreprocess", &PHPEvaluator::CanPreprocess);
+		
+		/**
+		 * @tiapi(method=True,name=PHP.preprocess,since=0.7) Runs a string+URL through preprocessing
+		 * @tiarg[String, url] URL used to load this resource
+		 * @tiarg[Object, scope] Global variables to bind for PHP
+		 * @tiresult[String] result of the evaluation
+		 */
+		SetMethod("preprocess", &PHPEvaluator::Preprocess);
+	}
+	
+	void PHPEvaluator::CanEvaluate(const ValueList& args, SharedValue result)
+	{
+		args.VerifyException("canEvaluate", "s");
+		
+		result->SetBool(false);
+		std::string mimeType = args.GetString(0);
+		if (mimeType == "text/php")
 		{
-			return Value::Undefined;
+			result->SetBool(true);
 		}
-
-		const char* code = args[1]->ToString();
-		SharedKObject windowGlobal = args.at(2)->ToObject();
-		const char* name = "<embedded PHP>";
+	}
+	
+	void PHPEvaluator::Evaluate(const ValueList& args, SharedValue result)
+	{
+		args.VerifyException("evaluate", "s s s o");
+		
+		TSRMLS_FETCH();
+		std::string mimeType = args.GetString(0);
+		std::string name = args.GetString(1);
+		std::string code = args.GetString(2);
+		SharedKObject windowGlobal = args.GetObject(3);
 		SharedValue kv = Value::Undefined;
 
 		std::string contextName = CreateContextName();
@@ -38,12 +82,10 @@ namespace kroll
 		codeString << " if (array_key_exists(\"user\", $__fns)) {\n";
 		codeString << "  foreach($__fns[\"user\"] as $fname) {\n";
 		codeString << "   if ($fname != \"" << contextName << "\" && !$window->$fname) {";
-		codeString << "     kroll_add_function($window, $fname);\n";
+		codeString << "     krollAddFunction($window, $fname);\n";
 		codeString << "   }\n";
 		codeString << "  }\n";
 		codeString << " }\n";
-		
-		//kroll_populate_context($window);\n";
 		codeString << "};\n";
 		codeString << contextName << "();";
 		zend_first_try {
@@ -51,17 +93,123 @@ namespace kroll
 			 * See: main/main.c line 969 */
 			PG(during_request_startup) = 0;
 			
-			zval *windowValue = PHPUtils::ToPHPValue(args.at(2));
+			zval *windowValue = PHPUtils::ToPHPValue(args.at(3));
 			ZEND_SET_SYMBOL(&EG(symbol_table), "window", windowValue);
 			SharedValue document = windowGlobal->Get("document");
 			zval *documentValue = PHPUtils::ToPHPValue(document);
 			ZEND_SET_SYMBOL(&EG(symbol_table), "document", documentValue);
 			
-			zend_eval_string((char *) codeString.str().c_str(), NULL, (char *) name TSRMLS_CC);
+			zend_eval_string((char *) codeString.str().c_str(), NULL, (char *) name.c_str() TSRMLS_CC);
 		} zend_catch {
 		} zend_end_try();
 
-		return kv;
+		result->SetValue(kv);
+	}
+	
+	void PHPEvaluator::CanPreprocess(const ValueList& args, SharedValue result)
+	{
+		args.VerifyException("canPreprocess", "s");
+
+		std::string url = args.GetString(0);
+		result->SetBool(false);
+		if (Script::HasExtension(url.c_str(), "php"))
+		{
+			result->SetBool(true);
+		}
+	}
+	
+	void PHPEvaluator::FillServerVars(Poco::URI& uri, SharedKObject scope TSRMLS_DC)
+	{
+		// Fill $_SERVER with HTTP headers
+		zval *SERVER;
+		array_init(SERVER);
+		
+		//if (zend_hash_find(&EG(symbol_table), "_SERVER", sizeof("_SERVER"), (void**)&SERVER) == SUCCESS)
+		//{
+		if (scope->HasProperty("httpHeaders"))
+		{
+			SharedStringList headerNames = scope->GetObject("httpHeaders")->GetPropertyNames();
+			for (size_t i = 0; i < headerNames->size(); i++)
+			{
+				//zval *headerValue;
+				const char *headerName = headerNames->at(i)->c_str();
+				const char *headerValue = scope->GetObject("httpHeaders")->
+					GetString(headerName).c_str();
+				
+				//ALLOC_INIT_ZVAL(headerValue);
+				//ZVAL_STRING(headerValue, (char*)headers->GetString(headerName).c_str(), 1);
+				
+				add_assoc_stringl(SERVER, (char *) headerName, (char *) headerValue, strlen(headerValue), 1);
+				//zend_hash_add(Z_ARRVAL_P(SERVER), (char*)headerName, strlen(headerName)+1, &headerValue, sizeof(zval*), NULL);
+				//ZEND_SET_SYMBOL(Z_ARRVAL_P(SERVER), (char*)headerName, headerValue);
+			}
+			ZEND_SET_SYMBOL(&EG(symbol_table), (char *)"_SERVER", SERVER);
+		}
+		//}
+		
+		// Fill $_GET with query string parameters
+		zval *GET;
+		if (zend_hash_find(&EG(symbol_table), "_GET", sizeof("_GET"), (void**)&GET) == SUCCESS)
+		{
+			std::string queryString = uri.getQuery();
+			Poco::StringTokenizer tokens(uri.getQuery(), "&=");
+			for (Poco::StringTokenizer::Iterator iter = tokens.begin();
+				iter != tokens.end(); iter++)
+			{
+				std::string key = *iter;
+				std::string value = *(++iter);
+				
+				zval *val;
+				ALLOC_INIT_ZVAL(val);
+				ZVAL_STRING(val, (char*)value.c_str(), 1);
+				zend_hash_add(Z_ARRVAL_P(GET), (char*)key.c_str(), key.size()+1, &val, sizeof(zval*), NULL);
+			}
+		}
+		
+		// TODO: Fill $_POST, $_REQUEST
+	}
+	
+	void PHPEvaluator::Preprocess(const ValueList& args, SharedValue result)
+	{
+		args.VerifyException("preprocess", "s o");
+		
+		std::string url = args.GetString(0);
+		Logger::Get("PHP")->Debug("preprocessing php => %s", url.c_str());
+		
+		Poco::URI uri(url);
+		std::string path = URLUtils::URLToPath(url);
+		
+		SharedKObject scope = args.GetObject(1);
+		TSRMLS_FETCH();
+		
+		PHPModule::SetBuffering(true);
+		zend_first_try {
+			/* This seems to be needed to make PHP actually give us errors at parse/compile time
+			 * See: main/main.c line 969 */
+			PG(during_request_startup) = 0;
+			
+			//FillServerVars(uri, scope TSRMLS_CC);
+			
+			zend_file_handle script;
+			script.type = ZEND_HANDLE_FP;
+			script.filename = (char*)path.c_str();
+			script.opened_path = NULL;
+			script.free_filename = 0;
+			script.handle.fp = fopen(script.filename, "rb");
+			
+			php_request_startup(TSRMLS_C);
+			php_execute_script(&script TSRMLS_CC);
+			
+		} zend_catch {
+		} zend_end_try();
+		
+		SharedKObject o = new StaticBoundObject();
+		AutoBlob data = new Blob(PHPModule::GetBuffer().str().c_str(), PHPModule::GetBuffer().str().size(), true);
+		o->Set("data", Value::NewObject(data));
+		o->Set("mimeType", Value::NewString(PHPModule::GetMimeType().c_str()));
+		result->SetObject(o);
+		
+		PHPModule::SetBuffering(false);
 	}
 	
 	std::string PHPEvaluator::CreateContextName()
@@ -69,19 +217,5 @@ namespace kroll
 		std::ostringstream contextName;
 		contextName << "_kroll_context_" << rand();
 		return contextName.str();
-	}
-	
-	void PHPEvaluator::Set(const char *name, SharedValue value)
-	{
-	}
-
-	SharedValue PHPEvaluator::Get(const char *name)
-	{
-		return Value::Undefined;
-	}
-
-	SharedStringList PHPEvaluator::GetPropertyNames()
-	{
-		return SharedStringList();
 	}
 }

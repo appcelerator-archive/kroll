@@ -31,6 +31,7 @@ namespace kroll
 		Py_XDECREF(s);
 		}
 
+		PythonUtils::InitializePythonKClasses();
 		this->InitializeBinding();
 		host->AddModuleProvider(this);
 	}
@@ -44,7 +45,7 @@ namespace kroll
 
 		SharedKObject global = this->host->GetGlobalObject();
 		global->Set("Python", Value::Undefined);
-		this->binding->Set("evaluate", Value::Undefined);
+		Script::GetInstance()->RemoveScriptEvaluator(this->binding);
 		this->binding = NULL;
 		PythonModule::instance_ = NULL;
 		Py_Finalize();
@@ -54,18 +55,10 @@ namespace kroll
 	{
 		PyLockGIL lock;
 		SharedKObject global = this->host->GetGlobalObject();
-		this->binding = new StaticBoundObject();
+		this->binding = new PythonEvaluator();
 		global->Set("Python", Value::NewObject(this->binding));
-
-		SharedKMethod evaluator = new PythonEvaluator();
-		/**
-		 * @tiapi(method=True,name=Python.evaluate,since=0.2) Evaluates a string as python code
-		 * @tiarg(for=Python.evaluate,name=code,type=String) python script code
-		 * @tiarg(for=Python.evaluate,name=scope,type=Object) global variable scope
-		 * @tiresult(for=Python.evaluate,type=any) the result of the evaluation
-		 */
-		this->binding->Set("evaluate", Value::NewMethod(evaluator));
-
+		Script::GetInstance()->AddScriptEvaluator(this->binding);
+		
 		{
 			PyObject* main_module = PyImport_AddModule("__main__");
 			PyObject* main_dict = PyModule_GetDict(main_module);
