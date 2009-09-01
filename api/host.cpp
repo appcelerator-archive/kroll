@@ -791,8 +791,14 @@ namespace kroll
 	void Host::Exit(int exitCode)
 	{
 		logger->Notice("Received exit signal (%d)", exitCode);
-		KEventObject::FireRootEvent(Event::EXIT);
-		running = false;
-		this->exitCode = exitCode;
+		if (KEventObject::FireRootEvent(Event::EXIT))
+		{
+			running = false;
+			this->exitCode = exitCode;
+		}
+		else
+		{
+			logger->Notice("Exit signal canceled by event handler");
+		}
 	}
 }

@@ -40,8 +40,8 @@ namespace kroll
 		virtual bool FireEvent(AutoPtr<Event>);
 		void _AddEventListener(const ValueList&, SharedValue result);
 		void _RemoveEventListener(const ValueList&, SharedValue result);
-		static void FireRootEvent(std::string& eventName);
-		static void FireRootEvent(AutoPtr<Event>);
+		static bool FireRootEvent(std::string& eventName);
+		static bool FireRootEvent(AutoPtr<Event>);
 		static AutoPtr<KEventObject> root;
 
 		protected:

@@ -106,14 +106,14 @@ namespace kroll
 		return listener->listenerId;
 	}
 
-	void KEventObject::FireRootEvent(std::string& eventName)
+	bool KEventObject::FireRootEvent(std::string& eventName)
 	{
-		KEventObject::root->FireEvent(eventName);
+		return KEventObject::root->FireEvent(eventName);
 	}
 
-	void KEventObject::FireRootEvent(AutoPtr<Event>event)
+	bool KEventObject::FireRootEvent(AutoPtr<Event>event)
 	{
-		KEventObject::root->FireEvent(event);
+		return KEventObject::root->FireEvent(event);
 	}
 
 	bool KEventObject::FireEvent(std::string& eventName)
