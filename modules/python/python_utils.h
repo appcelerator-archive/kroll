@@ -14,6 +14,7 @@ namespace kroll
 	class PythonUtils
 	{
 	public:
+		static void InitializePythonKClasses();
 		static SharedValue ToKrollValue(PyObject* value);
 		static PyObject* ToPyObject(SharedValue value);
 		static PyObject* ToPyObject(const ValueList& list);

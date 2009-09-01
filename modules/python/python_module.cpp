@@ -31,6 +31,7 @@ namespace kroll
 		Py_XDECREF(s);
 		}
 
+		PythonUtils::InitializePythonKClasses();
 		this->InitializeBinding();
 		host->AddModuleProvider(this);
 	}
