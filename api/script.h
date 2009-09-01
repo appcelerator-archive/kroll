@@ -11,12 +11,20 @@
 
 namespace kroll
 {
+	class KROLL_API PreprocessData : public ReferenceCounted
+	{
+	public:
+		AutoBlob data;
+		std::string mimeType;
+	};
+	
 	class KROLL_API Script
 	{
 	public:
 		static SharedPtr<Script> GetInstance();
 		static void Initialize();
 		static bool HasExtension(const char *url, const char *ext);
+		static std::string GetExtension(const char *url);
 		
 		void AddScriptEvaluator(SharedKObject evaluator);
 		void RemoveScriptEvaluator(SharedKObject evaluator);
@@ -26,7 +34,7 @@ namespace kroll
 		SharedKList GetEvaluators() { return evaluators; }
 
 		SharedValue Evaluate(const char *mimeType, const char *name, const char *code, SharedKObject scope);
-		SharedString Preprocess(const char *url, SharedKObject scope);
+		AutoPtr<PreprocessData> Preprocess(const char *url, SharedKObject scope);
 		
 	protected:
 		SharedKList evaluators;

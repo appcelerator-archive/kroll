@@ -18,6 +18,7 @@ namespace kroll
 	PHPModule* PHPModule::instance_ = NULL;
 	bool PHPModule::buffering = false;
 	std::ostringstream PHPModule::buffer;
+	std::string PHPModule::mimeType("text/html");
 	
 	void PHPModule::Initialize()
 	{
@@ -29,6 +30,7 @@ namespace kroll
 		php_embed_module.ub_write = PHPModule::UnbufferedWrite;
 		php_embed_module.log_message = PHPModule::LogMessage;
 		php_embed_module.ini_defaults = PHPModule::IniDefaults;
+		php_embed_module.header_handler = PHPModule::HeaderHandler;
 		
 		php_embed_init(argc, argv PTSRMLS_CC);
 		PHPUtils::InitializePHPKrollClasses();
@@ -42,7 +44,7 @@ namespace kroll
 	{
 		if (buffering)
 		{
-			buffer.clear();
+			buffer.str("");
 		}
 		buffering = buffering_;
 	}
@@ -51,6 +53,7 @@ namespace kroll
 	int PHPModule::UnbufferedWrite(const char *str, unsigned int length TSRMLS_DC)
 	{
 		std::string string(str,length);
+		
 		// This shouldn't need to be thread safe right?
 		if (buffering)
 		{
@@ -58,7 +61,7 @@ namespace kroll
 		}
 		else
 		{
-			PHPModule::Instance()->logger->Debug(string.c_str());
+			PHPModule::Instance()->logger->Info(string.c_str());
 		}
 		return length;
 	}
@@ -83,6 +86,17 @@ namespace kroll
 		PHPModule::Instance()->logger->Debug(message);
 	}
 
+	/*static*/
+	int PHPModule::HeaderHandler(sapi_header_struct *sapiHeader,
+		sapi_header_op_enum op, sapi_headers_struct *sapi_headers TSRMLS_DC)
+	{
+		if (sapi_headers && sapi_headers->mimetype)
+		{
+			PHPModule::mimeType = sapi_headers->mimetype;
+		}
+		return op;
+	}
+	
 	void PHPModule::Stop()
 	{
 		PHPModule::instance_ = NULL;
@@ -99,6 +113,8 @@ namespace kroll
 
 	void PHPModule::InitializeBinding()
 	{
+		PHPModule::mimeType = SG(default_mimetype);
+	
 		SharedKObject global = this->host->GetGlobalObject();
 		this->binding = new PHPEvaluator();
 		global->Set("PHP", Value::NewObject(this->binding));
