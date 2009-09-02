@@ -307,6 +307,27 @@ namespace kroll
 		delete value;
 	}
 
+	static bool PrototypeHasFunctionNamed(JSContextRef context, JSObjectRef object, JSStringRef name)
+	{
+		JSValueRef exception = NULL;
+
+		JSValueRef prototypeValue = JSObjectGetPrototype(context, object);
+		JSObjectRef prototype = JSValueToObject(context, prototypeValue, &exception);
+
+		if (exception)
+			return false;
+
+		JSValueRef propValue = JSObjectGetProperty(context, prototype, name, &exception);
+		if (exception)
+			return false;
+
+		if (!JSValueIsObject(context, propValue))
+			return false;
+
+		JSObjectRef prop = JSValueToObject(context, propValue, &exception);
+		return !exception && JSObjectIsFunction(context, prop);
+	}
+
 	bool has_property_cb(
 		JSContextRef js_context,
 		JSObjectRef js_object,
@@ -316,26 +337,35 @@ namespace kroll
 		if (value == NULL)
 			return false;
 
+		// Convert the name to a std::string.
 		SharedKObject object = (*value)->ToObject();
 		char *name = KJSUtil::ToChars(js_property);
 		std::string strName(name);
 		free(name);
 
-		if (object->HasProperty(strName.c_str())) {
-			return true;
-		}
-
-		SharedStringList names(new StringList());
-		AddSpecialPropertyNames(*value, names, true);
-		for (size_t i = 0; i < names->size(); i++)
+		// Special properties always take precedence. This is important
+		// because even though the Array and Function prototypes have 
+		// methods like toString -- we always want our special properties
+		// to override those.
+		SharedStringList specialProperties(new StringList());
+		AddSpecialPropertyNames(*value, specialProperties, true);
+		for (size_t i = 0; i < specialProperties->size(); i++)
 		{
-			if (strName == *names->at(i))
-			{
+			if (strName == *specialProperties->at(i))
 				return true;
-			}
 		}
 
-		return false;
+		// If the JavaScript prototype for Lists (Array) or Methods (Function) has
+		// a method with the same name -- opt to use the prototype's version instead.
+		// This will prevent  incompatible versions of things like pop() bleeding into
+		// JavaScript.
+		if (((*value)->IsList() || (*value)->IsMethod()) &&
+			PrototypeHasFunctionNamed(js_context, js_object, js_property))
+		{
+			return false;
+		}
+
+		return object->HasProperty(strName.c_str());
 	}
 
 	JSValueRef get_property_cb(
