@@ -9,26 +9,29 @@
 
 namespace kroll
 {
-	JSClassRef tibo_class = NULL;
-	JSClassRef tibm_class = NULL;
-	JSClassRef tibl_class = NULL;
-	const JSClassDefinition empty_class = { 0, 0, 0, 0, 0, 0,
-	                                        0, 0, 0, 0, 0, 0,
-	                                        0, 0, 0, 0, 0 };
+	static JSClassRef KJSKObjectClass = NULL;
+	static JSClassRef KJSKMethodClass = NULL;
+	static JSClassRef KJSKListClass = NULL;
+	static const JSClassDefinition emptyClassDefinition =
+	{
+		0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0
+	};
 
-	/* callback for KObject proxying to KJS */
-	void get_property_names_cb(JSContextRef, JSObjectRef, JSPropertyNameAccumulatorRef);
-	bool has_property_cb(JSContextRef, JSObjectRef, JSStringRef);
-	JSValueRef get_property_cb(JSContextRef, JSObjectRef, JSStringRef, JSValueRef*);
-	bool set_property_cb(JSContextRef, JSObjectRef, JSStringRef, JSValueRef, JSValueRef*);
-	JSValueRef call_as_function_cb(JSContextRef, JSObjectRef, JSObjectRef, size_t, const JSValueRef[], JSValueRef*);
-	void finalize_cb(JSObjectRef);
-	JSValueRef to_string_cb(JSContextRef, JSObjectRef, JSObjectRef, size_t, const JSValueRef[], JSValueRef*);
-	JSValueRef equals_cb(JSContextRef, JSObjectRef, JSObjectRef, size_t, const JSValueRef[], JSValueRef*);
+	// These are all KJSK*Class class methods.
+	static void GetPropertyNamesCallback(JSContextRef, JSObjectRef, JSPropertyNameAccumulatorRef);
+	static bool HasPropertyCallback(JSContextRef, JSObjectRef, JSStringRef);
+	static JSValueRef GetPropertyCallback(JSContextRef, JSObjectRef, JSStringRef, JSValueRef*);
+	static bool SetPropertyCallback(JSContextRef, JSObjectRef, JSStringRef, JSValueRef, JSValueRef*);
+	static JSValueRef CallAsFunctionCallback(JSContextRef, JSObjectRef, JSObjectRef, size_t, const JSValueRef[], JSValueRef*);
+	static void FinalizeCallback(JSObjectRef);
+	static JSValueRef ToStringCallback(JSContextRef, JSObjectRef, JSObjectRef, size_t, const JSValueRef[], JSValueRef*);
+	static JSValueRef EqualsCallback(JSContextRef, JSObjectRef, JSObjectRef, size_t, const JSValueRef[], JSValueRef*);
 
-	void AddSpecialPropertyNames(SharedValue, SharedStringList, bool);
-	JSValueRef GetSpecialProperty(SharedValue, char*, JSContextRef, SharedValue);
-	bool DoSpecialSetBehavior(SharedValue target, char* name, SharedValue newValue);
+	static void AddSpecialPropertyNames(SharedValue, SharedStringList, bool);
+	static JSValueRef GetSpecialProperty(SharedValue, char*, JSContextRef, SharedValue);
+	static bool DoSpecialSetBehavior(SharedValue target, char* name, SharedValue newValue);
 
 	SharedValue KJSUtil::ToKrollValue(
 		JSValueRef value,
@@ -204,41 +207,41 @@ namespace kroll
 
 	JSValueRef KJSUtil::KObjectToJSValue(SharedValue obj_val, JSContextRef c)
 	{
-		if (tibo_class == NULL)
+		if (KJSKObjectClass == NULL)
 		{
-			JSClassDefinition js_class_def = empty_class;
+			JSClassDefinition js_class_def = emptyClassDefinition;
 			js_class_def.className = "Object";
-			js_class_def.getPropertyNames = get_property_names_cb;
-			js_class_def.finalize = finalize_cb;
-			js_class_def.hasProperty = has_property_cb;
-			js_class_def.getProperty = get_property_cb;
-			js_class_def.setProperty = set_property_cb;
-			tibo_class = JSClassCreate(&js_class_def);
+			js_class_def.getPropertyNames = GetPropertyNamesCallback;
+			js_class_def.finalize = FinalizeCallback;
+			js_class_def.hasProperty = HasPropertyCallback;
+			js_class_def.getProperty = GetPropertyCallback;
+			js_class_def.setProperty = SetPropertyCallback;
+			KJSKObjectClass = JSClassCreate(&js_class_def);
 		}
-		return JSObjectMake(c, tibo_class, new SharedValue(obj_val));
+		return JSObjectMake(c, KJSKObjectClass, new SharedValue(obj_val));
 	}
 
 	JSValueRef KJSUtil::KMethodToJSValue(SharedValue meth_val, JSContextRef c)
 	{
-		if (tibm_class == NULL)
+		if (KJSKMethodClass == NULL)
 		{
-			JSClassDefinition js_class_def = empty_class;
+			JSClassDefinition js_class_def = emptyClassDefinition;
 			js_class_def.className = "Function";
-			js_class_def.getPropertyNames = get_property_names_cb;
-			js_class_def.finalize = finalize_cb;
-			js_class_def.hasProperty = has_property_cb;
-			js_class_def.getProperty = get_property_cb;
-			js_class_def.setProperty = set_property_cb;
-			js_class_def.callAsFunction = call_as_function_cb;
-			tibm_class = JSClassCreate(&js_class_def);
+			js_class_def.getPropertyNames = GetPropertyNamesCallback;
+			js_class_def.finalize = FinalizeCallback;
+			js_class_def.hasProperty = HasPropertyCallback;
+			js_class_def.getProperty = GetPropertyCallback;
+			js_class_def.setProperty = SetPropertyCallback;
+			js_class_def.callAsFunction = CallAsFunctionCallback;
+			KJSKMethodClass = JSClassCreate(&js_class_def);
 		}
-		JSObjectRef ref = JSObjectMake(c, tibm_class, new SharedValue(meth_val));
+		JSObjectRef ref = JSObjectMake(c, KJSKMethodClass, new SharedValue(meth_val));
 		JSValueRef fnProtoValue = GetFunctionPrototype(c, NULL);
 		JSObjectSetPrototype(c, ref, fnProtoValue);
 		return ref;
 	}
 
-	void inline CopyJSProperty(
+	static void inline CopyJSProperty(
 		JSContextRef c,
 		JSObjectRef from_obj,
 		SharedKObject to_bo,
@@ -256,19 +259,19 @@ namespace kroll
 	JSValueRef KJSUtil::KListToJSValue(SharedValue list_val, JSContextRef c)
 	{
 
-		if (tibl_class == NULL)
+		if (KJSKListClass == NULL)
 		{
-			JSClassDefinition js_class_def = empty_class;
+			JSClassDefinition js_class_def = emptyClassDefinition;
 			js_class_def.className = "Array";
-			js_class_def.getPropertyNames = get_property_names_cb;
-			js_class_def.finalize = finalize_cb;
-			js_class_def.hasProperty = has_property_cb;
-			js_class_def.getProperty = get_property_cb;
-			js_class_def.setProperty = set_property_cb;
-			tibl_class = JSClassCreate(&js_class_def);
+			js_class_def.getPropertyNames = GetPropertyNamesCallback;
+			js_class_def.finalize = FinalizeCallback;
+			js_class_def.hasProperty = HasPropertyCallback;
+			js_class_def.getProperty = GetPropertyCallback;
+			js_class_def.setProperty = SetPropertyCallback;
+			KJSKListClass = JSClassCreate(&js_class_def);
 		}
 
-		JSObjectRef ref = JSObjectMake(c, tibl_class, new SharedValue(list_val));
+		JSObjectRef ref = JSObjectMake(c, KJSKListClass, new SharedValue(list_val));
 		JSValueRef aProtoValue = GetArrayPrototype(c, NULL);
 		JSObjectSetPrototype(c, ref, aProtoValue);
 		return ref;
@@ -301,13 +304,34 @@ namespace kroll
 		return array_like;
 	}
 
-	void finalize_cb(JSObjectRef js_object)
+	static void FinalizeCallback(JSObjectRef js_object)
 	{
 		SharedValue* value = static_cast<SharedValue*>(JSObjectGetPrivate(js_object));
 		delete value;
 	}
 
-	bool has_property_cb(
+	static bool PrototypeHasFunctionNamed(JSContextRef context, JSObjectRef object, JSStringRef name)
+	{
+		JSValueRef exception = NULL;
+
+		JSValueRef prototypeValue = JSObjectGetPrototype(context, object);
+		JSObjectRef prototype = JSValueToObject(context, prototypeValue, &exception);
+
+		if (exception)
+			return false;
+
+		JSValueRef propValue = JSObjectGetProperty(context, prototype, name, &exception);
+		if (exception)
+			return false;
+
+		if (!JSValueIsObject(context, propValue))
+			return false;
+
+		JSObjectRef prop = JSValueToObject(context, propValue, &exception);
+		return !exception && JSObjectIsFunction(context, prop);
+	}
+
+	static bool HasPropertyCallback(
 		JSContextRef js_context,
 		JSObjectRef js_object,
 		JSStringRef js_property)
@@ -316,29 +340,38 @@ namespace kroll
 		if (value == NULL)
 			return false;
 
+		// Convert the name to a std::string.
 		SharedKObject object = (*value)->ToObject();
 		char *name = KJSUtil::ToChars(js_property);
 		std::string strName(name);
 		free(name);
 
-		if (object->HasProperty(strName.c_str())) {
-			return true;
-		}
-
-		SharedStringList names(new StringList());
-		AddSpecialPropertyNames(*value, names, true);
-		for (size_t i = 0; i < names->size(); i++)
+		// Special properties always take precedence. This is important
+		// because even though the Array and Function prototypes have 
+		// methods like toString -- we always want our special properties
+		// to override those.
+		SharedStringList specialProperties(new StringList());
+		AddSpecialPropertyNames(*value, specialProperties, true);
+		for (size_t i = 0; i < specialProperties->size(); i++)
 		{
-			if (strName == *names->at(i))
-			{
+			if (strName == *specialProperties->at(i))
 				return true;
-			}
 		}
 
-		return false;
+		// If the JavaScript prototype for Lists (Array) or Methods (Function) has
+		// a method with the same name -- opt to use the prototype's version instead.
+		// This will prevent  incompatible versions of things like pop() bleeding into
+		// JavaScript.
+		if (((*value)->IsList() || (*value)->IsMethod()) &&
+			PrototypeHasFunctionNamed(js_context, js_object, js_property))
+		{
+			return false;
+		}
+
+		return object->HasProperty(strName.c_str());
 	}
 
-	JSValueRef get_property_cb(
+	static JSValueRef GetPropertyCallback(
 		JSContextRef js_context,
 		JSObjectRef js_object,
 		JSStringRef js_property,
@@ -378,7 +411,7 @@ namespace kroll
 		return jsValue;
 	}
 
-	bool set_property_cb(
+	static bool SetPropertyCallback(
 		JSContextRef js_context,
 		JSObjectRef js_object,
 		JSStringRef js_property,
@@ -425,7 +458,7 @@ namespace kroll
 		return success;
 	}
 
-	JSValueRef call_as_function_cb(
+	static JSValueRef CallAsFunctionCallback(
 		JSContextRef js_context,
 		JSObjectRef js_function,
 		JSObjectRef js_this,
@@ -470,7 +503,7 @@ namespace kroll
 		return js_val;
 	}
 
-	void AddSpecialPropertyNames(SharedValue value, SharedStringList props, bool showInvisible)
+	static void AddSpecialPropertyNames(SharedValue value, SharedStringList props, bool showInvisible)
 	{
 		// Some attributes should be hidden unless the are requested specifically -- 
 		// essentially a has_property(...) versus  get_property_list(...). An example
@@ -506,7 +539,7 @@ namespace kroll
 		}
 	}
 
-	JSValueRef GetSpecialProperty(SharedValue value, char* name, JSContextRef ctx, SharedValue objValue)
+	static JSValueRef GetSpecialProperty(SharedValue value, char* name, JSContextRef ctx, SharedValue objValue)
 	{
 		// Always override the length property on lists. Some languages
 		// supply their own length property, which might be a method instead
@@ -526,13 +559,13 @@ namespace kroll
 			if (!strcmp(name, "toString"))
 			{
 				JSStringRef s = JSStringCreateWithUTF8CString("toString");
-				return JSObjectMakeFunctionWithCallback(ctx, s, &to_string_cb);
+				return JSObjectMakeFunctionWithCallback(ctx, s, &ToStringCallback);
 			}
 
 			if (!strcmp(name, "equals"))
 			{
 				JSStringRef s = JSStringCreateWithUTF8CString("equals");
-				return JSObjectMakeFunctionWithCallback(ctx, s, &equals_cb);
+				return JSObjectMakeFunctionWithCallback(ctx, s, &EqualsCallback);
 			}
 		}
 
@@ -540,7 +573,7 @@ namespace kroll
 		return KJSUtil::ToJSValue(objValue, ctx);
 	}
 
-	bool DoSpecialSetBehavior(SharedValue target, char* name, SharedValue newValue)
+	static bool DoSpecialSetBehavior(SharedValue target, char* name, SharedValue newValue)
 	{
 		// We only do something special if we are trying to set
 		// the length property of a list to a new int value.
@@ -552,7 +585,7 @@ namespace kroll
 		return true;
 	}
 
-	JSValueRef to_string_cb(
+	static JSValueRef ToStringCallback(
 		JSContextRef js_context,
 		JSObjectRef js_function,
 		JSObjectRef js_this,
@@ -569,7 +602,7 @@ namespace kroll
 		return KJSUtil::ToJSValue(dsv, js_context);
 	}
 
-	JSValueRef equals_cb(
+	static JSValueRef EqualsCallback(
 		JSContextRef ctx,
 		JSObjectRef function,
 		JSObjectRef jsThis,
@@ -601,7 +634,7 @@ namespace kroll
 		return JSValueMakeBoolean(ctx, (*value)->Equals(*otherValue));
 	}
 
-	void get_property_names_cb(
+	static void GetPropertyNamesCallback(
 		JSContextRef js_context,
 		JSObjectRef js_object,
 		JSPropertyNameAccumulatorRef js_properties)
@@ -621,7 +654,7 @@ namespace kroll
 			JSStringRelease(name);
 		}
 	}
-	
+
 	JSObjectRef KJSUtil::CreateNewGlobalContext(Host *host, bool add_global_object)
 	{
 		JSGlobalContextRef context = JSGlobalContextCreate(NULL);
@@ -647,7 +680,7 @@ namespace kroll
 		
 		return global_object;
 	}
-	
+
 	std::map<JSObjectRef, JSGlobalContextRef> KJSUtil::contextMap;
 	void KJSUtil::RegisterGlobalContext(
 		JSObjectRef object,
@@ -868,7 +901,7 @@ namespace kroll
 			JSObjectSetProperty(context, global_object, prop_name, js, kJSPropertyAttributeNone, NULL);
 		}
 	}
-	
+
 	SharedValue KJSUtil::GetProperty(JSObjectRef global_object, std::string name)
 	{
 		JSGlobalContextRef context = GetGlobalContext(global_object);

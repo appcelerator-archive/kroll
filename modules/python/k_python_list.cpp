@@ -12,10 +12,15 @@ namespace kroll
 		object(new KPythonObject(list, true))
 	{
 		PyLockGIL lock;
-		if (!PyList_Check(list))
-			throw ValueException::FromString("Invalid PyObject passed. Should be a Py_List");
-		else
+		if (PyList_Check(list))
+		{
 			Py_INCREF(this->list);
+		}
+		else
+		{
+			throw ValueException::FromString(
+				"Invalid PyObject passed. Should be a Py_List");
+		}
 	}
 
 	KPythonList::~KPythonList()
@@ -42,9 +47,9 @@ namespace kroll
 		PyLockGIL lock;
 		if (index < this->Size())
 		{
-			PyObject* empty_list = PyList_New(0);
-			PyList_SetSlice(this->list, index, index + 1, empty_list);
-			Py_DECREF(empty_list);
+			PyObject* emptyList = PyList_New(0);
+			PyList_SetSlice(this->list, index, index + 1, emptyList);
+			Py_DECREF(emptyList);
 			return true;
 		}
 		else
@@ -60,7 +65,6 @@ namespace kroll
 		{
 			PyObject *p = PyList_GetItem(this->list, index);
 			SharedValue v = PythonUtils::ToKrollValue(p);
-			Py_DECREF(p);
 			return v;
 		}
 		else
@@ -88,9 +92,10 @@ namespace kroll
 		PyLockGIL lock;
 		while (index >= this->Size())
 		{
-			// now we need to create entries between current size
+			// Now we need to create entries between current size
 			// and new size and make the entries undefined.
-			this->Append(Value::Undefined);
+			Py_INCREF(Py_None);
+			PyList_Append(this->list, Py_None);
 		}
 		PyObject* py_value = PythonUtils::ToPyObject(value);
 		PyList_SetItem(this->list, index, py_value);

@@ -166,72 +166,88 @@ namespace kroll
 	PyObject* PythonUtils::ToPyObject(SharedValue value)
 	{
 		PyLockGIL lock;
+		PyObject* pythonValue = 0;
+		bool needsReferenceIncrement = true;
+
 		if (value->IsBool())
 		{
-			return value->ToBool() ? Py_True : Py_False;
+			pythonValue = value->ToBool() ? Py_True : Py_False;
 		}
-		if (value->IsDouble())
+		else if (value->IsDouble())
 		{
-			return PyFloat_FromDouble(value->ToDouble());
+			pythonValue = PyFloat_FromDouble(value->ToDouble());
 		}
-		if (value->IsInt())
+		else if (value->IsInt())
 		{
-			return PyInt_FromLong(value->ToInt());
+			pythonValue = PyInt_FromLong(value->ToInt());
 		}
-		if (value->IsNull() || value->IsUndefined())
+		else if (value->IsNull() || value->IsUndefined())
 		{
-			Py_INCREF(Py_None);
-			return Py_None;
+			pythonValue = Py_None;
 		}
-		if (value->IsString())
+		else if (value->IsString())
 		{
-			return PyString_FromString(value->ToString());
+			pythonValue = PyString_FromString(value->ToString());
 		}
-		if (value->IsMethod())
+		else if (value->IsMethod())
 		{
 			AutoPtr<KPythonMethod> pymeth = value->ToMethod().cast<KPythonMethod>();
 			if (!pymeth.isNull())
 			{
-				return pymeth->ToPython();
+				pythonValue = pymeth->ToPython();
 			}
 			else
 			{
-				return PythonUtils::KMethodToPyObject(value);
+				pythonValue = PythonUtils::KMethodToPyObject(value);
+				needsReferenceIncrement = false;
 			}
 		}
-		if (value->IsList())
+		else if (value->IsList())
 		{
 			AutoPtr<KPythonList> pylist = value->ToList().cast<KPythonList>();
+			AutoPtr<KPythonTuple> pytuple = value->ToList().cast<KPythonTuple>();
 			if (!pylist.isNull())
 			{
-				return pylist->ToPython();
+				pythonValue = pylist->ToPython();
 			}
-
-			AutoPtr<KPythonTuple> pytuple = value->ToList().cast<KPythonTuple>();
-			if (!pytuple.isNull())
+			else if (!pytuple.isNull())
 			{
-				return pytuple->ToPython();
+				pythonValue = pytuple->ToPython();
 			}
-
-			return PythonUtils::KListToPyObject(value);
+			else
+			{
+				pythonValue = PythonUtils::KListToPyObject(value);
+				needsReferenceIncrement = false;
+			}
 		}
-		if (value->IsObject())
+		else if (value->IsObject())
 		{
 			SharedKObject obj = value->ToObject();
-
 			AutoPtr<KPythonObject> pyobj = obj.cast<KPythonObject>();
-			if (!pyobj.isNull())
-				return pyobj->ToPython();
-
 			AutoPtr<KPythonDict> pydict = obj.cast<KPythonDict>();
-			if (!pydict.isNull())
-				return pydict->ToPython();
 
-			return PythonUtils::KObjectToPyObject(value);
+			if (!pyobj.isNull())
+			{
+				pythonValue = pyobj->ToPython();
+			}
+			else if (!pydict.isNull())
+			{
+				pythonValue = pydict->ToPython();
+			}
+			else
+			{
+				pythonValue = PythonUtils::KObjectToPyObject(value);
+				needsReferenceIncrement = false;
+			}
 		}
 
-		Py_INCREF(Py_None);
-		return Py_None;
+		if (!pythonValue)
+			pythonValue = Py_None;
+
+		if (needsReferenceIncrement)
+			Py_INCREF(pythonValue);
+
+		return pythonValue;
 	}
 
 	const char* PythonUtils::ToString(PyObject* value)
@@ -589,7 +605,7 @@ namespace kroll
 		SharedValue result = Value::Undefined;
 		try
 		{
-			for (int c=0; c < PyTuple_Size(args); c++)
+			for (int c = 0; c < PyTuple_Size(args); c++)
 			{
 				PyObject* arg = PyTuple_GetItem(args, c);
 				SharedValue kValue = PythonUtils::ToKrollValue(arg);

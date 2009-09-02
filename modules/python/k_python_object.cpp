@@ -35,7 +35,6 @@ namespace kroll
 	PyObject* KPythonObject::ToPython()
 	{
 		PyLockGIL lock;
-		Py_INCREF(object);
 		return this->object;
 	}
 
