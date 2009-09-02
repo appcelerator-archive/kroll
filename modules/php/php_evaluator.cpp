@@ -196,19 +196,19 @@ namespace kroll
 			script.opened_path = NULL;
 			script.free_filename = 0;
 			script.handle.fp = fopen(script.filename, "rb");
-			
+
 			php_request_startup(TSRMLS_C);
 			php_execute_script(&script TSRMLS_CC);
 			
 		} zend_catch {
 		} zend_end_try();
 		
+		std::string output(PHPModule::GetBuffer().str());
 		SharedKObject o = new StaticBoundObject();
-		AutoBlob data = new Blob(PHPModule::GetBuffer().str().c_str(), PHPModule::GetBuffer().str().size(), true);
-		o->Set("data", Value::NewObject(data));
-		o->Set("mimeType", Value::NewString(PHPModule::GetMimeType().c_str()));
+		o->SetObject("data", new Blob(output.c_str(), output.size(), true));
+		o->SetString("mimeType", PHPModule::GetMimeType().c_str());
 		result->SetObject(o);
-		
+
 		PHPModule::SetBuffering(false);
 	}
 	
