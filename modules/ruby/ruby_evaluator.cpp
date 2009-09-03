@@ -129,13 +129,8 @@ namespace kroll
 	void RubyEvaluator::CanEvaluate(const ValueList& args, SharedValue result)
 	{
 		args.VerifyException("canEvaluate", "s");
-		
-		result->SetBool(false);
 		std::string mimeType = args.GetString(0);
-		if (mimeType == "text/ruby")
-		{
-			result->SetBool(true);
-		}
+		result->SetBool(mimeType == "text/ruby");
 	}
 
 	void RubyEvaluator::Evaluate(const ValueList& args, SharedValue result)
@@ -197,7 +192,7 @@ namespace kroll
 
 		// Next copy all methods over -- they override variables
 		VALUE methods = rb_funcall(ctx, rb_intern("singleton_methods"), 0);
-		for (long i = 0; i < RARRAY(methods)->len; i++)
+		for (long i = 0; i < RARRAY_LEN(methods); i++)
 		{
 			VALUE meth_symbol = rb_ary_entry(methods, i);
 			const char* meth_name = STR2CSTR(meth_symbol);
@@ -206,9 +201,9 @@ namespace kroll
 			if (strcmp(meth_name, "method_missing") == 0)
 				continue;
 
-			VALUE rmeth = rb_funcall(ctx, rb_intern("method"), 1, meth_symbol);
-			SharedValue meth = Value::NewMethod(new KRubyMethod(rmeth));
-			o->Set(meth_name, meth);
+			volatile VALUE rmeth = rb_funcall(ctx, rb_intern("method"), 1, meth_symbol);
+			SharedKMethod method = new KRubyMethod(rmeth, meth_name);
+			o->SetMethod(meth_name, method);
 		}
 	}
 }

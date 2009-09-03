@@ -28,7 +28,7 @@ namespace kroll
 
 	unsigned int KRubyList::Size()
 	{
-		return (unsigned int) RARRAY(list)->len;
+		return (unsigned int) RARRAY_LEN(list);
 	}
 
 	bool KRubyList::Remove(unsigned int index)

@@ -13,6 +13,7 @@ class KRubyMethod : public KMethod
 {
 	public:
 	KRubyMethod(VALUE method);
+	KRubyMethod(VALUE method, const char*);
 	KRubyMethod(VALUE method, VALUE arg);
 	virtual ~KRubyMethod();
 	SharedValue Call(const ValueList& args);
@@ -34,6 +35,7 @@ class KRubyMethod : public KMethod
 	VALUE method;
 	VALUE arg;
 	AutoPtr<KRubyObject> object;
+	char* name;
 };
 
 }
