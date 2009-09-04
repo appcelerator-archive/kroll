@@ -114,6 +114,15 @@ namespace UTILS_NS
 		return file.substr(0, pos);
 #endif
 	}
+	
+#if defined(OS_OSX) || defined(OS_LINUX)
+	void FileUtils::WriteFile(std::string& path, std::string& content)
+	{
+		std::ofstream(path.c_str());
+		ofstream << content;
+		ofstream.close();
+	}
+#endif
 
 	std::string FileUtils::Join(const char* inpart, ...)
 	{
@@ -230,7 +239,7 @@ namespace UTILS_NS
 
 	std::string FileUtils::Trim(std::string str)
 	{
-		std::string c(safe_encode(str));
+		std::string c(str);
 		while (1)
 		{
 			size_t pos = c.rfind(" ");

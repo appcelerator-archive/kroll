@@ -13,10 +13,9 @@
 
 namespace UTILS_NS
 {
-	bool FileHasAttributes(std::string& path, DWORD attributes)
-	{
-		std::wstring widePath = UTILS_NS::UTF8ToWide(path);
-
+	
+	bool WideFileHasAttributes(std::wstring& widePath, DWORD attributes)
+	{	
 		WIN32_FIND_DATA findFileData;
 		ZeroMemory(&findFileData, sizeof(WIN32_FIND_DATA));
 
@@ -35,6 +34,12 @@ namespace UTILS_NS
 		}
 
 	}
+	
+	bool FileHasAttributes(std::string& path, DWORD attributes)
+	{
+		std::wstring widePath = UTILS_NS::UTF8ToWide(path);
+		return WideFileHasAttributes(widePath, attributes);
+	}
 
 	std::string FileUtils::GetExecutableDirectory()
 	{
@@ -50,13 +55,12 @@ namespace UTILS_NS
 		wchar_t tempDirectory[MAX_PATH];
 		tempDirectory[MAX_PATH-1] = '\0';
 		GetTempPathW(MAX_PATH - 1, tempDirectory);
-
+		
 		// This function seem to return Windows stubby paths, so
 		// let's convert it to a full path name.
 		std::wstring dir(tempDirectory);
 		GetLongPathNameW(dir.c_str(), tempDirectory, MAX_PATH - 1);
 		std::string out = UTILS_NS::WideToUTF8(tempDirectory);
-
 		srand(GetTickCount()); // initialize seed
 		std::ostringstream s;
 		s << "k" << (double) rand();
@@ -64,11 +68,88 @@ namespace UTILS_NS
 		return FileUtils::Join(out.c_str(), end.c_str(), NULL);
 	}
 
-	bool FileUtils::IsFile(std::string &file)
+	bool FileUtils::IsFile(std::string& file)
 	{
 		return FileHasAttributes(file, 0);
 	}
+	
+	bool FileUtils::IsWideFile(std::wstring& file)
+	{
+		return WideFileHasAttributes(file, 0);
+	}
 
+	void FileUtils::WriteFile(std::string& path, std::string& content)
+	{
+		std::wstring widePath = UTF8ToWide(path);
+		// CreateFile doesn't have a path length limitation
+		HANDLE file = CreateFileW(widePath.c_str(),
+			GENERIC_WRITE, 
+			0,
+			NULL,
+			CREATE_ALWAYS,
+			FILE_ATTRIBUTE_NORMAL,
+			NULL);
+		
+		DWORD bytesWritten = 0;
+		DWORD bytesToWrite = (DWORD)content.size();
+		
+		if (file != INVALID_HANDLE_VALUE)
+		{
+			while (bytesWritten < bytesToWrite)
+			{
+				if(FALSE == ::WriteFile(file, 
+					content.c_str() + bytesWritten,
+					bytesToWrite - bytesWritten,
+					&bytesWritten,
+					NULL))
+				{
+					CloseHandle(file);
+					printf("Could not write to file. Error: %s\n", Win32Utils::QuickFormatMessage(GetLastError()).c_str());
+				}
+			}
+		}
+		
+		CloseHandle(file);
+	}
+	
+	std::string FileUtils::ReadFile(std::string& path)
+	{
+		return FileUtils::ReadWideFile(UTF8ToWide(path));
+	}
+	
+	std::string FileUtils::ReadWideFile(std::wstring& widePath)
+	{
+		std::ostringstream contents;
+		// CreateFile doesn't have a path length limitation
+		HANDLE file = CreateFileW(widePath.c_str(),
+			GENERIC_READ, 
+			FILE_SHARE_READ,
+			NULL,
+			OPEN_EXISTING,
+			FILE_ATTRIBUTE_NORMAL,
+			NULL);
+		
+		DWORD bytesRead;
+		const int bufferSize = 4096;
+		char readBuffer[bufferSize];
+		
+		do
+		{
+			BOOL result = ::ReadFile(file, readBuffer, bufferSize-2, &bytesRead, NULL);
+			if (!result && GetLastError() != ERROR_HANDLE_EOF)
+			{
+				printf("Could not read from file. Error: %s\n", Win32Utils::QuickFormatMessage(GetLastError()).c_str());
+				CloseHandle(file);
+				return std::string();
+			}
+			readBuffer[bytesRead+1] = '\0'; // NULL character
+			contents << readBuffer;
+		} while (bytesRead > 0);
+		
+		CloseHandle(file);
+		return contents.str();
+	}
+	
 	std::string FileUtils::Dirname(std::string path)
 	{
 		wchar_t pathBuffer[_MAX_PATH];

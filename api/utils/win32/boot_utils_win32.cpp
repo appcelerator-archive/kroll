@@ -96,15 +96,23 @@ namespace UTILS_NS
 		string tempdir = FileUtils::GetTempDirectory();
 		string jobsFile = FileUtils::Join(tempdir.c_str(), "jobs", NULL);
 		if (jobs.size() > 0)
-		{
+		{	
 			FileUtils::CreateDirectory(tempdir);
-			std::ofstream outfile(jobsFile.c_str());
-			for (size_t i = 0; i < jobs.size(); i++)
+			try {
+				std::ostringstream jobsContent;
+				for (size_t i = 0; i < jobs.size(); i++)
+				{
+					jobsContent << jobs[i] << std::endl;
+				}
+				
+				std::string content = jobsContent.str();
+				FileUtils::WriteFile(jobsFile, content);
+				args.push_back(jobsFile);
+			} 
+			catch (std::exception& e)
 			{
-				outfile << jobs[i] << "\n";
+				std::cout << e.what() << std::endl;
 			}
-			outfile.close();
-			args.push_back(jobsFile);
 		}
 	
 		string paramString = "";
@@ -115,8 +123,7 @@ namespace UTILS_NS
 			paramString.append("\"");
 		}
 		std::wstring wideParamString = UTF8ToWide(paramString);
-		printf("%s\n", paramString.c_str());
-	
+		
 		SHELLEXECUTEINFO ShExecInfo = {0};
 		ShExecInfo.cbSize = sizeof(SHELLEXECUTEINFO);
 		ShExecInfo.fMask = SEE_MASK_NOCLOSEPROCESS | SEE_MASK_FLAG_DDEWAIT;
