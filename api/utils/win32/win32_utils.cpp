@@ -30,23 +30,36 @@ namespace UTILS_NS
 
 	std::wstring UTF8ToWide(std::string& in)
 	{
-		return UTF8ToWide(in.c_str());
+		return UTF8ToWide(in.c_str(), in.length());
 	}
 
-	std::wstring UTF8ToWide(const char* in)
+	std::wstring UTF8ToWide(const char *in)
 	{
-		size_t size = strlen(in);
+		return UTF8ToWide(in, strlen(in));
+	}
+	
+	std::wstring UTF8ToWide(const char* in, size_t size)
+	{
+		return MBToWide(in, size, CP_UTF8);
+	}
+	
+	std::wstring MBToWide(std::string& in, size_t size, UINT codePage)
+	{
+		return MBToWide(in.c_str(), size, codePage);
+	}
+	
+	std::wstring MBToWide(const char* in, size_t size, UINT codePage)
+	{
 		if (size == 0)
 			return L"";
 
 	 	wchar_t* buffer = new wchar_t[size + 1];
 	 	buffer[size] = '\0';
 	
-	 	MultiByteToWideChar(CP_UTF8, 0, in, -1, buffer, (int) size);
+	 	MultiByteToWideChar(codePage, 0, in, -1, buffer, (int) size);
 	 	std::wstring out = buffer;
 	 	delete [] buffer;
 	 	return out; 
-	 
 	}
 
 	std::string WideToUTF8(std::wstring& in)

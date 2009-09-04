@@ -75,7 +75,17 @@ namespace UTILS_NS
 		 *
 		 */
 		static bool IsFile(std::string &file);
+		
+		/**
+		 *
+		 */
+		static void WriteFile(std::string& path, std::string& content);
 
+		/**
+		 *
+		 */
+		static std::string ReadFile(std::string& path);
+		
 		/**
 		 *
 		 */
@@ -188,6 +198,9 @@ namespace UTILS_NS
 #ifdef OS_WIN32
 		static void CopyRecursive(std::string &dir, std::string &dest,
 			std::string exclude = "");
+		
+		static bool IsWideFile(std::wstring& path);
+		static std::string ReadWideFile(std::wstring& path);
 #endif
 
 	private:

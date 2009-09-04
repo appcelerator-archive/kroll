@@ -27,36 +27,7 @@
 #include <iostream>
 #include <sstream>
 #include <cstring>
-
-const std::string ILLEGAL = "<>{}|\\\"^`";
-
-static std::string safe_encode(std::string &str)
-{
-	std::string encodedStr;
-	for (std::string::const_iterator it = str.begin(); it != str.end(); ++it)
-	{
-		char c = *it;
-		if (isalnum(c) ||
-			c == '-' || c == '_' ||
-			c == '.' || c == '~' ||
-			c == '/' || c == '\\' ||
-			c == ' ')
-		{
-			encodedStr += c;
-		}
-		else if (c == ' ')
-		{
-			encodedStr += c;
-		}
-		else if (c <= 0x20 || c >= 0x7F || ILLEGAL.find(c) != std::string::npos)
-		{
-			// skip these bad out of range characters ....
-		}
-		else encodedStr += c;
-	}
-	return encodedStr;
-}
-
+#include <fstream>
 
 namespace UTILS_NS
 {
@@ -114,6 +85,15 @@ namespace UTILS_NS
 		return file.substr(0, pos);
 #endif
 	}
+	
+#if defined(OS_OSX) || defined(OS_LINUX)
+	void FileUtils::WriteFile(std::string& path, std::string& content)
+	{
+		std::ofstream f(path.c_str());
+		f << content;
+		f.close();
+	}
+#endif
 
 	std::string FileUtils::Join(const char* inpart, ...)
 	{
@@ -230,7 +210,7 @@ namespace UTILS_NS
 
 	std::string FileUtils::Trim(std::string str)
 	{
-		std::string c(safe_encode(str));
+		std::string c(str);
 		while (1)
 		{
 			size_t pos = c.rfind(" ");
