@@ -49,12 +49,12 @@ namespace kroll {
 	{
 		SharedStringList property_names = object->GetPropertyNames();
 
-		SharedStringList names(new StringList());
+		SharedStringList names(this->object->GetPropertyNames());
 		VALUE keys = rb_funcall(hash, rb_intern("keys"), 0);
-		for (int i = 0; i < RARRAY(keys)->len; i++)
+		for (int i = 0; i < RARRAY_LEN(keys); i++)
 		{
 			VALUE key = rb_ary_entry(keys, i);
-			std::string name = RubyUtils::ToString(key);
+			std::string name(StringValueCStr(key));
 			names->push_back(new std::string(name));
 		}
 

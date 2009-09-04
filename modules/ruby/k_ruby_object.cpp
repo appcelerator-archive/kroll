@@ -120,26 +120,33 @@ namespace kroll {
 	SharedString KRubyObject::DisplayString(int levels)
 	{
 		VALUE out = rb_obj_as_string(object);
-		return new std::string(RubyUtils::ToString(out));
+		return new std::string(StringValueCStr(out));
 	}
 
 	SharedStringList KRubyObject::GetPropertyNames()
 	{
 		SharedStringList names(new StringList());
 		VALUE vars = rb_obj_instance_variables(object);
-		for (int i = 0; i < RARRAY(vars)->len; i++)
+		for (int i = 0; i < RARRAY_LEN(vars); i++)
 		{
 			VALUE prop_name = rb_ary_entry(vars, i);
-			std::string name = RubyUtils::ToString(prop_name);
+			std::string name(StringValueCStr(prop_name));
+			if (name[0] == '@')
+				name = name.substr(1);
+
 			names->push_back(new std::string(name));
 		}
 
+		VALUE methodsSymbol = rb_intern("methods");
+		if (!rb_obj_respond_to(object, methodsSymbol, Qfalse))
+			return names;
+
 		VALUE methods = rb_funcall(object, rb_intern("methods"), 0);
-		for (int i = 0; i < RARRAY(methods)->len; i++)
+		for (int i = 0; i < RARRAY_LEN(methods); i++)
 		{
-			VALUE meth_name = rb_ary_entry(methods, i);
-			std::string name = RubyUtils::ToString(meth_name);
-			names->push_back(new std::string(name));
+			VALUE rmethodName = rb_ary_entry(methods, i);
+			const char *methodName = StringValueCStr(rmethodName);
+			names->push_back(new std::string(methodName));
 		}
 
 		return names;

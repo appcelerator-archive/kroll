@@ -16,20 +16,6 @@ namespace kroll
 		CreateWithCopy(NULL, 0);
 	}
 
-	Blob::Blob(char *buf, bool makeCopy) : 
-		StaticBoundObject("Blob")
-	{
-		// Assume this guy is null terminated. If not -- oops.
-		if (makeCopy)
-		{
-			CreateWithCopy(buf, strlen(buf));
-		}
-		else
-		{
-			CreateWithReference(buf, strlen(buf));
-		}
-	}
-
 	Blob::Blob(char *bufferIn, int len, bool makeCopy) :
 		StaticBoundObject("Blob")
 	{
