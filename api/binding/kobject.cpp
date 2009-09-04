@@ -18,10 +18,10 @@ namespace kroll
 	bool KObject::HasProperty(const char* name)
 	{
 		SharedStringList names = this->GetPropertyNames();
-		for (size_t i = 0; i < names->size(); i++) {
-			if (!strcmp(name, names->at(i)->c_str())) {
+		for (size_t i = 0; i < names->size(); i++)
+		{
+			if (!strcmp(name, names->at(i)->c_str()))
 				return true;
-			}
 		}
 		return false;
 	}

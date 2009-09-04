@@ -16,16 +16,6 @@ namespace kroll
 	VALUE RubyUtils::KMethodClass = Qnil;
 	VALUE RubyUtils::KListClass = Qnil;
 
-	const char* RubyUtils::ToString(VALUE value)
-	{
-		if (TYPE(value) == T_STRING)
-		{
-			const char *result = StringValueCStr(value);
-			return result;
-		}
-		return NULL;
-	}
-
 	bool RubyUtils::KindOf(VALUE value, VALUE klass)
 	{
 		return rb_obj_is_kind_of(value, klass) == Qtrue;
@@ -184,7 +174,7 @@ namespace kroll
 	VALUE RubyUtils::GenericKMethodCall(SharedKMethod method, VALUE args)
 	{
 		ValueList kargs;
-		for (int i = 0; i < RARRAY(args)->len; i++)
+		for (int i = 0; i < RARRAY_LEN(args); i++)
 		{
 			VALUE rarg = rb_ary_entry(args, i);
 			SharedValue arg = RubyUtils::ToKrollValue(rarg);
@@ -271,7 +261,7 @@ namespace kroll
 		{
 			VALUE selfString = rb_obj_as_string(self);
 			rb_raise(rb_eNoMethodError, "undefined method `%s' for %s",
-				name, RubyUtils::ToString(selfString));
+				name, StringValueCStr(selfString));
 		}
 		else if (value->IsMethod()) // actually call a method
 		{

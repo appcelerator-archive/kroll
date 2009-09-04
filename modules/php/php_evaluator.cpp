@@ -89,8 +89,9 @@ namespace kroll
 		codeString << "};\n";
 		codeString << contextName << "();";
 		zend_first_try {
-			/* This seems to be needed to make PHP actually give us errors at parse/compile time
-			 * See: main/main.c line 969 */
+
+			// This seems to be needed to make PHP actually give  us errors
+			// at parse/compile time -- see: main/main.c line 969
 			PG(during_request_startup) = 0;
 			
 			zval *windowValue = PHPUtils::ToPHPValue(args.at(3));
@@ -184,31 +185,39 @@ namespace kroll
 		
 		PHPModule::SetBuffering(true);
 		zend_first_try {
-			/* This seems to be needed to make PHP actually give us errors at parse/compile time
-			 * See: main/main.c line 969 */
+
+			// These variables are normally initialized by php_module_startup
+			// but we do not call that function, so we manually initialize.
+			PG(header_is_being_sent) = 0;
+			SG(request_info).headers_only = 0;
+			SG(request_info).argv0 = NULL;
+			SG(request_info).argc= 0;
+			SG(request_info).argv= (char **) NULL;
+			php_request_startup(TSRMLS_C);
+
+			// This seems to be needed to make PHP actually give  us errors
+			// at parse/compile time -- see: main/main.c line 969
 			PG(during_request_startup) = 0;
-			
+
 			//FillServerVars(uri, scope TSRMLS_CC);
-			
 			zend_file_handle script;
 			script.type = ZEND_HANDLE_FP;
 			script.filename = (char*)path.c_str();
 			script.opened_path = NULL;
 			script.free_filename = 0;
 			script.handle.fp = fopen(script.filename, "rb");
-			
-			php_request_startup(TSRMLS_C);
+
 			php_execute_script(&script TSRMLS_CC);
 			
 		} zend_catch {
 		} zend_end_try();
 		
+		std::string output(PHPModule::GetBuffer().str());
 		SharedKObject o = new StaticBoundObject();
-		AutoBlob data = new Blob(PHPModule::GetBuffer().str().c_str(), PHPModule::GetBuffer().str().size(), true);
-		o->Set("data", Value::NewObject(data));
-		o->Set("mimeType", Value::NewString(PHPModule::GetMimeType().c_str()));
+		o->SetObject("data", new Blob(output.c_str(), output.size(), true));
+		o->SetString("mimeType", PHPModule::GetMimeType().c_str());
 		result->SetObject(o);
-		
+
 		PHPModule::SetBuffering(false);
 	}
 	

@@ -28,7 +28,6 @@ namespace kroll
 		 * bytes long and NULL terminated.
 		 */
 		Blob();
-		Blob(char *buffer, bool makeCopy=true);
 		Blob(char *buffer, int size, bool makeCopy=true);
 		Blob(const char *buffer, int size, bool makeCopy=true);
 		Blob(std::string);
