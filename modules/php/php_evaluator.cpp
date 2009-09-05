@@ -56,7 +56,17 @@ namespace kroll
 			result->SetBool(true);
 		}
 	}
-	
+
+	static std::string GetNextContextId()
+	{
+		// Namespace names in PHP are lower-cased, so returning something 
+		// that is lower-cased here will avoid tranformations later.
+		static int nextId = 0;
+		std::string contextName("krollnamespace");
+		contextName.append(KList::IntToChars(++nextId));
+		return contextName;
+	}
+
 	void PHPEvaluator::Evaluate(const ValueList& args, SharedValue result)
 	{
 		args.VerifyException("evaluate", "s s s o");
@@ -68,26 +78,29 @@ namespace kroll
 		SharedKObject windowGlobal = args.GetObject(3);
 		SharedValue kv = Value::Undefined;
 
-		std::string contextName = CreateContextName();
+		std::string contextId(GetNextContextId());
 		std::ostringstream codeString, callString;
-		codeString << "function " << contextName << "() {\n";
-		codeString << " global $Titanium, $window, $document;\n";
+		codeString << "namespace " << contextId << " {\n";
+		codeString << " function __kroll_exec__" << contextId << "() {\n";
+		codeString << "  global $Titanium, $window, $document;\n";
 		codeString << code;
-		codeString << " foreach (get_defined_vars() as $var=>$val) {\n";
-		codeString << "  if ($var != 'Titanium' && $var != 'window' && $var != 'document') {\n";
-		codeString << "    $window->$var = $val;\n";
-		codeString << "  }\n";
-		codeString << " }\n ";
-		codeString << " $__fns = get_defined_functions();\n";
-		codeString << " if (array_key_exists(\"user\", $__fns)) {\n";
-		codeString << "  foreach($__fns[\"user\"] as $fname) {\n";
-		codeString << "   if ($fname != \"" << contextName << "\" && !$window->$fname) {";
-		codeString << "     krollAddFunction($window, $fname);\n";
+		codeString << "  foreach (get_defined_vars() as $var=>$val) {\n";
+		codeString << "   if ($var != 'Titanium' && $var != 'window' && $var != 'document') {\n";
+		codeString << "     $window->$var = $val;\n";
+		codeString << "   }\n";
+		codeString << "  }\n ";
+		codeString << "  $__fns = get_defined_functions();\n";
+		codeString << "  if (array_key_exists(\"user\", $__fns)) {\n";
+		codeString << "   foreach($__fns[\"user\"] as $fname) {\n";
+		codeString << "    if (stristr($fname, \"__kroll_exec__\") === FALSE && !$window->$fname) {";
+		codeString << "      krollAddFunction($window, $fname);\n";
+		codeString << "    }\n";
 		codeString << "   }\n";
 		codeString << "  }\n";
 		codeString << " }\n";
-		codeString << "};\n";
-		codeString << contextName << "();";
+		codeString << " __kroll_exec__" << contextId << "();\n";
+		codeString << "}\n";
+
 		zend_first_try {
 
 			// This seems to be needed to make PHP actually give  us errors
@@ -219,12 +232,5 @@ namespace kroll
 		result->SetObject(o);
 
 		PHPModule::SetBuffering(false);
-	}
-	
-	std::string PHPEvaluator::CreateContextName()
-	{
-		std::ostringstream contextName;
-		contextName << "_kroll_context_" << rand();
-		return contextName.str();
 	}
 }
