@@ -572,10 +572,21 @@ namespace kroll
 		
 		PHPKObject* object = reinterpret_cast<PHPKObject*>(
 			zend_object_store_get_object(phpWindowContext TSRMLS_CC));
-			
+
+		// If there is a preceding namespace to this function name trim it off.
+		// This is likely the namespace we use to isolate PHP executions.
+		std::string fnameString(fname);
+		size_t index = fnameString.find("\\");
+		if (index != std::string::npos)
+		{
+			fnameString = fnameString.substr(index + 1);
+		}
+
+		// Use the name without the namespace for the Window object, but use
+		// the full name for the KPHPFunction.
 		SharedKObject window = object->kvalue->ToObject();
-		std::string functionName(fname, fnameLength);
-		window->Set(functionName.c_str(), Value::NewMethod(new KPHPFunction(functionName.c_str())));
+		window->Set(fnameString.c_str(),
+			Value::NewMethod(new KPHPFunction(fname)));
 	}
 
 	namespace PHPUtils
