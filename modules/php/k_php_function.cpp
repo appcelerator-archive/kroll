@@ -33,7 +33,9 @@ namespace kroll {
 			zval_delref_p(object);
 
 		free(methodName);
-		zval_ptr_dtor(&zMethodName);
+		
+		if (zMethodName)
+			zval_ptr_dtor(&zMethodName);
 	}
 
 	SharedValue KPHPFunction::Call(const ValueList& args)
