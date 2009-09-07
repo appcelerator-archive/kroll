@@ -46,9 +46,7 @@ namespace KJSUtil
 	static JSValueRef GetFunctionPrototype(JSContextRef jsContext, JSValueRef* exception);
 	static JSValueRef GetArrayPrototype(JSContextRef jsContext, JSValueRef* exception);
 
-	SharedValue ToKrollValue(
-		JSValueRef value,
-		JSContextRef context,
+	SharedValue ToKrollValue(JSValueRef value, JSContextRef jsContext,
 		JSObjectRef thisObject)
 	{
 		SharedValue krollValue = 0;
@@ -60,17 +58,17 @@ namespace KJSUtil
 			return Value::Undefined;
 		}
 
-		if (JSValueIsNumber(context, value))
+		if (JSValueIsNumber(jsContext, value))
 		{
-			krollValue = Value::NewDouble(JSValueToNumber(context, value, &exception));
+			krollValue = Value::NewDouble(JSValueToNumber(jsContext, value, &exception));
 		}
-		else if (JSValueIsBoolean(context, value))
+		else if (JSValueIsBoolean(jsContext, value))
 		{
-			krollValue = Value::NewBool(JSValueToBoolean(context, value));
+			krollValue = Value::NewBool(JSValueToBoolean(jsContext, value));
 		}
-		else if (JSValueIsString(context, value))
+		else if (JSValueIsString(jsContext, value))
 		{
-			JSStringRef jsString = JSValueToStringCopy(context, value, &exception);
+			JSStringRef jsString = JSValueToStringCopy(jsContext, value, &exception);
 			if (jsString)
 			{
 				std::string stringValue(ToChars(jsString));
@@ -78,9 +76,9 @@ namespace KJSUtil
 				krollValue = Value::NewString(stringValue);
 			}
 		}
-		else if (JSValueIsObject(context, value))
+		else if (JSValueIsObject(jsContext, value))
 		{
-			JSObjectRef o = JSValueToObject(context, value, &exception);
+			JSObjectRef o = JSValueToObject(jsContext, value, &exception);
 			if (o != NULL)
 			{
 				SharedValue* value = static_cast<SharedValue*>(JSObjectGetPrivate(o));
@@ -89,27 +87,27 @@ namespace KJSUtil
 					// This is a KJS-wrapped Kroll value: unwrap it
 					return *value;
 				}
-				else if (JSObjectIsFunction(context, o))
+				else if (JSObjectIsFunction(jsContext, o))
 				{
 					// this is a pure JS method: proxy it
-					SharedKMethod tibm = new KKJSMethod(context, o, thisObject);
+					SharedKMethod tibm = new KKJSMethod(jsContext, o, thisObject);
 					krollValue = Value::NewMethod(tibm);
 				}
-				else if (IsArrayLike(o, context))
+				else if (IsArrayLike(o, jsContext))
 				{
 					// this is a pure JS array: proxy it
-					SharedKList tibl = new KKJSList(context, o);
+					SharedKList tibl = new KKJSList(jsContext, o);
 					krollValue = Value::NewList(tibl);
 				}
 				else
 				{
 					// this is a pure JS object: proxy it
-					SharedKObject tibo = new KKJSObject(context, o);
+					SharedKObject tibo = new KKJSObject(jsContext, o);
 					krollValue = Value::NewObject(tibo);
 				}
 			}
 		}
-		else if (JSValueIsNull(context, value))
+		else if (JSValueIsNull(jsContext, value))
 		{
 			krollValue = kroll::Value::Null;
 		}
@@ -123,7 +121,7 @@ namespace KJSUtil
 		}
 		else if (exception != NULL)
 		{
-			throw ToKrollValue(exception, context, NULL);
+			throw ToKrollValue(exception, jsContext, NULL);
 		}
 		else
 		{
@@ -132,32 +130,32 @@ namespace KJSUtil
 		}
 	}
 
-	JSValueRef ToJSValue(SharedValue value, JSContextRef context)
+	JSValueRef ToJSValue(SharedValue value, JSContextRef jsContext)
 	{
 		JSValueRef jsValue = NULL;
 		if (value->IsInt())
 		{
-			jsValue = JSValueMakeNumber(context, value->ToInt());
+			jsValue = JSValueMakeNumber(jsContext, value->ToInt());
 		}
 		else if (value->IsDouble())
 		{
-			jsValue = JSValueMakeNumber(context, value->ToDouble());
+			jsValue = JSValueMakeNumber(jsContext, value->ToDouble());
 		}
 		else if (value->IsBool())
 		{
-			jsValue = JSValueMakeBoolean(context, value->ToBool());
+			jsValue = JSValueMakeBoolean(jsContext, value->ToBool());
 		}
 		else if (value->IsString())
 		{
 			JSStringRef s = JSStringCreateWithUTF8CString(value->ToString());
-			jsValue = JSValueMakeString(context, s);
+			jsValue = JSValueMakeString(jsContext, s);
 			JSStringRelease(s);
 		}
 		else if (value->IsObject())
 		{
 			SharedKObject obj = value->ToObject();
 			AutoPtr<KKJSObject> kobj = obj.cast<KKJSObject>();
-			if (!kobj.isNull() && kobj->SameContextGroup(context))
+			if (!kobj.isNull() && kobj->SameContextGroup(jsContext))
 			{
 				// this object is actually a pure JS object
 				jsValue = kobj->GetJSObject();
@@ -165,14 +163,14 @@ namespace KJSUtil
 			else
 			{
 				// this is a KObject that needs to be proxied
-				jsValue = KObjectToJSValue(value, context);
+				jsValue = KObjectToJSValue(value, jsContext);
 			}
 		}
 		else if (value->IsMethod())
 		{
 			SharedKMethod meth = value->ToMethod();
 			AutoPtr<KKJSMethod> kmeth = meth.cast<KKJSMethod>();
-			if (!kmeth.isNull() && kmeth->SameContextGroup(context))
+			if (!kmeth.isNull() && kmeth->SameContextGroup(jsContext))
 			{
 				// this object is actually a pure JS callable object
 				jsValue = kmeth->GetJSObject();
@@ -180,14 +178,14 @@ namespace KJSUtil
 			else
 			{
 				// this is a KMethod that needs to be proxied
-				jsValue = KMethodToJSValue(value, context);
+				jsValue = KMethodToJSValue(value, jsContext);
 			}
 		}
 		else if (value->IsList())
 		{
 			SharedKList list = value->ToList();
 			AutoPtr<KKJSList> klist = list.cast<KKJSList>();
-			if (!klist.isNull() && klist->SameContextGroup(context))
+			if (!klist.isNull() && klist->SameContextGroup(jsContext))
 			{
 				// this object is actually a pure JS array
 				jsValue = klist->GetJSObject();
@@ -195,27 +193,27 @@ namespace KJSUtil
 			else
 			{
 				// this is a KList that needs to be proxied
-				jsValue = KListToJSValue(value, context);
+				jsValue = KListToJSValue(value, jsContext);
 			}
 		}
 		else if (value->IsNull())
 		{
-			jsValue = JSValueMakeNull(context);
+			jsValue = JSValueMakeNull(jsContext);
 		}
 		else if (value->IsUndefined())
 		{
-			jsValue = JSValueMakeUndefined(context);
+			jsValue = JSValueMakeUndefined(jsContext);
 		}
 		else
 		{
-			jsValue = JSValueMakeUndefined(context);
+			jsValue = JSValueMakeUndefined(jsContext);
 		}
 
 		return jsValue;
 
 	}
 
-	JSValueRef KObjectToJSValue(SharedValue objectValue, JSContextRef c)
+	JSValueRef KObjectToJSValue(SharedValue objectValue, JSContextRef jsContext)
 	{
 		if (KJSKObjectClass == NULL)
 		{
@@ -228,10 +226,10 @@ namespace KJSUtil
 			jsClassDefinition.setProperty = SetPropertyCallback;
 			KJSKObjectClass = JSClassCreate(&jsClassDefinition);
 		}
-		return JSObjectMake(c, KJSKObjectClass, new SharedValue(objectValue));
+		return JSObjectMake(jsContext, KJSKObjectClass, new SharedValue(objectValue));
 	}
 
-	JSValueRef KMethodToJSValue(SharedValue methodValue, JSContextRef c)
+	JSValueRef KMethodToJSValue(SharedValue methodValue, JSContextRef jsContext)
 	{
 		if (KJSKMethodClass == NULL)
 		{
@@ -245,13 +243,13 @@ namespace KJSUtil
 			jsClassDefinition.callAsFunction = CallAsFunctionCallback;
 			KJSKMethodClass = JSClassCreate(&jsClassDefinition);
 		}
-		JSObjectRef ref = JSObjectMake(c, KJSKMethodClass, new SharedValue(methodValue));
-		JSValueRef fnProtoValue = GetFunctionPrototype(c, NULL);
-		JSObjectSetPrototype(c, ref, fnProtoValue);
-		return ref;
+		JSObjectRef jsobject = JSObjectMake(jsContext, KJSKMethodClass, new SharedValue(methodValue));
+		JSValueRef functionPrototype = GetFunctionPrototype(jsContext, NULL);
+		JSObjectSetPrototype(jsContext, jsobject, functionPrototype);
+		return jsobject;
 	}
 
-	JSValueRef KListToJSValue(SharedValue listValue, JSContextRef c)
+	JSValueRef KListToJSValue(SharedValue listValue, JSContextRef jsContext)
 	{
 
 		if (KJSKListClass == NULL)
@@ -266,10 +264,10 @@ namespace KJSUtil
 			KJSKListClass = JSClassCreate(&jsClassDefinition);
 		}
 
-		JSObjectRef ref = JSObjectMake(c, KJSKListClass, new SharedValue(listValue));
-		JSValueRef aProtoValue = GetArrayPrototype(c, NULL);
-		JSObjectSetPrototype(c, ref, aProtoValue);
-		return ref;
+		JSObjectRef jsobject = JSObjectMake(jsContext, KJSKListClass, new SharedValue(listValue));
+		JSValueRef arrayPrototype = GetArrayPrototype(jsContext, NULL);
+		JSObjectSetPrototype(jsContext, jsobject, arrayPrototype);
+		return jsobject;
 	}
 
 	std::string ToChars(JSStringRef jsString)
@@ -282,20 +280,20 @@ namespace KJSUtil
 		return string;
 	}
 
-	bool IsArrayLike(JSObjectRef object, JSContextRef c)
+	bool IsArrayLike(JSObjectRef object, JSContextRef jsContext)
 	{
 		bool isArrayLike = true;
 
 		JSStringRef pop = JSStringCreateWithUTF8CString("pop");
-		isArrayLike = isArrayLike && JSObjectHasProperty(c, object, pop);
+		isArrayLike = isArrayLike && JSObjectHasProperty(jsContext, object, pop);
 		JSStringRelease(pop);
 
 		JSStringRef concat = JSStringCreateWithUTF8CString("concat");
-		isArrayLike = isArrayLike && JSObjectHasProperty(c, object, concat);
+		isArrayLike = isArrayLike && JSObjectHasProperty(jsContext, object, concat);
 		JSStringRelease(concat);
 
 		JSStringRef length = JSStringCreateWithUTF8CString("length");
-		isArrayLike = isArrayLike && JSObjectHasProperty(c, object, length);
+		isArrayLike = isArrayLike && JSObjectHasProperty(jsContext, object, length);
 		JSStringRelease(length);
 
 		return isArrayLike;
@@ -307,26 +305,26 @@ namespace KJSUtil
 		delete value;
 	}
 
-	static bool PrototypeHasFunctionNamed(JSContextRef context, JSObjectRef object,
+	static bool PrototypeHasFunctionNamed(JSContextRef jsContext, JSObjectRef object,
 		JSStringRef name)
 	{
 		JSValueRef exception = NULL;
 
-		JSValueRef prototypeValue = JSObjectGetPrototype(context, object);
-		JSObjectRef prototype = JSValueToObject(context, prototypeValue, &exception);
+		JSValueRef prototypeValue = JSObjectGetPrototype(jsContext, object);
+		JSObjectRef prototype = JSValueToObject(jsContext, prototypeValue, &exception);
 
 		if (exception)
 			return false;
 
-		JSValueRef propValue = JSObjectGetProperty(context, prototype, name, &exception);
+		JSValueRef propValue = JSObjectGetProperty(jsContext, prototype, name, &exception);
 		if (exception)
 			return false;
 
-		if (!JSValueIsObject(context, propValue))
+		if (!JSValueIsObject(jsContext, propValue))
 			return false;
 
-		JSObjectRef prop = JSValueToObject(context, propValue, &exception);
-		return !exception && JSObjectIsFunction(context, prop);
+		JSObjectRef prop = JSValueToObject(jsContext, propValue, &exception);
+		return !exception && JSObjectIsFunction(jsContext, prop);
 	}
 
 	static bool HasPropertyCallback(JSContextRef jsContext, JSObjectRef jsObject,
@@ -365,11 +363,8 @@ namespace KJSUtil
 		return object->HasProperty(name.c_str());
 	}
 
-	static JSValueRef GetPropertyCallback(
-		JSContextRef jsContext,
-		JSObjectRef jsObject,
-		JSStringRef jsProperty,
-		JSValueRef* jsException)
+	static JSValueRef GetPropertyCallback(JSContextRef jsContext, 
+		JSObjectRef jsObject, JSStringRef jsProperty, JSValueRef* jsException)
 	{
 
 		SharedValue* value = static_cast<SharedValue*>(JSObjectGetPrivate(jsObject));
@@ -526,7 +521,7 @@ namespace KJSUtil
 	}
 
 	static JSValueRef GetSpecialProperty(SharedValue value, const char* name, 
-		JSContextRef context, SharedValue objValue)
+		JSContextRef jsContext, SharedValue objValue)
 	{
 		// Always override the length property on lists. Some languages
 		// supply their own length property, which might be a method instead
@@ -534,7 +529,7 @@ namespace KJSUtil
 		if (value->IsList() && !strcmp(name, "length"))
 		{
 			SharedKList l = value->ToList();
-			return JSValueMakeNumber(context, l->Size());
+			return JSValueMakeNumber(jsContext, l->Size());
 		}
 
 		// Only overload these methods if the value in our object is not a
@@ -546,18 +541,18 @@ namespace KJSUtil
 			if (!strcmp(name, "toString"))
 			{
 				JSStringRef s = JSStringCreateWithUTF8CString("toString");
-				return JSObjectMakeFunctionWithCallback(context, s, &ToStringCallback);
+				return JSObjectMakeFunctionWithCallback(jsContext, s, &ToStringCallback);
 			}
 
 			if (!strcmp(name, "equals"))
 			{
 				JSStringRef s = JSStringCreateWithUTF8CString("equals");
-				return JSObjectMakeFunctionWithCallback(context, s, &EqualsCallback);
+				return JSObjectMakeFunctionWithCallback(jsContext, s, &EqualsCallback);
 			}
 		}
 
 		// Otherwise this is just a normal JS value
-		return ToJSValue(objValue, context);
+		return ToJSValue(objValue, jsContext);
 	}
 
 	static bool DoSpecialSetBehavior(SharedValue target, const char* name, SharedValue newValue)
@@ -585,32 +580,32 @@ namespace KJSUtil
 		return ToJSValue(dsv, jsContext);
 	}
 
-	static JSValueRef EqualsCallback(JSContextRef context, JSObjectRef function,
+	static JSValueRef EqualsCallback(JSContextRef jsContext, JSObjectRef function,
 		JSObjectRef jsThis, size_t numArgs, const JSValueRef args[],
 		JSValueRef* exception)
 	{
 		SharedValue* value = static_cast<SharedValue*>(JSObjectGetPrivate(jsThis));
 		if (value == NULL || numArgs < 1)
 		{
-			return JSValueMakeBoolean(context, false);
+			return JSValueMakeBoolean(jsContext, false);
 		}
 
 		// Ensure argument is a JavaScript object
-		if (!JSValueIsObject(context, args[0]))
+		if (!JSValueIsObject(jsContext, args[0]))
 		{
-			return JSValueMakeBoolean(context, false);
+			return JSValueMakeBoolean(jsContext, false);
 		}
 
 		// Ensure argument is a Kroll JavaScript
-		JSObjectRef otherObject = JSValueToObject(context, args[0], NULL);
+		JSObjectRef otherObject = JSValueToObject(jsContext, args[0], NULL);
 		SharedValue* otherValue = static_cast<SharedValue*>(JSObjectGetPrivate(otherObject));
 		if (otherValue == NULL)
 		{
-			return JSValueMakeBoolean(context, false);
+			return JSValueMakeBoolean(jsContext, false);
 		}
 
 		// Test equality
-		return JSValueMakeBoolean(context, (*value)->Equals(*otherValue));
+		return JSValueMakeBoolean(jsContext, (*value)->Equals(*otherValue));
 	}
 
 	static void GetPropertyNamesCallback(JSContextRef jsContext,
@@ -634,22 +629,22 @@ namespace KJSUtil
 
 	JSObjectRef CreateNewGlobalContext(Host *host, bool addGlobalObject)
 	{
-		JSGlobalContextRef context = JSGlobalContextCreate(NULL);
-		JSObjectRef globalObject = JSContextGetGlobalObject(context);
-		RegisterGlobalContext(globalObject, context);
+		JSGlobalContextRef jsContext = JSGlobalContextCreate(NULL);
+		JSObjectRef globalObject = JSContextGetGlobalObject(jsContext);
+		RegisterGlobalContext(globalObject, jsContext);
 		
 		if (addGlobalObject)
 		{
-			/* Take some steps to insert the API into the Javascript context */
+			/* Take some steps to insert the API into the Javascript jsContext */
 			/* Create a crazy, crunktown delegate hybrid object for Javascript */
 			SharedValue globalValue = Value::NewObject(host->GetGlobalObject());
 
 			/* convert JS API to a KJS object */
-			JSValueRef jsAPI = ToJSValue(globalValue, context);
+			JSValueRef jsAPI = ToJSValue(globalValue, jsContext);
 
 			/* set the API as a property of the global object */
 			JSStringRef propertyName = JSStringCreateWithUTF8CString(PRODUCT_NAME);
-			JSObjectSetProperty(context, globalObject, propertyName,
+			JSObjectSetProperty(jsContext, globalObject, propertyName,
 				jsAPI, kJSPropertyAttributeNone, NULL);
 
 		}
@@ -657,78 +652,78 @@ namespace KJSUtil
 		return globalObject;
 	}
 
-	static std::map<JSObjectRef, JSGlobalContextRef> contextMap;
+	static std::map<JSObjectRef, JSGlobalContextRef> jsContextMap;
 	void RegisterGlobalContext(
 		JSObjectRef object,
 		JSGlobalContextRef globalContext)
 	{
-		contextMap[object] = globalContext;
+		jsContextMap[object] = globalContext;
 	}
 	
 	void UnregisterGlobalContext(JSObjectRef object)
 	{
-		std::map<JSObjectRef, JSGlobalContextRef>::iterator i = contextMap.find(object);
-		if (i!=contextMap.end())
+		std::map<JSObjectRef, JSGlobalContextRef>::iterator i = jsContextMap.find(object);
+		if (i!=jsContextMap.end())
 		{
-			contextMap.erase(i);
+			jsContextMap.erase(i);
 		}
 	}
 	
 
 	JSGlobalContextRef GetGlobalContext(JSObjectRef object)
 	{
-		if (contextMap.find(object) == contextMap.end())
+		if (jsContextMap.find(object) == jsContextMap.end())
 		{
 			return NULL;
 		}
 		else
 		{
-			return contextMap[object];
+			return jsContextMap[object];
 		}
 	}
 
-	static std::map<JSGlobalContextRef, int> contextRefCounts;
+	static std::map<JSGlobalContextRef, int> jsContextRefCounts;
 	void ProtectGlobalContext(JSGlobalContextRef globalContext)
 	{
-		if (contextRefCounts.find(globalContext) == contextRefCounts.end())
+		if (jsContextRefCounts.find(globalContext) == jsContextRefCounts.end())
 		{
 			JSGlobalContextRetain(globalContext);
-			contextRefCounts[globalContext] = 1;
+			jsContextRefCounts[globalContext] = 1;
 		}
 		else
 		{
-			contextRefCounts[globalContext]++;
+			jsContextRefCounts[globalContext]++;
 		}
 	}
 
 	void UnprotectGlobalContext(JSGlobalContextRef globalContext)
 	{
 		std::map<JSGlobalContextRef, int>::iterator i
-			= contextRefCounts.find(globalContext);
+			= jsContextRefCounts.find(globalContext);
 
-		if (i == contextRefCounts.end())
+		if (i == jsContextRefCounts.end())
 		{
-			GetLogger()->Error("Tried to unprotect an unknown context!");
+			GetLogger()->Error("Tried to unprotect an unknown jsContext!");
 		}
 		else if (i->second == 1)
 		{
 			JSGlobalContextRelease(globalContext);
-			contextRefCounts.erase(i);
+			jsContextRefCounts.erase(i);
 		}
 		else
 		{
-			contextRefCounts[globalContext]--;
+			jsContextRefCounts[globalContext]--;
 		}
 	}
 
-	SharedValue Evaluate(JSContextRef context, char *script)
+	SharedValue Evaluate(JSContextRef jsContext, char *script)
 	{
-		JSObjectRef globalObject = JSContextGetGlobalObject(context);
+		JSObjectRef globalObject = JSContextGetGlobalObject(jsContext);
 		JSStringRef scriptContents = JSStringCreateWithUTF8CString(script);
 		JSStringRef url = JSStringCreateWithUTF8CString("<string>");
 		JSValueRef exception = NULL;
 
-		JSValueRef returnValue = JSEvaluateScript(context, scriptContents, globalObject, 
+		JSValueRef returnValue = JSEvaluateScript(jsContext, scriptContents, globalObject, 
 			url, 0, &exception);
 
 		JSStringRelease(url);
@@ -736,33 +731,33 @@ namespace KJSUtil
 
 		if (exception != NULL)
 		{
-			throw ValueException(ToKrollValue(exception, context, NULL));
+			throw ValueException(ToKrollValue(exception, jsContext, NULL));
 		}
 
-		return ToKrollValue(returnValue, context, globalObject);
+		return ToKrollValue(returnValue, jsContext, globalObject);
 	}
 
-	SharedValue EvaluateFile(JSContextRef context, std::string fullPath)
+	SharedValue EvaluateFile(JSContextRef jsContext, std::string fullPath)
 	{
 		GetLogger()->Debug("Evaluating JavaScript file at: %s", fullPath.c_str());
 
-		JSObjectRef globalObject = JSContextGetGlobalObject(context);
+		JSObjectRef globalObject = JSContextGetGlobalObject(jsContext);
 		std::string scriptContents(FileUtils::ReadFile(fullPath));
 
 		JSStringRef script = JSStringCreateWithUTF8CString(scriptContents.c_str());
 		JSStringRef jsFullPath = JSStringCreateWithUTF8CString(fullPath.c_str());
 		JSValueRef exception = NULL;
-		JSValueRef returnValue = JSEvaluateScript(context, script, globalObject, 
+		JSValueRef returnValue = JSEvaluateScript(jsContext, script, globalObject, 
 			jsFullPath, 0, &exception);
 		JSStringRelease(script);
 		JSStringRelease(jsFullPath);
 
 		if (exception != NULL)
 		{
-			throw ValueException(ToKrollValue(exception, context, NULL));
+			throw ValueException(ToKrollValue(exception, jsContext, NULL));
 		}
 
-		return ToKrollValue(returnValue, context, globalObject);
+		return ToKrollValue(returnValue, jsContext, globalObject);
 	}
 
 	//===========================================================================//
@@ -858,26 +853,26 @@ namespace KJSUtil
 	
 	void BindProperties(JSObjectRef globalObject, SharedKObject obj)
 	{
-		JSGlobalContextRef context = GetGlobalContext(globalObject);
+		JSGlobalContextRef jsContext = GetGlobalContext(globalObject);
 
 		SharedStringList names = obj->GetPropertyNames();
 		for (size_t i = 0; i < names->size(); i++)
 		{
 			std::string other = *names->at(i);
 			SharedValue v = obj->Get(other.c_str());
-			JSValueRef js = ToJSValue(v, context);
+			JSValueRef js = ToJSValue(v, jsContext);
 			JSStringRef propertyName = JSStringCreateWithUTF8CString(other.c_str());
-			JSObjectSetProperty(context, globalObject, propertyName, js, kJSPropertyAttributeNone, NULL);
+			JSObjectSetProperty(jsContext, globalObject, propertyName, js, kJSPropertyAttributeNone, NULL);
 		}
 	}
 
 	SharedValue GetProperty(JSObjectRef globalObject, std::string name)
 	{
-		JSGlobalContextRef context = GetGlobalContext(globalObject);
+		JSGlobalContextRef jsContext = GetGlobalContext(globalObject);
 		JSStringRef jsName = JSStringCreateWithUTF8CString(name.c_str());
-		JSValueRef prop = JSObjectGetProperty(context, globalObject, jsName, NULL);
+		JSValueRef prop = JSObjectGetProperty(jsContext, globalObject, jsName, NULL);
 		JSStringRelease(jsName);
-		return ToKrollValue(prop, context, globalObject);
+		return ToKrollValue(prop, jsContext, globalObject);
 	}
 }
 }

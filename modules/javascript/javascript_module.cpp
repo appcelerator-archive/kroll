@@ -52,5 +52,4 @@ namespace kroll
 		JavascriptModuleInstance* instance = new JavascriptModuleInstance(this->host, path, moduledir, name);
 		return instance;
 	}
-
 }

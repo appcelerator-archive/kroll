@@ -65,6 +65,11 @@ namespace kroll
 		return kobject->GetPropertyNames();
 	}
 
+	bool KKJSMethod::HasProperty(const char* name)
+	{
+		return kobject->HasProperty(name);
+	}
+
 	bool KKJSMethod::SameContextGroup(JSContextRef c)
 	{
 		return kobject->SameContextGroup(c);
@@ -98,6 +103,5 @@ namespace kroll
 
 		return KJSUtil::ToKrollValue(jsValue, this->context, NULL);
 	}
-
 }
 

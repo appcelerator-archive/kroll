@@ -21,20 +21,15 @@ namespace kroll
 		KKJSMethod(JSContextRef, JSObjectRef, JSObjectRef);
 		~KKJSMethod();
 
-		void Set(const char *name, SharedValue value);
-		SharedValue Get(const char *name);
-		SharedValue Call(const ValueList& args);
-		SharedStringList GetPropertyNames();
-		bool SameContextGroup(JSContextRef c);
-		JSObjectRef GetJSObject();
-
-		/*
-		 * Determine if the given KJS object equals this one
-		 * by comparing these objects via strict equality (===)
-		 *  @param other the object to test
-		 *  @returns true if objects have strit equality, false otherwise
-		 */
+		virtual void Set(const char *name, SharedValue value);
+		virtual SharedValue Get(const char *name);
+		virtual SharedValue Call(const ValueList& args);
+		virtual SharedStringList GetPropertyNames();
+		virtual bool HasProperty(const char* name);
 		virtual bool Equals(SharedKObject);
+
+		virtual bool SameContextGroup(JSContextRef c);
+		JSObjectRef GetJSObject();
 
 		protected:
 		JSGlobalContextRef context;

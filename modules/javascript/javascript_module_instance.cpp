@@ -83,6 +83,5 @@ namespace kroll
 		// null it out so we don't hold a bunch of this in memory
 		this->code = "";
 	}
-
 }
 

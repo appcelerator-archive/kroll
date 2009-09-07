@@ -21,12 +21,13 @@ namespace kroll
 		KKJSObject(JSContextRef context, JSObjectRef js_object);
 		~KKJSObject();
 
-		void Set(const char *name, SharedValue value);
-		SharedValue Get(const char *name);
-		SharedStringList GetPropertyNames();
+		virtual void Set(const char *name, SharedValue value);
+		virtual SharedValue Get(const char *name);
+		virtual SharedStringList GetPropertyNames();
+		virtual bool HasProperty(const char* name);
 		virtual bool Equals(SharedKObject);
-		bool SameContextGroup(JSContextRef c);
 
+		bool SameContextGroup(JSContextRef c);
 		JSObjectRef GetJSObject();
 
 		protected:
@@ -35,7 +36,6 @@ namespace kroll
 
 		private:
 		DISALLOW_EVIL_CONSTRUCTORS(KKJSObject);
-
 	};
 }
 

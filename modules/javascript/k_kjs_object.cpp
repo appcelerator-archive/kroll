@@ -108,11 +108,16 @@ namespace kroll
 		return list;
 	}
 
+	bool KKJSObject::HasProperty(const char* name)
+	{
+		JSStringRef jsName = JSStringCreateWithUTF8CString(name);
+		bool hasProperty = JSObjectHasProperty(context, jsobject, jsName);
+		JSStringRelease(jsName);
+		return hasProperty;
+	}
+
 	bool KKJSObject::SameContextGroup(JSContextRef contextIn)
 	{
 		return JSContextGetGroup(this->context) == JSContextGetGroup(contextIn);
 	}
-
 }
-
-

@@ -8,7 +8,6 @@
 
 namespace kroll
 {
-
 	KKJSList::KKJSList(JSContextRef context, JSObjectRef jsobject) :
 		context(NULL),
 		jsobject(jsobject)
@@ -112,6 +111,11 @@ namespace kroll
 		 return kobject->GetPropertyNames();
 	}
 
+	bool KKJSList::HasProperty(const char* name)
+	{
+		return kobject->HasProperty(name);
+	}
+
 	bool KKJSList::SameContextGroup(JSContextRef c)
 	{
 		return kobject->SameContextGroup(c);
@@ -121,7 +125,4 @@ namespace kroll
 	{
 		return this->jsobject;
 	}
-
-
-
 }
