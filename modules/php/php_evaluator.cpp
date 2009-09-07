@@ -59,16 +59,16 @@ namespace kroll
 
 	static std::string GetContextId(SharedKObject global)
 	{
-		std::string id(global->GetString("__php_module_id__"));
-		if (id.empty())
+		std::string contextId(global->GetString("__php_module_id__"));
+		if (contextId.empty())
 		{
 			static int nextId = 0;
-			id.append("__kroll__namespace__");
-			id.append(KList::IntToChars(++nextId));
-			global->SetString("__php_module_id__", id);
+			contextId.append("__kroll__namespace__");
+			contextId.append(KList::IntToChars(++nextId));
+			global->SetString("__php_module_id__", contextId);
 		}
 
-		return id;
+		return contextId;
 	}
 
 	void PHPEvaluator::Evaluate(const ValueList& args, SharedValue result)
