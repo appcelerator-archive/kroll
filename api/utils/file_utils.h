@@ -54,7 +54,8 @@ namespace UTILS_NS
 		/**
 		 * tokenize a string by delimeter into parts and place in vector tokens
 		 */
-		static void Tokenize(const std::string& str, std::vector<std::string>& tokens, const std::string delimeters, bool skip_if_found=false);
+		static void Tokenize(const std::string& str, std::vector<std::string>& tokens,
+			const std::string delimeters, bool skipIfFound=false);
 
 		/**
 		 * @param str The string to trim
