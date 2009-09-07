@@ -21,7 +21,6 @@ namespace kroll {
 	class KKJSObject;
 	class KKJSMethod;
 	class KKJSList;
-	class KJSUtil;
 }
 #include "k_kjs_object.h"
 #include "k_kjs_method.h"

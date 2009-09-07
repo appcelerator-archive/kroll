@@ -7,48 +7,47 @@
 
 namespace kroll
 {
-	KKJSObject::KKJSObject(JSContextRef context, JSObjectRef js_object) :
+	KKJSObject::KKJSObject(JSContextRef context, JSObjectRef jsobject) :
 		context(NULL),
-		object(js_object)
+		jsobject(jsobject)
 	{
 		/* KJS methods run in the global context that they originated from
 		* this seems to prevent nasty crashes from trying to access invalid
 		* contexts later. Global contexts need to be registered by all modules
 		* that use a KJS context. */
-		JSObjectRef global_object = JSContextGetGlobalObject(context);
-		JSGlobalContextRef global_context = KJSUtil::GetGlobalContext(global_object);
+		JSObjectRef globalObject = JSContextGetGlobalObject(context);
+		JSGlobalContextRef globalContext = KJSUtil::GetGlobalContext(globalObject);
 
 		// This context hasn't been registered. Something has gone pretty
 		// terribly wrong and Kroll will likely crash soon. Nonetheless, keep
 		// the user up-to-date to keep their hopes up.
-		if (global_context == NULL)
+		if (globalContext == NULL)
 			std::cerr << "Could not locate global context for a KJS method."  <<
 			             " One of the modules is misbehaving." << std::endl;
 
-		this->context = global_context;
+		this->context = globalContext;
 
 		KJSUtil::ProtectGlobalContext(this->context);
-		JSValueProtect(this->context, this->object);
+		JSValueProtect(this->context, this->jsobject);
 	}
 
 	KKJSObject::~KKJSObject()
 	{
-		JSValueUnprotect(this->context, this->object);
+		JSValueUnprotect(this->context, this->jsobject);
 		KJSUtil::UnprotectGlobalContext(this->context);
 	}
 
 	JSObjectRef KKJSObject::GetJSObject()
 	{
-		return this->object;
+		return this->jsobject;
 	}
 
 	SharedValue KKJSObject::Get(const char *name)
 	{
-		JSStringRef s = JSStringCreateWithUTF8CString(name);
+		JSStringRef jsName = JSStringCreateWithUTF8CString(name);
 		JSValueRef exception = NULL;
-		JSValueRef js_value =
-			JSObjectGetProperty(this->context, this->object, s, NULL);
-		JSStringRelease(s);
+		JSValueRef jsValue = JSObjectGetProperty(this->context, this->jsobject, jsName, NULL);
+		JSStringRelease(jsName);
 
 		if (exception != NULL) //exception thrown
 		{
@@ -56,29 +55,24 @@ namespace kroll
 			throw ValueException(tv_exp);
 		}
 
-		SharedValue kvalue = KJSUtil::ToKrollValue(js_value, this->context, this->object);
+		SharedValue kvalue = KJSUtil::ToKrollValue(jsValue, this->context, this->jsobject);
 		return kvalue;
 	}
 
 	void KKJSObject::Set(const char *name, SharedValue value)
 	{
-		JSValueRef js_value = KJSUtil::ToJSValue(value, this->context);
-		JSStringRef s = JSStringCreateWithUTF8CString(name);
+		JSValueRef jsValue = KJSUtil::ToJSValue(value, this->context);
+		JSStringRef jsName = JSStringCreateWithUTF8CString(name);
 
 		JSValueRef exception = NULL;
-		JSObjectSetProperty(
-			this->context,
-			this->object,
-			s,
-			js_value,
-			NULL, // attributes
-			&exception);
-		JSStringRelease(s);
+		JSObjectSetProperty(this->context, this->jsobject, jsName, jsValue,
+			NULL, &exception);
+		JSStringRelease(jsName);
 
-		if (exception != NULL) //exception thrown
+		if (exception != NULL) // An exception was thrown.
 		{
-			Value* tv_exp = KJSUtil::ToKrollValue(exception, this->context, NULL);
-			throw ValueException(tv_exp);
+			SharedValue exceptionValue = KJSUtil::ToKrollValue(exception, this->context, NULL);
+			throw ValueException(exceptionValue);
 		}
 	}
 
@@ -92,7 +86,7 @@ namespace kroll
 			return false;
 
 		return JSValueIsStrictEqual(
-			this->context, this->object, kjsOther->GetJSObject());
+			this->context, this->jsobject, kjsOther->GetJSObject());
 	}
 
 	SharedStringList KKJSObject::GetPropertyNames()
@@ -100,28 +94,23 @@ namespace kroll
 		SharedStringList list(new StringList());
 
 		JSPropertyNameArrayRef names =
-			JSObjectCopyPropertyNames(this->context, this->object);
+			JSObjectCopyPropertyNames(this->context, this->jsobject);
 		JSPropertyNameArrayRetain(names);
 
 		size_t count = JSPropertyNameArrayGetCount(names);
 		for (size_t i = 0; i < count; i++)
 		{
-			JSStringRef js_name = JSPropertyNameArrayGetNameAtIndex(names, i);
-			char* name = KJSUtil::ToChars(js_name);
-			SharedString name_str(new std::string(name));
-			list->push_back(name_str);
-			free(name);
+			JSStringRef jsName = JSPropertyNameArrayGetNameAtIndex(names, i);
+			list->push_back(new std::string(KJSUtil::ToChars(jsName)));
 		}
 
 		JSPropertyNameArrayRelease(names);
 		return list;
 	}
 
-	bool KKJSObject::SameContextGroup(JSContextRef c)
+	bool KKJSObject::SameContextGroup(JSContextRef contextIn)
 	{
-		JSContextGroupRef context_group_a = JSContextGetGroup(this->context);
-		JSContextGroupRef context_group_b = JSContextGetGroup(c);
-		return context_group_a == context_group_b;
+		return JSContextGetGroup(this->context) == JSContextGetGroup(contextIn);
 	}
 
 }
