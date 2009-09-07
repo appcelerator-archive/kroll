@@ -26,15 +26,15 @@ namespace kroll
 		logger = Logger::Get("PHP");
 		int argc = 1;
 		char *argv[2] = { "php_kroll", NULL };
-		
+
 		php_embed_module.ub_write = PHPModule::UnbufferedWrite;
 		php_embed_module.log_message = PHPModule::LogMessage;
 		php_embed_module.ini_defaults = PHPModule::IniDefaults;
 		php_embed_module.header_handler = PHPModule::HeaderHandler;
-		
+
 		php_embed_init(argc, argv PTSRMLS_CC);
 		PHPUtils::InitializePHPKrollClasses();
-		
+
 		this->InitializeBinding();
 		host->AddModuleProvider(this);
 	}

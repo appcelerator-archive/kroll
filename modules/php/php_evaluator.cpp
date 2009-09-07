@@ -57,14 +57,18 @@ namespace kroll
 		}
 	}
 
-	static std::string GetNextContextId()
+	static std::string GetContextId(SharedKObject global)
 	{
-		// Namespace names in PHP are lower-cased, so returning something 
-		// that is lower-cased here will avoid tranformations later.
-		static int nextId = 0;
-		std::string contextName("krollnamespace");
-		contextName.append(KList::IntToChars(++nextId));
-		return contextName;
+		std::string id(global->GetString("__php_module_id__"));
+		if (id.empty())
+		{
+			static int nextId = 0;
+			id.append("__kroll__namespace__");
+			id.append(KList::IntToChars(++nextId));
+			global->SetString("__php_module_id__", id);
+		}
+
+		return id;
 	}
 
 	void PHPEvaluator::Evaluate(const ValueList& args, SharedValue result)
@@ -78,10 +82,16 @@ namespace kroll
 		SharedKObject windowGlobal = args.GetObject(3);
 		SharedValue kv = Value::Undefined;
 
-		std::string contextId(GetNextContextId());
-		std::ostringstream codeString, callString;
+		// Contexts must be the same for runs with the same global object.
+		std::string contextId(GetContextId(windowGlobal));
+
+		// Each function we create must have unique name though.
+		static int nextFunctionId = 0;
+		nextFunctionId++;
+
+		std::ostringstream codeString;
 		codeString << "namespace " << contextId << " {\n";
-		codeString << " function __kroll_exec__" << contextId << "() {\n";
+		codeString << " function __kroll_exec__" << contextId << "f" << nextFunctionId << "() {\n";
 		codeString << "  global $Titanium, $window, $document;\n";
 		codeString << code;
 		codeString << "  foreach (get_defined_vars() as $var=>$val) {\n";
@@ -98,8 +108,9 @@ namespace kroll
 		codeString << "   }\n";
 		codeString << "  }\n";
 		codeString << " }\n";
-		codeString << " __kroll_exec__" << contextId << "();\n";
+		codeString << " __kroll_exec__" << contextId << "f" << nextFunctionId << "();\n";
 		codeString << "}\n";
+		printf("%s\n", codeString.str().c_str());
 
 		zend_first_try {
 
