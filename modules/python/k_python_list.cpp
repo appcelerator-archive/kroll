@@ -12,15 +12,7 @@ namespace kroll
 		object(new KPythonObject(list, true))
 	{
 		PyLockGIL lock;
-		if (PyList_Check(list))
-		{
-			Py_INCREF(this->list);
-		}
-		else
-		{
-			throw ValueException::FromString(
-				"Invalid PyObject passed. Should be a Py_List");
-		}
+		Py_INCREF(this->list);
 	}
 
 	KPythonList::~KPythonList()

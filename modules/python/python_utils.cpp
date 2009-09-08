@@ -273,115 +273,121 @@ namespace kroll
 	SharedValue PythonUtils::ToKrollValue(PyObject* value)
 	{
 		PyLockGIL lock;
+
+		// Snow Leopard's version of Python 2.6 seems to return false positives
+		// when calling things like PyString_Check, PyList_Check, etc. Oddly enough,
+		// calling PyObject_TypeCheck(...) with the appropriate arguments does the
+		// trick. Therefore we should avoid using PyString_Check and friends for now
+		// unless it does the right thing on Snow Leopard.
+
+		SharedValue kvalue(0);
 		if (Py_None == value)
 		{
-			return Value::Null;
+			kvalue = Value::Null;
 		}
-		else if (PyString_Check(value))
+		else if (PyObject_TypeCheck(value, &PyString_Type))
 		{
-			std::string s = PythonUtils::ToString(value);
-			return Value::NewString(s);
+			kvalue = Value::NewString(PythonUtils::ToString(value));
 		}
-		else if (PyBool_Check(value))
+		else if (PyObject_TypeCheck(value, &PyUnicode_Type))
 		{
-			return Value::NewBool(PyObject_IsTrue(value));
+			PyObject* utf8Value = PyUnicode_AsUTF8String(value);
+			kvalue = Value::NewString(PythonUtils::ToString(utf8Value));
+			Py_DECREF(utf8Value);
 		}
-		else if (PyInt_Check(value))
+		else if (PyObject_TypeCheck(value, &PyBool_Type))
 		{
-			long lval = PyInt_AsLong(value);
-			return Value::NewInt((int) lval);
+			kvalue = Value::NewBool(PyObject_IsTrue(value));
 		}
-		else if (PyLong_Check(value))
+		else if (PyObject_TypeCheck(value, &PyInt_Type))
+		{
+			kvalue = Value::NewInt((int) PyInt_AsLong(value));
+		}
+		else if (PyObject_TypeCheck(value, &PyLong_Type))
 		{
 			double dval = PyLong_AsDouble(value);
 			if (dval == -1.0)
 			{
 				THROW_PYTHON_EXCEPTION
 			}
-			return Value::NewDouble(dval);
+			else
+			{
+				kvalue = Value::NewDouble(dval);
+			}
 		}
-		else if (PyFloat_Check(value))
+		else if (PyObject_TypeCheck(value, &PyFloat_Type))
 		{
-			double dval = PyFloat_AsDouble(value);
-			return Value::NewDouble(dval);
+			kvalue = Value::NewDouble(PyFloat_AsDouble(value));
 		}
-		else if (PyList_Check(value))
+		else if (PyObject_TypeCheck(value, &PyList_Type))
 		{
-			SharedKList l = new KPythonList(value);
-			SharedValue til = Value::NewList(l);
-			return til;
+			kvalue = Value::NewList(new KPythonList(value));
 		}
-		else if (PyTuple_Check(value))
+		else if (PyObject_TypeCheck(value, &PyTuple_Type))
 		{
-			SharedKList l = new KPythonTuple(value);
-			SharedValue til = Value::NewList(l);
-			return til;
+			kvalue = Value::NewList(new KPythonTuple(value));
 		}
 
-		/* These are objects that originated in the binding layer.
-		 * We need to unwrap them when we pass them back to Kroll */
-		if (PyObject_TypeCheck(value, &PyKObjectType))
+		// These are objects that originated in the binding layer.
+		// We need to unwrap them when we pass them back to Kroll.
+		else if (PyObject_TypeCheck(value, &PyKObjectType))
 		{
 			PyKObject *o = reinterpret_cast<PyKObject*>(value);
-			return *(o->value);
+			kvalue = *(o->value);
 		}
 		else if (PyObject_TypeCheck(value, &PyKMethodType))
 		{
 			PyKObject *o = reinterpret_cast<PyKObject*>(value);
-			return *(o->value);
+			kvalue = *(o->value);
 		}
 		else if (PyObject_TypeCheck(value, &PyKListType))
 		{
 			PyKObject *o = reinterpret_cast<PyKObject*>(value);
-			return *(o->value);
+			kvalue = *(o->value);
+		}
+		else if (PyObject_TypeCheck(value, &PyModule_Type))
+		{
+			kvalue = Value::NewObject(new KPythonObject(value));
 		}
 		else if (PyInstance_Check(value))
 		{
-			SharedKObject v = new KPythonObject(value);
-			SharedValue tiv = Value::NewObject(v);
-			return tiv;
+			kvalue = Value::NewObject(new KPythonObject(value));
 		}
 		else if (PyMethod_Check(value))
 		{
-			SharedKMethod m = new KPythonMethod(value);
-			SharedValue tiv = Value::NewMethod(m);
-			return tiv;
-		}
-		else if (PyModule_Check(value))
-		{
-			SharedKObject v = new KPythonObject(value);
-			SharedValue tiv = Value::NewObject(v);
-			return tiv;
+			kvalue = Value::NewMethod(new KPythonMethod(value));
 		}
 		else if (PyFunction_Check(value))
 		{
-			SharedKMethod m = new KPythonMethod(value);
-			SharedValue tiv = Value::NewMethod(m);
-			return tiv;
+			kvalue = Value::NewMethod(new KPythonMethod(value));
 		}
 		else if (PyCallable_Check(value))
 		{
-			SharedKMethod m = new KPythonMethod(value);
-			SharedValue tiv = Value::NewMethod(m);
-			return tiv;
+			kvalue = Value::NewMethod(new KPythonMethod(value));
 		}
 		else if (PyMapping_Check(value))
 		{
 			// While dicts are read-only we bind mappable
 			// objects as if gets/sets actually set the map keys
-			SharedKObject o = new KPythonDict(value);
-			SharedValue kv = Value::NewObject(o);
-			return kv;
+			kvalue = Value::NewObject(new KPythonDict(value));
 		}
 		else
 		{
 			// This is likely a new-style object instance
 			// and we can just map it like a KPythonObject
-			SharedKObject v = new KPythonObject(value);
-			SharedValue tiv = Value::NewObject(v);
-			return tiv;
+			kvalue = Value::NewObject(new KPythonObject(value));
 		}
 
+		if (kvalue.isNull())
+		{
+			std::string valueStr(PythonUtils::ToString(value));
+			Logger::Get("Python.PythonUtils")->Error(
+				"Failed to convert Python value to Kroll value: %s",
+				valueStr.c_str());
+			kvalue = Value::Undefined;
+		}
+
+		return kvalue;
 	}
 
 	static void PyKObject_dealloc(PyObject* self)
@@ -655,22 +661,32 @@ namespace kroll
 		}
 		else
 		{
+			char* fullTraceCString = NULL;
+
 			PyObject* list = PyObject_CallMethod(mod,
 				(char*) "format_exception", (char*) "OOO", type, value, traceback);
 
-			PyObject* newline = PyString_FromString("\n");
-			PyObject* fullTrace = PyObject_CallMethod(newline,
-				(char*) "join", (char*) "O", list);
-
-			char* fullTraceCString = PyString_AsString(fullTrace);
-			if (fullTraceCString)
+			if (list)
 			{
-				fullTraceString.append(fullTraceCString);
+				PyObject* newline = PyString_FromString("\n");
+				PyObject* fullTrace = PyObject_CallMethod(newline,
+					(char*) "join", (char*) "O", list);
+
+				if (fullTrace)
+					fullTraceCString = PyString_AsString(fullTrace);
+
+				if (fullTraceCString)
+					fullTraceString.append(fullTraceCString);
+
+				Py_DECREF(list);
+				Py_DECREF(newline);
+				Py_DECREF(fullTrace);
 			}
 
-			Py_DECREF(list);
-			Py_DECREF(newline);
-			Py_DECREF(fullTrace);
+			// We failed to format the exception properly, so fall back
+			// to using the str() of the exception.
+			if (fullTraceString.empty())
+				fullTraceString = PythonUtils::ToString(value);
 		}
 		return fullTraceString;
 	}
