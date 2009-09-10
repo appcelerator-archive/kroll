@@ -166,10 +166,8 @@ namespace UTILS_NS
 #endif
 	}
 
-	void FileUtils::Tokenize(
-		const std::string& str,
-		std::vector<std::string>& tokens, 
-		const std::string delimeters, 
+	void FileUtils::Tokenize(const std::string& str,
+		std::vector<std::string>& tokens, const std::string delimeters,
 		bool skip_if_found)
 	{
 		std::string::size_type lastPos = str.find_first_not_of(delimeters,0);
@@ -223,33 +221,4 @@ namespace UTILS_NS
 		}
 		return c;
 	}
-
-#if defined(OS_OSX) || defined(OS_LINUX)
-	void FileUtils::WriteFile(std::string& path, std::string& content)
-	{
-		std::ofstream f(path.c_str());
-		f << content;
-		f.close();
-	}
-
-	std::string FileUtils::ReadFile(std::string& path)
-	{
-		std::ostringstream inputStream;
-
-		std::ifstream inputFile(path.c_str());
-
-		if (!inputFile.is_open())
-			return inputStream.str();
-
-		std::string line;
-		while (!inputFile.eof())
-		{
-			getline(inputFile, line);
-			inputStream << line << std::endl;
-		}
-
-		inputFile.close();
-		return inputStream.str();
-	}
-#endif
 }
