@@ -168,7 +168,7 @@ namespace UTILS_NS
 
 		std::string url("file://");
 		std::vector<std::string> pieces;
-		std::string delim = "/";
+		std::string delim("/");
 		FileUtils::Tokenize(path, pieces, delim);
 		for (size_t i = 0; i < pieces.size(); i++)
 		{
@@ -234,9 +234,9 @@ namespace UTILS_NS
 				return tiURL;
 			}
 
-			std::string host = inURI.getHost();
+			std::string host(inURI.getHost());
 			SharedApplication app = Host::GetInstance()->GetApplication();
-			std::string path = app->GetComponentPath(host);
+			std::string path(app->GetComponentPath(host));
 
 			if (path.empty())
 			{
@@ -269,9 +269,9 @@ namespace UTILS_NS
 	std::string URLUtils::NormalizeAppURL(std::string& url)
 	{
 		size_t appLength = 6; // app://
-		std::string id = Host::GetInstance()->GetApplication()->id;
+		std::string id(Host::GetInstance()->GetApplication()->id);
 		size_t idLength = id.size();
-		std::string idPart = url.substr(appLength, idLength);
+		std::string idPart(url.substr(appLength, idLength));
 
 		if (idPart == id)
 		{
@@ -293,11 +293,11 @@ namespace UTILS_NS
 				return inURL;
 			}
 
-			std::string appURL = NormalizeAppURL(inURL);
+			std::string appURL(NormalizeAppURL(inURL));
 			inURI = Poco::URI(appURL);
 
 			SharedApplication app = Host::GetInstance()->GetApplication();
-			std::string path = app->GetResourcesPath();
+			std::string path(app->GetResourcesPath());
 
 			std::vector<std::string> segments;
 			inURI.getPathSegments(segments);

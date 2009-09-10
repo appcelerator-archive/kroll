@@ -39,7 +39,7 @@ namespace UTILS_NS
 		// and allocating the maximum size. Hopefully this will prevent
 		// expensive allocations.
 		wchar_t* buffer = new wchar_t[REASONABLE_MAX_ENV_VALUE_SIZE];
-		std::wstring wideName = UTF8ToWide(name);
+		std::wstring wideName(UTF8ToWide(name));
 
 		DWORD size = GetEnvironmentVariableW(wideName.c_str(), buffer, REASONABLE_MAX_ENV_VALUE_SIZE - 1);
 		if (size > REASONABLE_MAX_ENV_VALUE_SIZE)
@@ -75,8 +75,8 @@ namespace UTILS_NS
 	void EnvironmentUtils::Set(std::string name, std::string value)
 	{
 #ifdef OS_WIN32
-		std::wstring wideName = UTF8ToWide(name);
-		std::wstring wideValue = UTF8ToWide(value);
+		std::wstring wideName(UTF8ToWide(name));
+		std::wstring wideValue(UTF8ToWide(value));
 		if (SetEnvironmentVariableW(wideName.c_str(), wideValue.c_str()) == 0)
 		{
 			throw std::string("Cannot set environment variable: ") + name;
@@ -92,7 +92,7 @@ namespace UTILS_NS
 	void EnvironmentUtils::Unset(std::string name)
 	{
 #ifdef OS_WIN32
-		std::wstring wideName = UTF8ToWide(name);
+		std::wstring wideName(UTF8ToWide(name));
 		SetEnvironmentVariableW(wideName.c_str(), NULL);
 #else
 		unsetenv(name.c_str());
@@ -107,10 +107,10 @@ namespace UTILS_NS
 		LPWCH env = GetEnvironmentStringsW();
 		while (env[0] != '\0')
 		{
-			std::wstring entryW = env;
-			std::string entry = WideToUTF8(entryW);
-			std::string key = entry.substr(0, entry.find("="));
-			std::string val = entry.substr(entry.find("=")+1);
+			std::wstring entryW(env);
+			std::string entry(WideToUTF8(entryW));
+			std::string key(entry.substr(0, entry.find("=")));
+			std::string val(entry.substr(entry.find("=")+1));
 			environment[key] = val;
 			env += entry.size() + 1;
 		}
@@ -118,9 +118,9 @@ namespace UTILS_NS
 		char** current = environ;
 		while (*current)
 		{
-			std::string entry = *current;
-			std::string key = entry.substr(0, entry.find("="));
-			std::string val = entry.substr(entry.find("=")+1);
+			std::string entry(*current);
+			std::string key(entry.substr(0, entry.find("=")));
+			std::string val(entry.substr(entry.find("=")+1));
 			environment[key] = val;
 			current++;
 		}

@@ -23,7 +23,7 @@ namespace UTILS_NS
 		if (errorText)
 		{
 			result = WideToUTF8(errorText);
-	   		LocalFree(errorText);
+			LocalFree(errorText);
 		}
 		return result;
 	}
@@ -53,13 +53,13 @@ namespace UTILS_NS
 		if (size == 0)
 			return L"";
 
-	 	wchar_t* buffer = new wchar_t[size + 1];
-	 	buffer[size] = '\0';
+		wchar_t* buffer = new wchar_t[size + 1];
+		buffer[size] = '\0';
 	
-	 	MultiByteToWideChar(codePage, 0, in, -1, buffer, (int) size);
-	 	std::wstring out = buffer;
-	 	delete [] buffer;
-	 	return out; 
+		MultiByteToWideChar(codePage, 0, in, -1, buffer, (int) size);
+		std::wstring out(buffer);
+		delete [] buffer;
+		return out;
 	}
 
 	std::string WideToUTF8(std::wstring& in)
@@ -78,8 +78,8 @@ namespace UTILS_NS
 		buffer[4 * size] = '\0';
 	
 		WideCharToMultiByte(CP_UTF8, 0, in, -1, buffer, (int) (bufferSize - 1), NULL, NULL);
-		std::string out = buffer;
+		std::string out(buffer);
 		delete [] buffer;
-		return out; 
+		return out;
 	}
 }

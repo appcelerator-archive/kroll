@@ -33,7 +33,7 @@ namespace UTILS_NS
 {
 	std::string FileUtils::GetApplicationDataDirectory(std::string &appid)
 	{
-		std::string dir = GetUserRuntimeHomeDirectory();
+		std::string dir(GetUserRuntimeHomeDirectory());
 		dir = FileUtils::Join(dir.c_str(), "appdata", appid.c_str(), NULL);
 		CreateDirectory(dir, true);
 
@@ -56,7 +56,7 @@ namespace UTILS_NS
 			return true;
 		}
 		
-		string parent = Dirname(dir);
+		string parent(Dirname(dir));
 		if (recursive && parent.size() > 0 && !IsDirectory(parent))
 		{
 			if (!CreateDirectory(parent, true))
@@ -104,7 +104,7 @@ namespace UTILS_NS
 		std::vector<std::string>::iterator iter = parts.begin();
 		while (iter != parts.end())
 		{
-			std::string part = *iter;
+			std::string part(*iter);
 			bool first = (iter == parts.begin());
 			bool last = (iter == parts.end()-1);
 			iter++;
@@ -174,14 +174,14 @@ namespace UTILS_NS
 		std::string::size_type pos = str.find_first_of(delimeters,lastPos);
 		while (std::string::npos!=pos || std::string::npos!=lastPos)
 		{
-			std::string token = str.substr(lastPos,pos-lastPos);
+			std::string token(str.substr(lastPos,pos-lastPos));
 			bool found = false;
 			if (skip_if_found)
 			{
 				std::vector<std::string>::iterator i = tokens.begin();
 				while(i!=tokens.end())
 				{
-					std::string entry = (*i++);
+					std::string entry(*i++);
 					if (entry == token)
 					{
 						found = true;

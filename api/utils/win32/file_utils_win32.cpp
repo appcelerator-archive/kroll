@@ -37,7 +37,7 @@ namespace UTILS_NS
 	
 	bool FileHasAttributes(std::string& path, DWORD attributes)
 	{
-		std::wstring widePath = UTILS_NS::UTF8ToWide(path);
+		std::wstring widePath(UTILS_NS::UTF8ToWide(path));
 		return WideFileHasAttributes(widePath, attributes);
 	}
 
@@ -46,7 +46,7 @@ namespace UTILS_NS
 		wchar_t path[MAX_PATH];
 		path[MAX_PATH-1] = '\0';
 		GetModuleFileNameW(NULL, path, MAX_PATH - 1);
-		std::string fullPath = UTILS_NS::WideToUTF8(path);
+		std::string fullPath(UTILS_NS::WideToUTF8(path));
 		return Dirname(fullPath);
 	}
 
@@ -60,11 +60,11 @@ namespace UTILS_NS
 		// let's convert it to a full path name.
 		std::wstring dir(tempDirectory);
 		GetLongPathNameW(dir.c_str(), tempDirectory, MAX_PATH - 1);
-		std::string out = UTILS_NS::WideToUTF8(tempDirectory);
+		std::string out(UTILS_NS::WideToUTF8(tempDirectory));
 		srand(GetTickCount()); // initialize seed
 		std::ostringstream s;
 		s << "k" << (double) rand();
-		std::string end = s.str();
+		std::string end(s.str());
 		return FileUtils::Join(out.c_str(), end.c_str(), NULL);
 	}
 
@@ -80,7 +80,7 @@ namespace UTILS_NS
 
 	void FileUtils::WriteFile(std::string& path, std::string& content)
 	{
-		std::wstring widePath = UTF8ToWide(path);
+		std::wstring widePath(UTF8ToWide(path));
 		// CreateFile doesn't have a path length limitation
 		HANDLE file = CreateFileW(widePath.c_str(),
 			GENERIC_WRITE, 
@@ -165,7 +165,7 @@ namespace UTILS_NS
 		wchar_t fname[_MAX_FNAME];
 		wchar_t ext[_MAX_EXT];
 
-		std::wstring widePath = UTILS_NS::UTF8ToWide(path);
+		std::wstring widePath(UTILS_NS::UTF8ToWide(path));
 		wcsncpy(pathBuffer, widePath.c_str(), MAX_PATH - 1);
 		pathBuffer[MAX_PATH - 1] = '\0';
 
@@ -173,20 +173,20 @@ namespace UTILS_NS
 		if (dir[wcslen(dir)-1] == '\\')
 			dir[wcslen(dir)-1] = '\0';
 
-		std::wstring dirname = drive;
-		dirname += std::wstring(dir);
+		std::wstring dirname(drive);
+		dirname.append(dir);
 		return UTILS_NS::WideToUTF8(dirname);
 	}
 	
 	bool FileUtils::CreateDirectoryImpl(std::string& dir)
 	{
-		std::wstring wideDir = UTILS_NS::UTF8ToWide(dir);
+		std::wstring wideDir(UTILS_NS::UTF8ToWide(dir));
 		return (::CreateDirectoryW(wideDir.c_str(), NULL) == TRUE);
 	}
 
 	bool FileUtils::DeleteDirectory(std::string &dir)
 	{
-		std::wstring wideDir = UTILS_NS::UTF8ToWide(dir);
+		std::wstring wideDir(UTILS_NS::UTF8ToWide(dir));
 		SHFILEOPSTRUCT op;
 		op.hwnd = NULL;
 		op.wFunc = FO_DELETE;
@@ -207,7 +207,7 @@ namespace UTILS_NS
 		wchar_t widePath[MAX_PATH];
 		if (SHGetSpecialFolderPath(NULL, widePath, CSIDL_APPDATA, FALSE))
 		{
-			std::string path = UTILS_NS::WideToUTF8(widePath);
+			std::string path(UTILS_NS::WideToUTF8(widePath));
 			return Join(path.c_str(), PRODUCT_NAME, NULL);
 		}
 		else
@@ -223,7 +223,7 @@ namespace UTILS_NS
 		wchar_t widePath[MAX_PATH];
 		if (SHGetSpecialFolderPath(NULL, widePath, CSIDL_COMMON_APPDATA, FALSE))
 		{
-			std::string path = UTILS_NS::WideToUTF8(widePath);
+			std::string path(UTILS_NS::WideToUTF8(widePath));
 			return Join(path.c_str(), PRODUCT_NAME, NULL);
 		}
 		else
@@ -247,7 +247,7 @@ namespace UTILS_NS
 		WIN32_FIND_DATA findFileData;
 		ZeroMemory(&findFileData, sizeof(WIN32_FIND_DATA));
 
-		std::wstring widePath = UTILS_NS::UTF8ToWide(path);
+		std::wstring widePath(UTILS_NS::UTF8ToWide(path));
 		std::wstring searchString(widePath + L"\\*");
 
 		HANDLE hFind = FindFirstFile(searchString.c_str(), &findFileData);
@@ -258,7 +258,7 @@ namespace UTILS_NS
 				std::wstring wideFilename(findFileData.cFileName);
 				if (wideFilename != L"." && wideFilename != L"..")
 				{
-					std::string filename = UTILS_NS::WideToUTF8(wideFilename);
+					std::string filename(UTILS_NS::WideToUTF8(wideFilename));
 					files.push_back(filename);
 				}
 
@@ -288,7 +288,7 @@ namespace UTILS_NS
 		// Get the current working directory
 		wchar_t cwd[MAX_PATH];
 		DWORD size = GetCurrentDirectoryW(MAX_PATH, (wchar_t*) cwd);
-		std::wstring wideCmdLine = UTILS_NS::UTF8ToWide(cmdLine);
+		std::wstring wideCmdLine(UTILS_NS::UTF8ToWide(cmdLine));
 
 		DWORD rc = -1;
 		if (CreateProcessW(
@@ -320,8 +320,8 @@ namespace UTILS_NS
 	void FileUtils::Unzip(std::string& source, std::string& destination, 
 		UnzipCallback callback, void *data)
 	{
-		std::wstring wideSource = UTILS_NS::UTF8ToWide(source);
-		std::wstring wideDestination = UTILS_NS::UTF8ToWide(destination);
+		std::wstring wideSource(UTILS_NS::UTF8ToWide(source));
+		std::wstring wideDestination(UTILS_NS::UTF8ToWide(destination));
 
 		HZIP handle = OpenZip(wideSource.c_str(), 0);
 		SetUnzipBaseDir(handle, wideDestination.c_str());
@@ -335,7 +335,7 @@ namespace UTILS_NS
 			std::ostringstream message;
 			message << "Starting extraction of " << numItems 
 				<< " items from " << source << "to " << destination;
-			std::string messageString = message.str();
+			std::string messageString(message.str());
 			callback((char*) messageString.c_str(), 0, numItems, data);
 		}
 		
@@ -346,8 +346,8 @@ namespace UTILS_NS
 			
 			if (callback != NULL)
 			{
-				std::string name = WideToUTF8(zipEntry.name);
-				std::string message = "Extracting ";
+				std::string name(WideToUTF8(zipEntry.name));
+				std::string message("Extracting ");
 				message.append(name);
 				message.append("...");
 				callback((char*) message.c_str(), zi, numItems, data);
@@ -378,8 +378,8 @@ std::cout << "\n>Recursive copy " << dir << " to " << dest << std::endl;
 			if (!exclude.empty() && exclude == filename)
 				continue;
 
-			std::string srcName = Join(dir.c_str(), filename.c_str(), NULL);
-			std::string destName = Join(dest.c_str(), filename.c_str(), NULL);
+			std::string srcName(Join(dir.c_str(), filename.c_str(), NULL));
+			std::string destName(Join(dest.c_str(), filename.c_str(), NULL));
 
 			if (IsDirectory(srcName))
 			{
@@ -391,8 +391,8 @@ std::cout << "\n>Recursive copy " << dir << " to " << dest << std::endl;
 			}
 			else
 			{
-				std::wstring wideSrcName = UTILS_NS::UTF8ToWide(srcName);
-				std::wstring wideDestName = UTILS_NS::UTF8ToWide(destName);
+				std::wstring wideSrcName(UTILS_NS::UTF8ToWide(srcName));
+				std::wstring wideDestName(UTILS_NS::UTF8ToWide(destName));
 				CopyFileW(wideSrcName.c_str(), wideDestName.c_str(), FALSE);
 			}
 		}

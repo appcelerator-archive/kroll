@@ -63,12 +63,12 @@ namespace UTILS_NS
 	std::string PlatformUtils::GetMachineId()
 	{
 
-		std::string midFileName = std::string(".") + PRODUCT_NAME;
+		std::string midFileName(std::string(".") + PRODUCT_NAME);
 		std::transform(midFileName.begin(), midFileName.end(), midFileName.begin(), tolower);
 
-		std::string midFilePath = FileUtils::GetUserRuntimeHomeDirectory();
+		std::string midFilePath(FileUtils::GetUserRuntimeHomeDirectory());
 		midFilePath = FileUtils::Join(midFilePath.c_str(), midFileName.c_str(), NULL);
-		std::string mid = ReadMIDFromFile(midFilePath);
+		std::string mid(ReadMIDFromFile(midFilePath));
 
 		// If we couldn't read the MID or this is an old MID,
 		// create a new one and return it.
@@ -82,12 +82,12 @@ namespace UTILS_NS
 
 	std::string PlatformUtils::CreateMachineId(std::string& midFileName)
 	{
-		std::string newMID = MID_PREFIX;
+		std::string newMID(MID_PREFIX);
 		newMID.append(DataUtils::GenerateUUID());
 		newMID.append("|");
 		newMID.append(GetOldMachineId(midFileName));
 
-		std::string midFilePath = FileUtils::GetUserRuntimeHomeDirectory();
+		std::string midFilePath(FileUtils::GetUserRuntimeHomeDirectory());
 		midFilePath = FileUtils::Join(midFilePath.c_str(), midFileName.c_str(), NULL);
 		std::ofstream myfile;
 		myfile.open(midFilePath.c_str());
@@ -127,7 +127,7 @@ namespace UTILS_NS
 		}
 
 		// Alternatively hash the MAC address and use that as the old MID
-		std::string MACAddress = PlatformUtils::GetFirstMACAddress();
+		std::string MACAddress(PlatformUtils::GetFirstMACAddress());
 		return DataUtils::HexMD5(MACAddress);
 	}
 
