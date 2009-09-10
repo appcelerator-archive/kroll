@@ -4,6 +4,7 @@
  * Copyright (c) 2009 Appcelerator, Inc. All Rights Reserved.
  */
 #include "../utils.h"
+#include <sstream>
 using std::wstring;
 
 namespace UTILS_NS
@@ -36,8 +37,8 @@ namespace UTILS_NS
 	bool BootUtils::RunInstaller(
 		vector<SharedDependency> missing,
 		SharedApplication application,
-		std::string updateFile,
-		std::string installerPath,
+		string updateFile,
+		string installerPath,
 		bool quiet,
 		bool forceInstall)
 	{
@@ -46,8 +47,8 @@ namespace UTILS_NS
 			installerPath = application->path;
 		}
 
-		string exec = FileUtils::Join(
-			installerPath.c_str(), "installer", "Installer.exe", NULL);
+		string exec(FileUtils::Join(installerPath.c_str(), 
+			"installer", "Installer.exe", NULL));
 
 		if (!FileUtils::IsFile(exec))
 		{
@@ -93,36 +94,37 @@ namespace UTILS_NS
 	
 		// More ugliness: The path length for ShellExecuteEx is limited so just
 		// pass a file name containing all the download jobs. :(
-		string tempdir = FileUtils::GetTempDirectory();
-		string jobsFile = FileUtils::Join(tempdir.c_str(), "jobs", NULL);
+		string tempdir(FileUtils::GetTempDirectory());
+		string jobsFile(FileUtils::Join(tempdir.c_str(), "jobs", NULL));
 		if (jobs.size() > 0)
 		{	
 			FileUtils::CreateDirectory(tempdir);
-			try {
+			try
+			{
 				std::ostringstream jobsContent;
 				for (size_t i = 0; i < jobs.size(); i++)
 				{
 					jobsContent << jobs[i] << std::endl;
 				}
-				
-				std::string content = jobsContent.str();
+
+				string content(jobsContent.str());
 				FileUtils::WriteFile(jobsFile, content);
 				args.push_back(jobsFile);
 			} 
 			catch (std::exception& e)
 			{
-				std::cout << e.what() << std::endl;
+				std::cerr << e.what() << std::endl;
 			}
 		}
 	
-		string paramString = "";
+		string paramString("");
 		for (size_t i = 0; i < args.size(); i++)
 		{
 			paramString.append(" \"");
 			paramString.append(args.at(i));
 			paramString.append("\"");
 		}
-		std::wstring wideParamString = UTF8ToWide(paramString);
+		wstring wideParamString = UTF8ToWide(paramString);
 		
 		SHELLEXECUTEINFO ShExecInfo = {0};
 		ShExecInfo.cbSize = sizeof(SHELLEXECUTEINFO);
@@ -134,7 +136,7 @@ namespace UTILS_NS
 		if (!IsWindowsXP())
 			ShExecInfo.lpVerb = L"runas";
 
-		std::wstring wideExec = UTF8ToWide(exec);
+		wstring wideExec(UTF8ToWide(exec));
 		ShExecInfo.lpFile = wideExec.c_str();
 		ShExecInfo.lpParameters = wideParamString.c_str();
 		ShExecInfo.lpDirectory = NULL;
