@@ -27,7 +27,7 @@ namespace BootUtils
 		return componentSearchPaths;
 	}
 
-	bool BootUtils::RunInstaller(
+	bool RunInstaller(
 		vector<SharedDependency> missing,
 		SharedApplication application,
 		std::string updateFile,
