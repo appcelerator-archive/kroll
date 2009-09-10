@@ -142,7 +142,7 @@ namespace UTILS_NS
 				CloseHandle(file);
 				return std::string();
 			}
-			readBuffer[bytesRead+1] = '\0'; // NULL character
+			readBuffer[bytesRead] = '\0'; // NULL character
 			contents << readBuffer;
 		} while (bytesRead > 0);
 		
@@ -170,7 +170,7 @@ namespace UTILS_NS
 		dirname += std::wstring(dir);
 		return UTILS_NS::WideToUTF8(dirname);
 	}
-
+	
 	bool FileUtils::CreateDirectoryImpl(std::string& dir)
 	{
 		std::wstring wideDir = UTILS_NS::UTF8ToWide(dir);
