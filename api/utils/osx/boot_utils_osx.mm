@@ -7,10 +7,12 @@
 
 namespace UTILS_NS
 {
-	vector<string>& BootUtils::GetComponentSearchPaths()
+namespace BootUtils
+{
+	vector<string>& GetComponentSearchPaths()
 	{
-		static bool initialized = false;
-		if (!initialized)
+		static std::vector<std::string> componentSearchPaths;
+		if (componentSearchPaths.empty())
 		{
 			// Allow the user to force an override to the runtime home by setting the
 			// appropriate environment variable -- this will be the first path searched
@@ -21,7 +23,6 @@ namespace UTILS_NS
 
 			componentSearchPaths.push_back(FileUtils::GetUserRuntimeHomeDirectory());
 			componentSearchPaths.push_back(FileUtils::GetSystemRuntimeHomeDirectory());
-			initialized = true;
 		}
 		return componentSearchPaths;
 	}
@@ -78,4 +79,5 @@ namespace UTILS_NS
 		FileUtils::RunAndWait(exec, args);
 		return true;
 	}
+}
 }

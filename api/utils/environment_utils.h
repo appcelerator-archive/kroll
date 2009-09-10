@@ -10,35 +10,34 @@
 namespace UTILS_NS
 {
 
-	class KROLL_API EnvironmentUtils
+	namespace EnvironmentUtils
 	{
-		public:
 		/*
 		 * @returns whether or not the named environment variable exists.
 		 */
-		static bool Has(std::string name);
+		KROLL_API bool Has(std::string name);
 
 		/*
 		 * @returns the given environment variable or empty string if it does
 		 * not exist.
 		 */
-		static std::string Get(std::string name);
+		KROLL_API std::string Get(std::string name);
 
 		/*
 		 * Set an environment variable given a value and a name
 		 */
-		static void Set(std::string name, std::string value);
+		KROLL_API void Set(std::string name, std::string value);
 
 		/*
 		 * Unset an environment variable given a name
 		 */
-		static void Unset(std::string name);
+		KROLL_API void Unset(std::string name);
 
 #if defined(KROLL_HOST_EXPORT) || defined(KROLL_API_EXPORT) || defined(_KROLL_H_)
 		/*
 		 * Get the environment
 		 */
-		static std::map<std::string, std::string> GetEnvironment();
+		KROLL_API std::map<std::string, std::string> GetEnvironment();
 #endif
 	};
 }

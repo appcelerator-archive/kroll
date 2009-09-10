@@ -9,6 +9,8 @@
 #endif
 namespace UTILS_NS
 {
+namespace URLUtils
+{
 	namespace
 	{
 		const char HEX2DEC[256] =
@@ -61,7 +63,7 @@ namespace UTILS_NS
 		};
 	}
 
-	std::string URLUtils::EncodeURIComponent(std::string src)
+	std::string EncodeURIComponent(std::string src)
 	{
 		const char DEC2HEX[16 + 1] = "0123456789ABCDEF";
 		const unsigned char *pSrc = (const unsigned char *)src.c_str();
@@ -89,7 +91,7 @@ namespace UTILS_NS
 		return sResult;
 	}
 
-	std::string URLUtils::DecodeURIComponent(std::string src)
+	std::string DecodeURIComponent(std::string src)
 	{
 		// Note from RFC1630: "Sequences which start with a percent
 		// sign but are not followed by two hexadecimal characters
@@ -132,7 +134,7 @@ namespace UTILS_NS
 	}
 
 
-	std::string URLUtils::FileURLToPath(std::string url)
+	std::string FileURLToPath(std::string url)
 	{
 		size_t fileLength = 7; // file://
 		if (url.find("file://") == 0)
@@ -153,7 +155,7 @@ namespace UTILS_NS
 		return url;
 	}
 
-	std::string URLUtils::PathToFileURL(std::string path)
+	std::string PathToFileURL(std::string path)
 	{
 		if ('\\' == KR_PATH_SEP_CHAR)
 		{
@@ -187,7 +189,25 @@ namespace UTILS_NS
 	}
 
 #if defined(KROLL_HOST_EXPORT) || defined(KROLL_API_EXPORT) || defined(_KROLL_H_)
-	std::string URLUtils::NormalizeURL(std::string& url)
+	static std::string NormalizeAppURL(std::string& url)
+	{
+		size_t appLength = 6; // app://
+		std::string id(Host::GetInstance()->GetApplication()->id);
+		size_t idLength = id.size();
+		std::string idPart(url.substr(appLength, idLength));
+
+		if (idPart == id)
+		{
+			return url;
+		}
+		else
+		{
+			return std::string("app://") + id + "/" + url.substr(appLength);
+		}
+	}
+
+
+	std::string NormalizeURL(std::string& url)
 	{
 		Poco::URI inURI = Poco::URI(url);
 		if (inURI.getScheme() != "app")
@@ -200,7 +220,7 @@ namespace UTILS_NS
 		}
 	}
 
-	std::string URLUtils::URLToPath(std::string& url)
+	std::string URLToPath(std::string& url)
 	{
 		Poco::URI inURI = Poco::URI(url);
 		try
@@ -223,7 +243,7 @@ namespace UTILS_NS
 		return url;
 	}
 
-	std::string URLUtils::TiURLToPath(std::string& tiURL)
+	std::string TiURLToPath(std::string& tiURL)
 	{
 		try
 		{
@@ -266,24 +286,7 @@ namespace UTILS_NS
 		return tiURL;
 	}
 
-	std::string URLUtils::NormalizeAppURL(std::string& url)
-	{
-		size_t appLength = 6; // app://
-		std::string id(Host::GetInstance()->GetApplication()->id);
-		size_t idLength = id.size();
-		std::string idPart(url.substr(appLength, idLength));
-
-		if (idPart == id)
-		{
-			return url;
-		}
-		else
-		{
-			return std::string("app://") + id + "/" + url.substr(appLength);
-		}
-	}
-
-	std::string URLUtils::AppURLToPath(std::string& inURL)
+	std::string AppURLToPath(std::string& inURL)
 	{
 		try
 		{
@@ -322,4 +325,5 @@ namespace UTILS_NS
 		return inURL;
 	}
 #endif
+}
 }

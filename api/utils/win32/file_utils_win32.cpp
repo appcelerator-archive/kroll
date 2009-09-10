@@ -11,11 +11,16 @@
 #include <shellapi.h>
 #include <sstream>
 
+#ifndef NO_UNZIP
+#include "../unzip/unzip.h"
+#endif
+
 namespace UTILS_NS
 {
-	
-	bool WideFileHasAttributes(std::wstring& widePath, DWORD attributes)
-	{	
+namespace FileUtils
+{
+	static bool FileHasAttributes(std::wstring& widePath, DWORD attributes)
+	{
 		WIN32_FIND_DATA findFileData;
 		ZeroMemory(&findFileData, sizeof(WIN32_FIND_DATA));
 
@@ -32,16 +37,15 @@ namespace UTILS_NS
 		{
 			return false;
 		}
-
 	}
-	
-	bool FileHasAttributes(std::string& path, DWORD attributes)
+
+	static bool FileHasAttributes(std::string& path, DWORD attributes)
 	{
 		std::wstring widePath(UTILS_NS::UTF8ToWide(path));
-		return WideFileHasAttributes(widePath, attributes);
+		return FileHasAttributes(widePath, attributes);
 	}
 
-	std::string FileUtils::GetExecutableDirectory()
+	std::string GetExecutableDirectory()
 	{
 		wchar_t path[MAX_PATH];
 		path[MAX_PATH-1] = '\0';
@@ -50,7 +54,7 @@ namespace UTILS_NS
 		return Dirname(fullPath);
 	}
 
-	std::string FileUtils::GetTempDirectory()
+	std::string GetTempDirectory()
 	{
 		wchar_t tempDirectory[MAX_PATH];
 		tempDirectory[MAX_PATH-1] = '\0';
@@ -68,17 +72,17 @@ namespace UTILS_NS
 		return FileUtils::Join(out.c_str(), end.c_str(), NULL);
 	}
 
-	bool FileUtils::IsFile(std::string& file)
+	bool IsFile(std::string& file)
 	{
 		return FileHasAttributes(file, 0);
 	}
-	
-	bool FileUtils::IsWideFile(std::wstring& file)
+
+	bool IsFile(std::wstring& file)
 	{
-		return WideFileHasAttributes(file, 0);
+		return FileHasAttributes(file, 0);
 	}
 
-	void FileUtils::WriteFile(std::string& path, std::string& content)
+	void WriteFile(std::string& path, std::string& content)
 	{
 		std::wstring widePath(UTF8ToWide(path));
 		// CreateFile doesn't have a path length limitation
@@ -97,11 +101,8 @@ namespace UTILS_NS
 		{
 			while (bytesWritten < bytesToWrite)
 			{
-				if(FALSE == ::WriteFile(file, 
-					content.c_str() + bytesWritten,
-					bytesToWrite - bytesWritten,
-					&bytesWritten,
-					NULL))
+				if (FALSE == ::WriteFile(file, content.c_str() + bytesWritten,
+					bytesToWrite - bytesWritten, &bytesWritten, NULL))
 				{
 					CloseHandle(file);
 					fprintf(stderr, "Could not write to file. Error: %s\n",
@@ -109,16 +110,16 @@ namespace UTILS_NS
 				}
 			}
 		}
-		
+
 		CloseHandle(file);
 	}
 	
-	std::string FileUtils::ReadFile(std::string& path)
+	std::string ReadFile(std::string& path)
 	{
-		return FileUtils::ReadWideFile(UTF8ToWide(path));
+		return ReadFile(UTF8ToWide(path));
 	}
 	
-	std::string FileUtils::ReadWideFile(std::wstring& widePath)
+	std::string ReadFile(std::wstring& widePath)
 	{
 		std::ostringstream contents;
 		// CreateFile doesn't have a path length limitation
@@ -157,7 +158,7 @@ namespace UTILS_NS
 		return contents.str();
 	}
 	
-	std::string FileUtils::Dirname(std::string path)
+	std::string Dirname(std::string path)
 	{
 		wchar_t pathBuffer[_MAX_PATH];
 		wchar_t drive[_MAX_DRIVE];
@@ -178,13 +179,13 @@ namespace UTILS_NS
 		return UTILS_NS::WideToUTF8(dirname);
 	}
 	
-	bool FileUtils::CreateDirectoryImpl(std::string& dir)
+	bool CreateDirectoryImpl(std::string& dir)
 	{
 		std::wstring wideDir(UTILS_NS::UTF8ToWide(dir));
 		return (::CreateDirectoryW(wideDir.c_str(), NULL) == TRUE);
 	}
 
-	bool FileUtils::DeleteDirectory(std::string &dir)
+	bool DeleteDirectory(std::string &dir)
 	{
 		std::wstring wideDir(UTILS_NS::UTF8ToWide(dir));
 		SHFILEOPSTRUCT op;
@@ -197,12 +198,12 @@ namespace UTILS_NS
 		return (rc == 0);
 	}
 
-	bool FileUtils::IsDirectory(std::string &path)
+	bool IsDirectory(std::string &path)
 	{
 		return FileHasAttributes(path, FILE_ATTRIBUTE_DIRECTORY);
 	}
 
-	std::string FileUtils::GetUserRuntimeHomeDirectory()
+	std::string GetUserRuntimeHomeDirectory()
 	{
 		wchar_t widePath[MAX_PATH];
 		if (SHGetSpecialFolderPath(NULL, widePath, CSIDL_APPDATA, FALSE))
@@ -218,7 +219,7 @@ namespace UTILS_NS
 		}
 	}
 	
-	std::string FileUtils::GetSystemRuntimeHomeDirectory()
+	std::string GetSystemRuntimeHomeDirectory()
 	{
 		wchar_t widePath[MAX_PATH];
 		if (SHGetSpecialFolderPath(NULL, widePath, CSIDL_COMMON_APPDATA, FALSE))
@@ -232,12 +233,12 @@ namespace UTILS_NS
 		}
 	}
 
-	bool FileUtils::IsHidden(std::string &path)
+	bool IsHidden(std::string &path)
 	{
 		return FileHasAttributes(path, FILE_ATTRIBUTE_HIDDEN);
 	}
 
-	void FileUtils::ListDir(std::string& path, std::vector<std::string> &files)
+	void ListDir(std::string& path, std::vector<std::string> &files)
 	{
 		if (!IsDirectory(path))
 			return;
@@ -267,7 +268,7 @@ namespace UTILS_NS
 		}
 	}
 
-	int FileUtils::RunAndWait(std::string &path, std::vector<std::string> &args)
+	int RunAndWait(std::string &path, std::vector<std::string> &args)
 	{
 		std::string cmdLine = "\"" + path + "\"";
 		for (size_t i = 0; i < args.size(); i++)
@@ -300,7 +301,7 @@ namespace UTILS_NS
 			0,                              // No creation flags
 			NULL,                           // Use parent's environment block
 			(wchar_t*) cwd,                 // Use parent's starting directory
-			&startupInfo,                     // Pointer to STARTUPINFO structure
+			&startupInfo,                   // Pointer to STARTUPINFO structure
 			&processInfo))                  // Pointer to PROCESS_INFORMATION structure
 		{
 			// Wait until child process exits.
@@ -317,7 +318,7 @@ namespace UTILS_NS
 	}
 
 #ifndef NO_UNZIP
-	void FileUtils::Unzip(std::string& source, std::string& destination, 
+	void Unzip(std::string& source, std::string& destination, 
 		UnzipCallback callback, void *data)
 	{
 		std::wstring wideSource(UTILS_NS::UTF8ToWide(source));
@@ -358,9 +359,9 @@ namespace UTILS_NS
 		CloseZip(handle);
 	}
 #endif
-	
+
 	// TODO: implement this for other platforms
-	void FileUtils::CopyRecursive(std::string &dir, std::string &dest, std::string exclude)
+	void CopyRecursive(std::string &dir, std::string &dest, std::string exclude)
 	{ 
 		if (!IsDirectory(dest)) 
 		{
@@ -398,7 +399,7 @@ std::cout << "\n>Recursive copy " << dir << " to " << dest << std::endl;
 		}
 	}
 
-	std::string FileUtils::GetUsername()
+	std::string GetUsername()
 	{
 		wchar_t buf[MAX_PATH];
 		DWORD size = MAX_PATH - 1;
@@ -412,7 +413,6 @@ std::cout << "\n>Recursive copy " << dir << " to " << dest << std::endl;
 			return "Unknown";
 		}
 	}
-
-
+}
 }
 

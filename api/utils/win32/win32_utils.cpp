@@ -7,7 +7,9 @@
 
 namespace UTILS_NS
 {
-	std::string Win32Utils::QuickFormatMessage(DWORD errorCode, DWORD flags)
+namespace Win32Utils
+{
+	std::string QuickFormatMessage(DWORD errorCode, DWORD flags)
 	{
 		std::string result;
 		LPWSTR errorText = NULL;
@@ -27,27 +29,23 @@ namespace UTILS_NS
 		}
 		return result;
 	}
+}
 
 	std::wstring UTF8ToWide(std::string& in)
 	{
-		return UTF8ToWide(in.c_str(), in.length());
+		return MBToWide(in.c_str(), in.length(), CP_UTF8);
 	}
 
 	std::wstring UTF8ToWide(const char *in)
 	{
-		return UTF8ToWide(in, strlen(in));
+		return MBToWide(in, strlen(in), CP_UTF8);
 	}
-	
-	std::wstring UTF8ToWide(const char* in, size_t size)
-	{
-		return MBToWide(in, size, CP_UTF8);
-	}
-	
+
 	std::wstring MBToWide(std::string& in, size_t size, UINT codePage)
 	{
 		return MBToWide(in.c_str(), size, codePage);
 	}
-	
+
 	std::wstring MBToWide(const char* in, size_t size, UINT codePage)
 	{
 		if (size == 0)

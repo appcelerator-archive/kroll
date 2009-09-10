@@ -8,20 +8,18 @@
 #include <string>
 namespace UTILS_NS
 {
-	class KROLL_API DataUtils
+	namespace DataUtils
 	{
-		public:
 		/*
 		 * @returns the hexidecimal MD5 hash of a string
 		 */
-		static std::string HexMD5(std::string);
+		KROLL_API std::string HexMD5(std::string);
 
 		/**
 		 * Generate a new UUID
 		 * @returns a new UUID as a string
 		 */
-		static std::string GenerateUUID();
-
-	};
+		KROLL_API std::string GenerateUUID();
+	}
 }
 #endif

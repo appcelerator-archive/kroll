@@ -25,16 +25,13 @@
 #include <sstream>
 #include <utils.h>
 
+using namespace KrollUtils;
 using KrollUtils::Application;
 using KrollUtils::Dependency;
 using KrollUtils::KComponent;
 using KrollUtils::SharedApplication;
 using KrollUtils::SharedDependency;
 using KrollUtils::SharedComponent;
-using KrollUtils::FileUtils;
-using KrollUtils::BootUtils;
-using KrollUtils::EnvironmentUtils;
-using KrollUtils::PlatformUtils;
 using std::string;
 using std::vector;
 using std::map;

@@ -12,9 +12,10 @@ using std::pair;
 
 namespace UTILS_NS
 {
-	extern void ScanRuntimesAtPath(string, vector<SharedComponent>&);
-	extern void ScanModulesAtPath(string, vector<SharedComponent>&);
-	extern void ScanBundledComponents(string, vector<SharedComponent>&);
+	namespace BootUtils
+	{
+		extern void ScanBundledComponents(string, vector<SharedComponent>&);
+	}
 
 	SharedPtr<Application> Application::NewApplication(string appPath)
 	{
@@ -368,13 +369,13 @@ namespace UTILS_NS
 		{
 			// Only scan bundled components on the override path
 			string overridePath(this->GetArgumentValue(OVERRIDE_ARG));
-			ScanBundledComponents(overridePath, components); 
+			BootUtils::ScanBundledComponents(overridePath, components); 
 			onlyBundled = true;
 		}
 		else
 		{
 			// Merge bundled and installed components
-			ScanBundledComponents(this->path, components); 
+			BootUtils::ScanBundledComponents(this->path, components); 
 		}
 
 		if (!onlyBundled)

@@ -17,7 +17,9 @@ using std::string;
 
 namespace UTILS_NS
 {
-	std::string FileUtils::GetUserRuntimeHomeDirectory()
+namespace FileUtils
+{
+	std::string GetUserRuntimeHomeDirectory()
 	{
 		string pname = PRODUCT_NAME;
 		std::transform(pname.begin(), pname.end(), pname.begin(), tolower);
@@ -27,7 +29,7 @@ namespace UTILS_NS
 		return Join(user->pw_dir, pname.c_str(), NULL);
 	}
 
-	std::string FileUtils::GetSystemRuntimeHomeDirectory()
+	std::string GetSystemRuntimeHomeDirectory()
 	{
 		// Try to be a little smart about where the system runtime home
 		// is. If we can't find it, just give up and use the /opt location
@@ -43,7 +45,7 @@ namespace UTILS_NS
 		return path;
 	}
 
-	std::string FileUtils::GetUsername()
+	std::string GetUsername()
 	{
 		char* loginName = getlogin();
 		if (loginName != NULL)
@@ -60,14 +62,14 @@ namespace UTILS_NS
 		}
 	}
 
-	void FileUtils::WriteFile(std::string& path, std::string& content)
+	void WriteFile(std::string& path, std::string& content)
 	{
 		std::ofstream f(path.c_str());
 		f << content;
 		f.close();
 	}
 
-	std::string FileUtils::ReadFile(std::string& path)
+	std::string ReadFile(std::string& path)
 	{
 		std::ostringstream inputStream;
 
@@ -86,5 +88,5 @@ namespace UTILS_NS
 		inputFile.close();
 		return inputStream.str();
 	}
-
+}
 }

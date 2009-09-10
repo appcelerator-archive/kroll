@@ -35,7 +35,18 @@
 
 namespace UTILS_NS
 {
-	std::string PlatformUtils::GetFirstMACAddress()
+namespace PlatformUtils
+{
+	/**
+	 * Create a machine ID for this machine and write it to the .PRODUCT_NAME file
+	 * in the user runtime home directory. The machine id is specific to a particular
+	 * user on a particular OS install and does not uniquely identify a machine.
+	 */
+	static std::string CreateMachineId(std::string& midFileName);
+	static std::string GetOldMachineId(std::string& midFileName);
+	static std::string ReadMIDFromFile(std::string& path);
+
+	std::string GetFirstMACAddress()
 	{
 		NodeId id;
 		try
@@ -60,7 +71,7 @@ namespace UTILS_NS
 		return std::string(result);
 	}
 
-	std::string PlatformUtils::GetMachineId()
+	std::string GetMachineId()
 	{
 
 		std::string midFileName(std::string(".") + PRODUCT_NAME);
@@ -80,7 +91,7 @@ namespace UTILS_NS
 		return mid;
 	}
 
-	std::string PlatformUtils::CreateMachineId(std::string& midFileName)
+	static std::string CreateMachineId(std::string& midFileName)
 	{
 		std::string newMID(MID_PREFIX);
 		newMID.append(DataUtils::GenerateUUID());
@@ -97,7 +108,7 @@ namespace UTILS_NS
 		return newMID;
 	}
 
-	std::string PlatformUtils::GetOldMachineId(std::string& midFileName)
+	static std::string GetOldMachineId(std::string& midFileName)
 	{
 		// Search for an old MID stored in a file
 		std::vector<std::string> possibleMIDFiles;
@@ -131,7 +142,7 @@ namespace UTILS_NS
 		return DataUtils::HexMD5(MACAddress);
 	}
 
-	std::string PlatformUtils::ReadMIDFromFile(std::string& path)
+	static std::string ReadMIDFromFile(std::string& path)
 	{
 		if (FileUtils::IsFile(path))
 		{
@@ -147,4 +158,5 @@ namespace UTILS_NS
 		}
 		return std::string();
 	}
+}
 }

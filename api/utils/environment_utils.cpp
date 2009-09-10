@@ -1,5 +1,4 @@
-/**
- * Appcelerator Kroll - licensed under the Apache Public License 2
+/** * Appcelerator Kroll - licensed under the Apache Public License 2
  * see LICENSE in the root folder for details on the license.
  * Copyright (c) 2009 Appcelerator, Inc. All Rights Reserved.
  */
@@ -21,7 +20,9 @@ extern char** environ;
 
 namespace UTILS_NS
 {
-	bool EnvironmentUtils::Has(std::string name)
+namespace EnvironmentUtils
+{
+	bool Has(std::string name)
 	{
 #ifdef OS_WIN32
 		std::wstring wideName = UTF8ToWide(name);
@@ -32,7 +33,7 @@ namespace UTILS_NS
 #endif
 	}
 
-	std::string EnvironmentUtils::Get(std::string name)
+	std::string Get(std::string name)
 	{
 #ifdef OS_WIN32
 		// Allocate a small buffer first, before taking the plunge
@@ -72,7 +73,7 @@ namespace UTILS_NS
 #endif
 	}
 
-	void EnvironmentUtils::Set(std::string name, std::string value)
+	void Set(std::string name, std::string value)
 	{
 #ifdef OS_WIN32
 		std::wstring wideName(UTF8ToWide(name));
@@ -89,7 +90,7 @@ namespace UTILS_NS
 #endif
 	}
 
-	void EnvironmentUtils::Unset(std::string name)
+	void Unset(std::string name)
 	{
 #ifdef OS_WIN32
 		std::wstring wideName(UTF8ToWide(name));
@@ -100,7 +101,7 @@ namespace UTILS_NS
 	}
 
 #if defined(KROLL_HOST_EXPORT) || defined(KROLL_API_EXPORT) || defined(_KROLL_H_)
-	std::map<std::string, std::string> EnvironmentUtils::GetEnvironment()
+	std::map<std::string, std::string> GetEnvironment()
 	{
 		std::map<std::string, std::string> environment;
 #ifdef OS_WIN32
@@ -128,4 +129,5 @@ namespace UTILS_NS
 		return environment;
 	}
 #endif
+}
 }

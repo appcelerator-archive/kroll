@@ -9,7 +9,9 @@ using std::wstring;
 
 namespace UTILS_NS
 {
-	bool IsWindowsXP()
+namespace BootUtils
+{
+	static bool IsWindowsXP()
 	{
 		OSVERSIONINFO osVersion;
 		osVersion.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
@@ -17,10 +19,10 @@ namespace UTILS_NS
 		return osVersion.dwMajorVersion == 5;
 	}
 	
-	vector<string>& BootUtils::GetComponentSearchPaths()
+	vector<string>& GetComponentSearchPaths()
 	{
-		static bool initialized = false;
-		if (!initialized)
+		static std::vector<std::string> componentSearchPaths;
+		if (componentSearchPaths.empty())
 		{
 			// Allow the user to force an override to the runtime home by setting the
 			// appropriate environment variable -- this will be the first path searched
@@ -29,18 +31,13 @@ namespace UTILS_NS
 
 			componentSearchPaths.push_back(FileUtils::GetUserRuntimeHomeDirectory());
 			componentSearchPaths.push_back(FileUtils::GetSystemRuntimeHomeDirectory());
-			initialized = true;
 		}
 		return componentSearchPaths;
 	}
 
-	bool BootUtils::RunInstaller(
-		vector<SharedDependency> missing,
-		SharedApplication application,
-		string updateFile,
-		string installerPath,
-		bool quiet,
-		bool forceInstall)
+	bool RunInstaller(vector<SharedDependency> missing,
+		SharedApplication application, string updateFile,
+		string installerPath, bool quiet, bool forceInstall)
 	{
 		if (installerPath.empty())
 		{
@@ -157,4 +154,5 @@ namespace UTILS_NS
 		}
 		return true;
 	}
+}
 }

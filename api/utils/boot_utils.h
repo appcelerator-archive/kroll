@@ -91,34 +91,33 @@ namespace UTILS_NS
 		vector<pair<string, string> > ReadManifest();
 	};
 
-	class KROLL_API BootUtils
+	namespace BootUtils
 	{
-		public:
 		/**
 		 * Compare two version strings in a piecewise way.
 		 * @returns 1 if the first is larger, 0 if they are equal,
 		 *     -1 if the second is larger
 		 */
-		static int CompareVersions(std::string, std::string);
+		KROLL_API int CompareVersions(std::string, std::string);
 
 		/**
 		 * Compare two version strings in a piecewise way, weakly
 		 * @returns true if the first is larger or false otherwise
 		 */
-		static bool WeakCompareComponents(SharedComponent, SharedComponent);
+		KROLL_API bool WeakCompareComponents(SharedComponent, SharedComponent);
 
 		/**
 		 * Read a manifest file. 
 		 * @returns a vector of key-value pairs which represent the 
 		 *    manifest's contents or an empty vector if it cannot be read.
 		 */
-		static vector<pair<string, string> > ReadManifestFile(std::string);
+		KROLL_API vector<pair<string, string> > ReadManifestFile(std::string);
 
 		/**
 		 * Launch the intaller to install a list of dependencies. 
 		 * @returns false only if the installer cannot be found
 		 */
-		static bool RunInstaller(
+		KROLL_API bool RunInstaller(
 			vector<SharedDependency> missing,
 			SharedApplication application,
 			std::string updatefile = "",
@@ -126,13 +125,11 @@ namespace UTILS_NS
 			bool quiet=false,
 			bool forceInstaller=false);
 
-		// These are lazily initialized static variables, so always
-		// access them via the respective accessor functions.
-		static std::vector<std::string> componentSearchPaths;
-		static std::vector<std::string>& GetComponentSearchPaths();
+		KROLL_API std::vector<std::string>& GetComponentSearchPaths();
 
-		static std::vector<SharedComponent> installedComponents;
-		static std::vector<SharedComponent>& GetInstalledComponents(bool force = false);
+		KROLL_API std::vector<SharedComponent>& GetInstalledComponents(
+			bool force=false);
+
 	};
 }
 #endif

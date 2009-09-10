@@ -31,7 +31,9 @@
 
 namespace UTILS_NS
 {
-	std::string FileUtils::GetApplicationDataDirectory(std::string &appid)
+namespace FileUtils
+{
+	std::string GetApplicationDataDirectory(std::string &appid)
 	{
 		std::string dir(GetUserRuntimeHomeDirectory());
 		dir = FileUtils::Join(dir.c_str(), "appdata", appid.c_str(), NULL);
@@ -40,7 +42,7 @@ namespace UTILS_NS
 		return dir;
 	}
 
-	std::string FileUtils::Basename(std::string path)
+	std::string Basename(std::string path)
 	{
 		size_t pos = path.find_last_of(KR_PATH_SEP_CHAR);
 		if (pos == std::string::npos)
@@ -49,7 +51,7 @@ namespace UTILS_NS
 			return path.substr(pos+1);
 	}
 
-	bool FileUtils::CreateDirectory(std::string &dir, bool recursive)
+	bool CreateDirectory(std::string &dir, bool recursive)
 	{
 		if (IsDirectory(dir))
 		{
@@ -67,7 +69,7 @@ namespace UTILS_NS
 	}
 
 
-	std::string FileUtils::GetDirectory(std::string &file)
+	std::string GetDirectory(std::string &file)
 	{
 		size_t pos = file.find_last_of(KR_PATH_SEP);
 		if (pos == std::string::npos)
@@ -85,9 +87,8 @@ namespace UTILS_NS
 		return file.substr(0, pos);
 #endif
 	}
-	
 
-	std::string FileUtils::Join(const char* inpart, ...)
+	std::string Join(const char* inpart, ...)
 	{
 		va_list ap;
 		va_start(ap, inpart);
@@ -136,7 +137,7 @@ namespace UTILS_NS
 		return filepath;
 	}
 
-	std::string FileUtils::GetOSVersion()
+	std::string GetOSVersion()
 	{
 #ifdef OS_WIN32
 		OSVERSIONINFO vi;
@@ -155,7 +156,7 @@ namespace UTILS_NS
 #endif
 	}
 
-	std::string FileUtils::GetOSArchitecture()
+	std::string GetOSArchitecture()
 	{
 #ifdef OS_WIN32
 		return std::string("win32");
@@ -166,7 +167,7 @@ namespace UTILS_NS
 #endif
 	}
 
-	void FileUtils::Tokenize(const std::string& str,
+	void Tokenize(const std::string& str,
 		std::vector<std::string>& tokens, const std::string delimeters,
 		bool skip_if_found)
 	{
@@ -198,7 +199,7 @@ namespace UTILS_NS
 		}
 	}
 
-	std::string FileUtils::Trim(std::string str)
+	std::string Trim(std::string str)
 	{
 		std::string c(str);
 		while (1)
@@ -221,4 +222,5 @@ namespace UTILS_NS
 		}
 		return c;
 	}
+}
 }

@@ -11,7 +11,9 @@
 
 namespace UTILS_NS
 {
-	std::string DataUtils::GenerateUUID()
+namespace DataUtils
+{
+	std::string GenerateUUID()
 	{
 		kashmir::uuid_t uuid;
 		kashmir::system::DevRandom devrandom;
@@ -20,4 +22,5 @@ namespace UTILS_NS
 		outStream << uuid;
 		return outStream.str();
 	}
+}
 }
