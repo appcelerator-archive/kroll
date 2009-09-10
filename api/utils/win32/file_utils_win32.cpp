@@ -104,7 +104,8 @@ namespace UTILS_NS
 					NULL))
 				{
 					CloseHandle(file);
-					printf("Could not write to file. Error: %s\n", Win32Utils::QuickFormatMessage(GetLastError()).c_str());
+					fprintf(stderr, "Could not write to file. Error: %s\n",
+						Win32Utils::QuickFormatMessage(GetLastError()).c_str());
 				}
 			}
 		}
@@ -135,10 +136,16 @@ namespace UTILS_NS
 		
 		do
 		{
-			BOOL result = ::ReadFile(file, readBuffer, bufferSize-2, &bytesRead, NULL);
+			BOOL result = ::ReadFile(file,
+				readBuffer,
+				bufferSize-2,
+				&bytesRead,
+				NULL);
+			
 			if (!result && GetLastError() != ERROR_HANDLE_EOF)
 			{
-				printf("Could not read from file. Error: %s\n", Win32Utils::QuickFormatMessage(GetLastError()).c_str());
+				fprintf(stderr, "Could not read from file. Error: %s\n",
+					Win32Utils::QuickFormatMessage(GetLastError()).c_str());
 				CloseHandle(file);
 				return std::string();
 			}
