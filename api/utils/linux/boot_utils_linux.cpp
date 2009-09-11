@@ -30,8 +30,6 @@ namespace BootUtils
 			componentSearchPaths.push_back(string("/opt/") + pname);
 			componentSearchPaths.push_back(string("/usr/local/lib/") + pname);
 			componentSearchPaths.push_back(string("/usr/lib/") + pname);
-
-			initialized = true;
 		}
 		return componentSearchPaths;
 	}
