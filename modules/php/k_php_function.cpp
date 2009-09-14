@@ -7,33 +7,18 @@
 
 namespace kroll {
 
-	KPHPFunction::KPHPFunction(zval* object, const char* methodName) :
-		object(object),
-		methodName(strdup(methodName)),
-		zMethodName(0)
-	{
-		zval_addref_p(object);
-
-		MAKE_STD_ZVAL(zMethodName);
-		ZVAL_STRINGL(zMethodName, methodName, strlen(methodName), 0);
-	}
-
-	KPHPFunction::KPHPFunction(const char *functionName) :
-		object(0),
-		methodName(strdup(functionName)),
-		zMethodName(0)
+	KPHPFunction::KPHPFunction(const char* functionName) :
+		methodName(functionName),
+		zMethodName(0),
+		globalObject(PHPUtils::GetCurrentGlobalObject())
 	{
 		MAKE_STD_ZVAL(zMethodName);
-		ZVAL_STRINGL(zMethodName, methodName, strlen(methodName), 0);
+		ZVAL_STRINGL(zMethodName, methodName.c_str(), methodName.size(), 0);
+		zval_addref_p(zMethodName);
 	}
 
 	KPHPFunction::~KPHPFunction()
 	{
-		if (object)
-			zval_delref_p(object);
-
-		free(methodName);
-		
 		if (zMethodName)
 			zval_ptr_dtor(&zMethodName);
 	}
@@ -45,18 +30,9 @@ namespace kroll {
 		HashTable* functionTable = 0;
 		zend_class_entry* classEntry = 0;
 		zval** passObject = 0;
-		if (object)
-		{
-			passObject = &object;
-			classEntry = Z_OBJCE_P(object);
-			functionTable = &classEntry->function_table;
-		}
-		else
-		{
-			functionTable = EG(function_table);
-		}
+		functionTable = EG(function_table);
 
-        // Convert arguments
+		// Convert arguments
 		zval** pzargs = (zval**) emalloc(sizeof(zval*) * args.size());
 		for (int i = 0; i < args.size(); i++)
 		{
@@ -68,12 +44,21 @@ namespace kroll {
 		zval* zReturnValue;
 		MAKE_STD_ZVAL(zReturnValue);
 
-		zend_try {
+		SharedKObject previousGlobal(PHPUtils::GetCurrentGlobalObject());
+		PHPUtils::SwapGlobalObject(this->globalObject, &EG(symbol_table) TSRMLS_CC);
+
+		zend_try 
+		{
 			result = call_user_function(functionTable, passObject,
 			zMethodName, zReturnValue, args.size(), (zval**) pzargs TSRMLS_CC);
-		} zend_catch {
+		}
+		zend_catch
+		{
 			result = FAILURE;
-		} zend_end_try();
+		}
+		zend_end_try();
+
+		PHPUtils::SwapGlobalObject(previousGlobal, &EG(symbol_table) TSRMLS_CC);
 
 		// Cleanup the arguments.
 		for (int i = 0; i < args.size(); i++)
@@ -85,12 +70,12 @@ namespace kroll {
 			if (classEntry)
 			{
 				throw ValueException::FromFormat("Couldn't execute method %s::%s", 
-					classEntry->name, methodName);
+					classEntry->name, methodName.c_str());
 			}
 			else
 			{
 				throw ValueException::FromFormat("Couldn't execute function %s\n",
-					methodName);
+					methodName.c_str());
 			}
 			return Value::Undefined;
 		}
@@ -124,9 +109,8 @@ namespace kroll {
 		AutoPtr<KPHPFunction> phpOther = other.cast<KPHPFunction>();
 		if (phpOther.isNull())
 			return false;
-		
-		TSRMLS_FETCH();
-		return PHPUtils::PHPObjectsEqual(this->ToPHP(), phpOther->ToPHP() TSRMLS_CC);
+
+		return methodName == phpOther->GetMethodName();
 	}
 
 	SharedString KPHPFunction::DisplayString(int levels)
@@ -139,10 +123,5 @@ namespace kroll {
 	SharedStringList KPHPFunction::GetPropertyNames()
 	{
 		return new StringList();
-	}
-
-	zval* KPHPFunction::ToPHP()
-	{
-		return this->object;
 	}
 }

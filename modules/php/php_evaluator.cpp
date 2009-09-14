@@ -8,7 +8,7 @@
 #include <sstream>
  
 namespace kroll
-{	
+{
 	PHPEvaluator::PHPEvaluator()
 		: StaticBoundObject("PHPEvaluator")
 	{
@@ -18,7 +18,7 @@ namespace kroll
 		 * @tiresult[bool] whether or not the mimetype is understood by PHP
 		 */
 		SetMethod("canEvaluate", &PHPEvaluator::CanEvaluate);
-		
+
 		/**
 		 * @tiapi(method=True,name=PHP.evaluate,since=0.7) Evaluates a string as PHP code
 		 * @tiarg[String, mimeType] Code mime type (normally "text/php")
@@ -28,23 +28,24 @@ namespace kroll
 		 * @tiresult[Any] result of the evaluation
 		 */
 		SetMethod("evaluate", &PHPEvaluator::Evaluate);
-		
+
 		/**
 		 * @tiapi(method=True,name=PHP.canPreprocess,since=0.7)
 		 * @tiarg[String, url] URL to preprocess
 		 * @tiresult[bool] whether or not the mimetype is understood by PHP
 		 */
 		SetMethod("canPreprocess", &PHPEvaluator::CanPreprocess);
-		
+
 		/**
-		 * @tiapi(method=True,name=PHP.preprocess,since=0.7) Runs a string+URL through preprocessing
+		 * @tiapi(method=True,name=PHP.preprocess,since=0.7)
+		 * Runs a string and URL through preprocessing
 		 * @tiarg[String, url] URL used to load this resource
 		 * @tiarg[Object, scope] Global variables to bind for PHP
 		 * @tiresult[String] result of the evaluation
 		 */
 		SetMethod("preprocess", &PHPEvaluator::Preprocess);
 	}
-	
+
 	void PHPEvaluator::CanEvaluate(const ValueList& args, SharedValue result)
 	{
 		args.VerifyException("canEvaluate", "s");
@@ -73,8 +74,11 @@ namespace kroll
 
 	void PHPEvaluator::Evaluate(const ValueList& args, SharedValue result)
 	{
+		static Poco::Mutex evaluatorMutex;
+		Poco::Mutex::ScopedLock evaluatorLock(evaluatorMutex);
+
 		args.VerifyException("evaluate", "s s s o");
-		
+
 		TSRMLS_FETCH();
 		std::string mimeType = args.GetString(0);
 		std::string name = args.GetString(1);
@@ -91,46 +95,41 @@ namespace kroll
 
 		std::ostringstream codeString;
 		codeString << "namespace " << contextId << " {\n";
-		codeString << " function __kroll_exec__" << contextId << "f" << nextFunctionId << "() {\n";
-		codeString << "  global $Titanium, $window, $document;\n";
-		codeString << code;
-		codeString << "  foreach (get_defined_vars() as $var=>$val) {\n";
-		codeString << "   if ($var != 'Titanium' && $var != 'window' && $var != 'document') {\n";
-		codeString << "     $window->$var = $val;\n";
-		codeString << "   }\n";
-		codeString << "  }\n ";
+		codeString << code << "\n";
 		codeString << "  $__fns = get_defined_functions();\n";
 		codeString << "  if (array_key_exists(\"user\", $__fns)) {\n";
 		codeString << "   foreach($__fns[\"user\"] as $fname) {\n";
-		codeString << "    if (stristr($fname, \"__kroll_exec__\") === FALSE && !$window->$fname) {";
+		codeString << "    if (!$window->$fname) {";
 		codeString << "      krollAddFunction($window, $fname);\n";
 		codeString << "    }\n";
 		codeString << "   }\n";
 		codeString << "  }\n";
-		codeString << " }\n";
-		codeString << " __kroll_exec__" << contextId << "f" << nextFunctionId << "();\n";
 		codeString << "}\n";
 		printf("%s\n", codeString.str().c_str());
 
-		zend_first_try {
+		// This seems to be needed to make PHP actually give us errors
+		// at parse/compile time -- see: main/main.c line 969
+		PG(during_request_startup) = 0;
 
-			// This seems to be needed to make PHP actually give  us errors
-			// at parse/compile time -- see: main/main.c line 969
-			PG(during_request_startup) = 0;
-			
-			zval *windowValue = PHPUtils::ToPHPValue(args.at(3));
-			ZEND_SET_SYMBOL(&EG(symbol_table), "window", windowValue);
-			SharedValue document = windowGlobal->Get("document");
-			zval *documentValue = PHPUtils::ToPHPValue(document);
-			ZEND_SET_SYMBOL(&EG(symbol_table), "document", documentValue);
-			
-			zend_eval_string((char *) codeString.str().c_str(), NULL, (char *) name.c_str() TSRMLS_CC);
-		} zend_catch {
-		} zend_end_try();
+		SharedKObject previousGlobal(PHPUtils::GetCurrentGlobalObject());
+		PHPUtils::SwapGlobalObject(windowGlobal, &EG(symbol_table) TSRMLS_CC);
+
+		zend_first_try
+		{
+			zend_eval_string((char *) codeString.str().c_str(), NULL, 
+				(char *) name.c_str() TSRMLS_CC);
+		}
+		zend_catch
+		{
+			Logger::Get("PHP")->Error("Evaluation of script failed");
+		}
+		zend_end_try();
+
+		PHPUtils::SwapGlobalObject(previousGlobal, &EG(symbol_table) TSRMLS_CC);
 
 		result->SetValue(kv);
 	}
-	
+
 	void PHPEvaluator::CanPreprocess(const ValueList& args, SharedValue result)
 	{
 		args.VerifyException("canPreprocess", "s");
@@ -142,7 +141,7 @@ namespace kroll
 			result->SetBool(true);
 		}
 	}
-	
+
 	void PHPEvaluator::FillServerVars(Poco::URI& uri, SharedKObject scope TSRMLS_DC)
 	{
 		// Fill $_SERVER with HTTP headers
@@ -206,36 +205,41 @@ namespace kroll
 		
 		SharedKObject scope = args.GetObject(1);
 		TSRMLS_FETCH();
-		
+
 		PHPModule::SetBuffering(true);
-		zend_first_try {
 
-			// These variables are normally initialized by php_module_startup
-			// but we do not call that function, so we manually initialize.
-			PG(header_is_being_sent) = 0;
-			SG(request_info).headers_only = 0;
-			SG(request_info).argv0 = NULL;
-			SG(request_info).argc= 0;
-			SG(request_info).argv= (char **) NULL;
-			php_request_startup(TSRMLS_C);
+		// These variables are normally initialized by php_module_startup
+		// but we do not call that function, so we manually initialize.
+		PG(header_is_being_sent) = 0;
+		SG(request_info).headers_only = 0;
+		SG(request_info).argv0 = NULL;
+		SG(request_info).argc= 0;
+		SG(request_info).argv= (char **) NULL;
+		php_request_startup(TSRMLS_C);
 
-			// This seems to be needed to make PHP actually give  us errors
-			// at parse/compile time -- see: main/main.c line 969
-			PG(during_request_startup) = 0;
+		// This seems to be needed to make PHP actually give  us errors
+		// at parse/compile time -- see: main/main.c line 969
+		PG(during_request_startup) = 0;
 
-			//FillServerVars(uri, scope TSRMLS_CC);
-			zend_file_handle script;
-			script.type = ZEND_HANDLE_FP;
-			script.filename = (char*)path.c_str();
-			script.opened_path = NULL;
-			script.free_filename = 0;
-			script.handle.fp = fopen(script.filename, "rb");
+		//FillServerVars(uri, scope TSRMLS_CC);
+		zend_file_handle script;
+		script.type = ZEND_HANDLE_FP;
+		script.filename = (char*)path.c_str();
+		script.opened_path = NULL;
+		script.free_filename = 0;
+		script.handle.fp = fopen(script.filename, "rb");
 
+		zend_first_try
+		{
 			php_execute_script(&script TSRMLS_CC);
 			
-		} zend_catch {
-		} zend_end_try();
-		
+		}
+		zend_catch
+		{
+
+		}
+		zend_end_try();
+
 		std::string output(PHPModule::GetBuffer().str());
 		SharedKObject o = new StaticBoundObject();
 		o->SetObject("data", new Blob(output.c_str(), output.size(), true));

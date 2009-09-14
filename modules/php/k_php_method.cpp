@@ -9,7 +9,8 @@ namespace kroll {
 
 	KPHPMethod::KPHPMethod(zval* object, const char* methodName) :
 		object(object),
-		methodName(strdup(methodName))
+		methodName(strdup(methodName)),
+		globalObject(PHPUtils::GetCurrentGlobalObject())
 	{
 		zval_addref_p(object);
 	}
@@ -62,8 +63,13 @@ namespace kroll {
 		callInfo.symbol_table = NULL;
 		callInfo.function_table = &classEntry->function_table;
 
+		SharedKObject previousGlobal(PHPUtils::GetCurrentGlobalObject());
+		PHPUtils::SwapGlobalObject(this->globalObject, &EG(symbol_table) TSRMLS_CC);
+
 		int result;
 		zend_call_function(&callInfo, NULL TSRMLS_CC);
+
+		PHPUtils::SwapGlobalObject(previousGlobal, &EG(symbol_table) TSRMLS_CC);
 
 		for (int i = 0; i < args.size(); i++)
 		{

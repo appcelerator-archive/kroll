@@ -8,7 +8,6 @@
 
 namespace kroll
 {
-
 	class KPHPObject : public KObject
 	{
 		public:

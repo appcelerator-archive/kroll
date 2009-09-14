@@ -39,8 +39,8 @@ namespace kroll
 				// PHP arrays are almost always passed by value, which means
 				// they are all just copies of each other. To emulate this
 				// behavior we might as well just make a copy of the array
-				// here and turn it into a StaticBoundList.
-				returnValue = Value::NewList(PHPArrayToStaticBoundList(value TSRMLS_CC));
+				// here and turn it into a KList.
+				returnValue = Value::NewList(PHPArrayToKList(value TSRMLS_CC));
 			}
 			else if (IS_OBJECT == type)
 			{
@@ -140,28 +140,36 @@ namespace kroll
 			}
 		}
 
-		SharedKList PHPArrayToStaticBoundList(zval* array TSRMLS_DC)
+		SharedKList PHPArrayToKList(zval* array TSRMLS_DC)
+		{
+			HashTable* arrayHash = Z_ARRVAL_P(array);
+			return PHPHashTableToKList(arrayHash TSRMLS_CC);
+		}
+
+		SharedKList PHPHashTableToKList(HashTable* hashTable TSRMLS_DC)
 		{
 			SharedKList list = new StaticBoundList();
 
-			HashTable *arrayHash = Z_ARRVAL_P(array);
-			for (zend_hash_internal_pointer_reset(arrayHash);
-				zend_hash_has_more_elements(arrayHash) == SUCCESS;
-				zend_hash_move_forward(arrayHash))
+			for (zend_hash_internal_pointer_reset(hashTable);
+				zend_hash_has_more_elements(hashTable) == SUCCESS;
+				zend_hash_move_forward(hashTable))
 			{
 
 				char* key;
 				unsigned int keyLength;
 				unsigned long index;
 				int type = zend_hash_get_current_key_ex(
-					arrayHash, &key, &keyLength, &index, 0, NULL);
+					hashTable, &key, &keyLength, &index, 0, NULL);
 
 				zval** value;
-				if (zend_hash_get_current_data(arrayHash, (void**) &value) == FAILURE)
+				if (zend_hash_get_current_data(hashTable, (void**) &value) == FAILURE)
 					continue;
 
 				if (type == HASH_KEY_IS_STRING)
 				{
+					if (!strcmp(key, "GLOBALS"))
+						continue;
+
 					list->Set(key, ToKrollValue(*value TSRMLS_CC));
 				}
 				else // Numeric key
@@ -301,7 +309,7 @@ namespace kroll
 				}
 			}
 		}
-		
+
 		SharedKList GetClassVars(zend_class_entry *ce TSRMLS_DC)
 		{
 			zval classVars;
@@ -309,10 +317,9 @@ namespace kroll
 			zend_update_class_constants(ce TSRMLS_CC);
 			add_class_vars(ce, &ce->default_properties, &classVars TSRMLS_CC);
 			add_class_vars(ce, CE_STATIC_MEMBERS(ce), &classVars TSRMLS_CC);
-			
-			return PHPArrayToStaticBoundList(&classVars TSRMLS_CC);
+			return PHPArrayToKList(&classVars TSRMLS_CC);
 		}
-		
+
 		zend_function* GetGlobalFunction(const char *name TSRMLS_DC)
 		{
 			zend_function *function;
@@ -325,18 +332,52 @@ namespace kroll
 			Logger::Get("PHP")->Debug("Failed to find Global function: %s", name);
 			return 0;
 		}
-		
-		void PopulateContext(SharedKObject windowGlobal, HashTable *symbol_table TSRMLS_DC)
+
+		static SharedKObject currentPHPGlobal(0);
+
+		SharedKObject GetCurrentGlobalObject()
 		{
-			SharedStringList keys = GetHashKeys(symbol_table);
-			
-			for (int i = 0; i < keys->size(); i++)
+			return currentPHPGlobal;
+		}
+
+		void SwapGlobalObject(SharedKObject newGlobal, HashTable *symbolTable TSRMLS_DC)
+		{
+			// Push the variables from the given symbol table to the
+			// the current global object. TODO: This is broken! If the
+			// current global is modified deeper in the call stack from
+			// the swapee, the older value will overwrite the newer
+			// one. Dammit!
+			if (!currentPHPGlobal.isNull())
 			{
-				const char *name = keys->at(i)->c_str();
-				zval *value;
-				zend_hash_find(symbol_table, (char*)name, strlen(name)+1, (void **) &value);
-				
-				windowGlobal->Set(name, ToKrollValue(value TSRMLS_CC));
+				SharedKList symbols(PHPHashTableToKList(symbolTable TSRMLS_CC));
+				SharedStringList keys(symbols->GetPropertyNames());
+				for (size_t i = 0; i < keys->size(); i++)
+				{
+					const char* name = keys->at(i)->c_str();
+					SharedValue newValue(symbols->Get(name));
+					if (!newValue->Equals(currentPHPGlobal->Get(name)))
+					{
+						currentPHPGlobal->Set(name, newValue);
+					}
+				}
+			}
+
+			zend_hash_clean(symbolTable);
+			currentPHPGlobal = newGlobal;
+
+			// Move all variables from the new global object into the newly
+			// emptied PHP symbol table.
+			if (!newGlobal.isNull())
+			{
+				SharedStringList keys(newGlobal->GetPropertyNames());
+				for (size_t i = 0; i < keys->size(); i++)
+				{
+					const char* name = keys->at(i)->c_str();
+					zval* newValue;
+					MAKE_STD_ZVAL(newValue); 
+					ToPHPValue(newGlobal->Get(name), &newValue);
+					ZEND_SET_SYMBOL(symbolTable, (char*) name, newValue);
+				}
 			}
 		}
 	}

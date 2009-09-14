@@ -8,11 +8,9 @@
 
 namespace kroll
 {
-
 	class KPHPFunction : public KMethod
 	{
 		public:
-		KPHPFunction(zval* object, const char* methodName);
 		KPHPFunction(const char *functionName);
 
 		virtual ~KPHPFunction();
@@ -23,13 +21,13 @@ namespace kroll
 		virtual SharedString DisplayString(int);
 		virtual bool Equals(SharedKObject);
 		bool PropertyExists(const char* property);
-		zval* ToPHP();
+
+		inline std::string& GetMethodName() { return methodName; }
 
 		private:
-		zval* object;
-		char* methodName;
-        zval* zMethodName;
-
+		std::string methodName;
+		zval* zMethodName;
+		SharedKObject globalObject;
 	};
 }
 #endif
