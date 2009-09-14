@@ -31,6 +31,14 @@ namespace kroll
 	std::string Event::EXIT = "exit";
 	std::string Event::READ = "read";
 
+	std::string Event::HTTP_DONE = "http.done";
+	std::string Event::HTTP_STATECHANGED = "http.statechanged";
+	std::string Event::HTTP_TIMEOUT = "http.timeout";
+	std::string Event::HTTP_REDIRECT = "http.redirect";
+	std::string Event::HTTP_ABORT = "http.abort";
+	std::string Event::HTTP_DATASENT = "http.datasent";
+	std::string Event::HTTP_DATARECV = "http.datarecv";
+
 	Event::Event(AutoPtr<KEventObject> target, std::string& eventName) :
 		AccessorBoundObject("Event"),
 		target(target),
@@ -115,6 +123,22 @@ namespace kroll
 		target->Set("CREATED", Value::NewString(Event::CREATED));
 		target->Set("EXIT", Value::NewString(Event::EXIT));
 		target->Set("READ", Value::NewString(Event::READ));
+
+		// @tiproperty[String, HTTP_DONE, since=0.7] The HTTP_DONE event constant
+		// @tiproperty[String, HTTP_STATECHANGED, since=0.7] The HTTP_STATECHANGED constant
+		// @tiproperty[String, HTTP_TIMEOUT, since=0.7] The HTTP_TIMEOUT constant
+		// @tiproperty[String, HTTP_REDIRECT, since=0.7] The HTTP_REDIRECT constant
+		// @tiproperty[String, HTTP_ABORT, since=0.7] The HTTP_ABORT constant
+		// @tiproperty[String, HTTP_DATASENT, since=0.7] The HTTP_DATASENT constant
+		// @tiproperty[String, HTTP_DATARECV, since=0.7] The HTTP_DATARECV constant
+
+		target->Set("HTTP_DONE", Value::NewString(Event::HTTP_DONE));
+		target->Set("HTTP_STATECHANGED", Value::NewString(Event::HTTP_STATECHANGED));
+		target->Set("HTTP_TIMEOUT", Value::NewString(Event::HTTP_TIMEOUT));
+		target->Set("HTTP_REDIRECT", Value::NewString(Event::HTTP_REDIRECT));
+		target->Set("HTTP_ABORT", Value::NewString(Event::HTTP_ABORT));
+		target->Set("HTTP_DATASENT", Value::NewString(Event::HTTP_DATASENT));
+		target->Set("HTTP_DATARECV", Value::NewString(Event::HTTP_DATARECV));
 	}
 
 }
