@@ -34,7 +34,9 @@
 
 namespace UTILS_NS
 {
-	void PlatformUtils::GetNodeId(NodeId& id)
+namespace PlatformUtils
+{
+	void GetNodeId(NodeId& id)
 	{
 		PIP_ADAPTER_INFO pAdapterInfo;
 		PIP_ADAPTER_INFO pAdapter = 0;
@@ -78,4 +80,5 @@ namespace UTILS_NS
 		}
 		delete [] reinterpret_cast<char*>(pAdapterInfo);
 	}
+}
 }

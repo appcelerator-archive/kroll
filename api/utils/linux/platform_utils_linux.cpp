@@ -41,7 +41,9 @@
 
 namespace UTILS_NS
 {
-	void PlatformUtils::GetNodeId(NodeId& id)
+namespace PlatformUtils
+{
+	void GetNodeId(NodeId& id)
 	{
 		//Based on code from:
 		//http://adywicaksono.wordpress.com/2007/11/08/detecting-mac-address-using-c-application/
@@ -82,4 +84,5 @@ namespace UTILS_NS
 			}
 		}
 	}
+}
 }

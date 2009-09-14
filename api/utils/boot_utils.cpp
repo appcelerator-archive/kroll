@@ -11,17 +11,19 @@ using std::pair;
 
 namespace UTILS_NS
 {
-	vector<string> BootUtils::componentSearchPaths;
-	vector<SharedComponent> BootUtils::installedComponents;
-
-	void ScanRuntimesAtPath(string, vector<SharedComponent>&);
-	void ScanSDKsAtPath(string, vector<SharedComponent>&);
-	void ScanMobileSDKsAtPath(string, vector<SharedComponent>&);
-	void ScanModulesAtPath(string, vector<SharedComponent>&);
+namespace BootUtils
+{
+	// These are also used in application.cpp
 	void ScanBundledComponents(string, vector<SharedComponent>&);
-	void AddToComponentVector(vector<SharedComponent>&, SharedComponent);
 
-	void AddToComponentVector(vector<SharedComponent>& components, SharedComponent c)
+	static void ScanRuntimesAtPath(string, vector<SharedComponent>&);
+	static void ScanModulesAtPath(string, vector<SharedComponent>&);
+	static void ScanSDKsAtPath(string, vector<SharedComponent>&);
+	static void ScanMobileSDKsAtPath(string, vector<SharedComponent>&);
+	static void AddToComponentVector(vector<SharedComponent>&, SharedComponent);
+
+	static void AddToComponentVector(vector<SharedComponent>& components,
+		SharedComponent c)
 	{
 		// Avoid adding duplicate components to a component vector
 		vector<SharedComponent>::iterator i = components.begin();
@@ -37,17 +39,17 @@ namespace UTILS_NS
 		components.push_back(c);
 	}
 
-	vector<SharedComponent>& BootUtils::GetInstalledComponents(bool force)
+	vector<SharedComponent>& GetInstalledComponents(bool force)
 	{
-		static bool initialized = false;
-		if (!initialized || force)
+		static std::vector<SharedComponent> installedComponents;
+		if (installedComponents.empty() || force)
 		{
 			installedComponents.clear();
 			vector<string>& paths = GetComponentSearchPaths();
 			vector<string>::iterator i = paths.begin();
 			while (i != paths.end())
 			{
-				string path = *i++;
+				string path(*i++);
 				ScanRuntimesAtPath(path, installedComponents);
 				ScanSDKsAtPath(path, installedComponents);
 				ScanMobileSDKsAtPath(path, installedComponents);
@@ -61,13 +63,11 @@ namespace UTILS_NS
 				installedComponents.begin(),
 				installedComponents.end(),
 				BootUtils::WeakCompareComponents);
-
-			initialized = true;
 		}
-		return BootUtils::installedComponents;
+		return installedComponents;
 	}
 
-	void ScanRuntimesAtPath(string path, vector<SharedComponent>& results)
+	static void ScanRuntimesAtPath(string path, vector<SharedComponent>& results)
 	{
 		vector<string> paths;
 		SharedComponent c;
@@ -77,20 +77,20 @@ namespace UTILS_NS
 		}
 
 		// Read everything that looks like <searchpath>/runtime/<os>/*
-		string rtPath = FileUtils::Join(path.c_str(), "runtime", OS_NAME, NULL);
+		string rtPath(FileUtils::Join(path.c_str(), "runtime", OS_NAME, NULL));
 		FileUtils::ListDir(rtPath, paths);
 
 		vector<string>::iterator runtimeVersion = paths.begin();
 		while (runtimeVersion != paths.end())
 		{
-			string version = *runtimeVersion++;
-			string fullPath = FileUtils::Join(rtPath.c_str(), version.c_str(), NULL);
+			string version(*runtimeVersion++);
+			string fullPath(FileUtils::Join(rtPath.c_str(), version.c_str(), NULL));
 			c = KComponent::NewComponent(RUNTIME, "runtime", version, fullPath);
 			AddToComponentVector(results, c);
 		}
 	}
 
-	void ScanSDKsAtPath(string path, vector<SharedComponent>& results)
+	static void ScanSDKsAtPath(string path, vector<SharedComponent>& results)
 	{
 		vector<string> paths;
 		SharedComponent c;
@@ -100,20 +100,21 @@ namespace UTILS_NS
 		}
 
 		// Read everything that looks like <searchpath>/sdk/<os>/*
-		string sdkPath = FileUtils::Join(path.c_str(), "sdk", OS_NAME, NULL);
+		string sdkPath(FileUtils::Join(path.c_str(), "sdk", OS_NAME, NULL));
 		FileUtils::ListDir(sdkPath, paths);
 
 		vector<string>::iterator sdkVersion = paths.begin();
 		while (sdkVersion != paths.end())
 		{
-			string version = *sdkVersion++;
-			string fullPath = FileUtils::Join(sdkPath.c_str(), version.c_str(), NULL);
+			string version(*sdkVersion++);
+			string fullPath(FileUtils::Join(
+				sdkPath.c_str(), version.c_str(), NULL));
 			c = KComponent::NewComponent(SDK, "sdk", version, fullPath);
 			AddToComponentVector(results, c);
 		}
 	}
 
-	void ScanMobileSDKsAtPath(string path, vector<SharedComponent>& results)
+	static void ScanMobileSDKsAtPath(string path, vector<SharedComponent>& results)
 	{
 		vector<string> paths;
 		SharedComponent c;
@@ -123,20 +124,21 @@ namespace UTILS_NS
 		}
 
 		// Read everything that looks like <searchpath>/mobilesdk/<os>/*
-		string sdkPath = FileUtils::Join(path.c_str(), "mobilesdk", OS_NAME, NULL);
+		string sdkPath(FileUtils::Join(path.c_str(), "mobilesdk", OS_NAME, NULL));
 		FileUtils::ListDir(sdkPath, paths);
 
 		vector<string>::iterator sdkVersion = paths.begin();
 		while (sdkVersion != paths.end())
 		{
-			string version = *sdkVersion++;
-			string fullPath = FileUtils::Join(sdkPath.c_str(), version.c_str(), NULL);
+			string version(*sdkVersion++);
+			string fullPath(FileUtils::Join(
+				sdkPath.c_str(), version.c_str(), NULL));
 			c = KComponent::NewComponent(MOBILESDK, "mobilesdk", version, fullPath);
 			AddToComponentVector(results, c);
 		}
 	}
 
-	void ScanModulesAtPath(string path, vector<SharedComponent>& results)
+	static void ScanModulesAtPath(string path, vector<SharedComponent>& results)
 	{
 		vector<string> paths;
 		vector<string> subpaths;
@@ -147,23 +149,23 @@ namespace UTILS_NS
 			return;
 		}
 
-		string namesPath = FileUtils::Join(path.c_str(), "modules", OS_NAME, NULL);
+		string namesPath(FileUtils::Join(path.c_str(), "modules", OS_NAME, NULL));
 
 		// Read everything that looks like <searchpath>/modules/<os>/*
 		FileUtils::ListDir(namesPath, paths);
 		vector<string>::iterator moduleName = paths.begin();
 		while (moduleName != paths.end())
 		{
-			string name = *moduleName++;
-			string versionsPath = FileUtils::Join(namesPath.c_str(), name.c_str(), NULL);
+			string name(*moduleName++);
+			string versionsPath(FileUtils::Join(namesPath.c_str(), name.c_str(), NULL));
 
 			// Read everything that looks like <searchpath>/modules/<os>/<name>/*
 			FileUtils::ListDir(versionsPath, subpaths);
 			vector<string>::iterator moduleVersion = subpaths.begin();
 			while (moduleVersion != subpaths.end())
 			{
-				string version = *moduleVersion++;
-				string fullPath = FileUtils::Join(versionsPath.c_str(), version.c_str(), NULL);
+				string version(*moduleVersion++);
+				string fullPath(FileUtils::Join(versionsPath.c_str(), version.c_str(), NULL));
 				c = KComponent::NewComponent(MODULE, name, version, fullPath);
 				AddToComponentVector(results, c);
 			}
@@ -176,7 +178,7 @@ namespace UTILS_NS
 		SharedComponent c;
 
 		// Find a directory like <appdir>/runtime/
-		string rtPath = FileUtils::Join(path.c_str(), "runtime", NULL);
+		string rtPath(FileUtils::Join(path.c_str(), "runtime", NULL));
 		if (FileUtils::IsDirectory(rtPath))
 		{
 			c = KComponent::NewComponent(RUNTIME, "runtime", "", rtPath, true);
@@ -184,17 +186,93 @@ namespace UTILS_NS
 		}
 
 		// Find all directories like <appdir>/modules/*
-		string modulesPath = FileUtils::Join(path.c_str(), "modules", NULL);
+		string modulesPath(FileUtils::Join(path.c_str(), "modules", NULL));
 		FileUtils::ListDir(modulesPath, paths);
 		for (size_t i = 0; i < paths.size(); i++)
 		{
-			string name = paths[i];
-			string path = FileUtils::Join(modulesPath.c_str(), name.c_str(), NULL);
+			string name(paths[i]);
+			string path(FileUtils::Join(modulesPath.c_str(), name.c_str(), NULL));
 			c = KComponent::NewComponent(MODULE, name, "", path, true);
 			results.push_back(c);
 		}
 	}
 
+	int CompareVersions(string one, string two)
+	{
+		if (one.empty() && two.empty())
+			return 0;
+		if (one.empty())
+			return -1;
+		if (two.empty())
+			return 1;
+
+		vector<string> listOne;
+		vector<string> listTwo;
+		FileUtils::Tokenize(one, listOne, ".");
+		FileUtils::Tokenize(two, listTwo, ".");
+
+		size_t min = listOne.size();
+		if (listTwo.size() < listOne.size())
+			min = listTwo.size();
+
+		for (size_t i = 0; i < min; i++)
+		{
+			int result = listOne.at(i).compare(listTwo.at(i));
+			if (result != 0)
+				return result;
+		}
+
+		if (listOne.size() > listTwo.size())
+			return 1;
+		else if (listTwo.size() > listOne.size())
+			return -1;
+		else
+			return 0;
+	}
+
+	bool WeakCompareComponents(SharedComponent one, SharedComponent two)
+	{
+		return BootUtils::CompareVersions(one->version, two->version) > 0;
+	}
+
+	vector<pair<string, string> > ReadManifestFile(std::string path)
+	{
+		vector<pair<string, string> > manifest;
+		if (!FileUtils::IsFile(path))
+		{
+			return manifest;
+		}
+
+		std::ifstream file(path.c_str());
+		if (file.bad() || file.fail())
+		{
+			return manifest;
+		}
+
+		while (!file.eof())
+		{
+			string line;
+			std::getline(file, line);
+			line = FileUtils::Trim(line);
+
+			size_t pos = line.find(":");
+			if (pos == 0 || pos == line.length() - 1)
+			{
+				continue;
+			}
+			else
+			{
+				string key(line.substr(0, pos));
+				string value(line.substr(pos + 1, line.length()));
+				key = FileUtils::Trim(key);
+				value = FileUtils::Trim(value);
+				manifest.push_back(pair<string, string>(key, value));
+			}
+		}
+		file.close();
+		return manifest;
+	}
+}
 	SharedDependency Dependency::NewDependencyFromValues(
 		KComponentType type, std::string name, std::string version)
 	{
@@ -278,83 +356,9 @@ namespace UTILS_NS
 
 	vector<pair<string, string> > KComponent::ReadManifest()
 	{
-		string manifestPath = FileUtils::Join(this->path.c_str(), MANIFEST_FILENAME, NULL);
+		string manifestPath(FileUtils::Join(this->path.c_str(), MANIFEST_FILENAME, NULL));
 		return BootUtils::ReadManifestFile(manifestPath);
 	}
 
-	int BootUtils::CompareVersions(string one, string two)
-	{
-		if (one.empty() && two.empty())
-			return 0;
-		if (one.empty())
-			return -1;
-		if (two.empty())
-			return 1;
 
-		vector<string> listOne;
-		vector<string> listTwo;
-		FileUtils::Tokenize(one, listOne, ".");
-		FileUtils::Tokenize(two, listTwo, ".");
-
-		size_t min = listOne.size();
-		if (listTwo.size() < listOne.size())
-			min = listTwo.size();
-
-		for (size_t i = 0; i < min; i++)
-		{
-			int result = listOne.at(i).compare(listTwo.at(i));
-			if (result != 0)
-				return result;
-		}
-
-		if (listOne.size() > listTwo.size())
-			return 1;
-		else if (listTwo.size() > listOne.size())
-			return -1;
-		else
-			return 0;
-	}
-
-	bool BootUtils::WeakCompareComponents(SharedComponent one, SharedComponent two)
-	{
-		return BootUtils::CompareVersions(one->version, two->version) > 0;
-	}
-
-	vector<pair<string, string> > BootUtils::ReadManifestFile(std::string path)
-	{
-		vector<pair<string, string> > manifest;
-		if (!FileUtils::IsFile(path))
-		{
-			return manifest;
-		}
-
-		std::ifstream file(path.c_str());
-		if (file.bad() || file.fail())
-		{
-			return manifest;
-		}
-
-		while (!file.eof())
-		{
-			string line;
-			std::getline(file, line);
-			line = FileUtils::Trim(line);
-
-			size_t pos = line.find(":");
-			if (pos == 0 || pos == line.length() - 1)
-			{
-				continue;
-			}
-			else
-			{
-				string key = line.substr(0, pos);
-				string value = line.substr(pos + 1, line.length());
-				key = FileUtils::Trim(key);
-				value = FileUtils::Trim(value);
-				manifest.push_back(pair<string, string>(key, value));
-			}
-		}
-		file.close();
-		return manifest;
-	}
 }

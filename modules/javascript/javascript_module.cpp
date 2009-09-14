@@ -24,14 +24,14 @@ namespace kroll
 		JavascriptModule::instance = NULL;
 	}
 
-	const static std::string js_suffix = "module.js";
+	const static std::string jsSuffix = "module.js";
 	bool JavascriptModule::IsModule(std::string& path)
 	{
 		int plength = path.length();
-		int slength = js_suffix.length();
-		if (path.length() > js_suffix.length())
+		int slength = jsSuffix.length();
+		if (path.length() > jsSuffix.length())
 		{
-			return (path.substr(plength - slength) == js_suffix);
+			return (path.substr(plength - slength) == jsSuffix);
 		}
 		else
 		{
@@ -43,7 +43,7 @@ namespace kroll
 	{
 		Poco::Path p(path);
 		std::string basename = p.getBaseName();
-		std::string name = basename.substr(0,basename.length()-js_suffix.length()+3);
+		std::string name = basename.substr(0,basename.length()-jsSuffix.length()+3);
 		std::string moduledir = path.substr(0,path.length()-basename.length()-3);
 
 		Logger *logger = Logger::Get("Javascript");
@@ -52,5 +52,4 @@ namespace kroll
 		JavascriptModuleInstance* instance = new JavascriptModuleInstance(this->host, path, moduledir, name);
 		return instance;
 	}
-
 }

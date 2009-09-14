@@ -9,45 +9,32 @@
 
 namespace kroll
 {
-
-	class KROLL_JAVASCRIPT_API KJSUtil
+	namespace KJSUtil
 	{
+		KROLL_JAVASCRIPT_API SharedValue ToKrollValue(JSValueRef, JSContextRef, JSObjectRef);
+		KROLL_JAVASCRIPT_API JSValueRef ToJSValue(SharedValue, JSContextRef);
+		KROLL_JAVASCRIPT_API JSValueRef KObjectToJSValue(SharedValue, JSContextRef);
+		KROLL_JAVASCRIPT_API JSValueRef KMethodToJSValue(SharedValue, JSContextRef);
+		KROLL_JAVASCRIPT_API JSValueRef KListToJSValue(SharedValue, JSContextRef);
+		KROLL_JAVASCRIPT_API std::string ToChars(JSStringRef);
+		KROLL_JAVASCRIPT_API bool IsArrayLike(JSObjectRef, JSContextRef);
+		KROLL_JAVASCRIPT_API AutoPtr<KKJSObject> ToBoundObject(JSContextRef, JSObjectRef);
+		KROLL_JAVASCRIPT_API AutoPtr<KKJSObject> ToBoundMethod(JSContextRef, JSObjectRef, JSObjectRef);
+		KROLL_JAVASCRIPT_API AutoPtr<KKJSList> ToBoundList(JSContextRef, JSObjectRef);
 
-	public:
-		static SharedValue ToKrollValue(JSValueRef, JSContextRef, JSObjectRef);
-		static JSValueRef ToJSValue(SharedValue, JSContextRef);
-		static JSValueRef KObjectToJSValue(SharedValue, JSContextRef);
-		static JSValueRef KMethodToJSValue(SharedValue, JSContextRef);
-		static JSValueRef KListToJSValue(SharedValue, JSContextRef);
-		static char* ToChars(JSStringRef);
-		static bool IsArrayLike(JSObjectRef, JSContextRef);
-		static AutoPtr<KKJSObject> ToBoundObject(JSContextRef, JSObjectRef);
-		static AutoPtr<KKJSObject> ToBoundMethod(JSContextRef, JSObjectRef, JSObjectRef);
-		static AutoPtr<KKJSList> ToBoundList(JSContextRef, JSObjectRef);
+		KROLL_JAVASCRIPT_API JSObjectRef CreateNewGlobalContext(Host*, bool addGlobalObject=true);
+		KROLL_JAVASCRIPT_API void RegisterGlobalContext(JSObjectRef, JSGlobalContextRef);
+		KROLL_JAVASCRIPT_API void UnregisterGlobalContext(JSObjectRef);
+		KROLL_JAVASCRIPT_API JSGlobalContextRef GetGlobalContext(JSObjectRef);
 
-		static JSObjectRef CreateNewGlobalContext(Host*, bool add_global_object=true);
-		static void RegisterGlobalContext(JSObjectRef, JSGlobalContextRef);
-		static void UnregisterGlobalContext(JSObjectRef);
-		static JSGlobalContextRef GetGlobalContext(JSObjectRef);
+		KROLL_JAVASCRIPT_API void ProtectGlobalContext(JSGlobalContextRef);
+		KROLL_JAVASCRIPT_API void UnprotectGlobalContext(JSGlobalContextRef);
 
-		static void ProtectGlobalContext(JSGlobalContextRef);
-		static void UnprotectGlobalContext(JSGlobalContextRef);
-
-		static SharedValue Evaluate(JSContextRef context, char *script);
-		static SharedValue EvaluateFile(JSContextRef context, char *full_path);
-
-		static JSValueRef GetFunctionPrototype(JSContextRef jsContext, JSValueRef* exception);
-		static JSValueRef GetArrayPrototype(JSContextRef jsContext, JSValueRef* exception);
-		
-		static void BindProperties(JSObjectRef, SharedKObject);
-		static SharedValue GetProperty(JSObjectRef, std::string name);
-
-	private:
-		static std::map<JSObjectRef, JSGlobalContextRef> contextMap;
-		static std::map<JSGlobalContextRef, int> contextRefCounts;
-
+		KROLL_JAVASCRIPT_API SharedValue Evaluate(JSContextRef context, char* script);
+		KROLL_JAVASCRIPT_API SharedValue EvaluateFile(JSContextRef context, std::string fullPath);
+		KROLL_JAVASCRIPT_API void BindProperties(JSObjectRef, SharedKObject);
+		KROLL_JAVASCRIPT_API SharedValue GetProperty(JSObjectRef, std::string name);
 	};
-
 }
 
 #endif

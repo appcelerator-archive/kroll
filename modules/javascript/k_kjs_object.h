@@ -17,32 +17,25 @@ namespace kroll
 {
 	class KROLL_JAVASCRIPT_API KKJSObject : public KObject
 	{
-	public:
+		public:
 		KKJSObject(JSContextRef context, JSObjectRef js_object);
 		~KKJSObject();
 
-		void Set(const char *name, SharedValue value);
-		SharedValue Get(const char *name);
-		SharedStringList GetPropertyNames();
-		bool SameContextGroup(JSContextRef c);
-
-		JSObjectRef GetJSObject();
-
-		/*
-		 * Determine if the given KJS object equals this one
-		 * by comparing these objects via strict equality (===)
-		 *  @param other the object to test
-		 *  @returns true if objects have strit equality, false otherwise
-		 */
+		virtual void Set(const char *name, SharedValue value);
+		virtual SharedValue Get(const char *name);
+		virtual SharedStringList GetPropertyNames();
+		virtual bool HasProperty(const char* name);
 		virtual bool Equals(SharedKObject);
 
-	protected:
+		bool SameContextGroup(JSContextRef c);
+		JSObjectRef GetJSObject();
+
+		protected:
 		JSGlobalContextRef context;
-		JSObjectRef object;
+		JSObjectRef jsobject;
 
-	private:
+		private:
 		DISALLOW_EVIL_CONSTRUCTORS(KKJSObject);
-
 	};
 }
 

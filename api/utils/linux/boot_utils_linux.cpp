@@ -7,10 +7,12 @@
 
 namespace UTILS_NS
 {
-	vector<string>& BootUtils::GetComponentSearchPaths()
+namespace BootUtils
+{
+	vector<string>& GetComponentSearchPaths()
 	{
-		static bool initialized = false;
-		if (!initialized)
+		static std::vector<std::string> componentSearchPaths;
+		if (componentSearchPaths.empty())
 		{
 			// Allow the user to force an override to the runtime home by setting the
 			// appropriate environment variable -- this will be the first path searched
@@ -28,13 +30,11 @@ namespace UTILS_NS
 			componentSearchPaths.push_back(string("/opt/") + pname);
 			componentSearchPaths.push_back(string("/usr/local/lib/") + pname);
 			componentSearchPaths.push_back(string("/usr/lib/") + pname);
-
-			initialized = true;
 		}
 		return componentSearchPaths;
 	}
 
-	bool BootUtils::RunInstaller(
+	bool RunInstaller(
 		vector<SharedDependency> missing,
 		SharedApplication application,
 		std::string updateFile,
@@ -77,4 +77,5 @@ namespace UTILS_NS
 		FileUtils::RunAndWait(exec, args);
 		return true;
 	}
+}
 }

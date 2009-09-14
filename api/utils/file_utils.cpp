@@ -31,16 +31,18 @@
 
 namespace UTILS_NS
 {
-	std::string FileUtils::GetApplicationDataDirectory(std::string &appid)
+namespace FileUtils
+{
+	std::string GetApplicationDataDirectory(std::string &appid)
 	{
-		std::string dir = GetUserRuntimeHomeDirectory();
+		std::string dir(GetUserRuntimeHomeDirectory());
 		dir = FileUtils::Join(dir.c_str(), "appdata", appid.c_str(), NULL);
 		CreateDirectory(dir, true);
 
 		return dir;
 	}
 
-	std::string FileUtils::Basename(std::string path)
+	std::string Basename(std::string path)
 	{
 		size_t pos = path.find_last_of(KR_PATH_SEP_CHAR);
 		if (pos == std::string::npos)
@@ -49,14 +51,14 @@ namespace UTILS_NS
 			return path.substr(pos+1);
 	}
 
-	bool FileUtils::CreateDirectory(std::string &dir, bool recursive)
+	bool CreateDirectory(std::string &dir, bool recursive)
 	{
 		if (IsDirectory(dir))
 		{
 			return true;
 		}
 		
-		string parent = Dirname(dir);
+		string parent(Dirname(dir));
 		if (recursive && parent.size() > 0 && !IsDirectory(parent))
 		{
 			if (!CreateDirectory(parent, true))
@@ -67,7 +69,7 @@ namespace UTILS_NS
 	}
 
 
-	std::string FileUtils::GetDirectory(std::string &file)
+	std::string GetDirectory(std::string &file)
 	{
 		size_t pos = file.find_last_of(KR_PATH_SEP);
 		if (pos == std::string::npos)
@@ -85,17 +87,8 @@ namespace UTILS_NS
 		return file.substr(0, pos);
 #endif
 	}
-	
-#if defined(OS_OSX) || defined(OS_LINUX)
-	void FileUtils::WriteFile(std::string& path, std::string& content)
-	{
-		std::ofstream f(path.c_str());
-		f << content;
-		f.close();
-	}
-#endif
 
-	std::string FileUtils::Join(const char* inpart, ...)
+	std::string Join(const char* inpart, ...)
 	{
 		va_list ap;
 		va_start(ap, inpart);
@@ -112,7 +105,7 @@ namespace UTILS_NS
 		std::vector<std::string>::iterator iter = parts.begin();
 		while (iter != parts.end())
 		{
-			std::string part = *iter;
+			std::string part(*iter);
 			bool first = (iter == parts.begin());
 			bool last = (iter == parts.end()-1);
 			iter++;
@@ -144,7 +137,7 @@ namespace UTILS_NS
 		return filepath;
 	}
 
-	std::string FileUtils::GetOSVersion()
+	std::string GetOSVersion()
 	{
 #ifdef OS_WIN32
 		OSVERSIONINFO vi;
@@ -163,7 +156,7 @@ namespace UTILS_NS
 #endif
 	}
 
-	std::string FileUtils::GetOSArchitecture()
+	std::string GetOSArchitecture()
 	{
 #ifdef OS_WIN32
 		return std::string("win32");
@@ -174,24 +167,22 @@ namespace UTILS_NS
 #endif
 	}
 
-	void FileUtils::Tokenize(
-		const std::string& str,
-		std::vector<std::string>& tokens, 
-		const std::string delimeters, 
+	void Tokenize(const std::string& str,
+		std::vector<std::string>& tokens, const std::string delimeters,
 		bool skip_if_found)
 	{
 		std::string::size_type lastPos = str.find_first_not_of(delimeters,0);
 		std::string::size_type pos = str.find_first_of(delimeters,lastPos);
 		while (std::string::npos!=pos || std::string::npos!=lastPos)
 		{
-			std::string token = str.substr(lastPos,pos-lastPos);
+			std::string token(str.substr(lastPos,pos-lastPos));
 			bool found = false;
 			if (skip_if_found)
 			{
 				std::vector<std::string>::iterator i = tokens.begin();
 				while(i!=tokens.end())
 				{
-					std::string entry = (*i++);
+					std::string entry(*i++);
 					if (entry == token)
 					{
 						found = true;
@@ -208,7 +199,7 @@ namespace UTILS_NS
 		}
 	}
 
-	std::string FileUtils::Trim(std::string str)
+	std::string Trim(std::string str)
 	{
 		std::string c(str);
 		while (1)
@@ -232,4 +223,4 @@ namespace UTILS_NS
 		return c;
 	}
 }
-
+}

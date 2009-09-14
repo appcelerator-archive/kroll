@@ -8,7 +8,6 @@
 
 namespace kroll
 {
-
 	class KPHPMethod : public KMethod
 	{
 		public:
@@ -29,7 +28,7 @@ namespace kroll
 		zval* object;
 		char* methodName;
 		zval* zMethodName;
-
+		SharedKObject globalObject;
 	};
 }
 #endif

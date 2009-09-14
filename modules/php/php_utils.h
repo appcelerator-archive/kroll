@@ -27,7 +27,8 @@ namespace kroll
 		zval* ToPHPValue(SharedValue value);
 		void ToPHPValue(SharedValue value, zval** returnValue);
 		std::string ZvalToPropertyName(zval* property);
-		SharedKList PHPArrayToStaticBoundList(zval* array TSRMLS_DC);
+		SharedKList PHPArrayToKList(zval* array TSRMLS_DC);
+		SharedKList PHPHashTableToKList(HashTable* hashtable TSRMLS_DC);
 		SharedStringList GetHashKeys(HashTable *hash);
 		void KObjectToKPHPObject(SharedValue objectValue, zval** returnValue);
 		void KMethodToKPHPMethod(SharedValue methodValue, zval** returnValue);
@@ -38,7 +39,10 @@ namespace kroll
 		SharedStringList GetClassMethods(zend_class_entry *ce TSRMLS_DC);
 		SharedKList GetClassVars(zend_class_entry *ce TSRMLS_DC);
 		zend_function* GetGlobalFunction(const char *name TSRMLS_DC);
-		void PopulateContext(SharedKObject windowGlobal, HashTable *symbol_table TSRMLS_DC);
+
+		SharedKObject GetCurrentGlobalObject();
+		void SwapGlobalObject(SharedKObject newGlobal, 
+			HashTable *symbolTable TSRMLS_DC);
 	}
 }
 

@@ -16,24 +16,56 @@ namespace UTILS_NS
 {
 	std::string FileUtils::GetUserRuntimeHomeDirectory()
 	{
-		NSString* nsPath = [
-			NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, NO)
-			objectAtIndex: 0];
-		nsPath = [nsPath stringByAppendingPathComponent: [NSString stringWithUTF8String: PRODUCT_NAME]];
+		NSString* nsPath = [NSSearchPathForDirectoriesInDomains(
+			NSApplicationSupportDirectory, NSUserDomainMask, NO) objectAtIndex: 0];
+		nsPath = [nsPath stringByAppendingPathComponent:
+			[NSString stringWithUTF8String:PRODUCT_NAME]];
 		return [[nsPath stringByExpandingTildeInPath] UTF8String];
 	}
 	
 	std::string FileUtils::GetSystemRuntimeHomeDirectory()
 	{
-		NSString* nsPath = [
-			NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSLocalDomainMask, NO)
-			objectAtIndex: 0];
-		nsPath = [nsPath stringByAppendingPathComponent: [NSString stringWithUTF8String: PRODUCT_NAME]];
+		NSString* nsPath = [NSSearchPathForDirectoriesInDomains(
+			NSApplicationSupportDirectory, NSLocalDomainMask, NO) objectAtIndex: 0];
+		nsPath = [nsPath stringByAppendingPathComponent:
+			[NSString stringWithUTF8String:PRODUCT_NAME]];
 		return [[nsPath stringByExpandingTildeInPath] UTF8String];
 	}
 
 	std::string FileUtils::GetUsername()
 	{
 		return std::string([NSUserName() UTF8String]);
+	}
+
+	std::string FileUtils::ReadFile(std::string& path)
+	{
+		NSError* error = NULL;
+		NSString* nsPath = [NSString stringWithUTF8String:path.c_str()];
+		NSString* nsContents = [NSString stringWithContentsOfFile:nsPath
+			encoding:NSUTF8StringEncoding error:&error];
+
+		if (error)
+		{
+			fprintf(stderr, "Could not read file: %s: %s\n",
+				path.c_str(), [[error localizedDescription] UTF8String]);
+			return "";
+		}
+
+		return [nsContents UTF8String];
+	}
+
+	void FileUtils::WriteFile(std::string& path, std::string& content)
+	{
+		NSError* error = NULL;
+		NSString* nsContents = [NSString stringWithUTF8String:content.c_str()];
+		NSString* nsPath = [NSString stringWithUTF8String:path.c_str()];
+		[nsContents writeToFile:nsPath
+			atomically:YES encoding:NSUTF8StringEncoding error:&error];
+
+		if (error)
+		{
+			fprintf(stderr, "Could not write file: %s: %s\n",
+				path.c_str(), [[error localizedDescription] UTF8String]);
+		}
 	}
 }

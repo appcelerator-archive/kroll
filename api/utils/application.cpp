@@ -12,13 +12,14 @@ using std::pair;
 
 namespace UTILS_NS
 {
-	extern void ScanRuntimesAtPath(string, vector<SharedComponent>&);
-	extern void ScanModulesAtPath(string, vector<SharedComponent>&);
-	extern void ScanBundledComponents(string, vector<SharedComponent>&);
+	namespace BootUtils
+	{
+		extern void ScanBundledComponents(string, vector<SharedComponent>&);
+	}
 
 	SharedPtr<Application> Application::NewApplication(string appPath)
 	{
-		string manifest = FileUtils::Join(appPath.c_str(), MANIFEST_FILENAME, NULL);
+		string manifest(FileUtils::Join(appPath.c_str(), MANIFEST_FILENAME, NULL));
 		return Application::NewApplication(manifest, appPath);
 	}
 
@@ -37,8 +38,8 @@ namespace UTILS_NS
 		vector<pair<string, string> >::iterator i = manifest.begin();
 		while (i != manifest.end())
 		{
-			string key = i->first;
-			string value = i->second;
+			string key(i->first);
+			string value(i->second);
 			*i++;
 
 			if (key == "#appname")
@@ -120,8 +121,8 @@ namespace UTILS_NS
 		// TODO:
 		// If this application has arguments, it's probably the currently running
 		// application, so we can try to get the executable path based on argv[0]
-		string exeName = this->name + ".exe";
-		string path = FileUtils::Join(this->path.c_str(), exeName.c_str(), NULL);
+		string exeName(this->name + ".exe");
+		string path(FileUtils::Join(this->path.c_str(), exeName.c_str(), NULL));
 		if (FileUtils::IsFile(path))
 		{
 			return path;
@@ -176,14 +177,10 @@ namespace UTILS_NS
 
 	bool Application::IsInstalled()
 	{
-		string dataDirMarker = FileUtils::Join(
-			this->GetDataPath().c_str(),
-			INSTALLED_MARKER_FILENAME,
-			NULL);
-		string appDirMarker = FileUtils::Join(
-			this->path.c_str(),
-			INSTALLED_MARKER_FILENAME,
-			NULL);
+		string dataDirMarker(FileUtils::Join(this->GetDataPath().c_str(),
+			INSTALLED_MARKER_FILENAME, NULL));
+		string appDirMarker(FileUtils::Join(this->path.c_str(),
+			INSTALLED_MARKER_FILENAME, NULL));
 		return FileUtils::IsFile(dataDirMarker) ||
 			FileUtils::IsFile(appDirMarker);
 	}
@@ -261,7 +258,7 @@ namespace UTILS_NS
 			this->queryString = DISTRIBUTION_URL;
 			if (EnvironmentUtils::Has("TITANIUM_STREAM"))
 			{
-				string stream = EnvironmentUtils::Get("TITANIUM_STREAM");
+				string stream(EnvironmentUtils::Get("TITANIUM_STREAM"));
 				// support localhost only testing
 				if (stream == "local" || stream == "l")
 				{
@@ -278,10 +275,10 @@ namespace UTILS_NS
 			}
 			this->queryString += "/v1/release-download";
 
-			string mid = PlatformUtils::GetMachineId();
-			string os = OS_NAME;
-			string osver = FileUtils::GetOSVersion();
-			string osarch = FileUtils::GetOSArchitecture();
+			string mid(PlatformUtils::GetMachineId());
+			string os(OS_NAME);
+			string osver(FileUtils::GetOSVersion());
+			string osarch(FileUtils::GetOSArchitecture());
 
 			this->queryString += "?os=" + URLUtils::EncodeURIComponent(os);
 			this->queryString += "&osver=" + URLUtils::EncodeURIComponent(osver);
@@ -293,7 +290,7 @@ namespace UTILS_NS
 			this->queryString += "&osarch=" + URLUtils::EncodeURIComponent(osarch);
 		}
 
-		string url = this->queryString;
+		string url(this->queryString);
 		url.append("&name=");
 		url.append(d->name);
 		url.append("&version=");
@@ -316,7 +313,8 @@ namespace UTILS_NS
 	{
 		string text;
 
-		string license = FileUtils::Join(this->path.c_str(), LICENSE_FILENAME, NULL);
+		string license(FileUtils::Join(this->path.c_str(),
+			LICENSE_FILENAME, NULL));
 		if (!FileUtils::IsFile(license))
 			return text;
 
@@ -370,14 +368,14 @@ namespace UTILS_NS
 		if (this->HasArgument(OVERRIDE_ARG))
 		{
 			// Only scan bundled components on the override path
-			string overridePath = this->GetArgumentValue(OVERRIDE_ARG);
-			ScanBundledComponents(overridePath, components); 
+			string overridePath(this->GetArgumentValue(OVERRIDE_ARG));
+			BootUtils::ScanBundledComponents(overridePath, components); 
 			onlyBundled = true;
 		}
 		else
 		{
 			// Merge bundled and installed components
-			ScanBundledComponents(this->path, components); 
+			BootUtils::ScanBundledComponents(this->path, components); 
 		}
 
 		if (!onlyBundled)
@@ -433,11 +431,11 @@ namespace UTILS_NS
 
 	bool Application::HasArgument(string needle)
 	{
-		string dashNeedle = string("--") + needle;
+		string dashNeedle(string("--") + needle);
 		vector<string>::iterator i = this->arguments.begin();
 		while (i != this->arguments.end())
 		{
-			string arg = *i++;
+			string arg(*i++);
 			if (arg.find(needle) == 0 || arg.find(dashNeedle) == 0)
 			{
 				return true;
@@ -448,16 +446,16 @@ namespace UTILS_NS
 
 	string Application::GetArgumentValue(string needle)
 	{
-		string dashNeedle = string("--") + needle;
+		string dashNeedle(string("--") + needle);
 		vector<string>::iterator i = this->arguments.begin();
 		while (i != this->arguments.end())
 		{
-			string arg = *i++;
+			string arg(*i++);
 			size_t start;
 			if ((arg.find(needle) == 0 || arg.find(dashNeedle) == 0)
 				 && (start = arg.find("=")) != string::npos)
 			{
-				string value = arg.substr(start + 1);
+				string value(arg.substr(start + 1));
 				if (value[0] == '"' && value.length() > 3)
 				{
 					value = value.substr(1, value.length() - 2);

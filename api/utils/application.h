@@ -17,7 +17,7 @@ namespace UTILS_NS
 	class KROLL_API Application
 	{
 		private:
-			Application(string appPath, string manifestPath);
+		Application(string appPath, string manifestPath);
 
 		public:
 		string path;

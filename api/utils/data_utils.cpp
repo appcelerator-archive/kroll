@@ -12,11 +12,13 @@ using KPoco::MD5Engine;
 
 namespace UTILS_NS
 {
-	std::string DataUtils::HexMD5(std::string data)
+namespace DataUtils
+{
+	std::string HexMD5(std::string data)
 	{
 		MD5Engine engine;
 		engine.update(data);
 		return DigestEngine::digestToHex(engine.digest());
 	}
-
+}
 }

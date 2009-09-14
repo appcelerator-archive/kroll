@@ -11,11 +11,16 @@
 #include <shellapi.h>
 #include <sstream>
 
+#ifndef NO_UNZIP
+#include "../unzip/unzip.h"
+#endif
+
 namespace UTILS_NS
 {
-	
-	bool WideFileHasAttributes(std::wstring& widePath, DWORD attributes)
-	{	
+namespace FileUtils
+{
+	static bool FileHasAttributes(std::wstring& widePath, DWORD attributes)
+	{
 		WIN32_FIND_DATA findFileData;
 		ZeroMemory(&findFileData, sizeof(WIN32_FIND_DATA));
 
@@ -32,25 +37,24 @@ namespace UTILS_NS
 		{
 			return false;
 		}
-
 	}
-	
-	bool FileHasAttributes(std::string& path, DWORD attributes)
+
+	static bool FileHasAttributes(std::string& path, DWORD attributes)
 	{
-		std::wstring widePath = UTILS_NS::UTF8ToWide(path);
-		return WideFileHasAttributes(widePath, attributes);
+		std::wstring widePath(UTILS_NS::UTF8ToWide(path));
+		return FileHasAttributes(widePath, attributes);
 	}
 
-	std::string FileUtils::GetExecutableDirectory()
+	std::string GetExecutableDirectory()
 	{
 		wchar_t path[MAX_PATH];
 		path[MAX_PATH-1] = '\0';
 		GetModuleFileNameW(NULL, path, MAX_PATH - 1);
-		std::string fullPath = UTILS_NS::WideToUTF8(path);
+		std::string fullPath(UTILS_NS::WideToUTF8(path));
 		return Dirname(fullPath);
 	}
 
-	std::string FileUtils::GetTempDirectory()
+	std::string GetTempDirectory()
 	{
 		wchar_t tempDirectory[MAX_PATH];
 		tempDirectory[MAX_PATH-1] = '\0';
@@ -60,27 +64,27 @@ namespace UTILS_NS
 		// let's convert it to a full path name.
 		std::wstring dir(tempDirectory);
 		GetLongPathNameW(dir.c_str(), tempDirectory, MAX_PATH - 1);
-		std::string out = UTILS_NS::WideToUTF8(tempDirectory);
+		std::string out(UTILS_NS::WideToUTF8(tempDirectory));
 		srand(GetTickCount()); // initialize seed
 		std::ostringstream s;
 		s << "k" << (double) rand();
-		std::string end = s.str();
+		std::string end(s.str());
 		return FileUtils::Join(out.c_str(), end.c_str(), NULL);
 	}
 
-	bool FileUtils::IsFile(std::string& file)
+	bool IsFile(std::string& file)
 	{
 		return FileHasAttributes(file, 0);
 	}
-	
-	bool FileUtils::IsWideFile(std::wstring& file)
+
+	bool IsFile(std::wstring& file)
 	{
-		return WideFileHasAttributes(file, 0);
+		return FileHasAttributes(file, 0);
 	}
 
-	void FileUtils::WriteFile(std::string& path, std::string& content)
+	void WriteFile(std::string& path, std::string& content)
 	{
-		std::wstring widePath = UTF8ToWide(path);
+		std::wstring widePath(UTF8ToWide(path));
 		// CreateFile doesn't have a path length limitation
 		HANDLE file = CreateFileW(widePath.c_str(),
 			GENERIC_WRITE, 
@@ -97,27 +101,25 @@ namespace UTILS_NS
 		{
 			while (bytesWritten < bytesToWrite)
 			{
-				if(FALSE == ::WriteFile(file, 
-					content.c_str() + bytesWritten,
-					bytesToWrite - bytesWritten,
-					&bytesWritten,
-					NULL))
+				if (FALSE == ::WriteFile(file, content.c_str() + bytesWritten,
+					bytesToWrite - bytesWritten, &bytesWritten, NULL))
 				{
 					CloseHandle(file);
-					printf("Could not write to file. Error: %s\n", Win32Utils::QuickFormatMessage(GetLastError()).c_str());
+					fprintf(stderr, "Could not write to file. Error: %s\n",
+						Win32Utils::QuickFormatMessage(GetLastError()).c_str());
 				}
 			}
 		}
-		
+
 		CloseHandle(file);
 	}
 	
-	std::string FileUtils::ReadFile(std::string& path)
+	std::string ReadFile(std::string& path)
 	{
-		return FileUtils::ReadWideFile(UTF8ToWide(path));
+		return ReadFile(UTF8ToWide(path));
 	}
 	
-	std::string FileUtils::ReadWideFile(std::wstring& widePath)
+	std::string ReadFile(std::wstring& widePath)
 	{
 		std::ostringstream contents;
 		// CreateFile doesn't have a path length limitation
@@ -135,14 +137,20 @@ namespace UTILS_NS
 		
 		do
 		{
-			BOOL result = ::ReadFile(file, readBuffer, bufferSize-2, &bytesRead, NULL);
+			BOOL result = ::ReadFile(file,
+				readBuffer,
+				bufferSize-2,
+				&bytesRead,
+				NULL);
+			
 			if (!result && GetLastError() != ERROR_HANDLE_EOF)
 			{
-				printf("Could not read from file. Error: %s\n", Win32Utils::QuickFormatMessage(GetLastError()).c_str());
+				fprintf(stderr, "Could not read from file. Error: %s\n",
+					Win32Utils::QuickFormatMessage(GetLastError()).c_str());
 				CloseHandle(file);
 				return std::string();
 			}
-			readBuffer[bytesRead+1] = '\0'; // NULL character
+			readBuffer[bytesRead] = '\0'; // NULL character
 			contents << readBuffer;
 		} while (bytesRead > 0);
 		
@@ -150,7 +158,7 @@ namespace UTILS_NS
 		return contents.str();
 	}
 	
-	std::string FileUtils::Dirname(std::string path)
+	std::string Dirname(std::string path)
 	{
 		wchar_t pathBuffer[_MAX_PATH];
 		wchar_t drive[_MAX_DRIVE];
@@ -158,7 +166,7 @@ namespace UTILS_NS
 		wchar_t fname[_MAX_FNAME];
 		wchar_t ext[_MAX_EXT];
 
-		std::wstring widePath = UTILS_NS::UTF8ToWide(path);
+		std::wstring widePath(UTILS_NS::UTF8ToWide(path));
 		wcsncpy(pathBuffer, widePath.c_str(), MAX_PATH - 1);
 		pathBuffer[MAX_PATH - 1] = '\0';
 
@@ -166,20 +174,20 @@ namespace UTILS_NS
 		if (dir[wcslen(dir)-1] == '\\')
 			dir[wcslen(dir)-1] = '\0';
 
-		std::wstring dirname = drive;
-		dirname += std::wstring(dir);
+		std::wstring dirname(drive);
+		dirname.append(dir);
 		return UTILS_NS::WideToUTF8(dirname);
 	}
-
-	bool FileUtils::CreateDirectoryImpl(std::string& dir)
+	
+	bool CreateDirectoryImpl(std::string& dir)
 	{
-		std::wstring wideDir = UTILS_NS::UTF8ToWide(dir);
+		std::wstring wideDir(UTILS_NS::UTF8ToWide(dir));
 		return (::CreateDirectoryW(wideDir.c_str(), NULL) == TRUE);
 	}
 
-	bool FileUtils::DeleteDirectory(std::string &dir)
+	bool DeleteDirectory(std::string &dir)
 	{
-		std::wstring wideDir = UTILS_NS::UTF8ToWide(dir);
+		std::wstring wideDir(UTILS_NS::UTF8ToWide(dir));
 		SHFILEOPSTRUCT op;
 		op.hwnd = NULL;
 		op.wFunc = FO_DELETE;
@@ -190,17 +198,17 @@ namespace UTILS_NS
 		return (rc == 0);
 	}
 
-	bool FileUtils::IsDirectory(std::string &path)
+	bool IsDirectory(std::string &path)
 	{
 		return FileHasAttributes(path, FILE_ATTRIBUTE_DIRECTORY);
 	}
 
-	std::string FileUtils::GetUserRuntimeHomeDirectory()
+	std::string GetUserRuntimeHomeDirectory()
 	{
 		wchar_t widePath[MAX_PATH];
 		if (SHGetSpecialFolderPath(NULL, widePath, CSIDL_APPDATA, FALSE))
 		{
-			std::string path = UTILS_NS::WideToUTF8(widePath);
+			std::string path(UTILS_NS::WideToUTF8(widePath));
 			return Join(path.c_str(), PRODUCT_NAME, NULL);
 		}
 		else
@@ -211,12 +219,12 @@ namespace UTILS_NS
 		}
 	}
 	
-	std::string FileUtils::GetSystemRuntimeHomeDirectory()
+	std::string GetSystemRuntimeHomeDirectory()
 	{
 		wchar_t widePath[MAX_PATH];
 		if (SHGetSpecialFolderPath(NULL, widePath, CSIDL_COMMON_APPDATA, FALSE))
 		{
-			std::string path = UTILS_NS::WideToUTF8(widePath);
+			std::string path(UTILS_NS::WideToUTF8(widePath));
 			return Join(path.c_str(), PRODUCT_NAME, NULL);
 		}
 		else
@@ -225,12 +233,12 @@ namespace UTILS_NS
 		}
 	}
 
-	bool FileUtils::IsHidden(std::string &path)
+	bool IsHidden(std::string &path)
 	{
 		return FileHasAttributes(path, FILE_ATTRIBUTE_HIDDEN);
 	}
 
-	void FileUtils::ListDir(std::string& path, std::vector<std::string> &files)
+	void ListDir(std::string& path, std::vector<std::string> &files)
 	{
 		if (!IsDirectory(path))
 			return;
@@ -240,7 +248,7 @@ namespace UTILS_NS
 		WIN32_FIND_DATA findFileData;
 		ZeroMemory(&findFileData, sizeof(WIN32_FIND_DATA));
 
-		std::wstring widePath = UTILS_NS::UTF8ToWide(path);
+		std::wstring widePath(UTILS_NS::UTF8ToWide(path));
 		std::wstring searchString(widePath + L"\\*");
 
 		HANDLE hFind = FindFirstFile(searchString.c_str(), &findFileData);
@@ -251,7 +259,7 @@ namespace UTILS_NS
 				std::wstring wideFilename(findFileData.cFileName);
 				if (wideFilename != L"." && wideFilename != L"..")
 				{
-					std::string filename = UTILS_NS::WideToUTF8(wideFilename);
+					std::string filename(UTILS_NS::WideToUTF8(wideFilename));
 					files.push_back(filename);
 				}
 
@@ -260,7 +268,7 @@ namespace UTILS_NS
 		}
 	}
 
-	int FileUtils::RunAndWait(std::string &path, std::vector<std::string> &args)
+	int RunAndWait(std::string &path, std::vector<std::string> &args)
 	{
 		std::string cmdLine = "\"" + path + "\"";
 		for (size_t i = 0; i < args.size(); i++)
@@ -281,7 +289,7 @@ namespace UTILS_NS
 		// Get the current working directory
 		wchar_t cwd[MAX_PATH];
 		DWORD size = GetCurrentDirectoryW(MAX_PATH, (wchar_t*) cwd);
-		std::wstring wideCmdLine = UTILS_NS::UTF8ToWide(cmdLine);
+		std::wstring wideCmdLine(UTILS_NS::UTF8ToWide(cmdLine));
 
 		DWORD rc = -1;
 		if (CreateProcessW(
@@ -293,7 +301,7 @@ namespace UTILS_NS
 			0,                              // No creation flags
 			NULL,                           // Use parent's environment block
 			(wchar_t*) cwd,                 // Use parent's starting directory
-			&startupInfo,                     // Pointer to STARTUPINFO structure
+			&startupInfo,                   // Pointer to STARTUPINFO structure
 			&processInfo))                  // Pointer to PROCESS_INFORMATION structure
 		{
 			// Wait until child process exits.
@@ -310,11 +318,11 @@ namespace UTILS_NS
 	}
 
 #ifndef NO_UNZIP
-	void FileUtils::Unzip(std::string& source, std::string& destination, 
+	void Unzip(std::string& source, std::string& destination, 
 		UnzipCallback callback, void *data)
 	{
-		std::wstring wideSource = UTILS_NS::UTF8ToWide(source);
-		std::wstring wideDestination = UTILS_NS::UTF8ToWide(destination);
+		std::wstring wideSource(UTILS_NS::UTF8ToWide(source));
+		std::wstring wideDestination(UTILS_NS::UTF8ToWide(destination));
 
 		HZIP handle = OpenZip(wideSource.c_str(), 0);
 		SetUnzipBaseDir(handle, wideDestination.c_str());
@@ -328,7 +336,7 @@ namespace UTILS_NS
 			std::ostringstream message;
 			message << "Starting extraction of " << numItems 
 				<< " items from " << source << "to " << destination;
-			std::string messageString = message.str();
+			std::string messageString(message.str());
 			callback((char*) messageString.c_str(), 0, numItems, data);
 		}
 		
@@ -339,8 +347,8 @@ namespace UTILS_NS
 			
 			if (callback != NULL)
 			{
-				std::string name = WideToUTF8(zipEntry.name);
-				std::string message = "Extracting ";
+				std::string name(WideToUTF8(zipEntry.name));
+				std::string message("Extracting ");
 				message.append(name);
 				message.append("...");
 				callback((char*) message.c_str(), zi, numItems, data);
@@ -351,9 +359,9 @@ namespace UTILS_NS
 		CloseZip(handle);
 	}
 #endif
-	
+
 	// TODO: implement this for other platforms
-	void FileUtils::CopyRecursive(std::string &dir, std::string &dest, std::string exclude)
+	void CopyRecursive(std::string &dir, std::string &dest, std::string exclude)
 	{ 
 		if (!IsDirectory(dest)) 
 		{
@@ -371,8 +379,8 @@ std::cout << "\n>Recursive copy " << dir << " to " << dest << std::endl;
 			if (!exclude.empty() && exclude == filename)
 				continue;
 
-			std::string srcName = Join(dir.c_str(), filename.c_str(), NULL);
-			std::string destName = Join(dest.c_str(), filename.c_str(), NULL);
+			std::string srcName(Join(dir.c_str(), filename.c_str(), NULL));
+			std::string destName(Join(dest.c_str(), filename.c_str(), NULL));
 
 			if (IsDirectory(srcName))
 			{
@@ -384,14 +392,14 @@ std::cout << "\n>Recursive copy " << dir << " to " << dest << std::endl;
 			}
 			else
 			{
-				std::wstring wideSrcName = UTILS_NS::UTF8ToWide(srcName);
-				std::wstring wideDestName = UTILS_NS::UTF8ToWide(destName);
+				std::wstring wideSrcName(UTILS_NS::UTF8ToWide(srcName));
+				std::wstring wideDestName(UTILS_NS::UTF8ToWide(destName));
 				CopyFileW(wideSrcName.c_str(), wideDestName.c_str(), FALSE);
 			}
 		}
 	}
 
-	std::string FileUtils::GetUsername()
+	std::string GetUsername()
 	{
 		wchar_t buf[MAX_PATH];
 		DWORD size = MAX_PATH - 1;
@@ -405,7 +413,6 @@ std::cout << "\n>Recursive copy " << dir << " to " << dest << std::endl;
 			return "Unknown";
 		}
 	}
-
-
+}
 }
 

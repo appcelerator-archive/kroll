@@ -1,5 +1,4 @@
-/**
- * Appcelerator Kroll - licensed under the Apache Public License 2
+/** * Appcelerator Kroll - licensed under the Apache Public License 2
  * see LICENSE in the root folder for details on the license.
  * Copyright (c) 2009 Appcelerator, Inc. All Rights Reserved.
  */
@@ -21,7 +20,9 @@ extern char** environ;
 
 namespace UTILS_NS
 {
-	bool EnvironmentUtils::Has(std::string name)
+namespace EnvironmentUtils
+{
+	bool Has(std::string name)
 	{
 #ifdef OS_WIN32
 		std::wstring wideName = UTF8ToWide(name);
@@ -32,14 +33,14 @@ namespace UTILS_NS
 #endif
 	}
 
-	std::string EnvironmentUtils::Get(std::string name)
+	std::string Get(std::string name)
 	{
 #ifdef OS_WIN32
 		// Allocate a small buffer first, before taking the plunge
 		// and allocating the maximum size. Hopefully this will prevent
 		// expensive allocations.
 		wchar_t* buffer = new wchar_t[REASONABLE_MAX_ENV_VALUE_SIZE];
-		std::wstring wideName = UTF8ToWide(name);
+		std::wstring wideName(UTF8ToWide(name));
 
 		DWORD size = GetEnvironmentVariableW(wideName.c_str(), buffer, REASONABLE_MAX_ENV_VALUE_SIZE - 1);
 		if (size > REASONABLE_MAX_ENV_VALUE_SIZE)
@@ -72,11 +73,11 @@ namespace UTILS_NS
 #endif
 	}
 
-	void EnvironmentUtils::Set(std::string name, std::string value)
+	void Set(std::string name, std::string value)
 	{
 #ifdef OS_WIN32
-		std::wstring wideName = UTF8ToWide(name);
-		std::wstring wideValue = UTF8ToWide(value);
+		std::wstring wideName(UTF8ToWide(name));
+		std::wstring wideValue(UTF8ToWide(value));
 		if (SetEnvironmentVariableW(wideName.c_str(), wideValue.c_str()) == 0)
 		{
 			throw std::string("Cannot set environment variable: ") + name;
@@ -89,10 +90,10 @@ namespace UTILS_NS
 #endif
 	}
 
-	void EnvironmentUtils::Unset(std::string name)
+	void Unset(std::string name)
 	{
 #ifdef OS_WIN32
-		std::wstring wideName = UTF8ToWide(name);
+		std::wstring wideName(UTF8ToWide(name));
 		SetEnvironmentVariableW(wideName.c_str(), NULL);
 #else
 		unsetenv(name.c_str());
@@ -100,17 +101,17 @@ namespace UTILS_NS
 	}
 
 #if defined(KROLL_HOST_EXPORT) || defined(KROLL_API_EXPORT) || defined(_KROLL_H_)
-	std::map<std::string, std::string> EnvironmentUtils::GetEnvironment()
+	std::map<std::string, std::string> GetEnvironment()
 	{
 		std::map<std::string, std::string> environment;
 #ifdef OS_WIN32
 		LPWCH env = GetEnvironmentStringsW();
 		while (env[0] != '\0')
 		{
-			std::wstring entryW = env;
-			std::string entry = WideToUTF8(entryW);
-			std::string key = entry.substr(0, entry.find("="));
-			std::string val = entry.substr(entry.find("=")+1);
+			std::wstring entryW(env);
+			std::string entry(WideToUTF8(entryW));
+			std::string key(entry.substr(0, entry.find("=")));
+			std::string val(entry.substr(entry.find("=")+1));
 			environment[key] = val;
 			env += entry.size() + 1;
 		}
@@ -118,9 +119,9 @@ namespace UTILS_NS
 		char** current = environ;
 		while (*current)
 		{
-			std::string entry = *current;
-			std::string key = entry.substr(0, entry.find("="));
-			std::string val = entry.substr(entry.find("=")+1);
+			std::string entry(*current);
+			std::string key(entry.substr(0, entry.find("=")));
+			std::string val(entry.substr(entry.find("=")+1));
 			environment[key] = val;
 			current++;
 		}
@@ -128,4 +129,5 @@ namespace UTILS_NS
 		return environment;
 	}
 #endif
+}
 }

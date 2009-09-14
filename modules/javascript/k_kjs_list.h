@@ -19,40 +19,31 @@ namespace kroll
 	class KROLL_JAVASCRIPT_API KKJSList : public KList
 	{
 
-	public:
-
-		KKJSList(JSContextRef context, JSObjectRef js_object);
+		public:
+		KKJSList(JSContextRef context, JSObjectRef jsObject);
 		~KKJSList();
 
-		void Set(const char *name, SharedValue value);
-		void SetAt(unsigned int index, SharedValue value);
-		SharedValue Get(const char *name);
-		SharedStringList GetPropertyNames();
+		virtual void Set(const char *name, SharedValue value);
+		virtual void SetAt(unsigned int index, SharedValue value);
+		virtual SharedValue Get(const char *name);
+		virtual SharedStringList GetPropertyNames();
+		virtual bool HasProperty(const char* name);
+		virtual bool Equals(SharedKObject);
+		virtual void Append(SharedValue value);
+		virtual unsigned int Size();
+		virtual SharedValue At(unsigned int index);
+		virtual bool Remove(unsigned int index);
+
 		bool SameContextGroup(JSContextRef c);
-
-		void Append(SharedValue value);
-		unsigned int Size();
-		SharedValue At(unsigned int index);
-		bool Remove(unsigned int index);
-
 		JSObjectRef GetJSObject();
 
-		/*
-		 * Determine if the given KJS object equals this one
-		 * by comparing these objects via strict equality (===)
-		 *  @param other the object to test
-		 *  @returns true if objects have strit equality, false otherwise
-		 */
-		virtual bool Equals(SharedKObject);
-
-	protected:
+		protected:
 		JSGlobalContextRef context;
-		JSObjectRef object;
-		AutoPtr<KKJSObject> kjs_bound_object;
+		JSObjectRef jsobject;
+		AutoPtr<KKJSObject> kobject;
 
-	private:
+		private:
 		DISALLOW_EVIL_CONSTRUCTORS(KKJSList);
-
 	};
 }
 
