@@ -140,13 +140,13 @@ namespace kroll
 			}
 		}
 
-		SharedKList PHPArrayToKList(zval* array TSRMLS_DC)
+		SharedKList PHPArrayToKList(zval* array TSRMLS_DC, bool ignoreGlobals)
 		{
 			HashTable* arrayHash = Z_ARRVAL_P(array);
 			return PHPHashTableToKList(arrayHash TSRMLS_CC);
 		}
 
-		SharedKList PHPHashTableToKList(HashTable* hashTable TSRMLS_DC)
+		SharedKList PHPHashTableToKList(HashTable* hashTable TSRMLS_DC, bool ignoreGlobals)
 		{
 			SharedKList list = new StaticBoundList();
 
@@ -167,7 +167,9 @@ namespace kroll
 
 				if (type == HASH_KEY_IS_STRING)
 				{
-					if (!strcmp(key, "GLOBALS"))
+					// When we are processing the symbol table, we never want to copy
+					// the GLOBALS table, because it will put us into an infinite loop.
+					if (ignoreGlobals && !strcmp(key, "GLOBALS"))
 						continue;
 
 					list->Set(key, ToKrollValue(*value TSRMLS_CC));
@@ -349,7 +351,7 @@ namespace kroll
 			// one. Dammit!
 			if (!currentPHPGlobal.isNull())
 			{
-				SharedKList symbols(PHPHashTableToKList(symbolTable TSRMLS_CC));
+				SharedKList symbols(PHPHashTableToKList(symbolTable TSRMLS_CC, true));
 				SharedStringList keys(symbols->GetPropertyNames());
 				for (size_t i = 0; i < keys->size(); i++)
 				{
