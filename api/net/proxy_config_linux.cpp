@@ -5,6 +5,7 @@
  */
 #include "../kroll.h"
 #include "net.h"
+#include <libproxy/proxy.h>
 using std::string;
 using std::wstring;
 using std::vector;
@@ -17,10 +18,11 @@ namespace kroll
 	{
 		// TODO: We should free this on exit.
 		static pxProxyFactory* factory = NULL;
-		if (!pxProxyFactory)
+		if (!factory)
 		{
-			proxyFactory = px_proxy_factory_new();
+			factory = px_proxy_factory_new();
 		}
+		return factory;
 	}
 
 	static void FreeProxies(char** proxies)
@@ -38,7 +40,7 @@ namespace kroll
 			char* urlCString = strdup(url.c_str());
 
 			char** proxies = px_proxy_factory_get_proxies(
-				proxyFactory, urlCString);
+				GetProxyFactory(), urlCString);
 			free(urlCString);
 			SharedPtr<Proxy> proxy = 0;
 
