@@ -5,7 +5,6 @@
  */
 #include "../kroll.h"
 #include "net.h"
-#include "proxy_config_win32.h"
 #define _WINSOCKAPI_
 #include <winsock2.h>
 #include <windows.h>
@@ -20,6 +19,13 @@ using Poco::StringTokenizer;
 
 namespace kroll
 {
+
+	static void InitializeWin32ProxyConfig();
+	static bool GetAutoProxiesForURL(string& url, vector<SharedProxy>& proxies);
+	static void ParseProxyList(string proxyList, string bypassList,
+		vector<SharedPtr<Proxy > >& ieProxyList);
+	static std::string ErrorCodeToString(DWORD code);
+
 	class WinHTTPSession
 	{
 		public:
@@ -51,11 +57,17 @@ namespace kroll
 		HINTERNET handle;
 	};
 
-	Win32ProxyConfig::Win32ProxyConfig() :
-		useProxyAutoConfig(false),
-		autoConfigURL(L""),
-		session(0)
+	bool useProxyAutoConfig = false;
+	std::wstring autoConfigURL(L"");
+	WinHTTPSession httpSession;
+	std::vector<SharedProxy> ieProxies;
+
+	static void InitializeWin32ProxyConfig()
 	{
+		static bool initialized = false;
+		if (initialized)
+			return;
+
 		WINHTTP_CURRENT_USER_IE_PROXY_CONFIG ieProxyConfig;
 		ZeroMemory(&ieProxyConfig, sizeof(WINHTTP_CURRENT_USER_IE_PROXY_CONFIG)); 
 		
@@ -63,14 +75,14 @@ namespace kroll
 		{
 			if (ieProxyConfig.fAutoDetect)
 			{
-				this->useProxyAutoConfig = true;
+				useProxyAutoConfig = true;
 			}
 	
 			if (ieProxyConfig.lpszAutoConfigUrl != NULL)
 			{
 				// We using an auto proxy configuration, but this one
 				// has a URL which we must contact to get the configuration info.
-				this->autoConfigURL = ieProxyConfig.lpszAutoConfigUrl;
+				autoConfigURL = ieProxyConfig.lpszAutoConfigUrl;
 			}
 
 			// We always keep IE proxy information in case auto proxy
@@ -96,17 +108,14 @@ namespace kroll
 			useProxyAutoConfig = true;
 		}
 
-		if (this->useProxyAutoConfig || !autoConfigURL.empty())
+		if (useProxyAutoConfig || !autoConfigURL.empty())
 		{
-			// Initialize a WinHTTP session so that we can do lookup for auto proxy
-			session = new WinHTTPSession();
-
 			// We failed to open an HINTERNET handle! WTF. We'll have to have
 			// disable auto proxy support, because we can't do a lookup.
-			if (!session->GetHandle())
+			if (!httpSession.GetHandle())
 			{
-				this->useProxyAutoConfig = false;
-				this->autoConfigURL = L"";
+				useProxyAutoConfig = false;
+				autoConfigURL = L"";
 			}
 		}
 
@@ -118,59 +127,9 @@ namespace kroll
 			GlobalFree(ieProxyConfig.lpszAutoConfigUrl);
 	}
 
-	SharedPtr<Proxy> Win32ProxyConfig::GetProxyForURLImpl(string& url)
-	{
-		URI uri(url);
-
-		// The auto proxy configuration might tell us to simply use
-		// a direct connection, which should cause us to just return
-		// null. Otherwise we should try to use the IE proxy list (next block)
-		if (useProxyAutoConfig || !autoConfigURL.empty())
-		{
-			std::vector<SharedProxy> autoProxies;
-			bool shouldUseIEProxy = GetAutoProxiesForURL(url, autoProxies);
-
-			for (int i = 0; i < autoProxies.size(); i++)
-			{
-				SharedProxy proxy = autoProxies.at(i);
-				if (proxy->ShouldBypass(uri))
-				{
-					return 0;
-				}
-				else if (proxy->info->getScheme().empty() ||
-					proxy->info->getScheme() == uri.getScheme())
-				{
-					return proxy;
-				}
-			}
-
-			if (!shouldUseIEProxy)
-				return 0;
-		}
-
-		// Try the IE proxy list
-		for (int i = 0; i < ieProxies.size(); i++)
-		{
-			SharedProxy proxy = ieProxies.at(i);
-			std::string proxyScheme = proxy->info->getScheme();
-			if (proxy->ShouldBypass(uri))
-			{
-				return 0;
-			}
-			else if (proxyScheme.empty() || proxyScheme == uri.getScheme())
-			{
-				return proxy;
-			}
-		}
-
-		return 0;
-	}
-
-
 	// This method will return true if we should keep attempting to use a proxy
 	// or false if the auto proxy determination was to use a direct connection.
-	bool Win32ProxyConfig::GetAutoProxiesForURL(
-		string& url, vector<SharedProxy>& proxies)
+	static bool GetAutoProxiesForURL(string& url, vector<SharedProxy>& proxies)
 	{
 		bool shouldUseProxy = true;
 		WINHTTP_PROXY_INFO autoProxyInfo;
@@ -182,17 +141,17 @@ namespace kroll
 		// This type of auto-detection might take several seconds, so
 		// if the user specified  an autoconfiguration URL don't do it.
 		// TODO: Maybe we should use this as a fallback later, but it's *very* expensive.
-		if (this->autoConfigURL.empty() && this->useProxyAutoConfig)
+		if (autoConfigURL.empty() && useProxyAutoConfig)
 		{
 			autoProxyOptions.dwFlags = WINHTTP_AUTOPROXY_AUTO_DETECT;
 			autoProxyOptions.dwAutoDetectFlags = 
 				WINHTTP_AUTO_DETECT_TYPE_DHCP | WINHTTP_AUTO_DETECT_TYPE_DNS_A;
 		}
 
-		if (!this->autoConfigURL.empty())
+		if (!autoConfigURL.empty())
 		{
 			autoProxyOptions.dwFlags |= WINHTTP_AUTOPROXY_CONFIG_URL;
-			autoProxyOptions.lpszAutoConfigUrl = this->autoConfigURL.c_str();
+			autoProxyOptions.lpszAutoConfigUrl = autoConfigURL.c_str();
 		}
 		
 		// From Chromium:
@@ -204,13 +163,13 @@ namespace kroll
 		wstring wideURL = UTF8ToWide(url);
 		autoProxyOptions.fAutoLogonIfChallenged = FALSE;
 		BOOL ok = WinHttpGetProxyForUrl(
-			session->GetHandle(), wideURL.c_str(), &autoProxyOptions, &autoProxyInfo);
+			httpSession.GetHandle(), wideURL.c_str(), &autoProxyOptions, &autoProxyInfo);
 
 		if (!ok && ERROR_WINHTTP_LOGIN_FAILURE == GetLastError())
 		{
 			autoProxyOptions.fAutoLogonIfChallenged = TRUE;
 			ok = WinHttpGetProxyForUrl(
-				session->GetHandle(), wideURL.c_str(), &autoProxyOptions, &autoProxyInfo);
+				httpSession.GetHandle(), wideURL.c_str(), &autoProxyOptions, &autoProxyInfo);
 		}
 		
 		if (ok && autoProxyInfo.dwAccessType == WINHTTP_ACCESS_TYPE_NAMED_PROXY &&
@@ -253,8 +212,8 @@ namespace kroll
 		return shouldUseProxy;
 	}
 
-	void Win32ProxyConfig::ParseBypassList(string& bypassList,
-		 vector<SharedURI>& bypassVector)
+	static void ParseBypassList(string& bypassList,
+		vector<SharedURI>& bypassVector)
 	{
 		std::string sep = ",";
 		StringTokenizer tokenizer(bypassList, sep,
@@ -281,8 +240,7 @@ namespace kroll
 		}
 	}
 
-	void Win32ProxyConfig::ParseProxyList(
-		string proxyList, string bypassList,
+	static void ParseProxyList(string proxyList, string bypassList,
 		vector<SharedPtr<Proxy > >& ieProxyList)
 	{
 		std::string sep = "; ";
@@ -319,7 +277,8 @@ namespace kroll
 		}
 	}
 
-	std::string Win32ProxyConfig::ErrorCodeToString(DWORD code)
+
+	static std::string ErrorCodeToString(DWORD code)
 	{
 		// Okay. This is a little bit compulsive, but we really, really
 		// want to get good debugging information for proxy lookup failures.
@@ -425,5 +384,57 @@ namespace kroll
 			return "ERROR_NO_MORE_ITEMS";
 		else
 			return "UNKNOWN ERROR";
+	}
+
+	namespace ProxyConfig
+	{
+		SharedPtr<Proxy> GetProxyForURLImpl(URI& uri)
+		{
+			InitializeWin32ProxyConfig();
+			std::string url(uri.toString());
+
+			// The auto proxy configuration might tell us to simply use
+			// a direct connection, which should cause us to just return
+			// null. Otherwise we should try to use the IE proxy list (next block)
+			if (useProxyAutoConfig || !autoConfigURL.empty())
+			{
+				std::vector<SharedProxy> autoProxies;
+				bool shouldUseIEProxy = GetAutoProxiesForURL(url, autoProxies);
+
+				for (int i = 0; i < autoProxies.size(); i++)
+				{
+					SharedProxy proxy = autoProxies.at(i);
+					if (proxy->ShouldBypass(uri))
+					{
+						return 0;
+					}
+					else if (proxy->info->getScheme().empty() ||
+						proxy->info->getScheme() == uri.getScheme())
+					{
+						return proxy;
+					}
+				}
+
+				if (!shouldUseIEProxy)
+					return 0;
+			}
+
+			// Try the IE proxy list
+			for (int i = 0; i < ieProxies.size(); i++)
+			{
+				SharedProxy proxy = ieProxies.at(i);
+				std::string proxyScheme = proxy->info->getScheme();
+				if (proxy->ShouldBypass(uri))
+				{
+					return 0;
+				}
+				else if (proxyScheme.empty() || proxyScheme == uri.getScheme())
+				{
+					return proxy;
+				}
+			}
+
+			return 0;
+		}
 	}
 }

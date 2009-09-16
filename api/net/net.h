@@ -11,9 +11,7 @@
 namespace kroll
 {
 	class Proxy;
-	class ProxyConfig;
 	typedef SharedPtr<Proxy> SharedProxy;
-	typedef SharedPtr<ProxyConfig> SharedProxyConfig;
 	typedef SharedPtr<Poco::URI> SharedURI;
 }
 #include "proxy_config.h"

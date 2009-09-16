@@ -17,15 +17,10 @@ namespace kroll
 		static SharedURI ProxyEntryToURI(std::string& entry);
 	};
 
-	class KROLL_API ProxyConfig
+	namespace ProxyConfig
 	{
-		public:
-		static SharedProxy GetProxyForURL(std::string& url);
-		virtual SharedProxy GetProxyForURLImpl(std::string& url) = 0;
-		virtual ~ProxyConfig(){}
-	
-		private:
-		static SharedProxyConfig instance;
+		KROLL_API SharedProxy GetProxyForURL(std::string& url);
+		KROLL_API SharedProxy GetProxyForURLImpl(Poco::URI& uri);
 	};
 }
 #endif
