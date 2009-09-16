@@ -19,6 +19,10 @@ namespace kroll
 
 	namespace ProxyConfig
 	{
+		KROLL_API void SetHTTPProxyOverride(SharedProxy);
+		KROLL_API void SetHTTPSProxyOverride(SharedProxy);
+		KROLL_API SharedProxy GetHTTPProxyOverride();
+		KROLL_API SharedProxy GetHTTPSProxyOverride();
 		KROLL_API SharedProxy GetProxyForURL(std::string& url);
 		KROLL_API SharedProxy GetProxyForURLImpl(Poco::URI& uri);
 	};

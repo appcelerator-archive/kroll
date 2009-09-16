@@ -94,16 +94,43 @@ namespace kroll
 
 	namespace ProxyConfig
 	{
+		SharedProxy httpProxyOverride(0);
+		SharedProxy httpsProxyOverride(0);
+
+		void SetHTTPProxyOverride(SharedProxy newProxyOverride)
+		{
+			httpProxyOverride = newProxyOverride;
+		}
+
+		SharedProxy GetHTTPProxyOverride()
+		{
+			return httpProxyOverride;
+		}
+
+		void SetHTTPSProxyOverride(SharedProxy newProxyOverride)
+		{
+			httpsProxyOverride = newProxyOverride;
+		}
+
+		SharedProxy GetHTTPSProxyOverride()
+		{
+			return httpsProxyOverride;
+		}
+
 		SharedProxy GetProxyForURL(string& url)
 		{
-			// TODO: Only convert this to a Poco::URI once, instead of doing
-			// it here and then again in the implementations.
 			URI uri(url);
 
 			// Don't try to detect proxy settings for URLs we know are local
 			std::string scheme(uri.getScheme());
 			if (scheme == "app" || scheme == "ti" || scheme == "file")
 				return 0;
+
+			if (scheme == "http" && !httpProxyOverride.isNull())
+				return httpProxyOverride;
+
+			if (scheme == "https" && !httpsProxyOverride.isNull())
+				return httpsProxyOverride;
 
 			return ProxyConfig::GetProxyForURLImpl(uri);
 		}
