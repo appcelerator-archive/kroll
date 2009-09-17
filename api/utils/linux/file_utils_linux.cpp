@@ -13,6 +13,11 @@
 #include <sys/utsname.h>
 #include <libgen.h>
 
+#include <iostream>
+#include <sstream>
+#include <cstring>
+#include <fstream>
+
 using std::string;
 
 namespace UTILS_NS
