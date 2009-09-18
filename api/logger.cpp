@@ -451,12 +451,12 @@ namespace kroll
 		if (consoleLogging)
 		{
 			printf("%s\n", line.c_str());
+			fflush(stdout);
 		}
 
 		for (size_t i = 0; i < callbacks.size(); i++)
 		{
-			LoggerCallback c = callbacks[i];
-			c(level, line);
+			callbacks[i](level, line);
 		}
 	}
 

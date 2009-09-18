@@ -5,11 +5,6 @@
  */
 #include "../kroll.h"
 #include "net.h"
-#ifdef OS_WIN32
-#include "proxy_config_win32.h"
-#elif defined(OS_LINUX)
-#include "proxy_config_linux.h"
-#endif
 
 using std::string;
 using std::vector;
@@ -18,12 +13,9 @@ using Poco::URI;
 
 namespace kroll
 {
-	namespace
+	static inline bool EndsWith(string haystack, string needle)
 	{
-		inline bool EndsWith(string haystack, string needle)
-		{
-			return haystack.find(needle) == (haystack.size() - needle.size());
-		}
+		return haystack.find(needle) == (haystack.size() - needle.size());
 	}
 
 	bool Proxy::IsIPAddress(string& str)
@@ -100,35 +92,47 @@ namespace kroll
 		return uri;
 	}
 
-	SharedProxyConfig ProxyConfig::instance = 0;
-	SharedProxy ProxyConfig::GetProxyForURL(string& url)
+	namespace ProxyConfig
 	{
-		// TODO: Only convert this to a Poco::URI once, instead of doing
-		// it here and then again in the impls.
-		URI uri(url);
+		SharedProxy httpProxyOverride(0);
+		SharedProxy httpsProxyOverride(0);
 
-		// Don't try to detect proxy settings for URLs we know are local
-		std::string scheme(uri.getScheme());
-		if (scheme == "app" || scheme == "ti" || scheme == "file")
-			return 0;
+		void SetHTTPProxyOverride(SharedProxy newProxyOverride)
+		{
+			httpProxyOverride = newProxyOverride;
+		}
 
-#ifdef OS_WIN32
-		if (instance.isNull())
+		SharedProxy GetHTTPProxyOverride()
 		{
-			instance = new Win32ProxyConfig();
+			return httpProxyOverride;
 		}
-		return instance->GetProxyForURLImpl(url);
-#elif defined(OS_LINUX)
-		if (instance.isNull())
+
+		void SetHTTPSProxyOverride(SharedProxy newProxyOverride)
 		{
-			instance = new LinuxProxyConfig();
+			httpsProxyOverride = newProxyOverride;
 		}
-		return instance->GetProxyForURLImpl(url);
-#else
-		return 0;
-#endif
+
+		SharedProxy GetHTTPSProxyOverride()
+		{
+			return httpsProxyOverride;
+		}
+
+		SharedProxy GetProxyForURL(string& url)
+		{
+			URI uri(url);
+
+			// Don't try to detect proxy settings for URLs we know are local
+			std::string scheme(uri.getScheme());
+			if (scheme == "app" || scheme == "ti" || scheme == "file")
+				return 0;
+
+			if (scheme == "http" && !httpProxyOverride.isNull())
+				return httpProxyOverride;
+
+			if (scheme == "https" && !httpsProxyOverride.isNull())
+				return httpsProxyOverride;
+
+			return ProxyConfig::GetProxyForURLImpl(uri);
+		}
 	}
-
-
-
 }

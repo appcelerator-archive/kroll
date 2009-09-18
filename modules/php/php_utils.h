@@ -27,8 +27,10 @@ namespace kroll
 		zval* ToPHPValue(SharedValue value);
 		void ToPHPValue(SharedValue value, zval** returnValue);
 		std::string ZvalToPropertyName(zval* property);
-		SharedKList PHPArrayToKList(zval* array TSRMLS_DC);
-		SharedKList PHPHashTableToKList(HashTable* hashtable TSRMLS_DC);
+		SharedKList PHPArrayToKList(zval* array TSRMLS_DC,
+			bool ignoreGlobals=false);
+		SharedKList PHPHashTableToKList(HashTable* hashtable TSRMLS_DC,
+			 bool ignoreGlobals=false);
 		SharedStringList GetHashKeys(HashTable *hash);
 		void KObjectToKPHPObject(SharedValue objectValue, zval** returnValue);
 		void KMethodToKPHPMethod(SharedValue methodValue, zval** returnValue);
