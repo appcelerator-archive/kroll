@@ -7,7 +7,6 @@
 #define _KR_BOOT_UTILS_H_
 
 // These UUIDs should never change and uniquely identify a package type
-#define DISTRIBUTION_URL "http://api.appcelerator.net"
 #define DISTRIBUTION_UUID "7F7FA377-E695-4280-9F1F-96126F3D2C2A"
 #define RUNTIME_UUID "A2AC5CB5-8C52-456C-9525-601A5B0725DA"
 #define MODULE_UUID "1ACE5D3A-2B52-43FB-A136-007BD166CFD0"
