@@ -34,8 +34,13 @@ namespace kroll
 
 	void LinuxHost::Exit(int return_code)
 	{
+		if (this->running)
+		{
+			// Only call this if gtk main is running.
+			// If called when not running will cause an assert!
+			gtk_main_quit();
+		}
 		Host::Exit(return_code);
-		gtk_main_quit();
 	}
 
 	const char* LinuxHost::GetPlatform()
