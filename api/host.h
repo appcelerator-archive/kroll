@@ -203,6 +203,7 @@ namespace kroll
 
 		SharedApplication application;
 		bool running;
+		bool exiting;
 		int exitCode;
 		bool debug;
 		bool waitForDebugger;

@@ -43,6 +43,7 @@ namespace kroll
 	Host::Host(int argc, const char *argv[]) :
 		application(NULL),
 		running(false),
+		exiting(false),
 		exitCode(0),
 		debug(false),
 		waitForDebugger(false),
@@ -752,24 +753,29 @@ namespace kroll
 		// Depending on the implementation of platform-specific host,
 		// it may block in Start() or implement a UI loop which will
 		// be continually called until this->running becomes false.
-		try
+		// Do not run if exit flag is set. This can happen if a loaded
+		// module from above called exit().
+		if (!this->exiting)
 		{
-			this->running = this->Start();
-			if (this->runUILoop) 
+			try
 			{
-				while (this->running)
+				this->running = this->Start();
+				if (this->runUILoop) 
 				{
-					if (!this->RunLoop())
+					while (this->running)
 					{
-						break;
+						if (!this->RunLoop())
+						{
+							break;
+						}
 					}
 				}
 			}
-		}
-		catch (kroll::ValueException& e)
-		{
-			SharedString s = e.GetValue()->DisplayString();
-			logger->Error("Caught exception in main loop: %s", s->c_str());
+			catch (kroll::ValueException& e)
+			{
+				SharedString s = e.GetValue()->DisplayString();
+				logger->Error("Caught exception in main loop: %s", s->c_str());
+			}
 		}
 
 		ScopedLock lock(&moduleMutex);
@@ -794,6 +800,7 @@ namespace kroll
 		if (KEventObject::FireRootEvent(Event::EXIT))
 		{
 			running = false;
+			exiting = true;
 			this->exitCode = exitCode;
 		}
 		else
