@@ -100,8 +100,10 @@ namespace kroll
 		KObjectWrapper(SharedKObject object);
 		void Set(const char *name, SharedValue value);
 		SharedValue Get(const char *name);
+		bool HasProperty(const char *name);
 		SharedStringList GetPropertyNames();
 		SharedString DisplayString(int levels);
+		bool Equals(SharedKObject other);
 
 	private:
 		SharedKObject object;
@@ -117,8 +119,10 @@ namespace kroll
 		SharedValue Call(const ValueList& args);
 		void Set(const char *name, SharedValue value);
 		SharedValue Get(const char *name);
+		bool HasProperty(const char *name);
 		SharedStringList GetPropertyNames();
 		SharedString DisplayString(int levels);
+		bool Equals(SharedKObject other);
 
 	private:
 		SharedKMethod method;
@@ -138,9 +142,10 @@ namespace kroll
 		bool Remove(unsigned int index);
 		void Set(const char *name, SharedValue value);
 		SharedValue Get(const char *name);
+		bool HasProperty(const char *name);
 		SharedStringList GetPropertyNames();
 		SharedString DisplayString(int levels=3);
-
+		bool Equals(SharedKObject other);
 	private:
 		SharedKList list;
 	};
