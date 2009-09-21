@@ -127,7 +127,7 @@ namespace kroll
 					out += "null";
 					break;
 				default:
-					out += "Unkown,";
+					out += "Unknown,";
 			}
 		}
 
