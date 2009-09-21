@@ -77,15 +77,19 @@ namespace kroll
 		out += "(";;
 		std::string::iterator it;
 		bool optional = false;
+		bool lastCharacterWasComma = false;
 		for (it = argSpec.begin(); it < argSpec.end(); it++)
 		{
-			switch(*it)
+			if (*it == ' ' || *it == ',')
 			{
-				// Ignore spaces and commas
-				case ' ':
-				case ',':
-					break;
+			 	if (!lastCharacterWasComma)
+					out += ", ";
+				continue;
+			}
 
+			lastCharacterWasComma = false;
+			switch (*it)
+			{
 				case '|':
 					out += "|";
 					break;
@@ -96,40 +100,40 @@ namespace kroll
 					break;
 
 				case 's':
-					out += "String,";
+					out += "String";
 					break;
 				case 'b':
-					out += "Boolean,";
+					out += "Boolean";
 					break;
 				case 'i':
-					out += "Integer,";
+					out += "Integer";
 					break;
 				case 'd':
-					out += "Double,";
+					out += "Double";
 					break;
 				case 'n':
-					out += "Number,";
+					out += "Number";
 					break;
 				case 'o':
-					out += "Object,";
+					out += "Object";
 					break;
 				case 'l':
-					out += "List,";
+					out += "Array";
 					break;
 				case 'm':
-					out += "Method,";
+					out += "Function";
 					break;
 				case '0':
-					out += "Null,";
+					out += "null";
 					break;
 				default:
 					out += "Unkown,";
 			}
 		}
+
 		if (optional)
-		{	
 			out += "]";
-		}
+
 		out += ")";
 		return out;
 	}
