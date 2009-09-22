@@ -26,7 +26,7 @@ namespace KrollBoot
 	extern SharedApplication app;
 	extern int argc;
 	extern const char** argv;
-	const char *preload[] = { "zlib1.dll", "libeay32.dll", "ssleay32.dll", "libpng13.dll", "libxml2.dll", "libxslt.dll" };
+	const char *preload[] = { "zlib1.dll", "libeay32.dll", "ssleay32.dll", "libxml2.dll", "libxslt.dll" };
 	const int preloadSize = sizeof(preload)/sizeof(preload[0]);
 	
 	inline void ShowError(string msg, bool fatal)

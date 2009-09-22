@@ -98,6 +98,10 @@ namespace UTILS_NS
 				application->dependencies.push_back(d);
 			}
 		}
+
+		if (EnvironmentUtils::Has("TITANIUM_STREAM"))
+			application->stream = EnvironmentUtils::Get("TITANIUM_STREAM");
+
 		return application;
 	}
 
@@ -224,6 +228,43 @@ namespace UTILS_NS
 		return unresolved;
 	}
 
+	string& Application::GetStreamURL(const char* scheme)
+	{
+		static string url;
+		if (!url.empty())
+			return url;
+
+		if (stream == "local" || stream == "l")
+		{
+			url = "http://localhost";
+		}
+		else
+		{
+			url = scheme;
+			url.append("://"STRING(_DISTRIBUTION_URL));
+			if (stream == "production" || stream == "p")
+			{
+				url.append("/p");
+			}
+			else if (stream == "dev" || stream == "d")
+			{
+				url.append("/d");
+			}
+			else if (stream == "test" || stream == "t")
+			{
+				url.append("/t");
+			}
+			else
+			{
+				url.append("/");
+				url.append(this->stream);
+			}
+			url.append("/v1");
+		}
+
+		return url;
+	}
+
 	string Application::GetURLForDependency(SharedDependency d)
 	{
 		// First look for a bundled zip in the "dist" directory
@@ -255,25 +296,8 @@ namespace UTILS_NS
 		// Otherwise return a URL on the distribution site
 		if (this->queryString.empty()) // Lazy caching of app query string
 		{
-			this->queryString = DISTRIBUTION_URL;
-			if (EnvironmentUtils::Has("TITANIUM_STREAM"))
-			{
-				string stream(EnvironmentUtils::Get("TITANIUM_STREAM"));
-				// support localhost only testing
-				if (stream == "local" || stream == "l")
-				{
-					this->queryString = "http://localhost";
-				}
-				else
-				{
-					this->queryString += "/" + stream.substr(0,1);
-				}
-			}
-			else
-			{
-				this->queryString += "/" + this->stream.substr(0,1);
-			}
-			this->queryString += "/v1/release-download";
+			queryString = this->GetStreamURL();
+			queryString += "/release-download";
 
 			string mid(PlatformUtils::GetMachineId());
 			string os(OS_NAME);

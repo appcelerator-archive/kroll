@@ -70,166 +70,160 @@ namespace kroll
 		return this->args->at(index);
 	}
 
-	bool ArgList::Verify(const char* sig) const
+	std::string ArgList::GenerateSignature(const char* name,
+		 std::string& argSpec)
 	{
-		std::vector<std::string>* sig_vector = ArgList::ParseSigString(sig);
-		return ArgList::VerifyImpl(sig_vector);
-	}
-
-	void ArgList::VerifyException(const char *name, const char* sig) const
-	{
-		std::vector<std::string>* sig_vector = ArgList::ParseSigString(sig);
-		if (!VerifyImpl(sig_vector))
-		{
-			SharedString sig = ArgList::GenerateSignature(name, sig_vector);
-			std::string s = "Invalid arguments passed for: " + *sig;
-			delete sig_vector;
-			throw ValueException::FromString(s);
-		}
-		delete sig_vector;
-	}
-
-	inline std::vector<std::string>* ArgList::ParseSigString(const char* sig)
-	{
-		std::vector<std::string>* sig_vector = new std::vector<std::string>();
-		std::string types = "";
-		while (true)
-		{
-			if (*sig == '\0')
-			{
-				break;
-			}
-			else if (*sig == ',' || *sig == ' ')
-			{
-				sig_vector->push_back(types);
-				types = "";
-			}
-			else
-			{
-				types += *sig;
-			}
-			*sig++;
-		}
-
-		if (!types.empty())
-			sig_vector->push_back(types);
-		return sig_vector;
-	}
-
-	SharedString ArgList::GenerateSignature(const char* name, std::vector<std::string>* sig_vector)
-	{
-		std::ostringstream out;
-		out << name << "(";
+		std::string out(name);
+		out += "(";;
+		std::string::iterator it;
 		bool optional = false;
-		for (size_t i = 0; i < sig_vector->size(); i++)
+		bool lastCharacterWasComma = false;
+		for (it = argSpec.begin(); it < argSpec.end(); it++)
 		{
-			const char *t = sig_vector->at(i).c_str();
-			// The first time we see the optional
-			// parameter we stay in optional mode
-			// until the end of the session.
-			if (*t== '?')
+			if (*it == ' ' || *it == ',')
 			{
-				optional = true;
-				out << "[";
-				*t++;
+			 	if (!lastCharacterWasComma)
+					out += ", ";
+				continue;
 			}
 
-			while (*t != '\0')
+			lastCharacterWasComma = false;
+			switch (*it)
 			{
-				if (*t == 's')
-					out << "String";
-				if (*t == 'b')
-					out << "Boolean";
-				else if (*t == 'i')
-					out << "Integer";
-				else if (*t == 'd')
-					out << "Double";
-				else if (*t == 'n')
-					out << "Number";
-				else if (*t == 'o')
-					out << "Object";
-				else if (*t == 'l')
-					out << "List";
-				else if (*t == 'm')
-					out << "Function";
-				else if (*t == '0')
-					out << "Null";
-				*t++;
-				if (*t != '\0')
-					out << "|";
-			}
+				case '|':
+					out += "|";
+					break;
 
-			if (i != sig_vector->size() - 1)
-				out << ",";
+				case '?':
+					out += "[";
+					optional = true;
+					break;
+
+				case 's':
+					out += "String";
+					break;
+				case 'b':
+					out += "Boolean";
+					break;
+				case 'i':
+					out += "Integer";
+					break;
+				case 'd':
+					out += "Double";
+					break;
+				case 'n':
+					out += "Number";
+					break;
+				case 'o':
+					out += "Object";
+					break;
+				case 'l':
+					out += "Array";
+					break;
+				case 'm':
+					out += "Function";
+					break;
+				case '0':
+					out += "null";
+					break;
+				default:
+					out += "Unkown,";
+			}
 		}
 
 		if (optional)
-		{
-			out << "]";
-		}
+			out += "]";
 
-		out << ")";
-		return new std::string(out.str());
+		out += ")";
+		return out;
 	}
 
-	bool ArgList::VerifyImpl(std::vector<std::string>* sig_vector) const
+	bool ArgList::Verify(std::string& argSpec) const
 	{
 		bool optional = false;
-		for (size_t i = 0; i < sig_vector->size(); i++)
+		std::string::iterator it;
+		size_t i = 0;
+		for (it = argSpec.begin(); it < argSpec.end(); it++)
 		{
-			const char *t = sig_vector->at(i).c_str();
-
-			// The first time we see the optional
-			// parameter we stay in optional mode
-			// until the end of the session.
-			if (*t == '?')
+			switch (*it)
 			{
-				optional = true;
-				*t++;
-			}
+				// Ignore any spaces or commas.
+				case ' ':
+				case ',':
+					break;
 
-			// Not enough args given, but we're in
-			// optional mode.
-			if (this->size() < i + 1 && optional)
-			{
-				return true;
-			}
+				// If we find an OR operator here it means the left side of the OR
+				// was true so we can skip it and the next argument type.
+				case '|':
+					it++;
+					break;
 
-			// Not enough args given.
-			if (this->size() < i + 1)
-			{
-				return false;
-			}
+				// The first time we see the optional parameter we stay in
+				// optional mode until the end of the session.
+				case '?':
+					optional = true;
+					break;
 
-			// Arg doesn't conform to arg string
-			if (!ArgList::VerifyArg(this->at(i), t))
-			{
-				return false;
+				default:
+					// Verify argument count is correct.
+					if (this->size() < i + 1)
+					{
+						// we are in optional mode, so arguments are valid
+						if (optional) return true;
+
+						// missing arguments not optional, invalid arguments
+						else return false;
+					}
+
+					// Verify argument type
+					if (!ArgList::VerifyArg(this->at(i), *it))
+					{
+						// Check for OR operator following current character
+						if (++it == argSpec.end() || *it != '|')
+						{
+							// No OR operator, so arguments are invalid.
+							return false;
+						}
+						else
+						{
+							// OR operator is next, so do another loop
+							// but not increment the count.
+							continue;
+						}
+					}
+
+					// Increment the argument counter.
+					i++;
 			}
 		}
 		return true;
 	}
 
-
-	inline bool ArgList::VerifyArg(SharedValue arg, const char* t)
+	void ArgList::VerifyException(const char *name, std::string argSpec) const
 	{
-		while (*t != '\0')
+		
+		if (!Verify(argSpec))
 		{
-		// Check if type of value matches current character.
-		if ((*t == 's' && arg->IsString())
-		 || (*t == 'b' && arg->IsBool())
-		 || (*t == 'i' && arg->IsInt())
-		 || (*t == 'd' && arg->IsDouble())
-		 || (*t == 'n' && arg->IsNumber())
-		 || (*t == 'o' && arg->IsObject())
-		 || (*t == 'l' && arg->IsList())
-		 || (*t == 'm' && arg->IsMethod())
-		 || (*t == '0' && arg->IsNull()))
+			std::string signature(GenerateSignature(name, argSpec));
+			throw ValueException::FromFormat("Invalid arguments passed for: %s",
+				 signature.c_str());
+		}
+	}
+
+	inline bool ArgList::VerifyArg(SharedValue arg, char t)
+	{
+		if ((t == 's' && arg->IsString())
+		 || (t == 'b' && arg->IsBool())
+		 || (t == 'i' && arg->IsInt())
+		 || (t == 'd' && arg->IsDouble())
+		 || (t == 'n' && arg->IsNumber())
+		 || (t == 'o' && arg->IsObject())
+		 || (t == 'l' && arg->IsList())
+		 || (t == 'm' && arg->IsMethod())
+		 || (t == '0' && arg->IsNull()))
 			return true;
 		else
-			*t++;
-		}
-		return false;
+			return false;
 	}
 
 	int ArgList::GetInt(size_t index, int defaultValue) const

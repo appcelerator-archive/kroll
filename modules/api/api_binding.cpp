@@ -962,6 +962,11 @@ namespace kroll
 		return object->Get(name);
 	}
 
+	bool KObjectWrapper::HasProperty(const char *name)
+	{
+		return object->HasProperty(name);	
+	}
+	
 	SharedStringList KObjectWrapper::GetPropertyNames()
 	{
 		return object->GetPropertyNames();
@@ -972,6 +977,11 @@ namespace kroll
 		return object->DisplayString(levels);
 	}
 
+	bool KObjectWrapper::Equals(SharedKObject other)
+	{
+		return object->Equals(other);	
+	}
+	
 	KMethodWrapper::KMethodWrapper(SharedKMethod method) :
 		method(method)
 	{
@@ -992,6 +1002,11 @@ namespace kroll
 		return method->Get(name);
 	}
 
+	bool KMethodWrapper::HasProperty(const char *name)
+	{
+		return method->HasProperty(name);
+	}
+	
 	SharedStringList KMethodWrapper::GetPropertyNames()
 	{
 		return method->GetPropertyNames();
@@ -1000,6 +1015,11 @@ namespace kroll
 	SharedString KMethodWrapper::DisplayString(int levels)
 	{
 		return method->DisplayString(levels);
+	}
+	
+	bool KMethodWrapper::Equals(SharedKObject other)
+	{
+		return method->Equals(other);	
 	}
 
 	KListWrapper::KListWrapper(SharedKList list) :
@@ -1042,6 +1062,11 @@ namespace kroll
 		return list->Get(name);
 	}
 
+	bool KListWrapper::HasProperty(const char *name)
+	{
+		return list->HasProperty(name);
+	}
+	
 	SharedStringList KListWrapper::GetPropertyNames()
 	{
 		return list->GetPropertyNames();
@@ -1051,6 +1076,10 @@ namespace kroll
 	{
 		return list->DisplayString(levels);
 	}
-
+	
+	bool KListWrapper::Equals(SharedKObject other)
+	{
+		return list->Equals(other);	
+	}
 
 }

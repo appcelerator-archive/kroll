@@ -18,6 +18,7 @@ build = BuildConfig(
 	CONFIG_FILENAME = 'tiapp.xml',
 	BUILD_DIR = path.abspath('build'),
 	THIRD_PARTY_DIR = path.abspath('thirdparty'),
+	DISTRIBUTION_URL = 'api.appcelerator.net',
 	CRASH_REPORT_URL = 'api.appcelerator.net/p/v1/app-crash-report',
 )
 build.set_kroll_source_dir(path.abspath('.'))

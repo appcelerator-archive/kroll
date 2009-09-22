@@ -89,6 +89,11 @@ namespace UTILS_NS
 		std::string GetLicenseText();
 
 		/**
+		 * Get the stream URL for this application
+		 */
+		std::string& GetStreamURL(const char* scheme="http");
+
+		/**
 		 * Generate a list of all components available for this application
 		 * including bundled components and any components or all the components
 		 * in the bundle override directory.
