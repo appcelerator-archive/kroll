@@ -124,13 +124,13 @@ namespace kroll
 		target->Set("EXIT", Value::NewString(Event::EXIT));
 		target->Set("READ", Value::NewString(Event::READ));
 
-		// @tiproperty[String, HTTP_DONE, since=0.7] The HTTP_DONE event constant
-		// @tiproperty[String, HTTP_STATECHANGED, since=0.7] The HTTP_STATECHANGED constant
-		// @tiproperty[String, HTTP_TIMEOUT, since=0.7] The HTTP_TIMEOUT constant
-		// @tiproperty[String, HTTP_REDIRECT, since=0.7] The HTTP_REDIRECT constant
-		// @tiproperty[String, HTTP_ABORT, since=0.7] The HTTP_ABORT constant
-		// @tiproperty[String, HTTP_DATASENT, since=0.7] The HTTP_DATASENT constant
-		// @tiproperty[String, HTTP_DATARECV, since=0.7] The HTTP_DATARECV constant
+		// @tiproperty[String, HTTP_DONE, since=0.7] The request has completed.
+		// @tiproperty[String, HTTP_STATECHANGED, since=0.7] HTTP state has changed.
+		// @tiproperty[String, HTTP_TIMEOUT, since=0.7] Request has timed out.
+		// @tiproperty[String, HTTP_REDIRECT, since=0.7] HTTP redirect occurred.
+		// @tiproperty[String, HTTP_ABORT, since=0.7] Request has been aborted.
+		// @tiproperty[String, HTTP_DATASENT, since=0.7] Data has been sent to server.
+		// @tiproperty[String, HTTP_DATARECV, since=0.7] Data has been received from server.
 
 		target->Set("HTTP_DONE", Value::NewString(Event::HTTP_DONE));
 		target->Set("HTTP_STATECHANGED", Value::NewString(Event::HTTP_STATECHANGED));
