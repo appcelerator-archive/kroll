@@ -14,89 +14,54 @@ void ***tsrm_ls;
 namespace kroll
 {
 	KROLL_MODULE(PHPModule, STRING(MODULE_NAME), STRING(MODULE_VERSION));
+	static Logger* logger = Logger::Get("PHPModule");
+	const static std::string phpSuffix("module.php");
+	static bool buffering = false;
 
 	PHPModule* PHPModule::instance_ = NULL;
-	bool PHPModule::buffering = false;
 	std::ostringstream PHPModule::buffer;
 	std::string PHPModule::mimeType("text/html");
-	
+
+	static int UnbufferedWrite(const char *, unsigned int TSRMLS_DC);
+	static void SetIniDefault(HashTable*, const char*, const char*);
+	static void IniDefaults(HashTable*);
+	static void LogMessage(char*);
+	static int HeaderHandler(sapi_header_struct*, sapi_header_op_enum, 
+		sapi_headers_struct* TSRMLS_DC);
+
 	void PHPModule::Initialize()
 	{
 		PHPModule::instance_ = this;
-		logger = Logger::Get("PHP");
 		int argc = 1;
 		char *argv[2] = { "php_kroll", NULL };
 
-		php_embed_module.ub_write = PHPModule::UnbufferedWrite;
-		php_embed_module.log_message = PHPModule::LogMessage;
-		php_embed_module.ini_defaults = PHPModule::IniDefaults;
-		php_embed_module.header_handler = PHPModule::HeaderHandler;
-
+		php_embed_module.ub_write = UnbufferedWrite;
+		php_embed_module.log_message = LogMessage;
+		php_embed_module.ini_defaults = IniDefaults;
+		php_embed_module.header_handler = HeaderHandler;
 		php_embed_init(argc, argv PTSRMLS_CC);
-		PHPUtils::InitializePHPKrollClasses();
 
+		PHPUtils::InitializePHPKrollClasses();
 		this->InitializeBinding();
 		host->AddModuleProvider(this);
+
+		const char* resourcesPath =
+			host->GetApplication()->GetResourcesPath().c_str();
+		zend_alter_ini_entry("include_path", sizeof("include_path"),
+			(char*) resourcesPath, strlen(resourcesPath), 
+			ZEND_INI_USER, ZEND_INI_STAGE_RUNTIME);
 	}
-	
+
 	/*static*/
-	void PHPModule::SetBuffering(bool buffering_)
+	void PHPModule::SetBuffering(bool newBuffering)
 	{
 		if (buffering)
 		{
 			buffer.str("");
 		}
-		buffering = buffering_;
-	}
-	
-	/*static*/
-	int PHPModule::UnbufferedWrite(const char *str, unsigned int length TSRMLS_DC)
-	{
-		std::string string(str,length);
-		
-		// This shouldn't need to be thread safe right?
-		if (buffering)
-		{
-			buffer << string;
-		}
-		else
-		{
-			PHPModule::Instance()->logger->Info(string.c_str());
-		}
-		return length;
-	}
-	
-	// Forgive me Martin, borrowed from php_cli.c line 409
-	#define INI_DEFAULT(name,value)\
-		Z_SET_REFCOUNT(tmp, 0);\
-		Z_UNSET_ISREF(tmp); \
-		ZVAL_STRINGL(&tmp, zend_strndup(value, sizeof(value)-1), sizeof(value)-1, 0);\
-		zend_hash_update(configuration, name, sizeof(name), &tmp, sizeof(zval), NULL);\
-	
-	/*static*/
-	void PHPModule::IniDefaults(HashTable *configuration)
-	{
-		zval tmp;
-		INI_DEFAULT("display_errors", "1");
-	}
-	
-	/*static*/
-	void PHPModule::LogMessage(char *message)
-	{
-		PHPModule::Instance()->logger->Debug(message);
+		buffering = newBuffering;
 	}
 
-	/*static*/
-	int PHPModule::HeaderHandler(sapi_header_struct *sapiHeader,
-		sapi_header_op_enum op, sapi_headers_struct *sapi_headers TSRMLS_DC)
-	{
-		if (sapi_headers && sapi_headers->mimetype)
-		{
-			PHPModule::mimeType = sapi_headers->mimetype;
-		}
-		return op;
-	}
-	
 	void PHPModule::Stop()
 	{
 		PHPModule::instance_ = NULL;
@@ -105,8 +70,8 @@ namespace kroll
 		Script::GetInstance()->RemoveScriptEvaluator(this->binding);
 		global->Set("PHP", Value::Undefined);
 		this->binding->Set("evaluate", Value::Undefined);
-		this->binding = NULL;
-		PHPModule::instance_ = NULL;
+		this->binding = 0;
+		PHPModule::instance_ = 0;
 
 		php_embed_shutdown(TSRMLS_C);
 	}
@@ -114,43 +79,91 @@ namespace kroll
 	void PHPModule::InitializeBinding()
 	{
 		PHPModule::mimeType = SG(default_mimetype);
-	
+
 		SharedKObject global = this->host->GetGlobalObject();
 		this->binding = new PHPEvaluator();
 		global->Set("PHP", Value::NewObject(this->binding));
 		Script::GetInstance()->AddScriptEvaluator(this->binding);
-		
+
 		zval *titaniumValue = PHPUtils::ToPHPValue(Value::NewObject(global));
-		ZEND_SET_SYMBOL(&EG(symbol_table), "Titanium", titaniumValue);
+		ZEND_SET_SYMBOL(&EG(symbol_table), PRODUCT_NAME, titaniumValue);
 	}
 
-	const static std::string php_suffix = "module.php";
 
 	bool PHPModule::IsModule(std::string& path)
 	{
-		return (path.substr(path.length()-php_suffix.length()) == php_suffix);
+		return (path.substr(path.length()-phpSuffix.length()) == phpSuffix);
 	}
 
 	Module* PHPModule::CreateModule(std::string& path)
 	{
-		Logger *logger = Logger::Get("PHP");
-		zend_first_try {
+		zend_first_try
+		{
 			std::string includeScript = "include '" + path + "';";
-			if (SUCCESS != zend_eval_string((char *)includeScript.c_str(), NULL, (char *) path.c_str() TSRMLS_CC))
-			{
+			if (SUCCESS != zend_eval_string((char *) includeScript.c_str(),
+				NULL, (char *) path.c_str() TSRMLS_CC))
 				logger->Error("Error evaluating module at path: %s", path.c_str());
-			}
-		} zend_catch {
+		}
+		zend_catch
+		{
 			logger->Error("Error evaluating module at path: %s", path.c_str());
-		} zend_end_try();
+		}
+		zend_end_try();
 
 		Poco::Path p(path);
-		std::string basename = p.getBaseName();
-		std::string name = basename.substr(0,basename.length()-php_suffix.length()+4);
-		std::string moduledir = path.substr(0,path.length()-basename.length()-4);
-
-		logger->Info("Loading PHP path=%s", path.c_str());
+		std::string name(p.getBaseName());
+		std::string moduledir(p.makeParent().toString());
+		logger->Info("Loading PHP module name=%s path=%s", name.c_str(), path.c_str());
 
 		return new PHPModuleInstance(host, path, moduledir, name);
+	}
+
+	static int UnbufferedWrite(const char *str, unsigned int length TSRMLS_DC)
+	{
+		std::string string(str, length);
+		std::ostringstream& buffer = PHPModule::GetBuffer();
+
+		// This shouldn't need to be thread safe right?
+		if (buffering)
+		{
+			buffer << string;
+		}
+		else
+		{
+			logger->Info(string.c_str());
+		}
+		return length;
+	}
+
+	static void SetIniDefault(HashTable* config, const char* name, const char* value)
+	{
+		// Forgive me Martin, borrowed from php_cli.c line 409
+		// Thou are forgiven.
+		zval tmp;
+		Z_SET_REFCOUNT(tmp, 0);
+		Z_UNSET_ISREF(tmp);
+		ZVAL_STRINGL(&tmp, zend_strndup(value, sizeof(value)-1), sizeof(value)-1, 0);
+		zend_hash_update(config, name, sizeof(name), &tmp, sizeof(zval), NULL);
+	}
+
+	static void IniDefaults(HashTable* configuration)
+	{
+		SetIniDefault(configuration, "display_errors", "1");
+	}
+
+	static void LogMessage(char* message)
+	{
+		logger->Debug(message);
+	}
+
+	static int HeaderHandler(sapi_header_struct* sapiHeader,
+		sapi_header_op_enum op, sapi_headers_struct* sapiHeaders TSRMLS_DC)
+	{
+		if (sapiHeaders && sapiHeaders->mimetype)
+		{
+			std::string& mimeType = PHPModule::GetMimeType();
+			mimeType = sapiHeaders->mimetype;
+		}
+		return op;
 	}
 }

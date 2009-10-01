@@ -43,7 +43,7 @@ namespace kroll {
 		{
 			SharedValue value = args.at(i);
 
-			zval *zargument;
+			zval* zargument;
 			ALLOC_INIT_ZVAL(zargsStore[i]);
 			zargs[i] = &zargsStore[i];
 
