@@ -70,7 +70,7 @@ namespace kroll
 
 		zval* ToPHPValue(SharedValue value)
 		{
-			zval *returnValue;
+			zval* returnValue;
 			ALLOC_INIT_ZVAL(returnValue);
 			ToPHPValue(value, &returnValue);
 			return returnValue;

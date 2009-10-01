@@ -55,44 +55,26 @@ namespace kroll
 	{
 		KROLL_MODULE_CLASS(PHPModule)
 
-			public:
-			virtual bool IsModule(std::string& path);
-			virtual Module* CreateModule(std::string& path);
-			void InitializeBinding();
+	public:
+		virtual bool IsModule(std::string& path);
+		virtual Module* CreateModule(std::string& path);
+		void InitializeBinding();
 
-			virtual const char * GetDescription()
-			{
-				return "PHP Module Loader";
-			}
-			Host* GetHost()
-			{
-				return host;
-			}
-			static PHPModule* Instance()
-			{
-				return instance_;
-			}
+		virtual const char * GetDescription() { return "PHP Module Loader"; }
+		static PHPModule* Instance() { return instance_; }
+		static void SetBuffering(bool buffering);
+		static std::ostringstream& GetBuffer() { return buffer; }
+		static std::string& GetMimeType() { return mimeType; }
 
-			static int UnbufferedWrite(const char *str, unsigned int len TSRMLS_DC);
-			static void LogMessage(char *message);
-			static void IniDefaults(HashTable *configuration);
-			static int HeaderHandler(sapi_header_struct *sapiHeader, sapi_header_op_enum op, sapi_headers_struct *sapi_headers TSRMLS_DC);
-			
-			static void SetBuffering(bool buffering);
-			static std::ostringstream& GetBuffer() { return buffer; }
-			static std::string& GetMimeType() { return mimeType; }
-			
-			private:
-			SharedKObject binding;
-			Logger *logger;
-			static bool buffering;
-			static std::ostringstream buffer;
-			static std::string mimeType;
-			
-			static PHPModule *instance_;
-			DISALLOW_EVIL_CONSTRUCTORS(PHPModule);
-		};
-	}
+	private:
+		SharedKObject binding;
+		static std::ostringstream buffer;
+		static std::string mimeType;
+		static PHPModule *instance_;
+
+		DISALLOW_EVIL_CONSTRUCTORS(PHPModule);
+	};
+}
 
 #include "php_module_instance.h"
 
