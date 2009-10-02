@@ -195,8 +195,8 @@ namespace kroll
 		{
 			Logger* logger = Logger::Get("KEventObject");
 			SharedString ss = e.DisplayString();
-			logger->Error("Exception caught during window event callback: %s", ss->c_str());
-
+			SharedString ds = event->target->DisplayString();
+			logger->Error("Exception caught during event callback (target=[%s]): %s", ds->c_str(), ss->c_str());
 		}
 	}
 
