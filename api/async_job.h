@@ -107,9 +107,21 @@ namespace kroll
 		 * related to that job.
 		 */
 		void AddErrorCallback(SharedKMethod);
+		
+		/**
+		 * Set arguments for this job.
+		 * This allows the job method to take in custom arguments
+		 */
+		void SetArguments(ValueList args) { this->arguments = args; }
 
+		/**
+		 * Get the arguments for this job.
+		 */
+		ValueList& GetArguments() { return arguments; }
+		
 		protected:
 		SharedKMethod job;
+		ValueList arguments;
 		double progress;
 		bool completed;
 		SharedValue result;
