@@ -6,6 +6,8 @@
 #include "utils.h"
 #if defined(KROLL_HOST_EXPORT) || defined(KROLL_API_EXPORT) || defined(_KROLL_H_)
 #include <Poco/URI.h>
+#include <Poco/TemporaryFile.h>
+#include <Poco/FileStream.h>
 #endif
 namespace UTILS_NS
 {
@@ -205,10 +207,37 @@ namespace URLUtils
 		}
 	}
 
+	std::string& BlankPageURL()
+	{
+		static std::string url("app://__blank__.html");
+		return url;
+	}
+
+	static std::string& BlankURLToFilePath()
+	{
+		static std::string path;
+		if (path.empty())
+		{
+			Poco::TemporaryFile temp;
+			temp.keepUntilExit();
+			path = temp.path();
+
+			std::string contents("<html><body></body></html>");
+			Poco::FileStream stream;
+			stream.open(path, std::ios::out);
+			stream.write(contents.c_str(), contents.size());
+			stream.close();
+		}
+		return path;
+	}
 
 	std::string NormalizeURL(std::string& url)
 	{
 		Poco::URI inURI = Poco::URI(url);
+		if (url == BlankPageURL())
+		{
+			return url;
+		}
 		if (inURI.getScheme() != "app")
 		{
 			return url;
@@ -224,6 +253,10 @@ namespace URLUtils
 		Poco::URI inURI = Poco::URI(url);
 		try
 		{
+			if (url == BlankPageURL())
+			{
+				return BlankURLToFilePath();
+			}
 			if (inURI.getScheme() == "ti")
 			{
 				return TiURLToPath(url);
