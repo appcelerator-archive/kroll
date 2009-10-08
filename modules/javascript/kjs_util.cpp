@@ -698,11 +698,11 @@ namespace KJSUtil
 		std::map<JSGlobalContextRef, int>::iterator i = jsContextRefCounts.begin();
 		while (i != jsContextRefCounts.end())
 		{
-			std::map<JSGlobalContextRef, int>::iterator item = i++;
-			if (item->second <= 0)
+			std::map<JSGlobalContextRef, int>::iterator toRelease = i++;
+			if (toRelease->second <= 0)
 			{
-				JSGlobalContextRelease(globalContext);
-				jsContextRefCounts.erase(item);
+				JSGlobalContextRelease(toRelease->first);
+				jsContextRefCounts.erase(toRelease);
 			}
 		}
 	}
@@ -713,7 +713,10 @@ namespace KJSUtil
 			= jsContextRefCounts.find(globalContext);
 
 		if (i == jsContextRefCounts.end())
+		{
 			GetLogger()->Error("Tried to unprotect an unknown jsContext!");
+			return;
+		}
 
 		// Defer the release of this global context until the next protection.
 		// This function may be called from JavaScript garbage collection. Unprotecting
