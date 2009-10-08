@@ -47,7 +47,15 @@ namespace kroll
 		static std::string CLICKED;
 		static std::string DOUBLE_CLICKED;
 		static std::string EXIT;
+		static std::string APP_EXIT;
 		static std::string READ;
+		static std::string HTTP_DONE;
+		static std::string HTTP_STATE_CHANGED;
+		static std::string HTTP_TIMEOUT;
+		static std::string HTTP_REDIRECT;
+		static std::string HTTP_ABORT;
+		static std::string HTTP_DATA_SENT;
+		static std::string HTTP_DATA_RECEIVED;
 	};
 }
 #endif

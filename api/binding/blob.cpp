@@ -8,6 +8,7 @@
 #include <cstring>
 #include <Poco/String.h>
 #include <Poco/StringTokenizer.h>
+#include <Poco/Data/BLOB.h>
 
 namespace kroll
 {
@@ -45,6 +46,16 @@ namespace kroll
 		CreateWithCopy(str.c_str(), str.length());
 	}
 
+	Blob::Blob(Poco::Data::BLOB *blob) : StaticBoundObject("Blob")
+	{
+		CreateWithReference((char *)&(blob->content()[0]), blob->size());
+	}
+	
+	Blob::Blob(int byte) : StaticBoundObject("Blob")
+	{
+		CreateWithCopy((char *) &byte, 1);
+	}
+	
 	void Blob::CreateWithCopy(const char *bufferIn, int length)
 	{
 		if (length > 0)
@@ -101,11 +112,19 @@ namespace kroll
 
 		/**
 		 * @tiapi(method=True,name=Blob.charAt,since=0.3)
-		 * @tiapi Return a character representing a byte at at given index in a Blob
+		 * @tiapi Return a character representing a byte at the given index in a Blob
 		 * @tiarg[Number, index] The index to look for a character at
 		 * @tiresult[String] A String containing a character representing the byte at the given index
 		 */
 		this->SetMethod("charAt", &Blob::CharAt);
+		
+		/**
+		 * @tiapi(method=True,name=Blob.byteAt,since=0.7)
+		 * @tiapi Return the character code (or byte value) at the given index in a Blob
+		 * @tiarg[Number, index] The index to look for a character code at
+		 * @tiresult[Number] The character code (or byte value) at the given index
+		 */
+		this->SetMethod("byteAt", &Blob::ByteAt);
 
 		/**
 		 * @tiapi(method=True,name=Blob.split,since=0.3)
@@ -173,6 +192,7 @@ namespace kroll
 		{
 			delete [] this->buffer;
 		}
+		
 		this->buffer = NULL;
 		this->length = 0;
 	}
@@ -263,6 +283,17 @@ namespace kroll
 			buf[0] = this->buffer[position];
 		}
 		result->SetString(buf);
+	}
+	
+	void Blob::ByteAt(const ValueList& args, SharedValue result)
+	{
+		args.VerifyException("Blob.byteAt", "n");
+		int position = args.at(0)->ToInt();
+		
+		if (position >= 0 && position < this->length)
+		{
+			result->SetInt(static_cast<unsigned char>(this->buffer[position]));
+		}
 	}
 
 	void Blob::Split(const ValueList& args, SharedValue result)

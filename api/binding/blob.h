@@ -13,6 +13,14 @@
 #include <map>
 #include <cstring>
 
+namespace Poco
+{
+	namespace Data
+	{
+		class BLOB;
+	}
+}
+
 namespace kroll
 {
 	/**
@@ -32,11 +40,14 @@ namespace kroll
 		Blob(const char *buffer, int size, bool makeCopy=true);
 		Blob(std::string);
 		Blob(std::string&);
+		Blob(Poco::Data::BLOB* blob);
+		Blob(int byte);
+		
 		virtual ~Blob();
 		void SetupBinding();
 		AutoBlob Concat(std::vector<AutoBlob>& blobs);
+		
 		static AutoBlob GlobBlobs(std::vector<AutoBlob>& blobs);
-
 		/**
 		 * @return The buffer as a const char *
 		 */
@@ -58,6 +69,7 @@ namespace kroll
 		void IndexOf(const ValueList& args, SharedValue result);
 		void LastIndexOf(const ValueList& args, SharedValue result);
 		void CharAt(const ValueList& args, SharedValue result);
+		void ByteAt(const ValueList& args, SharedValue result);
 		void Split(const ValueList& args, SharedValue result);
 		void Substr(const ValueList& args, SharedValue result);
 		void Substring(const ValueList& args, SharedValue result);

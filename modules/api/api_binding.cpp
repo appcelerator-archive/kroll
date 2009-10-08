@@ -925,24 +925,37 @@ namespace kroll
 		}
 	}
 
+	static void GetBlobs(SharedValue value, std::vector<AutoBlob>& blobs)
+	{
+		if (value->IsObject())
+		{
+			blobs.push_back(value->ToObject().cast<Blob>());
+		}
+		else if (value->IsString())
+		{
+			blobs.push_back(new Blob(value->ToString()));
+		}
+		else if (value->IsList())
+		{
+			SharedKList list = value->ToList();
+			for (size_t j = 0; j < list->Size(); j++)
+			{
+				GetBlobs(list->At(j), blobs);
+			}
+		}
+		else if (value->IsNumber())
+		{
+			blobs.push_back(new Blob(value->ToInt()));
+		}
+	}
+	
 	void APIBinding::_CreateBlob(const ValueList& args, SharedValue result)
 	{
-		args.VerifyException("createBlob", "?s|o");
+		args.VerifyException("createBlob", "?s|o|l|i");
 		std::vector<AutoBlob> blobs;
 		for (size_t i = 0; i < args.size(); i++)
 		{
-			if (args.at(i)->IsObject())
-			{
-				AutoBlob blob = args.GetObject(i).cast<Blob>();
-				if (!blob.isNull())
-				{
-					blobs.push_back(blob);
-				}
-			}
-			else if (args.at(i)->IsString())
-			{
-				blobs.push_back(new Blob(args.GetString(i)));
-			}
+			GetBlobs(args.at(i), blobs);
 		}
 		result->SetObject(Blob::GlobBlobs(blobs));
 	}

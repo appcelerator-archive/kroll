@@ -44,6 +44,11 @@ namespace UTILS_NS
 		 */
 		KROLL_API std::string URLToPath(string& url);
 
+		/**
+		 * Path portion of URL which is guauranteed to be a local and * blank file.
+		 */
+		KROLL_API std::string& BlankPageURL();
+
 		KROLL_API std::string TiURLToPath(std::string& url);
 		KROLL_API std::string AppURLToPath(std::string& url);
 #endif

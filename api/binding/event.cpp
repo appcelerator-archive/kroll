@@ -29,7 +29,15 @@ namespace kroll
 	std::string Event::CLICKED = "clicked";
 	std::string Event::DOUBLE_CLICKED = "double.clicked";
 	std::string Event::EXIT = "exit";
+	std::string Event::APP_EXIT = "app.exit";
 	std::string Event::READ = "read";
+	std::string Event::HTTP_DONE = "http.done";
+	std::string Event::HTTP_STATE_CHANGED = "http.statechanged";
+	std::string Event::HTTP_TIMEOUT = "http.timeout";
+	std::string Event::HTTP_REDIRECT = "http.redirect";
+	std::string Event::HTTP_ABORT = "http.abort";
+	std::string Event::HTTP_DATA_SENT = "http.datasent";
+	std::string Event::HTTP_DATA_RECEIVED = "http.datareceived";
 
 	Event::Event(AutoPtr<KEventObject> target, std::string& eventName) :
 		AccessorBoundObject("Event"),
@@ -93,6 +101,7 @@ namespace kroll
 		// @tiproperty[String, PAGE_LOADED, since=0.6] The PAGE_LOADED event constant
 		// @tiproperty[String, CREATE, since=0.6] The CREATE event constant
 		// @tiproperty[String, EXIT, since=0.6] The EXIT event constant
+		// @tiproperty[String, APP_EXIT, since=0.7] The APP_EXIT event constant, fired during host application exit.
 		// @tiproperty[String, READ, since=0.6] The READ event constant
 
 		target->Set("ALL", Value::NewString(Event::ALL));
@@ -114,7 +123,24 @@ namespace kroll
 		target->Set("PAGE_LOADED", Value::NewString(Event::PAGE_LOADED));
 		target->Set("CREATED", Value::NewString(Event::CREATED));
 		target->Set("EXIT", Value::NewString(Event::EXIT));
+		target->Set("APP_EXIT", Value::NewString(Event::APP_EXIT));
 		target->Set("READ", Value::NewString(Event::READ));
+
+		// @tiproperty[String, HTTP_DONE, since=0.7] The request has completed.
+		// @tiproperty[String, HTTP_STATE_CHANGED, since=0.7] HTTP state has changed.
+		// @tiproperty[String, HTTP_TIMEOUT, since=0.7] Request has timed out.
+		// @tiproperty[String, HTTP_REDIRECT, since=0.7] HTTP redirect occurred.
+		// @tiproperty[String, HTTP_ABORT, since=0.7] Request has been aborted.
+		// @tiproperty[String, HTTP_DATA_SENT, since=0.7] Data has been sent to server.
+		// @tiproperty[String, HTTP_DATA_RECEIVED, since=0.7] Data has been received from server.
+
+		target->Set("HTTP_DONE", Value::NewString(Event::HTTP_DONE));
+		target->Set("HTTP_STATE_CHANGED", Value::NewString(Event::HTTP_STATE_CHANGED));
+		target->Set("HTTP_TIMEOUT", Value::NewString(Event::HTTP_TIMEOUT));
+		target->Set("HTTP_REDIRECT", Value::NewString(Event::HTTP_REDIRECT));
+		target->Set("HTTP_ABORT", Value::NewString(Event::HTTP_ABORT));
+		target->Set("HTTP_DATA_SENT", Value::NewString(Event::HTTP_DATA_SENT));
+		target->Set("HTTP_DATA_RECEIVED", Value::NewString(Event::HTTP_DATA_RECEIVED));
 	}
 
 }

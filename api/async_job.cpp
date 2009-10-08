@@ -95,7 +95,7 @@ namespace kroll
 		{
 			try
 			{
-				return this->job->Call(ValueList());
+				return this->job->Call(this->arguments);
 			}
 			catch (ValueException& e)
 			{
