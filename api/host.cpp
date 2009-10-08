@@ -797,7 +797,8 @@ namespace kroll
 	void Host::Exit(int exitCode)
 	{
 		logger->Notice("Received exit signal (%d)", exitCode);
-		if (KEventObject::FireRootEvent(Event::EXIT))
+		if (KEventObject::FireRootEvent(Event::EXIT) &&
+			KEventObject::FireRootEvent(Event::APP_EXIT))
 		{
 			running = false;
 			exiting = true;
