@@ -659,11 +659,11 @@ namespace KJSUtil
 	{
 		jsContextMap[object] = globalContext;
 	}
-	
+
 	void UnregisterGlobalContext(JSObjectRef object)
 	{
 		std::map<JSObjectRef, JSGlobalContextRef>::iterator i = jsContextMap.find(object);
-		if (i!=jsContextMap.end())
+		if (i != jsContextMap.end())
 		{
 			jsContextMap.erase(i);
 		}
@@ -694,6 +694,17 @@ namespace KJSUtil
 		{
 			jsContextRefCounts[globalContext]++;
 		}
+
+		std::map<JSGlobalContextRef, int>::iterator i = jsContextRefCounts.begin();
+		while (i != jsContextRefCounts.end())
+		{
+			std::map<JSGlobalContextRef, int>::iterator item = i++;
+			if (item->second <= 0)
+			{
+				JSGlobalContextRelease(globalContext);
+				jsContextRefCounts.erase(item);
+			}
+		}
 	}
 
 	void UnprotectGlobalContext(JSGlobalContextRef globalContext)
@@ -702,18 +713,12 @@ namespace KJSUtil
 			= jsContextRefCounts.find(globalContext);
 
 		if (i == jsContextRefCounts.end())
-		{
 			GetLogger()->Error("Tried to unprotect an unknown jsContext!");
-		}
-		else if (i->second == 1)
-		{
-			JSGlobalContextRelease(globalContext);
-			jsContextRefCounts.erase(i);
-		}
-		else
-		{
-			jsContextRefCounts[globalContext]--;
-		}
+
+		// Defer the release of this global context until the next protection.
+		// This function may be called from JavaScript garbage collection. Unprotecting
+		// the contet here might spawn another garbage collection causing a segfault.
+		jsContextRefCounts[globalContext]--;
 	}
 
 	SharedValue Evaluate(JSContextRef jsContext, char *script)
