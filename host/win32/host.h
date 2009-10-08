@@ -44,6 +44,7 @@ namespace kroll
 		const char* GetPlatform();
 		const char* GetModuleSuffix();
 		HWND AddMessageHandler(MessageHandler handler);
+		HWND GetEventWindow() { return eventWindow.GetHandle(); }
 		
 	protected:
 		bool RunLoop();

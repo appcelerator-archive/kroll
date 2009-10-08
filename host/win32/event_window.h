@@ -20,7 +20,8 @@ namespace kroll
 		HWND AddMessageHandler(MessageHandler handler);
 		LRESULT CALLBACK Handler(
 			HWND hwnd, unsigned int message, WPARAM wParam, LPARAM lParam);
-
+		HWND GetHandle() { return handle; }
+		
 		private:
 		HINSTANCE hInstance;
 		HWND handle;
