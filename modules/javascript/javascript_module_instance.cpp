@@ -10,14 +10,17 @@
 
 namespace kroll
 {
-	JavascriptModuleInstance::JavascriptModuleInstance(Host *host, std::string path, 
-			std::string dir, std::string name) :
+	JavascriptModuleInstance::JavascriptModuleInstance(Host *host, std::string path, std::string dir, std::string name) :
 		Module(host, dir.c_str(), name.c_str(), "0.1"),
 		path(path)
 	{
+		this->context = JSGlobalContextCreate(NULL);
+		this->global = JSContextGetGlobalObject(context);
+		KJSUtil::RegisterGlobalContext(global, context);
+		KJSUtil::ProtectGlobalContext(context);
+
 		try
 		{
-			this->Load();
 			this->Run();
 		}
 		catch (ValueException& e)
@@ -26,43 +29,30 @@ namespace kroll
 			Logger *logger = Logger::Get("Javascript");
 			logger->Error("Could not execute %s because %s", path.c_str(), (*ss).c_str());
 		}
-
 	}
-	void JavascriptModuleInstance::Initialize () {}
-	void JavascriptModuleInstance::Destroy () {}
 
-	void JavascriptModuleInstance::Load()
+	JavascriptModuleInstance::~JavascriptModuleInstance()
 	{
-		this->code = FileUtils::ReadFile(this->path);
+		KJSUtil::UnregisterGlobalContext(global);
+		KJSUtil::UnprotectGlobalContext(context);
 	}
 
 	void JavascriptModuleInstance::Run()
 	{
+		std::string code(FileUtils::ReadFile(this->path));
 
-		JSValueRef exception;
-		JSGlobalContextRef context = JSGlobalContextCreate(NULL);
-		JSObjectRef globalObject = JSContextGetGlobalObject(context);
-		KJSUtil::RegisterGlobalContext(globalObject, context);
-
-		/* Take some steps to insert the API into the Javascript context */
-		/* Create a crazy, crunktown delegate hybrid object for Javascript */
+		// Insert the global object into this script's context.
 		SharedValue globalValue = Value::NewObject(host->GetGlobalObject());
-
-		/* convert JS API to a KJS object */
 		JSValueRef jsAPI = KJSUtil::ToJSValue(globalValue, context);
-
-		/* set the API as a property of the global object */
 		JSStringRef propertyName = JSStringCreateWithUTF8CString(PRODUCT_NAME);
-		JSObjectSetProperty(context, globalObject, propertyName,
-		                    jsAPI, kJSPropertyAttributeNone, NULL);
+		JSObjectSetProperty(context, global, propertyName, jsAPI,
+			kJSPropertyAttributeNone, NULL);
 		JSStringRelease(propertyName);
 
-		/* Try to run the script */
-		JSStringRef jsCode = JSStringCreateWithUTF8CString(this->code.c_str());
-
-		/* check script syntax */
+		// Check the script's syntax.
+		JSValueRef exception;
+		JSStringRef jsCode = JSStringCreateWithUTF8CString(code.c_str());
 		bool syntax = JSCheckScriptSyntax(context, jsCode, NULL, 0, &exception);
-		
 		if (!syntax)
 		{
 			SharedValue e = KJSUtil::ToKrollValue(exception, context, NULL);
@@ -70,18 +60,15 @@ namespace kroll
 			throw ValueException(e);
 		}
 
-		/* evaluate the script */
+		// Run the script.
 		JSValueRef ret = JSEvaluateScript(context, jsCode, NULL, NULL, 1, &exception);
 		JSStringRelease(jsCode);
-		
+
 		if (ret == NULL)
 		{
 			SharedValue e = KJSUtil::ToKrollValue(exception, context, NULL);
 			throw ValueException(e);
 		}
-		
-		// null it out so we don't hold a bunch of this in memory
-		this->code = "";
 	}
 }
 

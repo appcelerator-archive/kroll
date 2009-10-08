@@ -13,15 +13,17 @@ namespace kroll
 	class KROLL_JAVASCRIPT_API JavascriptModuleInstance : public Module
 	{
 	public:
-		JavascriptModuleInstance(Host *host, std::string path, std::string dir, std::string name);
-		void Initialize ();
-		void Destroy ();
-
-		void Load();
+		JavascriptModuleInstance(Host *host, std::string path, 
+			std::string dir, std::string name);
+		~JavascriptModuleInstance();
+		void Initialize () {}
+		void Destroy () {}
 		void Run();
+
 	protected:
 		std::string path;
-		std::string code;
+		JSGlobalContextRef context;
+		JSObjectRef global;
 	};
 }
 
