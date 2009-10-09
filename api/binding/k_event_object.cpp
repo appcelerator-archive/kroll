@@ -58,7 +58,7 @@ namespace kroll
 
 	AutoPtr<Event> KEventObject::CreateEvent(const std::string& eventName)
 	{
-		return new Event(AutoPtr<KEventObjet>(this, true), eventName);
+		return new Event(AutoPtr<KEventObject>(this, true), eventName);
 	}
 
 	void KEventObject::RemoveEventListener(std::string& eventName, SharedKMethod listener)

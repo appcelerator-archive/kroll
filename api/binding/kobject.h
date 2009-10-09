@@ -317,6 +317,15 @@ namespace kroll
 		 */
 		static SharedKObject Unwrap(SharedKObject);
 
+		/**
+		 * If this object is already exposed as an AutoPtr, this method
+		 * returns a shared version of this object
+		 */
+		AutoPtr<KObject> GetAutoPtr()
+		{
+			return AutoPtr<KObject>(this, true);
+		}
+
 	protected:
 		std::string type;
 
