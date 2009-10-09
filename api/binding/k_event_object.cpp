@@ -56,6 +56,11 @@ namespace kroll
 		delete listeners;
 	}
 
+	AutoPtr<Event> KEventObject::CreateEvent(const std::string& eventName)
+	{
+		return new Event(AutoPtr<KEventObjet>(this, true), eventName);
+	}
+
 	void KEventObject::RemoveEventListener(std::string& eventName, SharedKMethod listener)
 	{
 		this->RemoveEventListener(eventName, 0, listener);

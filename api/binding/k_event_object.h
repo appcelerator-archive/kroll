@@ -32,6 +32,7 @@ namespace kroll
 		KEventObject(bool root, const char* name = "");
 		~KEventObject();
 
+		AutoPtr<Event> CreateEvent(const std::string& eventName);
 		unsigned int AddEventListener(std::string& eventName, SharedKMethod listener);
 		unsigned int AddEventListenerForAllEvents(SharedKMethod callback);
 		virtual void RemoveEventListener(std::string& eventName, SharedKMethod listener);
