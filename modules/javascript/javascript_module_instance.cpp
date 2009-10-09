@@ -31,10 +31,12 @@ namespace kroll
 		}
 	}
 
-	JavascriptModuleInstance::~JavascriptModuleInstance()
+	void JavascriptModuleInstance::Stop()
 	{
 		KJSUtil::UnregisterGlobalContext(global);
 		KJSUtil::UnprotectGlobalContext(context);
+		this->global = 0;
+		this->context = 0;
 	}
 
 	void JavascriptModuleInstance::Run()

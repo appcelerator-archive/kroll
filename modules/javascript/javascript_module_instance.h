@@ -15,9 +15,8 @@ namespace kroll
 	public:
 		JavascriptModuleInstance(Host *host, std::string path, 
 			std::string dir, std::string name);
-		~JavascriptModuleInstance();
 		void Initialize () {}
-		void Destroy () {}
+		void Stop();
 		void Run();
 
 	protected:
