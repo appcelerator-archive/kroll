@@ -17,21 +17,21 @@ namespace kroll
 
 	SharedKMethod AccessorBoundObject::FindMethod(std::string& name)
 	{
-		std::string lcname = name;
+		std::string lcname(name);
 		std::transform(lcname.begin(), lcname.end(), lcname.begin(), tolower);
 
-		SharedStringList names = this->GetPropertyNames();
+		SharedStringList names(this->GetPropertyNames());
 		for (size_t i = 0; i < names->size(); i++)
 		{
-			std::string other = *names->at(i);
-			SharedValue v = this->RawGet(other.c_str());
-			if (v->IsMethod()) {
+			std::string other(*names->at(i));
+			SharedValue v(this->RawGet(other.c_str()));
 
+			if (v->IsMethod())
+			{
 				std::transform(other.begin(), other.end(), other.begin(), tolower);
 				if (other == lcname) {
 					return v->ToMethod();
 				}
-
 			}
 		}
 		return 0;
@@ -39,8 +39,8 @@ namespace kroll
 
 	bool AccessorBoundObject::HasProperty(const char* name)
 	{
-		std::string styleOne = "get";
-		std::string styleTwo = "is";
+		std::string styleOne("get");
+		std::string styleTwo("is");
 		styleOne.append(name);
 		styleTwo.append(name);
 
@@ -51,33 +51,39 @@ namespace kroll
 
 	void AccessorBoundObject::Set(const char *name, SharedValue value)
 	{
-		std::string methodName = "set";
+		std::string methodName("set");
 		methodName.append(name);
-		SharedKMethod m = this->FindMethod(methodName);
+		SharedKMethod m(this->FindMethod(methodName));
 
-		if (!m.isNull()) {
+		if (!m.isNull())
+		{
 			m->Call(value);
-		} else {
+		}
+		else
+		{
 			this->RawSet(name, value);
 		}
 	}
 
 	SharedValue AccessorBoundObject::Get(const char *name)
 	{
-		std::string styleOne = "get";
-		std::string styleTwo = "is";
+		std::string styleOne("get");
+		std::string styleTwo("is");
 		styleOne.append(name);
 		styleTwo.append(name);
-		SharedKMethod m1 = this->FindMethod(styleOne);
-		SharedKMethod m2 = this->FindMethod(styleTwo);
+		SharedKMethod m1(this->FindMethod(styleOne));
+		SharedKMethod m2(this->FindMethod(styleTwo));
 
-		if (!m1.isNull()) {
+		if (!m1.isNull())
+		{
 			return m1->Call();
-
-		} else if (!m2.isNull()) {
+		}
+		else if (!m2.isNull())
+		{
 			return m2->Call();
-
-		} else {
+		}
+		else
+		{
 			return this->RawGet(name);
 		}
 	}
