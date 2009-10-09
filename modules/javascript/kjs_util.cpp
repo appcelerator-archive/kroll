@@ -6,6 +6,7 @@
 
 #include "javascript_module.h"
 #include <Poco/FileStream.h>
+#include <Poco/Mutex.h>
 
 namespace kroll
 {
@@ -653,15 +654,16 @@ namespace KJSUtil
 	}
 
 	static std::map<JSObjectRef, JSGlobalContextRef> jsContextMap;
-	void RegisterGlobalContext(
-		JSObjectRef object,
-		JSGlobalContextRef globalContext)
+	Poco::Mutex jsContextMapMutex;
+	void RegisterGlobalContext(JSObjectRef object, JSGlobalContextRef globalContext)
 	{
+		Poco::Mutex::ScopedLock lock(jsContextMapMutex);
 		jsContextMap[object] = globalContext;
 	}
 
 	void UnregisterGlobalContext(JSObjectRef object)
 	{
+		Poco::Mutex::ScopedLock lock(jsContextMapMutex);
 		std::map<JSObjectRef, JSGlobalContextRef>::iterator i = jsContextMap.find(object);
 		if (i != jsContextMap.end())
 		{
@@ -672,6 +674,7 @@ namespace KJSUtil
 
 	JSGlobalContextRef GetGlobalContext(JSObjectRef object)
 	{
+		Poco::Mutex::ScopedLock lock(jsContextMapMutex);
 		if (jsContextMap.find(object) == jsContextMap.end())
 		{
 			return NULL;
@@ -683,8 +686,10 @@ namespace KJSUtil
 	}
 
 	static std::map<JSGlobalContextRef, int> jsContextRefCounts;
+	Poco::Mutex jsContextRefCountsMutex;
 	void ProtectGlobalContext(JSGlobalContextRef globalContext)
 	{
+		Poco::Mutex::ScopedLock lock(jsContextRefCountsMutex);
 		if (jsContextRefCounts.find(globalContext) == jsContextRefCounts.end())
 		{
 			JSGlobalContextRetain(globalContext);
@@ -709,6 +714,7 @@ namespace KJSUtil
 
 	void UnprotectGlobalContext(JSGlobalContextRef globalContext)
 	{
+		Poco::Mutex::ScopedLock lock(jsContextRefCountsMutex);
 		std::map<JSGlobalContextRef, int>::iterator i
 			= jsContextRefCounts.find(globalContext);
 
