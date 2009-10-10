@@ -45,7 +45,7 @@ namespace kroll
 		// basic bookkeeping for the reference counter, but other
 		// than that, everything past here is like executing a job
 		// in a synchronous fashion.
-		ThreadManager manager;
+		ThreadManager manager();
 		this->Run();
 
 		try
