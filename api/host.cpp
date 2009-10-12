@@ -11,6 +11,7 @@
 #include <cstdlib>
 
 #include "kroll.h"
+#include "thread_manager.h"
 #include <Poco/DirectoryIterator.h>
 #include <Poco/File.h>
 #include <Poco/Path.h>
@@ -60,7 +61,7 @@ namespace kroll
 		this->SetupGlobalObject();
 		this->SetupApplication(argc, argv);
 		this->ParseCommandLineArguments(); // Depends on this->application
-		
+
 		if (Environment::has(DEBUG_ENV))
 		{
 			std::string debug_val = Environment::get(DEBUG_ENV);

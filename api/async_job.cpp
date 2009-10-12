@@ -4,7 +4,9 @@
  * Copyright (c) 2009 Appcelerator, Inc. All Rights Reserved.
  */
 #include "kroll.h"
+#include "thread_manager.h"
 #include <Poco/Bugcheck.h>
+
 namespace kroll
 {
 	AsyncJob::AsyncJob(SharedKMethod job) :
@@ -45,7 +47,7 @@ namespace kroll
 		// basic bookkeeping for the reference counter, but other
 		// than that, everything past here is like executing a job
 		// in a synchronous fashion.
-		ThreadManager manager();
+		START_KROLL_THREAD;
 		this->Run();
 
 		try
@@ -56,6 +58,8 @@ namespace kroll
 		{
 			std::cerr << bge.what() << std::endl;
 		}
+
+		END_KROLL_THREAD;
 	}
 
 	void AsyncJob::Run()

@@ -123,9 +123,7 @@ namespace kroll
 
 	bool KEventObject::FireEvent(std::string& eventName)
 	{
-		this->duplicate();
-		AutoPtr<KEventObject> target = this;
-		AutoPtr<Event> event = new Event(target, eventName);
+		AutoPtr<Event> event(this->CreateEvent(eventName));
 		return this->FireEvent(event);
 	}
 

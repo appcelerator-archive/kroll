@@ -7,27 +7,11 @@
 #define _KR_THREAD_MANAGER_H_
 
 #ifdef OS_OSX
-#import <Foundation/Foundation.h>
+#define START_KROLL_THREAD NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
+#define END_KROLL_THREAD [pool release];
+#else
+#define START_KROLL_THREAD
+#define END_KROLL_THREAD
 #endif
 
-namespace kroll
-{
-	class KROLL_API ThreadManager
-	{
-	public:
-#ifdef OS_OSX
-		ThreadManager()
-		{
-			this->pool = [[NSAutoreleasePool alloc] init];
-		}
-
-		~ThreadManager()
-		{
-			[pool release];
-		}
-	private:
-		NSAutoreleasePool* pool;
-#endif
-	};
-}
 #endif
