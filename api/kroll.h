@@ -92,6 +92,7 @@ namespace kroll
 #include "async_job.h"
 #include "host.h"
 #include "script.h"
+#include "thread_manager.h"
 
 #ifdef OS_OSX
 #include "osx/osx.h"

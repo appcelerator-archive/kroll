@@ -12,7 +12,7 @@ namespace kroll
 	class KROLL_API Event : public AccessorBoundObject
 	{
 		public:
-		Event(AutoPtr<KEventObject> target, std::string& eventName);
+		Event(AutoPtr<KEventObject> target, const std::string& eventName);
 		void _GetTarget(const ValueList&, SharedValue result);
 		void _GetType(const ValueList&, SharedValue result);
 		void _GetTimestamp(const ValueList&, SharedValue result);
@@ -21,7 +21,7 @@ namespace kroll
 		static void SetEventConstants(KObject* target);
 
 		AutoPtr<KEventObject> target;
-		std::string& eventName;
+		std::string eventName;
 		Poco::Timestamp timestamp;
 		bool stopped;
 		bool preventedDefault;
