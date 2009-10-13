@@ -14,7 +14,7 @@ revisions = {
 	"linux-i386": 21,
 	"linux-x86_64": 17,
 	"osx-universal": 17,
-	"win32-i386": 22
+	"win32-i386": 23
 }
 
 thirdparty_name = 'thirdparty-%s-%s-r%s' % (build.os, build.arch, revisions[build.os+'-'+build.arch])
@@ -59,10 +59,10 @@ elif build.is_win32():
 	futils.CopyTree(path.join(build.third_party, 'webkit', 'bin'), rtdir)
 	futils.CopyToDir(path.join(build.third_party, 'microsoft', 'Microsoft.VC80.CRT'), rtdir)
 
-	webkit_tlb = path.join(build.third_party, 'webkit', 'lib', 'WebKit.tlb')
-	webkit_manifest = path.join(build.runtime_build_dir, 'WebKit.manifest')
-	t = Command(webkit_manifest, webkit_tlb, 'mt.exe /nologo /tlb:"$SOURCE" /dll:WebKit /out:"$TARGET"')
-	build.mark_build_target(t)
+	#webkit_tlb = path.join(build.third_party, 'webkit', 'lib', 'WebKit.tlb')
+	#webkit_manifest = path.join(build.runtime_build_dir, 'WebKit.manifest')
+	#t = Command(webkit_manifest, webkit_tlb, 'mt.exe /nologo /tlb:"$SOURCE" /dll:WebKit /out:"$TARGET"')
+	#build.mark_build_target(t)
 
 elif build.is_osx():
 	excludes = ['.h', '.defs', 'JavaScriptGlue.framework']
