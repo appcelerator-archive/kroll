@@ -47,7 +47,7 @@ namespace kroll
 
 		std::string resourcesPath(host->GetApplication()->GetResourcesPath());
 		zend_alter_ini_entry("include_path", sizeof("include_path"),
-			(char*) resourcesPath.c_str(), resourcesPath.size() - 1,
+			(char*) resourcesPath.c_str(), resourcesPath.size(),
 			ZEND_INI_USER, ZEND_INI_STAGE_RUNTIME);
 	}
 
