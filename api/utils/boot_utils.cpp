@@ -67,133 +67,145 @@ namespace BootUtils
 		return installedComponents;
 	}
 
+	class PathBits
+	{
+	public:
+		PathBits(const string& name, const string& fullPath) :
+			name(name),
+			fullPath(fullPath)
+		{ }
+		std::string name;
+		std::string fullPath;
+	};
+
+	static vector<PathBits> GetDirectoriesAtPath(std::string& path)
+	{
+		vector<PathBits> directories;
+		vector<string> paths;
+
+		FileUtils::ListDir(path, paths);
+		vector<string>::iterator i = paths.begin();
+		while (i != paths.end())
+		{
+			string& subpath(*i++);
+			if (subpath[0] == '.')
+				continue;
+
+			string fullPath(FileUtils::Join(path.c_str(), subpath.c_str(), NULL));
+			if (!FileUtils::IsDirectory(fullPath))
+				continue;
+
+			directories.push_back(PathBits(subpath, fullPath));
+		}
+		return directories;
+	}
+
 	static void ScanRuntimesAtPath(string path, vector<SharedComponent>& results)
 	{
-		vector<string> paths;
-		SharedComponent c;
 		if (!FileUtils::IsDirectory(path))
-		{
 			return;
-		}
 
 		// Read everything that looks like <searchpath>/runtime/<os>/*
 		string rtPath(FileUtils::Join(path.c_str(), "runtime", OS_NAME, NULL));
-		FileUtils::ListDir(rtPath, paths);
-
-		vector<string>::iterator runtimeVersion = paths.begin();
-		while (runtimeVersion != paths.end())
+		vector<PathBits> versions(GetDirectoriesAtPath(rtPath));
+		for (size_t i = 0; i < versions.size(); i++)
 		{
-			string version(*runtimeVersion++);
-			string fullPath(FileUtils::Join(rtPath.c_str(), version.c_str(), NULL));
-			c = KComponent::NewComponent(RUNTIME, "runtime", version, fullPath);
-			AddToComponentVector(results, c);
+			PathBits& b = versions[i];
+			AddToComponentVector(results,
+				KComponent::NewComponent(RUNTIME, "runtime", b.name, b.fullPath));
 		}
 	}
 
 	static void ScanSDKsAtPath(string path, vector<SharedComponent>& results)
 	{
-		vector<string> paths;
-		SharedComponent c;
 		if (!FileUtils::IsDirectory(path))
-		{
 			return;
-		}
 
 		// Read everything that looks like <searchpath>/sdk/<os>/*
 		string sdkPath(FileUtils::Join(path.c_str(), "sdk", OS_NAME, NULL));
-		FileUtils::ListDir(sdkPath, paths);
+		vector<PathBits> versions(GetDirectoriesAtPath(sdkPath));
 
-		vector<string>::iterator sdkVersion = paths.begin();
-		while (sdkVersion != paths.end())
+		for (size_t i = 0; i < versions.size(); i++)
 		{
-			string version(*sdkVersion++);
-			string fullPath(FileUtils::Join(
-				sdkPath.c_str(), version.c_str(), NULL));
-			c = KComponent::NewComponent(SDK, "sdk", version, fullPath);
-			AddToComponentVector(results, c);
+			PathBits& b = versions[i];
+			AddToComponentVector(results,
+				KComponent::NewComponent(SDK, "sdk", b.name, b.fullPath));
 		}
 	}
 
 	static void ScanMobileSDKsAtPath(string path, vector<SharedComponent>& results)
 	{
-		vector<string> paths;
-		SharedComponent c;
 		if (!FileUtils::IsDirectory(path))
-		{
 			return;
-		}
 
 		// Read everything that looks like <searchpath>/mobilesdk/<os>/*
 		string sdkPath(FileUtils::Join(path.c_str(), "mobilesdk", OS_NAME, NULL));
-		FileUtils::ListDir(sdkPath, paths);
-
-		vector<string>::iterator sdkVersion = paths.begin();
-		while (sdkVersion != paths.end())
+		vector<PathBits> versions(GetDirectoriesAtPath(sdkPath));
+		for (size_t i = 0; i < versions.size(); i++)
 		{
-			string version(*sdkVersion++);
-			string fullPath(FileUtils::Join(
-				sdkPath.c_str(), version.c_str(), NULL));
-			c = KComponent::NewComponent(MOBILESDK, "mobilesdk", version, fullPath);
-			AddToComponentVector(results, c);
+			PathBits& b = versions[i];
+			AddToComponentVector(results,
+				KComponent::NewComponent(MOBILESDK, "mobilesdk", b.name, b.fullPath));
 		}
 	}
 
 	static void ScanModulesAtPath(string path, vector<SharedComponent>& results)
 	{
-		vector<string> paths;
-		vector<string> subpaths;
-		SharedComponent c;
-
 		if (!FileUtils::IsDirectory(path))
-		{
 			return;
-		}
-
-		string namesPath(FileUtils::Join(path.c_str(), "modules", OS_NAME, NULL));
 
 		// Read everything that looks like <searchpath>/modules/<os>/*
-		FileUtils::ListDir(namesPath, paths);
-		vector<string>::iterator moduleName = paths.begin();
-		while (moduleName != paths.end())
+		string namesPath(FileUtils::Join(path.c_str(), "modules", OS_NAME, NULL));
+		vector<PathBits> moduleNames(GetDirectoriesAtPath(namesPath));
+		for (size_t i = 0; i < moduleNames.size(); i++)
 		{
-			string name(*moduleName++);
-			string versionsPath(FileUtils::Join(namesPath.c_str(), name.c_str(), NULL));
+			PathBits& moduleName = moduleNames[i];
 
 			// Read everything that looks like <searchpath>/modules/<os>/<name>/*
-			FileUtils::ListDir(versionsPath, subpaths);
-			vector<string>::iterator moduleVersion = subpaths.begin();
-			while (moduleVersion != subpaths.end())
+			vector<PathBits> moduleVersions(GetDirectoriesAtPath(moduleName.fullPath));
+			for (size_t j = 0; j < moduleVersions.size(); j++)
 			{
-				string version(*moduleVersion++);
-				string fullPath(FileUtils::Join(versionsPath.c_str(), version.c_str(), NULL));
-				c = KComponent::NewComponent(MODULE, name, version, fullPath);
-				AddToComponentVector(results, c);
+				PathBits& moduleVersion = moduleVersions[j];
+				AddToComponentVector(results, KComponent::NewComponent(
+					MODULE, moduleName.name, moduleVersion.name, moduleVersion.fullPath));
 			}
 		}
 	}
 
 	void ScanBundledComponents(string path, vector<SharedComponent>& results)
 	{
-		vector<string> paths;
-		SharedComponent c;
-
 		// Find a directory like <appdir>/runtime/
-		string rtPath(FileUtils::Join(path.c_str(), "runtime", NULL));
-		if (FileUtils::IsDirectory(rtPath))
+		string runtimePath(FileUtils::Join(path.c_str(), "runtime", NULL));
+		if (FileUtils::IsDirectory(runtimePath))
 		{
-			c = KComponent::NewComponent(RUNTIME, "runtime", "", rtPath, true);
-			results.push_back(c);
+			results.push_back(KComponent::NewComponent(
+				RUNTIME, "runtime", "", runtimePath, true));
+		}
+
+		// Find a directory like <appdir>/mobilesdk/
+		string mobileSDKPath(FileUtils::Join(path.c_str(), "mobilesdk", NULL));
+		if (FileUtils::IsDirectory(mobileSDKPath))
+		{
+			results.push_back(KComponent::NewComponent(
+				RUNTIME, "mobilesdk", "", mobileSDKPath, true));
+		}
+
+		// Find a directory like <appdir>/sdk/
+		string sdkPath(FileUtils::Join(path.c_str(), "sdk", NULL));
+		if (FileUtils::IsDirectory(sdkPath))
+		{
+			results.push_back(KComponent::NewComponent(
+				RUNTIME, "sdk", "", sdkPath, true));
 		}
 
 		// Find all directories like <appdir>/modules/*
 		string modulesPath(FileUtils::Join(path.c_str(), "modules", NULL));
-		FileUtils::ListDir(modulesPath, paths);
-		for (size_t i = 0; i < paths.size(); i++)
+		vector<PathBits> moduleNames(GetDirectoriesAtPath(modulesPath));
+		for (size_t i = 0; i < moduleNames.size(); i++)
 		{
-			string name(paths[i]);
-			string path(FileUtils::Join(modulesPath.c_str(), name.c_str(), NULL));
-			c = KComponent::NewComponent(MODULE, name, "", path, true);
-			results.push_back(c);
+			PathBits& moduleName = moduleNames[i];
+			results.push_back(KComponent::NewComponent(MODULE, 
+				moduleName.name, "", moduleName.fullPath, true));
 		}
 	}
 
