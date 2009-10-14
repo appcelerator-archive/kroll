@@ -832,6 +832,8 @@ namespace kroll
 	
 	void APIBinding::RunInstaller()
 	{
+		START_KROLL_THREAD;
+
 		SharedApplication app = host->GetApplication();
 		BootUtils::RunInstaller(
 			this->installerDependencies, app, "", app->runtime->path, true);
@@ -842,6 +844,8 @@ namespace kroll
 				this->installerCallback, ValueList(), false);
 		}
 		this->installerMutex.unlock();
+
+		END_KROLL_THREAD;
 	}
 
 	SharedKList APIBinding::ComponentVectorToKList(
