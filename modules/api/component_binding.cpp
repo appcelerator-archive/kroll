@@ -11,7 +11,7 @@ namespace kroll
 {
 
 	ComponentBinding::ComponentBinding(SharedComponent component) :
-		AccessorBoundObject("API.Component"),
+		KAccessorObject("API.Component"),
 		component(component)
 	{
 		/**

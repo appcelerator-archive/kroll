@@ -16,7 +16,7 @@
 
 namespace kroll
 {
-	class APIBinding : public AccessorBoundObject
+	class APIBinding : public KAccessorObject
 	{
 		public:
 		APIBinding(Host* host);

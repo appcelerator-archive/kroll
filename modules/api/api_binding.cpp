@@ -20,7 +20,7 @@ using std::map;
 namespace kroll
 {
 	APIBinding::APIBinding(Host* host) :
-		AccessorBoundObject("API"),
+		KAccessorObject("API"),
 		host(host),
 		global(host->GetGlobalObject()),
 		logger(Logger::Get("API")),

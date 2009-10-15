@@ -14,7 +14,7 @@
 
 namespace kroll
 {
-	class ApplicationBinding : public AccessorBoundObject
+	class ApplicationBinding : public KAccessorObject
 	{
 		public:
 		ApplicationBinding(SharedApplication application, bool current = false);

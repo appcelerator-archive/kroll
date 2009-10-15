@@ -13,7 +13,7 @@
 
 namespace kroll
 {
-	class DependencyBinding : public AccessorBoundObject
+	class DependencyBinding : public KAccessorObject
 	{
 		public:
 		DependencyBinding(SharedDependency dependency);

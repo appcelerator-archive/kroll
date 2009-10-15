@@ -10,7 +10,7 @@ namespace kroll
 {
 
 	DependencyBinding::DependencyBinding(SharedDependency dependency) :
-		AccessorBoundObject("API.Dependency"),
+		KAccessorObject("API.Dependency"),
 		dependency(dependency)
 	{
 		/**

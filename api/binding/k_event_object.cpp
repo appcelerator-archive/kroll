@@ -13,7 +13,7 @@ namespace kroll
 	AutoPtr<KEventObject> KEventObject::root = new KEventObject(true, "Host");
 
 	KEventObject::KEventObject(const char *type) :
-		AccessorBoundObject(type),
+		KAccessorObject(type),
 		isRoot(false)
 	{
 		{
@@ -27,7 +27,7 @@ namespace kroll
 	}
 
 	KEventObject::KEventObject(bool isRoot, const char *type) :
-		AccessorBoundObject(type),
+		KAccessorObject(type),
 		isRoot(isRoot)
 	{
 		{

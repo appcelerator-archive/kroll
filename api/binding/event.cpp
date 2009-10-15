@@ -40,7 +40,7 @@ namespace kroll
 	std::string Event::HTTP_DATA_RECEIVED = "http.datareceived";
 
 	Event::Event(AutoPtr<KEventObject> target, const std::string& eventName) :
-		AccessorBoundObject("Event"),
+		KAccessorObject("Event"),
 		target(target),
 		eventName(eventName),
 		stopped(false),

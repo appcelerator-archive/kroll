@@ -236,6 +236,7 @@ int main(int argc, const char* argv[])
 
 	if (!EnvironmentUtils::Has(BOOTSTRAP_ENV))
 	{
+		printf("doesn't have bootstrap env: "BOOTSTRAP_ENV"\n");
 		return KrollBoot::Bootstrap();
 	}
 	else

@@ -25,7 +25,7 @@ namespace kroll
 		static unsigned int currentId;
 	};
 
-	class KROLL_API KEventObject : public AccessorBoundObject
+	class KROLL_API KEventObject : public KAccessorObject
 	{
 		public:
 		KEventObject(const char* name = "");

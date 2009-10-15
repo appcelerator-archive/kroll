@@ -9,7 +9,7 @@
 
 namespace kroll
 {
-	class KROLL_API Event : public AccessorBoundObject
+	class KROLL_API Event : public KAccessorObject
 	{
 		public:
 		Event(AutoPtr<KEventObject> target, const std::string& eventName);
