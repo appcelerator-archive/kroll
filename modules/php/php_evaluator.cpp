@@ -141,57 +141,6 @@ namespace kroll
 			result->SetBool(true);
 		}
 	}
-
-	void PHPEvaluator::FillServerVars(Poco::URI& uri, SharedKObject scope TSRMLS_DC)
-	{
-		// Fill $_SERVER with HTTP headers
-		zval *SERVER;
-		array_init(SERVER);
-		
-		//if (zend_hash_find(&EG(symbol_table), "_SERVER", sizeof("_SERVER"), (void**)&SERVER) == SUCCESS)
-		//{
-		if (scope->HasProperty("httpHeaders"))
-		{
-			SharedStringList headerNames = scope->GetObject("httpHeaders")->GetPropertyNames();
-			for (size_t i = 0; i < headerNames->size(); i++)
-			{
-				//zval *headerValue;
-				const char *headerName = headerNames->at(i)->c_str();
-				const char *headerValue = scope->GetObject("httpHeaders")->
-					GetString(headerName).c_str();
-				
-				//ALLOC_INIT_ZVAL(headerValue);
-				//ZVAL_STRING(headerValue, (char*)headers->GetString(headerName).c_str(), 1);
-				
-				add_assoc_stringl(SERVER, (char *) headerName, (char *) headerValue, strlen(headerValue), 1);
-				//zend_hash_add(Z_ARRVAL_P(SERVER), (char*)headerName, strlen(headerName)+1, &headerValue, sizeof(zval*), NULL);
-				//ZEND_SET_SYMBOL(Z_ARRVAL_P(SERVER), (char*)headerName, headerValue);
-			}
-			ZEND_SET_SYMBOL(&EG(symbol_table), (char *)"_SERVER", SERVER);
-		}
-		//}
-		
-		// Fill $_GET with query string parameters
-		zval *GET;
-		if (zend_hash_find(&EG(symbol_table), "_GET", sizeof("_GET"), (void**)&GET) == SUCCESS)
-		{
-			std::string queryString = uri.getQuery();
-			Poco::StringTokenizer tokens(uri.getQuery(), "&=");
-			for (Poco::StringTokenizer::Iterator iter = tokens.begin();
-				iter != tokens.end(); iter++)
-			{
-				std::string key = *iter;
-				std::string value = *(++iter);
-				
-				zval *val;
-				ALLOC_INIT_ZVAL(val);
-				ZVAL_STRING(val, (char*)value.c_str(), 1);
-				zend_hash_add(Z_ARRVAL_P(GET), (char*)key.c_str(), key.size()+1, &val, sizeof(zval*), NULL);
-			}
-		}
-		
-		// TODO: Fill $_POST, $_REQUEST
-	}
 	
 	void PHPEvaluator::Preprocess(const ValueList& args, SharedValue result)
 	{
@@ -207,7 +156,8 @@ namespace kroll
 		TSRMLS_FETCH();
 
 		PHPModule::SetBuffering(true);
-
+		PHPModule::Instance()->PushURI(uri);
+		
 		// These variables are normally initialized by php_module_startup
 		// but we do not call that function, so we manually initialize.
 		PG(header_is_being_sent) = 0;
@@ -221,7 +171,6 @@ namespace kroll
 		// at parse/compile time -- see: main/main.c line 969
 		PG(during_request_startup) = 0;
 
-		//FillServerVars(uri, scope TSRMLS_CC);
 		zend_file_handle script;
 		script.type = ZEND_HANDLE_FP;
 		script.filename = (char*)path.c_str();
@@ -246,6 +195,7 @@ namespace kroll
 		o->SetString("mimeType", PHPModule::GetMimeType().c_str());
 		result->SetObject(o);
 
+		PHPModule::Instance()->PopURI();
 		PHPModule::SetBuffering(false);
 	}
 }

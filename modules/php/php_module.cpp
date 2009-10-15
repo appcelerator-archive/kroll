@@ -28,6 +28,7 @@ namespace kroll
 	static void LogMessage(char*);
 	static int HeaderHandler(sapi_header_struct*, sapi_header_op_enum, 
 		sapi_headers_struct* TSRMLS_DC);
+	static void RegisterServerVariables(zval *tracks_var_array TSRMLS_DC);
 
 	void PHPModule::Initialize()
 	{
@@ -39,6 +40,7 @@ namespace kroll
 		php_embed_module.log_message = LogMessage;
 		php_embed_module.ini_defaults = IniDefaults;
 		php_embed_module.header_handler = HeaderHandler;
+		php_embed_module.register_server_variables = RegisterServerVariables;
 		php_embed_init(argc, argv PTSRMLS_CC);
 
 		PHPUtils::InitializePHPKrollClasses();
@@ -164,5 +166,15 @@ namespace kroll
 			mimeType = sapiHeaders->mimetype;
 		}
 		return op;
+	}
+	
+	static void RegisterServerVariables(zval *tracks_var_array TSRMLS_DC)
+	{
+		Poco::URI* uri = PHPModule::Instance()->GetURI();
+		if (uri)
+		{
+			php_register_variable("SCRIPT_NAME", (char*)uri->getPath().c_str(), tracks_var_array TSRMLS_CC);
+			php_register_variable("REQUEST_URI", (char*)uri->getPathEtc().c_str(), tracks_var_array TSRMLS_CC);
+		}
 	}
 }

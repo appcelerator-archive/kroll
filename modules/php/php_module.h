@@ -32,6 +32,7 @@
 
 #include <kroll/kroll.h>
 #include <sstream>
+#include <stack>
 
 #include "php_api.h"
 #include "php_utils.h"
@@ -65,12 +66,17 @@ namespace kroll
 		static void SetBuffering(bool buffering);
 		static std::ostringstream& GetBuffer() { return buffer; }
 		static std::string& GetMimeType() { return mimeType; }
-
+		
+		void PushURI(Poco::URI& uri) { uriStack.push(new Poco::URI(uri)); }
+		void PopURI() { Poco::URI* uri = uriStack.top(); uriStack.pop(); delete uri; }
+		Poco::URI* GetURI() { return uriStack.size() == 0 ? 0 : uriStack.top(); }
+		
 	private:
 		SharedKObject binding;
 		static std::ostringstream buffer;
 		static std::string mimeType;
 		static PHPModule *instance_;
+		std::stack<Poco::URI*> uriStack;
 
 		DISALLOW_EVIL_CONSTRUCTORS(PHPModule);
 	};
