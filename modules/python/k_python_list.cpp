@@ -8,6 +8,7 @@
 namespace kroll
 {
 	KPythonList::KPythonList(PyObject *list) :
+		KList("Python.KPythonList"),
 		list(list),
 		object(new KPythonObject(list, true))
 	{

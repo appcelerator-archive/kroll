@@ -8,6 +8,7 @@
 namespace kroll {
 
 	KPHPMethod::KPHPMethod(zval* object, const char* methodName) :
+		KMethod("PHP.KPHPMethod"),
 		object(object),
 		methodName(strdup(methodName)),
 		globalObject(PHPUtils::GetCurrentGlobalObject())

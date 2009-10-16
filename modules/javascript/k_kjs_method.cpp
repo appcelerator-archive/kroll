@@ -8,6 +8,7 @@
 namespace kroll
 {
 	KKJSMethod::KKJSMethod(JSContextRef context, JSObjectRef jsobject, JSObjectRef thisObject) :
+		KMethod("JavaScript.KKJSMethod"),
 		context(NULL),
 		jsobject(jsobject),
 		thisObject(thisObject)

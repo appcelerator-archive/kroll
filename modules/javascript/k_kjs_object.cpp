@@ -8,6 +8,7 @@
 namespace kroll
 {
 	KKJSObject::KKJSObject(JSContextRef context, JSObjectRef jsobject) :
+		KObject("JavaScript.KKJSObject"),
 		context(NULL),
 		jsobject(jsobject)
 	{

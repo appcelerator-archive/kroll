@@ -8,6 +8,7 @@
 namespace kroll
 {
 	KPHPArrayObject::KPHPArrayObject(zval *list) :
+		KList("PHP.KPHPArrayObject"),
 		list(list)
 	{
 		if (Z_TYPE_P(list) != IS_ARRAY)

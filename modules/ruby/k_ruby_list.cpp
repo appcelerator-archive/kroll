@@ -9,6 +9,7 @@
 namespace kroll
 {
 	KRubyList::KRubyList(VALUE list) :
+		KList("Ruby.KRubyList"),
 		list(list),
 		object(new KRubyObject(list))
 	{

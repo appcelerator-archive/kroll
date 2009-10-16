@@ -11,9 +11,8 @@
 
 namespace kroll
 {
-
 	RubyEvaluator::RubyEvaluator() :
-		StaticBoundObject("Ruby"), next_id(0)
+		StaticBoundObject("Ruby.Evaluator")
 	{
 		/**
 		 * @tiapi(method=True,name=Ruby.canEvaluate,since=0.7)
@@ -88,11 +87,12 @@ namespace kroll
 
 	std::string RubyEvaluator::GetContextId(SharedKObject global)
 	{
+		static int nextId = 0;
 		int cid = 0;
 		SharedValue idv = global->Get("__ruby_module_id__");
 		if (idv->IsUndefined())
 		{
-			cid = this->next_id++;
+			cid = nextId++;
 			global->Set("__ruby_module_id__", Value::NewInt(cid));
 		}
 		else

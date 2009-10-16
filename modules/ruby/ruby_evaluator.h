@@ -18,7 +18,6 @@ namespace kroll
 		void Evaluate(const ValueList& args, SharedValue result);
 
 		private:
-		int next_id;
 		std::string GetContextId(SharedKObject global);
 		VALUE GetContext(SharedKObject global);
 		void ContextToGlobal(VALUE ctx, SharedKObject o);

@@ -8,6 +8,7 @@
 namespace kroll {
 
 	KPHPObject::KPHPObject(zval* object) :
+		KObject("PHP.KPHPObject"),
 		object(object)
 	{
 		zval_addref_p(object);

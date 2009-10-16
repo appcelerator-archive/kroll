@@ -8,6 +8,7 @@
 namespace kroll
 {
 	KPythonObject::KPythonObject(PyObject *obj) :
+		KObject("Python.KPythonObject"),
 		object(obj),
 		readOnly(false),
 		delegate(NULL)

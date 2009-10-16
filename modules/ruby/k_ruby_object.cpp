@@ -5,9 +5,10 @@
  */
 #include "ruby_module.h"
 
-namespace kroll {
-
+namespace kroll
+{
 	KRubyObject::KRubyObject(VALUE object) :
+		KObject("Ruby.KRubyObject"),
 		object(object)
 	{
 		rb_gc_register_address(&object);

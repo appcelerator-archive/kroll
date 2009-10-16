@@ -9,6 +9,7 @@
 namespace kroll
 {
 	KRubyMethod::KRubyMethod(VALUE method) :
+		KMethod("Ruby.KRubyMethod"),
 		method(method),
 		arg(Qnil),
 		object(new KRubyObject(method)),

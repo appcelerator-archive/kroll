@@ -7,7 +7,9 @@
 
 namespace kroll
 {
-	KPythonDict::KPythonDict(PyObject *obj) : object(obj)
+	KPythonDict::KPythonDict(PyObject *obj) :
+		KObject("Python,KPythonDict"),
+		object(obj)
 	{
 		PyLockGIL lock;
 		Py_INCREF(this->object);

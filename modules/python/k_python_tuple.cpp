@@ -8,6 +8,7 @@
 namespace kroll
 {
 	KPythonTuple::KPythonTuple(PyObject *tuple) :
+		KList("Python.KPythonTuple"),
 		tuple(tuple),
 		object(new KPythonObject(tuple, true))
 	{

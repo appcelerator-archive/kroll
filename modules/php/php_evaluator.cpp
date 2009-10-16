@@ -10,7 +10,7 @@
 namespace kroll
 {
 	PHPEvaluator::PHPEvaluator()
-		: StaticBoundObject("PHPEvaluator")
+		: StaticBoundObject("PHP.PHPEvaluator")
 	{
 		/**
 		 * @tiapi(method=True,name=PHP.canEvaluate,since=0.7)

@@ -7,7 +7,8 @@
 
 namespace kroll
 {
-	KPHPList::KPHPList(zval *list) :
+	KPHPList::KPHPList(zval* list) :
+		KList("PHP.KPHPList"),
 		list(list)
 	{
 		if (Z_TYPE_P(list) != IS_ARRAY)

@@ -8,7 +8,6 @@
 
 namespace kroll
 {
-
 	DependencyBinding::DependencyBinding(SharedDependency dependency) :
 		KAccessorObject("API.Dependency"),
 		dependency(dependency)

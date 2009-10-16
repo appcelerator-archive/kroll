@@ -8,6 +8,7 @@
 namespace kroll {
 
 	KRubyHash::KRubyHash(VALUE hash) :
+		KObject("Ruby.KRubyHash"),
 		hash(hash),
 		object(new KRubyObject(hash))
 	{

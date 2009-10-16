@@ -20,7 +20,6 @@
 
 namespace kroll
 {
-
 	ApplicationBinding::ApplicationBinding(SharedApplication application, bool current) :
 		KAccessorObject("API.Application"),
 		application(application),

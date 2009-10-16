@@ -8,8 +8,8 @@
 
 namespace kroll
 {
-	PythonEvaluator::PythonEvaluator()
-		: StaticBoundObject("Python")
+	PythonEvaluator::PythonEvaluator() :
+		StaticBoundObject("Python.Evaluator")
 	{
 		/**
 		 * @tiapi(method=True,name=Python.canEvaluate,since=0.7)

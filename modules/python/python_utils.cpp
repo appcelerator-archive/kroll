@@ -7,7 +7,6 @@
 
 namespace kroll
 {
-
 	static void PyKObject_dealloc(PyObject* );
 	static PyObject* PyKObject_getattr(PyObject*, char*);
 	static int PyKObject_setattr(PyObject*, char*, PyObject *);

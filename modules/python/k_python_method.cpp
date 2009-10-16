@@ -8,6 +8,7 @@
 namespace kroll
 {
 	KPythonMethod::KPythonMethod(PyObject *method) :
+		KMethod("Python.KMethod"),
 		method(method),
 		object(new KPythonObject(method))
 	{
