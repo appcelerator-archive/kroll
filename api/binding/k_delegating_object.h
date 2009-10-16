@@ -1,11 +1,10 @@
 /*
  * Appcelerator Kroll - licensed under the Apache Public License 2
  * see LICENSE in the root folder for details on the license.
- * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
+ * Copyright (c) 2008, 2009 Appcelerator, Inc. All Rights Reserved.
  */
-
-#ifndef _KR_DELEGATE_STATIC_BOUND_OBJECT_H_
-#define _KR_DELEGATE_STATIC_BOUND_OBJECT_H_
+#ifndef _KR_K_DELEGATING_OBJECT_H_
+#define _KR_K_DELEGATING_OBJECT_H_
 
 #include <vector>
 #include <string>
@@ -14,7 +13,7 @@
 namespace kroll
 {
 	/**
-	 * The DelegateStaticBoundObject lets you wrap a globally accessible
+	 * The KDelegatingObject lets you wrap a globally accessible
 	 * object in such a way as it appears to have special properties in
 	 * in local contexts. When a Get(...) occurs, the object searches a local
 	 * delegate and then a global one. When a Set(...) occurs, the object
@@ -22,12 +21,12 @@ namespace kroll
 	 * is most useful if the local properties are assigned to the local object
 	 * in an initial setup phase.
 	 */
-	class KROLL_API DelegateStaticBoundObject : public KObject
+	class KROLL_API KDelegatingObject : public KObject
 	{
 		public:
-		DelegateStaticBoundObject(SharedKObject global);
-		DelegateStaticBoundObject(SharedKObject global, SharedKObject local);
-		virtual ~DelegateStaticBoundObject();
+		KDelegatingObject(SharedKObject global);
+		KDelegatingObject(SharedKObject global, SharedKObject local);
+		virtual ~KDelegatingObject();
 		virtual SharedValue Get(const char *name);
 		virtual SharedStringList GetPropertyNames();
 		virtual void Set(const char *name, SharedValue value);
@@ -50,7 +49,7 @@ namespace kroll
 		 */
 		SharedKObject local;
 
-		DISALLOW_EVIL_CONSTRUCTORS(DelegateStaticBoundObject);
+		DISALLOW_EVIL_CONSTRUCTORS(KDelegatingObject);
 
 	protected:
 		Mutex mutex;

@@ -1,7 +1,7 @@
 /*
  * Appcelerator Kroll - licensed under the Apache Public License 2
  * see LICENSE in the root folder for details on the license.
- * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
+ * Copyright (c) 2008, 2009 Appcelerator, Inc. All Rights Reserved.
  */
 
 #include "../kroll.h"
@@ -9,25 +9,24 @@
 
 namespace kroll
 {
-
-	DelegateStaticBoundObject::DelegateStaticBoundObject(SharedKObject global) :
+	KDelegatingObject::KDelegatingObject(SharedKObject global) :
 		global(global),
 		local(new StaticBoundObject())
 	{
 	}
 
-	DelegateStaticBoundObject::DelegateStaticBoundObject(
+	KDelegatingObject::KDelegatingObject(
 		SharedKObject global, SharedKObject local) :
 		global(global),
 		local(local)
 	{
 	}
 
-	DelegateStaticBoundObject::~DelegateStaticBoundObject()
+	KDelegatingObject::~KDelegatingObject()
 	{
 	}
 
-	SharedValue DelegateStaticBoundObject::Get(const char *name)
+	SharedValue KDelegatingObject::Get(const char *name)
 	{
 		ScopedLock lock(&mutex);
 
@@ -47,7 +46,7 @@ namespace kroll
 
 	}
 
-	void DelegateStaticBoundObject::Set(const char *name, SharedValue value)
+	void KDelegatingObject::Set(const char *name, SharedValue value)
 	{
 		// We want to set the property on both
 		// the local and the global object.
@@ -56,12 +55,12 @@ namespace kroll
 		global->Set(name, value);
 	}
 
-	bool DelegateStaticBoundObject::HasProperty(const char* name)
+	bool KDelegatingObject::HasProperty(const char* name)
 	{
 		return global->HasProperty(name) || local->HasProperty(name);
 	}
 
-	SharedStringList DelegateStaticBoundObject::GetPropertyNames()
+	SharedStringList KDelegatingObject::GetPropertyNames()
 	{
 		ScopedLock lock(&mutex);
 

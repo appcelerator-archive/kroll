@@ -27,7 +27,7 @@ namespace kroll
 #include "arg_list.h"
 #include "value_exception.h"
 #include "callback.h"
-#include "delegate_static_bound_object.h"
+#include "k_delegating_object.h"
 #include "k_accessor.h"
 #include "k_accessor_object.h"
 #include "k_accessor_list.h"
