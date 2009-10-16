@@ -146,7 +146,6 @@ namespace kroll
 	
 	void PHPEvaluator::FillGet(Poco::URI& uri TSRMLS_DC)
 	{
-		std::string queryString = uri.getQuery();
 		Poco::StringTokenizer tokens(uri.getQuery(), "&=");
 		Poco::StringTokenizer::Iterator iter = tokens.begin();
 		
