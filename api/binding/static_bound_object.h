@@ -43,6 +43,7 @@ namespace kroll
 		StaticBoundObject(const char *type = "StaticBoundObject");
 		virtual ~StaticBoundObject();
 
+		virtual bool HasProperty(const char *name);
 		virtual SharedValue Get(const char *name);
 		virtual SharedStringList GetPropertyNames();
 		virtual void Set(const char *name, SharedValue value);

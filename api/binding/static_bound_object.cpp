@@ -21,6 +21,11 @@ namespace kroll
 		// map destructs
 	}
 
+	bool StaticBoundObject::HasProperty(const char *name)
+	{
+		return properties.find(name) != properties.end();
+	}
+	
 	SharedValue StaticBoundObject::Get(const char *name)
 	{
 		ScopedLock lock(&mutex);
