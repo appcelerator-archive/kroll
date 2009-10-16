@@ -135,10 +135,31 @@ namespace kroll
 		args.VerifyException("canPreprocess", "s");
 
 		std::string url = args.GetString(0);
+		Poco::URI uri(url);
+		
 		result->SetBool(false);
-		if (Script::HasExtension(url.c_str(), "php"))
+		if (Script::HasExtension(uri.getPath().c_str(), "php"))
 		{
 			result->SetBool(true);
+		}
+	}
+	
+	void PHPEvaluator::FillGet(Poco::URI& uri TSRMLS_DC)
+	{
+		std::string queryString = uri.getQuery();
+		Poco::StringTokenizer tokens(uri.getQuery(), "&=");
+		Poco::StringTokenizer::Iterator iter = tokens.begin();
+		
+		for (; iter != tokens.end(); iter++)
+		{
+			std::string key = *iter;
+			std::string value = *(++iter);
+			
+			zval *val;
+			ALLOC_INIT_ZVAL(val);
+			ZVAL_STRING(val, (char *) value.c_str(), 1);
+			zend_hash_add(Z_ARRVAL_P(PG(http_globals)[TRACK_VARS_GET]),
+				(char *) key.c_str(), key.size()+1, &val, sizeof(zval*), NULL);
 		}
 	}
 	
@@ -166,6 +187,7 @@ namespace kroll
 		SG(request_info).argc= 0;
 		SG(request_info).argv= (char **) NULL;
 		php_request_startup(TSRMLS_C);
+		FillGet(uri TSRMLS_CC);
 
 		// This seems to be needed to make PHP actually give  us errors
 		// at parse/compile time -- see: main/main.c line 969
@@ -181,7 +203,6 @@ namespace kroll
 		zend_first_try
 		{
 			php_execute_script(&script TSRMLS_CC);
-			
 		}
 		zend_catch
 		{

@@ -19,7 +19,7 @@ namespace kroll
 		
 		protected:
 		std::string CreateContextName();
-		void FillServerVars(Poco::URI& uri, SharedKObject scope TSRMLS_DC);
+		void FillGet(Poco::URI& uri TSRMLS_DC);
 		
 	};
 }
