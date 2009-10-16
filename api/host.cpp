@@ -35,18 +35,22 @@ using Poco::Environment;
 #define NO_FILE_LOG_ARG "--no-file-logging"
 #define PROFILE_ARG "--profile"
 #define LOGPATH_ARG "--logpath"
-#define BOOT_HOME_ARG "--start" 
+#define BOOT_HOME_ARG "--start"
 namespace kroll
 {
 	SharedPtr<Host> Host::instance_;
 	Poco::Timestamp Host::started_;
-	
+
 	Host::Host(int argc, const char *argv[]) :
 		application(NULL),
 		running(false),
 		exiting(false),
 		exitCode(0),
+#ifdef DEBUG
+		debug(true),
+#else
 		debug(false),
+#endif
 		waitForDebugger(false),
 		autoScan(false),
 		runUILoop(true),
@@ -67,9 +71,6 @@ namespace kroll
 			std::string debug_val = Environment::get(DEBUG_ENV);
 			this->debug = (debug_val == "true" || debug_val == "yes" || debug_val == "1");
 		}
-#ifdef DEBUG
-		this->debug = true; // if you compile in debug, force debug here
-#endif
 
 		this->SetupLogging(); // Depends on command-line arguments and this->debug
 		this->SetupProfiling(); // Depends on logging
@@ -78,9 +79,35 @@ namespace kroll
 	void Host::SetupGlobalObject()
 	{
 		// Initialize our global object to be a simple mapped Kroll object
-		this->globalObject = new StaticBoundObject("");
+		globalObject = new KEventObject("");
+
+		// @tiapi(method=True,type=String,name=getVersion,since=0.8)
+		// @tiapi Return the Titanium runtime version.
+		// @tiresult[String] The runtime version.
+		globalObject->SetMethod("getVersion", 
+			StaticBoundMethod::FromMethod<Host>(this, &Host::GetVersion));
+
+		// @tiapi(method=True,type=String,name=getPlatform,since=0.8)
+		// @tiapi Return the current platform, usually one of
+		// @tiapi 'osx', 'win32', or 'linux'.
+		// @tiresult[String] The current platform.
+		globalObject->SetMethod("getPlatform",
+			StaticBoundMethod::FromMethod<Host>(this, &Host::GetPlatform));
+
 		Event::SetEventConstants(this->globalObject.get());
 		Script::Initialize();
+	}
+
+	void Host::GetVersion(const ValueList& args, SharedValue result)
+	{
+		static std::string version(STRING(PRODUCT_VERSION));
+		result->SetString(version);
+	}
+
+	void Host::GetPlatform(const ValueList& args, SharedValue result)
+	{
+		static std::string platform(this->GetPlatform());
+		result->SetString(platform);
 	}
 
 	void Host::SetupApplication(int argc, const char* argv[])
@@ -92,13 +119,14 @@ namespace kroll
 		string applicationHome = Environment::get(HOME_ENV);
 		string runtimePath = Environment::get(RUNTIME_ENV);
 		string modulePaths = Environment::get(MODULES_ENV);
-		
-#ifdef DEBUG
-		// Loggin isn't activated yet -- need to just print here
-		printf(">>> %s=%s\n", HOME_ENV, applicationHome.c_str());
-		printf(">>> %s=%s\n", RUNTIME_ENV, runtimePath.c_str());
-		printf(">>> %s=%s\n", MODULES_ENV, modulePaths.c_str());
-#endif
+
+		if (this->debug)
+		{
+			// Logging isn't activated yet -- need to just print here
+			printf(">>> %s=%s\n", HOME_ENV, applicationHome.c_str());
+			printf(">>> %s=%s\n", RUNTIME_ENV, runtimePath.c_str());
+			printf(">>> %s=%s\n", MODULES_ENV, modulePaths.c_str());
+		}
 
 		this->application = Application::NewApplication(applicationHome);
 		if (this->application.isNull())
@@ -248,7 +276,6 @@ namespace kroll
 	{
 		return this->application->runtime->path;
 	}
-	
 
 	const std::string& Host::GetApplicationID()
 	{
@@ -305,7 +332,7 @@ namespace kroll
 		     iter++)
 		{
 			ModuleProvider *provider = (*iter);
-			if (provider != NULL && provider->IsModule(filename)) 
+			if (provider != NULL && provider->IsModule(filename))
 			{
 				return provider;
 			}
@@ -320,7 +347,7 @@ namespace kroll
 		std::vector<ModuleProvider*>::iterator iter =
 		    std::find(module_providers.begin(),
 		              module_providers.end(), provider);
-		if (iter != module_providers.end()) 
+		if (iter != module_providers.end())
 		{
 			module_providers.erase(iter);
 		}
@@ -369,7 +396,7 @@ namespace kroll
 
 				std::vector<File> files;
 				platformAppResourcesDir.list(files);
-				for (size_t i = 0; i < files.size(); i++) 
+				for (size_t i = 0; i < files.size(); i++)
 				{
 					File f = files.at(i);
 					Path targetPath(appPath, Path(Path(f.path()).getBaseName()));
@@ -392,7 +419,7 @@ namespace kroll
 			{
 				std::vector<File> files;
 				allAppResourcesDir.list(files);
-				for (size_t i = 0; i < files.size(); i++) 
+				for (size_t i = 0; i < files.size(); i++)
 				{
 					File f = files.at(i);
 					Path targetPath(appPath, Path(Path(f.path()).getBaseName()));
@@ -424,12 +451,12 @@ namespace kroll
 		manifestPath = Poco::Path(FileUtils::Join(moduleTopDir.toString().c_str(), "manifest", NULL));
 
 		Poco::File manifestFile(manifestPath);
-		if (manifestFile.exists()) 
+		if (manifestFile.exists())
 		{
 			this->logger->Trace("Reading manifest for module: %s", manifestPath.toString().c_str());
 			Poco::AutoPtr<Poco::Util::PropertyFileConfiguration> manifest = new Poco::Util::PropertyFileConfiguration(manifestFile.path());
 
-			if (manifest->hasProperty("libpath")) 
+			if (manifest->hasProperty("libpath"))
 			{
 				std::string libPath = manifest->getString("libpath");
 				Poco::StringTokenizer t(libPath, ",", Poco::StringTokenizer::TOK_TRIM);
@@ -442,12 +469,12 @@ namespace kroll
 	#endif
 				std::string newLibPath;
 
-				if (Environment::has(libPathEnv)) 
+				if (Environment::has(libPathEnv))
 				{
 					newLibPath = Environment::get(libPathEnv);
 				}
 
-				for (size_t i = 0; i < t.count(); i++) 
+				for (size_t i = 0; i < t.count(); i++)
 				{
 					std::string lib = t[i];
 					newLibPath = FileUtils::Join(moduleTopDir.toString().c_str(), lib.c_str(), NULL) +
@@ -471,7 +498,7 @@ namespace kroll
 			logger->Warn("Module cannot be loaded twice: %s", path.c_str());
 			return NULL;
 		}
-		
+
 		try
 		{
 			logger->Debug("Loading module: %s", path.c_str());
@@ -707,7 +734,7 @@ namespace kroll
 		}
 	}
 
-	SharedKObject Host::GetGlobalObject() 
+	SharedKObject Host::GetGlobalObject()
 	{
 		return this->globalObject;
 	}
@@ -761,7 +788,7 @@ namespace kroll
 			try
 			{
 				this->running = this->Start();
-				if (this->runUILoop) 
+				if (this->runUILoop)
 				{
 					while (this->running)
 					{

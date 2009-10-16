@@ -20,13 +20,10 @@ namespace kroll
 	 */
 	class KROLL_API Host : public ModuleProvider
 	{
+		// FIXME: Is this still necessary?
 		friend class Poco::ReleasePolicy<Host>;
 
-	protected:
-		virtual ~Host();
-
 	public:
-
 		/**
 		 * @param argc argument count
 		 * @param argv command line arguments
@@ -48,9 +45,7 @@ namespace kroll
 		 */
 		virtual void Exit(int exitcode);
 
-		/**
-		 * Call with a method and arguments to invoke the method
-		 * on the main UI thread.
+	 	/* Call with a method and arguments to invoke the method on the UI thread.
 		 *
 		 * @param method method to execute on the main thread
 		 * @param args method arguments
@@ -58,10 +53,8 @@ namespace kroll
 		 *
 		 * @return the method's return value§
 		 */
-		virtual SharedValue InvokeMethodOnMainThread(
-			SharedKMethod method,
-			const ValueList& args,
-			bool waitForCompletion=true) = 0;
+		virtual SharedValue InvokeMethodOnMainThread(SharedKMethod method,
+			const ValueList& args, bool waitForCompletion=true) = 0;
 
 		/**
 		 * Add a module provider to the host
@@ -217,6 +210,8 @@ namespace kroll
 		bool fileLogging;
 		Logger* logger;
 
+		virtual ~Host();
+
 		/* This is the module suffix for this module provider. Since
 		 * this is the basic provider the suffix is "module.(dll|dylib|so)"
 		 * Other modules providers can override this property and use the
@@ -275,14 +270,12 @@ namespace kroll
 		/**
 		 * Scan a directory (no-recursion) for basic (shared library) modules
 		 * and, if any are found, load them.
-		 *
 		 * @param dir The directory to scan.
 		*/
 		void FindBasicModules(std::string& dir);
 
 		/**
 		 * Call the Start() lifecycle event on a vector of modules.
-		 *
 		 * @param to_init A vector of modules to initialize.
 		*/
 		void StartModules(std::vector<SharedPtr<Module> > modules);
@@ -295,13 +288,13 @@ namespace kroll
 		void SetupAppInstallerIfRequired();
 		void ParseCommandLineArguments();
 		static void AssertEnvironmentVariable(std::string);
-		std::string FindAppInstaller();
+		void GetVersion(const ValueList& args, SharedValue result);
+		void GetPlatform(const ValueList& args, SharedValue result);
 
 	private:
 		static SharedPtr<Host> instance_;
 		static Poco::Timestamp started_;
 
-		// Some initialization methods
 		void SetupGlobalObject();
 		void SetupApplication(int argc, const char* argv[]);
 		void SetupLogging();
@@ -312,9 +305,14 @@ namespace kroll
 	};
 
 	/**
-	 * method that invokes a bound method on the main host thread
+	 * Call with a method and arguments to invoke the method on the UI thread.
+	 * @param method method to execute on the main thread
+	 * @param args method arguments
+	 * @param waitForCompletion block until method is finished (default: true)
+	 * @return the method's return value§
 	 */
-	extern KROLL_API SharedValue InvokeMethodOnMainThread(SharedKMethod method, const ValueList& args, bool waitForCompletion=true);
+	extern KROLL_API SharedValue InvokeMethodOnMainThread(SharedKMethod method, 
+		const ValueList& args, bool waitForCompletion=true);
 }
 #endif
 
