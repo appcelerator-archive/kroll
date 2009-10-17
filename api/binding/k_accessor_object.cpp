@@ -17,42 +17,18 @@ namespace kroll
 
 	bool KAccessorObject::HasProperty(const char* name)
 	{
-		return StaticBoundObject::HasProperty(name) ||
-			!this->FindAccessorName(name).empty();
+		return StaticBoundObject::HasProperty(name) || this->HasGetterFor(name);
 	}
 
 	void KAccessorObject::Set(const char* name, SharedValue value)
 	{
-		this->MapAccessor(name, value);
-
-		std::string& accessorName = this->FindAccessorName(name);
-		if (accessorName.empty())
-		{
+		if (!this->UseSetter(name, value, StaticBoundObject::Get(name)))
 			StaticBoundObject::Set(name, value);
-			return;
-		}
-
-		SharedKMethod m(StaticBoundObject::Get(accessorName.c_str())->ToMethod());
-		if (m.isNull())
-		{
-			StaticBoundObject::Set(name, value);
-			return;
-		}
-
-		m->Call(value);
 	}
 
 	SharedValue KAccessorObject::Get(const char* name)
 	{
-		std::string& accessorName = this->FindAccessorName(name);
-		if (accessorName.empty())
-			return StaticBoundObject::Get(name);
-
-		SharedKMethod m(StaticBoundObject::Get(accessorName.c_str())->ToMethod());
-		if (m.isNull())
-			return StaticBoundObject::Get(name);
-
-		return m->Call();
+		return this->UseGetter(name, StaticBoundObject::Get(name));
 	}
 }
 

@@ -9,47 +9,90 @@
 
 namespace kroll
 {
+	typedef std::map<std::string, SharedKMethod> AccessorMap;
+
 	class KAccessor
 	{
 	protected:
 		KAccessor() {}
 
-		inline void MapAccessor(const std::string& originalName, SharedValue value)
+		inline void RecordAccessor(const std::string& name, SharedValue value)
 		{
-			std::string name(originalName);
+			if (name.find("set") == 0)
+				DoMap(name.substr(3), value, setterMap);
 
-			if (value->IsMethod())
-			{
-				size_t location = 0;
-				if (name.find("set") == 0 || name.find("get") == 0)
-					location = 3;
-				else if (name.find("is") == 0)
-					location = 2;
+			else if (name.find("get") == 0)
+				DoMap(name.substr(3), value, getterMap);
 
-				if (location != 0)
-				{
-					name = name.substr(location);
-					std::transform(name.begin(), name.end(), name.begin(), tolower);
-					methodMap[name] = originalName;
-				}
-			}
+			else if (name.find("is") == 0)
+				DoMap(name.substr(2), value, getterMap);
 		}
 
-		inline std::string& FindAccessorName(std::string name)
+		bool HasGetterFor(std::string name)
 		{
-			static std::string empty;
-			std::transform(name.begin(), name.end(), name.begin(), tolower);
+			return !FindAccessor(name, getterMap).isNull();
+		}
 
-			std::map<std::string, std::string>::iterator i = methodMap.find(name);
-			if (i == methodMap.end())
-				return empty;
-			else
-				return i->second;
+		SharedValue UseGetter(std::string name, SharedValue existingValue)
+		{
+			if (!existingValue->IsUndefined())
+				return existingValue;
+
+			SharedKMethod getter = FindAccessor(name, getterMap);
+			if (getter.isNull())
+				return existingValue;
+
+			return getter->Call();
+		}
+
+		bool UseSetter(std::string name, SharedValue newValue, SharedValue existingValue)
+		{
+			RecordAccessor(name, newValue);
+
+			// If a property already exists on this object with the given
+			// name, just set the property and don't call the setter.
+			if (!existingValue->IsUndefined())
+				return false;
+
+			SharedKMethod setter = FindAccessor(name, setterMap);
+			if (setter.isNull())
+				return false;
+
+			setter->Call(newValue);
+			return true;
 		}
 
 	private:
+		inline void DoMap(std::string name, SharedValue accessor, AccessorMap& map)
+		{
+			// Lower-case the name so that all comparisons are case-insensitive.
+			std::transform(name.begin(), name.end(), name.begin(), tolower);
+
+			// Null old mapping if it exists. This is so that if an accessor
+			// is replaced with a non-accessor, we don't keep a copy of it around.
+			if (map.find(name) != map.end())
+				map[name] = 0;
+
+			if (!accessor->IsMethod())
+				return;
+
+			map[name] = accessor->ToMethod();
+		}
+
+		inline SharedKMethod FindAccessor(std::string& name, AccessorMap& map)
+		{
+			// Lower-case the name so that all comparisons are case-insensitive.
+			std::transform(name.begin(), name.end(), name.begin(), tolower);
+
+			if (map.find(name) == map.end())
+				return 0;
+
+			return map[name];
+		}
+
 		DISALLOW_EVIL_CONSTRUCTORS(KAccessor);
-		std::map<std::string, std::string> methodMap;
+		AccessorMap getterMap;
+		AccessorMap setterMap;
 	};
 }
 
