@@ -40,6 +40,7 @@ namespace kroll
 		const SharedValue& at(size_t) const;
 		const SharedValue& operator[](size_t) const;
 
+		SharedValue GetValue(size_t index, SharedValue defaultValue=Value::Undefined) const;
 		int GetInt(size_t index, int defaultValue=0) const;
 		double GetDouble(size_t index, double defaultValue=0.0) const;
 		double GetNumber(size_t index, double defaultValue=0.0) const;

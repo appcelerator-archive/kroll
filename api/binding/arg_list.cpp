@@ -220,10 +220,23 @@ namespace kroll
 		 || (t == 'o' && arg->IsObject())
 		 || (t == 'l' && arg->IsList())
 		 || (t == 'm' && arg->IsMethod())
-		 || (t == '0' && arg->IsNull()))
+		 || (t == '0' && (arg->IsNull() || arg->IsUndefined())))
 			return true;
 		else
 			return false;
+	}
+
+	SharedValue ArgList::GetValue(size_t index, SharedValue defaultValue) const
+	{
+		if (this->size() > index)
+		{
+			return this->at(index);
+		}
+		else
+		{
+			return defaultValue;
+		}
+
 	}
 
 	int ArgList::GetInt(size_t index, int defaultValue) const
