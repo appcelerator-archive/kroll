@@ -41,6 +41,7 @@ namespace kroll
 		php_embed_module.ini_defaults = IniDefaults;
 		php_embed_module.header_handler = HeaderHandler;
 		php_embed_module.register_server_variables = RegisterServerVariables;
+		php_embed_module.phpinfo_as_text = 1;
 		php_embed_init(argc, argv PTSRMLS_CC);
 
 		PHPUtils::InitializePHPKrollClasses();
@@ -71,6 +72,7 @@ namespace kroll
 		Script::GetInstance()->RemoveScriptEvaluator(this->binding);
 		global->Set("PHP", Value::Undefined);
 		this->binding->Set("evaluate", Value::Undefined);
+
 		this->binding = 0;
 		PHPModule::instance_ = 0;
 
@@ -131,7 +133,10 @@ namespace kroll
 		}
 		else
 		{
-			logger->Info(string.c_str());
+			// Other language modules ship their output straight to stdout
+			// so we might as well do the same here, rather than sending
+			// it through the Logger. 
+			std::cout << string;
 		}
 		return length;
 	}
