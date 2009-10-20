@@ -542,13 +542,19 @@ namespace KJSUtil
 			if (!strcmp(name, "toString"))
 			{
 				JSStringRef s = JSStringCreateWithUTF8CString("toString");
-				return JSObjectMakeFunctionWithCallback(jsContext, s, &ToStringCallback);
+				JSValueRef toString = JSObjectMakeFunctionWithCallback(
+					jsContext, s, &ToStringCallback);
+				JSStringRelease(s);
+				return toString;
 			}
 
 			if (!strcmp(name, "equals"))
 			{
 				JSStringRef s = JSStringCreateWithUTF8CString("equals");
-				return JSObjectMakeFunctionWithCallback(jsContext, s, &EqualsCallback);
+				JSValueRef equals = JSObjectMakeFunctionWithCallback(
+					jsContext, s, &EqualsCallback);
+				JSStringRelease(s);
+				return equals;
 			}
 		}
 
@@ -647,9 +653,9 @@ namespace KJSUtil
 			JSStringRef propertyName = JSStringCreateWithUTF8CString(PRODUCT_NAME);
 			JSObjectSetProperty(jsContext, globalObject, propertyName,
 				jsAPI, kJSPropertyAttributeNone, NULL);
-
+			JSStringRelease(propertyName);
 		}
-		
+
 		return globalObject;
 	}
 
@@ -877,6 +883,7 @@ namespace KJSUtil
 			JSValueRef js = ToJSValue(v, jsContext);
 			JSStringRef propertyName = JSStringCreateWithUTF8CString(other.c_str());
 			JSObjectSetProperty(jsContext, globalObject, propertyName, js, kJSPropertyAttributeNone, NULL);
+			JSStringRelease(propertyName);
 		}
 	}
 
