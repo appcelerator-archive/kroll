@@ -13,8 +13,16 @@ extern "C" {
 	reinterpret_cast<PHPKObject*>( \
 	 zend_object_store_get_object(getThis() TSRMLS_CC))->kvalue->ToList()
 
+// FIXME: PHP does not export any of the token constants in the
+// headers so we have to hardcode them here. Ick.
+#define T_FUNCTION 334
+#define T_STRING 307
+using std::string;
+using std::map;
+
 namespace kroll
 {
+	static map<string, string> currentCaseMap;
 	zend_class_entry *PHPKObjectClassEntry = NULL;
 	zend_class_entry *PHPKMethodClassEntry = NULL;
 	zend_class_entry *PHPKListClassEntry = NULL;
@@ -142,7 +150,7 @@ namespace kroll
 		// Find the method by its name.
 		if (method.isNull())
 		{
-			std::string error("Could not find method named '");
+			string error("Could not find method named '");
 			error.append(methodName);
 			error.append("'");
 			zend_throw_exception(zend_exception_get_default(TSRMLS_C),
@@ -234,7 +242,7 @@ namespace kroll
 		PHPKObject* kthis = reinterpret_cast<PHPKObject*>(
 			zend_object_store_get_object(zthis TSRMLS_CC));
 		SharedKObject kobject = kthis->kvalue->ToObject();
-		std::string propertyName = PHPUtils::ZvalToPropertyName(property);
+		string propertyName = PHPUtils::ZvalToPropertyName(property);
 
 		try
 		{
@@ -257,7 +265,7 @@ namespace kroll
 			zend_object_store_get_object(zthis TSRMLS_CC));
 		SharedKObject kobject = kthis->kvalue->ToObject();
 
-		std::string propertyName = PHPUtils::ZvalToPropertyName(property);
+		string propertyName = PHPUtils::ZvalToPropertyName(property);
 		SharedValue krollValue = PHPUtils::ToKrollValue(value TSRMLS_CC);
 
 		try
@@ -319,7 +327,7 @@ namespace kroll
 		PHPKObject* kthis = reinterpret_cast<PHPKObject*>(
 			zend_object_store_get_object(zthis TSRMLS_CC));
 		SharedKObject kobject = kthis->kvalue->ToObject();
-		std::string propertyName = PHPUtils::ZvalToPropertyName(property);
+		string propertyName = PHPUtils::ZvalToPropertyName(property);
 
 		if (checkType == 0)
 		{
@@ -354,7 +362,7 @@ namespace kroll
 		PHPKObject* kthis = reinterpret_cast<PHPKObject*>(
 			zend_object_store_get_object(zthis TSRMLS_CC));
 		SharedKObject kobject = kthis->kvalue->ToObject();
-		std::string propertyName = PHPUtils::ZvalToPropertyName(property);
+		string propertyName = PHPUtils::ZvalToPropertyName(property);
 
 		if (checkType == 0)
 		{
@@ -396,7 +404,7 @@ namespace kroll
 		PHPKObject* kthis = reinterpret_cast<PHPKObject*>(
 			zend_object_store_get_object(zthis TSRMLS_CC));
 		SharedKObject kobject = kthis->kvalue->ToObject();
-		std::string propertyName = PHPUtils::ZvalToPropertyName(property);
+		string propertyName = PHPUtils::ZvalToPropertyName(property);
 
 		try
 		{
@@ -460,7 +468,7 @@ namespace kroll
 		}
 
 		SharedKList klist(GET_MY_KLIST());
-		std::string name(PHPUtils::ZvalToPropertyName(index));
+		string name(PHPUtils::ZvalToPropertyName(index));
 		RETURN_BOOL((!name.empty() && klist->HasProperty(name.c_str())));
 	}
 
@@ -475,7 +483,7 @@ namespace kroll
 		}
 
 		SharedKList klist(GET_MY_KLIST());
-		std::string name(PHPUtils::ZvalToPropertyName(index));
+		string name(PHPUtils::ZvalToPropertyName(index));
 		SharedValue returnValue(klist->Get(name.c_str()));
 		PHPUtils::ToPHPValue(returnValue, &return_value);
 	}
@@ -490,7 +498,7 @@ namespace kroll
 		}
 
 		SharedKList klist(GET_MY_KLIST());
-		std::string indexString(PHPUtils::ZvalToPropertyName(zindexString));
+		string indexString(PHPUtils::ZvalToPropertyName(zindexString));
 		SharedValue value(PHPUtils::ToKrollValue(zvalue TSRMLS_CC));
 
 		int index = 0;
@@ -514,7 +522,7 @@ namespace kroll
 		}
 
 		SharedKList klist(GET_MY_KLIST());
-		std::string indexString(PHPUtils::ZvalToPropertyName(zindex));
+		string indexString(PHPUtils::ZvalToPropertyName(zindex));
 		klist->Set(indexString.c_str(), Value::Undefined);
 	}
 
@@ -575,12 +583,16 @@ namespace kroll
 
 		// If there is a preceding namespace to this function name trim it off.
 		// This is likely the namespace we use to isolate PHP executions.
-		std::string fnameString(fname);
+		string fnameString(fname);
 		size_t index = fnameString.find("\\");
-		if (index != std::string::npos)
+		if (index != string::npos)
 		{
 			fnameString = fnameString.substr(index + 1);
 		}
+
+		// Convert the function name back to its original case.
+		if (currentCaseMap.find(fnameString) != currentCaseMap.end())
+			fnameString = currentCaseMap[fnameString];
 
 		// Use the name without the namespace for the Window object, but use
 		// the full name for the KPHPFunction.
@@ -673,5 +685,61 @@ namespace kroll
 				zend_object_store_get_object(*returnValue TSRMLS_CC));
 			internal->kvalue = listValue;
 		}
+
+		void GenerateCaseMap(string code TSRMLS_DC)
+		{
+			// HACK: Okay, so PHP stores all function names in lower-case, but
+			// we need the original case, so that developers can call these
+			// functions from other contexts. Here we lex the code string and
+			// pull out all the top-level function names.
+			currentCaseMap.clear();
+
+			code = string("<?php\n") + code + "?>"; zval *args[1];
+			zval functionName, zCode, returnValue;
+
+			ZVAL_STRING(&functionName, "token_get_all", 0);
+			ZVAL_STRING(&zCode, code.c_str(), 0);
+			args[0] = &zCode;
+
+			call_user_function(EG(function_table), NULL, &functionName,
+				&returnValue, 1, args TSRMLS_CC);
+
+			SharedValue krollValue(PHPUtils::ToKrollValue(&returnValue TSRMLS_CC));
+			if (!krollValue->IsList())
+				return;
+
+			SharedKList tokenList(krollValue->ToList());
+			for (unsigned int i = 0; i < tokenList->Size(); i++)
+			{
+				SharedValue tokenValue(tokenList->At(i));
+				if (!tokenValue->IsList())
+					continue;
+
+				// This is the beginning of a function name only if this
+				// token value is a list, the first value in the list is the
+				// T_FUNCTION constant and the second value after this one is
+				// list as well.
+				SharedKList tokenAsList(tokenValue->ToList());
+				if (!tokenAsList->At(0)->IsInt() 
+					|| tokenAsList->At(0)->ToInt() != T_FUNCTION
+					|| !tokenList->At(i+2)->IsList())
+					continue;
+
+				// This is the string part of the function name if the second
+				// value after the function token is a string.
+				SharedKList functionNameAsList(tokenList->At(i+2)->ToList());
+				if (!functionNameAsList->At(0)->IsInt()
+					|| functionNameAsList->At(0)->ToInt() != T_STRING
+					|| !functionNameAsList->At(1)->IsString())
+					continue;
+
+				string functionName(functionNameAsList->At(1)->ToString());
+				string lc(functionName);
+				transform(lc.begin(), lc.end(), lc.begin(), tolower);
+
+				currentCaseMap[lc] = functionName;
+			}
+		}
 	}
+
 }

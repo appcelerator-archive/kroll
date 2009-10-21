@@ -41,6 +41,7 @@ namespace kroll
 		SharedStringList GetClassMethods(zend_class_entry *ce TSRMLS_DC);
 		SharedKList GetClassVars(zend_class_entry *ce TSRMLS_DC);
 		zend_function* GetGlobalFunction(const char *name TSRMLS_DC);
+		void GenerateCaseMap(string code TSRMLS_DC);
 
 		SharedKObject GetCurrentGlobalObject();
 		void SwapGlobalObject(SharedKObject newGlobal, 

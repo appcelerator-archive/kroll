@@ -6,7 +6,12 @@
 
 #include "php_module.h"
 #include <sstream>
+#include <map>
+#include <algorithm>
  
+using std::string;
+using std::map;
+
 namespace kroll
 {
 	PHPEvaluator::PHPEvaluator()
@@ -51,16 +56,16 @@ namespace kroll
 		args.VerifyException("canEvaluate", "s");
 		
 		result->SetBool(false);
-		std::string mimeType = args.GetString(0);
+		string mimeType(args.GetString(0));
 		if (mimeType == "text/php")
 		{
 			result->SetBool(true);
 		}
 	}
 
-	static std::string GetContextId(SharedKObject global)
+	static string GetContextId(SharedKObject global)
 	{
-		std::string contextId(global->GetString("__php_module_id__"));
+		string contextId(global->GetString("__php_module_id__"));
 		if (contextId.empty())
 		{
 			static int nextId = 0;
@@ -80,18 +85,15 @@ namespace kroll
 		args.VerifyException("evaluate", "s s s o");
 
 		TSRMLS_FETCH();
-		std::string mimeType = args.GetString(0);
-		std::string name = args.GetString(1);
-		std::string code = args.GetString(2);
-		SharedKObject windowGlobal = args.GetObject(3);
-		SharedValue kv = Value::Undefined;
+		string mimeType(args.GetString(0));
+		string name(args.GetString(1));
+		string code(args.GetString(2));
+		SharedKObject windowGlobal(args.GetObject(3));
+		SharedValue kv(Value::Undefined);
 
 		// Contexts must be the same for runs with the same global object.
-		std::string contextId(GetContextId(windowGlobal));
-
-		// Each function we create must have unique name though.
-		static int nextFunctionId = 0;
-		nextFunctionId++;
+		string contextId(GetContextId(windowGlobal));
+		PHPUtils::GenerateCaseMap(code TSRMLS_CC);
 
 		std::ostringstream codeString;
 		codeString << "namespace " << contextId << " {\n";
@@ -126,7 +128,6 @@ namespace kroll
 		zend_end_try();
 
 		PHPUtils::SwapGlobalObject(previousGlobal, &EG(symbol_table) TSRMLS_CC);
-
 		result->SetValue(kv);
 	}
 
@@ -134,7 +135,7 @@ namespace kroll
 	{
 		args.VerifyException("canPreprocess", "s");
 
-		std::string url = args.GetString(0);
+		string url(args.GetString(0));
 		Poco::URI uri(url);
 		
 		result->SetBool(false);
@@ -151,9 +152,9 @@ namespace kroll
 		
 		for (; iter != tokens.end(); iter++)
 		{
-			std::string key = *iter;
-			std::string value = *(++iter);
-			
+			string key(*iter);
+			string value(*(++iter));
+
 			zval *val;
 			ALLOC_INIT_ZVAL(val);
 			ZVAL_STRING(val, (char *) value.c_str(), 1);
@@ -165,13 +166,13 @@ namespace kroll
 	void PHPEvaluator::Preprocess(const ValueList& args, SharedValue result)
 	{
 		args.VerifyException("preprocess", "s o");
-		
-		std::string url = args.GetString(0);
+
+		string url(args.GetString(0));
 		Logger::Get("PHP")->Debug("preprocessing php => %s", url.c_str());
-		
+
 		Poco::URI uri(url);
-		std::string path = URLUtils::URLToPath(url);
-		
+		string path(URLUtils::URLToPath(url));
+
 		SharedKObject scope = args.GetObject(1);
 		TSRMLS_FETCH();
 
@@ -209,7 +210,7 @@ namespace kroll
 		}
 		zend_end_try();
 
-		std::string output(PHPModule::GetBuffer().str());
+		string output(PHPModule::GetBuffer().str());
 		SharedKObject o = new StaticBoundObject();
 		o->SetObject("data", new Blob(output.c_str(), output.size(), true));
 		o->SetString("mimeType", PHPModule::GetMimeType().c_str());
