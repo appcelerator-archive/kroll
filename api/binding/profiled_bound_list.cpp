@@ -10,7 +10,7 @@
 
 namespace kroll
 {
-	ProfiledBoundList::ProfiledBoundList(SharedKList delegate) :
+	ProfiledBoundList::ProfiledBoundList(KListRef delegate) :
 		ProfiledBoundObject(delegate),
 		list(delegate),
 		count(1)
@@ -21,7 +21,7 @@ namespace kroll
 	{
 	}
 
-	void ProfiledBoundList::Append(SharedValue value)
+	void ProfiledBoundList::Append(KValueRef value)
 	{
 		list->Append(value);
 	}
@@ -31,12 +31,12 @@ namespace kroll
 		return list->Size();
 	}
 
-	SharedValue ProfiledBoundList::At(unsigned int index)
+	KValueRef ProfiledBoundList::At(unsigned int index)
 	{
 		return list->At(index);
 	}
 
-	void ProfiledBoundList::SetAt(unsigned int index, SharedValue value)
+	void ProfiledBoundList::SetAt(unsigned int index, KValueRef value)
 	{
 		list->SetAt(index,value);
 	}
@@ -46,12 +46,12 @@ namespace kroll
 		return list->Remove(index);
 	}
 
-	void ProfiledBoundList::Set(const char *name, SharedValue value)
+	void ProfiledBoundList::Set(const char *name, KValueRef value)
 	{
 		list->Set(name, value);
 	}
 
-	SharedValue ProfiledBoundList::Get(const char *name)
+	KValueRef ProfiledBoundList::Get(const char *name)
 	{
 		return list->Get(name);
 	}

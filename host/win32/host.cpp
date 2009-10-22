@@ -118,8 +118,8 @@ namespace kroll
 		return create(this, dir.c_str());
 	}
 
-	SharedValue Win32Host::InvokeMethodOnMainThread(
-		SharedKMethod method,
+	KValueRef Win32Host::InvokeMethodOnMainThread(
+		KMethodRef method,
 		const ValueList& args,
 		bool synchronous)
 	{
@@ -147,7 +147,7 @@ namespace kroll
 			// through because we've already called Execute() above.
 			job->Wait(); // Wait for processing
 
-			SharedValue r = job->GetResult();
+			KValueRef r = job->GetResult();
 			ValueException e = job->GetException();
 			delete job;
 

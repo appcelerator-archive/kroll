@@ -22,13 +22,13 @@ namespace kroll
 		private:
 		SharedComponent component;
 
-		void _GetType(const ValueList& args, SharedValue value);
-		void _GetName(const ValueList& args, SharedValue value);
-		void _GetVersion(const ValueList& args, SharedValue value);
-		void _GetPath(const ValueList& args, SharedValue value);
-		void _GetManifest(const ValueList& args, SharedValue value);
-		void _IsBundled(const ValueList& args, SharedValue value);
-		void _IsLoaded(const ValueList& args, SharedValue value);
+		void _GetType(const ValueList& args, KValueRef value);
+		void _GetName(const ValueList& args, KValueRef value);
+		void _GetVersion(const ValueList& args, KValueRef value);
+		void _GetPath(const ValueList& args, KValueRef value);
+		void _GetManifest(const ValueList& args, KValueRef value);
+		void _IsBundled(const ValueList& args, KValueRef value);
+		void _IsLoaded(const ValueList& args, KValueRef value);
 	};
 }
 

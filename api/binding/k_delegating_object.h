@@ -24,16 +24,16 @@ namespace kroll
 	class KROLL_API KDelegatingObject : public KObject
 	{
 		public:
-		KDelegatingObject(SharedKObject global);
-		KDelegatingObject(SharedKObject global, SharedKObject local);
+		KDelegatingObject(KObjectRef global);
+		KDelegatingObject(KObjectRef global, KObjectRef local);
 		virtual ~KDelegatingObject();
-		virtual SharedValue Get(const char *name);
+		virtual KValueRef Get(const char *name);
 		virtual SharedStringList GetPropertyNames();
-		virtual void Set(const char *name, SharedValue value);
+		virtual void Set(const char *name, KValueRef value);
 		virtual bool HasProperty(const char* name);
 
-		virtual inline SharedKObject GetGlobal() { return this->global; }
-		virtual inline SharedKObject GetLocal() { return this->local; }
+		virtual inline KObjectRef GetGlobal() { return this->global; }
+		virtual inline KObjectRef GetLocal() { return this->local; }
 
 		private:
 		/**
@@ -41,13 +41,13 @@ namespace kroll
 		 * is used to find properties if they are not found in
 		 * the local object.
 		 */
-		SharedKObject global;
+		KObjectRef global;
 
 		/**
 		 * The local part of this delegate object. This object
 		 * is the first in line for property retrieval. 
 		 */
-		SharedKObject local;
+		KObjectRef local;
 
 		DISALLOW_EVIL_CONSTRUCTORS(KDelegatingObject);
 

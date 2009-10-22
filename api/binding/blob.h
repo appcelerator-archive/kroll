@@ -45,9 +45,9 @@ namespace kroll
 		
 		virtual ~Blob();
 		void SetupBinding();
-		AutoBlob Concat(std::vector<AutoBlob>& blobs);
+		BlobRef Concat(std::vector<BlobRef>& blobs);
 		
-		static AutoBlob GlobBlobs(std::vector<AutoBlob>& blobs);
+		static BlobRef GlobBlobs(std::vector<BlobRef>& blobs);
 		/**
 		 * @return The buffer as a const char *
 		 */
@@ -62,21 +62,21 @@ namespace kroll
 		char *buffer;
 		int length;
 
-		void ToString(const ValueList& args, SharedValue result);
-		void Get(const ValueList& args, SharedValue result);
-		void Length(const ValueList& args, SharedValue result);
+		void ToString(const ValueList& args, KValueRef result);
+		void Get(const ValueList& args, KValueRef result);
+		void Length(const ValueList& args, KValueRef result);
 
-		void IndexOf(const ValueList& args, SharedValue result);
-		void LastIndexOf(const ValueList& args, SharedValue result);
-		void CharAt(const ValueList& args, SharedValue result);
-		void ByteAt(const ValueList& args, SharedValue result);
-		void Split(const ValueList& args, SharedValue result);
-		void Substr(const ValueList& args, SharedValue result);
-		void Substring(const ValueList& args, SharedValue result);
-		void ToLowerCase(const ValueList& args, SharedValue result);
-		void ToUpperCase(const ValueList& args, SharedValue result);
-		void Replace(const ValueList& args, SharedValue result);
-		void Concat(const ValueList& args, SharedValue result);
+		void IndexOf(const ValueList& args, KValueRef result);
+		void LastIndexOf(const ValueList& args, KValueRef result);
+		void CharAt(const ValueList& args, KValueRef result);
+		void ByteAt(const ValueList& args, KValueRef result);
+		void Split(const ValueList& args, KValueRef result);
+		void Substr(const ValueList& args, KValueRef result);
+		void Substring(const ValueList& args, KValueRef result);
+		void ToLowerCase(const ValueList& args, KValueRef result);
+		void ToUpperCase(const ValueList& args, KValueRef result);
+		void Replace(const ValueList& args, KValueRef result);
+		void Concat(const ValueList& args, KValueRef result);
 
 		void CreateWithCopy(const char *buf, int len);
 		void CreateWithReference(char *buf, int len);

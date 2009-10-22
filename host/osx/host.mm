@@ -138,33 +138,33 @@ namespace kroll
 
 @interface KrollMainThreadCaller : NSObject
 {
-	SharedKMethod *method;
-	SharedValue *result;
-	SharedValue *exception;
+	KMethodRef *method;
+	KValueRef *result;
+	KValueRef *exception;
 	ValueList *args;
 	bool wait;
 }
-- (id)initWithKMethod:(SharedKMethod)method args:(const ValueList*)args wait:(bool)wait;
+- (id)initWithKMethod:(KMethodRef)method args:(const ValueList*)args wait:(bool)wait;
 - (void)call;
-- (SharedValue)getResult;
-- (SharedValue)getException;
+- (KValueRef)getResult;
+- (KValueRef)getException;
 @end
 
 @implementation KrollMainThreadCaller
-- (id)initWithKMethod:(SharedKMethod)m args:(const ValueList*)a wait:(bool)w
+- (id)initWithKMethod:(KMethodRef)m args:(const ValueList*)a wait:(bool)w
 {
 	self = [super init];
 	if (self)
 	{
-		method = new SharedKMethod(m);
+		method = new KMethodRef(m);
 		args = new ValueList();
 		for (size_t c=0;c<a->size();c++)
 		{
 			args->push_back(a->at(c));
 		}
 		wait = w;
-		result = new SharedValue();
-		exception = new SharedValue();
+		result = new KValueRef();
+		exception = new KValueRef();
 	}
 	return self;
 }
@@ -176,11 +176,11 @@ namespace kroll
 	delete args;
 	[super dealloc];
 }
-- (SharedValue)getResult
+- (KValueRef)getResult
 {
 	return *result;
 }
-- (SharedValue)getException
+- (KValueRef)getException
 {
 	return *exception;
 }
@@ -230,8 +230,8 @@ namespace kroll
 
 namespace kroll
 {
-	SharedValue OSXHost::InvokeMethodOnMainThread(
-		SharedKMethod method,
+	KValueRef OSXHost::InvokeMethodOnMainThread(
+		KMethodRef method,
 		const ValueList& args,
 		bool waitForCompletion)
 	{
@@ -263,10 +263,10 @@ namespace kroll
 			[pool release];
 			return Value::Undefined;
 		}
-		SharedValue exception = [caller getException];
+		KValueRef exception = [caller getException];
 		if (exception.isNull())
 		{
-			SharedValue result = [caller getResult];
+			KValueRef result = [caller getResult];
 			[caller release];
 			[pool release];
 			return result;

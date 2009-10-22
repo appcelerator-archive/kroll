@@ -26,7 +26,7 @@ using Poco::AutoPtr;
 	// this is important which essentially marks all of
 	// these classes below and the typedef/templates to be
 	// visible outside of the library.  if you don't do this
-	// you won't be able to catch exceptions of SharedValue for
+	// you won't be able to catch exceptions of KValueRef for
 	// example
 	#pragma GCC visibility push(default)
 #endif
@@ -49,15 +49,11 @@ namespace kroll
 	class Logger;
 	class ArgList;
 
-	typedef AutoPtr<Value> AutoValue;
-	typedef AutoPtr<KObject> AutoKObject;
-	typedef AutoPtr<KMethod> AutoKMethod;
-	typedef AutoPtr<KList> AutoKList;
-	typedef AutoPtr<Value> SharedValue;
-	typedef AutoPtr<KObject> SharedKObject;
-	typedef AutoPtr<KMethod> SharedKMethod;
-	typedef AutoPtr<KList> SharedKList;
-	typedef AutoPtr<Blob> AutoBlob;
+	typedef AutoPtr<Value> KValueRef;
+	typedef AutoPtr<KObject> KObjectRef;
+	typedef AutoPtr<KMethod> KMethodRef;
+	typedef AutoPtr<KList> KListRef;
+	typedef AutoPtr<Blob> BlobRef;
 
 	typedef SharedPtr<std::string> SharedString;
 	typedef std::vector<SharedString> StringList;

@@ -14,21 +14,21 @@ namespace kroll
 	class Win32Job
 	{
 		public:
-			Win32Job(SharedKMethod method, const ValueList& args, bool wait);
+			Win32Job(KMethodRef method, const ValueList& args, bool wait);
 			virtual ~Win32Job();
 			void Lock();
 			void Wait();
 			void Execute();
-			SharedValue GetResult();
+			KValueRef GetResult();
 			ValueException GetException();
 			bool IsSynchronous();
 			void PrintException();
 	
 		private:
-			SharedKMethod method;
+			KMethodRef method;
 			const ValueList args;
 			bool wait;
-			SharedValue return_value;
+			KValueRef return_value;
 			ValueException exception;
 			Poco::Semaphore semaphore;
 	};

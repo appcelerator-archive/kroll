@@ -51,7 +51,7 @@ namespace kroll
 		SetMethod("preprocess", &PHPEvaluator::Preprocess);
 	}
 
-	void PHPEvaluator::CanEvaluate(const ValueList& args, SharedValue result)
+	void PHPEvaluator::CanEvaluate(const ValueList& args, KValueRef result)
 	{
 		args.VerifyException("canEvaluate", "s");
 		
@@ -63,7 +63,7 @@ namespace kroll
 		}
 	}
 
-	static string GetContextId(SharedKObject global)
+	static string GetContextId(KObjectRef global)
 	{
 		string contextId(global->GetString("__php_module_id__"));
 		if (contextId.empty())
@@ -77,7 +77,7 @@ namespace kroll
 		return contextId;
 	}
 
-	void PHPEvaluator::Evaluate(const ValueList& args, SharedValue result)
+	void PHPEvaluator::Evaluate(const ValueList& args, KValueRef result)
 	{
 		static Poco::Mutex evaluatorMutex;
 		Poco::Mutex::ScopedLock evaluatorLock(evaluatorMutex);
@@ -88,8 +88,8 @@ namespace kroll
 		string mimeType(args.GetString(0));
 		string name(args.GetString(1));
 		string code(args.GetString(2));
-		SharedKObject windowGlobal(args.GetObject(3));
-		SharedValue kv(Value::Undefined);
+		KObjectRef windowGlobal(args.GetObject(3));
+		KValueRef kv(Value::Undefined);
 
 		// Contexts must be the same for runs with the same global object.
 		string contextId(GetContextId(windowGlobal));
@@ -113,7 +113,7 @@ namespace kroll
 		// at parse/compile time -- see: main/main.c line 969
 		PG(during_request_startup) = 0;
 
-		SharedKObject previousGlobal(PHPUtils::GetCurrentGlobalObject());
+		KObjectRef previousGlobal(PHPUtils::GetCurrentGlobalObject());
 		PHPUtils::SwapGlobalObject(windowGlobal, &EG(symbol_table) TSRMLS_CC);
 
 		zend_first_try
@@ -131,7 +131,7 @@ namespace kroll
 		result->SetValue(kv);
 	}
 
-	void PHPEvaluator::CanPreprocess(const ValueList& args, SharedValue result)
+	void PHPEvaluator::CanPreprocess(const ValueList& args, KValueRef result)
 	{
 		args.VerifyException("canPreprocess", "s");
 
@@ -163,7 +163,7 @@ namespace kroll
 		}
 	}
 	
-	void PHPEvaluator::Preprocess(const ValueList& args, SharedValue result)
+	void PHPEvaluator::Preprocess(const ValueList& args, KValueRef result)
 	{
 		args.VerifyException("preprocess", "s o");
 
@@ -173,7 +173,7 @@ namespace kroll
 		Poco::URI uri(url);
 		string path(URLUtils::URLToPath(url));
 
-		SharedKObject scope = args.GetObject(1);
+		KObjectRef scope = args.GetObject(1);
 		TSRMLS_FETCH();
 
 		PHPModule::SetBuffering(true);
@@ -211,7 +211,7 @@ namespace kroll
 		zend_end_try();
 
 		string output(PHPModule::GetBuffer().str());
-		SharedKObject o = new StaticBoundObject();
+		KObjectRef o = new StaticBoundObject();
 		o->SetObject("data", new Blob(output.c_str(), output.size(), true));
 		o->SetString("mimeType", PHPModule::GetMimeType().c_str());
 		result->SetObject(o);

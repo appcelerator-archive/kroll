@@ -17,13 +17,13 @@ namespace kroll
 		KRubyList(VALUE);
 		virtual ~KRubyList();
 
-		void Append(SharedValue value);
+		void Append(KValueRef value);
 		unsigned int Size();
-		SharedValue At(unsigned int index);
-		void SetAt(unsigned int index, SharedValue value);
+		KValueRef At(unsigned int index);
+		void SetAt(unsigned int index, KValueRef value);
 		bool Remove(unsigned int index);
-		void Set(const char *name, SharedValue value);
-		SharedValue Get(const char *name);
+		void Set(const char *name, KValueRef value);
+		KValueRef Get(const char *name);
 		SharedStringList GetPropertyNames();
 		SharedString DisplayString(int);
 		VALUE ToRuby();
@@ -34,7 +34,7 @@ namespace kroll
 	 *  @param other the object to test
 	 *  @returns true if objects have reference equality, false otherwise
 	 */
-	virtual bool Equals(SharedKObject);
+	virtual bool Equals(KObjectRef);
 
 	protected:
 		VALUE list;

@@ -12,14 +12,14 @@ namespace kroll
 	class EventListener
 	{
 		public:
-		EventListener(std::string& eventName, SharedKMethod callback) :
+		EventListener(std::string& eventName, KMethodRef callback) :
 			eventName(eventName),
 			callback(callback),
 			listenerId(++EventListener::currentId) {}
 		void FireEventIfMatches(AutoPtr<Event>);
-		bool Matches(std::string&, unsigned int, SharedKMethod);
+		bool Matches(std::string&, unsigned int, KMethodRef);
 		std::string eventName;
-		SharedKMethod callback;
+		KMethodRef callback;
 		unsigned int listenerId;
 
 		static unsigned int currentId;
@@ -33,14 +33,14 @@ namespace kroll
 		~KEventObject();
 
 		AutoPtr<Event> CreateEvent(const std::string& eventName);
-		unsigned int AddEventListener(std::string& eventName, SharedKMethod listener);
-		unsigned int AddEventListenerForAllEvents(SharedKMethod callback);
-		virtual void RemoveEventListener(std::string& eventName, SharedKMethod listener);
+		unsigned int AddEventListener(std::string& eventName, KMethodRef listener);
+		unsigned int AddEventListenerForAllEvents(KMethodRef callback);
+		virtual void RemoveEventListener(std::string& eventName, KMethodRef listener);
 		virtual void RemoveEventListener(std::string& eventName, unsigned int id);
 		virtual bool FireEvent(std::string& eventName);
 		virtual bool FireEvent(AutoPtr<Event>);
-		void _AddEventListener(const ValueList&, SharedValue result);
-		void _RemoveEventListener(const ValueList&, SharedValue result);
+		void _AddEventListener(const ValueList&, KValueRef result);
+		void _RemoveEventListener(const ValueList&, KValueRef result);
 		static bool FireRootEvent(std::string& eventName);
 		static bool FireRootEvent(AutoPtr<Event>);
 		static AutoPtr<KEventObject> root;
@@ -52,7 +52,7 @@ namespace kroll
 
 		private:
 		void RemoveEventListener(
-			std::string& eventName, unsigned int id, SharedKMethod callback);
+			std::string& eventName, unsigned int id, KMethodRef callback);
 	};
 
 }

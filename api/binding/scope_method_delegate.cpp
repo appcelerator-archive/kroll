@@ -9,9 +9,9 @@
 using namespace kroll;
 
 ScopeMethodDelegate::ScopeMethodDelegate(MethodDelegateType type,
-                                         SharedKObject global,
-                                         SharedKObject scope,
-                                         SharedKMethod delegate) :
+                                         KObjectRef global,
+                                         KObjectRef scope,
+                                         KMethodRef delegate) :
 	type(type), global(global), scope(scope), delegate(delegate)
 {
 }
@@ -21,12 +21,12 @@ ScopeMethodDelegate::~ScopeMethodDelegate()
 }
 
 
-void ScopeMethodDelegate::Set(const char *name, SharedValue value)
+void ScopeMethodDelegate::Set(const char *name, KValueRef value)
 {
 	delegate->Set(name,value);
 }
 
-SharedValue ScopeMethodDelegate::Get(const char *name)
+KValueRef ScopeMethodDelegate::Get(const char *name)
 {
 	return delegate->Get(name);
 }
@@ -42,10 +42,10 @@ bool ScopeMethodDelegate::IsGlobalKey(std::string& key)
 	return (pos!=std::string::npos);
 }
 
-SharedValue ScopeMethodDelegate::Call(const ValueList& args)
+KValueRef ScopeMethodDelegate::Call(const ValueList& args)
 {
 	std::string key = args.at(0)->ToString();
-	SharedKObject obj = IsGlobalKey(key) ? global : scope;
+	KObjectRef obj = IsGlobalKey(key) ? global : scope;
 	if (type == GET)
 	{
 		// not found, look inside scope
@@ -53,13 +53,13 @@ SharedValue ScopeMethodDelegate::Call(const ValueList& args)
 	}
 	else
 	{
-		SharedValue result = args.at(1);
+		KValueRef result = args.at(1);
 		obj->SetNS(key.c_str(),result);
 		return Value::Undefined;
 	}
 }
 
-AutoPtr<StaticBoundObject> ScopeMethodDelegate::CreateDelegate(SharedKObject global, SharedKObject bo)
+AutoPtr<StaticBoundObject> ScopeMethodDelegate::CreateDelegate(KObjectRef global, KObjectRef bo)
 {
 	AutoPtr<StaticBoundObject> scope = new StaticBoundObject();
 	SharedStringList keys = bo->GetPropertyNames();
@@ -69,18 +69,18 @@ AutoPtr<StaticBoundObject> ScopeMethodDelegate::CreateDelegate(SharedKObject glo
 	{
 		SharedString key_ptr = (*iter++);
 		std::string key = *key_ptr;
-		SharedValue value = bo->Get(key.c_str());
+		KValueRef value = bo->Get(key.c_str());
 
 		if (key == "set")
 		{
-			SharedKMethod d = new ScopeMethodDelegate(SET, global, scope, value->ToMethod());
-			SharedValue v = Value::NewMethod(d);
+			KMethodRef d = new ScopeMethodDelegate(SET, global, scope, value->ToMethod());
+			KValueRef v = Value::NewMethod(d);
 			scope->Set(key.c_str(), v);
 		}
 		else if (key == "get")
 		{
-			SharedKMethod d = new ScopeMethodDelegate(GET, global, scope, value->ToMethod());
-			SharedValue v = Value::NewMethod(d);
+			KMethodRef d = new ScopeMethodDelegate(GET, global, scope, value->ToMethod());
+			KValueRef v = Value::NewMethod(d);
 			scope->Set(key.c_str(), v);
 		}
 		else

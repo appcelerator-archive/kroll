@@ -22,7 +22,7 @@ namespace kroll
 		this->object = NULL;
 	}
 
-	void KPythonDict::Set(const char* name, SharedValue value)
+	void KPythonDict::Set(const char* name, KValueRef value)
 	{
 		PyLockGIL lock;
 		PyObject* pyval = PythonUtils::ToPyObject(value);
@@ -34,7 +34,7 @@ namespace kroll
 		}
 	}
 
-	SharedValue KPythonDict::Get(const char *name)
+	KValueRef KPythonDict::Get(const char *name)
 	{
 		PyLockGIL lock;
 		PyObject* item = PyMapping_GetItemString(this->object, (char*) name);
@@ -44,7 +44,7 @@ namespace kroll
 
 		try
 		{
-			SharedValue value = PythonUtils::ToKrollValue(item);
+			KValueRef value = PythonUtils::ToKrollValue(item);
 			Py_DECREF(item);
 			return value;
 		}
@@ -55,7 +55,7 @@ namespace kroll
 		}
 	}
 
-	bool KPythonDict::Equals(SharedKObject other)
+	bool KPythonDict::Equals(KObjectRef other)
 	{
 		AutoPtr<KPythonDict> pyOther = other.cast<KPythonDict>();
 

@@ -63,39 +63,39 @@ namespace kroll
 		this->SetMethod("isLoaded", &ComponentBinding::_IsLoaded);
 	}
 
-	void ComponentBinding::_GetType(const ValueList& args, SharedValue result)
+	void ComponentBinding::_GetType(const ValueList& args, KValueRef result)
 	{
 		result->SetInt((int) this->component->type);
 	}
 
-	void ComponentBinding::_GetName(const ValueList& args, SharedValue result)
+	void ComponentBinding::_GetName(const ValueList& args, KValueRef result)
 	{
 		result->SetString(this->component->name);
 	}
 
-	void ComponentBinding::_GetVersion(const ValueList& args, SharedValue result)
+	void ComponentBinding::_GetVersion(const ValueList& args, KValueRef result)
 	{
 		result->SetString(this->component->version);
 	}
 
-	void ComponentBinding::_GetPath(const ValueList& args, SharedValue result)
+	void ComponentBinding::_GetPath(const ValueList& args, KValueRef result)
 	{
 		result->SetString(this->component->path);
 	}
 
-	void ComponentBinding::_GetManifest(const ValueList& args, SharedValue result)
+	void ComponentBinding::_GetManifest(const ValueList& args, KValueRef result)
 	{
 		vector<pair<string, string> > manifest = this->component->ReadManifest();
-		SharedKList manifestList = APIBinding::ManifestToKList(manifest);
+		KListRef manifestList = APIBinding::ManifestToKList(manifest);
 		result->SetList(manifestList);
 	}
 
-	void ComponentBinding::_IsBundled(const ValueList& args, SharedValue result)
+	void ComponentBinding::_IsBundled(const ValueList& args, KValueRef result)
 	{
 		result->SetBool(this->component->bundled);
 	}
 
-	void ComponentBinding::_IsLoaded(const ValueList& args, SharedValue result)
+	void ComponentBinding::_IsLoaded(const ValueList& args, KValueRef result)
 	{
 		SharedApplication app = Host::GetInstance()->GetApplication();
 		result->SetBool(false);

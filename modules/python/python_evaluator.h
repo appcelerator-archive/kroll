@@ -12,14 +12,14 @@ namespace kroll
 	{
 		public:
 		PythonEvaluator();
-		void Evaluate(const ValueList& args, SharedValue result);
-		void CanEvaluate(const ValueList& args, SharedValue result);
+		void Evaluate(const ValueList& args, KValueRef result);
+		void CanEvaluate(const ValueList& args, KValueRef result);
 
 		private:
 		static void Strip(std::string &);
 		static void ConvertLineEndings(std::string &);
-		static void DictToKObjectProps(PyObject* map, SharedKObject o);
-		static void KObjectPropsToDict(SharedKObject o, PyObject* pyobj);
+		static void DictToKObjectProps(PyObject* map, KObjectRef o);
+		static void KObjectPropsToDict(KObjectRef o, PyObject* pyobj);
 
 	};
 }

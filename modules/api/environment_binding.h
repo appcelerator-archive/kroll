@@ -15,9 +15,9 @@ namespace kroll
 	public:
 		EnvironmentBinding() : KObject("API.Environment") {}
 		
-		virtual SharedValue Get(const char *name);
+		virtual KValueRef Get(const char *name);
 		virtual SharedStringList GetPropertyNames();
-		virtual void Set(const char *name, SharedValue value);
+		virtual void Set(const char *name, KValueRef value);
 		virtual SharedString DisplayString(int levels=3);
 	};
 }

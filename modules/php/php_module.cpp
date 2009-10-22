@@ -68,7 +68,7 @@ namespace kroll
 	{
 		PHPModule::instance_ = NULL;
 
-		SharedKObject global = this->host->GetGlobalObject();
+		KObjectRef global = this->host->GetGlobalObject();
 		Script::GetInstance()->RemoveScriptEvaluator(this->binding);
 		global->Set("PHP", Value::Undefined);
 		this->binding->Set("evaluate", Value::Undefined);
@@ -83,7 +83,7 @@ namespace kroll
 	{
 		PHPModule::mimeType = SG(default_mimetype);
 
-		SharedKObject global = this->host->GetGlobalObject();
+		KObjectRef global = this->host->GetGlobalObject();
 		this->binding = new PHPEvaluator();
 		global->Set("PHP", Value::NewObject(this->binding));
 		Script::GetInstance()->AddScriptEvaluator(this->binding);

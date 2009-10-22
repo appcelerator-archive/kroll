@@ -96,8 +96,8 @@ namespace kroll
 		return this->jobs;
 	}
 
-	SharedValue LinuxHost::InvokeMethodOnMainThread(
-		SharedKMethod method,
+	KValueRef LinuxHost::InvokeMethodOnMainThread(
+		KMethodRef method,
 		const ValueList& args,
 		bool synchronous)
 	{
@@ -122,7 +122,7 @@ namespace kroll
 			// through because we've already called Execute() above.
 			job->Wait(); 
 
-			SharedValue r = job->GetResult();
+			KValueRef r = job->GetResult();
 			ValueException e = job->GetException();
 			delete job;
 

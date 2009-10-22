@@ -18,9 +18,9 @@ namespace kroll
 	{
 	}
 
-	SharedValue StaticBoundMethod::Call(const ValueList& args)
+	KValueRef StaticBoundMethod::Call(const ValueList& args)
 	{
-		SharedValue tv = Value::NewUndefined();
+		KValueRef tv = Value::NewUndefined();
 		if (this->callback)
 		{
 			this->callback->Run(args, tv);
@@ -28,12 +28,12 @@ namespace kroll
 		return tv;
 	}
 
-	void StaticBoundMethod::Set(const char *name, SharedValue value)
+	void StaticBoundMethod::Set(const char *name, KValueRef value)
 	{
 		this->object->Set(name, value);
 	}
 
-	SharedValue StaticBoundMethod::Get(const char *name)
+	KValueRef StaticBoundMethod::Get(const char *name)
 	{
 		return this->object->Get(name);
 	}

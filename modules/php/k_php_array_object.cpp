@@ -19,7 +19,7 @@ namespace kroll
 	{
 	}
 
-	SharedValue KPHPArrayObject::Get(const char *name)
+	KValueRef KPHPArrayObject::Get(const char *name)
 	{
 		if (KList::IsInt(name))
 		{
@@ -41,11 +41,11 @@ namespace kroll
 		}
 
 		TSRMLS_FETCH();
-		SharedValue v = PHPUtils::ToKrollValue((zval *) copyval TSRMLS_CC);
+		KValueRef v = PHPUtils::ToKrollValue((zval *) copyval TSRMLS_CC);
 		return v;
 	}
 
-	void KPHPArrayObject::Set(const char *name, SharedValue value)
+	void KPHPArrayObject::Set(const char *name, KValueRef value)
 	{
 		// Check for integer value as name
 		int index = -1;
@@ -59,7 +59,7 @@ namespace kroll
 		}
 	}
 
-	bool KPHPArrayObject::Equals(SharedKObject other)
+	bool KPHPArrayObject::Equals(KObjectRef other)
 	{
 		AutoPtr<KPHPArrayObject> phpOther = other.cast<KPHPArrayObject>();
 
@@ -101,12 +101,12 @@ namespace kroll
 		return 0;
 	}
 
-	void KPHPArrayObject::Append(SharedValue value)
+	void KPHPArrayObject::Append(KValueRef value)
 	{
 		/*TODO: Implement*/
 	}
 
-	void KPHPArrayObject::SetAt(unsigned int index, SharedValue value)
+	void KPHPArrayObject::SetAt(unsigned int index, KValueRef value)
 	{
 		/*TODO: Implement*/
 	}
@@ -117,7 +117,7 @@ namespace kroll
 		return true;
 	}
 
-	SharedValue KPHPArrayObject::At(unsigned int index)
+	KValueRef KPHPArrayObject::At(unsigned int index)
 	{
 		/*TODO: Implement*/
 		return Value::Null;
@@ -128,7 +128,7 @@ namespace kroll
 		return this->list;
 	}
 
-	void KPHPArrayObject::AddKrollValueToPHPArray(SharedValue value, zval *phpArray, const char *key)
+	void KPHPArrayObject::AddKrollValueToPHPArray(KValueRef value, zval *phpArray, const char *key)
 	{
 		if (value->IsNull() || value->IsUndefined())
 		{
@@ -175,7 +175,7 @@ namespace kroll
 		}
 	}
 
-	void KPHPArrayObject::AddKrollValueToPHPArray(SharedValue value, zval *phpArray, unsigned int index)
+	void KPHPArrayObject::AddKrollValueToPHPArray(KValueRef value, zval *phpArray, unsigned int index)
 	{
 		if (value->IsNull() || value->IsUndefined())
 		{
@@ -222,7 +222,7 @@ namespace kroll
 		}
 	}
 
-	void KPHPArrayObject::AddKrollValueToPHPArray(SharedValue value, zval *phpArray)
+	void KPHPArrayObject::AddKrollValueToPHPArray(KValueRef value, zval *phpArray)
 	{
 		if (value->IsNull() || value->IsUndefined())
 		{

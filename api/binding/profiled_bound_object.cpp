@@ -21,7 +21,7 @@ namespace kroll
 		ProfiledBoundObject::stream = stream;
 	}
 
-	ProfiledBoundObject::ProfiledBoundObject(SharedKObject delegate) :
+	ProfiledBoundObject::ProfiledBoundObject(KObjectRef delegate) :
 		KObject(delegate->GetType()),
 		delegate(delegate),
 		count(1)
@@ -32,20 +32,20 @@ namespace kroll
 	{
 	}
 
-	bool ProfiledBoundObject::AlreadyWrapped(SharedValue value)
+	bool ProfiledBoundObject::AlreadyWrapped(KValueRef value)
 	{
 		if (value->IsMethod()) {
-			SharedKMethod source = value->ToMethod();
+			KMethodRef source = value->ToMethod();
 			AutoPtr<ProfiledBoundMethod> po = source.cast<ProfiledBoundMethod>();
 			return !po.isNull();
 
 		} else if (value->IsList()) {
-			SharedKList source = value->ToList();
+			KListRef source = value->ToList();
 			AutoPtr<ProfiledBoundList> po = source.cast<ProfiledBoundList>();
 			return !po.isNull();
 
 		} else if (value->IsObject()) {
-			SharedKObject source = value->ToObject();
+			KObjectRef source = value->ToObject();
 			AutoPtr<ProfiledBoundObject> po = source.cast<ProfiledBoundObject>();
 			return !po.isNull();
 
@@ -54,22 +54,22 @@ namespace kroll
 		}
 	}
 
-	SharedValue ProfiledBoundObject::Wrap(SharedValue value, std::string type)
+	KValueRef ProfiledBoundObject::Wrap(KValueRef value, std::string type)
 	{
 		if (AlreadyWrapped(value)) {
 			return value;
 
 		} else if (value->IsMethod()) {
-			SharedKMethod toWrap = value->ToMethod();
-			SharedKMethod wrapped = new ProfiledBoundMethod(toWrap, type);
+			KMethodRef toWrap = value->ToMethod();
+			KMethodRef wrapped = new ProfiledBoundMethod(toWrap, type);
 			return Value::NewMethod(wrapped);
 
 		} else if (value->IsList()) {
-			SharedKList wrapped = new ProfiledBoundList(value->ToList());
+			KListRef wrapped = new ProfiledBoundList(value->ToList());
 			return Value::NewList(wrapped);
 
 		} else if (value->IsObject()) {
-			SharedKObject wrapped = new ProfiledBoundObject(value->ToObject());
+			KObjectRef wrapped = new ProfiledBoundObject(value->ToObject());
 			return Value::NewObject(wrapped);
 
 		} else {
@@ -77,10 +77,10 @@ namespace kroll
 		}
 	}
 
-	void ProfiledBoundObject::Set(const char *name, SharedValue value)
+	void ProfiledBoundObject::Set(const char *name, KValueRef value)
 	{
 		std::string type = this->GetSubType(name);
-		SharedValue result = ProfiledBoundObject::Wrap(value, type);
+		KValueRef result = ProfiledBoundObject::Wrap(value, type);
 
 		Poco::Stopwatch sw;
 		sw.start();
@@ -90,13 +90,13 @@ namespace kroll
 		this->Log("set", type, sw.elapsed());
 	}
 
-	SharedValue ProfiledBoundObject::Get(const char *name)
+	KValueRef ProfiledBoundObject::Get(const char *name)
 	{
 		std::string type = this->GetSubType(name);
 
 		Poco::Stopwatch sw;
 		sw.start();
-		SharedValue value = delegate->Get(name);
+		KValueRef value = delegate->Get(name);
 		sw.stop();
 
 		this->Log("get", type, sw.elapsed());
@@ -130,7 +130,7 @@ namespace kroll
 		return delegate->HasProperty(name);
 	}
 
-	bool ProfiledBoundObject::Equals(SharedKObject other)
+	bool ProfiledBoundObject::Equals(KObjectRef other)
 	{
 		AutoPtr<ProfiledBoundObject> pother = other.cast<ProfiledBoundObject>();
 		if (!pother.isNull()) {

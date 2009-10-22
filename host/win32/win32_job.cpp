@@ -9,7 +9,7 @@
 
 namespace kroll
 {
-	Win32Job::Win32Job(SharedKMethod method, const ValueList& args, bool wait) :
+	Win32Job::Win32Job(KMethodRef method, const ValueList& args, bool wait) :
 		method(method),
 		args(args),
 		wait(wait),
@@ -60,7 +60,7 @@ namespace kroll
 			this->semaphore.set();
 	}
 
-	SharedValue Win32Job::GetResult()
+	KValueRef Win32Job::GetResult()
 	{
 		return this->return_value;
 	}

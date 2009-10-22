@@ -72,7 +72,7 @@ namespace kroll
 		Poco::URI* GetURI() { return uriStack.size() == 0 ? 0 : uriStack.top(); }
 		
 	private:
-		SharedKObject binding;
+		KObjectRef binding;
 		static std::ostringstream buffer;
 		static std::string mimeType;
 		static PHPModule *instance_;

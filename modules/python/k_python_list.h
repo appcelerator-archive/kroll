@@ -17,16 +17,16 @@ namespace kroll
 		KPythonList(PyObject *obj);
 		virtual ~KPythonList();
 
-		SharedValue Get(const char *name);
-		void Set(const char *name, SharedValue value);
-		virtual bool Equals(SharedKObject);
+		KValueRef Get(const char *name);
+		void Set(const char *name, KValueRef value);
+		virtual bool Equals(KObjectRef);
 		SharedStringList GetPropertyNames();
 
 		unsigned int Size();
-		void Append(SharedValue value);
-		virtual void SetAt(unsigned int index, SharedValue value);
+		void Append(KValueRef value);
+		virtual void SetAt(unsigned int index, KValueRef value);
 		bool Remove(unsigned int index);
-		SharedValue At(unsigned int index);
+		KValueRef At(unsigned int index);
 
 		PyObject* ToPython();
 

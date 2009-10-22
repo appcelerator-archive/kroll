@@ -44,7 +44,7 @@ namespace kroll
 		std::string code(FileUtils::ReadFile(this->path));
 
 		// Insert the global object into this script's context.
-		SharedValue globalValue = Value::NewObject(host->GetGlobalObject());
+		KValueRef globalValue = Value::NewObject(host->GetGlobalObject());
 		JSValueRef jsAPI = KJSUtil::ToJSValue(globalValue, context);
 		JSStringRef propertyName = JSStringCreateWithUTF8CString(PRODUCT_NAME);
 		JSObjectSetProperty(context, global, propertyName, jsAPI,
@@ -57,7 +57,7 @@ namespace kroll
 		bool syntax = JSCheckScriptSyntax(context, jsCode, NULL, 0, &exception);
 		if (!syntax)
 		{
-			SharedValue e = KJSUtil::ToKrollValue(exception, context, NULL);
+			KValueRef e = KJSUtil::ToKrollValue(exception, context, NULL);
 			JSStringRelease(jsCode);
 			throw ValueException(e);
 		}
@@ -68,7 +68,7 @@ namespace kroll
 
 		if (ret == NULL)
 		{
-			SharedValue e = KJSUtil::ToKrollValue(exception, context, NULL);
+			KValueRef e = KJSUtil::ToKrollValue(exception, context, NULL);
 			throw ValueException(e);
 		}
 	}

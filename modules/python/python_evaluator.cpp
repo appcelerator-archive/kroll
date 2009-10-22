@@ -29,7 +29,7 @@ namespace kroll
 		SetMethod("evaluate", &PythonEvaluator::Evaluate);
 	}
 	
-	void PythonEvaluator::CanEvaluate(const ValueList& args, SharedValue result)
+	void PythonEvaluator::CanEvaluate(const ValueList& args, KValueRef result)
 	{
 		args.VerifyException("canEvaluate", "s");
 		
@@ -41,7 +41,7 @@ namespace kroll
 		}
 	}
 	
-	void PythonEvaluator::Evaluate(const ValueList& args, SharedValue result)
+	void PythonEvaluator::Evaluate(const ValueList& args, KValueRef result)
 	{
 		PyLockGIL lock;
 		args.VerifyException("evaluate", "s s s o");
@@ -49,7 +49,7 @@ namespace kroll
 		//const char *mimeType = args.GetString(0).c_str();
 		const char *name = args.GetString(1).c_str();
 		std::string code = args.GetString(2);
-		SharedKObject windowGlobal = args.GetObject(3);
+		KObjectRef windowGlobal = args.GetObject(3);
 		
 		// Normalize tabs and convert line-feeds
 		PythonEvaluator::Strip(code);
@@ -84,7 +84,7 @@ namespace kroll
 		// Clear the error indicator before doing anything else. It might
 		// cause a a false positive for errors in other bits of Python.
 		// TODO: Logging
-		SharedValue kv = Value::Undefined;
+		KValueRef kv = Value::Undefined;
 		if (returnValue == NULL && PyErr_Occurred())
 		{
 			Logger *logger = Logger::Get("Python");
@@ -96,7 +96,7 @@ namespace kroll
 		}
 		else
 		{
-			SharedValue kv = PythonUtils::ToKrollValue(returnValue);
+			KValueRef kv = PythonUtils::ToKrollValue(returnValue);
 			Py_DECREF(returnValue);
 		}
 
@@ -106,7 +106,7 @@ namespace kroll
 		result->SetValue(kv);
 	}
 
-	void PythonEvaluator::KObjectPropsToDict(SharedKObject o, PyObject* pyobj)
+	void PythonEvaluator::KObjectPropsToDict(KObjectRef o, PyObject* pyobj)
 	{
 		PyObject* builtins = PyDict_GetItemString(pyobj, "__builtins__");
 
@@ -121,7 +121,7 @@ namespace kroll
 			if ((!PyDict_GetItemString(pyobj, k) && !PyObject_HasAttrString(builtins, k))
 					|| !strcmp(k, PRODUCT_NAME))
 			{
-				SharedValue v = o->Get(k);
+				KValueRef v = o->Get(k);
 				PyObject* pv = PythonUtils::ToPyObject(v);
 				PyDict_SetItemString(pyobj, k, pv);
 				Py_DECREF(pv);
@@ -129,7 +129,7 @@ namespace kroll
 		}
 	}
 
-	void PythonEvaluator::DictToKObjectProps(PyObject* dict, SharedKObject o)
+	void PythonEvaluator::DictToKObjectProps(PyObject* dict, KObjectRef o)
 	{
 		// Avoid compiler warnings
 		PyObject *items = PyObject_CallMethod(dict, (char*) "items", NULL);
@@ -148,8 +148,8 @@ namespace kroll
 			std::string sk = PythonUtils::ToString(k);
 			if (sk.find("__") != 0)
 			{
-				SharedValue newValue = PythonUtils::ToKrollValue(v);
-				SharedValue existingValue = o->Get(sk.c_str());
+				KValueRef newValue = PythonUtils::ToKrollValue(v);
+				KValueRef existingValue = o->Get(sk.c_str());
 				if (!newValue->Equals(existingValue))
 				{
 					o->Set(sk.c_str(), newValue);

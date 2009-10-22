@@ -9,7 +9,7 @@
 
 namespace kroll
 {
-	ValueException::ValueException(SharedValue v) : std::exception(), value(v)
+	ValueException::ValueException(KValueRef v) : std::exception(), value(v)
 	{
 	}
 
@@ -38,12 +38,12 @@ namespace kroll
 		return ValueException(Value::NewString(text));
 	}
 
-	ValueException ValueException::FromObject(SharedKObject o)
+	ValueException ValueException::FromObject(KObjectRef o)
 	{
 		return ValueException(Value::NewObject(o));
 	}
 
-	SharedValue ValueException::GetValue()
+	KValueRef ValueException::GetValue()
 	{
 		return this->value;
 	}

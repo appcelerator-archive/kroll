@@ -14,12 +14,12 @@ namespace kroll
 		KPHPFunction(const char *functionName);
 
 		virtual ~KPHPFunction();
-		SharedValue Call(const ValueList& args);
-		virtual void Set(const char *name, SharedValue value);
-		virtual SharedValue Get(const char *name);
+		KValueRef Call(const ValueList& args);
+		virtual void Set(const char *name, KValueRef value);
+		virtual KValueRef Get(const char *name);
 		virtual SharedStringList GetPropertyNames();
 		virtual SharedString DisplayString(int);
-		virtual bool Equals(SharedKObject);
+		virtual bool Equals(KObjectRef);
 		bool PropertyExists(const char* property);
 
 		inline std::string& GetMethodName() { return methodName; }
@@ -27,7 +27,7 @@ namespace kroll
 		private:
 		std::string methodName;
 		zval* zMethodName;
-		SharedKObject globalObject;
+		KObjectRef globalObject;
 	};
 }
 #endif

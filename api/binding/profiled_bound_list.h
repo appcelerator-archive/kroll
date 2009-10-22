@@ -15,23 +15,23 @@ namespace kroll
 	class ProfiledBoundList : public ProfiledBoundObject, public KList
 	{
 	public:
-		ProfiledBoundList(SharedKList delegate);
+		ProfiledBoundList(KListRef delegate);
 		virtual ~ProfiledBoundList();
 
 		// @see KList::Append
-		virtual void Append(SharedValue value);
+		virtual void Append(KValueRef value);
 		// @see KList::Size
 		virtual unsigned int Size();
 		// @see KList::At
-		virtual SharedValue At(unsigned int index);
+		virtual KValueRef At(unsigned int index);
 		// @see KList::SetAt
-		virtual void SetAt(unsigned int index, SharedValue value);
+		virtual void SetAt(unsigned int index, KValueRef value);
 		// @see KList::Remove
 		virtual bool Remove(unsigned int index);
 		// @See KList::Set
-		virtual void Set(const char *name, SharedValue value);
+		virtual void Set(const char *name, KValueRef value);
 		// @see KList::Get
-		virtual SharedValue Get(const char *name);
+		virtual KValueRef Get(const char *name);
 		// @see KList::GetPropertyNames
 		virtual SharedStringList GetPropertyNames();
 
@@ -40,7 +40,7 @@ namespace kroll
 		/**
 		 * @return the delegate of this profiled bound object
 		 */
-		SharedKList GetDelegate() { return list; }
+		KListRef GetDelegate() { return list; }
 		virtual void duplicate()
 		{
 			++count;
@@ -60,7 +60,7 @@ namespace kroll
 		}
 
 	private:
-		SharedKList list;
+		KListRef list;
 		Poco::AtomicCounter count;
 
 	};

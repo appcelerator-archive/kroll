@@ -9,14 +9,14 @@
 
 namespace kroll
 {
-	KDelegatingObject::KDelegatingObject(SharedKObject global) :
+	KDelegatingObject::KDelegatingObject(KObjectRef global) :
 		global(global),
 		local(new StaticBoundObject())
 	{
 	}
 
 	KDelegatingObject::KDelegatingObject(
-		SharedKObject global, SharedKObject local) :
+		KObjectRef global, KObjectRef local) :
 		global(global),
 		local(local)
 	{
@@ -26,11 +26,11 @@ namespace kroll
 	{
 	}
 
-	SharedValue KDelegatingObject::Get(const char *name)
+	KValueRef KDelegatingObject::Get(const char *name)
 	{
 		ScopedLock lock(&mutex);
 
-		SharedValue val = local->Get(name);
+		KValueRef val = local->Get(name);
 		if (!val->IsUndefined())
 		{
 			// We want properties of the local object to
@@ -46,7 +46,7 @@ namespace kroll
 
 	}
 
-	void KDelegatingObject::Set(const char *name, SharedValue value)
+	void KDelegatingObject::Set(const char *name, KValueRef value)
 	{
 		// We want to set the property on both
 		// the local and the global object.

@@ -24,7 +24,7 @@ namespace kroll {
 			zval_ptr_dtor(&zMethodName);
 	}
 
-	SharedValue KPHPFunction::Call(const ValueList& args)
+	KValueRef KPHPFunction::Call(const ValueList& args)
 	{
 		TSRMLS_FETCH();
 
@@ -45,7 +45,7 @@ namespace kroll {
 		zval* zReturnValue;
 		MAKE_STD_ZVAL(zReturnValue);
 
-		SharedKObject previousGlobal(PHPUtils::GetCurrentGlobalObject());
+		KObjectRef previousGlobal(PHPUtils::GetCurrentGlobalObject());
 		PHPUtils::SwapGlobalObject(this->globalObject, &EG(symbol_table) TSRMLS_CC);
 
 		zend_try 
@@ -82,7 +82,7 @@ namespace kroll {
 		}
 		else if (zReturnValue)
 		{
-			SharedValue returnValue(PHPUtils::ToKrollValue(zReturnValue TSRMLS_CC));
+			KValueRef returnValue(PHPUtils::ToKrollValue(zReturnValue TSRMLS_CC));
 			zval_ptr_dtor(&zReturnValue);
 			return returnValue;
 		}
@@ -92,20 +92,20 @@ namespace kroll {
 		}
 	}
 
-	void KPHPFunction::Set(const char *name, SharedValue value)
+	void KPHPFunction::Set(const char *name, KValueRef value)
 	{
 		// TODO: PHP methods do not have properties. Should we should set
 		// them on a StaticBoundObject here?
 	}
 
-	SharedValue KPHPFunction::Get(const char *name)
+	KValueRef KPHPFunction::Get(const char *name)
 	{
 		// TODO: PHP methods do not have properties. Should we should get
 		// them from a StaticBoundObject here?
 		return Value::Undefined;
 	}
 
-	bool KPHPFunction::Equals(SharedKObject other)
+	bool KPHPFunction::Equals(KObjectRef other)
 	{
 		AutoPtr<KPHPFunction> phpOther = other.cast<KPHPFunction>();
 		if (phpOther.isNull())

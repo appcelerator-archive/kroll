@@ -22,10 +22,10 @@ namespace kroll
 		private:
 		SharedDependency dependency;
 
-		void _GetType(const ValueList& args, SharedValue value);
-		void _GetName(const ValueList& args, SharedValue value);;
-		void _GetVersion(const ValueList& args, SharedValue value);
-		void _GetRequirement(const ValueList& args, SharedValue value);
+		void _GetType(const ValueList& args, KValueRef value);
+		void _GetName(const ValueList& args, KValueRef value);;
+		void _GetVersion(const ValueList& args, KValueRef value);
+		void _GetRequirement(const ValueList& args, KValueRef value);
 	};
 }
 

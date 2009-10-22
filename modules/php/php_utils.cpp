@@ -9,9 +9,9 @@ namespace kroll
 {
 	namespace PHPUtils
 	{
-		SharedValue ToKrollValue(zval *value TSRMLS_DC)
+		KValueRef ToKrollValue(zval *value TSRMLS_DC)
 		{
-			SharedValue returnValue = Value::NewNull();
+			KValueRef returnValue = Value::NewNull();
 			int type = Z_TYPE_P(value);
 
 			if (IS_NULL == type)
@@ -68,7 +68,7 @@ namespace kroll
 			return returnValue;
 		}
 
-		zval* ToPHPValue(SharedValue value)
+		zval* ToPHPValue(KValueRef value)
 		{
 			zval* returnValue;
 			ALLOC_INIT_ZVAL(returnValue);
@@ -76,7 +76,7 @@ namespace kroll
 			return returnValue;
 		}
 
-		void ToPHPValue(SharedValue value, zval** returnValue)
+		void ToPHPValue(KValueRef value, zval** returnValue)
 		{
 			if (value->IsNull() || value->IsUndefined())
 			{
@@ -140,15 +140,15 @@ namespace kroll
 			}
 		}
 
-		SharedKList PHPArrayToKList(zval* array TSRMLS_DC, bool ignoreGlobals)
+		KListRef PHPArrayToKList(zval* array TSRMLS_DC, bool ignoreGlobals)
 		{
 			HashTable* arrayHash = Z_ARRVAL_P(array);
 			return PHPHashTableToKList(arrayHash TSRMLS_CC);
 		}
 
-		SharedKList PHPHashTableToKList(HashTable* hashTable TSRMLS_DC, bool ignoreGlobals)
+		KListRef PHPHashTableToKList(HashTable* hashTable TSRMLS_DC, bool ignoreGlobals)
 		{
-			SharedKList list = new StaticBoundList();
+			KListRef list = new StaticBoundList();
 
 			for (zend_hash_internal_pointer_reset(hashTable);
 				zend_hash_has_more_elements(hashTable) == SUCCESS;
@@ -312,7 +312,7 @@ namespace kroll
 			}
 		}
 
-		SharedKList GetClassVars(zend_class_entry *ce TSRMLS_DC)
+		KListRef GetClassVars(zend_class_entry *ce TSRMLS_DC)
 		{
 			zval classVars;
 			array_init(&classVars);
@@ -335,14 +335,14 @@ namespace kroll
 			return 0;
 		}
 
-		static SharedKObject currentPHPGlobal(0);
+		static KObjectRef currentPHPGlobal(0);
 
-		SharedKObject GetCurrentGlobalObject()
+		KObjectRef GetCurrentGlobalObject()
 		{
 			return currentPHPGlobal;
 		}
 
-		void SwapGlobalObject(SharedKObject newGlobal, HashTable *symbolTable TSRMLS_DC)
+		void SwapGlobalObject(KObjectRef newGlobal, HashTable *symbolTable TSRMLS_DC)
 		{
 			// Push the variables from the given symbol table to the
 			// the current global object. TODO: This is broken! If the
@@ -351,12 +351,12 @@ namespace kroll
 			// one. Dammit!
 			if (!currentPHPGlobal.isNull())
 			{
-				SharedKList symbols(PHPHashTableToKList(symbolTable TSRMLS_CC, true));
+				KListRef symbols(PHPHashTableToKList(symbolTable TSRMLS_CC, true));
 				SharedStringList keys(symbols->GetPropertyNames());
 				for (size_t i = 0; i < keys->size(); i++)
 				{
 					const char* name = keys->at(i)->c_str();
-					SharedValue newValue(symbols->Get(name));
+					KValueRef newValue(symbols->Get(name));
 					if (!newValue->Equals(currentPHPGlobal->Get(name)))
 					{
 						currentPHPGlobal->Set(name, newValue);

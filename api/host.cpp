@@ -98,13 +98,13 @@ namespace kroll
 		Script::Initialize();
 	}
 
-	void Host::GetVersion(const ValueList& args, SharedValue result)
+	void Host::GetVersion(const ValueList& args, KValueRef result)
 	{
 		static std::string version(STRING(PRODUCT_VERSION));
 		result->SetString(version);
 	}
 
-	void Host::GetPlatform(const ValueList& args, SharedValue result)
+	void Host::GetPlatform(const ValueList& args, KValueRef result)
 	{
 		static std::string platform(this->GetPlatform());
 		result->SetString(platform);
@@ -734,7 +734,7 @@ namespace kroll
 		}
 	}
 
-	SharedKObject Host::GetGlobalObject()
+	KObjectRef Host::GetGlobalObject()
 	{
 		return this->globalObject;
 	}

@@ -36,7 +36,7 @@ namespace kroll
 	{
 	}
 
-	static SharedKObject global_object;
+	static KObjectRef global_object;
 	static VALUE m_missing(int argc, VALUE* argv, VALUE self)
 	{
 		bool assignment = false;
@@ -57,7 +57,7 @@ namespace kroll
 		}
 		// If we can't find this property perhaps we should return
 		// the same property name except capitalized.
-		SharedValue v = global_object->Get(name);
+		KValueRef v = global_object->Get(name);
 		if (v->IsUndefined())
 		{
 			name[0] = toupper(name[0]);
@@ -71,7 +71,7 @@ namespace kroll
 		if (assignment) // Assignment
 		{
 			rval = rb_ary_entry(args, 0);
-			SharedValue val = RubyUtils::ToKrollValue(rval);
+			KValueRef val = RubyUtils::ToKrollValue(rval);
 			global_object->Set(name, val);
 		}
 		else if (v->IsMethod()) // Method call
@@ -85,11 +85,11 @@ namespace kroll
 		return rval;
 	}
 
-	std::string RubyEvaluator::GetContextId(SharedKObject global)
+	std::string RubyEvaluator::GetContextId(KObjectRef global)
 	{
 		static int nextId = 0;
 		int cid = 0;
-		SharedValue idv = global->Get("__ruby_module_id__");
+		KValueRef idv = global->Get("__ruby_module_id__");
 		if (idv->IsUndefined())
 		{
 			cid = nextId++;
@@ -102,7 +102,7 @@ namespace kroll
 		return std::string("$windowProc") + KList::IntToChars(cid);
 	}
 
-	VALUE RubyEvaluator::GetContext(SharedKObject global)
+	VALUE RubyEvaluator::GetContext(KObjectRef global)
 	{
 		std::string theid = this->GetContextId(global);
 		VALUE ctx = rb_gv_get(theid.c_str());
@@ -126,14 +126,14 @@ namespace kroll
 		return rb_funcall(ctx, rb_intern("instance_eval"), 1, code);
 	}
 	
-	void RubyEvaluator::CanEvaluate(const ValueList& args, SharedValue result)
+	void RubyEvaluator::CanEvaluate(const ValueList& args, KValueRef result)
 	{
 		args.VerifyException("canEvaluate", "s");
 		std::string mimeType = args.GetString(0);
 		result->SetBool(mimeType == "text/ruby");
 	}
 
-	void RubyEvaluator::Evaluate(const ValueList& args, SharedValue result)
+	void RubyEvaluator::Evaluate(const ValueList& args, KValueRef result)
 	{
 		args.VerifyException("evaluate", "s s s o");
 		
@@ -160,7 +160,7 @@ namespace kroll
 
 			// Display a stringified version of the exception.
 			VALUE exception = rb_gv_get("$!");
-			SharedValue v = RubyUtils::ToKrollValue(exception);
+			KValueRef v = RubyUtils::ToKrollValue(exception);
 			SharedString ss = v->DisplayString();
 			error.append(ss->c_str());
 
@@ -185,7 +185,7 @@ namespace kroll
 		result->SetValue(RubyUtils::ToKrollValue(returnValue));
 	}
 
-	void RubyEvaluator::ContextToGlobal(VALUE ctx, SharedKObject o)
+	void RubyEvaluator::ContextToGlobal(VALUE ctx, KObjectRef o)
 	{
 		if (global_object.isNull())
 			return;
@@ -202,7 +202,7 @@ namespace kroll
 				continue;
 
 			volatile VALUE rmeth = rb_funcall(ctx, rb_intern("method"), 1, meth_symbol);
-			SharedKMethod method = new KRubyMethod(rmeth, meth_name);
+			KMethodRef method = new KRubyMethod(rmeth, meth_name);
 			o->SetMethod(meth_name, method);
 		}
 	}

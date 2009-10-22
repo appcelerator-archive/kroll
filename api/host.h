@@ -53,7 +53,7 @@ namespace kroll
 		 *
 		 * @return the method's return value§
 		 */
-		virtual SharedValue InvokeMethodOnMainThread(SharedKMethod method,
+		virtual KValueRef InvokeMethodOnMainThread(KMethodRef method,
 			const ValueList& args, bool waitForCompletion=true) = 0;
 
 		/**
@@ -98,7 +98,7 @@ namespace kroll
 		/**
 		 * @return the Global context object. In most languages this is known as "Titanium"
 		 */
-		SharedKObject GetGlobalObject();
+		KObjectRef GetGlobalObject();
 		
 		/**
 		 * @return the SharedApplication instance for this host
@@ -192,7 +192,7 @@ namespace kroll
 		Mutex moduleMutex;
 		std::vector<ModuleProvider *> module_providers;
 		std::vector<std::string> module_paths;
-		SharedKObject globalObject;
+		KObjectRef globalObject;
 
 		SharedApplication application;
 		bool running;
@@ -288,8 +288,8 @@ namespace kroll
 		void SetupAppInstallerIfRequired();
 		void ParseCommandLineArguments();
 		static void AssertEnvironmentVariable(std::string);
-		void GetVersion(const ValueList& args, SharedValue result);
-		void GetPlatform(const ValueList& args, SharedValue result);
+		void GetVersion(const ValueList& args, KValueRef result);
+		void GetPlatform(const ValueList& args, KValueRef result);
 
 	private:
 		static SharedPtr<Host> instance_;
@@ -311,7 +311,7 @@ namespace kroll
 	 * @param waitForCompletion block until method is finished (default: true)
 	 * @return the method's return value§
 	 */
-	extern KROLL_API SharedValue InvokeMethodOnMainThread(SharedKMethod method, 
+	extern KROLL_API KValueRef InvokeMethodOnMainThread(KMethodRef method, 
 		const ValueList& args, bool waitForCompletion=true);
 }
 #endif

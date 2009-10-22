@@ -9,7 +9,7 @@
 
 namespace kroll
 {
-	LinuxJob::LinuxJob(SharedKMethod method, const ValueList& args, bool synchronous) :
+	LinuxJob::LinuxJob(KMethodRef method, const ValueList& args, bool synchronous) :
 		method(method),
 		args(args),
 		synchronous(synchronous),
@@ -56,7 +56,7 @@ namespace kroll
 			this->semaphore.set();
 	}
 
-	SharedValue LinuxJob::GetResult()
+	KValueRef LinuxJob::GetResult()
 	{
 		return this->return_value;
 	}

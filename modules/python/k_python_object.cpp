@@ -39,7 +39,7 @@ namespace kroll
 		return this->object;
 	}
 
-	void KPythonObject::Set(const char *name, SharedValue value)
+	void KPythonObject::Set(const char *name, KValueRef value)
 	{
 		PyLockGIL lock;
 		PyObject* py_value = PythonUtils::ToPyObject(value);
@@ -61,7 +61,7 @@ namespace kroll
 		}
 	}
 
-	SharedValue KPythonObject::Get(const char *name)
+	KValueRef KPythonObject::Get(const char *name)
 	{
 		PyLockGIL lock;
 		if (0 == (PyObject_HasAttrString(this->object, (char*)name)))
@@ -84,12 +84,12 @@ namespace kroll
 			THROW_PYTHON_EXCEPTION
 		}
 
-		SharedValue kroll_value = PythonUtils::ToKrollValue(value);
+		KValueRef kroll_value = PythonUtils::ToKrollValue(value);
 		Py_DECREF(value);
 		return kroll_value;
 	}
 
-	bool KPythonObject::Equals(SharedKObject other)
+	bool KPythonObject::Equals(KObjectRef other)
 	{
 		AutoPtr<KPythonObject> pyOther = other.cast<KPythonObject>();
 

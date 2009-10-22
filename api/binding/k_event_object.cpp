@@ -61,7 +61,7 @@ namespace kroll
 		return new Event(AutoPtr<KEventObject>(this, true), eventName);
 	}
 
-	void KEventObject::RemoveEventListener(std::string& eventName, SharedKMethod listener)
+	void KEventObject::RemoveEventListener(std::string& eventName, KMethodRef listener)
 	{
 		this->RemoveEventListener(eventName, 0, listener);
 	}
@@ -72,7 +72,7 @@ namespace kroll
 	}
 
 	void KEventObject::RemoveEventListener(
-		std::string& eventName, unsigned int listenerId, SharedKMethod callback)
+		std::string& eventName, unsigned int listenerId, KMethodRef callback)
 	{
 		Poco::Mutex::ScopedLock lock(listenerMapMutex);
 		std::vector<EventListener*>* listeners = KEventObject::listenerMap[this];
@@ -93,7 +93,7 @@ namespace kroll
 	}
 
 	unsigned int KEventObject::AddEventListener(
-		std::string& eventName, SharedKMethod callback)
+		std::string& eventName, KMethodRef callback)
 	{
 		Poco::Mutex::ScopedLock lock(listenerMapMutex);
 		EventListener* listener = new EventListener(eventName, callback);
@@ -102,7 +102,7 @@ namespace kroll
 		return listener->listenerId;
 	}
 
-	unsigned int KEventObject::AddEventListenerForAllEvents(SharedKMethod callback)
+	unsigned int KEventObject::AddEventListenerForAllEvents(KMethodRef callback)
 	{
 		Poco::Mutex::ScopedLock lock(listenerMapMutex);
 		EventListener* listener = new EventListener(Event::ALL, callback);
@@ -154,7 +154,7 @@ namespace kroll
 		return !event->preventedDefault;
 	}
 
-	void KEventObject::_AddEventListener(const ValueList& args, SharedValue result)
+	void KEventObject::_AddEventListener(const ValueList& args, KValueRef result)
 	{
 		unsigned int listenerId;
 		if (args.size() > 1 && args.at(0)->IsString() && args.at(1)->IsMethod()) {
@@ -171,7 +171,7 @@ namespace kroll
 		result->SetDouble((double) listenerId);
 	}
 
-	void KEventObject::_RemoveEventListener(const ValueList& args, SharedValue result)
+	void KEventObject::_RemoveEventListener(const ValueList& args, KValueRef result)
 	{
 		args.VerifyException("removeEventListener", "s n|m");
 
@@ -204,7 +204,7 @@ namespace kroll
 	}
 
 	bool EventListener::Matches(
-		std::string& eventName, unsigned int listenerId, SharedKMethod callback)
+		std::string& eventName, unsigned int listenerId, KMethodRef callback)
 	{
 		return eventName == eventName &&
 			((callback.isNull() && listenerId == 0) ||

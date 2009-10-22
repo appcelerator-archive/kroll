@@ -34,7 +34,7 @@ namespace kroll
 	{
 	}
 
-	Value::Value(SharedValue value) :
+	Value::Value(KValueRef value) :
 		type(UNDEFINED),
 		numberValue(0),
 		stringValue(NULL),
@@ -58,91 +58,91 @@ namespace kroll
 		reset();
 	}
 
-	SharedValue Value::NewUndefined()
+	KValueRef Value::NewUndefined()
 	{
-		SharedValue v(new Value());
+		KValueRef v(new Value());
 		return v;
 	}
 
-	SharedValue Value::NewNull()
+	KValueRef Value::NewNull()
 	{
-		SharedValue v(new Value());
+		KValueRef v(new Value());
 		v->SetNull();
 		return v;
 	}
 
-	SharedValue Value::NewInt(int value)
+	KValueRef Value::NewInt(int value)
 	{
-		SharedValue v(new Value());
+		KValueRef v(new Value());
 		v->SetInt(value);
 		return v;
 	}
 
-	SharedValue Value::NewDouble(double value)
+	KValueRef Value::NewDouble(double value)
 	{
-		SharedValue v(new Value());
+		KValueRef v(new Value());
 		v->SetDouble(value);
 		return v;
 	}
 
-	SharedValue Value::NewBool(bool value)
+	KValueRef Value::NewBool(bool value)
 	{
-		SharedValue v(new Value());
+		KValueRef v(new Value());
 		v->SetBool(value);
 		return v;
 	}
 
-	SharedValue Value::NewString(const char* value)
+	KValueRef Value::NewString(const char* value)
 	{
-		SharedValue v(new Value());
+		KValueRef v(new Value());
 		v->SetString(value);
 		return v;
 	}
 
-	SharedValue Value::NewString(std::string value)
+	KValueRef Value::NewString(std::string value)
 	{
-		SharedValue v(new Value());
+		KValueRef v(new Value());
 		v->SetString(value.c_str());
 		return v;
 	}
 
-	SharedValue Value::NewString(SharedString value)
+	KValueRef Value::NewString(SharedString value)
 	{
-		SharedValue v(new Value());
+		KValueRef v(new Value());
 		v->SetString(value.get()->c_str());
 		return v;
 	}
 
-	SharedValue Value::NewList(SharedKList value)
+	KValueRef Value::NewList(KListRef value)
 	{
-		SharedValue v(new Value());
+		KValueRef v(new Value());
 		v->SetList(value);
 		return v;
 	}
 
-	SharedValue Value::NewMethod(SharedKMethod method)
+	KValueRef Value::NewMethod(KMethodRef method)
 	{
-		SharedValue v(new Value());
+		KValueRef v(new Value());
 		v->SetMethod(method);
 		return v;
 	}
 
-	SharedValue Value::NewVoidPtr(void *value)
+	KValueRef Value::NewVoidPtr(void *value)
 	{
-		SharedValue v(new Value());
+		KValueRef v(new Value());
 		v->SetVoidPtr(value);
 		return v;
 	}
 
-	SharedValue Value::NewObject(SharedKObject value)
+	KValueRef Value::NewObject(KObjectRef value)
 	{
-		SharedValue v(new Value());
+		KValueRef v(new Value());
 		v->SetObject(value);
 		return v;
 	}
 
-	SharedValue Value::Undefined = NewUndefined();
-	SharedValue Value::Null = NewNull();
+	KValueRef Value::Undefined = NewUndefined();
+	KValueRef Value::Null = NewNull();
 
 	bool Value::IsInt() const { return type == INT || (type == DOUBLE && ((int) numberValue) == numberValue); }
 	bool Value::IsDouble() const { return type == DOUBLE; }
@@ -161,12 +161,12 @@ namespace kroll
 	double Value::ToNumber() const { return numberValue; }
 	bool Value::ToBool() const { return boolValue; }
 	const char* Value::ToString() const { return stringValue; }
-	SharedKObject Value::ToObject() const { return objectValue; }
-	SharedKMethod Value::ToMethod() const { return objectValue.cast<KMethod>(); }
-	SharedKList Value::ToList() const { return objectValue.cast<KList>(); }
+	KObjectRef Value::ToObject() const { return objectValue; }
+	KMethodRef Value::ToMethod() const { return objectValue.cast<KMethod>(); }
+	KListRef Value::ToList() const { return objectValue.cast<KList>(); }
 	void* Value::ToVoidPtr() const { return voidPtrValue; }
 
-	void Value::SetValue(SharedValue other)
+	void Value::SetValue(KValueRef other)
 	{
 		SetValue(other.get());
 	}
@@ -245,7 +245,7 @@ namespace kroll
 		this->SetString(value.get()->c_str());
 	}
 
-	void Value::SetList(SharedKList value)
+	void Value::SetList(KListRef value)
 	{
 		reset();
 		this->objectValue = value;
@@ -256,7 +256,7 @@ namespace kroll
 		}
 	}
 
-	void Value::SetObject(SharedKObject value)
+	void Value::SetObject(KObjectRef value)
 	{
 		reset();
 		this->objectValue = value;
@@ -267,7 +267,7 @@ namespace kroll
 		}
 	}
 
-	void Value::SetMethod(SharedKMethod value)
+	void Value::SetMethod(KMethodRef value)
 	{
 		reset();
 		this->objectValue = value;
@@ -297,7 +297,7 @@ namespace kroll
 		type = UNDEFINED;
 	}
 
-	bool Value::Equals(SharedValue i)
+	bool Value::Equals(KValueRef i)
 	{
 		if (this->IsInt() && i->IsInt()
 			&& this->ToInt() == i->ToInt())
@@ -357,19 +357,19 @@ namespace kroll
 		}
 		else if (this->IsList())
 		{
-			SharedKList list = this->ToList();
+			KListRef list = this->ToList();
 			SharedString disp_string = list->DisplayString(levels-1);
 			oss << *disp_string;
 		}
 		else if (this->IsMethod())
 		{
-			SharedKMethod meth = this->ToMethod();
+			KMethodRef meth = this->ToMethod();
 			SharedString disp_string = meth->DisplayString(levels-1);
 			oss << *disp_string;
 		}
 		else if (this->IsObject())
 		{
-			SharedKObject obj = this->ToObject();
+			KObjectRef obj = this->ToObject();
 			SharedString disp_string = obj->DisplayString(levels-1);
 			oss << *disp_string;
 		}
@@ -430,7 +430,7 @@ namespace kroll
 		}
 	}
 
-	void Value::Unwrap(SharedValue value)
+	void Value::Unwrap(KValueRef value)
 	{
 		if (!Host::GetInstance()->ProfilingEnabled())
 		{
@@ -438,15 +438,15 @@ namespace kroll
 		}
 
 		if (value->IsMethod()) {
-			SharedKMethod list = KMethod::Unwrap(value->ToMethod());
+			KMethodRef list = KMethod::Unwrap(value->ToMethod());
 			value->SetMethod(list);
 
 		} else if (value->IsList()) {
-			SharedKList list = KList::Unwrap(value->ToList());
+			KListRef list = KList::Unwrap(value->ToList());
 			value->SetList(list);
 
 		} else if (value->IsObject()) {
-			SharedKObject obj = KObject::Unwrap(value->ToObject());
+			KObjectRef obj = KObject::Unwrap(value->ToObject());
 			value->SetObject(obj);
 		}
 	}

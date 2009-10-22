@@ -20,13 +20,13 @@ namespace kroll
 		return StaticBoundMethod::HasProperty(name) || this->HasGetterFor(name);
 	}
 
-	void KAccessorMethod::Set(const char* name, SharedValue value)
+	void KAccessorMethod::Set(const char* name, KValueRef value)
 	{
 		if (!this->UseSetter(name, value, StaticBoundMethod::Get(name)))
 			StaticBoundMethod::Set(name, value);
 	}
 
-	SharedValue KAccessorMethod::Get(const char* name)
+	KValueRef KAccessorMethod::Get(const char* name)
 	{
 		return this->UseGetter(name, StaticBoundMethod::Get(name));
 	}

@@ -22,14 +22,14 @@ namespace kroll
 	{
 	}
 
-	void StaticBoundList::Append(SharedValue value)
+	void StaticBoundList::Append(KValueRef value)
 	{
 		std::string name = KList::IntToChars(this->length);
 		this->object->Set(name.c_str(), value);
 		this->length++;
 	}
 
-	void StaticBoundList::SetAt(unsigned int index, SharedValue value)
+	void StaticBoundList::SetAt(unsigned int index, KValueRef value)
 	{
 		std::string name = KList::IntToChars(index);
 		this->object->Set(name.c_str(), value);
@@ -60,14 +60,14 @@ namespace kroll
 		return this->length;
 	}
 
-	SharedValue StaticBoundList::At(unsigned int index)
+	KValueRef StaticBoundList::At(unsigned int index)
 	{
 		std::string name = KList::IntToChars(index);
-		SharedValue value = this->object->Get(name.c_str());
+		KValueRef value = this->object->Get(name.c_str());
 		return value;
 	}
 
-	void StaticBoundList::Set(const char *name, SharedValue value)
+	void StaticBoundList::Set(const char *name, KValueRef value)
 	{
 		int index = -1;
 		if (KList::IsInt(name) && (index = atoi(name)) >= 0)
@@ -80,7 +80,7 @@ namespace kroll
 		}
 	}
 
-	SharedValue StaticBoundList::Get(const char *name)
+	KValueRef StaticBoundList::Get(const char *name)
 	{
 		return this->object->Get(name);
 	}
@@ -90,9 +90,9 @@ namespace kroll
 		return this->object->GetPropertyNames();
 	}
 
-	SharedKList StaticBoundList::FromStringVector(std::vector<std::string>& values)
+	KListRef StaticBoundList::FromStringVector(std::vector<std::string>& values)
 	{
-		SharedKList l = new StaticBoundList();
+		KListRef l = new StaticBoundList();
 		std::vector<std::string>::iterator i = values.begin();
 		while (i != values.end())
 		{

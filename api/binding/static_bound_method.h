@@ -20,17 +20,17 @@ namespace kroll
 		/**
 		 * @see KMethod::Call
 		 */
-		virtual SharedValue Call(const ValueList& args);
+		virtual KValueRef Call(const ValueList& args);
 
 		/**
 		 * @see KObject::Set
 		 */
-		virtual void Set(const char *name, SharedValue value);
+		virtual void Set(const char *name, KValueRef value);
 
 		/**
 		 * @see KObject::Get
 		 */
-		virtual SharedValue Get(const char *name);
+		virtual KValueRef Get(const char *name);
 
 		/**
 		 * @see KObject::GetPropertyNames
@@ -42,26 +42,26 @@ namespace kroll
 		 * occurs will throw an exception of type ValueException.
 		 */
 		template <typename T>
-		void SetMethod(const char *name, void (T::*method)(const ValueList&, SharedValue))
+		void SetMethod(const char *name, void (T::*method)(const ValueList&, KValueRef))
 		{
-			MethodCallback* callback = NewCallback<T, const ValueList&, SharedValue>(static_cast<T*>(this), method);
+			MethodCallback* callback = NewCallback<T, const ValueList&, KValueRef>(static_cast<T*>(this), method);
 
-			SharedKMethod bound_method = new StaticBoundMethod(callback);
-			SharedValue method_value = Value::NewMethod(bound_method);
+			KMethodRef bound_method = new StaticBoundMethod(callback);
+			KValueRef method_value = Value::NewMethod(bound_method);
 			this->Set(name, method_value);
 		}
 
 		template <typename T>
-		static AutoPtr<StaticBoundMethod> FromMethod(T* owner, void (T::*method)(const ValueList&, SharedValue))
+		static AutoPtr<StaticBoundMethod> FromMethod(T* owner, void (T::*method)(const ValueList&, KValueRef))
 		{
-			MethodCallback* callback = NewCallback<T, const ValueList&, SharedValue>(static_cast<T*>(owner), method);
+			MethodCallback* callback = NewCallback<T, const ValueList&, KValueRef>(static_cast<T*>(owner), method);
 			return new StaticBoundMethod(callback);
 		}
 
 	protected:
 		SharedPtr<MethodCallback> callback;
 		AutoPtr<StaticBoundObject> object;
-		std::map<std::string, SharedValue > properties;
+		std::map<std::string, KValueRef > properties;
 
 	private:
 		DISALLOW_EVIL_CONSTRUCTORS(StaticBoundMethod);

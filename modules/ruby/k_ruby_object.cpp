@@ -25,7 +25,7 @@ namespace kroll
 		return rb_apply(object, rb_intern("method_missing"), args);
 	}
 
-	void KRubyObject::Set(const char *name, SharedValue value)
+	void KRubyObject::Set(const char *name, KValueRef value)
 	{
 		VALUE ruby_value = RubyUtils::ToRubyValue(value);
 		std::string setter_name = std::string(name) + "=";
@@ -51,7 +51,7 @@ namespace kroll
 			if (rb_obj_is_kind_of(exception, rb_eNoMethodError) != Qtrue
 				&& rb_obj_is_kind_of(exception,rb_eNameError) == Qtrue)
 			{
-				SharedValue exceptionValue = RubyUtils::ToKrollValue(exception);
+				KValueRef exceptionValue = RubyUtils::ToKrollValue(exception);
 				ValueException e = ValueException(exceptionValue);
 				throw e;
 			}
@@ -65,7 +65,7 @@ namespace kroll
 		}
 	}
 
-	SharedValue KRubyObject::Get(const char *name)
+	KValueRef KRubyObject::Get(const char *name)
 	{
 		std::string iv_name = std::string("@") + name;
 		ID iv_ID = rb_intern(iv_name.c_str());
@@ -100,7 +100,7 @@ namespace kroll
 			}
 			else
 			{
-				SharedValue exceptionValue = RubyUtils::ToKrollValue(exception);
+				KValueRef exceptionValue = RubyUtils::ToKrollValue(exception);
 				ValueException e = ValueException(exceptionValue);
 				throw e;
 			}
@@ -109,7 +109,7 @@ namespace kroll
 		return RubyUtils::ToKrollValue(ruby_value);
 	}
 
-	bool KRubyObject::Equals(SharedKObject other)
+	bool KRubyObject::Equals(KObjectRef other)
 	{
 		AutoPtr<KRubyObject> rubyOther = other.cast<KRubyObject>();
 		if (rubyOther.isNull())

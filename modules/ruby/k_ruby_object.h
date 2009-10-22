@@ -14,8 +14,8 @@ public:
 	KRubyObject(VALUE object);
 	virtual ~KRubyObject();
 
-	virtual void Set(const char *name, SharedValue value);
-	virtual SharedValue Get(const char *name);
+	virtual void Set(const char *name, KValueRef value);
+	virtual KValueRef Get(const char *name);
 
 	virtual SharedStringList GetPropertyNames();
 	virtual SharedString DisplayString(int);
@@ -27,7 +27,7 @@ public:
 	 *  @param other the object to test
 	 *  @returns true if objects have reference equality, false otherwise
 	 */
-	virtual bool Equals(SharedKObject);
+	virtual bool Equals(KObjectRef);
 
 private:
 	VALUE object;

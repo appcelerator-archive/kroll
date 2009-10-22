@@ -43,7 +43,7 @@ namespace kroll
 		PyGILState_STATE gstate;
 		gstate = PyGILState_Ensure();
 
-		SharedKObject global = this->host->GetGlobalObject();
+		KObjectRef global = this->host->GetGlobalObject();
 		global->Set("Python", Value::Undefined);
 		Script::GetInstance()->RemoveScriptEvaluator(this->binding);
 		this->binding = NULL;
@@ -54,7 +54,7 @@ namespace kroll
 	void PythonModule::InitializeBinding()
 	{
 		PyLockGIL lock;
-		SharedKObject global = this->host->GetGlobalObject();
+		KObjectRef global = this->host->GetGlobalObject();
 		this->binding = new PythonEvaluator();
 		global->Set("Python", Value::NewObject(this->binding));
 		Script::GetInstance()->AddScriptEvaluator(this->binding);

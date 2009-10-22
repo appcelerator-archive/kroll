@@ -16,7 +16,7 @@ namespace kroll
 		/*
 		 * Create an AsyncJob and initialize its binding-layer properties.
 		 */
-		AsyncJob(SharedKMethod job=0);
+		AsyncJob(KMethodRef job=0);
 
 		/*
 		 * Destroy an AsyncJob and release its callbacks.
@@ -49,7 +49,7 @@ namespace kroll
 		 * The result of the execution of this job. On an execution
 		 * error and before the job is completed this will be Undefined;
 		 */
-		SharedValue GetResult();
+		KValueRef GetResult();
 
 		/**
 		 * The progress of this job, which is a number in
@@ -75,7 +75,7 @@ namespace kroll
 		 * Add a callback to be executed when the progress of
 		 * this job changes
 		 */
-		void AddProgressCallback(SharedKMethod);
+		void AddProgressCallback(KMethodRef);
 
 		/**
 		 * A built-in completion callback. This will be called  in the
@@ -87,7 +87,7 @@ namespace kroll
 		 * Add a callback to be executed when the progress of
 		 * this job changes
 		 */
-		void AddCompletedCallback(SharedKMethod);
+		void AddCompletedCallback(KMethodRef);
 
 		/**
 		 * A built-in error callback. This will be called  in the
@@ -100,7 +100,7 @@ namespace kroll
 		 * course of this job, whether in the job itself or a callback
 		 * related to that job.
 		 */
-		void AddErrorCallback(SharedKMethod);
+		void AddErrorCallback(KMethodRef);
 		
 		/**
 		 * Set arguments for this job.
@@ -114,11 +114,11 @@ namespace kroll
 		ValueList& GetArguments() { return arguments; }
 		
 		protected:
-		SharedKMethod job;
+		KMethodRef job;
 		ValueList arguments;
 		double progress;
 		bool completed;
-		SharedValue result;
+		KValueRef result;
 		bool hadError;
 		bool cancelled;
 		void Error(ValueException&);
@@ -130,20 +130,20 @@ namespace kroll
 		 * choices. It can be overridden to create custom job types which
 		 * do something other than just execute a KMethod.
 		 */
-		virtual SharedValue Execute();
+		virtual KValueRef Execute();
 
-		void _Cancel(const ValueList&, SharedValue);
-		void _GetProgress(const ValueList&, SharedValue);
-		void _IsComplete(const ValueList& args, SharedValue result);
+		void _Cancel(const ValueList&, KValueRef);
+		void _GetProgress(const ValueList&, KValueRef);
+		void _IsComplete(const ValueList& args, KValueRef result);
 
 		private:
-		std::vector<SharedKMethod> progressCallbacks;
-		std::vector<SharedKMethod> completedCallbacks;
-		std::vector<SharedKMethod> errorCallbacks;
+		std::vector<KMethodRef> progressCallbacks;
+		std::vector<KMethodRef> completedCallbacks;
+		std::vector<KMethodRef> errorCallbacks;
 
 		Poco::Thread* thread;
 		Poco::RunnableAdapter<AsyncJob>* adapter;
-		void DoCallback(SharedKMethod, bool reportErrors=false);
+		void DoCallback(KMethodRef, bool reportErrors=false);
 	};
 }
 #endif

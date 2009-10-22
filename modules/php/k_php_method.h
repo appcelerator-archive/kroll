@@ -15,12 +15,12 @@ namespace kroll
 		KPHPMethod(const char *functionName);
 
 		virtual ~KPHPMethod();
-		SharedValue Call(const ValueList& args);
-		virtual void Set(const char *name, SharedValue value);
-		virtual SharedValue Get(const char *name);
+		KValueRef Call(const ValueList& args);
+		virtual void Set(const char *name, KValueRef value);
+		virtual KValueRef Get(const char *name);
 		virtual SharedStringList GetPropertyNames();
 		virtual SharedString DisplayString(int);
-		virtual bool Equals(SharedKObject);
+		virtual bool Equals(KObjectRef);
 		bool PropertyExists(const char* property);
 		zval* ToPHP();
 
@@ -28,7 +28,7 @@ namespace kroll
 		zval* object;
 		char* methodName;
 		zval* zMethodName;
-		SharedKObject globalObject;
+		KObjectRef globalObject;
 	};
 }
 #endif

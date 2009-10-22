@@ -17,16 +17,16 @@ namespace kroll
 			count(1) {}
 
 		// @see KMethod::Call
-		virtual SharedValue Call(const ValueList& args) = 0;
+		virtual KValueRef Call(const ValueList& args) = 0;
 
 		// @see KMethod::Set
-		virtual void Set(const char *name, SharedValue value)
+		virtual void Set(const char *name, KValueRef value)
 		{
 			KEventObject::Set(name, value);
 		}
 
 		// @see KMethod::Get
-		virtual SharedValue Get(const char *name)
+		virtual KValueRef Get(const char *name)
 		{
 			return KEventObject::Get(name);
 		}
@@ -54,12 +54,12 @@ namespace kroll
 		 * occurs will throw an exception of type ValueException.
 		 */
 		template <typename T>
-		void SetMethod(const char *name, void (T::*method)(const ValueList&, SharedValue))
+		void SetMethod(const char *name, void (T::*method)(const ValueList&, KValueRef))
 		{
-			MethodCallback* callback = NewCallback<T, const ValueList&, SharedValue>(static_cast<T*>(this), method);
+			MethodCallback* callback = NewCallback<T, const ValueList&, KValueRef>(static_cast<T*>(this), method);
 
-			SharedKMethod bound_method = new StaticBoundMethod(callback);
-			SharedValue method_value = Value::NewMethod(bound_method);
+			KMethodRef bound_method = new StaticBoundMethod(callback);
+			KValueRef method_value = Value::NewMethod(bound_method);
 			KEventObject::Set(name, method_value);
 		}
 

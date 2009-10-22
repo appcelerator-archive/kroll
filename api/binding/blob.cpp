@@ -197,7 +197,7 @@ namespace kroll
 		this->length = 0;
 	}
 
-	void Blob::ToString(const ValueList& args, SharedValue result)
+	void Blob::ToString(const ValueList& args, KValueRef result)
 	{
 		if (this->length == 0)
 		{
@@ -209,17 +209,17 @@ namespace kroll
 		}
 	}
 
-	void Blob::Get(const ValueList& args, SharedValue result)
+	void Blob::Get(const ValueList& args, KValueRef result)
 	{
 		result->SetVoidPtr(buffer);
 	}
 
-	void Blob::Length(const ValueList& args, SharedValue result)
+	void Blob::Length(const ValueList& args, KValueRef result)
 	{
 		result->SetInt(length);
 	}
 
-	void Blob::IndexOf(const ValueList& args, SharedValue result)
+	void Blob::IndexOf(const ValueList& args, KValueRef result)
 	{
 		// https://developer.mozilla.org/en/Core_JavaScript_1.5_Reference/Global_Objects/String/indexOf
 		args.VerifyException("Blob.indexOf", "s,?i");
@@ -245,7 +245,7 @@ namespace kroll
 		}
 	}
 
-	void Blob::LastIndexOf(const ValueList& args, SharedValue result)
+	void Blob::LastIndexOf(const ValueList& args, KValueRef result)
 	{
 		// https://developer.mozilla.org/en/Core_JavaScript_1.5_Reference/Global_Objects/String/lastIndexOf
 		args.VerifyException("Blob.lastIndexOf", "s,?i");
@@ -271,7 +271,7 @@ namespace kroll
 		}
 	}
 
-	void Blob::CharAt(const ValueList& args, SharedValue result)
+	void Blob::CharAt(const ValueList& args, KValueRef result)
 	{
 		// https://developer.mozilla.org/en/core_javascript_1.5_reference/global_objects/string/charat
 		args.VerifyException("Blob.charAt", "n");
@@ -285,7 +285,7 @@ namespace kroll
 		result->SetString(buf);
 	}
 	
-	void Blob::ByteAt(const ValueList& args, SharedValue result)
+	void Blob::ByteAt(const ValueList& args, KValueRef result)
 	{
 		args.VerifyException("Blob.byteAt", "n");
 		int position = args.at(0)->ToInt();
@@ -296,14 +296,14 @@ namespace kroll
 		}
 	}
 
-	void Blob::Split(const ValueList& args, SharedValue result)
+	void Blob::Split(const ValueList& args, KValueRef result)
 	{
 		// This method now follows the spec located at:
 		// https://developer.mozilla.org/en/Core_JavaScript_1.5_Reference/Global_Objects/String/split
 		// Except support for regular expressions
 		args.VerifyException("Blob.split", "?s,i");
 
-		SharedKList list = new StaticBoundList();
+		KListRef list = new StaticBoundList();
 		result->SetList(list);
 
 		std::string target = "";
@@ -360,7 +360,7 @@ namespace kroll
 			list->Append(Value::NewString(target));
 	}
 
-	void Blob::Substr(const ValueList& args, SharedValue result)
+	void Blob::Substr(const ValueList& args, KValueRef result)
 	{
 		// This method now follows the spec located at:
 		// https://developer.mozilla.org/en/Core_JavaScript_1.5_Reference/Global_Objects/String/substr
@@ -403,7 +403,7 @@ namespace kroll
 		result->SetString(r);
 	}
 
-	void Blob::Substring(const ValueList& args, SharedValue result)
+	void Blob::Substring(const ValueList& args, KValueRef result)
 	{
 		// This method now follows the spec located at:
 		// https://developer.mozilla.org/en/Core_JavaScript_1.5_Reference/Global_Objects/String/substring
@@ -449,7 +449,7 @@ namespace kroll
 		}
 	}
 
-	void Blob::ToLowerCase(const ValueList& args, SharedValue result)
+	void Blob::ToLowerCase(const ValueList& args, KValueRef result)
 	{
 		if (this->length > 0)
 		{
@@ -463,7 +463,7 @@ namespace kroll
 		}
 	}
 
-	void Blob::ToUpperCase(const ValueList& args, SharedValue result)
+	void Blob::ToUpperCase(const ValueList& args, KValueRef result)
 	{
 		if (this->length > 0)
 		{
@@ -477,7 +477,7 @@ namespace kroll
 		}
 	}
 	
-	AutoBlob Blob::Concat(std::vector<AutoBlob>& blobs)
+	BlobRef Blob::Concat(std::vector<BlobRef>& blobs)
 	{
 		if (blobs.size() == 0) {
 			this->duplicate();
@@ -499,7 +499,7 @@ namespace kroll
 		
 		for (size_t i = 0; i < blobs.size(); i++)
 		{
-			AutoBlob blob = blobs.at(i);
+			BlobRef blob = blobs.at(i);
 			if (blob->Length() > 0)
 			{
 				memcpy(current, blob->Get(), blob->Length());
@@ -510,14 +510,14 @@ namespace kroll
 		return new Blob(buffer, size, false);
 	}
 	
-	void Blob::Concat(const ValueList& args, SharedValue result)
+	void Blob::Concat(const ValueList& args, KValueRef result)
 	{
-		std::vector<AutoBlob> blobs;
+		std::vector<BlobRef> blobs;
 		for (size_t i = 0; i < args.size(); i++)
 		{
 			if (args.at(i)->IsObject())
 			{
-				AutoBlob blob = args.GetObject(i).cast<Blob>();
+				BlobRef blob = args.GetObject(i).cast<Blob>();
 				if (!blob.isNull())
 				{
 					blobs.push_back(blob);
@@ -529,14 +529,14 @@ namespace kroll
 			}
 		}
 		
-		AutoBlob newBlob = this->Concat(blobs);
+		BlobRef newBlob = this->Concat(blobs);
 		result->SetObject(newBlob);
 	}
 
 	/*static*/
-	AutoBlob Blob::GlobBlobs(std::vector<AutoBlob>& blobs)
+	BlobRef Blob::GlobBlobs(std::vector<BlobRef>& blobs)
 	{
-		AutoBlob blob = new Blob();
+		BlobRef blob = new Blob();
 		blob = blob->Concat(blobs);
 		return blob;
 	}

@@ -18,10 +18,10 @@ namespace kroll
 		KPythonMethod(PyObject *obj);
 		virtual ~KPythonMethod();
 
-		SharedValue Call(const ValueList& args);
-		virtual void Set(const char *name, SharedValue value);
-		virtual SharedValue Get(const char *name);
-		virtual bool Equals(SharedKObject);
+		KValueRef Call(const ValueList& args);
+		virtual void Set(const char *name, KValueRef value);
+		virtual KValueRef Get(const char *name);
+		virtual bool Equals(KObjectRef);
 		virtual SharedStringList GetPropertyNames();
 		PyObject* ToPython();
 

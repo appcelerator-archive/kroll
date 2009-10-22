@@ -17,25 +17,25 @@ namespace kroll
 		KPHPList(zval *list);
 		virtual ~KPHPList();
 
-		SharedValue Get(const char *name);
-		void Set(const char *name, SharedValue value);
-		virtual bool Equals(SharedKObject);
+		KValueRef Get(const char *name);
+		void Set(const char *name, KValueRef value);
+		virtual bool Equals(KObjectRef);
 		SharedStringList GetPropertyNames();
 
 		unsigned int Size();
-		void Append(SharedValue value);
-		virtual void SetAt(unsigned int index, SharedValue value);
+		void Append(KValueRef value);
+		virtual void SetAt(unsigned int index, KValueRef value);
 		bool Remove(unsigned int index);
-		SharedValue At(unsigned int index);
+		KValueRef At(unsigned int index);
 
 		zval* ToPHP();
 
 		protected:
 		zval *list;
 
-		static void AddKrollValueToPHPArray(SharedValue value, zval *phpArray, const char *key);
-		static void AddKrollValueToPHPArray(SharedValue value, zval *phpArray, unsigned int index);
-		static void AddKrollValueToPHPArray(SharedValue value, zval *phpArray);
+		static void AddKrollValueToPHPArray(KValueRef value, zval *phpArray, const char *key);
+		static void AddKrollValueToPHPArray(KValueRef value, zval *phpArray, unsigned int index);
+		static void AddKrollValueToPHPArray(KValueRef value, zval *phpArray);
 		DISALLOW_EVIL_CONSTRUCTORS(KPHPList);
 	};
 }

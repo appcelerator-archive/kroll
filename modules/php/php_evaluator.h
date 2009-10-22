@@ -12,10 +12,10 @@ namespace kroll
 	{
 		public:
 		PHPEvaluator();
-		void CanEvaluate(const ValueList& args, SharedValue result);
-		void CanPreprocess(const ValueList& args, SharedValue result);
-		void Evaluate(const ValueList& args, SharedValue result);
-		void Preprocess(const ValueList& args, SharedValue result);
+		void CanEvaluate(const ValueList& args, KValueRef result);
+		void CanPreprocess(const ValueList& args, KValueRef result);
+		void Evaluate(const ValueList& args, KValueRef result);
+		void Preprocess(const ValueList& args, KValueRef result);
 		
 		protected:
 		std::string CreateContextName();

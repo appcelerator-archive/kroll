@@ -74,7 +74,7 @@ namespace kroll
 
 
 	private:
-		SharedKObject binding;
+		KObjectRef binding;
 		static RubyModule *instance_;
 		DISALLOW_EVIL_CONSTRUCTORS(RubyModule);
 	};

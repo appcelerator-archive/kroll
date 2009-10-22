@@ -121,7 +121,7 @@ namespace kroll
 
 	PHP_METHOD(PHPKObject, __toString)
 	{
-		SharedValue kvalue(reinterpret_cast<PHPKObject*>(
+		KValueRef kvalue(reinterpret_cast<PHPKObject*>(
 			zend_object_store_get_object(getThis() TSRMLS_CC))->kvalue);
 		SharedString ss = kvalue->DisplayString();
 		ZVAL_STRINGL(return_value, (char *) ss->c_str(), ss->size(), 1);
@@ -144,8 +144,8 @@ namespace kroll
 
 		PHPKObject* kthis = reinterpret_cast<PHPKObject*>(
 			zend_object_store_get_object(getThis() TSRMLS_CC));
-		SharedKObject kobject = kthis->kvalue->ToObject();
-		SharedKMethod method = kobject->GetMethod(methodName, 0);
+		KObjectRef kobject = kthis->kvalue->ToObject();
+		KMethodRef method = kobject->GetMethod(methodName, 0);
 
 		// Find the method by its name.
 		if (method.isNull())
@@ -179,7 +179,7 @@ namespace kroll
 		// Do the method invocation.
 		try
 		{
-			SharedValue returnValue = method->Call(kargs);
+			KValueRef returnValue = method->Call(kargs);
 			PHPUtils::ToPHPValue(returnValue, &return_value);
 		}
 		catch (ValueException& e)
@@ -241,12 +241,12 @@ namespace kroll
 	{
 		PHPKObject* kthis = reinterpret_cast<PHPKObject*>(
 			zend_object_store_get_object(zthis TSRMLS_CC));
-		SharedKObject kobject = kthis->kvalue->ToObject();
+		KObjectRef kobject = kthis->kvalue->ToObject();
 		string propertyName = PHPUtils::ZvalToPropertyName(property);
 
 		try
 		{
-			SharedValue value = kobject->Get(propertyName.c_str());
+			KValueRef value = kobject->Get(propertyName.c_str());
 			return PHPUtils::ToPHPValue(value);
 		}
 		catch (ValueException& e)
@@ -263,10 +263,10 @@ namespace kroll
 	{
 		PHPKObject* kthis = reinterpret_cast<PHPKObject*>(
 			zend_object_store_get_object(zthis TSRMLS_CC));
-		SharedKObject kobject = kthis->kvalue->ToObject();
+		KObjectRef kobject = kthis->kvalue->ToObject();
 
 		string propertyName = PHPUtils::ZvalToPropertyName(property);
-		SharedValue krollValue = PHPUtils::ToKrollValue(value TSRMLS_CC);
+		KValueRef krollValue = PHPUtils::ToKrollValue(value TSRMLS_CC);
 
 		try
 		{
@@ -283,7 +283,7 @@ namespace kroll
 	{
 		PHPKObject *kthis = reinterpret_cast<PHPKObject*>(
 			zend_object_store_get_object(zthis TSRMLS_CC));
-		SharedKObject kobject = kthis->kvalue->ToObject();
+		KObjectRef kobject = kthis->kvalue->ToObject();
 
 		try
 		{
@@ -295,7 +295,7 @@ namespace kroll
 			for (size_t i = 0; i < propertyNames->size(); i++)
 			{
 				const char *key = propertyNames->at(i)->c_str();
-				SharedValue value = kobject->Get(key);
+				KValueRef value = kobject->Get(key);
 				zval* zvalue = PHPUtils::ToPHPValue(value);
 				zend_hash_add(properties, (char *)key, strlen(key)+1, &zvalue, sizeof(zval*), NULL);
 			}
@@ -326,17 +326,17 @@ namespace kroll
 	{
 		PHPKObject* kthis = reinterpret_cast<PHPKObject*>(
 			zend_object_store_get_object(zthis TSRMLS_CC));
-		SharedKObject kobject = kthis->kvalue->ToObject();
+		KObjectRef kobject = kthis->kvalue->ToObject();
 		string propertyName = PHPUtils::ZvalToPropertyName(property);
 
 		if (checkType == 0)
 		{
-			SharedValue value = kobject->Get(propertyName.c_str());
+			KValueRef value = kobject->Get(propertyName.c_str());
 			return !value->IsUndefined() && !value->IsNull();
 		}
 		else if (checkType == 1)
 		{
-			SharedValue value = kobject->Get(propertyName.c_str());
+			KValueRef value = kobject->Get(propertyName.c_str());
 			zval* phpValue = PHPUtils::ToPHPValue(value);
 			convert_to_boolean(phpValue);
 			return Z_BVAL_P(phpValue);
@@ -361,7 +361,7 @@ namespace kroll
 	{
 		PHPKObject* kthis = reinterpret_cast<PHPKObject*>(
 			zend_object_store_get_object(zthis TSRMLS_CC));
-		SharedKObject kobject = kthis->kvalue->ToObject();
+		KObjectRef kobject = kthis->kvalue->ToObject();
 		string propertyName = PHPUtils::ZvalToPropertyName(property);
 
 		if (checkType == 0)
@@ -376,7 +376,7 @@ namespace kroll
 			}
 			else
 			{
-				SharedValue value = kobject->Get(propertyName.c_str());
+				KValueRef value = kobject->Get(propertyName.c_str());
 				zval* phpValue = PHPUtils::ToPHPValue(value);
 				convert_to_boolean(phpValue);
 				return Z_BVAL_P(phpValue);
@@ -403,7 +403,7 @@ namespace kroll
 	{
 		PHPKObject* kthis = reinterpret_cast<PHPKObject*>(
 			zend_object_store_get_object(zthis TSRMLS_CC));
-		SharedKObject kobject = kthis->kvalue->ToObject();
+		KObjectRef kobject = kthis->kvalue->ToObject();
 		string propertyName = PHPUtils::ZvalToPropertyName(property);
 
 		try
@@ -421,7 +421,7 @@ namespace kroll
 	{
 		PHPKObject* kthis = reinterpret_cast<PHPKObject*>(
 			zend_object_store_get_object(getThis() TSRMLS_CC));
-		SharedKMethod kmethod = kthis->kvalue->ToMethod();
+		KMethodRef kmethod = kthis->kvalue->ToMethod();
 
 		zend_function *func = EG(current_execute_data)->function_state.function;
 		zval*** arguments = (zval***) emalloc(sizeof(zval**) * ZEND_NUM_ARGS());
@@ -438,7 +438,7 @@ namespace kroll
 		for (int i = 0; i < ZEND_NUM_ARGS(); i++)
 		{
 			zval** zargValue = arguments[i];
-			SharedValue argValue = PHPUtils::ToKrollValue(*zargValue TSRMLS_CC);
+			KValueRef argValue = PHPUtils::ToKrollValue(*zargValue TSRMLS_CC);
 			kargs.push_back(argValue);
 		}
 		efree(arguments);
@@ -446,12 +446,12 @@ namespace kroll
 		// CAUTION: FRIGGIN SWEET METHOD INVOCATION COMING UP.
 		try
 		{
-			SharedValue returnValue = kmethod->Call(kargs);
+			KValueRef returnValue = kmethod->Call(kargs);
 			PHPUtils::ToPHPValue(returnValue, &return_value);
 		}
 		catch (ValueException& e)
 		{
-			// TODO: Create an exception class that can hold a SharedValue.
+			// TODO: Create an exception class that can hold a KValueRef.
 			zend_throw_exception(zend_exception_get_default(TSRMLS_C),
 				(char*) e.ToString().c_str(), 666 TSRMLS_CC);
 			RETVAL_NULL();
@@ -467,7 +467,7 @@ namespace kroll
 			return;
 		}
 
-		SharedKList klist(GET_MY_KLIST());
+		KListRef klist(GET_MY_KLIST());
 		string name(PHPUtils::ZvalToPropertyName(index));
 		RETURN_BOOL((!name.empty() && klist->HasProperty(name.c_str())));
 	}
@@ -482,9 +482,9 @@ namespace kroll
 			
 		}
 
-		SharedKList klist(GET_MY_KLIST());
+		KListRef klist(GET_MY_KLIST());
 		string name(PHPUtils::ZvalToPropertyName(index));
-		SharedValue returnValue(klist->Get(name.c_str()));
+		KValueRef returnValue(klist->Get(name.c_str()));
 		PHPUtils::ToPHPValue(returnValue, &return_value);
 	}
 
@@ -497,9 +497,9 @@ namespace kroll
 			return;
 		}
 
-		SharedKList klist(GET_MY_KLIST());
+		KListRef klist(GET_MY_KLIST());
 		string indexString(PHPUtils::ZvalToPropertyName(zindexString));
-		SharedValue value(PHPUtils::ToKrollValue(zvalue TSRMLS_CC));
+		KValueRef value(PHPUtils::ToKrollValue(zvalue TSRMLS_CC));
 
 		int index = 0;
 		if (KList::IsInt(indexString) &&
@@ -521,14 +521,14 @@ namespace kroll
 			return;
 		}
 
-		SharedKList klist(GET_MY_KLIST());
+		KListRef klist(GET_MY_KLIST());
 		string indexString(PHPUtils::ZvalToPropertyName(zindex));
 		klist->Set(indexString.c_str(), Value::Undefined);
 	}
 
 	PHP_METHOD(PHPKList, count)
 	{
-		SharedKList klist(GET_MY_KLIST());
+		KListRef klist(GET_MY_KLIST());
 		SharedStringList propertyList = klist->GetPropertyNames();
 		RETVAL_LONG(propertyList->size());
 	}
@@ -542,14 +542,14 @@ namespace kroll
 			return;
 		}
 
-		SharedKList klist(GET_MY_KLIST());
-		SharedValue value(PHPUtils::ToKrollValue(zvalue TSRMLS_CC));
+		KListRef klist(GET_MY_KLIST());
+		KValueRef value(PHPUtils::ToKrollValue(zvalue TSRMLS_CC));
 		klist->Append(value);
 	} 
 
 	PHP_METHOD(PHPKList, getArrayCopy)
 	{
-		SharedKList klist(GET_MY_KLIST());
+		KListRef klist(GET_MY_KLIST());
 		SharedStringList propertyList = klist->GetPropertyNames();
 
 		array_init(return_value);
@@ -596,7 +596,7 @@ namespace kroll
 
 		// Use the name without the namespace for the Window object, but use
 		// the full name for the KPHPFunction.
-		SharedKObject window = object->kvalue->ToObject();
+		KObjectRef window = object->kvalue->ToObject();
 		window->Set(fnameString.c_str(),
 			Value::NewMethod(new KPHPFunction(fname)));
 	}
@@ -650,7 +650,7 @@ namespace kroll
 			zend_register_functions(NULL, PHPFunctions, NULL, MODULE_PERSISTENT TSRMLS_CC);
 		}
 
-		void KObjectToKPHPObject(SharedValue objectValue, zval** returnValue)
+		void KObjectToKPHPObject(KValueRef objectValue, zval** returnValue)
 		{
 			// Initialize our object with our pre-defined KObject class entry.
 			TSRMLS_FETCH();
@@ -662,7 +662,7 @@ namespace kroll
 			internal->kvalue = objectValue;
 		}
 
-		void KMethodToKPHPMethod(SharedValue methodValue, zval** returnValue)
+		void KMethodToKPHPMethod(KValueRef methodValue, zval** returnValue)
 		{
 			// Initialize our object with our pre-defined KObject class entry.
 			TSRMLS_FETCH();
@@ -674,7 +674,7 @@ namespace kroll
 			internal->kvalue = methodValue;
 		}
 
-		void KListToKPHPArray(SharedValue listValue, zval** returnValue)
+		void KListToKPHPArray(KValueRef listValue, zval** returnValue)
 		{
 			// Initialize our object with our pre-defined KObject class entry.
 			TSRMLS_FETCH();
@@ -704,14 +704,14 @@ namespace kroll
 			call_user_function(EG(function_table), NULL, &functionName,
 				&returnValue, 1, args TSRMLS_CC);
 
-			SharedValue krollValue(PHPUtils::ToKrollValue(&returnValue TSRMLS_CC));
+			KValueRef krollValue(PHPUtils::ToKrollValue(&returnValue TSRMLS_CC));
 			if (!krollValue->IsList())
 				return;
 
-			SharedKList tokenList(krollValue->ToList());
+			KListRef tokenList(krollValue->ToList());
 			for (unsigned int i = 0; i < tokenList->Size(); i++)
 			{
-				SharedValue tokenValue(tokenList->At(i));
+				KValueRef tokenValue(tokenList->At(i));
 				if (!tokenValue->IsList())
 					continue;
 
@@ -719,7 +719,7 @@ namespace kroll
 				// token value is a list, the first value in the list is the
 				// T_FUNCTION constant and the second value after this one is
 				// list as well.
-				SharedKList tokenAsList(tokenValue->ToList());
+				KListRef tokenAsList(tokenValue->ToList());
 				if (!tokenAsList->At(0)->IsInt() 
 					|| tokenAsList->At(0)->ToInt() != T_FUNCTION
 					|| !tokenList->At(i+2)->IsList())
@@ -727,7 +727,7 @@ namespace kroll
 
 				// This is the string part of the function name if the second
 				// value after the function token is a string.
-				SharedKList functionNameAsList(tokenList->At(i+2)->ToList());
+				KListRef functionNameAsList(tokenList->At(i+2)->ToList());
 				if (!functionNameAsList->At(0)->IsInt()
 					|| functionNameAsList->At(0)->ToInt() != T_STRING
 					|| !functionNameAsList->At(1)->IsString())

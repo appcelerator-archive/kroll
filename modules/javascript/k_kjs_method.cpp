@@ -47,17 +47,17 @@ namespace kroll
 		KJSUtil::UnprotectGlobalContext(this->context);
 	}
 
-	SharedValue KKJSMethod::Get(const char *name)
+	KValueRef KKJSMethod::Get(const char *name)
 	{
 		return kobject->Get(name);
 	}
 
-	void KKJSMethod::Set(const char *name, SharedValue value)
+	void KKJSMethod::Set(const char *name, KValueRef value)
 	{
 		return kobject->Set(name, value);
 	}
 
-	bool KKJSMethod::Equals(SharedKObject other)
+	bool KKJSMethod::Equals(KObjectRef other)
 	{
 		return this->kobject->Equals(other);
 	}
@@ -82,12 +82,12 @@ namespace kroll
 		return this->jsobject;
 	}
 
-	SharedValue KKJSMethod::Call(const ValueList& args)
+	KValueRef KKJSMethod::Call(const ValueList& args)
 	{
 		JSValueRef* jsArgs = new JSValueRef[args.size()];
 		for (int i = 0; i < (int) args.size(); i++)
 		{
-			SharedValue arg = args.at(i);
+			KValueRef arg = args.at(i);
 			jsArgs[i] = KJSUtil::ToJSValue(arg, this->context);
 		}
 
@@ -99,7 +99,7 @@ namespace kroll
 
 		if (jsValue == NULL && exception != NULL) //exception thrown
 		{
-			SharedValue exceptionValue = KJSUtil::ToKrollValue(exception, this->context, NULL);
+			KValueRef exceptionValue = KJSUtil::ToKrollValue(exception, this->context, NULL);
 			throw ValueException(exceptionValue);
 		}
 

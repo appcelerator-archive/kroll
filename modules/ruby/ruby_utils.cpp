@@ -21,9 +21,9 @@ namespace kroll
 		return rb_obj_is_kind_of(value, klass) == Qtrue;
 	}
 
-	SharedValue RubyUtils::ToKrollValue(VALUE value)
+	KValueRef RubyUtils::ToKrollValue(VALUE value)
 	{
-		SharedValue kvalue = Value::Undefined;
+		KValueRef kvalue = Value::Undefined;
 
 		int t = TYPE(value);
 		if (T_NIL == t)
@@ -49,62 +49,62 @@ namespace kroll
 		}
 		else if (T_OBJECT == t)
 		{
-			SharedKObject kobj = new KRubyObject(value);
+			KObjectRef kobj = new KRubyObject(value);
 			kvalue = Value::NewObject(kobj);
 		}
 		else if (T_STRUCT == t)
 		{
-			SharedKObject kobj = new KRubyObject(value);
+			KObjectRef kobj = new KRubyObject(value);
 			kvalue = Value::NewObject(kobj);
 		}
 		else if (T_HASH == t)
 		{
-			SharedKObject kobj = new KRubyHash(value);
+			KObjectRef kobj = new KRubyHash(value);
 			kvalue = Value::NewObject(kobj);
 		}
 		else if (T_ARRAY == t)
 		{
-			SharedKList klist = new KRubyList(value);
+			KListRef klist = new KRubyList(value);
 			kvalue = Value::NewList(klist);
 		}
 		else if (T_DATA == t && KObjectClass != Qnil && KindOf(value, KObjectClass))
 		{
-			SharedValue* kval = NULL;
-			Data_Get_Struct(value, SharedValue, kval);
+			KValueRef* kval = NULL;
+			Data_Get_Struct(value, KValueRef, kval);
 			kvalue = Value::NewObject((*kval)->ToObject());
 		}
 		else if (T_DATA == t && KMethodClass != Qnil && KindOf(value, KMethodClass))
 		{
-			SharedValue* kval = NULL;
-			Data_Get_Struct(value, SharedValue, kval);
+			KValueRef* kval = NULL;
+			Data_Get_Struct(value, KValueRef, kval);
 			kvalue = Value::NewMethod((*kval)->ToMethod());
 		}
 		else if (T_DATA == t && KListClass != Qnil && KindOf(value, KListClass))
 		{
-			SharedValue* kval = NULL;
-			Data_Get_Struct(value, SharedValue, kval);
+			KValueRef* kval = NULL;
+			Data_Get_Struct(value, KValueRef, kval);
 			kvalue = Value::NewList((*kval)->ToList());
 		}
 		else if (T_DATA == t && KindOf(value, rb_cMethod))
 		{
-			SharedKMethod method = new KRubyMethod(value);
+			KMethodRef method = new KRubyMethod(value);
 			return Value::NewMethod(method);
 		}
 		else if (T_DATA == t && KindOf(value, rb_cProc))
 		{
-			SharedKMethod method = new KRubyMethod(value);
+			KMethodRef method = new KRubyMethod(value);
 			return Value::NewMethod(method);
 		}
 		else if (T_DATA == t)
 		{
-			SharedKObject object = new KRubyObject(value);
+			KObjectRef object = new KRubyObject(value);
 			return Value::NewObject(object);
 		}
 
 		return kvalue;
 	}
 
-	VALUE RubyUtils::ToRubyValue(SharedValue value)
+	VALUE RubyUtils::ToRubyValue(KValueRef value)
 	{
 		if (value->IsNull() || value->IsUndefined())
 		{
@@ -155,9 +155,9 @@ namespace kroll
 
 	static VALUE RubyKObjectMethods(VALUE self)
 	{
-		SharedValue* value = NULL;
-		Data_Get_Struct(self, SharedValue, value);
-		SharedKObject object = (*value)->ToObject();
+		KValueRef* value = NULL;
+		Data_Get_Struct(self, KValueRef, value);
+		KObjectRef object = (*value)->ToObject();
 
 		VALUE* args = NULL;
 		VALUE methods = rb_call_super(0, args);
@@ -171,20 +171,20 @@ namespace kroll
 		return methods;
 	}
 
-	VALUE RubyUtils::GenericKMethodCall(SharedKMethod method, VALUE args)
+	VALUE RubyUtils::GenericKMethodCall(KMethodRef method, VALUE args)
 	{
 		ValueList kargs;
 		for (int i = 0; i < RARRAY_LEN(args); i++)
 		{
 			VALUE rarg = rb_ary_entry(args, i);
-			SharedValue arg = RubyUtils::ToKrollValue(rarg);
+			KValueRef arg = RubyUtils::ToKrollValue(rarg);
 			Value::Unwrap(arg);
 			kargs.push_back(arg);
 		}
 
 		try
 		{
-			SharedValue result = method->Call(kargs);
+			KValueRef result = method->Call(kargs);
 			return RubyUtils::ToRubyValue(result);
 		}
 		catch (ValueException& e)
@@ -200,9 +200,9 @@ namespace kroll
 	// A :method method for pulling methods off of KObjects in Ruby
 	static VALUE RubyKObjectMethod(int argc, VALUE *argv, VALUE self)
 	{
-		SharedValue* dval = NULL;
-		Data_Get_Struct(self, SharedValue, dval);
-		SharedKObject object = (*dval)->ToObject();
+		KValueRef* dval = NULL;
+		Data_Get_Struct(self, KValueRef, dval);
+		KObjectRef object = (*dval)->ToObject();
 
 		// TODO: We should raise an exception instead
 		if (object.isNull())
@@ -212,7 +212,7 @@ namespace kroll
 
 		VALUE meth_name = argv[0];
 		const char* name = rb_id2name(SYM2ID(meth_name));
-		SharedValue v = object->Get(name);
+		KValueRef v = object->Get(name);
 		if (v->IsMethod())
 		{
 			return RubyUtils::ToRubyValue(v);
@@ -226,9 +226,9 @@ namespace kroll
 	// A :method_missing method for finding KObject properties in Ruby
 	static VALUE RubyKObjectMethodMissing(int argc, VALUE *argv, VALUE self)
 	{
-		SharedValue* dval = NULL;
-		Data_Get_Struct(self, SharedValue, dval);
-		SharedKObject object = (*dval)->ToObject();
+		KValueRef* dval = NULL;
+		Data_Get_Struct(self, KValueRef, dval);
+		KObjectRef object = (*dval)->ToObject();
 
 		// TODO: We should raise an exception instead
 		if (object.isNull())
@@ -247,7 +247,7 @@ namespace kroll
 		const char* name = rb_id2name(SYM2ID(r_name));
 
 		// Check if this is an assignment
-		SharedValue value = object->Get(name);
+		KValueRef value = object->Get(name);
 		if (name[strlen(name) - 1] == '=' && argc > 1)
 		{
 			char* mod_name = strdup(name);
@@ -276,28 +276,28 @@ namespace kroll
 	// A :responds_to? method for finding KObject properties in Ruby
 	static VALUE RubyKObjectRespondTo(int argc, VALUE *argv, VALUE self)
 	{
-		SharedValue* dval = NULL;
-		Data_Get_Struct(self, SharedValue, dval);
-		SharedKObject object = (*dval)->ToObject();
+		KValueRef* dval = NULL;
+		Data_Get_Struct(self, KValueRef, dval);
+		KObjectRef object = (*dval)->ToObject();
 		VALUE mid, priv; // We ignore the priv argument
 
 		rb_scan_args(argc, argv, "11", &mid, &priv);
 		const char* name = rb_id2name(rb_to_id(mid));
-		SharedValue value = object->Get(name);
+		KValueRef value = object->Get(name);
 		return value->IsUndefined() ? Qfalse : Qtrue;
 	}
 
 	static void RubyKObjectFree(void *p)
 	{
-		SharedValue* kval = static_cast<SharedValue*>(p);
+		KValueRef* kval = static_cast<KValueRef*>(p);
 		delete kval;
 	}
 
 	static VALUE RubyKMethodCall(VALUE self, VALUE args)
 	{
-		SharedValue* dval = NULL;
-		Data_Get_Struct(self, SharedValue, dval);
-		SharedKMethod method = (*dval)->ToMethod();
+		KValueRef* dval = NULL;
+		Data_Get_Struct(self, KValueRef, dval);
+		KMethodRef method = (*dval)->ToMethod();
 
 		// TODO: We should raise an exception instead
 		if (method.isNull())
@@ -306,7 +306,7 @@ namespace kroll
 		return RubyUtils::GenericKMethodCall(method, args);
 	}
 
-	VALUE RubyUtils::KObjectToRubyValue(SharedValue obj)
+	VALUE RubyUtils::KObjectToRubyValue(KValueRef obj)
 	{
 		// Lazily initialize the KObject wrapper class
 		if (KObjectClass == Qnil)
@@ -322,12 +322,12 @@ namespace kroll
 				RUBY_METHOD_FUNC(RubyKObjectRespondTo), -1);
 		}
 
-		VALUE wrapper = Data_Wrap_Struct(KObjectClass, 0, RubyKObjectFree, new SharedValue(obj));
+		VALUE wrapper = Data_Wrap_Struct(KObjectClass, 0, RubyKObjectFree, new KValueRef(obj));
 		rb_obj_call_init(wrapper, 0, 0);
 		return wrapper;
 	}
 
-	VALUE RubyUtils::KMethodToRubyValue(SharedValue obj)
+	VALUE RubyUtils::KMethodToRubyValue(KValueRef obj)
 	{
 		// Lazily initialize the KMethod wrapper class
 		if (KMethodClass == Qnil)
@@ -345,16 +345,16 @@ namespace kroll
 				RUBY_METHOD_FUNC(RubyKMethodCall), -2);
 		}
 
-		VALUE wrapper = Data_Wrap_Struct(KMethodClass, 0, RubyKObjectFree, new SharedValue(obj));
+		VALUE wrapper = Data_Wrap_Struct(KMethodClass, 0, RubyKObjectFree, new KValueRef(obj));
 		rb_obj_call_init(wrapper, 0, 0);
 		return wrapper;
 	}
 
 	static VALUE RubyKListGetElt(int argc, VALUE *argv, VALUE self)
 	{
-		SharedValue* dval = NULL;
-		Data_Get_Struct(self, SharedValue, dval);
-		SharedKList list = (*dval)->ToList();
+		KValueRef* dval = NULL;
+		Data_Get_Struct(self, KValueRef, dval);
+		KListRef list = (*dval)->ToList();
 
 		// TODO: We should raise an exception instead
 		if (list.isNull() || argc < 1)
@@ -366,7 +366,7 @@ namespace kroll
 
 		if (idx >= 0 && idx < (int) list->Size())
 		{
-			SharedValue v = list->At(idx);
+			KValueRef v = list->At(idx);
 			return RubyUtils::ToRubyValue(v);
 		}
 		else
@@ -377,9 +377,9 @@ namespace kroll
 
 	static VALUE RubyKListSetElt(int argc, VALUE *argv, VALUE self)
 	{
-		SharedValue* dval = NULL;
-		Data_Get_Struct(self, SharedValue, dval);
-		SharedKList klist = (*dval)->ToList();
+		KValueRef* dval = NULL;
+		Data_Get_Struct(self, KValueRef, dval);
+		KListRef klist = (*dval)->ToList();
 
 		// TODO: We should raise an exception instead
 		if (klist.isNull() || argc < 2)
@@ -392,7 +392,7 @@ namespace kroll
 		if (idx < 0)
 			return Qnil;
 
-		SharedValue value = RubyUtils::ToKrollValue(argv[1]);
+		KValueRef value = RubyUtils::ToKrollValue(argv[1]);
 		klist->SetAt(idx, value);
 
 		return argv[1];
@@ -400,9 +400,9 @@ namespace kroll
 
 	static VALUE RubyKListLength(int argc, VALUE *argv, VALUE self)
 	{
-		SharedValue* dval = NULL;
-		Data_Get_Struct(self, SharedValue, dval);
-		SharedKList klist = (*dval)->ToList();
+		KValueRef* dval = NULL;
+		Data_Get_Struct(self, KValueRef, dval);
+		KListRef klist = (*dval)->ToList();
 
 		// TODO: We should raise an exception instead
 		if (klist.isNull())
@@ -421,9 +421,9 @@ namespace kroll
 
 	static VALUE RubyKListEach(VALUE self)
 	{
-		SharedValue* dval = NULL;
-		Data_Get_Struct(self, SharedValue, dval);
-		SharedKList list = (*dval)->ToList();
+		KValueRef* dval = NULL;
+		Data_Get_Struct(self, KValueRef, dval);
+		KListRef list = (*dval)->ToList();
 
 		if (list.isNull() || !rb_block_given_p())
 			return Qnil;
@@ -436,7 +436,7 @@ namespace kroll
 		return self;
 	}
 
-	VALUE RubyUtils::KListToRubyValue(SharedValue obj)
+	VALUE RubyUtils::KListToRubyValue(KValueRef obj)
 	{
 		// Lazily initialize the KMethod wrapper class
 		if (KListClass == Qnil)
@@ -460,7 +460,7 @@ namespace kroll
 				RUBY_METHOD_FUNC(RubyKListEach), 0);
 		}
 
-		VALUE wrapper = Data_Wrap_Struct(KListClass, 0, RubyKObjectFree, new SharedValue(obj));
+		VALUE wrapper = Data_Wrap_Struct(KListClass, 0, RubyKObjectFree, new KValueRef(obj));
 		rb_obj_call_init(wrapper, 0, 0);
 		return wrapper;
 	}
@@ -468,7 +468,7 @@ namespace kroll
 	ValueException RubyUtils::GetException()
 	{
 		VALUE e = rb_gv_get("$!");
-		SharedValue v = RubyUtils::ToKrollValue(e);
+		KValueRef v = RubyUtils::ToKrollValue(e);
 		return ValueException(v);
 	}
 }

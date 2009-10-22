@@ -39,7 +39,7 @@ namespace kroll
 		 * @param name The property name
 		 * @param value The new property value
 		 */
-		virtual void Set(const char *name, SharedValue value) = 0;
+		virtual void Set(const char *name, KValueRef value) = 0;
 
 		/**
 		 * @param name The property name
@@ -47,14 +47,14 @@ namespace kroll
 		 *         if the property is not found.
 		 * Errors will result in a thrown ValueException
 		 */
-		virtual SharedValue Get(const char *name) = 0;
+		virtual KValueRef Get(const char *name) = 0;
 
 		/**
 		 * Determine if two objects have *reference* equality
 		 * @param other The object to compare to
 		 * @return true if these two objects are equal, false otherwise.
 		 */
-		virtual bool Equals(SharedKObject other);
+		virtual bool Equals(KObjectRef other);
 
 		/**
 		 * Determine if this objects has the property with the given name.
@@ -79,14 +79,14 @@ namespace kroll
 		 * @param value The new property value
 		 * Helpful overload to Set which takes a SharedString
 		 */
-		void Set(SharedString name, SharedValue value);
+		void Set(SharedString name, KValueRef value);
 
 		/**
 		 * @see KObject::Get(const char*)
 		 * @param name The property name
 		 * Helpful overload to Get which takes a SharedString
 		 */
-		SharedValue Get(SharedString name);
+		KValueRef Get(SharedString name);
 
 		/**
 		 * Get an int property from this object.
@@ -152,7 +152,7 @@ namespace kroll
 		 * @return Value of given property name, or the default value if
 		 * if it does not exist or is not an object.
 		 */
-		SharedKObject GetObject(const char *name, SharedKObject defaultValue=NULL);
+		KObjectRef GetObject(const char *name, KObjectRef defaultValue=NULL);
 
 		/**
 		 * Get a method property from this object.
@@ -163,7 +163,7 @@ namespace kroll
 		 * @return Value of given property name, or the default value if
 		 * if it does not exist or is not a method.
 		 */
-		SharedKMethod GetMethod(const char *name, SharedKMethod defaultValue=NULL);
+		KMethodRef GetMethod(const char *name, KMethodRef defaultValue=NULL);
 
 		/**
 		 * Get a list property from this object.
@@ -174,7 +174,7 @@ namespace kroll
 		 * @return Value of given property name, or the default value if
 		 * if it does not exist or is not a list.
 		 */
-		SharedKList GetList(const char *name, SharedKList defaultValue=NULL);
+		KListRef GetList(const char *name, KListRef defaultValue=NULL);
 
 		/**
 		 * Set an undefined property on this object
@@ -222,19 +222,19 @@ namespace kroll
 		 * Set an object property on this object
 		 * When an error occurs will throw an exception of type ValueException.
 		 */
-		void SetObject(const char *name, SharedKObject);
+		void SetObject(const char *name, KObjectRef);
 
 		/**
 		 * Set a method property on this object
 		 * When an error occurs will throw an exception of type ValueException.
 		 */
-		void SetMethod(const char *name, SharedKMethod);
+		void SetMethod(const char *name, KMethodRef);
 
 		/**
 		 * Set a list property on this object
 		 * When an error occurs will throw an exception of type ValueException.
 		 */
-		void SetList(const char *name, SharedKList);
+		void SetList(const char *name, KListRef);
 
 		/**
 		 * Get a list of strings for the given property of this object. The list
@@ -256,20 +256,20 @@ namespace kroll
 		 *
 		 * This function does nothing if the object or it's parents are undefined
 		 */
-		void SetNS(const char *name, SharedValue value);
+		void SetNS(const char *name, KValueRef value);
 
 		/**
 		 * Get the value of a child of this object using a simple object notation
 		 * For example:
 		 * \code
-		 * SharedValue value = this->GetNS("object.property.subproperty");
+		 * KValueRef value = this->GetNS("object.property.subproperty");
 		 * // instead of
-		 * SharedValue value = this->Get("object")->ToObject()->Get("property")->ToObject()->Get("subproperty");
+		 * KValueRef value = this->Get("object")->ToObject()->Get("property")->ToObject()->Get("subproperty");
 		 * \endcode
 		 *
 		 * @return The value of the child object, or Value::Undefined if the object, or it's parents are undefined
 		 */
-		SharedValue GetNS(const char *name);
+		KValueRef GetNS(const char *name);
 
 		/**
 		 * Call a child method on this object using simple object notation
@@ -285,27 +285,27 @@ namespace kroll
 		 * CallNS is overridden, and can accept up to 3 arguments inline, or a ValueList
 		 * @return The return value of the function, or Value::Undefined if the object or method in the string is undefined
 		 */
-		SharedValue CallNS(const char *name);
+		KValueRef CallNS(const char *name);
 		
 		/**
 		 * @see KObject::CallNS(const char *name);
 		 */
-		SharedValue CallNS(const char *name, SharedValue val1);
+		KValueRef CallNS(const char *name, KValueRef val1);
 
 		/**
 		 * @see KObject::CallNS(const char *name);
 		 */
-		SharedValue CallNS(const char *name, SharedValue val1, SharedValue val2);
+		KValueRef CallNS(const char *name, KValueRef val1, KValueRef val2);
 
 		/**
 		 * @see KObject::CallNS(const char *name);
 		 */
-		SharedValue CallNS(const char *name, SharedValue val1, SharedValue val2, SharedValue val3);
+		KValueRef CallNS(const char *name, KValueRef val1, KValueRef val2, KValueRef val3);
 
 		/**
 		 * @see KObject::CallNS(const char *name);
 		 */
-		SharedValue CallNS(const char *name, const ValueList& args);
+		KValueRef CallNS(const char *name, const ValueList& args);
 
 		/**
 		 * Return the type of this object as a string.
@@ -315,7 +315,7 @@ namespace kroll
 		/**
 		 * Return the unwrapped version of this object
 		 */
-		static SharedKObject Unwrap(SharedKObject);
+		static KObjectRef Unwrap(KObjectRef);
 
 		/**
 		 * If this object is already exposed as an AutoPtr, this method
