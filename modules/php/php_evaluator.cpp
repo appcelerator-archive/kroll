@@ -93,7 +93,7 @@ namespace kroll
 
 		// Contexts must be the same for runs with the same global object.
 		string contextId(GetContextId(windowGlobal));
-		PHPUtils::GenerateCaseMap(code TSRMLS_CC);
+		//PHPUtils::GenerateCaseMap(code TSRMLS_CC);
 
 		std::ostringstream codeString;
 		codeString << "namespace " << contextId << " {\n";
