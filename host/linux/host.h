@@ -40,9 +40,9 @@ namespace kroll
 		virtual ~LinuxHost();
 
 	private:
-		Poco::Mutex job_queue_mutex;
+		Poco::Mutex jobQueueMutex;
 		std::vector<LinuxJob*> jobs;
-		pthread_t main_thread;
+		pthread_t mainThread;
 	};
 }
 

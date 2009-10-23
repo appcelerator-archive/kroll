@@ -20,12 +20,16 @@ using Poco::Mutex;
 
 namespace kroll
 {
-	gboolean main_thread_job_handler(gpointer);
+	static gboolean MainThreadJobCallback(gpointer);
 
 	LinuxHost::LinuxHost(int argc, const char *argv[]) : Host(argc, argv)
 	{
 		gtk_init(&argc, (char***) &argv);
-		this->main_thread = pthread_self();
+
+		if (!g_thread_supported())
+			g_thread_init(NULL);
+
+		this->mainThread = pthread_self();
 	}
 
 	LinuxHost::~LinuxHost()
@@ -47,6 +51,7 @@ namespace kroll
 	{
 		return "linux";
 	}
+
 	const char* LinuxHost::GetModuleSuffix()
 	{
 		return "module.so";
@@ -54,14 +59,14 @@ namespace kroll
 
 	bool LinuxHost::RunLoop()
 	{
-		g_timeout_add(250, &main_thread_job_handler, this);
+		g_timeout_add(250, &MainThreadJobCallback, this);
 		gtk_main();
 		return false;
 	}
 
 	bool LinuxHost::IsMainThread()
 	{
-		return pthread_equal(this->main_thread, pthread_self());
+		return pthread_equal(this->mainThread, pthread_self());
 	}
 
 	Module* LinuxHost::CreateModule(std::string& path)
@@ -88,7 +93,7 @@ namespace kroll
 
 	Poco::Mutex& LinuxHost::GetJobQueueMutex()
 	{
-		return this->job_queue_mutex;
+		return this->jobQueueMutex;
 	}
 
 	std::vector<LinuxJob*>& LinuxHost::GetJobs()
@@ -133,7 +138,7 @@ namespace kroll
 		}
 	}
 
-	gboolean main_thread_job_handler(gpointer data)
+	static gboolean MainThreadJobCallback(gpointer data)
 	{
 		LinuxHost *host = (LinuxHost*) data;
 
