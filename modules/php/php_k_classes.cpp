@@ -693,56 +693,42 @@ namespace kroll
 
 		void GenerateCaseMap(string code TSRMLS_DC)
 		{
-			// HACK: Okay, so PHP stores all function names in lower-case, but
+			// HACK: Okay, so PHP stores all function names in lowercase, but
 			// we need the original case, so that developers can call these
-			// functions from other contexts. Here we lex the code string and
-			// pull out all the top-level function names.
+			// functions from other contexts. Here do a simple search for function
+			// defintions. There are several cases where this can generate inaccurate
+			// results. A true fix for this issue may require patching PHP itself.
 			currentCaseMap.clear();
+			size_t searchStart = 0;
+			size_t functionNameStart = code.find("function ", 0);
 
-			code = string("<?php\n") + code + "?>"; zval *args[1];
-			zval functionName, zCode, returnValue;
-
-			ZVAL_STRING(&functionName, "token_get_all", 0);
-			ZVAL_STRING(&zCode, code.c_str(), 0);
-			args[0] = &zCode;
-
-			call_user_function(EG(function_table), NULL, &functionName,
-				&returnValue, 1, args TSRMLS_CC);
-
-			KValueRef krollValue(PHPUtils::ToKrollValue(&returnValue TSRMLS_CC));
-			if (!krollValue->IsList())
-				return;
-
-			KListRef tokenList(krollValue->ToList());
-			for (unsigned int i = 0; i < tokenList->Size(); i++)
+			while (functionNameStart != string::npos)
 			{
-				KValueRef tokenValue(tokenList->At(i));
-				if (!tokenValue->IsList())
-					continue;
+				functionNameStart += sizeof("function ");
 
-				// This is the beginning of a function name only if this
-				// token value is a list, the first value in the list is the
-				// T_FUNCTION constant and the second value after this one is
-				// list as well.
-				KListRef tokenAsList(tokenValue->ToList());
-				if (!tokenAsList->At(0)->IsInt() 
-					|| tokenAsList->At(0)->ToInt() != T_FUNCTION
-					|| !tokenList->At(i+2)->IsList())
-					continue;
+				// Find next non-space character / beginning of function name.
+				while (isspace(code[functionNameStart]))
+				{
+					if (functionNameStart > code.size())
+						return;
+					functionNameStart++;
+				}
 
-				// This is the string part of the function name if the second
-				// value after the function token is a string.
-				KListRef functionNameAsList(tokenList->At(i+2)->ToList());
-				if (!functionNameAsList->At(0)->IsInt()
-					|| functionNameAsList->At(0)->ToInt() != T_STRING
-					|| !functionNameAsList->At(1)->IsString())
-					continue;
+				size_t functionNameEnd = functionNameStart;
+				while (!isspace(code[functionNameEnd]) && code[functionNameEnd] != '(')
+				{
+					if (functionNameEnd > code.size())
+						return;
+					functionNameEnd++;
+				}
 
-				string functionName(functionNameAsList->At(1)->ToString());
-				string lc(functionName);
-				transform(lc.begin(), lc.end(), lc.begin(), tolower);
+				string originalName(code.substr(functionNameStart - 1,
+					 functionNameEnd - functionNameStart + 1).c_str());
+				string lcName(originalName);
+				std::transform(lcName.begin(), lcName.end(), lcName.begin(), tolower);
+				currentCaseMap[lcName] = originalName;
 
-				currentCaseMap[lc] = functionName;
+				functionNameStart = code.find("function ", functionNameStart);
 			}
 		}
 	}
