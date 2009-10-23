@@ -443,6 +443,9 @@ namespace kroll
 		}
 		efree(arguments);
 
+		PHPUtils::PushPHPSymbolsIntoGlobalObject(&EG(symbol_table),
+			 PHPUtils::GetCurrentGlobalObject() TSRMLS_CC);
+
 		// CAUTION: FRIGGIN SWEET METHOD INVOCATION COMING UP.
 		try
 		{
@@ -455,8 +458,10 @@ namespace kroll
 			zend_throw_exception(zend_exception_get_default(TSRMLS_C),
 				(char*) e.ToString().c_str(), 666 TSRMLS_CC);
 			RETVAL_NULL();
-			return;
 		}
+
+		PHPUtils::PushGlobalObjectMembersIntoPHPSymbolTable(&EG(symbol_table),
+			PHPUtils::GetCurrentGlobalObject() TSRMLS_CC);
 	}
 
 	PHP_METHOD(PHPKList, offsetExists)

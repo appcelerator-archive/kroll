@@ -336,20 +336,16 @@ namespace kroll
 		}
 
 		static KObjectRef currentPHPGlobal(0);
-
 		KObjectRef GetCurrentGlobalObject()
 		{
 			return currentPHPGlobal;
 		}
 
-		void SwapGlobalObject(KObjectRef newGlobal, HashTable *symbolTable TSRMLS_DC)
+		void PushPHPSymbolsIntoGlobalObject(HashTable* symbolTable,
+			KObjectRef global TSRMLS_DC)
 		{
-			// Push the variables from the given symbol table to the
-			// the current global object. TODO: This is broken! If the
-			// current global is modified deeper in the call stack from
-			// the swapee, the older value will overwrite the newer
-			// one. Dammit!
-			if (!currentPHPGlobal.isNull())
+			// Push the variables from the given symbol table to the global object.
+			if (!global.isNull())
 			{
 				KListRef symbols(PHPHashTableToKList(symbolTable TSRMLS_CC, true));
 				SharedStringList keys(symbols->GetPropertyNames());
@@ -357,30 +353,39 @@ namespace kroll
 				{
 					const char* name = keys->at(i)->c_str();
 					KValueRef newValue(symbols->Get(name));
-					if (!newValue->Equals(currentPHPGlobal->Get(name)))
+					if (!newValue->Equals(global->Get(name)))
 					{
-						currentPHPGlobal->Set(name, newValue);
+						global->Set(name, newValue);
 					}
 				}
 			}
+		}
 
-			zend_hash_clean(symbolTable);
-			currentPHPGlobal = newGlobal;
-
-			// Move all variables from the new global object into the newly
-			// emptied PHP symbol table.
-			if (!newGlobal.isNull())
+		void PushGlobalObjectMembersIntoPHPSymbolTable(HashTable* symbolTable,
+			KObjectRef global TSRMLS_DC)
+		{
+			// Move all variables from the new global object into the PHP symbol table.
+			if (!global.isNull())
 			{
-				SharedStringList keys(newGlobal->GetPropertyNames());
+				SharedStringList keys(global->GetPropertyNames());
 				for (size_t i = 0; i < keys->size(); i++)
 				{
 					const char* name = keys->at(i)->c_str();
 					zval* newValue;
 					MAKE_STD_ZVAL(newValue); 
-					ToPHPValue(newGlobal->Get(name), &newValue);
+					ToPHPValue(global->Get(name), &newValue);
 					ZEND_SET_SYMBOL(symbolTable, (char*) name, newValue);
 				}
 			}
 		}
+
+		void SwapGlobalObject(KObjectRef newGlobal, HashTable* symbolTable TSRMLS_DC)
+		{
+			PushPHPSymbolsIntoGlobalObject(symbolTable, currentPHPGlobal TSRMLS_CC);
+			zend_hash_clean(symbolTable);
+			currentPHPGlobal = newGlobal;
+			PushGlobalObjectMembersIntoPHPSymbolTable(symbolTable, newGlobal TSRMLS_CC);
+		}
+
 	}
 }

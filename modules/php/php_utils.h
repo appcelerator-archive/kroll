@@ -31,21 +31,22 @@ namespace kroll
 			bool ignoreGlobals=false);
 		KListRef PHPHashTableToKList(HashTable* hashtable TSRMLS_DC,
 			 bool ignoreGlobals=false);
-		SharedStringList GetHashKeys(HashTable *hash);
+		SharedStringList GetHashKeys(HashTable* hash);
 		void KObjectToKPHPObject(KValueRef objectValue, zval** returnValue);
 		void KMethodToKPHPMethod(KValueRef methodValue, zval** returnValue);
 		void KListToKPHPArray(KValueRef listValue, zval** returnValue);
 		void InitializePHPKrollClasses();
 		bool PHPObjectsEqual(zval* val1, zval* val2 TSRMLS_DC);
-		int HashZvalCompareCallback(const zval **one, const zval **two TSRMLS_DC);
-		SharedStringList GetClassMethods(zend_class_entry *ce TSRMLS_DC);
-		KListRef GetClassVars(zend_class_entry *ce TSRMLS_DC);
+		int HashZvalCompareCallback(const zval** one, const zval** two TSRMLS_DC);
+		SharedStringList GetClassMethods(zend_class_entry* ce TSRMLS_DC);
+		KListRef GetClassVars(zend_class_entry* ce TSRMLS_DC);
 		zend_function* GetGlobalFunction(const char *name TSRMLS_DC);
 		void GenerateCaseMap(string code TSRMLS_DC);
 
 		KObjectRef GetCurrentGlobalObject();
-		void SwapGlobalObject(KObjectRef newGlobal, 
-			HashTable *symbolTable TSRMLS_DC);
+		void PushPHPSymbolsIntoGlobalObject(HashTable* symbolTable, KObjectRef global TSRMLS_DC);
+		void PushGlobalObjectMembersIntoPHPSymbolTable(HashTable* symbolTable, KObjectRef global TSRMLS_DC);
+		void SwapGlobalObject(KObjectRef newGlobal, HashTable* symbolTable TSRMLS_DC);
 	}
 }
 
