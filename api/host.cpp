@@ -100,7 +100,7 @@ namespace kroll
 
 	void Host::GetVersion(const ValueList& args, KValueRef result)
 	{
-		static std::string version(STRING(PRODUCT_VERSION));
+		static std::string version(PRODUCT_VERSION);
 		result->SetString(version);
 	}
 
@@ -141,7 +141,7 @@ namespace kroll
 		this->application->ResolveDependencies();
 		if (!this->application->runtime.isNull())
 		{
-			this->application->runtime->version = STRING(PRODUCT_VERSION);
+			this->application->runtime->version = PRODUCT_VERSION;
 		}
 
 		// Parse the module paths, we'll later use this to load all the shared-objects.
@@ -255,7 +255,7 @@ namespace kroll
 				newApp->ResolveDependencies();
 				if (!newApp->runtime.isNull())
 				{
-					newApp->runtime->version = STRING(PRODUCT_VERSION);
+					newApp->runtime->version = PRODUCT_VERSION;
 				}
 				this->application = newApp;
 			}

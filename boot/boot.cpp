@@ -205,7 +205,7 @@ namespace KrollBoot
 			params["ostype"] = OS_TYPE;
 			params["osver"] = FileUtils::GetOSVersion();
 			params["osarch"] = FileUtils::GetOSArchitecture();
-			params["ver"] = STRING(_PRODUCT_VERSION);
+			params["ver"] = PRODUCT_VERSION;
 			params["un"] = FileUtils::GetUsername();
 
 			if (!app.isNull())

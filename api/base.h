@@ -83,7 +83,7 @@
   #define CONFIG_FILENAME STRING(_CONFIG_FILENAME)
 #endif
 
-#define PRODUCT_VERSION _PRODUCT_VERSION
+#define PRODUCT_VERSION STRING(_PRODUCT_VERSION)
 
 
 // define a macro that points to the name of the enclosing function where
