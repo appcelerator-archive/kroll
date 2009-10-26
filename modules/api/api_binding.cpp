@@ -569,12 +569,12 @@ namespace kroll
 
 	void APIBinding::_AddEventListener(const ValueList& args, KValueRef result)
 	{
-		KEventObject::root->_AddEventListener(args, result);
+		GlobalObject::GetInstance()->_AddEventListener(args, result);
 	}
 
 	void APIBinding::_RemoveEventListener(const ValueList& args, KValueRef result)
 	{
-		KEventObject::root->_RemoveEventListener(args, result);
+		GlobalObject::GetInstance()->_RemoveEventListener(args, result);
 	}
 
 	void APIBinding::_FireEvent(const ValueList& args, KValueRef result)
@@ -583,14 +583,13 @@ namespace kroll
 		if (args.at(0)->IsString())
 		{
 			std::string eventName = args.GetString(0);
-			KEventObject::FireRootEvent(eventName);
-
+			GlobalObject::GetInstance()->FireEvent(eventName);
 		}
 		else if (args.at(0)->IsObject())
 		{
 			AutoPtr<Event> event = args.GetObject(0).cast<Event>();
 			if (!event.isNull())
-				KEventObject::FireRootEvent(event);
+				GlobalObject::GetInstance()->FireEvent(event);
 		}
 	}
 

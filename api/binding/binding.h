@@ -14,6 +14,7 @@ namespace kroll
 	class Event;
 	class EventListener;
 	class KEventObject;
+	class ProfiledGlobalObject;
 }
 
 #include "kobject.h"
@@ -34,12 +35,14 @@ namespace kroll
 #include "k_accessor_method.h"
 #include "scope_method_delegate.h"
 #include "blob.h"
-#include "profiled_bound_object.h"
-#include "profiled_bound_list.h"
-#include "profiled_bound_method.h"
 #include "event.h"
 #include "read_event.h"
 #include "k_event_object.h"
 #include "k_event_method.h"
+#include "profiled_bound_object.h"
+#include "profiled_bound_list.h"
+#include "profiled_bound_method.h"
+#include "global_object.h"
+#include "profiled_global_object.h"
 
 #endif

@@ -56,23 +56,28 @@ namespace kroll
 
 	KValueRef ProfiledBoundObject::Wrap(KValueRef value, std::string type)
 	{
-		if (AlreadyWrapped(value)) {
+		if (AlreadyWrapped(value))
+		{
 			return value;
-
-		} else if (value->IsMethod()) {
+		}
+		else if (value->IsMethod())
+		{
 			KMethodRef toWrap = value->ToMethod();
 			KMethodRef wrapped = new ProfiledBoundMethod(toWrap, type);
 			return Value::NewMethod(wrapped);
-
-		} else if (value->IsList()) {
+		}
+		else if (value->IsList())
+		{
 			KListRef wrapped = new ProfiledBoundList(value->ToList());
 			return Value::NewList(wrapped);
-
-		} else if (value->IsObject()) {
+		}
+		else if (value->IsObject())
+		{
 			KObjectRef wrapped = new ProfiledBoundObject(value->ToObject());
 			return Value::NewObject(wrapped);
-
-		} else {
+		}
+		else
+		{
 			return value;
 		}
 	}
@@ -133,17 +138,20 @@ namespace kroll
 	bool ProfiledBoundObject::Equals(KObjectRef other)
 	{
 		AutoPtr<ProfiledBoundObject> pother = other.cast<ProfiledBoundObject>();
-		if (!pother.isNull()) {
+		if (!pother.isNull())
 			other = pother->GetDelegate();
-		}
+
 		return other.get() == this->GetDelegate().get();
 	}
 
 	std::string ProfiledBoundObject::GetSubType(std::string name)
 	{
-		if (!this->GetType().empty()) {
+		if (!this->GetType().empty())
+		{
 			return this->GetType() + "." + name;
-		} else {
+		}
+		else
+		{
 			return name;
 		}
 	}

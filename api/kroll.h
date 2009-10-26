@@ -42,7 +42,7 @@ namespace kroll
 	class StaticBoundMethod;
 	class StaticBoundList;
 
-	class DelegateStaticBoundObject;
+	class GlobalObject;
 	class ScopeMethodDelegate;
 	class Blob;
 	class ValueReleasePolicy;

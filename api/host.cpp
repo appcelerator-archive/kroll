@@ -62,7 +62,7 @@ namespace kroll
 	{
 		instance_ = this;
 
-		this->SetupGlobalObject();
+		GlobalObject::Initialize();
 		this->SetupApplication(argc, argv);
 		this->ParseCommandLineArguments(); // Depends on this->application
 
@@ -76,49 +76,15 @@ namespace kroll
 		this->SetupProfiling(); // Depends on logging
 	}
 
-	void Host::SetupGlobalObject()
-	{
-		// Initialize our global object to be a simple mapped Kroll object
-		globalObject = new KEventObject("");
-
-		// @tiapi(method=True,type=String,name=getVersion,since=0.8)
-		// @tiapi Return the Titanium runtime version.
-		// @tiresult[String] The runtime version.
-		globalObject->SetMethod("getVersion", 
-			StaticBoundMethod::FromMethod<Host>(this, &Host::GetVersion));
-
-		// @tiapi(method=True,type=String,name=getPlatform,since=0.8)
-		// @tiapi Return the current platform, usually one of
-		// @tiapi 'osx', 'win32', or 'linux'.
-		// @tiresult[String] The current platform.
-		globalObject->SetMethod("getPlatform",
-			StaticBoundMethod::FromMethod<Host>(this, &Host::GetPlatform));
-
-		Event::SetEventConstants(this->globalObject.get());
-		Script::Initialize();
-	}
-
-	void Host::GetVersion(const ValueList& args, KValueRef result)
-	{
-		static std::string version(PRODUCT_VERSION);
-		result->SetString(version);
-	}
-
-	void Host::GetPlatform(const ValueList& args, KValueRef result)
-	{
-		static std::string platform(this->GetPlatform());
-		result->SetString(platform);
-	}
-
 	void Host::SetupApplication(int argc, const char* argv[])
 	{
 		AssertEnvironmentVariable(HOME_ENV);
 		AssertEnvironmentVariable(RUNTIME_ENV);
 		AssertEnvironmentVariable(MODULES_ENV);
 
-		string applicationHome = Environment::get(HOME_ENV);
-		string runtimePath = Environment::get(RUNTIME_ENV);
-		string modulePaths = Environment::get(MODULES_ENV);
+		string applicationHome(Environment::get(HOME_ENV));
+		string runtimePath(Environment::get(RUNTIME_ENV));
+		string modulePaths(Environment::get(MODULES_ENV));
 
 		if (this->debug)
 		{
@@ -181,7 +147,7 @@ namespace kroll
 			// going through this object and it's attached children
 			this->profileStream = new Poco::FileOutputStream(this->profilePath);
 			ProfiledBoundObject::SetStream(this->profileStream);
-			this->globalObject = new ProfiledBoundObject(this->globalObject);
+			GlobalObject::TurnOnProfiling();
 
 			logger->Info("Starting Profiler. Output going to %s", this->profilePath.c_str());
 		}
@@ -734,11 +700,6 @@ namespace kroll
 		}
 	}
 
-	KObjectRef Host::GetGlobalObject()
-	{
-		return this->globalObject;
-	}
-
 	bool Host::ProfilingEnabled()
 	{
 		return this->profile;
@@ -825,8 +786,8 @@ namespace kroll
 	void Host::Exit(int exitCode)
 	{
 		logger->Notice("Received exit signal (%d)", exitCode);
-		if (KEventObject::FireRootEvent(Event::EXIT) &&
-			KEventObject::FireRootEvent(Event::APP_EXIT))
+		if (GlobalObject::GetInstance()->FireEvent(Event::EXIT) &&
+			GlobalObject::GetInstance()->FireEvent(Event::APP_EXIT))
 		{
 			running = false;
 			exiting = true;

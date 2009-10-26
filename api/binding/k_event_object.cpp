@@ -10,25 +10,9 @@ namespace kroll
 	unsigned int EventListener::currentId = 1;
 	std::map<KEventObject*, std::vector<EventListener*>*> KEventObject::listenerMap;
 	Poco::Mutex KEventObject::listenerMapMutex;
-	AutoPtr<KEventObject> KEventObject::root = new KEventObject(true, "Host");
 
 	KEventObject::KEventObject(const char *type) :
-		KAccessorObject(type),
-		isRoot(false)
-	{
-		{
-			Poco::Mutex::ScopedLock lock(listenerMapMutex);
-			std::vector<EventListener*>* listeners = new std::vector<EventListener*>();
-			KEventObject::listenerMap[this] = listeners;
-		}
-
-		this->SetMethod("addEventListener", &KEventObject::_AddEventListener);
-		this->SetMethod("removeEventListener", &KEventObject::_RemoveEventListener);
-	}
-
-	KEventObject::KEventObject(bool isRoot, const char *type) :
-		KAccessorObject(type),
-		isRoot(isRoot)
+		KAccessorObject(type)
 	{
 		{
 			Poco::Mutex::ScopedLock lock(listenerMapMutex);
@@ -111,16 +95,6 @@ namespace kroll
 		return listener->listenerId;
 	}
 
-	bool KEventObject::FireRootEvent(std::string& eventName)
-	{
-		return KEventObject::root->FireEvent(eventName);
-	}
-
-	bool KEventObject::FireRootEvent(AutoPtr<Event>event)
-	{
-		return KEventObject::root->FireEvent(event);
-	}
-
 	bool KEventObject::FireEvent(std::string& eventName)
 	{
 		AutoPtr<Event> event(this->CreateEvent(eventName));
@@ -148,8 +122,8 @@ namespace kroll
 				return !event->preventedDefault;
 		}
 
-		if (!this->isRoot)
-			KEventObject::root->FireEvent(event);
+		if (this != GlobalObject::GetInstance().get())
+			GlobalObject::GetInstance()->FireEvent(event);
 
 		return !event->preventedDefault;
 	}

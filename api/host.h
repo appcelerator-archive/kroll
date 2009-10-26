@@ -1,6 +1,5 @@
 /*
- * Appcelerator Kroll - licensed under the Apache Public License 2
- * see LICENSE in the root folder for details on the license.
+ * Appcelerator Kroll - licensed under the Apache Public License 2 * see LICENSE in the root folder for details on the license.
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
 #ifndef _KR_HOST_H_
@@ -96,10 +95,10 @@ namespace kroll
 		bool HasModule(std::string name);
 
 		/**
-		 * @return the Global context object. In most languages this is known as "Titanium"
+		 * @return the top-level API-holding object.
 		 */
-		KObjectRef GetGlobalObject();
-		
+		KObjectRef GetGlobalObject() { return GlobalObject::GetInstance(); }
+
 		/**
 		 * @return the SharedApplication instance for this host
 		 */
@@ -288,14 +287,11 @@ namespace kroll
 		void SetupAppInstallerIfRequired();
 		void ParseCommandLineArguments();
 		static void AssertEnvironmentVariable(std::string);
-		void GetVersion(const ValueList& args, KValueRef result);
-		void GetPlatform(const ValueList& args, KValueRef result);
 
 	private:
 		static SharedPtr<Host> instance_;
 		static Poco::Timestamp started_;
 
-		void SetupGlobalObject();
 		void SetupApplication(int argc, const char* argv[]);
 		void SetupLogging();
 		void SetupProfiling();
