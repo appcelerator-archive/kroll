@@ -56,6 +56,7 @@ namespace kroll
 		static std::string HTTP_ABORT;
 		static std::string HTTP_DATA_SENT;
 		static std::string HTTP_DATA_RECEIVED;
+		static std::string OPEN_REQUEST;
 	};
 }
 #endif
