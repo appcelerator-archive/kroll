@@ -71,14 +71,18 @@ namespace KrollBoot
 		string manifestPath = FileUtils::Join(applicationHome.c_str(), MANIFEST_FILENAME, NULL);
 		if (!FileUtils::IsFile(manifestPath))
 		{
-			ShowError("Application packaging error: no manifest was found.");
+			string error("Application packaging error: no manifest was found at: ");
+			error.append(manifestPath);
+			ShowError(error);
 			return __LINE__;
 		}
 
 		app = Application::NewApplication(applicationHome);
 		if (app.isNull())
 		{
-			ShowError("Application packaging error: could not read manifest.");
+			string error("Application packaging error: could not read manifest at: ");
+			error.append(manifestPath);
+			ShowError(error);
 			return __LINE__;
 		}
 		app->SetArguments(argc, argv);
