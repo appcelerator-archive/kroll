@@ -3,8 +3,8 @@
  * see LICENSE in the root folder for details on the license.
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
-#include <signal.h>
 #include "python_module.h"
+#include <signal.h>
 #include <Poco/Path.h>
 
 namespace kroll

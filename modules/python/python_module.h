@@ -6,11 +6,11 @@
 #ifndef _PYTHON_MODULE_H
 #define _PYTHON_MODULE_H
 
+#include <Python.h>
+#include <kroll/kroll.h>
 #include <string>
 #include <vector>
 #include <iostream>
-#include <Python.h>
-#include <kroll/kroll.h>
 
 #include "python_api.h"
 #include "python_utils.h"
