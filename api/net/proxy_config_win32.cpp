@@ -19,12 +19,12 @@ using Poco::StringTokenizer;
 
 namespace kroll
 {
-
+	static vector<SharedPtr<BypassEntry> > bypassList;
 	static void InitializeWin32ProxyConfig();
 	static bool GetAutoProxiesForURL(string& url, vector<SharedProxy>& proxies);
-	static void ParseProxyList(string proxyList, string bypassList,
-		vector<SharedPtr<Proxy > >& ieProxyList);
-	static std::string ErrorCodeToString(DWORD code);
+	static void ParseProxyList(string proxyList, 
+		vector<SharedProxy>& ieProxyList);
+	static string ErrorCodeToString(DWORD code);
 
 	class WinHTTPSession
 	{
@@ -58,9 +58,9 @@ namespace kroll
 	};
 
 	bool useProxyAutoConfig = false;
-	std::wstring autoConfigURL(L"");
+	wstring autoConfigURL(L"");
 	WinHTTPSession httpSession;
-	std::vector<SharedProxy> ieProxies;
+	vector<SharedProxy> ieProxies;
 
 	static void InitializeWin32ProxyConfig()
 	{
@@ -86,19 +86,19 @@ namespace kroll
 			}
 
 			// We always keep IE proxy information in case auto proxy
-			// determination fails. We want to it as a fallback.
+			// determination fails, so we can use it as a fallback.
 			if (ieProxyConfig.lpszProxy)
 			{
-				std::string bypassList;
-				if (ieProxyConfig.lpszProxyBypass)
-				{
-					std::wstring bypassW = ieProxyConfig.lpszProxyBypass;
-					bypassList = string(bypassW.begin(), bypassW.end());
-				}
+				wstring proxyListW(ieProxyConfig.lpszProxy);
+				string proxyList(WideToUTF8(proxyListW));
+				ParseProxyList(proxyList, ieProxies);
+			}
 
-				std::wstring proxyListW = ieProxyConfig.lpszProxy;
-				string proxyList = string(proxyListW.begin(), proxyListW.end());
-				ParseProxyList(proxyList, bypassList, ieProxies);
+			if (ieProxyConfig.lpszProxyBypass)
+			{
+				wstring bypassW(ieProxyConfig.lpszProxyBypass);
+				string bypassListString(WideToUTF8(bypassW));
+				AddToBypassList(bypassListString, bypassList);
 			}
 		}
 		else
@@ -139,8 +139,10 @@ namespace kroll
 		ZeroMemory(&autoProxyOptions, sizeof(WINHTTP_AUTOPROXY_OPTIONS)); 
 		
 		// This type of auto-detection might take several seconds, so
-		// if the user specified  an autoconfiguration URL don't do it.
-		// TODO: Maybe we should use this as a fallback later, but it's *very* expensive.
+		// if the user specified an auto-configuration URL don't do it.
+		// TODO: Maybe we should use this as a fallback later, but it's
+		// *very* expensive. A better solution would be to use asyncronous
+		// proxy determination.
 		if (autoConfigURL.empty() && useProxyAutoConfig)
 		{
 			autoProxyOptions.dwFlags = WINHTTP_AUTOPROXY_AUTO_DETECT;
@@ -153,7 +155,7 @@ namespace kroll
 			autoProxyOptions.dwFlags |= WINHTTP_AUTOPROXY_CONFIG_URL;
 			autoProxyOptions.lpszAutoConfigUrl = autoConfigURL.c_str();
 		}
-		
+
 		// From Chromium:
 		// Per http://msdn.microsoft.com/en-us/library/aa383153(VS.85).aspx, it is
 		// necessary to first try resolving with fAutoLogonIfChallenged set to false.
@@ -173,19 +175,18 @@ namespace kroll
 		}
 		
 		if (ok && autoProxyInfo.dwAccessType == WINHTTP_ACCESS_TYPE_NAMED_PROXY &&
-			 autoProxyInfo.lpszProxy)
+			autoProxyInfo.lpszProxy)
 		{
-			// Only the first proxy in the list will get a copy of the bypass list.
-			std::string bypassList;
 			if (autoProxyInfo.lpszProxyBypass)
 			{
-				std::wstring bypassW = autoProxyInfo.lpszProxyBypass;
-				bypassList = string(bypassW.begin(), bypassW.end());
+				wstring bypassW(autoProxyInfo.lpszProxyBypass);
+				string bypassListString(WideToUTF8(bypassW));
+				AddToBypassList(bypassListString, bypassList);
 			}
 
-			std::wstring proxyListW = autoProxyInfo.lpszProxy;
-			string proxyList = string(proxyListW.begin(), proxyListW.end());
-			ParseProxyList(proxyList, bypassList, proxies);
+			wstring proxyListW(autoProxyInfo.lpszProxy);
+			string proxyList(WideToUTF8(proxyListW));
+			ParseProxyList(proxyList, proxies);
 		}
 		else if (ok && autoProxyInfo.dwAccessType == WINHTTP_ACCESS_TYPE_NO_PROXY)
 		{
@@ -202,48 +203,19 @@ namespace kroll
 			error.append(ErrorCodeToString(GetLastError()));
 			Logger::Get("Proxy")->Error(error);
 		}
-		
+
 		// Always cleanup
 		if (autoProxyInfo.lpszProxy)
 			GlobalFree(autoProxyInfo.lpszProxy);
 		if (autoProxyInfo.lpszProxyBypass)
 			GlobalFree(autoProxyInfo.lpszProxyBypass);
-		
+
 		return shouldUseProxy;
 	}
 
-	static void ParseBypassList(string& bypassList,
-		vector<SharedURI>& bypassVector)
+	static void ParseProxyList(string proxyList, vector<SharedProxy>& ieProxyList)
 	{
-		std::string sep = ",";
-		StringTokenizer tokenizer(bypassList, sep,
-			StringTokenizer::TOK_IGNORE_EMPTY | StringTokenizer::TOK_TRIM);
-		for (size_t i = 0; i < tokenizer.count(); i++)
-		{
-			// Traditionally an endswith comparison is always done with the host
-			// part, so we throwaway explicit wildcards at the beginning. If the
-			// entire string is a wildcard this is an unconditional bypass.
-			std::string entry = tokenizer[i];
-			if (entry.at(0) == '*' && entry.size() == 1)
-			{
-				// Null URI means always bypass
-				bypassVector.push_back(0);
-				continue;
-			}
-			else if (entry.at(0) == '*' && entry.size() > 1)
-			{
-				entry = entry.substr(1);
-			}
-
-			SharedPtr<URI> bypassEntry = Proxy::ProxyEntryToURI(entry);
-			bypassVector.push_back(bypassEntry);
-		}
-	}
-
-	static void ParseProxyList(string proxyList, string bypassList,
-		vector<SharedPtr<Proxy > >& ieProxyList)
-	{
-		std::string sep = "; ";
+		string sep = "; ";
 		StringTokenizer proxyTokens(proxyList, sep,
 			StringTokenizer::TOK_IGNORE_EMPTY | StringTokenizer::TOK_TRIM);
 		for (size_t i = 0; i < proxyTokens.count(); i++)
@@ -260,8 +232,8 @@ namespace kroll
 				entry = entry.substr(schemeEnd + 1);
 			}
 
-			SharedPtr<Proxy> proxy = new Proxy;	
-			proxy->info = Proxy::ProxyEntryToURI(entry);
+			SharedProxy proxy = new Proxy;
+			proxy->info = new URI(entry);
 
 			// Set the scheme based on the value that came before '='
 			// We want this proxy to only apply to what it was specifically
@@ -269,16 +241,21 @@ namespace kroll
 			proxy->info->setScheme(scheme);
 			ieProxyList.push_back(proxy);
 		}
+	}
 
-		if (ieProxyList.size() > 0 && !bypassList.empty())
+	static void AddToBypassList(string bypassListString,
+		vector<SharedPtr<BypassEntry > >& list)
+	{
+		string sep = ",";
+		StringTokenizer tokenizer(bypassListString, sep,
+			StringTokenizer::TOK_IGNORE_EMPTY | StringTokenizer::TOK_TRIM);
+		for (size_t i = 0; i < tokenizer.count(); i++)
 		{
-			SharedPtr<Proxy> proxy = ieProxyList.at(0);
-			ParseBypassList(bypassList, proxy->bypassList);
+			list.push_back(ParseBypassEntry(tokenizer[i]));
 		}
 	}
 
-
-	static std::string ErrorCodeToString(DWORD code)
+	static string ErrorCodeToString(DWORD code)
 	{
 		// Okay. This is a little bit compulsive, but we really, really
 		// want to get good debugging information for proxy lookup failures.
@@ -388,17 +365,22 @@ namespace kroll
 
 	namespace ProxyConfig
 	{
-		SharedPtr<Proxy> GetProxyForURLImpl(URI& uri)
+		SharedProxy GetProxyForURLImpl(URI& uri)
 		{
 			InitializeWin32ProxyConfig();
-			std::string url(uri.toString());
+			string url(uri.toString());
+
+			// If this URI is on the bypass list, just signal a direct connetion.
+			for (int i = 0; i < bypassList.size(); i++)
+				if (ShouldBypass(uri, bypassList))
+					return 0;
 
 			// The auto proxy configuration might tell us to simply use
 			// a direct connection, which should cause us to just return
 			// null. Otherwise we should try to use the IE proxy list (next block)
 			if (useProxyAutoConfig || !autoConfigURL.empty())
 			{
-				std::vector<SharedProxy> autoProxies;
+				vector<SharedProxy> autoProxies;
 				bool shouldUseIEProxy = GetAutoProxiesForURL(url, autoProxies);
 
 				for (int i = 0; i < autoProxies.size(); i++)
@@ -422,12 +404,8 @@ namespace kroll
 			// Try the IE proxy list
 			for (int i = 0; i < ieProxies.size(); i++)
 			{
-				SharedProxy proxy = ieProxies.at(i);
-				std::string proxyScheme = proxy->info->getScheme();
-				if (proxy->ShouldBypass(uri))
-				{
-					return 0;
-				}
+				SharedProxy proxy(ieProxies.at(i));
+				string proxyScheme(proxy->info->getScheme());
 				else if (proxyScheme.empty() || proxyScheme == uri.getScheme())
 				{
 					return proxy;

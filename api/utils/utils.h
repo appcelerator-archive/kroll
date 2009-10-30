@@ -48,4 +48,8 @@
 #include "win32/win32_utils.h"
 #endif
 
+#ifdef OS_OSX
+#include "osx/osx_utils.h"
+#endif
+
 #endif
