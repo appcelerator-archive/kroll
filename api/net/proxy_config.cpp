@@ -121,7 +121,7 @@ namespace ProxyConfig
 		return false;
 	}
 
-	SharedPtr<BypassEntry> ParseBypassEntry(string& entry)
+	SharedPtr<BypassEntry> ParseBypassEntry(string entry)
 	{
 		// Traditionally an endswith comparison is always done with the host
 		// part, so we throw away explicit wildcards at the beginning. If the

@@ -33,7 +33,7 @@ namespace kroll
 		SharedProxy GetProxyForURLImpl(Poco::URI& uri);
 		bool ShouldBypass(Poco::URI& uri,
 			std::vector<SharedPtr<BypassEntry> >& bypassList);
-		SharedPtr<BypassEntry> ParseBypassEntry(std::string& entry);
+		SharedPtr<BypassEntry> ParseBypassEntry(std::string entry);
 		Logger* GetLogger();
 	};
 }
