@@ -176,8 +176,8 @@ namespace KrollBoot
 
 	void InitCrashDetection()
 	{
-		// We need to load this since in a crash situation
-		// we restart back and by-pass the normal load mechanism.
+		// Load the application manifest so that we can get lots of debugging
+		// information for the crash report.
 		applicationHome = GetApplicationHomePath();
 		string manifestPath = FileUtils::Join(applicationHome.c_str(), MANIFEST_FILENAME, NULL);
 
@@ -226,7 +226,7 @@ namespace KrollBoot
 				while (i != components.end())
 				{
 					SharedComponent c = (*i++);
-					string type = "unknown";
+					string type("unknown");
 					if (c->type == KrollUtils::MODULE)
 					{
 						type = "module";
