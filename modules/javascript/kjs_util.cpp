@@ -736,7 +736,7 @@ namespace KJSUtil
 		jsContextRefCounts[globalContext]--;
 	}
 
-	KValueRef Evaluate(JSContextRef jsContext, char *script)
+	KValueRef Evaluate(JSContextRef jsContext, const char* script)
 	{
 		JSObjectRef globalObject = JSContextGetGlobalObject(jsContext);
 		JSStringRef scriptContents = JSStringCreateWithUTF8CString(script);

@@ -30,7 +30,7 @@ namespace kroll
 		KROLL_JAVASCRIPT_API void ProtectGlobalContext(JSGlobalContextRef);
 		KROLL_JAVASCRIPT_API void UnprotectGlobalContext(JSGlobalContextRef);
 
-		KROLL_JAVASCRIPT_API KValueRef Evaluate(JSContextRef context, char* script);
+		KROLL_JAVASCRIPT_API KValueRef Evaluate(JSContextRef context, const char* script);
 		KROLL_JAVASCRIPT_API KValueRef EvaluateFile(JSContextRef context, std::string fullPath);
 		KROLL_JAVASCRIPT_API void BindProperties(JSObjectRef, KObjectRef);
 		KROLL_JAVASCRIPT_API KValueRef GetProperty(JSObjectRef, std::string name);
