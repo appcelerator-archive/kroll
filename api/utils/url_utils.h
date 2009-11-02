@@ -42,15 +42,15 @@ namespace UTILS_NS
 		 * Convert a URL to a path if it is an app://, ti:// or file://
 		 * URL. If this URL cannot be converted to a path, return the original URL
 		 */
-		KROLL_API std::string URLToPath(string& url);
+		KROLL_API std::string URLToPath(const string& url);
 
 		/**
 		 * Path portion of URL which is guauranteed to be a local and * blank file.
 		 */
 		KROLL_API std::string& BlankPageURL();
 
-		KROLL_API std::string TiURLToPath(std::string& url);
-		KROLL_API std::string AppURLToPath(std::string& url);
+		KROLL_API std::string TiURLToPath(const std::string& url);
+		KROLL_API std::string AppURLToPath(const std::string& url);
 #endif
 	};
 }
