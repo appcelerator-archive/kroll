@@ -55,7 +55,7 @@ namespace KrollBoot
 			}
 		}
 
-		if (justSDKs.size() > 0)
+		if (!justSDKs.empty())
 		{
 			return justSDKs;
 		}
@@ -109,8 +109,8 @@ namespace KrollBoot
 		}
 
 		bool forceInstall = app->HasArgument("--force-install");
-		if (forceInstall || missing.size() > 0
-			|| !app->IsInstalled() || !updateFile.empty())
+		if (forceInstall || !missing.empty() || !app->IsInstalled() ||
+			!updateFile.empty())
 		{
 			// If this list of dependencies incluces the SDKs, just install
 			// those -- we assume that they also supply our other dependencies.
