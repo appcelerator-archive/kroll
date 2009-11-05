@@ -16,7 +16,7 @@ namespace kroll
 			eventName(eventName),
 			callback(callback),
 			listenerId(++EventListener::currentId) {}
-		void FireEventIfMatches(AutoPtr<Event>);
+		void FireEventIfMatches(AutoPtr<Event>, bool synchronous=true);
 		bool Matches(std::string&, unsigned int, KMethodRef);
 		std::string eventName;
 		KMethodRef callback;
@@ -36,8 +36,8 @@ namespace kroll
 		unsigned int AddEventListenerForAllEvents(KMethodRef callback);
 		virtual void RemoveEventListener(std::string& eventName, KMethodRef listener);
 		virtual void RemoveEventListener(std::string& eventName, unsigned int id);
-		virtual bool FireEvent(std::string& eventName);
-		virtual bool FireEvent(AutoPtr<Event>);
+		virtual bool FireEvent(std::string& eventName, bool synchronous=true);
+		virtual bool FireEvent(AutoPtr<Event>, bool synchronous=true);
 		void _AddEventListener(const ValueList&, KValueRef result);
 		void _RemoveEventListener(const ValueList&, KValueRef result);
 
