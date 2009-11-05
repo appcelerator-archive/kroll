@@ -299,6 +299,10 @@ class BuildConfig(object):
 			libpath = path.join(self.third_party, 'poco', 'lib')
 			libs = ['PocoFoundation', 'PocoNet', 'PocoNetSSL', 'PocoUtil',
 			        'PocoXML', 'PocoZip', 'PocoData', 'PocoSQLite']
+		if name is 'curl':
+			cpppath = path.join(self.third_party, 'curl', 'include')
+			libpath = path.join(self.third_party, 'curl', 'lib')
+			libs = ['curl']
 		env.Append(CPPPATH=[cpppath])
 		env.Append(LIBPATH=[libpath])
 		env.Append(LIBS=[libs])
