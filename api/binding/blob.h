@@ -12,14 +12,7 @@
 #include <string>
 #include <map>
 #include <cstring>
-
-namespace Poco
-{
-	namespace Data
-	{
-		class BLOB;
-	}
-}
+#include <Poco/Data/BLOB.h>
 
 namespace kroll
 {
@@ -30,37 +23,29 @@ namespace kroll
 	{
 	public:
 		/**
-		 * if makeCopy is false: create a Blob from a heap-allocated
+		 * If makeCopy is false: create a Blob from a heap-allocated
 		 * pointer. The blob * will keep the pointer to this string,
 		 * so do not free it afterward. The buffer should be size+1
 		 * bytes long and NULL terminated.
 		 */
 		Blob();
-		Blob(char *buffer, int size, bool makeCopy=true);
-		Blob(const char *buffer, int size, bool makeCopy=true);
+		Blob(char *buffer, size_t size, bool makeCopy=true);
+		Blob(const char *buffer, size_t size, bool makeCopy=true);
 		Blob(std::string);
 		Blob(std::string&);
 		Blob(Poco::Data::BLOB* blob);
-		Blob(int byte);
-		
+		Blob(size_t byte);
 		virtual ~Blob();
-		void SetupBinding();
-		BlobRef Concat(std::vector<BlobRef>& blobs);
-		
-		static BlobRef GlobBlobs(std::vector<BlobRef>& blobs);
-		/**
-		 * @return The buffer as a const char *
-		 */
-		const char* Get() { return buffer; }
 
-		/**
-		 * @return the length of the underlying buffer§
-		 */
-		const int Length() { return length; }
+		BlobRef Concat(std::vector<BlobRef>& blobs);
+		const char* Get() { return buffer; }
+		const size_t Length() { return length; }
+
+		static BlobRef GlobBlobs(std::vector<BlobRef>& blobs);
 
 	private:
-		char *buffer;
-		int length;
+		char* buffer;
+		size_t length;
 
 		void ToString(const ValueList& args, KValueRef result);
 		void Get(const ValueList& args, KValueRef result);
@@ -78,8 +63,8 @@ namespace kroll
 		void Replace(const ValueList& args, KValueRef result);
 		void Concat(const ValueList& args, KValueRef result);
 
-		void CreateWithCopy(const char *buf, int len);
-		void CreateWithReference(char *buf, int len);
+		void CreateWithCopy(const char* buffer, size_t len);
+		void CreateWithReference(char* buffer, size_t len);
 	};
 }
 

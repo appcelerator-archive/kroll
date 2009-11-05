@@ -17,23 +17,23 @@ namespace kroll
 		CreateWithCopy(NULL, 0);
 	}
 
-	Blob::Blob(char *bufferIn, int len, bool makeCopy) :
+	Blob::Blob(char* bufferIn, size_t length, bool makeCopy) :
 		StaticBoundObject("Blob")
 	{
 		if (makeCopy)
 		{
-			CreateWithCopy(bufferIn, len);
+			CreateWithCopy(bufferIn, length);
 		}
 		else
 		{
-			CreateWithReference(bufferIn, len);
+			CreateWithReference(bufferIn, length);
 		}
 	}
 
-	Blob::Blob(const char *bufferIn, int len, bool makeCopy) :
+	Blob::Blob(const char* bufferIn, size_t length, bool makeCopy) :
 		StaticBoundObject("Blob")
 	{
-		CreateWithCopy(bufferIn, len);
+		CreateWithCopy(bufferIn, length);
 	}
 
 	Blob::Blob(std::string str) : StaticBoundObject("Blob")
@@ -50,13 +50,13 @@ namespace kroll
 	{
 		CreateWithReference((char *)&(blob->content()[0]), blob->size());
 	}
-	
-	Blob::Blob(int byte) : StaticBoundObject("Blob")
+
+	Blob::Blob(size_t byte) : StaticBoundObject("Blob")
 	{
 		CreateWithCopy((char *) &byte, 1);
 	}
-	
-	void Blob::CreateWithCopy(const char *bufferIn, int length)
+
+	void Blob::CreateWithCopy(const char* bufferIn, size_t length)
 	{
 		if (length > 0)
 		{
@@ -73,7 +73,7 @@ namespace kroll
 		}
 	}
 
-	void Blob::CreateWithReference(char* buffer, int length)
+	void Blob::CreateWithReference(char* buffer, size_t length)
 	{
 		this->buffer = buffer;
 		this->length = length;
@@ -232,7 +232,7 @@ namespace kroll
 		{
 			std::string target = this->buffer;
 			std::string needle = args.at(0)->ToString();
-			int start = 0;
+			size_t start = 0;
 			if (args.size() > 1)
 			{
 				start = args.GetNumber(1);
@@ -258,7 +258,7 @@ namespace kroll
 		{
 			std::string target = this->buffer;
 			std::string needle = args.at(0)->ToString();
-			int start = target.size() + 1;
+			size_t start = target.size() + 1;
 			if (args.size() > 1)
 			{
 				start = args.GetNumber(1);
@@ -275,7 +275,7 @@ namespace kroll
 	{
 		// https://developer.mozilla.org/en/core_javascript_1.5_reference/global_objects/string/charat
 		args.VerifyException("Blob.charAt", "n");
-		int position = args.at(0)->ToInt();
+		size_t position = args.at(0)->ToInt();
 
 		char buf[2] = {'\0', '\0'};
 		if (position >= 0 && position < this->length)
@@ -288,7 +288,7 @@ namespace kroll
 	void Blob::ByteAt(const ValueList& args, KValueRef result)
 	{
 		args.VerifyException("Blob.byteAt", "n");
-		int position = args.at(0)->ToInt();
+		size_t position = args.at(0)->ToInt();
 		
 		if (position >= 0 && position < this->length)
 		{
@@ -324,11 +324,7 @@ namespace kroll
 		}
 
 		std::string separator = args.GetString(0);
-		int limit = INT_MAX;
-		if (args.size() > 1)
-		{
-			limit = args.GetInt(1);
-		}
+		size_t limit = args.GetInt(1, SIZE_MAX);
 
 		// We could use Poco's tokenizer here, but it doesn't split strings
 		// like "abc,def,," -> ['abc', 'def', '', ''] correctly. It produces
@@ -350,13 +346,13 @@ namespace kroll
 			target = target.substr(next + 1);
 			next = target.find(separator);
 
-			if ((int) list->Size() >= limit)
+			if (list->Size() >= limit)
 				return;
 
 			list->Append(Value::NewString(token));
 		}
 
-		if ((int) list->Size() < limit && separator.size() != 0)
+		if (list->Size() < limit && separator.size() != 0)
 			list->Append(Value::NewString(target));
 	}
 
@@ -371,7 +367,7 @@ namespace kroll
 			target = this->buffer;
 		}
 
-		int start = args.GetInt(0);
+		size_t start = args.GetInt(0);
 		if (start > 0 && start >= this->length)
 		{
 			result->SetString("");
@@ -387,7 +383,7 @@ namespace kroll
 			start = this->length + start;
 		}
 
-		int length = this->length - start;
+		size_t length = this->length - start;
 		if (args.size() > 1)
 		{
 			length = args.GetInt(1);
@@ -414,10 +410,10 @@ namespace kroll
 			target = this->buffer;
 		}
 
-		int indexA = args.GetInt(0);
+		size_t indexA = args.GetInt(0);
 		if (indexA < 0)
 			indexA = 0;
-		if (indexA > (int) target.size())
+		if (indexA > target.size())
 			indexA = target.size();
 
 		if (args.size() < 2)
@@ -427,10 +423,10 @@ namespace kroll
 		}
 		else
 		{
-			int indexB = args.GetInt(1);
+			size_t indexB = args.GetInt(1);
 			if (indexB < 0)
 				indexB = 0;
-			if (indexB > (int) target.size())
+			if (indexB > target.size())
 				indexB = target.size();
 
 			if (indexA == indexB)
@@ -440,7 +436,7 @@ namespace kroll
 			}
 			if (indexA > indexB)
 			{
-				int temp = indexA;
+				size_t temp = indexA;
 				indexA = indexB;
 				indexB = temp;
 			}
@@ -483,8 +479,8 @@ namespace kroll
 			this->duplicate();
 			return this;
 		}
-		
-		int size = this->Length();
+
+		size_t size = this->Length();
 		for (size_t i = 0; i < blobs.size(); i++)
 		{
 			size += blobs.at(i)->Length();
@@ -506,10 +502,10 @@ namespace kroll
 				current += blob->Length();
 			}
 		}
-		
+
 		return new Blob(buffer, size, false);
 	}
-	
+
 	void Blob::Concat(const ValueList& args, KValueRef result)
 	{
 		std::vector<BlobRef> blobs;
@@ -528,7 +524,7 @@ namespace kroll
 				blobs.push_back(new Blob(args.GetString(i)));
 			}
 		}
-		
+
 		BlobRef newBlob = this->Concat(blobs);
 		result->SetObject(newBlob);
 	}
