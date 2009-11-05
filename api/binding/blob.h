@@ -29,23 +29,23 @@ namespace kroll
 		 * bytes long and NULL terminated.
 		 */
 		Blob();
-		Blob(char *buffer, size_t size, bool makeCopy=true);
-		Blob(const char *buffer, size_t size, bool makeCopy=true);
+		Blob(char *buffer, long size, bool makeCopy=true);
+		Blob(const char *buffer, long size, bool makeCopy=true);
 		Blob(std::string);
 		Blob(std::string&);
 		Blob(Poco::Data::BLOB* blob);
-		Blob(size_t byte);
+		Blob(long byte);
 		virtual ~Blob();
 
 		BlobRef Concat(std::vector<BlobRef>& blobs);
 		const char* Get() { return buffer; }
-		const size_t Length() { return length; }
+		const long Length() { return length; }
 
 		static BlobRef GlobBlobs(std::vector<BlobRef>& blobs);
 
 	private:
 		char* buffer;
-		size_t length;
+		long length;
 
 		void ToString(const ValueList& args, KValueRef result);
 		void Get(const ValueList& args, KValueRef result);
@@ -63,8 +63,8 @@ namespace kroll
 		void Replace(const ValueList& args, KValueRef result);
 		void Concat(const ValueList& args, KValueRef result);
 
-		void CreateWithCopy(const char* buffer, size_t len);
-		void CreateWithReference(char* buffer, size_t len);
+		void CreateWithCopy(const char* buffer, long len);
+		void CreateWithReference(char* buffer, long len);
 	};
 }
 
