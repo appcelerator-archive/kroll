@@ -12,14 +12,62 @@
 #include "host.h"
 #include <signal.h>
 
+@interface KrollMainThreadCaller : NSObject
+{
+	MainThreadJob* job;
+}
+- (id)initWithJob:(MainThreadJob*)jobIn;
+- (void)call;
+@end
+
+@implementation KrollMainThreadCaller
+- (id)initWithJob:(MainThreadJob*)jobIn
+{
+	self = [super init];
+	if (self)
+	{
+		job = jobIn;
+	}
+	return self;
+}
+- (void)dealloc
+{
+	delete job;
+	[super dealloc];
+}
+- (MainThreadJob*)job
+{
+	return job;
+}
+- (void)execute
+{
+	job->Execute();
+
+	// When executing asynchronously, we need to clean ourselves up.
+	if (!job->ShouldWaitForCompletion)
+	{
+		job->PrintException();
+		[self release];
+	}
+}
+@end
+
 namespace kroll
 {
+	static NSThread* mainThread;
+
 	OSXHost::OSXHost(int _argc, const char **_argv) : Host(_argc,_argv)
 	{
+		mainThread = [NSThread currentThread];
 	}
 
 	OSXHost::~OSXHost()
 	{
+	}
+
+	bool OSXHost::IsMainThread()
+	{
+		return [NSThread currentThread] == mainThread;
 	}
 
 	const char* OSXHost::GetPlatform()
@@ -121,160 +169,51 @@ namespace kroll
 		void* handle = dlopen(path.c_str(), RTLD_LAZY | RTLD_GLOBAL);
 		if (!handle)
 		{
-			throw ValueException::FromFormat("Error loading module (%s): %s\n", path.c_str(), dlerror());
+			throw ValueException::FromFormat("Error loading module (%s): %s\n",
+				path.c_str(), dlerror());
 		}
 
 		// Get the module factory symbol.
 		ModuleCreator* create = (ModuleCreator*) dlsym(handle, "CreateModule");
 		if (!create)
 		{
-			throw ValueException::FromFormat("Cannot load CreateModule symbol from module (%s): %s\n", path.c_str(), dlerror());
+			throw ValueException::FromFormat("Cannot load CreateModule symbol from module "
+				"(%s): %s\n", path.c_str(), dlerror());
 		}
 
 		std::string dir(FileUtils::GetDirectory(path));
 		return create(this, dir.c_str());
 	}
-}
 
-@interface KrollMainThreadCaller : NSObject
-{
-	KMethodRef *method;
-	KValueRef *result;
-	KValueRef *exception;
-	ValueList *args;
-	bool wait;
-}
-- (id)initWithKMethod:(KMethodRef)method args:(const ValueList*)args wait:(bool)wait;
-- (void)call;
-- (KValueRef)getResult;
-- (KValueRef)getException;
-@end
-
-@implementation KrollMainThreadCaller
-- (id)initWithKMethod:(KMethodRef)m args:(const ValueList*)a wait:(bool)w
-{
-	self = [super init];
-	if (self)
+	KValueRef Host::RunOnMainThread(KMethodRef method, KObjectRef thisObject,
+		const ValueList& args, bool waitForCompletion)
 	{
-		method = new KMethodRef(m);
-		args = new ValueList();
-		for (size_t c=0;c<a->size();c++)
-		{
-			args->push_back(a->at(c));
-		}
-		wait = w;
-		result = new KValueRef();
-		exception = new KValueRef();
-	}
-	return self;
-}
-- (void)dealloc
-{
-	delete result;
-	delete exception;
-	delete method;
-	delete args;
-	[super dealloc];
-}
-- (KValueRef)getResult
-{
-	return *result;
-}
-- (KValueRef)getException
-{
-	return *exception;
-}
-- (void)call
-{
-	try
-	{
-		result->assign((*method)->Call(*args));
-	}
-	catch (ValueException &e)
-	{
-		exception->assign(e.GetValue());
-	}
-	catch (std::exception &e)
-	{
-		exception->assign(Value::NewString(e.what()));
-	}
-	catch (...)
-	{
-		exception->assign(Value::NewString("unhandled exception"));
-	}
-
-	if (!wait)
-	{
-		// on non-blocking we own ourselves and need to release
-		[self release];
-	}
-}
-@end
-
-@interface NSThread(isMainThreadIsSafeReally)
-+ (BOOL) isMainThread;
-@end
-
-@interface NSThread(isMainThreadLegacy)
-+ (void) TiLegacyGetCurrentThread: (NSMutableData *) currentThreadData;
-@end
-
-@implementation NSThread(isMainThreadLegacy)
-+ (void) TiLegacyGetCurrentThread: (NSMutableData *) currentThreadData;
-{
-	NSThread * currentThread = [NSThread currentThread];
-	NSRange pointerRange = NSMakeRange(0,sizeof(NSThread *));
-	[currentThreadData replaceBytesInRange:pointerRange withBytes:&currentThread]; //This copies the contents of currentThread, not its address.
-}
-@end
-
-namespace kroll
-{
-	KValueRef OSXHost::InvokeMethodOnMainThread(
-		KMethodRef method,
-		const ValueList& args,
-		bool waitForCompletion)
-	{
-		// make sure to just invoke if we're already on the
-		// main thread
-		bool isMainThread;
-		if ([NSThread respondsToSelector:@selector(isMainThread)]) 
-		{
-			isMainThread = [NSThread isMainThread];
-		} 
-		else 
-		{
-			NSMutableData * mainThreadData= [[NSMutableData alloc] initWithLength:sizeof(NSThread *)];
-			[NSThread performSelectorOnMainThread:@selector(TiLegacyGetCurrentThread:) withObject:mainThreadData waitUntilDone:YES];
-			NSThread * mainThread = *((id *)[mainThreadData bytes]);
-			isMainThread = mainThread == [NSThread currentThread];
-			[mainThreadData release];
-		}
-
-		if (isMainThread && waitForCompletion)
+		if (this->IsMainThread() && waitForCompletion)
 		{
 			return method->Call(args);
 		}
-		NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-		KrollMainThreadCaller *caller = [[KrollMainThreadCaller alloc] initWithKMethod:method args:&args wait:waitForCompletion];
-		[caller performSelectorOnMainThread:@selector(call) withObject:nil waitUntilDone:waitForCompletion];
+
+		MainThreadJob* job = new MainThreadJob(method, thisObject,
+			args, waitForCompletion);
+		KrollMainThreadCaller* caller = 
+			[[KrollMainThreadCaller alloc] initWithJob:job];
+		[caller performSelectorOnMainThread:@selector(call) 
+			withObject:nil waitUntilDone:waitForCompletion];
+
 		if (!waitForCompletion)
 		{
-			[pool release];
+			// The job will release itself.
 			return Value::Undefined;
 		}
-		KValueRef exception = [caller getException];
-		if (exception.isNull())
-		{
-			KValueRef result = [caller getResult];
-			[caller release];
-			[pool release];
-			return result;
-		}
+
+		KValueRef result(job->GetResult());
+		ValueException exception(job->GetException());
 		[caller release];
-		[pool release];
-		throw ValueException(exception);
-		return Value::Undefined;
+
+		if (!result.isNull())
+			return result;
+		else
+			throw exception;
 	}
 }
 

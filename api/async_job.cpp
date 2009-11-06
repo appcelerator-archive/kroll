@@ -106,9 +106,8 @@ namespace kroll
 
 	void AsyncJob::DoCallback(KMethodRef method, bool reportErrors)
 	{
-		Host* host = Host::GetInstance();
 		ValueList args(Value::NewObject(GetAutoPtr()));
-		host->InvokeMethodOnMainThread(method, args, false);
+		RunOnMainThread(method, args, false);
 	}
 
 	void AsyncJob::SetProgress(double progress, bool callbacks)

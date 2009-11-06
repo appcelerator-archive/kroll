@@ -118,7 +118,7 @@ namespace kroll
 	{
 		Poco::ScopedLock<Poco::Mutex> lock(logMutex);
 		if ((*ProfiledBoundObject::stream)) {
-			*ProfiledBoundObject::stream << Host::GetElapsedTime() << ",";
+			*ProfiledBoundObject::stream << Host::GetInstance()->GetElapsedTime() << ",";
 			*ProfiledBoundObject::stream << eventType << ",";
 			*ProfiledBoundObject::stream << name << ",";
 			*ProfiledBoundObject::stream << elapsedTime << "," << std::endl;

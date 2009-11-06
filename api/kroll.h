@@ -86,6 +86,7 @@ namespace kroll
 #include "module_provider.h"
 #include "module.h"
 #include "async_job.h"
+#include "main_thread_job.h"
 #include "host.h"
 #include "script.h"
 

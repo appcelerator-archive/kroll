@@ -170,8 +170,7 @@ namespace kroll
 
 		try
 		{
-			Host* host = Host::GetInstance();
-			host->InvokeMethodOnMainThread(callback,
+			RunOnMainThread(callback, event->target,
 				ValueList(Value::NewObject(event)), synchronous);
 		}
 		catch (ValueException& e)

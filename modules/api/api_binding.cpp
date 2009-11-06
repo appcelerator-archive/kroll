@@ -607,9 +607,7 @@ namespace kroll
 			for (size_t i = 1; i < args.size(); i++)
 				outArgs.push_back(args.at(i));
 
-			KValueRef outResult =
-				host->InvokeMethodOnMainThread(args.GetMethod(0), outArgs);
-			result->SetValue(outResult);
+			result->SetValue(RunOnMainThread(args.GetMethod(0), outArgs));
 		}
 	}
 
@@ -627,7 +625,7 @@ namespace kroll
 			for (size_t i = 1; i < args.size(); i++)
 				outArgs.push_back(args.at(i));
 
-			host->InvokeMethodOnMainThread(args.GetMethod(0), outArgs, false);
+			RunOnMainThread(args.GetMethod(0), outArgs, false);
 		}
 	}
 
@@ -840,8 +838,7 @@ namespace kroll
 
 		if (!this->installerCallback.isNull())
 		{
-			host->InvokeMethodOnMainThread(
-				this->installerCallback, ValueList(), false);
+			RunOnMainThread(this->installerCallback, ValueList(), false);
 		}
 		this->installerMutex.unlock();
 
