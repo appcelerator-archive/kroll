@@ -200,9 +200,11 @@ namespace FileUtils
 
 	std::string Trim(std::string string)
 	{
+		if (string.empty())
+			return string;
+
 		size_t left = 0;
 		size_t right = string.size() - 1;
-
 		while (isspace(string[left]) && left < string.size() - 1)
 			left++;
 
