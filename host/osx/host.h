@@ -16,24 +16,23 @@ namespace kroll
 		OSXHost(int argc, const char **argv);
 
 		virtual Module* CreateModule(std::string& path);
-
-		KValueRef InvokeMethodOnMainThread(KMethodRef method,
-		                                     const ValueList& args,
-		                                     bool waitForCompletion=true);
 		const char* GetPlatform();
 		const char* GetModuleSuffix();
+		virtual bool IsMainThread();
+		virtual KValueRef RunOnMainThread(KMethodRef method, KObjectRef thisObject,
+			const ValueList& args, bool waitForCompletion=true);
 
 	protected:
 		virtual ~OSXHost();
 		virtual bool RunLoop();
 		virtual bool Start();
 		virtual void Exit(int exitcode);
-
-	private:
-		std::string appConfig;
 	};
 }
 
 extern "C"
-{ EXPORT int Execute(int argc,const char** argv); }
+{
+	EXPORT int Execute(int argc,const char** argv);
+}
+
 #endif

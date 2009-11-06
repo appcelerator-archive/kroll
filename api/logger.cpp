@@ -94,7 +94,7 @@ namespace kroll
 			return Logger::LCRITICAL;
 		else if (levelString == "FATAL")
 			return Logger::LFATAL;
-		else if (Host::GetInstance()->IsDebugMode())
+		else if (Host::GetInstance()->DebugModeEnabled())
 			return Logger::LDEBUG;
 		else
 			return Logger::LINFO;

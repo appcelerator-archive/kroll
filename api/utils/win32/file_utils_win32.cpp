@@ -72,7 +72,7 @@ namespace FileUtils
 		return FileUtils::Join(out.c_str(), end.c_str(), NULL);
 	}
 
-	bool IsFile(std::string& file)
+	bool IsFile(const std::string& file)
 	{
 		return FileHasAttributes(file, 0);
 	}

@@ -82,7 +82,7 @@ namespace kroll
 		return this->jsobject;
 	}
 
-	KValueRef KKJSMethod::Call(const ValueList& args)
+	KValueRef KKJSMethod::Call(JSObjectRef thisObject, const ValueList& args)
 	{
 		JSValueRef* jsArgs = new JSValueRef[args.size()];
 		for (int i = 0; i < (int) args.size(); i++)
@@ -92,7 +92,7 @@ namespace kroll
 		}
 
 		JSValueRef exception = NULL;
-		JSValueRef jsValue = JSObjectCallAsFunction(this->context, this->jsobject,
+		JSValueRef jsValue = JSObjectCallAsFunction(this->context, thisObject,
 			this->thisObject, args.size(), jsArgs, &exception);
 
 		delete [] jsArgs; // clean up args
@@ -104,6 +104,32 @@ namespace kroll
 		}
 
 		return KJSUtil::ToKrollValue(jsValue, this->context, NULL);
+	}
+
+	KValueRef KKJSMethod::Call(const ValueList& args)
+	{
+		return this->Call(this->jsobject, args);
+	}
+
+	KValueRef KKJSMethod::Call(KObjectRef thisObject, const ValueList& args)
+	{
+		JSValueRef thisObjectValue = KJSUtil::ToJSValue(Value::NewObject(thisObject), this->context);
+		if (!JSValueIsObject(this->context, thisObjectValue))
+		{
+			SharedString ss(thisObject->DisplayString());
+			throw ValueException::FromFormat("Could not convert %s to JSObjectRef for KKJSMethod::Call",
+				ss->c_str());
+		}
+
+		JSObjectRef jsThisObject = JSValueToObject(this->context, thisObjectValue, NULL);
+		if (!jsThisObject)
+		{
+			SharedString ss(thisObject->DisplayString());
+			throw ValueException::FromFormat("Could not convert %s to JSObjectRef for KKJSMethod::Call",
+				ss->c_str());
+		}
+
+		return this->Call(jsThisObject, args);
 	}
 }
 

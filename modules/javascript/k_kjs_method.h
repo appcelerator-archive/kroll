@@ -23,7 +23,9 @@ namespace kroll
 
 		virtual void Set(const char *name, KValueRef value);
 		virtual KValueRef Get(const char *name);
+		KValueRef Call(JSObjectRef thisObject, const ValueList& args);
 		virtual KValueRef Call(const ValueList& args);
+		virtual KValueRef Call(KObjectRef thisObject, const ValueList& args);
 		virtual SharedStringList GetPropertyNames();
 		virtual bool HasProperty(const char* name);
 		virtual bool Equals(KObjectRef);
