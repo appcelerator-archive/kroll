@@ -31,17 +31,24 @@ namespace kroll
 		virtual KValueRef Call(const ValueList& args) = 0;
 
 		/**
+		 * Call this method with the given 'this' object and arguments.
+		 * Errors will result in a thrown ValueException
+		 * @return the return value of this method
+		 */
+		virtual KValueRef Call(KObjectRef thisObject, const ValueList& args);
+
+		/**
 		 * Set a property on this object to the given value
 		 * Errors will result in a thrown ValueException
 		 */
-		virtual void Set(const char *name, KValueRef value) = 0;
+		virtual void Set(const char* name, KValueRef value) = 0;
 
 		/**
 		 * @return the property with the given name or Value::Undefined
 		 * if the property is not found.
 		 * Errors will result in a thrown ValueException
 		 */
-		virtual KValueRef Get(const char *name) = 0;
+		virtual KValueRef Get(const char* name) = 0;
 
 		/**
 		 * @return a list of this object's property names.
@@ -63,13 +70,10 @@ namespace kroll
 		KValueRef Call(KValueRef one, KValueRef two);
 		KValueRef Call(KValueRef one, KValueRef two, KValueRef three);
 		KValueRef Call();
-		KValueRef Call(const char *one);
-		KValueRef Call(const char *one, KValueRef two);
-		KValueRef Call(const char *one, KValueRef two, KValueRef three);
-		KValueRef Call(
-			const char *one,
-			KValueRef two,
-			KValueRef three,
+		KValueRef Call(const char* one);
+		KValueRef Call(const char* one, KValueRef two);
+		KValueRef Call(const char* one, KValueRef two, KValueRef three);
+		KValueRef Call(const char* one, KValueRef two, KValueRef three,
 			KValueRef four);
 
 	private:
