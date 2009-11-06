@@ -17,7 +17,7 @@
 	MainThreadJob* job;
 }
 - (id)initWithJob:(MainThreadJob*)jobIn;
-- (void)call;
+- (void)execute;
 @end
 
 @implementation KrollMainThreadCaller
@@ -44,7 +44,7 @@
 	job->Execute();
 
 	// When executing asynchronously, we need to clean ourselves up.
-	if (!job->ShouldWaitForCompletion)
+	if (!job->ShouldWaitForCompletion())
 	{
 		job->PrintException();
 		[self release];
@@ -185,7 +185,7 @@ namespace kroll
 		return create(this, dir.c_str());
 	}
 
-	KValueRef Host::RunOnMainThread(KMethodRef method, KObjectRef thisObject,
+	KValueRef OSXHost::RunOnMainThread(KMethodRef method, KObjectRef thisObject,
 		const ValueList& args, bool waitForCompletion)
 	{
 		if (this->IsMainThread() && waitForCompletion)
@@ -197,7 +197,7 @@ namespace kroll
 			args, waitForCompletion);
 		KrollMainThreadCaller* caller = 
 			[[KrollMainThreadCaller alloc] initWithJob:job];
-		[caller performSelectorOnMainThread:@selector(call) 
+		[caller performSelectorOnMainThread:@selector(execute)
 			withObject:nil waitUntilDone:waitForCompletion];
 
 		if (!waitForCompletion)
