@@ -4,6 +4,7 @@
 * Copyright (c) 2009 Appcelerator, Inc. All Rights Reserved.
 */
 #include "php_module.h"
+#include <typeinfo>
 
 namespace kroll
 {

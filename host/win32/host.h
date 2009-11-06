@@ -32,25 +32,26 @@ namespace kroll
 		virtual Module* CreateModule(std::string& path);
 		const char* GetPlatform();
 		const char* GetModuleSuffix();
-		virtual bool IsMainThread()
+		virtual bool IsMainThread();
 
 		HWND AddMessageHandler(MessageHandler handler);
 		HINSTANCE GetInstanceHandle() { return instanceHandle; }
 		HWND GetEventWindow() { return eventWindow.GetHandle(); }
-		static inline SharedPtr<Win32Host> Win32Instance() { return Host::GetInstance().cast<Win32Host>(); }
-	protected:
-		std::vector<Win32Job*>& GetJobs();
-		static UINT tickleRequestMessage;
-		EventWindow eventWindow;
+		static inline Win32Host* Win32Instance()
+		{
+			return static_cast<Win32Host*>(Host::GetInstance());
+		}
 
-		virtual void SignalNewMainThreadJob()
+	protected:
+		virtual void SignalNewMainThreadJob();
 		bool RunLoop();
 		bool Start();
 
 	private:
 		HINSTANCE instanceHandle;
 		static bool oleInitialized;
-		DWORD threadId;
+		DWORD mainThreadId;
+		EventWindow eventWindow;
 	};
 }
 

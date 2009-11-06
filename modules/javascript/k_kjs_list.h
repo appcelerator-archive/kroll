@@ -9,11 +9,6 @@
 
 #include "javascript_module.h"
 
-#include <vector>
-#include <string>
-#include <map>
-#include <cmath>
-
 namespace kroll
 {
 	class KROLL_JAVASCRIPT_API KKJSList : public KList

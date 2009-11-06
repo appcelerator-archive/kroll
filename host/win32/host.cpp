@@ -12,9 +12,8 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <io.h>
-#include "win32_job.h"
 
-#define MAX_CONSOLE_LINES = 500;
+#define MAX_CONSOLE_LINES 500;
 
 using Poco::ScopedLock;
 using Poco::Mutex;
@@ -22,7 +21,7 @@ using Poco::Mutex;
 namespace kroll
 {
 	bool Win32Host::oleInitialized = false;
-	UINT Win32Host::tickleRequestMessage =
+	static UINT tickleRequestMessage =
 		::RegisterWindowMessageA(PRODUCT_NAME"TickleRequest");
 
 	/*static*/
@@ -35,8 +34,8 @@ namespace kroll
 		}
 	}
 
-	Win32Host::Win32Host(HINSTANCE hInstance, int _argc, const char** _argv) :
-		Host(_argc,_argv),
+	Win32Host::Win32Host(HINSTANCE hInstance, int argc, const char** argv) :
+		Host(argc, argv),
 		instanceHandle(hInstance),
 		eventWindow(hInstance)
 	{
@@ -64,7 +63,7 @@ namespace kroll
 	bool Win32Host::Start()
 	{
 		Host::Start();
-		threadId = GetCurrentThreadId();
+		mainThreadId = GetCurrentThreadId();
 		return true;
 	}
 
@@ -76,7 +75,7 @@ namespace kroll
 		{
 			if (message.message == tickleRequestMessage)
 			{
-				this->InvokeMethods();
+				this->RunMainThreadJobs();
 			}
 
 			// still translate/dispatch this message, in case
@@ -112,15 +111,15 @@ namespace kroll
 		return create(this, dir.c_str());
 	}
 
-	bool IsMainThread()
+	bool Win32Host::IsMainThread()
 	{
-		return threadId == GetCurrentThreadId();
+		return mainThreadId == GetCurrentThreadId();
 	}
 
-	void SignalNewMainThreadJob()
+	void Win32Host::SignalNewMainThreadJob()
 	{
 		// send a message to tickle the windows message queue
-		PostThreadMessage(threadId, tickleRequestMessage, 0, 0);
+		PostThreadMessage(mainThreadId, tickleRequestMessage, 0, 0);
 	}
 
 	HWND Win32Host::AddMessageHandler(MessageHandler handler)

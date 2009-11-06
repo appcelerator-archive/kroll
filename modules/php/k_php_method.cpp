@@ -67,8 +67,7 @@ namespace kroll {
 		KObjectRef previousGlobal(PHPUtils::GetCurrentGlobalObject());
 		PHPUtils::SwapGlobalObject(this->globalObject, &EG(symbol_table) TSRMLS_CC);
 
-		int result;
-		zend_call_function(&callInfo, NULL TSRMLS_CC);
+		int result = zend_call_function(&callInfo, NULL TSRMLS_CC);
 
 		PHPUtils::SwapGlobalObject(previousGlobal, &EG(symbol_table) TSRMLS_CC);
 

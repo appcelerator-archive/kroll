@@ -6,7 +6,6 @@
 #ifndef _PHP_TYPES_H_
 #define _PHP_TYPES_H_
 
-#include <typeinfo>
 #include "php_module.h"
 
 namespace kroll

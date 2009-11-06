@@ -340,15 +340,15 @@ bool UTF8ToUTF16(const char* src, size_t src_len, string16* output) {
 }
 
 string16 UTF8ToUTF16(const std::string& utf8) {
-  return UTF8ToWide(utf8);
+  return ::UTF8ToWide(utf8);
 }
 
 bool UTF16ToUTF8(const char16* src, size_t src_len, std::string* output) {
-  return WideToUTF8(src, src_len, output);
+  return ::WideToUTF8(src, src_len, output);
 }
 
 std::string UTF16ToUTF8(const string16& utf16) {
-  return WideToUTF8(utf16);
+  return ::WideToUTF8(utf16);
 }
 
 #endif

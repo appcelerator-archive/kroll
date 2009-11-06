@@ -19,7 +19,7 @@ namespace UTILS_NS
 {
 namespace FileUtils
 {
-	static bool FileHasAttributes(std::wstring& widePath, DWORD attributes)
+	static bool FileHasAttributes(const std::wstring& widePath, DWORD attributes)
 	{
 		WIN32_FIND_DATA findFileData;
 		ZeroMemory(&findFileData, sizeof(WIN32_FIND_DATA));
@@ -39,7 +39,7 @@ namespace FileUtils
 		}
 	}
 
-	static bool FileHasAttributes(std::string& path, DWORD attributes)
+	static bool FileHasAttributes(const std::string& path, DWORD attributes)
 	{
 		std::wstring widePath(UTILS_NS::UTF8ToWide(path));
 		return FileHasAttributes(widePath, attributes);

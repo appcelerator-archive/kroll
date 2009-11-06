@@ -6,12 +6,12 @@
 #ifndef _PHP_MODULE_H_
 #define _PHP_MODULE_H_
 
-#include <string>
-#include <vector>
+#include <kroll/kroll.h>
+#include <stack>
 #include <iostream>
 #include <sstream>
 
-/* 
+/*
  * PHP wreaks havoc on all kinds of cdecl/export/inline/god knows what macros,
  * causing math functions to be exported into each object file. _INC_MATH is
  * the math inclusion macro; defining it here seems to fix this issue for now,
@@ -29,10 +29,12 @@
 #else
 #include <sapi/embed/php_embed.h>
 #endif
-
-#include <kroll/kroll.h>
-#include <sstream>
-#include <stack>
+#include <Zend/zend.h>
+#include <Zend/zend_exceptions.h>
+#include <Zend/zend_compile.h>
+#include <Zend/zend_API.h>
+#include <Zend/zend_closures.h>
+#include <Zend/zend_hash.h>
 
 #include "php_api.h"
 #include "php_utils.h"
@@ -42,13 +44,6 @@
 #include "k_php_list.h"
 #include "k_php_array_object.h"
 #include "php_evaluator.h"
-
-#include <Zend/zend.h>
-#include <Zend/zend_exceptions.h>
-#include <Zend/zend_compile.h>
-#include <Zend/zend_API.h>
-#include <Zend/zend_closures.h>
-#include <Zend/zend_hash.h>
 
 namespace kroll
 {
