@@ -128,6 +128,8 @@ namespace UTILS_NS
 
 		KROLL_API std::vector<SharedComponent>& GetInstalledComponents(
 			bool force=false);
+		
+		KROLL_API SharedComponent ResolveDependency(SharedDependency dep, std::vector<SharedComponent>&);
 
 	};
 }

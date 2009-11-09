@@ -284,6 +284,30 @@ namespace BootUtils
 		file.close();
 		return manifest;
 	}
+	
+	SharedComponent ResolveDependency(SharedDependency dep, vector<SharedComponent>& components)
+	{
+		vector<SharedComponent>::iterator i = components.begin();
+		while (i != components.end())
+		{
+			SharedComponent comp = *i++;
+			if (dep->type != comp->type || dep->name != comp->name)
+				continue;
+
+			// Always give preference to bundled components, otherwise do a normal comparison
+			int compare = CompareVersions(comp->version, dep->version);
+			if (comp->bundled
+				|| (dep->requirement == Dependency::EQ && compare == 0)
+				|| (dep->requirement == Dependency::GTE && compare >= 0)
+				|| (dep->requirement == Dependency::GT && compare > 0)
+				|| (dep->requirement == Dependency::LT && compare < 0))
+			{
+				return comp;
+			}
+		}
+
+		return NULL;
+	} 
 }
 	SharedDependency Dependency::NewDependencyFromValues(
 		KComponentType type, std::string name, std::string version)
@@ -371,6 +395,4 @@ namespace BootUtils
 		string manifestPath(FileUtils::Join(this->path.c_str(), MANIFEST_FILENAME, NULL));
 		return BootUtils::ReadManifestFile(manifestPath);
 	}
-
-
 }
