@@ -29,6 +29,7 @@
 #include <sstream>
 
 #if defined(OS_WIN32)
+#include <kroll/kroll.h>
 #define _INC_MATH
 #include <zend_config.w32.h>
 #include <sapi/embed/php_embed.h>
@@ -38,6 +39,7 @@
 #else
 #include <sapi/embed/php_embed.h>
 #endif
+
 #include <Zend/zend.h>
 #include <Zend/zend_exceptions.h>
 #include <Zend/zend_compile.h>
@@ -45,7 +47,10 @@
 #include <Zend/zend_closures.h>
 #include <Zend/zend_hash.h>
 
+#ifndef OS_WIN32
 #include <kroll/kroll.h>
+#endif
+
 #include "php_api.h"
 #include "php_utils.h"
 #include "k_php_object.h"
