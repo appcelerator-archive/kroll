@@ -12,33 +12,33 @@ namespace kroll
 
 	ArgList::ArgList()
 	{
-		this->args = new std::vector<SharedValue>;
+		this->args = new std::vector<KValueRef>;
 	}
 
-	ArgList::ArgList(SharedValue a)
+	ArgList::ArgList(KValueRef a)
 	{
-		this->args = new std::vector<SharedValue>;
+		this->args = new std::vector<KValueRef>;
 		this->args->push_back(a);
 	}
 
-	ArgList::ArgList(SharedValue a, SharedValue b)
+	ArgList::ArgList(KValueRef a, KValueRef b)
 	{
-		this->args = new std::vector<SharedValue>;
+		this->args = new std::vector<KValueRef>;
 		this->args->push_back(a);
 		this->args->push_back(b);
 	}
 
-	ArgList::ArgList(SharedValue a, SharedValue b, SharedValue c)
+	ArgList::ArgList(KValueRef a, KValueRef b, KValueRef c)
 	{
-		this->args = new std::vector<SharedValue>;
+		this->args = new std::vector<KValueRef>;
 		this->args->push_back(a);
 		this->args->push_back(b);
 		this->args->push_back(c);
 	}
 
-	ArgList::ArgList(SharedValue a, SharedValue b, SharedValue c, SharedValue d)
+	ArgList::ArgList(KValueRef a, KValueRef b, KValueRef c, KValueRef d)
 	{
-		this->args = new std::vector<SharedValue>;
+		this->args = new std::vector<KValueRef>;
 		this->args->push_back(a);
 		this->args->push_back(b);
 		this->args->push_back(c);
@@ -50,7 +50,7 @@ namespace kroll
 		this->args = other.args;
 	}
 
-	void ArgList::push_back(SharedValue v)
+	void ArgList::push_back(KValueRef v)
 	{
 		this->args->push_back(v);
 	}
@@ -60,12 +60,12 @@ namespace kroll
 		return this->args->size();
 	}
 
-	const SharedValue& ArgList::at(size_t index) const
+	const KValueRef& ArgList::at(size_t index) const
 	{
 		return this->args->at(index);
 	}
 
-	const SharedValue& ArgList::operator[](size_t index) const
+	const KValueRef& ArgList::operator[](size_t index) const
 	{
 		return this->args->at(index);
 	}
@@ -84,6 +84,7 @@ namespace kroll
 			{
 			 	if (!lastCharacterWasComma)
 					out += ", ";
+				lastCharacterWasComma = true;
 				continue;
 			}
 
@@ -210,7 +211,7 @@ namespace kroll
 		}
 	}
 
-	inline bool ArgList::VerifyArg(SharedValue arg, char t)
+	inline bool ArgList::VerifyArg(KValueRef arg, char t)
 	{
 		if ((t == 's' && arg->IsString())
 		 || (t == 'b' && arg->IsBool())
@@ -226,7 +227,7 @@ namespace kroll
 			return false;
 	}
 
-	SharedValue ArgList::GetValue(size_t index, SharedValue defaultValue) const
+	KValueRef ArgList::GetValue(size_t index, KValueRef defaultValue) const
 	{
 		if (this->size() > index)
 		{
@@ -299,7 +300,7 @@ namespace kroll
 		}
 	}
 
-	SharedKObject ArgList::GetObject(size_t index, SharedKObject defaultValue) const
+	KObjectRef ArgList::GetObject(size_t index, KObjectRef defaultValue) const
 	{
 		if (this->size() > index && this->at(index)->IsObject())
 		{
@@ -311,7 +312,7 @@ namespace kroll
 		}
 	}
 
-	SharedKMethod ArgList::GetMethod(size_t index, SharedKMethod defaultValue) const
+	KMethodRef ArgList::GetMethod(size_t index, KMethodRef defaultValue) const
 	{
 		if (this->size() > index && this->at(index)->IsMethod())
 		{
@@ -323,7 +324,7 @@ namespace kroll
 		}
 	}
 
-	SharedKList ArgList::GetList(size_t index, SharedKList defaultValue) const
+	KListRef ArgList::GetList(size_t index, KListRef defaultValue) const
 	{
 		if (this->size() > index && this->at(index)->IsList())
 		{

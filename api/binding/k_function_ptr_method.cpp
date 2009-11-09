@@ -18,17 +18,17 @@ namespace kroll
 	{
 	}
 
-	SharedValue KFunctionPtrMethod::Call(const ValueList& args)
+	KValueRef KFunctionPtrMethod::Call(const ValueList& args)
 	{
 		return this->callback(args);
 	}
 
-	void KFunctionPtrMethod::Set(const char *name, SharedValue value)
+	void KFunctionPtrMethod::Set(const char *name, KValueRef value)
 	{
 		this->object->Set(name, value);
 	}
 
-	SharedValue KFunctionPtrMethod::Get(const char *name)
+	KValueRef KFunctionPtrMethod::Get(const char *name)
 	{
 		return this->object->Get(name);
 	}

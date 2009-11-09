@@ -16,9 +16,9 @@ class KRubyMethod : public KMethod
 	KRubyMethod(VALUE method, const char*);
 	KRubyMethod(VALUE method, VALUE arg);
 	virtual ~KRubyMethod();
-	SharedValue Call(const ValueList& args);
-	virtual void Set(const char *name, SharedValue value);
-	virtual SharedValue Get(const char *name);
+	KValueRef Call(const ValueList& args);
+	virtual void Set(const char *name, KValueRef value);
+	virtual KValueRef Get(const char *name);
 	virtual SharedStringList GetPropertyNames();
 	virtual SharedString DisplayString(int);
 	VALUE ToRuby();
@@ -29,7 +29,7 @@ class KRubyMethod : public KMethod
 	 *  @param other the object to test
 	 *  @returns true if objects have reference equality, false otherwise
 	 */
-	virtual bool Equals(SharedKObject);
+	virtual bool Equals(KObjectRef);
 
 	private:
 	VALUE method;

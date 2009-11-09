@@ -31,6 +31,8 @@ namespace kroll
 	std::string Event::EXIT = "exit";
 	std::string Event::APP_EXIT = "app.exit";
 	std::string Event::READ = "read";
+	std::string Event::OPEN_REQUEST = "open.request";
+
 	std::string Event::HTTP_DONE = "http.done";
 	std::string Event::HTTP_STATE_CHANGED = "http.statechanged";
 	std::string Event::HTTP_TIMEOUT = "http.timeout";
@@ -54,28 +56,28 @@ namespace kroll
 		this->SetMethod("preventDefault", &Event::_PreventDefault);
 	}
 
-	void Event::_GetTarget(const ValueList&, SharedValue result)
+	void Event::_GetTarget(const ValueList&, KValueRef result)
 	{
 		result->SetObject(this->target);
 	}
 
-	void Event::_GetType(const ValueList&, SharedValue result)
+	void Event::_GetType(const ValueList&, KValueRef result)
 	{
 		result->SetString(this->eventName);
 	}
 
-	void Event::_GetTimestamp(const ValueList&, SharedValue result)
+	void Event::_GetTimestamp(const ValueList&, KValueRef result)
 	{
 		result->SetDouble((int) timestamp.epochMicroseconds() / 1000);
 	}
 
-	void Event::_StopPropagation(const ValueList&, SharedValue result)
+	void Event::_StopPropagation(const ValueList&, KValueRef result)
 	{
 		this->stopped = true;
 		this->preventedDefault = true;
 	}
 
-	void Event::_PreventDefault(const ValueList&, SharedValue result)
+	void Event::_PreventDefault(const ValueList&, KValueRef result)
 	{
 		this->preventedDefault = true;
 	}
@@ -103,6 +105,8 @@ namespace kroll
 		// @tiproperty[String, EXIT, since=0.6] The EXIT event constant
 		// @tiproperty[String, APP_EXIT, since=0.7] The APP_EXIT event constant, fired during host application exit.
 		// @tiproperty[String, READ, since=0.6] The READ event constant
+		// @tiproperty[String, OPEN_REQUEST, since=0.7] The OPEN request event constant.
+		// @tiproperty Fired when the application has been requested to open a file.
 
 		target->Set("ALL", Value::NewString(Event::ALL));
 		target->Set("FOCUSED", Value::NewString(Event::FOCUSED));
@@ -125,6 +129,7 @@ namespace kroll
 		target->Set("EXIT", Value::NewString(Event::EXIT));
 		target->Set("APP_EXIT", Value::NewString(Event::APP_EXIT));
 		target->Set("READ", Value::NewString(Event::READ));
+		target->Set("OPEN_REQUEST", Value::NewString(Event::OPEN_REQUEST));
 
 		// @tiproperty[String, HTTP_DONE, since=0.7] The request has completed.
 		// @tiproperty[String, HTTP_STATE_CHANGED, since=0.7] HTTP state has changed.

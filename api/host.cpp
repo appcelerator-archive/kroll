@@ -14,6 +14,7 @@
 #include "thread_manager.h"
 #include <Poco/DirectoryIterator.h>
 #include <Poco/File.h>
+#include <Poco/FileStream.h>
 #include <Poco/Path.h>
 #include <Poco/Environment.h>
 #include <Poco/AutoPtr.h>
@@ -36,33 +37,33 @@ using Poco::Environment;
 #define PROFILE_ARG "--profile"
 #define LOGPATH_ARG "--logpath"
 #define BOOT_HOME_ARG "--start"
+
 namespace kroll
 {
-	SharedPtr<Host> Host::instance_;
-	Poco::Timestamp Host::started_;
+	static Host* hostInstance;
 
 	Host::Host(int argc, const char *argv[]) :
-		application(NULL),
+		application(0),
 		running(false),
 		exiting(false),
 		exitCode(0),
-#ifdef DEBUG
-		debug(true),
-#else
 		debug(false),
-#endif
 		waitForDebugger(false),
 		autoScan(false),
 		runUILoop(true),
 		profile(false),
-		profileStream(NULL),
+		profileStream(0),
 		consoleLogging(true),
 		fileLogging(true),
-		logger(NULL)
+		logger(0)
 	{
-		instance_ = this;
+		hostInstance = this;
 
-		this->SetupGlobalObject();
+#ifdef DEBUG
+		this->debug = true;
+#endif
+
+		GlobalObject::Initialize();
 		this->SetupApplication(argc, argv);
 		this->ParseCommandLineArguments(); // Depends on this->application
 
@@ -76,38 +77,9 @@ namespace kroll
 		this->SetupProfiling(); // Depends on logging
 	}
 
-	void Host::SetupGlobalObject()
+	Host* Host::GetInstance()
 	{
-		// Initialize our global object to be a simple mapped Kroll object
-		globalObject = new KEventObject("");
-
-		// @tiapi(method=True,type=String,name=getVersion,since=0.8)
-		// @tiapi Return the Titanium runtime version.
-		// @tiresult[String] The runtime version.
-		globalObject->SetMethod("getVersion", 
-			StaticBoundMethod::FromMethod<Host>(this, &Host::GetVersion));
-
-		// @tiapi(method=True,type=String,name=getPlatform,since=0.8)
-		// @tiapi Return the current platform, usually one of
-		// @tiapi 'osx', 'win32', or 'linux'.
-		// @tiresult[String] The current platform.
-		globalObject->SetMethod("getPlatform",
-			StaticBoundMethod::FromMethod<Host>(this, &Host::GetPlatform));
-
-		Event::SetEventConstants(this->globalObject.get());
-		Script::Initialize();
-	}
-
-	void Host::GetVersion(const ValueList& args, SharedValue result)
-	{
-		static std::string version(STRING(PRODUCT_VERSION));
-		result->SetString(version);
-	}
-
-	void Host::GetPlatform(const ValueList& args, SharedValue result)
-	{
-		static std::string platform(this->GetPlatform());
-		result->SetString(platform);
+		return hostInstance;
 	}
 
 	void Host::SetupApplication(int argc, const char* argv[])
@@ -116,9 +88,9 @@ namespace kroll
 		AssertEnvironmentVariable(RUNTIME_ENV);
 		AssertEnvironmentVariable(MODULES_ENV);
 
-		string applicationHome = Environment::get(HOME_ENV);
-		string runtimePath = Environment::get(RUNTIME_ENV);
-		string modulePaths = Environment::get(MODULES_ENV);
+		string applicationHome(Environment::get(HOME_ENV));
+		string runtimePath(Environment::get(RUNTIME_ENV));
+		string modulePaths(Environment::get(MODULES_ENV));
 
 		if (this->debug)
 		{
@@ -141,11 +113,11 @@ namespace kroll
 		this->application->ResolveDependencies();
 		if (!this->application->runtime.isNull())
 		{
-			this->application->runtime->version = STRING(PRODUCT_VERSION);
+			this->application->runtime->version = PRODUCT_VERSION;
 		}
 
 		// Parse the module paths, we'll later use this to load all the shared-objects.
-		FileUtils::Tokenize(modulePaths, this->module_paths, KR_LIB_SEP, true);
+		FileUtils::Tokenize(modulePaths, this->modulePaths, KR_LIB_SEP, true);
 	}
 
 	void Host::SetupLogging()
@@ -159,7 +131,7 @@ namespace kroll
 		else if (this->logFilePath.empty())
 		{
 			string dataDir = FileUtils::GetApplicationDataDirectory(this->application->id);
-			this->logFilePath = FileUtils::Join(dataDir.c_str(), "tiapp.log", NULL);
+			this->logFilePath = FileUtils::Join(dataDir.c_str(), "tiapp.log", 0);
 		}
 
 		// If this application has no log level, we'll get a suitable default
@@ -181,7 +153,7 @@ namespace kroll
 			// going through this object and it's attached children
 			this->profileStream = new Poco::FileOutputStream(this->profilePath);
 			ProfiledBoundObject::SetStream(this->profileStream);
-			this->globalObject = new ProfiledBoundObject(this->globalObject);
+			GlobalObject::TurnOnProfiling();
 
 			logger->Info("Starting Profiler. Output going to %s", this->profilePath.c_str());
 		}
@@ -195,7 +167,7 @@ namespace kroll
 			ProfiledBoundObject::SetStream(0);
 			profileStream->flush();
 			profileStream->close();
-			profileStream = NULL;
+			profileStream = 0;
 			this->profile = false;
 		}
 	}
@@ -255,66 +227,17 @@ namespace kroll
 				newApp->ResolveDependencies();
 				if (!newApp->runtime.isNull())
 				{
-					newApp->runtime->version = STRING(PRODUCT_VERSION);
+					newApp->runtime->version = PRODUCT_VERSION;
 				}
 				this->application = newApp;
 			}
 		}
 	}
 
-	SharedApplication Host::GetApplication()
-	{
-		return this->application;
-	}
-
-	const std::string& Host::GetApplicationHomePath()
-	{
-		return this->application->path;
-	}
-
-	const std::string& Host::GetRuntimePath()
-	{
-		return this->application->runtime->path;
-	}
-
-	const std::string& Host::GetApplicationID()
-	{
-		return this->application->id;
-	}
-
-	const std::string& Host::GetApplicationGUID()
-	{
-		return this->application->guid;
-	}
-
-	bool Host::IsDebugMode()
-	{
-		return this->debug;
-	}
-
-	const int Host::GetCommandLineArgCount()
-	{
-		vector<string>& args = this->application->GetArguments();
-		return args.size();
-	}
-
-	const char* Host::GetCommandLineArg(int index)
-	{
-		vector<string>& args = this->application->GetArguments();
-		if ((int) args.size() > index)
-		{
-			return args.at(index).c_str();
-		}
-		else
-		{
-			return NULL;
-		}
-	}
-
 	void Host::AddModuleProvider(ModuleProvider *provider)
 	{
 		ScopedLock lock(&moduleMutex);
-		module_providers.push_back(provider);
+		moduleProviders.push_back(provider);
 
 		if (autoScan)
 		{
@@ -322,42 +245,43 @@ namespace kroll
 		}
 	}
 
+	/**
+	 * Find the module provider for a given filename or return NULL if
+	 * no module provider can be found.
+	*/
 	ModuleProvider* Host::FindModuleProvider(std::string& filename)
 	{
 		ScopedLock lock(&moduleMutex);
 
 		std::vector<ModuleProvider*>::iterator iter;
-		for (iter = module_providers.begin();
-		     iter != module_providers.end();
-		     iter++)
+		for (iter = moduleProviders.begin(); iter != moduleProviders.end(); iter++)
 		{
 			ModuleProvider *provider = (*iter);
-			if (provider != NULL && provider->IsModule(filename))
+			if (provider && provider->IsModule(filename))
 			{
 				return provider;
 			}
 		}
-		return NULL;
+		return 0;
 	}
 
 	void Host::RemoveModuleProvider(ModuleProvider *provider)
 	{
 		ScopedLock lock(&moduleMutex);
 
-		std::vector<ModuleProvider*>::iterator iter =
-		    std::find(module_providers.begin(),
-		              module_providers.end(), provider);
-		if (iter != module_providers.end())
+		std::vector<ModuleProvider*>::iterator iter = std::find(
+			moduleProviders.begin(), moduleProviders.end(), provider);
+		if (iter != moduleProviders.end())
 		{
-			module_providers.erase(iter);
+			moduleProviders.erase(iter);
 		}
-
 	}
+
 	void Host::UnloadModuleProviders()
 	{
-		while (module_providers.size() > 0)
+		while (moduleProviders.size() > 0)
 		{
-			ModuleProvider* provider = module_providers.at(0);
+			ModuleProvider* provider = moduleProviders.at(0);
 			this->RemoveModuleProvider(provider);
 		}
 	}
@@ -371,6 +295,9 @@ namespace kroll
 		return isModule;
 	}
 
+	/**
+	 * Copy a module's application-specific resources into the currently running app
+	 */
 	void Host::CopyModuleAppResources(std::string& modulePath)
 	{
 		this->logger->Trace("CopyModuleAppResources: %s", modulePath.c_str());
@@ -384,9 +311,9 @@ namespace kroll
 			std::string mds(moduleDir.toString());
 
 			const char* platform = this->GetPlatform();
-			std::string resources_dir = FileUtils::Join(mds.c_str(), "AppResources", NULL);
-			std::string plt_resources_dir = FileUtils::Join(resources_dir.c_str(), platform, NULL);
-			std::string all_resources_dir = FileUtils::Join(resources_dir.c_str(), "all", NULL);
+			std::string resources_dir = FileUtils::Join(mds.c_str(), "AppResources", 0);
+			std::string plt_resources_dir = FileUtils::Join(resources_dir.c_str(), platform, 0);
+			std::string all_resources_dir = FileUtils::Join(resources_dir.c_str(), "all", 0);
 			File platformAppResourcesDir(plt_resources_dir);
 			File allAppResourcesDir(all_resources_dir);
 
@@ -443,12 +370,15 @@ namespace kroll
 		}
 	}
 
+	/**
+	 * Read / process a module's manifest file
+	*/
 	void Host::ReadModuleManifest(std::string& modulePath)
 	{
 		Poco::Path manifestPath(modulePath);
 		Poco::Path moduleTopDir = manifestPath.parent();
 
-		manifestPath = Poco::Path(FileUtils::Join(moduleTopDir.toString().c_str(), "manifest", NULL));
+		manifestPath = Poco::Path(FileUtils::Join(moduleTopDir.toString().c_str(), "manifest", 0));
 
 		Poco::File manifestFile(manifestPath);
 		if (manifestFile.exists())
@@ -477,7 +407,7 @@ namespace kroll
 				for (size_t i = 0; i < t.count(); i++)
 				{
 					std::string lib = t[i];
-					newLibPath = FileUtils::Join(moduleTopDir.toString().c_str(), lib.c_str(), NULL) +
+					newLibPath = FileUtils::Join(moduleTopDir.toString().c_str(), lib.c_str(), 0) +
 						KR_LIB_SEP + newLibPath;
 				}
 
@@ -487,6 +417,12 @@ namespace kroll
 		}
 	}
 
+	/**
+	 * Load a modules from a path given a module provider.
+	 * @param path Path to the module to attempt to load.
+	 * @param provider The provider to attempt to load with.
+	 * @return The module that was loaded or NULL on failure.
+	*/
 	SharedPtr<Module> Host::LoadModule(std::string& path, ModuleProvider *provider)
 	{
 		ScopedLock lock(&moduleMutex);
@@ -496,7 +432,7 @@ namespace kroll
 		if (!module.isNull())
 		{
 			logger->Warn("Module cannot be loaded twice: %s", path.c_str());
-			return NULL;
+			return 0;
 		}
 
 		try
@@ -560,6 +496,11 @@ namespace kroll
 		}
 	}
 
+	/**
+	 * Do the initial round of module loading. First load all modules  that can be
+	 * loaded by the main Host module provider (shared libraries) and then load all
+	 * modules which can be loaded by freshly installed module providers.
+	*/
 	void Host::LoadModules()
 	{
 		ScopedLock lock(&moduleMutex);
@@ -567,8 +508,8 @@ namespace kroll
 		/* Scan module paths for modules which can be
 		 * loaded by the basic shared-object provider */
 		std::vector<std::string>::iterator iter;
-		iter = this->module_paths.begin();
-		while (iter != this->module_paths.end())
+		iter = this->modulePaths.begin();
+		while (iter != this->modulePaths.end())
 		{
 			this->FindBasicModules((*iter++));
 		}
@@ -585,6 +526,9 @@ namespace kroll
 		this->autoScan = true;
 	}
 
+	/**
+	 * Scan a directory (no-recursion) for shared-object modules and load them.
+	*/
 	void Host::FindBasicModules(std::string& dir)
 	{
 		ScopedLock lock(&moduleMutex);
@@ -613,13 +557,17 @@ namespace kroll
 	void Host::AddInvalidModuleFile(std::string path)
 	{
 		// Don't add module twice
-		std::vector<std::string>& invalid = this->invalid_module_files;
+		std::vector<std::string>& invalid = this->invalidModuleFiles;
 		if (std::find(invalid.begin(), invalid.end(), path) == invalid.end())
 		{
-			this->invalid_module_files.push_back(path);
+			this->invalidModuleFiles.push_back(path);
 		}
 	}
 
+	/**
+	 * Load modules from all paths in invalidModuleFiles that can be loaded by
+	 * module providers found in module_providers.
+	*/
 	void Host::ScanInvalidModuleFiles()
 	{
 		ScopedLock lock(&moduleMutex);
@@ -628,12 +576,12 @@ namespace kroll
 		ModuleList modulesLoaded; // Track loaded modules
 
 		std::vector<std::string>::iterator iter;
-		iter = this->invalid_module_files.begin();
-		while (iter != this->invalid_module_files.end())
+		iter = this->invalidModuleFiles.begin();
+		while (iter != this->invalidModuleFiles.end())
 		{
 			std::string path = *iter;
 			ModuleProvider *provider = FindModuleProvider(path);
-			if (provider != NULL)
+			if (provider != 0)
 			{
 				SharedPtr<Module> m = this->LoadModule(path, provider);
 
@@ -642,7 +590,7 @@ namespace kroll
 					modulesLoaded.push_back(m);
 
 				// Erase path, even on failure
-				iter = invalid_module_files.erase(iter);
+				iter = invalidModuleFiles.erase(iter);
 			}
 			else
 			{
@@ -662,6 +610,9 @@ namespace kroll
 		this->autoScan = true;
 	}
 
+	/**
+	 * Call the Start() lifecycle event on a vector of modules.
+	*/
 	void Host::StartModules(ModuleList to_init)
 	{
 		ScopedLock lock(&moduleMutex);
@@ -684,7 +635,7 @@ namespace kroll
 			if (m->GetPath() == path)
 				return m;
 		}
-		return NULL;
+		return 0;
 	}
 
 	SharedPtr<Module> Host::GetModuleByName(std::string& name)
@@ -697,7 +648,7 @@ namespace kroll
 			if (m->GetName() == name)
 				return m;
 		}
-		return NULL;
+		return 0;
 	}
 
 	void Host::UnregisterModule(SharedPtr<Module> module)
@@ -732,16 +683,6 @@ namespace kroll
 				i++;
 			}
 		}
-	}
-
-	SharedKObject Host::GetGlobalObject()
-	{
-		return this->globalObject;
-	}
-
-	bool Host::ProfilingEnabled()
-	{
-		return this->profile;
 	}
 
 	bool Host::Start()
@@ -811,8 +752,6 @@ namespace kroll
 		this->UnloadModuleProviders();
 		this->UnloadModules();
 
-		this->globalObject = NULL;
-
 		// Stop the profiler, if it was enabled
 		StopProfiling();
 
@@ -825,8 +764,8 @@ namespace kroll
 	void Host::Exit(int exitCode)
 	{
 		logger->Notice("Received exit signal (%d)", exitCode);
-		if (KEventObject::FireRootEvent(Event::EXIT) &&
-			KEventObject::FireRootEvent(Event::APP_EXIT))
+		if (GlobalObject::GetInstance()->FireEvent(Event::EXIT) &&
+			GlobalObject::GetInstance()->FireEvent(Event::APP_EXIT))
 		{
 			running = false;
 			exiting = true;
@@ -837,4 +776,95 @@ namespace kroll
 			logger->Notice("Exit signal canceled by event handler");
 		}
 	}
+
+	KValueRef Host::RunOnMainThread(KMethodRef method, const ValueList& args,
+		bool waitForCompletion)
+	{
+		return this->RunOnMainThread(method, 0, args, waitForCompletion);
+	}
+
+	KValueRef Host::RunOnMainThread(KMethodRef method, KObjectRef thisObject,
+		const ValueList& args, bool waitForCompletion)
+	{
+		MainThreadJob* job = new MainThreadJob(method, thisObject,
+			args, waitForCompletion);
+		if (this->IsMainThread() && waitForCompletion)
+		{
+			job->Execute();
+		}
+		else
+		{
+			Poco::ScopedLock<Poco::Mutex> s(jobQueueMutex);
+			this->mainThreadJobs.push_back(job); // Enqueue job
+		}
+
+		this->SignalNewMainThreadJob();
+
+		if (!waitForCompletion)
+		{
+			return Value::Undefined; // Handler will cleanup
+		}
+		else
+		{
+			// If this is the main thread, Wait() will fall
+			// through because we've already called Execute() above.
+			job->Wait();
+
+			KValueRef result(job->GetResult());
+			ValueException exception(job->GetException());
+			delete job;
+
+			if (!result.isNull())
+				return result;
+			else
+				throw exception;
+		}
+	}
+
+	void Host::RunMainThreadJobs()
+	{
+		// Prevent other threads trying to queue while we clear the queue.
+		// But don't block the invocation task while we actually execute
+		// the jobs -- one of these jobs may try to add something to the
+		// job queue -- deadlock-o-rama
+		std::vector<MainThreadJob*> jobs;
+		{
+			Poco::ScopedLock<Poco::Mutex> s(jobQueueMutex);
+			jobs = this->mainThreadJobs;
+			this->mainThreadJobs.clear();
+		}
+
+		for (size_t i = 0; i < jobs.size(); i++)
+		{
+			MainThreadJob* job = jobs[i];
+
+			// Job might be freed soon after Execute(), so get this value now.
+			bool asynchronous = !job->ShouldWaitForCompletion();
+			job->Execute();
+
+			if (asynchronous)
+			{
+				job->PrintException();
+				delete job;
+			}
+		}
+	}
+
+	KValueRef RunOnMainThread(KMethodRef method, const ValueList& args,
+		bool waitForCompletion)
+	{
+		return hostInstance->RunOnMainThread(method, args, waitForCompletion);
+	}
+
+	KValueRef RunOnMainThread(KMethodRef method, KObjectRef thisObject,
+		const ValueList& args, bool waitForCompletion)
+	{
+		return hostInstance->RunOnMainThread(method, args, waitForCompletion);
+	}
+
+	bool IsMainThread()
+	{
+		return hostInstance->IsMainThread();
+	}
+
 }

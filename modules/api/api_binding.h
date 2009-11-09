@@ -22,19 +22,19 @@ namespace kroll
 		APIBinding(Host* host);
 		virtual ~APIBinding();
 
-		void Log(int severity, SharedValue);
-		static SharedKList ComponentVectorToKList(
+		void Log(int severity, KValueRef);
+		static KListRef ComponentVectorToKList(
 			vector<SharedComponent>&,
 			KComponentType filter = UNKNOWN);
-		static SharedKList DependencyVectorToKList(
+		static KListRef DependencyVectorToKList(
 			std::vector<SharedDependency>&);
-		static SharedKList ManifestToKList(
+		static KListRef ManifestToKList(
 			vector<pair<string, string> >&);
 
 
 		private:
 		Host* host;
-		SharedKObject global;
+		KObjectRef global;
 		Logger* logger;
 
 		// Use a FastMutex to protect the installer, because we are
@@ -43,52 +43,52 @@ namespace kroll
 		Poco::Thread* installerThread;
 		Poco::RunnableAdapter<APIBinding>* installerThreadAdapter;
 		vector<SharedDependency> installerDependencies;
-		SharedKMethod installerCallback;
+		KMethodRef installerCallback;
 
 		void RunInstaller();
 
-		void _Set(const ValueList& args, SharedValue result);
-		void _Get(const ValueList& args, SharedValue result);
-		void _AddEventListener(const ValueList& args, SharedValue result);
-		void _RemoveEventListener(const ValueList& args, SharedValue result);
-		void _FireEvent(const ValueList& args, SharedValue result);
+		void _Set(const ValueList& args, KValueRef result);
+		void _Get(const ValueList& args, KValueRef result);
+		void _AddEventListener(const ValueList& args, KValueRef result);
+		void _RemoveEventListener(const ValueList& args, KValueRef result);
+		void _FireEvent(const ValueList& args, KValueRef result);
 
-		Logger::Level ValueToLevel(SharedValue v);
-		void _SetLogLevel(const ValueList& args, SharedValue result);
-		void _GetLogLevel(const ValueList& args, SharedValue result);
-		void _RunOnMainThread(const ValueList& args, SharedValue result);
-		void _RunOnMainThreadAsync(const ValueList& args, SharedValue result);
+		Logger::Level ValueToLevel(KValueRef v);
+		void _SetLogLevel(const ValueList& args, KValueRef result);
+		void _GetLogLevel(const ValueList& args, KValueRef result);
+		void _RunOnMainThread(const ValueList& args, KValueRef result);
+		void _RunOnMainThreadAsync(const ValueList& args, KValueRef result);
 
-		void _Print(const ValueList& args, SharedValue result);
-		void _Log(const ValueList& args, SharedValue result);
-		void _LogTrace(const ValueList& args, SharedValue result);
-		void _LogDebug(const ValueList& args, SharedValue result);
-		void _LogInfo(const ValueList& args, SharedValue result);
-		void _LogNotice(const ValueList& args, SharedValue result);
-		void _LogWarn(const ValueList& args, SharedValue result);
-		void _LogError(const ValueList& args, SharedValue result);
-		void _LogCritical(const ValueList& args, SharedValue result);
-		void _LogFatal(const ValueList& args, SharedValue result);
+		void _Print(const ValueList& args, KValueRef result);
+		void _Log(const ValueList& args, KValueRef result);
+		void _LogTrace(const ValueList& args, KValueRef result);
+		void _LogDebug(const ValueList& args, KValueRef result);
+		void _LogInfo(const ValueList& args, KValueRef result);
+		void _LogNotice(const ValueList& args, KValueRef result);
+		void _LogWarn(const ValueList& args, KValueRef result);
+		void _LogError(const ValueList& args, KValueRef result);
+		void _LogCritical(const ValueList& args, KValueRef result);
+		void _LogFatal(const ValueList& args, KValueRef result);
 
-		void _GetInstalledComponentsImpl(KComponentType type, const ValueList& args, SharedValue result);
-		void _GetApplication(const ValueList& args, SharedValue value);
-		void _GetInstalledComponents(const ValueList& args, SharedValue value);
-		void _GetInstalledModules(const ValueList& args, SharedValue value);
-		void _GetInstalledSDKs(const ValueList& args, SharedValue value);
-		void _GetInstalledMobileSDKs(const ValueList& args, SharedValue value);
-		void _GetInstalledRuntimes(const ValueList& args, SharedValue value);
-		void _GetComponentSearchPaths(const ValueList& args, SharedValue value);
-		void _ReadApplicationManifest(const ValueList& args, SharedValue value);
-		void _ComponentGUIDToComponentType(const ValueList& args, SharedValue value);
-		void _GetEnvironment(const ValueList& args, SharedValue value);
+		void _GetInstalledComponentsImpl(KComponentType type, const ValueList& args, KValueRef result);
+		void _GetApplication(const ValueList& args, KValueRef value);
+		void _GetInstalledComponents(const ValueList& args, KValueRef value);
+		void _GetInstalledModules(const ValueList& args, KValueRef value);
+		void _GetInstalledSDKs(const ValueList& args, KValueRef value);
+		void _GetInstalledMobileSDKs(const ValueList& args, KValueRef value);
+		void _GetInstalledRuntimes(const ValueList& args, KValueRef value);
+		void _GetComponentSearchPaths(const ValueList& args, KValueRef value);
+		void _ReadApplicationManifest(const ValueList& args, KValueRef value);
+		void _ComponentGUIDToComponentType(const ValueList& args, KValueRef value);
+		void _GetEnvironment(const ValueList& args, KValueRef value);
 		
-		void _CreateDependency(const ValueList& args, SharedValue value);
-		void _InstallDependencies(const ValueList& args, SharedValue value);
+		void _CreateDependency(const ValueList& args, KValueRef value);
+		void _InstallDependencies(const ValueList& args, KValueRef value);
 
-		void _CreateKObject(const ValueList& args, SharedValue result);
-		void _CreateKMethod(const ValueList& args, SharedValue result);
-		void _CreateKList(const ValueList& args, SharedValue result);
-		void _CreateBlob(const ValueList& args, SharedValue result);
+		void _CreateKObject(const ValueList& args, KValueRef result);
+		void _CreateKMethod(const ValueList& args, KValueRef result);
+		void _CreateKList(const ValueList& args, KValueRef result);
+		void _CreateBlob(const ValueList& args, KValueRef result);
 	};
 
 	/**
@@ -97,16 +97,16 @@ namespace kroll
 	class KObjectWrapper : public KObject
 	{
 	public:
-		KObjectWrapper(SharedKObject object);
-		void Set(const char *name, SharedValue value);
-		SharedValue Get(const char *name);
+		KObjectWrapper(KObjectRef object);
+		void Set(const char *name, KValueRef value);
+		KValueRef Get(const char *name);
 		bool HasProperty(const char *name);
 		SharedStringList GetPropertyNames();
 		SharedString DisplayString(int levels);
-		bool Equals(SharedKObject other);
+		bool Equals(KObjectRef other);
 
 	private:
-		SharedKObject object;
+		KObjectRef object;
 	};
 
 	/**
@@ -115,17 +115,17 @@ namespace kroll
 	class KMethodWrapper : public KMethod
 	{
 	public:
-		KMethodWrapper(SharedKMethod method);
-		SharedValue Call(const ValueList& args);
-		void Set(const char *name, SharedValue value);
-		SharedValue Get(const char *name);
+		KMethodWrapper(KMethodRef method);
+		KValueRef Call(const ValueList& args);
+		void Set(const char *name, KValueRef value);
+		KValueRef Get(const char *name);
 		bool HasProperty(const char *name);
 		SharedStringList GetPropertyNames();
 		SharedString DisplayString(int levels);
-		bool Equals(SharedKObject other);
+		bool Equals(KObjectRef other);
 
 	private:
-		SharedKMethod method;
+		KMethodRef method;
 	};
 
 	/**
@@ -134,20 +134,20 @@ namespace kroll
 	class KListWrapper : public KList
 	{
 	public:
-		KListWrapper(SharedKList list);
-		void Append(SharedValue value);
+		KListWrapper(KListRef list);
+		void Append(KValueRef value);
 		unsigned int Size();
-		SharedValue At(unsigned int index);
-		void SetAt(unsigned int index, SharedValue value);
+		KValueRef At(unsigned int index);
+		void SetAt(unsigned int index, KValueRef value);
 		bool Remove(unsigned int index);
-		void Set(const char *name, SharedValue value);
-		SharedValue Get(const char *name);
+		void Set(const char *name, KValueRef value);
+		KValueRef Get(const char *name);
 		bool HasProperty(const char *name);
 		SharedStringList GetPropertyNames();
 		SharedString DisplayString(int levels=3);
-		bool Equals(SharedKObject other);
+		bool Equals(KObjectRef other);
 	private:
-		SharedKList list;
+		KListRef list;
 	};
 }
 

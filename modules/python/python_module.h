@@ -6,11 +6,11 @@
 #ifndef _PYTHON_MODULE_H
 #define _PYTHON_MODULE_H
 
+#include <Python.h>
+#include <kroll/kroll.h>
 #include <string>
 #include <vector>
 #include <iostream>
-#include <Python.h>
-#include <kroll/kroll.h>
 
 #include "python_api.h"
 #include "python_utils.h"
@@ -27,7 +27,7 @@ PyErr_Fetch(&_ptype, &_pvalue, &_trace); \
 ValueException _ex = ValueException::FromString("Unknown"); \
 if (_pvalue != NULL) \
 { \
-	SharedValue _ex_val = PythonUtils::ToKrollValue(_pvalue); \
+	KValueRef _ex_val = PythonUtils::ToKrollValue(_pvalue); \
 	_ex = ValueException(_ex_val); \
 } \
 Py_XDECREF(_ptype); \
@@ -60,7 +60,7 @@ namespace kroll
 		}
 
 	private:
-		SharedKObject binding;
+		KObjectRef binding;
 		static PythonModule *instance_;
 		DISALLOW_EVIL_CONSTRUCTORS(PythonModule);
 	};

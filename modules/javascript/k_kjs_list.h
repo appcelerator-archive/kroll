@@ -9,11 +9,6 @@
 
 #include "javascript_module.h"
 
-#include <vector>
-#include <string>
-#include <map>
-#include <cmath>
-
 namespace kroll
 {
 	class KROLL_JAVASCRIPT_API KKJSList : public KList
@@ -23,15 +18,15 @@ namespace kroll
 		KKJSList(JSContextRef context, JSObjectRef jsObject);
 		~KKJSList();
 
-		virtual void Set(const char *name, SharedValue value);
-		virtual void SetAt(unsigned int index, SharedValue value);
-		virtual SharedValue Get(const char *name);
+		virtual void Set(const char *name, KValueRef value);
+		virtual void SetAt(unsigned int index, KValueRef value);
+		virtual KValueRef Get(const char *name);
 		virtual SharedStringList GetPropertyNames();
 		virtual bool HasProperty(const char* name);
-		virtual bool Equals(SharedKObject);
-		virtual void Append(SharedValue value);
+		virtual bool Equals(KObjectRef);
+		virtual void Append(KValueRef value);
 		virtual unsigned int Size();
-		virtual SharedValue At(unsigned int index);
+		virtual KValueRef At(unsigned int index);
 		virtual bool Remove(unsigned int index);
 
 		bool SameContextGroup(JSContextRef c);

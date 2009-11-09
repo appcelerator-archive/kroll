@@ -10,7 +10,7 @@
 namespace kroll
 {
 
-	bool KObject::Equals(SharedKObject other)
+	bool KObject::Equals(KObjectRef other)
 	{
 		return other.get() == this;
 	}
@@ -40,7 +40,7 @@ namespace kroll
 			ss << "{";
 			for (size_t i = 0; i < props->size(); i++)
 			{
-				SharedValue prop = this->Get(props->at(i));
+				KValueRef prop = this->Get(props->at(i));
 				SharedString disp_string = prop->DisplayString(levels);
 
 				ss << " " << *(props->at(i))
@@ -56,19 +56,19 @@ namespace kroll
 		return new std::string(ss.str());
 	}
 
-	void KObject::Set(SharedString name, SharedValue value)
+	void KObject::Set(SharedString name, KValueRef value)
 	{
 		this->Set(name->c_str(), value);
 	}
 
-	SharedValue KObject::Get(SharedString name)
+	KValueRef KObject::Get(SharedString name)
 	{
 		return this->Get(name->c_str());
 	}
 
 	int KObject::GetInt(const char* name, int defaultValue)
 	{
-		SharedValue prop = this->Get(name);
+		KValueRef prop = this->Get(name);
 		if (prop->IsInt())
 		{
 			return prop->ToInt();
@@ -81,7 +81,7 @@ namespace kroll
 
 	double KObject::GetDouble(const char* name, double defaultValue)
 	{
-		SharedValue prop = this->Get(name);
+		KValueRef prop = this->Get(name);
 		if (prop->IsDouble())
 		{
 			return prop->ToDouble();
@@ -94,7 +94,7 @@ namespace kroll
 
 	double KObject::GetNumber(const char* name, double defaultValue)
 	{
-		SharedValue prop = this->Get(name);
+		KValueRef prop = this->Get(name);
 		if (prop->IsNumber())
 		{
 			return prop->ToNumber();
@@ -107,7 +107,7 @@ namespace kroll
 
 	bool KObject::GetBool(const char* name, bool defaultValue)
 	{
-		SharedValue prop = this->Get(name);
+		KValueRef prop = this->Get(name);
 		if (prop->IsBool())
 		{
 			return prop->ToBool();
@@ -120,7 +120,7 @@ namespace kroll
 
 	std::string KObject::GetString(const char* name, std::string defaultValue)
 	{
-		SharedValue prop = this->Get(name);
+		KValueRef prop = this->Get(name);
 		if(prop->IsString())
 		{
 			return prop->ToString();
@@ -131,9 +131,9 @@ namespace kroll
 		}
 	}
 
-	SharedKObject KObject::GetObject(const char* name, SharedKObject defaultValue)
+	KObjectRef KObject::GetObject(const char* name, KObjectRef defaultValue)
 	{
-		SharedValue prop = this->Get(name);
+		KValueRef prop = this->Get(name);
 		if (prop->IsObject())
 		{
 			return prop->ToObject();
@@ -144,9 +144,9 @@ namespace kroll
 		}
 	}
 
-	SharedKMethod KObject::GetMethod(const char* name, SharedKMethod defaultValue)
+	KMethodRef KObject::GetMethod(const char* name, KMethodRef defaultValue)
 	{
-		SharedValue prop = this->Get(name);
+		KValueRef prop = this->Get(name);
 		if (prop->IsMethod())
 		{
 			return prop->ToMethod();
@@ -157,9 +157,9 @@ namespace kroll
 		}
 	}
 
-	SharedKList KObject::GetList(const char* name, SharedKList defaultValue)
+	KListRef KObject::GetList(const char* name, KListRef defaultValue)
 	{
-		SharedValue prop = this->Get(name);
+		KValueRef prop = this->Get(name);
 		if (prop->IsList())
 		{
 			return prop->ToList();
@@ -182,63 +182,63 @@ namespace kroll
 
 	void KObject::SetInt(const char *name, int v)
 	{
-		SharedValue val = Value::NewInt(v);
+		KValueRef val = Value::NewInt(v);
 		this->Set(name, val);
 	}
 
 	void KObject::SetDouble(const char *name, double v)
 	{
-		SharedValue val = Value::NewDouble(v);
+		KValueRef val = Value::NewDouble(v);
 		this->Set(name, val);
 	}
 
 	void KObject::SetNumber(const char *name, double v)
 	{
-		SharedValue val = Value::NewDouble(v);
+		KValueRef val = Value::NewDouble(v);
 		this->Set(name, val);
 	}
 
 	void KObject::SetBool(const char *name, bool v)
 	{
-		SharedValue val = Value::NewBool(v);
+		KValueRef val = Value::NewBool(v);
 		this->Set(name, val);
 	}
 
 	void KObject::SetString(const char *name, std::string v)
 	{
-		SharedValue val = Value::NewString(v);
+		KValueRef val = Value::NewString(v);
 		this->Set(name, val);
 	}
 
-	void KObject::SetObject(const char *name, SharedKObject object)
+	void KObject::SetObject(const char *name, KObjectRef object)
 	{
-		SharedValue obj_val = Value::NewObject(object);
+		KValueRef obj_val = Value::NewObject(object);
 		this->Set(name, obj_val);
 	}
 
-	void KObject::SetMethod(const char *name, SharedKMethod object)
+	void KObject::SetMethod(const char *name, KMethodRef object)
 	{
-		SharedValue obj_val = Value::NewMethod(object);
+		KValueRef obj_val = Value::NewMethod(object);
 		this->Set(name, obj_val);
 	}
 
-	void KObject::SetList(const char *name, SharedKList object)
+	void KObject::SetList(const char *name, KListRef object)
 	{
-		SharedValue obj_val = Value::NewList(object);
+		KValueRef obj_val = Value::NewList(object);
 		this->Set(name, obj_val);
 	}
 
 	void KObject::GetStringList(const char *name, std::vector<std::string> &list)
 	{
-		SharedValue prop = this->Get(name);
+		KValueRef prop = this->Get(name);
 		if(!prop->IsUndefined() && prop->IsList())
 		{
-			SharedKList values = prop->ToList();
+			KListRef values = prop->ToList();
 			if (values->Size() > 0)
 			{
 				for (unsigned int c = 0; c < values->Size(); c++)
 				{
-					SharedValue v = values->At(c);
+					KValueRef v = values->At(c);
 					if (v->IsString())
 					{
 						const char *s = v->ToString();
@@ -249,7 +249,7 @@ namespace kroll
 		}
 	}
 
-	void KObject::SetNS(const char *name, SharedValue value)
+	void KObject::SetNS(const char *name, KValueRef value)
 	{
 		std::vector<std::string> tokens;
 		FileUtils::Tokenize(std::string(name), tokens, ".");
@@ -259,12 +259,12 @@ namespace kroll
 		{
 			const char* token = tokens[i].c_str();
 			StaticBoundObject *next;
-			SharedValue next_val = scope->Get(token);
+			KValueRef next_val = scope->Get(token);
 
 			if (next_val->IsUndefined())
 			{
 				next = new StaticBoundObject();
-				SharedKObject so = next;
+				KObjectRef so = next;
 				next_val = Value::NewObject(so);
 				scope->Set(token, next_val);
 				scope = next;
@@ -290,12 +290,12 @@ namespace kroll
 #endif
 	}
 
-	SharedValue KObject::GetNS(const char *name)
+	KValueRef KObject::GetNS(const char *name)
 	{
 		std::string s(name);
 		std::string::size_type last = 0;
 		std::string::size_type pos = s.find_first_of(".");
-		SharedValue current;
+		KValueRef current;
 		KObject* scope = this;
 		while (pos != std::string::npos)
 		{
@@ -321,20 +321,20 @@ namespace kroll
 		return current;
 	}
 
-	SharedValue KObject::CallNS(const char *name)
+	KValueRef KObject::CallNS(const char *name)
 	{
 		ValueList args;
 		return CallNS(name, args);
 	}
 	
-	SharedValue KObject::CallNS(const char *name, SharedValue val1)
+	KValueRef KObject::CallNS(const char *name, KValueRef val1)
 	{
 		ValueList args;
 		args.push_back(val1);
 		return CallNS(name, args);
 	}
 
-	SharedValue KObject::CallNS(const char *name, SharedValue val1, SharedValue val2)
+	KValueRef KObject::CallNS(const char *name, KValueRef val1, KValueRef val2)
 	{
 		ValueList args;
 		args.push_back(val1);
@@ -342,7 +342,7 @@ namespace kroll
 		return CallNS(name, args);
 	}
 
-	SharedValue KObject::CallNS(const char *name, SharedValue val1, SharedValue val2, SharedValue val3)
+	KValueRef KObject::CallNS(const char *name, KValueRef val1, KValueRef val2, KValueRef val3)
 	{
 		ValueList args;
 		args.push_back(val1);
@@ -351,9 +351,9 @@ namespace kroll
 		return CallNS(name, args);
 	}
 
-	SharedValue KObject::CallNS(const char *name, const ValueList& args)
+	KValueRef KObject::CallNS(const char *name, const ValueList& args)
 	{
-		SharedValue callable_value = GetNS(name);
+		KValueRef callable_value = GetNS(name);
 		if (callable_value->IsUndefined()) {
 			return callable_value;
 		}
@@ -370,7 +370,7 @@ namespace kroll
 		return type;
 	}
 
-	SharedKObject KObject::Unwrap(SharedKObject o)
+	KObjectRef KObject::Unwrap(KObjectRef o)
 	{
 		AutoPtr<ProfiledBoundObject> pobj = o.cast<ProfiledBoundObject>();
 		if (pobj.isNull())

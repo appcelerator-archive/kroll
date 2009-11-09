@@ -19,7 +19,7 @@ namespace kroll
 	{
 	}
 
-	SharedValue KPHPList::Get(const char *name)
+	KValueRef KPHPList::Get(const char *name)
 	{
 		if (KList::IsInt(name))
 		{
@@ -41,11 +41,11 @@ namespace kroll
 		}
 
 		TSRMLS_FETCH();
-		SharedValue v = PHPUtils::ToKrollValue((zval *) copyval TSRMLS_CC);
+		KValueRef v = PHPUtils::ToKrollValue((zval *) copyval TSRMLS_CC);
 		return v;
 	}
 
-	void KPHPList::Set(const char *name, SharedValue value)
+	void KPHPList::Set(const char *name, KValueRef value)
 	{
 		// Check for integer value as name
 		int index = -1;
@@ -59,7 +59,7 @@ namespace kroll
 		}
 	}
 
-	bool KPHPList::Equals(SharedKObject other)
+	bool KPHPList::Equals(KObjectRef other)
 	{
 		AutoPtr<KPHPList> phpOther = other.cast<KPHPList>();
 
@@ -84,12 +84,12 @@ namespace kroll
 		return (unsigned int) zend_hash_num_elements(Z_ARRVAL_P(this->list));
 	}
 
-	void KPHPList::Append(SharedValue value)
+	void KPHPList::Append(KValueRef value)
 	{
 		AddKrollValueToPHPArray(value, this->list);
 	}
 
-	void KPHPList::SetAt(unsigned int index, SharedValue value)
+	void KPHPList::SetAt(unsigned int index, KValueRef value)
 	{
 		AddKrollValueToPHPArray(value, this->list, index);
 	}
@@ -105,7 +105,7 @@ namespace kroll
 		return false;
 	}
 
-	SharedValue KPHPList::At(unsigned int index)
+	KValueRef KPHPList::At(unsigned int index)
 	{
 		zval **copyval;
 
@@ -116,7 +116,7 @@ namespace kroll
 		}
 
 		TSRMLS_FETCH();
-		SharedValue v = PHPUtils::ToKrollValue((zval *) copyval TSRMLS_CC);
+		KValueRef v = PHPUtils::ToKrollValue((zval *) copyval TSRMLS_CC);
 		return v;
 	}
 
@@ -125,7 +125,7 @@ namespace kroll
 		return this->list;
 	}
 
-	void KPHPList::AddKrollValueToPHPArray(SharedValue value, zval *phpArray, const char *key)
+	void KPHPList::AddKrollValueToPHPArray(KValueRef value, zval *phpArray, const char *key)
 	{
 		if (value->IsNull() || value->IsUndefined())
 		{
@@ -172,7 +172,7 @@ namespace kroll
 		}
 	}
 
-	void KPHPList::AddKrollValueToPHPArray(SharedValue value, zval *phpArray, unsigned int index)
+	void KPHPList::AddKrollValueToPHPArray(KValueRef value, zval *phpArray, unsigned int index)
 	{
 		if (value->IsNull() || value->IsUndefined())
 		{
@@ -219,7 +219,7 @@ namespace kroll
 		}
 	}
 
-	void KPHPList::AddKrollValueToPHPArray(SharedValue value, zval *phpArray)
+	void KPHPList::AddKrollValueToPHPArray(KValueRef value, zval *phpArray)
 	{
 		AddKrollValueToPHPArray(value, phpArray, (unsigned int) zend_hash_num_elements(Z_ARRVAL_P(phpArray)));
 	}

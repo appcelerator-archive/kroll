@@ -26,7 +26,7 @@ using Poco::AutoPtr;
 	// this is important which essentially marks all of
 	// these classes below and the typedef/templates to be
 	// visible outside of the library.  if you don't do this
-	// you won't be able to catch exceptions of SharedValue for
+	// you won't be able to catch exceptions of KValueRef for
 	// example
 	#pragma GCC visibility push(default)
 #endif
@@ -42,22 +42,18 @@ namespace kroll
 	class StaticBoundMethod;
 	class StaticBoundList;
 
-	class DelegateStaticBoundObject;
+	class GlobalObject;
 	class ScopeMethodDelegate;
 	class Blob;
 	class ValueReleasePolicy;
 	class Logger;
 	class ArgList;
 
-	typedef AutoPtr<Value> AutoValue;
-	typedef AutoPtr<KObject> AutoKObject;
-	typedef AutoPtr<KMethod> AutoKMethod;
-	typedef AutoPtr<KList> AutoKList;
-	typedef AutoPtr<Value> SharedValue;
-	typedef AutoPtr<KObject> SharedKObject;
-	typedef AutoPtr<KMethod> SharedKMethod;
-	typedef AutoPtr<KList> SharedKList;
-	typedef AutoPtr<Blob> AutoBlob;
+	typedef AutoPtr<Value> KValueRef;
+	typedef AutoPtr<KObject> KObjectRef;
+	typedef AutoPtr<KMethod> KMethodRef;
+	typedef AutoPtr<KList> KListRef;
+	typedef AutoPtr<Blob> BlobRef;
 
 	typedef SharedPtr<std::string> SharedString;
 	typedef std::vector<SharedString> StringList;
@@ -79,9 +75,9 @@ namespace kroll
 	#pragma GCC visibility pop
 #endif
 
+#include "utils/utils.h"
 #include "net/net.h"
 #include "reference_counted.h"
-#include "utils/utils.h"
 #include "logger.h"
 #include "mutex.h"
 #include "scoped_lock.h"
@@ -90,6 +86,7 @@ namespace kroll
 #include "module_provider.h"
 #include "module.h"
 #include "async_job.h"
+#include "main_thread_job.h"
 #include "host.h"
 #include "script.h"
 

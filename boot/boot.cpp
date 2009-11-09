@@ -55,7 +55,7 @@ namespace KrollBoot
 			}
 		}
 
-		if (justSDKs.size() > 0)
+		if (!justSDKs.empty())
 		{
 			return justSDKs;
 		}
@@ -71,14 +71,18 @@ namespace KrollBoot
 		string manifestPath = FileUtils::Join(applicationHome.c_str(), MANIFEST_FILENAME, NULL);
 		if (!FileUtils::IsFile(manifestPath))
 		{
-			ShowError("Application packaging error: no manifest was found.");
+			string error("Application packaging error: no manifest was found at: ");
+			error.append(manifestPath);
+			ShowError(error);
 			return __LINE__;
 		}
 
 		app = Application::NewApplication(applicationHome);
 		if (app.isNull())
 		{
-			ShowError("Application packaging error: could not read manifest.");
+			string error("Application packaging error: could not read manifest at: ");
+			error.append(manifestPath);
+			ShowError(error);
 			return __LINE__;
 		}
 		app->SetArguments(argc, argv);
@@ -105,8 +109,8 @@ namespace KrollBoot
 		}
 
 		bool forceInstall = app->HasArgument("--force-install");
-		if (forceInstall || missing.size() > 0
-			|| !app->IsInstalled() || !updateFile.empty())
+		if (forceInstall || !missing.empty() || !app->IsInstalled() ||
+			!updateFile.empty())
 		{
 			// If this list of dependencies incluces the SDKs, just install
 			// those -- we assume that they also supply our other dependencies.
@@ -172,8 +176,8 @@ namespace KrollBoot
 
 	void InitCrashDetection()
 	{
-		// We need to load this since in a crash situation
-		// we restart back and by-pass the normal load mechanism.
+		// Load the application manifest so that we can get lots of debugging
+		// information for the crash report.
 		applicationHome = GetApplicationHomePath();
 		string manifestPath = FileUtils::Join(applicationHome.c_str(), MANIFEST_FILENAME, NULL);
 
@@ -205,7 +209,7 @@ namespace KrollBoot
 			params["ostype"] = OS_TYPE;
 			params["osver"] = FileUtils::GetOSVersion();
 			params["osarch"] = FileUtils::GetOSArchitecture();
-			params["ver"] = STRING(_PRODUCT_VERSION);
+			params["ver"] = PRODUCT_VERSION;
 			params["un"] = FileUtils::GetUsername();
 
 			if (!app.isNull())
@@ -222,7 +226,7 @@ namespace KrollBoot
 				while (i != components.end())
 				{
 					SharedComponent c = (*i++);
-					string type = "unknown";
+					string type("unknown");
 					if (c->type == KrollUtils::MODULE)
 					{
 						type = "module";

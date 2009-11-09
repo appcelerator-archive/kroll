@@ -20,13 +20,13 @@ namespace kroll
 		return StaticBoundList::HasProperty(name) || this->HasGetterFor(name);
 	}
 
-	void KAccessorList::Set(const char* name, SharedValue value)
+	void KAccessorList::Set(const char* name, KValueRef value)
 	{
 		if (!this->UseSetter(name, value, StaticBoundList::Get(name)))
 			StaticBoundList::Set(name, value);
 	}
 
-	SharedValue KAccessorList::Get(const char* name)
+	KValueRef KAccessorList::Get(const char* name)
 	{
 		return this->UseGetter(name, StaticBoundList::Get(name));
 	}

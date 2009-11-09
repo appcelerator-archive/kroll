@@ -21,7 +21,7 @@ namespace kroll
 		rb_gc_unregister_address(&list);
 	}
 
-	void KRubyList::Append(SharedValue value)
+	void KRubyList::Append(KValueRef value)
 	{
 		VALUE rv = RubyUtils::ToRubyValue(value);
 		rb_ary_push(list, rv);
@@ -38,7 +38,7 @@ namespace kroll
 		return (v != Qnil);
 	}
 
-	SharedValue KRubyList::At(unsigned int index)
+	KValueRef KRubyList::At(unsigned int index)
 	{
 		if (index >= 0 && index < this->Size())
 		{
@@ -51,7 +51,7 @@ namespace kroll
 		}
 	}
 
-	void KRubyList::Set(const char *name, SharedValue value)
+	void KRubyList::Set(const char *name, KValueRef value)
 	{
 		int index = -1; // Check for integer value as name
 		if (KList::IsInt(name) && ((index = atoi(name) >= 0)))
@@ -64,7 +64,7 @@ namespace kroll
 		}
 	}
 
-	void KRubyList::SetAt(unsigned int index, SharedValue value)
+	void KRubyList::SetAt(unsigned int index, KValueRef value)
 	{
 		VALUE rv = RubyUtils::ToRubyValue(value);
 
@@ -73,7 +73,7 @@ namespace kroll
 		rb_ary_store(list, index, rv);
 	}
 
-	SharedValue KRubyList::Get(const char *name)
+	KValueRef KRubyList::Get(const char *name)
 	{
 		if (KList::IsInt(name))
 		{
@@ -107,7 +107,7 @@ namespace kroll
 		return this->object->DisplayString(levels);
 	}
 
-	bool KRubyList::Equals(SharedKObject other)
+	bool KRubyList::Equals(KObjectRef other)
 	{
 		AutoPtr<KRubyList> listOther = other.cast<KRubyList>();
 		if (listOther.isNull())

@@ -68,7 +68,7 @@ namespace UTILS_NS
 		/**
 		 *
 		 */
-		KROLL_API bool IsFile(std::string &file);
+		KROLL_API bool IsFile(const std::string &file);
 
 		/**
 		 *

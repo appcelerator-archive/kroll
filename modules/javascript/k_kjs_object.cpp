@@ -43,7 +43,7 @@ namespace kroll
 		return this->jsobject;
 	}
 
-	SharedValue KKJSObject::Get(const char *name)
+	KValueRef KKJSObject::Get(const char *name)
 	{
 		JSStringRef jsName = JSStringCreateWithUTF8CString(name);
 		JSValueRef exception = NULL;
@@ -52,15 +52,15 @@ namespace kroll
 
 		if (exception != NULL) //exception thrown
 		{
-			SharedValue tv_exp = KJSUtil::ToKrollValue(exception, this->context, NULL);
+			KValueRef tv_exp = KJSUtil::ToKrollValue(exception, this->context, NULL);
 			throw ValueException(tv_exp);
 		}
 
-		SharedValue kvalue = KJSUtil::ToKrollValue(jsValue, this->context, this->jsobject);
+		KValueRef kvalue = KJSUtil::ToKrollValue(jsValue, this->context, this->jsobject);
 		return kvalue;
 	}
 
-	void KKJSObject::Set(const char *name, SharedValue value)
+	void KKJSObject::Set(const char *name, KValueRef value)
 	{
 		JSValueRef jsValue = KJSUtil::ToJSValue(value, this->context);
 		JSStringRef jsName = JSStringCreateWithUTF8CString(name);
@@ -72,12 +72,12 @@ namespace kroll
 
 		if (exception != NULL) // An exception was thrown.
 		{
-			SharedValue exceptionValue = KJSUtil::ToKrollValue(exception, this->context, NULL);
+			KValueRef exceptionValue = KJSUtil::ToKrollValue(exception, this->context, NULL);
 			throw ValueException(exceptionValue);
 		}
 	}
 
-	bool KKJSObject::Equals(SharedKObject other)
+	bool KKJSObject::Equals(KObjectRef other)
 	{
 		AutoPtr<KKJSObject> kjsOther = other.cast<KKJSObject>();
 		if (kjsOther.isNull())

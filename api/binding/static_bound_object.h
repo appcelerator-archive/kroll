@@ -24,7 +24,7 @@ namespace kroll
 	 *   this->SetMethod("add", &MyObject::Add);
 	 * }
 	 *
-	 * void MyObject::Add(const ValueList& args, SharedValue result) {
+	 * void MyObject::Add(const ValueList& args, KValueRef result) {
 	 *   result->SetInt(args[0]->ToInt() + args[1]->ToInt());
 	 * }
 	 * \endcode
@@ -44,9 +44,9 @@ namespace kroll
 		virtual ~StaticBoundObject();
 
 		virtual bool HasProperty(const char *name);
-		virtual SharedValue Get(const char *name);
+		virtual KValueRef Get(const char *name);
 		virtual SharedStringList GetPropertyNames();
-		virtual void Set(const char *name, SharedValue value);
+		virtual void Set(const char *name, KValueRef value);
 
 
 		/**
@@ -61,24 +61,24 @@ namespace kroll
 		 * occurs will throw an exception of type ValueException.
 		 */
 		template <typename T>
-		void SetMethod(const char *name, void (T::*method)(const ValueList&, SharedValue))
+		void SetMethod(const char *name, void (T::*method)(const ValueList&, KValueRef))
 		{
-			MethodCallback* callback = NewCallback<T, const ValueList&, SharedValue>(static_cast<T*>(this), method);
+			MethodCallback* callback = NewCallback<T, const ValueList&, KValueRef>(static_cast<T*>(this), method);
 
-			SharedKMethod bound_method = new StaticBoundMethod(callback);
-			SharedValue method_value = Value::NewMethod(bound_method);
+			KMethodRef bound_method = new StaticBoundMethod(callback);
+			KValueRef method_value = Value::NewMethod(bound_method);
 			this->Set(name, method_value);
 		}
 
 
 	protected:
-		std::map<std::string, SharedValue> properties;
+		std::map<std::string, KValueRef> properties;
 		Mutex mutex;
 		
 		/**
 		 * called to allow a subclass to be notified when a property is bound
 		 */
-		virtual void Bound(const char *name, SharedValue value) {}
+		virtual void Bound(const char *name, KValueRef value) {}
 		
 		/**
 		 * called to allow a subclass to be notified when a property is unbound

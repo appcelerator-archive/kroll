@@ -22,7 +22,7 @@ namespace kroll
 		Py_DECREF(this->method);
 	}
 
-	SharedValue KPythonMethod::Call(const ValueList& args)
+	KValueRef KPythonMethod::Call(const ValueList& args)
 	{
 		PyLockGIL lock;
 		PyObject *arglist = NULL;
@@ -40,7 +40,7 @@ namespace kroll
 		PyObject *response = PyObject_CallObject(this->method, arglist);
 		Py_XDECREF(arglist);
 
-		SharedValue value = Value::Undefined;
+		KValueRef value = Value::Undefined;
 		if (response == NULL && PyErr_Occurred() != NULL)
 		{
 			THROW_PYTHON_EXCEPTION
@@ -54,12 +54,12 @@ namespace kroll
 		return value;
 	}
 
-	void KPythonMethod::Set(const char *name, SharedValue value)
+	void KPythonMethod::Set(const char *name, KValueRef value)
 	{
 		this->object->Set(name, value);
 	}
 
-	SharedValue KPythonMethod::Get(const char *name)
+	KValueRef KPythonMethod::Get(const char *name)
 	{
 		return this->object->Get(name);
 	}
@@ -74,7 +74,7 @@ namespace kroll
 		return this->object->ToPython();
 	}
 
-	bool KPythonMethod::Equals(SharedKObject other)
+	bool KPythonMethod::Equals(KObjectRef other)
 	{
 		AutoPtr<KPythonMethod> pyOther = other.cast<KPythonMethod>();
 

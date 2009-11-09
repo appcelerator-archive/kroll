@@ -18,12 +18,12 @@ namespace kroll
 		ScriptBinding();
 		
 	protected:
-		void _AddScriptEvaluator(const ValueList& args, SharedValue result);
-		void _RemoveScriptEvaluator(const ValueList& args, SharedValue result);
-		void _CanEvaluate(const ValueList& args, SharedValue result);
-		void _CanPreprocess(const ValueList& args, SharedValue result);
-		void _Evaluate(const ValueList& args, SharedValue result);
-		void _Preprocess(const ValueList& args, SharedValue result);
+		void _AddScriptEvaluator(const ValueList& args, KValueRef result);
+		void _RemoveScriptEvaluator(const ValueList& args, KValueRef result);
+		void _CanEvaluate(const ValueList& args, KValueRef result);
+		void _CanPreprocess(const ValueList& args, KValueRef result);
+		void _Evaluate(const ValueList& args, KValueRef result);
+		void _Preprocess(const ValueList& args, KValueRef result);
 	};
 }
 

@@ -17,8 +17,8 @@ namespace kroll
 	{
 	public:
 		KAccessorList(const char* type = "KAccessorList");
-		virtual void Set(const char* name, SharedValue value);
-		virtual SharedValue Get(const char* name);
+		virtual void Set(const char* name, KValueRef value);
+		virtual KValueRef Get(const char* name);
 		virtual bool HasProperty(const char* name);
 
 	private:

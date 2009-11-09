@@ -8,7 +8,7 @@
 
 namespace kroll
 {
-	SharedValue EnvironmentBinding::Get(const char *name)
+	KValueRef EnvironmentBinding::Get(const char *name)
 	{
 		return Value::NewString(EnvironmentUtils::Get(name));
 	}
@@ -26,7 +26,7 @@ namespace kroll
 		return keys;
 	}
 	
-	void EnvironmentBinding::Set(const char *name, SharedValue value)
+	void EnvironmentBinding::Set(const char *name, KValueRef value)
 	{
 		if (value->IsString())
 		{

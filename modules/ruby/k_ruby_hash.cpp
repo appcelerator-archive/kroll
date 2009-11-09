@@ -20,7 +20,7 @@ namespace kroll {
 		rb_gc_unregister_address(&hash);
 	}
 
-	SharedValue KRubyHash::Get(const char *name)
+	KValueRef KRubyHash::Get(const char *name)
 	{
 		VALUE key = rb_str_new2(name);
 		if (rb_funcall(hash, rb_intern("has_key?"), 1, key))
@@ -34,7 +34,7 @@ namespace kroll {
 		}
 	}
 
-	void KRubyHash::Set(const char *name, SharedValue value)
+	void KRubyHash::Set(const char *name, KValueRef value)
 	{
 		VALUE key = rb_str_new2(name);
 		VALUE v = RubyUtils::ToRubyValue(value);
@@ -67,7 +67,7 @@ namespace kroll {
 		return this->object->ToRuby();
 	}
 
-	bool KRubyHash::Equals(SharedKObject other)
+	bool KRubyHash::Equals(KObjectRef other)
 	{
 		AutoPtr<KRubyHash> hashOther = other.cast<KRubyHash>();
 		if (hashOther.isNull())

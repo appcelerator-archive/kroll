@@ -9,14 +9,14 @@
 
 namespace kroll
 {
-	typedef std::map<std::string, SharedKMethod> AccessorMap;
+	typedef std::map<std::string, KMethodRef> AccessorMap;
 
 	class KAccessor
 	{
 	protected:
 		KAccessor() {}
 
-		inline void RecordAccessor(const std::string& name, SharedValue value)
+		inline void RecordAccessor(const std::string& name, KValueRef value)
 		{
 			if (name.find("set") == 0)
 				DoMap(name.substr(3), value, setterMap);
@@ -33,19 +33,19 @@ namespace kroll
 			return !FindAccessor(name, getterMap).isNull();
 		}
 
-		SharedValue UseGetter(std::string name, SharedValue existingValue)
+		KValueRef UseGetter(std::string name, KValueRef existingValue)
 		{
 			if (!existingValue->IsUndefined())
 				return existingValue;
 
-			SharedKMethod getter = FindAccessor(name, getterMap);
+			KMethodRef getter = FindAccessor(name, getterMap);
 			if (getter.isNull())
 				return existingValue;
 
 			return getter->Call();
 		}
 
-		bool UseSetter(std::string name, SharedValue newValue, SharedValue existingValue)
+		bool UseSetter(std::string name, KValueRef newValue, KValueRef existingValue)
 		{
 			RecordAccessor(name, newValue);
 
@@ -54,7 +54,7 @@ namespace kroll
 			if (!existingValue->IsUndefined())
 				return false;
 
-			SharedKMethod setter = FindAccessor(name, setterMap);
+			KMethodRef setter = FindAccessor(name, setterMap);
 			if (setter.isNull())
 				return false;
 
@@ -63,7 +63,7 @@ namespace kroll
 		}
 
 	private:
-		inline void DoMap(std::string name, SharedValue accessor, AccessorMap& map)
+		inline void DoMap(std::string name, KValueRef accessor, AccessorMap& map)
 		{
 			// Lower-case the name so that all comparisons are case-insensitive.
 			std::transform(name.begin(), name.end(), name.begin(), tolower);
@@ -79,7 +79,7 @@ namespace kroll
 			map[name] = accessor->ToMethod();
 		}
 
-		inline SharedKMethod FindAccessor(std::string& name, AccessorMap& map)
+		inline KMethodRef FindAccessor(std::string& name, AccessorMap& map)
 		{
 			// Lower-case the name so that all comparisons are case-insensitive.
 			std::transform(name.begin(), name.end(), name.begin(), tolower);

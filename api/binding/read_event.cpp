@@ -7,14 +7,14 @@
 #include "../kroll.h"
 namespace kroll
 {
-	ReadEvent::ReadEvent(AutoPtr<KEventObject> target, AutoBlob data) :
+	ReadEvent::ReadEvent(AutoPtr<KEventObject> target, BlobRef data) :
 		Event(target, Event::READ),
 		data(data)
 	{
 		this->SetMethod("getData", &ReadEvent::_GetData);
 	}
 
-	void ReadEvent::_GetData(const ValueList&, SharedValue result)
+	void ReadEvent::_GetData(const ValueList&, KValueRef result)
 	{
 		result->SetObject(this->data);
 	}

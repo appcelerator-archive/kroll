@@ -13,11 +13,11 @@ namespace kroll
 	{
 		public:
 		Event(AutoPtr<KEventObject> target, const std::string& eventName);
-		void _GetTarget(const ValueList&, SharedValue result);
-		void _GetType(const ValueList&, SharedValue result);
-		void _GetTimestamp(const ValueList&, SharedValue result);
-		void _StopPropagation(const ValueList&, SharedValue result);
-		void _PreventDefault(const ValueList&, SharedValue result);
+		void _GetTarget(const ValueList&, KValueRef result);
+		void _GetType(const ValueList&, KValueRef result);
+		void _GetTimestamp(const ValueList&, KValueRef result);
+		void _StopPropagation(const ValueList&, KValueRef result);
+		void _PreventDefault(const ValueList&, KValueRef result);
 		static void SetEventConstants(KObject* target);
 
 		AutoPtr<KEventObject> target;
@@ -56,6 +56,7 @@ namespace kroll
 		static std::string HTTP_ABORT;
 		static std::string HTTP_DATA_SENT;
 		static std::string HTTP_DATA_RECEIVED;
+		static std::string OPEN_REQUEST;
 	};
 }
 #endif

@@ -9,7 +9,7 @@
 
 namespace kroll
 {
-	AsyncJob::AsyncJob(SharedKMethod job) :
+	AsyncJob::AsyncJob(KMethodRef job) :
 		StaticBoundObject(),
 		job(job),
 		completed(false),
@@ -65,7 +65,7 @@ namespace kroll
 	void AsyncJob::Run()
 	{
 		// Make sure this job sticks around at least until it finishes.
-		SharedKObject save(this, true);
+		KObjectRef save(this, true);
 
 		this->result = this->Execute();
 		if (!this->hadError)
@@ -73,7 +73,7 @@ namespace kroll
 			this->completed = true;
 			this->OnCompleted();
 
-			std::vector<SharedKMethod>::iterator i = this->completedCallbacks.begin();
+			std::vector<KMethodRef>::iterator i = this->completedCallbacks.begin();
 			while (i != this->completedCallbacks.end())
 			{
 				this->DoCallback(*i++, true);
@@ -81,7 +81,7 @@ namespace kroll
 		}
 	}
 
-	SharedValue AsyncJob::Execute()
+	KValueRef AsyncJob::Execute()
 	{
 		try
 		{
@@ -104,11 +104,10 @@ namespace kroll
 		return this->progress;
 	}
 
-	void AsyncJob::DoCallback(SharedKMethod method, bool reportErrors)
+	void AsyncJob::DoCallback(KMethodRef method, bool reportErrors)
 	{
-		Host* host = Host::GetInstance();
 		ValueList args(Value::NewObject(GetAutoPtr()));
-		host->InvokeMethodOnMainThread(method, args, false);
+		RunOnMainThread(method, args, false);
 	}
 
 	void AsyncJob::SetProgress(double progress, bool callbacks)
@@ -130,7 +129,7 @@ namespace kroll
 		{
 			this->OnProgressChanged();
 
-			std::vector<SharedKMethod>::iterator i = this->progressCallbacks.begin();
+			std::vector<KMethodRef>::iterator i = this->progressCallbacks.begin();
 			while (i != this->progressCallbacks.end())
 			{
 				this->DoCallback(*i++, true);
@@ -143,39 +142,39 @@ namespace kroll
 		this->hadError = true;
 		this->OnError(e);
 
-		std::vector<SharedKMethod>::iterator i = this->errorCallbacks.begin();
+		std::vector<KMethodRef>::iterator i = this->errorCallbacks.begin();
 		while (i != this->errorCallbacks.end())
 		{
 			this->DoCallback(*i++, false);
 		}
 	}
 
-	void AsyncJob::AddProgressCallback(SharedKMethod callback)
+	void AsyncJob::AddProgressCallback(KMethodRef callback)
 	{
 		this->progressCallbacks.push_back(callback);
 	}
 
-	void AsyncJob::AddCompletedCallback(SharedKMethod callback)
+	void AsyncJob::AddCompletedCallback(KMethodRef callback)
 	{
 		this->completedCallbacks.push_back(callback);
 	}
 
-	void AsyncJob::AddErrorCallback(SharedKMethod callback)
+	void AsyncJob::AddErrorCallback(KMethodRef callback)
 	{
 		this->errorCallbacks.push_back(callback);
 	}
 
-	void AsyncJob::_Cancel(const ValueList& args, SharedValue result)
+	void AsyncJob::_Cancel(const ValueList& args, KValueRef result)
 	{
 		this->Cancel();
 	}
 
-	void AsyncJob::_GetProgress(const ValueList& args, SharedValue result)
+	void AsyncJob::_GetProgress(const ValueList& args, KValueRef result)
 	{
 		result->SetDouble(this->GetProgress());
 	}
 
-	void AsyncJob::_IsComplete(const ValueList& args, SharedValue result)
+	void AsyncJob::_IsComplete(const ValueList& args, KValueRef result)
 	{
 		result->SetBool(this->completed);
 	}

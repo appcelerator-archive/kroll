@@ -15,13 +15,13 @@ namespace kroll
 	{
 	public:
 		static void InitializePythonKClasses();
-		static SharedValue ToKrollValue(PyObject* value);
-		static PyObject* ToPyObject(SharedValue value);
+		static KValueRef ToKrollValue(PyObject* value);
+		static PyObject* ToPyObject(KValueRef value);
 		static PyObject* ToPyObject(const ValueList& list);
 		static const char* ToString(PyObject* value);
-		static PyObject* KObjectToPyObject(SharedValue o);
-		static PyObject* KMethodToPyObject(SharedValue o);
-		static PyObject* KListToPyObject(SharedValue o);
+		static PyObject* KObjectToPyObject(KValueRef o);
+		static PyObject* KMethodToPyObject(KValueRef o);
+		static PyObject* KListToPyObject(KValueRef o);
 		static std::string PythonErrorToString();
 
 	private:

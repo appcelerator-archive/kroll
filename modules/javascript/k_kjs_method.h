@@ -21,12 +21,14 @@ namespace kroll
 		KKJSMethod(JSContextRef, JSObjectRef, JSObjectRef);
 		~KKJSMethod();
 
-		virtual void Set(const char *name, SharedValue value);
-		virtual SharedValue Get(const char *name);
-		virtual SharedValue Call(const ValueList& args);
+		virtual void Set(const char *name, KValueRef value);
+		virtual KValueRef Get(const char *name);
+		KValueRef Call(JSObjectRef thisObject, const ValueList& args);
+		virtual KValueRef Call(const ValueList& args);
+		virtual KValueRef Call(KObjectRef thisObject, const ValueList& args);
 		virtual SharedStringList GetPropertyNames();
 		virtual bool HasProperty(const char* name);
-		virtual bool Equals(SharedKObject);
+		virtual bool Equals(KObjectRef);
 
 		virtual bool SameContextGroup(JSContextRef c);
 		JSObjectRef GetJSObject();

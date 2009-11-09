@@ -25,32 +25,32 @@ namespace kroll {
 	{
 	public:
 
-		ScopeMethodDelegate(MethodDelegateType type, SharedKObject global,
-		                    SharedKObject scope, SharedKMethod delegate);
+		ScopeMethodDelegate(MethodDelegateType type, KObjectRef global,
+		                    KObjectRef scope, KMethodRef delegate);
 		virtual ~ScopeMethodDelegate();
 
 
-		void Set(const char *name, SharedValue value);
-		SharedValue Get(const char *name);
+		void Set(const char *name, KValueRef value);
+		KValueRef Get(const char *name);
 		SharedStringList GetPropertyNames();
 
 
 		bool IsGlobalKey(std::string& key);
-		SharedValue Call(const ValueList& args);
+		KValueRef Call(const ValueList& args);
 
 		/**
 		 * create a delegate from a KObject to a wrapped
 		 * StaticBoundObject and delegate set/get to the new
 		 * static bound object
 		 */
-		static AutoPtr<StaticBoundObject> CreateDelegate(SharedKObject global, SharedKObject bo);
+		static AutoPtr<StaticBoundObject> CreateDelegate(KObjectRef global, KObjectRef bo);
 
 
 	private:
 		MethodDelegateType type;
-		SharedKObject global;
-		SharedKObject scope;
-		SharedKMethod delegate;
+		KObjectRef global;
+		KObjectRef scope;
+		KMethodRef delegate;
 
 
 	private:

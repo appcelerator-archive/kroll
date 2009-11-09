@@ -4,7 +4,6 @@
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
 #include "javascript_module.h"
-#include <cstdio>
 
 namespace kroll
 {
@@ -42,29 +41,29 @@ namespace kroll
 
 	unsigned int KKJSList::Size()
 	{
-		SharedValue length_val = this->kobject->Get("length");
+		KValueRef length_val = this->kobject->Get("length");
 		if (length_val->IsInt())
 			return (unsigned int) length_val->ToInt();
 		else
 			return 0;
 	}
 
-	SharedValue KKJSList::At(unsigned int index)
+	KValueRef KKJSList::At(unsigned int index)
 	{
 		std::string name = KList::IntToChars(index);
-		SharedValue value = this->kobject->Get(name.c_str());
+		KValueRef value = this->kobject->Get(name.c_str());
 		return value;
 	}
 
-	void KKJSList::SetAt(unsigned int index, SharedValue value)
+	void KKJSList::SetAt(unsigned int index, KValueRef value)
 	{
 		std::string name = KList::IntToChars(index);
 		this->kobject->Set(name.c_str(), value);
 	}
 
-	void KKJSList::Append(SharedValue value)
+	void KKJSList::Append(KValueRef value)
 	{
-		SharedValue push_method = this->kobject->Get("push");
+		KValueRef push_method = this->kobject->Get("push");
 
 		if (push_method->IsMethod())
 		{
@@ -82,7 +81,7 @@ namespace kroll
 	{
 		if (index >= 0 && index < this->Size())
 		{
-			SharedValue spliceMethod = this->kobject->Get("splice");
+			KValueRef spliceMethod = this->kobject->Get("splice");
 			spliceMethod->ToMethod()->Call(
 				Value::NewInt(index),
 				Value::NewInt(1));
@@ -92,17 +91,17 @@ namespace kroll
 	}
 
 
-	SharedValue KKJSList::Get(const char *name)
+	KValueRef KKJSList::Get(const char *name)
 	{
 		return kobject->Get(name);
 	}
 
-	void KKJSList::Set(const char *name, SharedValue value)
+	void KKJSList::Set(const char *name, KValueRef value)
 	{
 		return kobject->Set(name, value);
 	}
 
-	bool KKJSList::Equals(SharedKObject other)
+	bool KKJSList::Equals(KObjectRef other)
 	{
 		return this->kobject->Equals(other);
 	}

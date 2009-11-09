@@ -18,16 +18,16 @@ namespace kroll
 		KPythonObject(PyObject *obj, bool readOnly);
 		virtual ~KPythonObject();
 
-		virtual void Set(const char *name, SharedValue value);
-		virtual SharedValue Get(const char *name);
-		virtual bool Equals(SharedKObject);
+		virtual void Set(const char *name, KValueRef value);
+		virtual KValueRef Get(const char *name);
+		virtual bool Equals(KObjectRef);
 		virtual SharedStringList GetPropertyNames();
 		PyObject* ToPython();
 
 	private:
 		PyObject *object;
 		bool readOnly;
-		SharedKObject delegate;
+		KObjectRef delegate;
 		DISALLOW_EVIL_CONSTRUCTORS(KPythonObject);
 	};
 }

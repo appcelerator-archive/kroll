@@ -47,17 +47,17 @@ namespace kroll
 		KJSUtil::UnprotectGlobalContext(this->context);
 	}
 
-	SharedValue KKJSMethod::Get(const char *name)
+	KValueRef KKJSMethod::Get(const char *name)
 	{
 		return kobject->Get(name);
 	}
 
-	void KKJSMethod::Set(const char *name, SharedValue value)
+	void KKJSMethod::Set(const char *name, KValueRef value)
 	{
 		return kobject->Set(name, value);
 	}
 
-	bool KKJSMethod::Equals(SharedKObject other)
+	bool KKJSMethod::Equals(KObjectRef other)
 	{
 		return this->kobject->Equals(other);
 	}
@@ -82,28 +82,54 @@ namespace kroll
 		return this->jsobject;
 	}
 
-	SharedValue KKJSMethod::Call(const ValueList& args)
+	KValueRef KKJSMethod::Call(JSObjectRef thisObject, const ValueList& args)
 	{
 		JSValueRef* jsArgs = new JSValueRef[args.size()];
 		for (int i = 0; i < (int) args.size(); i++)
 		{
-			SharedValue arg = args.at(i);
+			KValueRef arg = args.at(i);
 			jsArgs[i] = KJSUtil::ToJSValue(arg, this->context);
 		}
 
 		JSValueRef exception = NULL;
-		JSValueRef jsValue = JSObjectCallAsFunction(this->context, this->jsobject,
+		JSValueRef jsValue = JSObjectCallAsFunction(this->context, thisObject,
 			this->thisObject, args.size(), jsArgs, &exception);
 
 		delete [] jsArgs; // clean up args
 
 		if (jsValue == NULL && exception != NULL) //exception thrown
 		{
-			SharedValue exceptionValue = KJSUtil::ToKrollValue(exception, this->context, NULL);
+			KValueRef exceptionValue = KJSUtil::ToKrollValue(exception, this->context, NULL);
 			throw ValueException(exceptionValue);
 		}
 
 		return KJSUtil::ToKrollValue(jsValue, this->context, NULL);
+	}
+
+	KValueRef KKJSMethod::Call(const ValueList& args)
+	{
+		return this->Call(this->jsobject, args);
+	}
+
+	KValueRef KKJSMethod::Call(KObjectRef thisObject, const ValueList& args)
+	{
+		JSValueRef thisObjectValue = KJSUtil::ToJSValue(Value::NewObject(thisObject), this->context);
+		if (!JSValueIsObject(this->context, thisObjectValue))
+		{
+			SharedString ss(thisObject->DisplayString());
+			throw ValueException::FromFormat("Could not convert %s to JSObjectRef for KKJSMethod::Call",
+				ss->c_str());
+		}
+
+		JSObjectRef jsThisObject = JSValueToObject(this->context, thisObjectValue, NULL);
+		if (!jsThisObject)
+		{
+			SharedString ss(thisObject->DisplayString());
+			throw ValueException::FromFormat("Could not convert %s to JSObjectRef for KKJSMethod::Call",
+				ss->c_str());
+		}
+
+		return this->Call(jsThisObject, args);
 	}
 }
 

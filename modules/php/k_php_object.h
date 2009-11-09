@@ -14,11 +14,11 @@ namespace kroll
 		KPHPObject(zval* object);
 		virtual ~KPHPObject();
 
-		virtual void Set(const char *name, SharedValue value);
-		virtual SharedValue Get(const char *name);
+		virtual void Set(const char *name, KValueRef value);
+		virtual KValueRef Get(const char *name);
 		virtual SharedStringList GetPropertyNames();
 		virtual SharedString DisplayString(int);
-		virtual bool Equals(SharedKObject);
+		virtual bool Equals(KObjectRef);
 		bool PropertyExists(const char* property TSRMLS_DC);
 		bool MethodExists(const char* methodName TSRMLS_DC);
 		zval* ToPHP();

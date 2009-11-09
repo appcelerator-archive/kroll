@@ -42,7 +42,7 @@ namespace kroll
 			oss << "[";
 			for (unsigned int i = 0; i < this->Size(); i++)
 			{
-				SharedValue list_val = this->At(i);
+				KValueRef list_val = this->At(i);
 				SharedString list_str = list_val->DisplayString(levels-1);
 				oss << " " << *list_str << ",";
 			}
@@ -70,7 +70,7 @@ namespace kroll
 		return true;
 	}
 
-	SharedKList KList::Unwrap(SharedKList o)
+	KListRef KList::Unwrap(KListRef o)
 	{
 		AutoPtr<ProfiledBoundList> plist = o.cast<ProfiledBoundList>();
 		if (plist.isNull())

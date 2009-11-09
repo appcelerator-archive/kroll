@@ -32,7 +32,7 @@ namespace kroll
 
 	void RubyModule::Stop()
 	{
-		SharedKObject global = this->host->GetGlobalObject();
+		KObjectRef global = this->host->GetGlobalObject();
 		global->Set("Ruby", Value::Undefined);
 		Script::GetInstance()->RemoveScriptEvaluator(this->binding);
 		this->binding = NULL;
@@ -44,7 +44,7 @@ namespace kroll
 	void RubyModule::InitializeBinding()
 	{
 		// Expose the Ruby evaluator into Kroll
-		SharedKObject global = this->host->GetGlobalObject();
+		KObjectRef global = this->host->GetGlobalObject();
 		this->binding = new RubyEvaluator();
 		global->Set("Ruby", Value::NewObject(binding));
 		Script::GetInstance()->AddScriptEvaluator(this->binding);

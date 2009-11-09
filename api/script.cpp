@@ -42,12 +42,12 @@ namespace kroll
 		return scriptStr.substr(scriptStr.rfind("."));
 	}
 	
-	void Script::AddScriptEvaluator(SharedKObject evaluator)
+	void Script::AddScriptEvaluator(KObjectRef evaluator)
 	{
 		evaluators->Append(Value::NewObject(evaluator));
 	}
 	
-	void Script::RemoveScriptEvaluator(SharedKObject evaluator)
+	void Script::RemoveScriptEvaluator(KObjectRef evaluator)
 	{
 		int index = -1;
 		for (size_t i = 0; i < evaluators->Size(); i++)
@@ -64,17 +64,17 @@ namespace kroll
 		}
 	}
 	
-	SharedKObject Script::FindEvaluatorWithMethod(const char *method, const char *arg)
+	KObjectRef Script::FindEvaluatorWithMethod(const char *method, const char *arg)
 	{
 		ValueList args;
 		args.push_back(Value::NewString(arg));
 		
 		for (size_t i = 0; i < evaluators->Size(); i++)
 		{
-			SharedKMethod finder = evaluators->At(i)->ToObject()->GetMethod(method);
+			KMethodRef finder = evaluators->At(i)->ToObject()->GetMethod(method);
 			if (!finder.isNull())
 			{
-				SharedValue result = finder->Call(args);
+				KValueRef result = finder->Call(args);
 				if (result->IsBool() && result->ToBool())
 				{
 					return evaluators->At(i)->ToObject();
@@ -94,12 +94,12 @@ namespace kroll
 		return !this->FindEvaluatorWithMethod("canPreprocess", url).isNull();
 	}
 	
-	SharedValue Script::Evaluate(const char *mimeType, const char *name, const char *code, SharedKObject scope)
+	KValueRef Script::Evaluate(const char *mimeType, const char *name, const char *code, KObjectRef scope)
 	{
-		SharedKObject evaluator = this->FindEvaluatorWithMethod("canEvaluate", mimeType);
+		KObjectRef evaluator = this->FindEvaluatorWithMethod("canEvaluate", mimeType);
 		if (!evaluator.isNull())
 		{
-			SharedKMethod evaluate = evaluator->GetMethod("evaluate");
+			KMethodRef evaluate = evaluator->GetMethod("evaluate");
 			if (!evaluate.isNull())
 			{
 				ValueList args;
@@ -121,30 +121,30 @@ namespace kroll
 		}
 	}
 	
-	AutoPtr<PreprocessData> Script::Preprocess(const char *url, SharedKObject scope)
+	AutoPtr<PreprocessData> Script::Preprocess(const char *url, KObjectRef scope)
 	{
-		SharedKObject evaluator = this->FindEvaluatorWithMethod("canPreprocess", url);
+		KObjectRef evaluator = this->FindEvaluatorWithMethod("canPreprocess", url);
 		if (!evaluator.isNull())
 		{
-			SharedKMethod preprocess = evaluator->GetMethod("preprocess");
+			KMethodRef preprocess = evaluator->GetMethod("preprocess");
 			if (!preprocess.isNull())
 			{
 				ValueList args;
 				args.push_back(Value::NewString(url));
 				args.push_back(Value::NewObject(scope));
 				
-				SharedValue result = preprocess->Call(args);
+				KValueRef result = preprocess->Call(args);
 				
 				if (result->IsObject())
 				{
-					SharedKObject object = result->ToObject();
+					KObjectRef object = result->ToObject();
 					AutoPtr<PreprocessData> data = new PreprocessData();
 					if (object->HasProperty("data"))
 					{
-						SharedValue objectData = object->Get("data");
+						KValueRef objectData = object->Get("data");
 						if (objectData->IsObject())
 						{
-							AutoBlob blobData = objectData->ToObject().cast<Blob>();
+							BlobRef blobData = objectData->ToObject().cast<Blob>();
 							if (!blobData.isNull())
 							{
 								data->data = blobData;

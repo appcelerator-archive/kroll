@@ -22,7 +22,7 @@ namespace kroll
 		Py_DECREF(this->tuple);
 	}
 
-	void KPythonTuple::Append(SharedValue value)
+	void KPythonTuple::Append(KValueRef value)
 	{
 		throw ValueException::FromString("Cannot modify the size of a Python tuple.");
 	}
@@ -39,13 +39,13 @@ namespace kroll
 		return false;
 	}
 
-	SharedValue KPythonTuple::At(unsigned int index)
+	KValueRef KPythonTuple::At(unsigned int index)
 	{
 		PyLockGIL lock;
 		if (index >= 0 && index < this->Size())
 		{
 			PyObject *p = PyTuple_GetItem(this->tuple, index);
-			SharedValue v = PythonUtils::ToKrollValue(p);
+			KValueRef v = PythonUtils::ToKrollValue(p);
 			Py_DECREF(p);
 			return v;
 		}
@@ -55,17 +55,17 @@ namespace kroll
 		}
 	}
 
-	void KPythonTuple::Set(const char *name, SharedValue value)
+	void KPythonTuple::Set(const char *name, KValueRef value)
 	{
 		throw ValueException::FromString("Cannot modify a Python tuple.");
 	}
 
-	void KPythonTuple::SetAt(unsigned int index, SharedValue value)
+	void KPythonTuple::SetAt(unsigned int index, KValueRef value)
 	{
 		throw ValueException::FromString("Cannot modify a Python tuple.");
 	}
 
-	SharedValue KPythonTuple::Get(const char *name)
+	KValueRef KPythonTuple::Get(const char *name)
 	{
 		if (KList::IsInt(name))
 		{
@@ -94,7 +94,7 @@ namespace kroll
 		return this->object->ToPython();
 	}
 
-	bool KPythonTuple::Equals(SharedKObject other)
+	bool KPythonTuple::Equals(KObjectRef other)
 	{
 		AutoPtr<KPythonTuple> pyOther = other.cast<KPythonTuple>();
 		if (pyOther.isNull())

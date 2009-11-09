@@ -19,7 +19,7 @@ namespace kroll {
 		zval_delref_p(object);
 	}
 
-	void KPHPObject::Set(const char *name, SharedValue value)
+	void KPHPObject::Set(const char *name, KValueRef value)
 	{
 		// zend_update_property will call the write_property handler, but will
 		// error out if the handler is NULL. add_property_zval_ex will try to
@@ -44,7 +44,7 @@ namespace kroll {
 		}
 	}
 
-	SharedValue KPHPObject::Get(const char *name)
+	KValueRef KPHPObject::Get(const char *name)
 	{
 		zval** zPropertyPtr;
 		unsigned int nameLength = strlen(name);
@@ -79,7 +79,7 @@ namespace kroll {
 		}
 	}
 
-	bool KPHPObject::Equals(SharedKObject other)
+	bool KPHPObject::Equals(KObjectRef other)
 	{
 		AutoPtr<KPHPObject> phpOther = other.cast<KPHPObject>();
 		if (phpOther.isNull())

@@ -320,7 +320,7 @@ namespace UTILS_NS
 
 			this->queryString += "?os=" + URLUtils::EncodeURIComponent(os);
 			this->queryString += "&osver=" + URLUtils::EncodeURIComponent(osver);
-			this->queryString += "&tiver=" + URLUtils::EncodeURIComponent(STRING(_PRODUCT_VERSION));
+			this->queryString += "&tiver=" + URLUtils::EncodeURIComponent(PRODUCT_VERSION);
 			this->queryString += "&mid=" + URLUtils::EncodeURIComponent(mid);
 			this->queryString += "&aid=" + URLUtils::EncodeURIComponent(this->id);
 			this->queryString += "&guid=" + URLUtils::EncodeURIComponent(this->guid);

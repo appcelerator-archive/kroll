@@ -7,14 +7,19 @@
 #define _KR_PROXY_CONFIG_H_
 namespace kroll
 {
+	class KROLL_API BypassEntry
+	{
+	public:
+		BypassEntry() : port(0) {}
+		std::string scheme;
+		std::string host;
+		unsigned short port;
+	};
+
 	class KROLL_API Proxy
 	{
-		public:
+	public:
 		SharedURI info;
-		std::vector<SharedURI> bypassList;
-		bool ShouldBypass(Poco::URI& uri);
-		static bool IsIPAddress(std::string& str);
-		static SharedURI ProxyEntryToURI(std::string& entry);
 	};
 
 	namespace ProxyConfig
@@ -24,7 +29,12 @@ namespace kroll
 		KROLL_API SharedProxy GetHTTPProxyOverride();
 		KROLL_API SharedProxy GetHTTPSProxyOverride();
 		KROLL_API SharedProxy GetProxyForURL(std::string& url);
-		KROLL_API SharedProxy GetProxyForURLImpl(Poco::URI& uri);
+
+		SharedProxy GetProxyForURLImpl(Poco::URI& uri);
+		bool ShouldBypass(Poco::URI& uri,
+			std::vector<SharedPtr<BypassEntry> >& bypassList);
+		SharedPtr<BypassEntry> ParseBypassEntry(std::string entry);
+		Logger* GetLogger();
 	};
 }
 #endif

@@ -299,6 +299,17 @@ class BuildConfig(object):
 			libpath = path.join(self.third_party, 'poco', 'lib')
 			libs = ['PocoFoundation', 'PocoNet', 'PocoNetSSL', 'PocoUtil',
 			        'PocoXML', 'PocoZip', 'PocoData', 'PocoSQLite']
+
+		if name is 'curl' and self.is_win32(): # Don't judge us!
+			cpppath = path.join(self.third_party, 'webkit', 'include')
+			libpath = path.join(self.third_party, 'webkit', 'lib')
+			libs = ['libcurl_imp']
+
+		elif name is 'curl':
+			cpppath = path.join(self.third_party, 'curl', 'include')
+			libpath = path.join(self.third_party, 'curl', 'lib')
+			libs = ['curl']
+
 		env.Append(CPPPATH=[cpppath])
 		env.Append(LIBPATH=[libpath])
 		env.Append(LIBS=[libs])

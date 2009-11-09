@@ -10,7 +10,7 @@
 
 namespace kroll
 {
-	typedef Callback2<const ValueList&, SharedValue>::Type MethodCallback;
+	typedef Callback2<const ValueList&, KValueRef>::Type MethodCallback;
 
 	/**
 	 * An abstract representation of a method
@@ -28,20 +28,27 @@ namespace kroll
 		 * Errors will result in a thrown ValueException
 		 * @return the return value of this method
 		 */
-		virtual SharedValue Call(const ValueList& args) = 0;
+		virtual KValueRef Call(const ValueList& args) = 0;
+
+		/**
+		 * Call this method with the given 'this' object and arguments.
+		 * Errors will result in a thrown ValueException
+		 * @return the return value of this method
+		 */
+		virtual KValueRef Call(KObjectRef thisObject, const ValueList& args);
 
 		/**
 		 * Set a property on this object to the given value
 		 * Errors will result in a thrown ValueException
 		 */
-		virtual void Set(const char *name, SharedValue value) = 0;
+		virtual void Set(const char* name, KValueRef value) = 0;
 
 		/**
 		 * @return the property with the given name or Value::Undefined
 		 * if the property is not found.
 		 * Errors will result in a thrown ValueException
 		 */
-		virtual SharedValue Get(const char *name) = 0;
+		virtual KValueRef Get(const char* name) = 0;
 
 		/**
 		 * @return a list of this object's property names.
@@ -56,21 +63,18 @@ namespace kroll
 		/**
 		 * Return the unwrapped version of this object
 		 */
-		static SharedKMethod Unwrap(SharedKMethod);
+		static KMethodRef Unwrap(KMethodRef);
 
 		/* Convenience methods below */
-		SharedValue Call(SharedValue one);
-		SharedValue Call(SharedValue one, SharedValue two);
-		SharedValue Call(SharedValue one, SharedValue two, SharedValue three);
-		SharedValue Call();
-		SharedValue Call(const char *one);
-		SharedValue Call(const char *one, SharedValue two);
-		SharedValue Call(const char *one, SharedValue two, SharedValue three);
-		SharedValue Call(
-			const char *one,
-			SharedValue two,
-			SharedValue three,
-			SharedValue four);
+		KValueRef Call(KValueRef one);
+		KValueRef Call(KValueRef one, KValueRef two);
+		KValueRef Call(KValueRef one, KValueRef two, KValueRef three);
+		KValueRef Call();
+		KValueRef Call(const char* one);
+		KValueRef Call(const char* one, KValueRef two);
+		KValueRef Call(const char* one, KValueRef two, KValueRef three);
+		KValueRef Call(const char* one, KValueRef two, KValueRef three,
+			KValueRef four);
 
 	private:
 		DISALLOW_EVIL_CONSTRUCTORS(KMethod);

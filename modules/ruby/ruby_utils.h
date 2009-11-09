@@ -14,15 +14,15 @@ namespace kroll
 	class RubyUtils
 	{
 	public:
-		static SharedValue ToKrollValue(VALUE value);
-		static VALUE ToRubyValue(SharedValue value);
-		static VALUE KObjectToRubyValue(SharedValue value);
-		static VALUE KMethodToRubyValue(SharedValue value);
-		static VALUE KListToRubyValue(SharedValue value);
+		static KValueRef ToKrollValue(VALUE value);
+		static VALUE ToRubyValue(KValueRef value);
+		static VALUE KObjectToRubyValue(KValueRef value);
+		static VALUE KMethodToRubyValue(KValueRef value);
+		static VALUE KListToRubyValue(KValueRef value);
 		static bool KindOf(VALUE value, VALUE klass);
 
 		static ValueException GetException();
-		static VALUE GenericKMethodCall(SharedKMethod method, VALUE args);
+		static VALUE GenericKMethodCall(KMethodRef method, VALUE args);
 
 	private:
 		static VALUE KObjectClass;

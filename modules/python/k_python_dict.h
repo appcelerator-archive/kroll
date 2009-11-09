@@ -17,9 +17,9 @@ namespace kroll
 		KPythonDict(PyObject *obj);
 		virtual ~KPythonDict();
 
-		virtual void Set(const char *name, SharedValue value);
-		virtual SharedValue Get(const char *name);
-		virtual bool Equals(SharedKObject);
+		virtual void Set(const char *name, KValueRef value);
+		virtual KValueRef Get(const char *name);
+		virtual bool Equals(KObjectRef);
 		virtual SharedStringList GetPropertyNames();
 
 		PyObject* ToPython();

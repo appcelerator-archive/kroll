@@ -14,13 +14,13 @@ namespace kroll
 		RubyEvaluator();
 		~RubyEvaluator();
 
-		void CanEvaluate(const ValueList& args, SharedValue result);
-		void Evaluate(const ValueList& args, SharedValue result);
+		void CanEvaluate(const ValueList& args, KValueRef result);
+		void Evaluate(const ValueList& args, KValueRef result);
 
 		private:
-		std::string GetContextId(SharedKObject global);
-		VALUE GetContext(SharedKObject global);
-		void ContextToGlobal(VALUE ctx, SharedKObject o);
+		std::string GetContextId(KObjectRef global);
+		VALUE GetContext(KObjectRef global);
+		void ContextToGlobal(VALUE ctx, KObjectRef o);
 	};
 }
 

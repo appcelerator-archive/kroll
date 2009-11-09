@@ -26,15 +26,15 @@ namespace kroll
 		return properties.find(name) != properties.end();
 	}
 	
-	SharedValue StaticBoundObject::Get(const char *name)
+	KValueRef StaticBoundObject::Get(const char *name)
 	{
 		ScopedLock lock(&mutex);
 
 		// TODO: Referencing global Undefined here is causing
 		// invalid access in win32? (need to look into it..)
-		SharedValue result = Value::NewUndefined();
+		KValueRef result = Value::NewUndefined();
 
-		std::map<std::string, SharedValue>::iterator iter;
+		std::map<std::string, KValueRef>::iterator iter;
 		iter = properties.find(std::string(name));
 		if (iter != properties.end()) 
 		{
@@ -43,7 +43,7 @@ namespace kroll
 		return result;
 	}
 
-	void StaticBoundObject::Set(const char *name, SharedValue value)
+	void StaticBoundObject::Set(const char *name, KValueRef value)
 	{
 		{
 			ScopedLock lock(&mutex);
@@ -58,7 +58,7 @@ namespace kroll
 		bool found = false;
 		{
 			ScopedLock lock(&mutex);
-			std::map<std::string, SharedValue>::iterator iter;
+			std::map<std::string, KValueRef>::iterator iter;
 			iter = this->properties.find(std::string(name));
 			if (this->properties.end() != iter)
 			{
@@ -78,7 +78,7 @@ namespace kroll
 		SharedStringList list(new StringList());
 
 		ScopedLock lock(&mutex);
-		std::map<std::string, SharedValue>::iterator iter;
+		std::map<std::string, KValueRef>::iterator iter;
 		iter = properties.begin();
 		while (iter != properties.end())
 		{

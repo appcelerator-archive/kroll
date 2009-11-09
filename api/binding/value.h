@@ -29,9 +29,9 @@ namespace kroll
 			DOUBLE = 2, /**< double */
 			BOOL = 3, /**< boolean */
 			STRING = 4, /**< const char* */
-			LIST = 5, /**< SharedKList */
-			OBJECT = 6, /**< SharedKObject */
-			METHOD = 7, /**< SharedKMethod */
+			LIST = 5, /**< KListRef */
+			OBJECT = 6, /**< KObjectRef */
+			METHOD = 7, /**< KMethodRef */
 			VOIDPTR = 8, /**< void* */
 			NULLV = 0, /**< NULL */
 			UNDEFINED = -1 /**< undefined */
@@ -40,75 +40,75 @@ namespace kroll
 		/**
 		 * A static, reusable instance who's value is Value::Type::UNDEFINED.
 		 */
-		static SharedValue Undefined;
+		static KValueRef Undefined;
 
 		/**
 		 * A static, reusable instance who's value is Value::Type::NULL
 		 */
-		static SharedValue Null;
+		static KValueRef Null;
 
-		static SharedValue NewUndefined();
-		static SharedValue NewNull();
+		static KValueRef NewUndefined();
+		static KValueRef NewNull();
 
 		/**
 		 * Construct a new \link #Value::Type::INT integer\endlink value.
 		 * @param value The integer value
 		 */
-		static SharedValue NewInt(int value);
+		static KValueRef NewInt(int value);
 
 		/**
 		 * Construct a new \link #Value::Type::DOUBLE double\endlink value.
 		 * @param value The double value
 		 */
-		static SharedValue NewDouble(double value);
+		static KValueRef NewDouble(double value);
 
 		/**
 		 * Construct a new \link #Value::Type::BOOL boolean\endlink value.
 		 * @param value The boolean value
 		 */
-		static SharedValue NewBool(bool value);
+		static KValueRef NewBool(bool value);
 
 		/**
 		 * Construct a new \link #Value::Type::STRING string\endlink value.
 		 * @param value The string value
 		 */
-		static SharedValue NewString(const char* value);
+		static KValueRef NewString(const char* value);
 
 		/**
 		 * Construct a new \link #Value::Type::STRING string\endlink value.
 		 * @param value The string value
 		 */
-		static SharedValue NewString(std::string value);
+		static KValueRef NewString(std::string value);
 
 		/**
 		 * Construct a new \link #Value::Type::STRING string\endlink value.
 		 * @param value The string value
 		 */
-		static SharedValue NewString(SharedString value);
+		static KValueRef NewString(SharedString value);
 
 		/**
 		 * Construct a new \link #Value::Type::LIST list\endlink value.
 		 * @param value The list value
 		 */
-		static SharedValue NewList(SharedKList value);
+		static KValueRef NewList(KListRef value);
 
 		/**
 		 * Construct a new \link #Value::Type::OBJECT object\endlink value.
 		 * @param value The object value
 		 */
-		static SharedValue NewObject(SharedKObject value);
+		static KValueRef NewObject(KObjectRef value);
 
 		/**
 		 * Construct a new \link #Value::Type::METHOD method\endlink value.
 		 * @param value The method value
 		 */
-		static SharedValue NewMethod(SharedKMethod value);
+		static KValueRef NewMethod(KMethodRef value);
 
 		/**
 		 * Construct a new \link #Value::Type::VOIDPTR void*\endlink value.
 		 * @param value The void* value
 		 */
-		static SharedValue NewVoidPtr(void *value);
+		static KValueRef NewVoidPtr(void *value);
 
 		virtual ~Value();
 
@@ -116,7 +116,7 @@ namespace kroll
 		/**
 		 * Test underlying value's equality to another Value
 		 */
-		bool Equals(SharedValue);
+		bool Equals(KValueRef);
 
 		/**
 		 * @return true if the internal value is an \link #Value::Type::INT integer\endlink
@@ -199,19 +199,19 @@ namespace kroll
 		const char* ToString() const;
 
 		/**
-		 * @return the value as a \link #Value::Type::LIST SharedKList\endlink
+		 * @return the value as a \link #Value::Type::LIST KListRef\endlink
 		 */
-		SharedKList ToList() const;
+		KListRef ToList() const;
 
 		/**
-		 * @return the value as a \link #Value::Type::OBJECT SharedKObject\endlink
+		 * @return the value as a \link #Value::Type::OBJECT KObjectRef\endlink
 		 */
-		SharedKObject ToObject() const;
+		KObjectRef ToObject() const;
 
 		/**
-		 * @return the value as a \link #Value::Type::METHOD SharedKMethod\endlink
+		 * @return the value as a \link #Value::Type::METHOD KMethodRef\endlink
 		 */
-		SharedKMethod ToMethod() const;
+		KMethodRef ToMethod() const;
 
 		/**
 		 * @return the value as a \link #Value::Type::VOIDPTR void*\endlink
@@ -239,7 +239,7 @@ namespace kroll
 		 * Change the internal value of this Value from another Value object.
 		 * @param other another Value
 		 */
-		void SetValue(SharedValue other);
+		void SetValue(KValueRef other);
 
 		/**
 		 * Change the internal value of this Value to an \link #Value::Type::INT integer\endlink
@@ -281,19 +281,19 @@ namespace kroll
 		 * Change the internal value of this Value to an \link #Value::Type::LIST list\endlink
 		 * @param value the list value
 		 */
-		void SetList(SharedKList value);
+		void SetList(KListRef value);
 
 		/**
 		 * Change the internal value of this Value to an \link #Value::Type::OBJECT object\endlink
 		 * @param value the object value
 		 */
-		void SetObject(SharedKObject value);
+		void SetObject(KObjectRef value);
 
 		/**
 		 * Change the internal value of this Value to an \link #Value::Type::METHOD method\endlink
 		 * @param value the method value
 		 */
-		void SetMethod(SharedKMethod value);
+		void SetMethod(KMethodRef value);
 
 		/**
 		 * Change the internal value of this Value to an \link #Value::Type::VOIDPTR void*\endlink
@@ -314,20 +314,20 @@ namespace kroll
 		/**
 		 * Replace a value wth an unwrapped value
 		 */
-		static void Unwrap(SharedValue value);
+		static void Unwrap(KValueRef value);
 
 	private:
 		Type type;
 		double numberValue;
 		bool boolValue;
 		char* stringValue;
-		SharedKObject objectValue;
+		KObjectRef objectValue;
 		void *voidPtrValue;
 
 		void reset();
 
 		Value();
-		Value(SharedValue value);
+		Value(KValueRef value);
 		Value(const Value& value);
 	};
 

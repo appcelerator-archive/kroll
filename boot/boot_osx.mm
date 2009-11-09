@@ -13,6 +13,25 @@
 #include <Foundation/Foundation.h>
 #endif
 
+@interface KrollApplicationDelegate : NSObject
+-(BOOL)application:(NSApplication*)theApplication
+	openFile:(NSString*)filename;
+-(BOOL)application:(NSApplication*)theApplication
+	openFiles:(NSArray*)filenames;
+@end
+
+@implementation KrollApplicationDelegate
+-(BOOL)application:(NSApplication*)theApplication openFile:(NSString*)filename
+{
+	return YES;
+}
+
+-(BOOL)application:(NSApplication*)theApplication openFiles:(NSArray*)filenames
+{
+	return YES;
+}
+@end
+
 namespace KrollBoot
 {
 	extern string applicationHome;
@@ -24,10 +43,14 @@ namespace KrollBoot
 	void ShowError(std::string error, bool fatal)
 	{
 		NSApplicationLoad();
+
+		NSString* buttonText = @"Continue";
+		if (fatal)
+			buttonText = @"Quit";
+
 		NSRunCriticalAlertPanel(
-			[NSString stringWithCString:GetApplicationName().c_str() encoding:NSUTF8StringEncoding],
-			[NSString stringWithCString:error.c_str() encoding:NSUTF8StringEncoding], 
-			@"Quit", nil, nil);
+			[NSString stringWithUTF8String:GetApplicationName().c_str()],
+			[NSString stringWithUTF8String:error.c_str()], buttonText, nil, nil);
 
 		if (fatal)
 			exit(1);
@@ -165,7 +188,7 @@ namespace KrollBoot
 		if (succeeded)
 		{
 			snprintf(breakpadCallBuffer, PATH_MAX - 1,
-				 "\"%s\" %s \"%s\" %s &", argv[0], CRASH_REPORT_OPT, dumpPath, dumpId);
+				"\"%s\" %s \"%s\" %s &", argv[0], CRASH_REPORT_OPT, dumpPath, dumpId);
 			system(breakpadCallBuffer);
 		}
 		return true;
@@ -181,11 +204,11 @@ namespace KrollBoot
 
 		InitCrashDetection();
 		NSApplicationLoad();
-		NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-		NSString *title = [NSString stringWithCString:GetCrashDetectionHeader().c_str() encoding:NSUTF8StringEncoding];
-		NSString *message = [NSString stringWithCString:GetCrashDetectionMessage().c_str() encoding:NSUTF8StringEncoding];
-		[alert setMessageText: title];
-		[alert setInformativeText: message];
+		NSAlert* alert = [[[NSAlert alloc] init] autorelease];
+		[alert setMessageText: 
+			[NSString stringWithUTF8String:GetCrashDetectionHeader().c_str()]];
+		[alert setInformativeText:
+			[NSString stringWithUTF8String:GetCrashDetectionMessage().c_str()]];
 		[alert addButtonWithTitle:@"Send Report"];
 		[alert addButtonWithTitle:@"Cancel"];
 		int response = [alert runModal];
@@ -234,6 +257,10 @@ int main(int argc, char* argv[])
 	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 	KrollBoot::argc = argc;
 	KrollBoot::argv = (const char**) argv;
+
+	[[NSApplication sharedApplication] setDelegate:
+		[[KrollApplicationDelegate alloc] init]];
+	NSApplicationLoad();
 
 #ifdef USE_BREAKPAD
 	if (argc > 2 && !strcmp(CRASH_REPORT_OPT, argv[1]))

@@ -18,28 +18,28 @@ namespace kroll
 	class KROLL_API ProfiledBoundObject : public KObject
 	{
 		public:
-		ProfiledBoundObject(SharedKObject delegate);
+		ProfiledBoundObject(KObjectRef delegate);
 		virtual ~ProfiledBoundObject();
 		static void SetStream(Poco::FileOutputStream*);
 
 		public:
 		// @see KObject::Set
-		virtual void Set(const char *name, SharedValue value);
+		virtual void Set(const char *name, KValueRef value);
 		// @see KObject::Get
-		virtual SharedValue Get(const char *name);
+		virtual KValueRef Get(const char *name);
 		// @see KObject::GetPropertyNames
 		virtual SharedStringList GetPropertyNames();
 		// @see KObject::DisplayString
 		virtual SharedString DisplayString(int levels=3);
 		// @see KObject::Equals
-		virtual bool Equals(SharedKObject other);
+		virtual bool Equals(KObjectRef other);
 
 		bool HasProperty(const char* name);
 
 		/**
 		 * @return the delegate of this profiled bound object
 		 */
-		SharedKObject GetDelegate() { return delegate; }
+		KObjectRef GetDelegate() { return delegate; }
 		virtual void duplicate()
 		{
 			++count;
@@ -59,11 +59,11 @@ namespace kroll
 		}
 
 	protected:
-		SharedKObject delegate;
-		SharedValue Wrap(SharedValue value, std::string type);
+		KObjectRef delegate;
+		KValueRef Wrap(KValueRef value, std::string type);
 		std::string GetSubType(std::string name);
 		void Log(const char* eventType, std::string& name, Poco::Timestamp::TimeDiff);
-		static bool AlreadyWrapped(SharedValue);
+		static bool AlreadyWrapped(KValueRef);
 		static Poco::FileOutputStream *stream;
 		static Poco::Mutex logMutex;
 		Poco::AtomicCounter count;

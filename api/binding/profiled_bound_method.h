@@ -15,15 +15,15 @@ namespace kroll
 	class ProfiledBoundMethod : public ProfiledBoundObject, public KMethod
 	{
 	public:
-		ProfiledBoundMethod(SharedKMethod delegate, std::string& parentType);
+		ProfiledBoundMethod(KMethodRef delegate, std::string& parentType);
 		virtual ~ProfiledBoundMethod();
 
 		// @see KMethod::Call
-		virtual SharedValue Call(const ValueList& args);
+		virtual KValueRef Call(const ValueList& args);
 		// @see KMethod::Set
-		virtual void Set(const char *name, SharedValue value);
+		virtual void Set(const char *name, KValueRef value);
 		// @see KMethod::Get
-		virtual SharedValue Get(const char *name);
+		virtual KValueRef Get(const char *name);
 		// @see KMethod::GetPropertyNames
 		virtual SharedStringList GetPropertyNames();
 		// @see KObject::GetType
@@ -34,7 +34,7 @@ namespace kroll
 		/**
 		 * @return the delegate of this profiled bound method
 		 */
-		SharedKMethod GetDelegate() { return method; }
+		KMethodRef GetDelegate() { return method; }
 		virtual void duplicate()
 		{
 			++count;
@@ -54,7 +54,7 @@ namespace kroll
 		}
 
 	private:
-		SharedKMethod method;
+		KMethodRef method;
 		std::string fullType;
 		Poco::AtomicCounter count;
 

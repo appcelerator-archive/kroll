@@ -41,16 +41,16 @@ namespace KJSUtil
 	static JSValueRef EqualsCallback(JSContextRef, JSObjectRef, JSObjectRef, size_t, const JSValueRef[], JSValueRef*);
 
 	// Private functions
-	static void AddSpecialPropertyNames(SharedValue, SharedStringList, bool);
-	static JSValueRef GetSpecialProperty(SharedValue, const char*, JSContextRef, SharedValue);
-	static bool DoSpecialSetBehavior(SharedValue target, const char* name, SharedValue newValue);
+	static void AddSpecialPropertyNames(KValueRef, SharedStringList, bool);
+	static JSValueRef GetSpecialProperty(KValueRef, const char*, JSContextRef, KValueRef);
+	static bool DoSpecialSetBehavior(KValueRef target, const char* name, KValueRef newValue);
 	static JSValueRef GetFunctionPrototype(JSContextRef jsContext, JSValueRef* exception);
 	static JSValueRef GetArrayPrototype(JSContextRef jsContext, JSValueRef* exception);
 
-	SharedValue ToKrollValue(JSValueRef value, JSContextRef jsContext,
+	KValueRef ToKrollValue(JSValueRef value, JSContextRef jsContext,
 		JSObjectRef thisObject)
 	{
-		SharedValue krollValue = 0;
+		KValueRef krollValue = 0;
 		JSValueRef exception = NULL;
 
 		if (value == NULL)
@@ -82,7 +82,7 @@ namespace KJSUtil
 			JSObjectRef o = JSValueToObject(jsContext, value, &exception);
 			if (o != NULL)
 			{
-				SharedValue* value = static_cast<SharedValue*>(JSObjectGetPrivate(o));
+				KValueRef* value = static_cast<KValueRef*>(JSObjectGetPrivate(o));
 				if (value != NULL)
 				{
 					// This is a KJS-wrapped Kroll value: unwrap it
@@ -91,19 +91,19 @@ namespace KJSUtil
 				else if (JSObjectIsFunction(jsContext, o))
 				{
 					// this is a pure JS method: proxy it
-					SharedKMethod tibm = new KKJSMethod(jsContext, o, thisObject);
+					KMethodRef tibm = new KKJSMethod(jsContext, o, thisObject);
 					krollValue = Value::NewMethod(tibm);
 				}
 				else if (IsArrayLike(o, jsContext))
 				{
 					// this is a pure JS array: proxy it
-					SharedKList tibl = new KKJSList(jsContext, o);
+					KListRef tibl = new KKJSList(jsContext, o);
 					krollValue = Value::NewList(tibl);
 				}
 				else
 				{
 					// this is a pure JS object: proxy it
-					SharedKObject tibo = new KKJSObject(jsContext, o);
+					KObjectRef tibo = new KKJSObject(jsContext, o);
 					krollValue = Value::NewObject(tibo);
 				}
 			}
@@ -131,7 +131,7 @@ namespace KJSUtil
 		}
 	}
 
-	JSValueRef ToJSValue(SharedValue value, JSContextRef jsContext)
+	JSValueRef ToJSValue(KValueRef value, JSContextRef jsContext)
 	{
 		JSValueRef jsValue = NULL;
 		if (value->IsInt())
@@ -154,7 +154,7 @@ namespace KJSUtil
 		}
 		else if (value->IsObject())
 		{
-			SharedKObject obj = value->ToObject();
+			KObjectRef obj = value->ToObject();
 			AutoPtr<KKJSObject> kobj = obj.cast<KKJSObject>();
 			if (!kobj.isNull() && kobj->SameContextGroup(jsContext))
 			{
@@ -169,7 +169,7 @@ namespace KJSUtil
 		}
 		else if (value->IsMethod())
 		{
-			SharedKMethod meth = value->ToMethod();
+			KMethodRef meth = value->ToMethod();
 			AutoPtr<KKJSMethod> kmeth = meth.cast<KKJSMethod>();
 			if (!kmeth.isNull() && kmeth->SameContextGroup(jsContext))
 			{
@@ -184,7 +184,7 @@ namespace KJSUtil
 		}
 		else if (value->IsList())
 		{
-			SharedKList list = value->ToList();
+			KListRef list = value->ToList();
 			AutoPtr<KKJSList> klist = list.cast<KKJSList>();
 			if (!klist.isNull() && klist->SameContextGroup(jsContext))
 			{
@@ -214,7 +214,7 @@ namespace KJSUtil
 
 	}
 
-	JSValueRef KObjectToJSValue(SharedValue objectValue, JSContextRef jsContext)
+	JSValueRef KObjectToJSValue(KValueRef objectValue, JSContextRef jsContext)
 	{
 		if (KJSKObjectClass == NULL)
 		{
@@ -227,10 +227,10 @@ namespace KJSUtil
 			jsClassDefinition.setProperty = SetPropertyCallback;
 			KJSKObjectClass = JSClassCreate(&jsClassDefinition);
 		}
-		return JSObjectMake(jsContext, KJSKObjectClass, new SharedValue(objectValue));
+		return JSObjectMake(jsContext, KJSKObjectClass, new KValueRef(objectValue));
 	}
 
-	JSValueRef KMethodToJSValue(SharedValue methodValue, JSContextRef jsContext)
+	JSValueRef KMethodToJSValue(KValueRef methodValue, JSContextRef jsContext)
 	{
 		if (KJSKMethodClass == NULL)
 		{
@@ -244,13 +244,13 @@ namespace KJSUtil
 			jsClassDefinition.callAsFunction = CallAsFunctionCallback;
 			KJSKMethodClass = JSClassCreate(&jsClassDefinition);
 		}
-		JSObjectRef jsobject = JSObjectMake(jsContext, KJSKMethodClass, new SharedValue(methodValue));
+		JSObjectRef jsobject = JSObjectMake(jsContext, KJSKMethodClass, new KValueRef(methodValue));
 		JSValueRef functionPrototype = GetFunctionPrototype(jsContext, NULL);
 		JSObjectSetPrototype(jsContext, jsobject, functionPrototype);
 		return jsobject;
 	}
 
-	JSValueRef KListToJSValue(SharedValue listValue, JSContextRef jsContext)
+	JSValueRef KListToJSValue(KValueRef listValue, JSContextRef jsContext)
 	{
 
 		if (KJSKListClass == NULL)
@@ -265,7 +265,7 @@ namespace KJSUtil
 			KJSKListClass = JSClassCreate(&jsClassDefinition);
 		}
 
-		JSObjectRef jsobject = JSObjectMake(jsContext, KJSKListClass, new SharedValue(listValue));
+		JSObjectRef jsobject = JSObjectMake(jsContext, KJSKListClass, new KValueRef(listValue));
 		JSValueRef arrayPrototype = GetArrayPrototype(jsContext, NULL);
 		JSObjectSetPrototype(jsContext, jsobject, arrayPrototype);
 		return jsobject;
@@ -302,7 +302,7 @@ namespace KJSUtil
 
 	static void FinalizeCallback(JSObjectRef jsObject)
 	{
-		SharedValue* value = static_cast<SharedValue*>(JSObjectGetPrivate(jsObject));
+		KValueRef* value = static_cast<KValueRef*>(JSObjectGetPrivate(jsObject));
 		delete value;
 	}
 
@@ -331,12 +331,12 @@ namespace KJSUtil
 	static bool HasPropertyCallback(JSContextRef jsContext, JSObjectRef jsObject,
 		JSStringRef jsProperty)
 	{
-		SharedValue* value = static_cast<SharedValue*>(JSObjectGetPrivate(jsObject));
+		KValueRef* value = static_cast<KValueRef*>(JSObjectGetPrivate(jsObject));
 		if (value == NULL)
 			return false;
 
 		// Convert the name to a std::string.
-		SharedKObject object = (*value)->ToObject();
+		KObjectRef object = (*value)->ToObject();
 		std::string name(ToChars(jsProperty));
 
 		// Special properties always take precedence. This is important
@@ -368,16 +368,16 @@ namespace KJSUtil
 		JSObjectRef jsObject, JSStringRef jsProperty, JSValueRef* jsException)
 	{
 
-		SharedValue* value = static_cast<SharedValue*>(JSObjectGetPrivate(jsObject));
+		KValueRef* value = static_cast<KValueRef*>(JSObjectGetPrivate(jsObject));
 		if (value == NULL)
 			return JSValueMakeUndefined(jsContext);
 
-		SharedKObject object = (*value)->ToObject();
+		KObjectRef object = (*value)->ToObject();
 		std::string name(ToChars(jsProperty));
 		JSValueRef jsValue = NULL;
 		try
 		{
-			SharedValue kvalue = object->Get(name.c_str());
+			KValueRef kvalue = object->Get(name.c_str());
 			jsValue = GetSpecialProperty(*value, name.c_str(), jsContext, kvalue);
 		}
 		catch (ValueException& exception)
@@ -386,14 +386,14 @@ namespace KJSUtil
 		}
 		catch (std::exception &e)
 		{
-			SharedValue v = Value::NewString(e.what());
+			KValueRef v = Value::NewString(e.what());
 			*jsException = ToJSValue(v, jsContext);
 		}
 		catch (...)
 		{
 			std::string error = "Unknown exception trying to get property: ";
 			error.append(name);
-			SharedValue v = Value::NewString(error);
+			KValueRef v = Value::NewString(error);
 			*jsException = ToJSValue(v, jsContext);
 		}
 
@@ -403,16 +403,16 @@ namespace KJSUtil
 	static bool SetPropertyCallback(JSContextRef jsContext, JSObjectRef jsObject,
 		JSStringRef jsProperty, JSValueRef jsValue, JSValueRef* jsException)
 	{
-		SharedValue* value = static_cast<SharedValue*>(JSObjectGetPrivate(jsObject));
+		KValueRef* value = static_cast<KValueRef*>(JSObjectGetPrivate(jsObject));
 		if (value == NULL)
 			return false;
 
-		SharedKObject object = (*value)->ToObject();
+		KObjectRef object = (*value)->ToObject();
 		bool success = false;
 		std::string propertyName(ToChars(jsProperty));
 		try
 		{
-			SharedValue newValue = ToKrollValue(jsValue, jsContext, jsObject);
+			KValueRef newValue = ToKrollValue(jsValue, jsContext, jsObject);
 
 			// Arrays in particular have a special behavior when
 			// you do something like set the "length" property
@@ -428,14 +428,14 @@ namespace KJSUtil
 		}
 		catch (std::exception &e)
 		{
-			SharedValue v = Value::NewString(e.what());
+			KValueRef v = Value::NewString(e.what());
 			*jsException = ToJSValue(v, jsContext);
 		}
 		catch (...)
 		{
 			std::string error = "Unknown exception trying to set property: ";
 			error.append(propertyName);
-			SharedValue v = Value::NewString(error);
+			KValueRef v = Value::NewString(error);
 			*jsException = ToJSValue(v, jsContext);
 		}
 
@@ -446,15 +446,15 @@ namespace KJSUtil
 		JSObjectRef jsFunction, JSObjectRef jsThis, size_t argCount,
 		const JSValueRef jsArgs[], JSValueRef* jsException)
 	{
-		SharedValue* value = static_cast<SharedValue*>(JSObjectGetPrivate(jsFunction));
+		KValueRef* value = static_cast<KValueRef*>(JSObjectGetPrivate(jsFunction));
 		if (value == NULL)
 			return JSValueMakeUndefined(jsContext);
 
-		SharedKMethod method = (*value)->ToMethod();
+		KMethodRef method = (*value)->ToMethod();
 		ValueList args;
 		for (size_t i = 0; i < argCount; i++)
 		{
-			SharedValue argVal = ToKrollValue(jsArgs[i], jsContext, jsThis);
+			KValueRef argVal = ToKrollValue(jsArgs[i], jsContext, jsThis);
 			Value::Unwrap(argVal);
 			args.push_back(argVal);
 		}
@@ -462,7 +462,7 @@ namespace KJSUtil
 		JSValueRef jsValue = NULL;
 		try
 		{
-			SharedValue kvalue = method->Call(args);
+			KValueRef kvalue = method->Call(args);
 			jsValue = ToJSValue(kvalue, jsContext);
 		}
 		catch (ValueException& exception)
@@ -472,19 +472,19 @@ namespace KJSUtil
 		} 
 		catch (std::exception &e)
 		{
-			SharedValue v = Value::NewString(e.what());
+			KValueRef v = Value::NewString(e.what());
 			*jsException = ToJSValue(v, jsContext);
 		}
 		catch (...)
 		{
-			SharedValue v = Value::NewString("Unknown exception during Kroll method call");
+			KValueRef v = Value::NewString("Unknown exception during Kroll method call");
 			*jsException = ToJSValue(v, jsContext);
 		}
 
 		return jsValue;
 	}
 
-	static void AddSpecialPropertyNames(SharedValue value, SharedStringList props,
+	static void AddSpecialPropertyNames(KValueRef value, SharedStringList props,
 		bool showInvisible)
 	{
 		// Some attributes should be hidden unless the are requested specifically -- 
@@ -521,15 +521,15 @@ namespace KJSUtil
 		}
 	}
 
-	static JSValueRef GetSpecialProperty(SharedValue value, const char* name, 
-		JSContextRef jsContext, SharedValue objValue)
+	static JSValueRef GetSpecialProperty(KValueRef value, const char* name, 
+		JSContextRef jsContext, KValueRef objValue)
 	{
 		// Always override the length property on lists. Some languages
 		// supply their own length property, which might be a method instead
 		// of a number -- bad news.
 		if (value->IsList() && !strcmp(name, "length"))
 		{
-			SharedKList l = value->ToList();
+			KListRef l = value->ToList();
 			return JSValueMakeNumber(jsContext, l->Size());
 		}
 
@@ -562,7 +562,7 @@ namespace KJSUtil
 		return ToJSValue(objValue, jsContext);
 	}
 
-	static bool DoSpecialSetBehavior(SharedValue target, const char* name, SharedValue newValue)
+	static bool DoSpecialSetBehavior(KValueRef target, const char* name, KValueRef newValue)
 	{
 		// We only do something special if we are trying to set
 		// the length property of a list to a new int value.
@@ -578,12 +578,12 @@ namespace KJSUtil
 		JSObjectRef jsFunction, JSObjectRef jsThis, size_t argCount,
 		const JSValueRef args[], JSValueRef* exception)
 	{
-		SharedValue* value = static_cast<SharedValue*>(JSObjectGetPrivate(jsThis));
+		KValueRef* value = static_cast<KValueRef*>(JSObjectGetPrivate(jsThis));
 		if (value == NULL)
 			return JSValueMakeUndefined(jsContext);
 
 		SharedString ss = (*value)->DisplayString(2);
-		SharedValue dsv = Value::NewString(ss);
+		KValueRef dsv = Value::NewString(ss);
 		return ToJSValue(dsv, jsContext);
 	}
 
@@ -591,7 +591,7 @@ namespace KJSUtil
 		JSObjectRef jsThis, size_t numArgs, const JSValueRef args[],
 		JSValueRef* exception)
 	{
-		SharedValue* value = static_cast<SharedValue*>(JSObjectGetPrivate(jsThis));
+		KValueRef* value = static_cast<KValueRef*>(JSObjectGetPrivate(jsThis));
 		if (value == NULL || numArgs < 1)
 		{
 			return JSValueMakeBoolean(jsContext, false);
@@ -605,7 +605,7 @@ namespace KJSUtil
 
 		// Ensure argument is a Kroll JavaScript
 		JSObjectRef otherObject = JSValueToObject(jsContext, args[0], NULL);
-		SharedValue* otherValue = static_cast<SharedValue*>(JSObjectGetPrivate(otherObject));
+		KValueRef* otherValue = static_cast<KValueRef*>(JSObjectGetPrivate(otherObject));
 		if (otherValue == NULL)
 		{
 			return JSValueMakeBoolean(jsContext, false);
@@ -618,11 +618,11 @@ namespace KJSUtil
 	static void GetPropertyNamesCallback(JSContextRef jsContext,
 		JSObjectRef jsObject, JSPropertyNameAccumulatorRef jsProperties)
 	{
-		SharedValue* value = static_cast<SharedValue*>(JSObjectGetPrivate(jsObject));
+		KValueRef* value = static_cast<KValueRef*>(JSObjectGetPrivate(jsObject));
 		if (value == NULL)
 			return;
 
-		SharedKObject object = (*value)->ToObject();
+		KObjectRef object = (*value)->ToObject();
 		SharedStringList props = object->GetPropertyNames();
 		AddSpecialPropertyNames(*value, props, false);
 		for (size_t i = 0; i < props->size(); i++)
@@ -644,7 +644,7 @@ namespace KJSUtil
 		{
 			/* Take some steps to insert the API into the Javascript jsContext */
 			/* Create a crazy, crunktown delegate hybrid object for Javascript */
-			SharedValue globalValue = Value::NewObject(host->GetGlobalObject());
+			KValueRef globalValue = Value::NewObject(host->GetGlobalObject());
 
 			/* convert JS API to a KJS object */
 			JSValueRef jsAPI = ToJSValue(globalValue, jsContext);
@@ -736,7 +736,7 @@ namespace KJSUtil
 		jsContextRefCounts[globalContext]--;
 	}
 
-	SharedValue Evaluate(JSContextRef jsContext, char *script)
+	KValueRef Evaluate(JSContextRef jsContext, const char* script)
 	{
 		JSObjectRef globalObject = JSContextGetGlobalObject(jsContext);
 		JSStringRef scriptContents = JSStringCreateWithUTF8CString(script);
@@ -757,7 +757,7 @@ namespace KJSUtil
 		return ToKrollValue(returnValue, jsContext, globalObject);
 	}
 
-	SharedValue EvaluateFile(JSContextRef jsContext, std::string fullPath)
+	KValueRef EvaluateFile(JSContextRef jsContext, std::string fullPath)
 	{
 		GetLogger()->Debug("Evaluating JavaScript file at: %s", fullPath.c_str());
 
@@ -871,7 +871,7 @@ namespace KJSUtil
 		return fnPrototype;
 	}
 	
-	void BindProperties(JSObjectRef globalObject, SharedKObject obj)
+	void BindProperties(JSObjectRef globalObject, KObjectRef obj)
 	{
 		JSGlobalContextRef jsContext = GetGlobalContext(globalObject);
 
@@ -879,7 +879,7 @@ namespace KJSUtil
 		for (size_t i = 0; i < names->size(); i++)
 		{
 			std::string other = *names->at(i);
-			SharedValue v = obj->Get(other.c_str());
+			KValueRef v = obj->Get(other.c_str());
 			JSValueRef js = ToJSValue(v, jsContext);
 			JSStringRef propertyName = JSStringCreateWithUTF8CString(other.c_str());
 			JSObjectSetProperty(jsContext, globalObject, propertyName, js, kJSPropertyAttributeNone, NULL);
@@ -887,7 +887,7 @@ namespace KJSUtil
 		}
 	}
 
-	SharedValue GetProperty(JSObjectRef globalObject, std::string name)
+	KValueRef GetProperty(JSObjectRef globalObject, std::string name)
 	{
 		JSGlobalContextRef jsContext = GetGlobalContext(globalObject);
 		JSStringRef jsName = JSStringCreateWithUTF8CString(name.c_str());

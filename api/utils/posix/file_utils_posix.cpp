@@ -97,7 +97,7 @@ namespace UTILS_NS
 #endif
 	}
 
-	bool FileUtils::IsFile(std::string &file)
+	bool FileUtils::IsFile(const std::string& file)
 	{
 #ifdef OS_OSX
 		BOOL isDir = NO;

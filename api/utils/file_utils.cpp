@@ -198,28 +198,20 @@ namespace FileUtils
 		}
 	}
 
-	std::string Trim(std::string str)
+	std::string Trim(std::string string)
 	{
-		std::string c(str);
-		while (1)
-		{
-			size_t pos = c.rfind(" ");
-			if (pos == std::string::npos || pos!=c.length()-1)
-			{
-				break;
-			}
-			c = c.substr(0,pos);
-		}
-		while(1)
-		{
-			size_t pos = c.find(" ");
-			if (pos != 0)
-			{
-				break;
-			}
-			c = c.substr(1);
-		}
-		return c;
+		if (string.empty())
+			return string;
+
+		size_t left = 0;
+		size_t right = string.size() - 1;
+		while (isspace(string[left]) && left < string.size() - 1)
+			left++;
+
+		while (isspace(string[right]) && right > left)
+			right--;
+
+		return string.substr(left, right - left + 1);
 	}
 }
 }

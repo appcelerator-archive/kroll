@@ -190,7 +190,7 @@ namespace URLUtils
 	}
 
 #if defined(KROLL_HOST_EXPORT) || defined(KROLL_API_EXPORT) || defined(_KROLL_H_)
-	static std::string NormalizeAppURL(std::string& url)
+	static std::string NormalizeAppURL(const std::string& url)
 	{
 		size_t appLength = 6; // app://
 		std::string id(Host::GetInstance()->GetApplication()->id);
@@ -248,7 +248,7 @@ namespace URLUtils
 		}
 	}
 
-	std::string URLToPath(std::string& url)
+	std::string URLToPath(const std::string& url)
 	{
 		Poco::URI inURI = Poco::URI(url);
 		try
@@ -265,6 +265,19 @@ namespace URLUtils
 			{
 				return AppURLToPath(url);
 			}
+			else if (inURI.getScheme().empty())
+			{
+				// There is no scheme for this URL, so we have to/ guess at this point if
+				// it's a path or a relative app:// URL. If a file can be found, assume thi
+				// is a file path.
+				if (FileUtils::IsFile(url))
+					return url;
+
+				// Otherwise treat this like an app:// URL relative to the root.
+				std::string newURL("app://");
+				newURL.append(url);
+				return AppURLToPath(newURL);
+			}
 		}
 		catch (ValueException& e)
 		{
@@ -275,7 +288,7 @@ namespace URLUtils
 		return url;
 	}
 
-	std::string TiURLToPath(std::string& tiURL)
+	std::string TiURLToPath(const std::string& tiURL)
 	{
 		try
 		{
@@ -318,7 +331,7 @@ namespace URLUtils
 		return tiURL;
 	}
 
-	std::string AppURLToPath(std::string& inURL)
+	std::string AppURLToPath(const std::string& inURL)
 	{
 		try
 		{

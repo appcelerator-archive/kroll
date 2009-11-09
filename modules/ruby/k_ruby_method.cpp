@@ -56,7 +56,7 @@ namespace kroll
 		return rb_apply(method, rb_intern("call"), rargs);
 	}
 
-	SharedValue KRubyMethod::Call(const ValueList& args)
+	KValueRef KRubyMethod::Call(const ValueList& args)
 	{
 		// Bloody hell, Ruby will segfault if we try to pass a number
 		// of args to a method that is greater than its arity
@@ -91,12 +91,12 @@ namespace kroll
 		return RubyUtils::ToKrollValue(result);
 	}
 
-	void KRubyMethod::Set(const char *name, SharedValue value)
+	void KRubyMethod::Set(const char *name, KValueRef value)
 	{
 		object->Set(name, value);
 	}
 
-	SharedValue KRubyMethod::Get(const char *name)
+	KValueRef KRubyMethod::Get(const char *name)
 	{
 		return object->Get(name);
 	}
@@ -116,7 +116,7 @@ namespace kroll
 		return this->object->ToRuby();
 	}
 
-	bool KRubyMethod::Equals(SharedKObject other)
+	bool KRubyMethod::Equals(KObjectRef other)
 	{
 		AutoPtr<KRubyMethod> methodOther = other.cast<KRubyMethod>();
 		if (methodOther.isNull())

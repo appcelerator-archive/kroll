@@ -18,16 +18,18 @@ namespace kroll
 		return new std::string(oss.str());
 	}
 
-	SharedValue KMethod::Call()
+	KValueRef KMethod::Call(KObjectRef thisObject, const ValueList& args)
+	{
+		return this->Call(args);
+	}
+
+	KValueRef KMethod::Call()
 	{
 		return this->Call(ValueList());
 	}
 
-	SharedValue KMethod::Call(
-		const char *one,
-		SharedValue two,
-		SharedValue three,
-		SharedValue four)
+	KValueRef KMethod::Call(const char* one, KValueRef two, KValueRef three,
+		KValueRef four)
 	{
 		ValueList args;
 		args.push_back(Value::NewString(one));
@@ -37,14 +39,14 @@ namespace kroll
 		return this->Call(args);
 	}
 
-	SharedValue KMethod::Call(SharedValue one)
+	KValueRef KMethod::Call(KValueRef one)
 	{
 		ValueList args;
 		args.push_back(one);
 		return this->Call(args);
 	}
 
-	SharedValue KMethod::Call(SharedValue one, SharedValue two)
+	KValueRef KMethod::Call(KValueRef one, KValueRef two)
 	{
 		ValueList args;
 		args.push_back(one);
@@ -52,10 +54,7 @@ namespace kroll
 		return this->Call(args);
 	}
 
-	SharedValue KMethod::Call(
-		SharedValue one,
-		SharedValue two,
-		SharedValue three)
+	KValueRef KMethod::Call(KValueRef one, KValueRef two, KValueRef three)
 	{
 		ValueList args;
 		args.push_back(one);
@@ -64,14 +63,14 @@ namespace kroll
 		return this->Call(args);
 	}
 
-	SharedValue KMethod::Call(const char *one)
+	KValueRef KMethod::Call(const char* one)
 	{
 		ValueList args;
 		args.push_back(Value::NewString(one));
 		return this->Call(args);
 	}
 
-	SharedValue KMethod::Call(const char *one, SharedValue two)
+	KValueRef KMethod::Call(const char* one, KValueRef two)
 	{
 		ValueList args;
 		args.push_back(Value::NewString(one));
@@ -79,7 +78,7 @@ namespace kroll
 		return this->Call(args);
 	}
 
-	SharedValue KMethod::Call(const char *one, SharedValue two, SharedValue three)
+	KValueRef KMethod::Call(const char* one, KValueRef two, KValueRef three)
 	{
 		ValueList args;
 		args.push_back(Value::NewString(one));
@@ -88,7 +87,7 @@ namespace kroll
 		return this->Call(args);
 	}
 
-	SharedKMethod KMethod::Unwrap(SharedKMethod o)
+	KMethodRef KMethod::Unwrap(KMethodRef o)
 	{
 		AutoPtr<ProfiledBoundMethod> pmeth = o.cast<ProfiledBoundMethod>();
 		if (pmeth.isNull())

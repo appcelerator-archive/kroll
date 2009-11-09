@@ -14,8 +14,8 @@ public:
 	KRubyHash(VALUE object);
 	virtual ~KRubyHash();
 
-	virtual void Set(const char *name, SharedValue value);
-	virtual SharedValue Get(const char *name);
+	virtual void Set(const char *name, KValueRef value);
+	virtual KValueRef Get(const char *name);
 	virtual SharedStringList GetPropertyNames();
 	virtual SharedString DisplayString(int);
 	VALUE ToRuby();
@@ -26,7 +26,7 @@ public:
 	 *  @param other the object to test
 	 *  @returns true if objects have reference equality, false otherwise
 	 */
-	virtual bool Equals(SharedKObject);
+	virtual bool Equals(KObjectRef);
 
 private:
 	VALUE hash;

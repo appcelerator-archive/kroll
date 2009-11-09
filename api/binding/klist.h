@@ -25,7 +25,7 @@ namespace kroll
 		 * Append a value to this list
 		 *  Errors will result in a thrown ValueException
 		 */
-		virtual void Append(SharedValue value) = 0;
+		virtual void Append(KValueRef value) = 0;
 
 		/**
 		 * Get the length of this list.
@@ -36,7 +36,7 @@ namespace kroll
 		 * @return the value at the given index.
 		 * Errors will result in a thrown ValueException
 		 */
-		virtual SharedValue At(unsigned int index) = 0;
+		virtual KValueRef At(unsigned int index) = 0;
 
 		/**
 		 * Set the value at the given index. If the index is greater
@@ -44,7 +44,7 @@ namespace kroll
 		 * by appending Value::Undefined;
 		 * Errors will result in a thrown ValueException
 		 */
-		virtual void SetAt(unsigned int index, SharedValue value) = 0;
+		virtual void SetAt(unsigned int index, KValueRef value) = 0;
 
 		/**
 		 * Remove the list entry at the given index. Return true
@@ -57,14 +57,14 @@ namespace kroll
 		 * Set a property on this object to the given value
 		 * Errors will result in a thrown ValueException
 		 */
-		virtual void Set(const char *name, SharedValue value) = 0;
+		virtual void Set(const char *name, KValueRef value) = 0;
 
 		/**
 		 * @return the property with the given name or Value::Undefined
 		 * if the property is not found.
 		 * Errors will result in a thrown ValueException
 		 */
-		virtual SharedValue Get(const char *name) = 0;
+		virtual KValueRef Get(const char *name) = 0;
 
 		/**
 		 * @return a list of this object's property names.
@@ -98,7 +98,7 @@ namespace kroll
 		/**
 		 * Return the unwrapped version of this object
 		 */
-		static SharedKList Unwrap(SharedKList);
+		static KListRef Unwrap(KListRef);
 
 	private:
 		DISALLOW_EVIL_CONSTRUCTORS(KList);

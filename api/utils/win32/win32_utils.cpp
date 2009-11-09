@@ -31,7 +31,7 @@ namespace Win32Utils
 	}
 }
 
-	std::wstring UTF8ToWide(std::string& in)
+	std::wstring UTF8ToWide(const std::string& in)
 	{
 		return MBToWide(in.c_str(), in.length(), CP_UTF8);
 	}
@@ -41,7 +41,7 @@ namespace Win32Utils
 		return MBToWide(in, strlen(in), CP_UTF8);
 	}
 
-	std::wstring MBToWide(std::string& in, size_t size, UINT codePage)
+	std::wstring MBToWide(const std::string& in, size_t size, UINT codePage)
 	{
 		return MBToWide(in.c_str(), size, codePage);
 	}
@@ -60,7 +60,7 @@ namespace Win32Utils
 		return out;
 	}
 
-	std::string WideToUTF8(std::wstring& in)
+	std::string WideToUTF8(const std::wstring& in)
 	{
 		return WideToUTF8(in.c_str());
 	}

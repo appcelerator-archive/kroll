@@ -10,7 +10,7 @@
 namespace kroll
 {
 
-	typedef SharedValue (*KFunctionPtrCallback) (const ValueList& args);
+	typedef KValueRef (*KFunctionPtrCallback) (const ValueList& args);
 	class KROLL_API KFunctionPtrMethod : public KMethod
 	{
 		public:
@@ -20,17 +20,17 @@ namespace kroll
 		/**
 		 * @see KMethod::Call
 		 */
-		virtual SharedValue Call(const ValueList& args);
+		virtual KValueRef Call(const ValueList& args);
 
 		/**
 		 * @see KObject::Set
 		 */
-		virtual void Set(const char *name, SharedValue value);
+		virtual void Set(const char *name, KValueRef value);
 
 		/**
 		 * @see KObject::Get
 		 */
-		virtual SharedValue Get(const char *name);
+		virtual KValueRef Get(const char *name);
 
 		/**
 		 * @see KObject::GetPropertyNames
@@ -40,7 +40,7 @@ namespace kroll
 
 		protected:
 		KFunctionPtrCallback callback;
-		SharedKObject object;
+		KObjectRef object;
 
 		private:
 		DISALLOW_EVIL_CONSTRUCTORS(KFunctionPtrMethod);

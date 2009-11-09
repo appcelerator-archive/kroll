@@ -6,7 +6,6 @@
 #ifndef _PHP_TYPES_H_
 #define _PHP_TYPES_H_
 
-#include <typeinfo>
 #include "php_module.h"
 
 namespace kroll
@@ -14,7 +13,7 @@ namespace kroll
 	typedef struct
 	{
 		zend_object std;
-		SharedValue kvalue;
+		KValueRef kvalue;
 	} PHPKObject;
 	extern zend_class_entry *PHPKObjectClassEntry;
 	extern zend_class_entry *PHPKMethodClassEntry;
@@ -23,29 +22,30 @@ namespace kroll
 
 	namespace PHPUtils
 	{
-		SharedValue ToKrollValue(zval* value TSRMLS_DC);
-		zval* ToPHPValue(SharedValue value);
-		void ToPHPValue(SharedValue value, zval** returnValue);
+		KValueRef ToKrollValue(zval* value TSRMLS_DC);
+		zval* ToPHPValue(KValueRef value);
+		void ToPHPValue(KValueRef value, zval** returnValue);
 		std::string ZvalToPropertyName(zval* property);
-		SharedKList PHPArrayToKList(zval* array TSRMLS_DC,
+		KListRef PHPArrayToKList(zval* array TSRMLS_DC,
 			bool ignoreGlobals=false);
-		SharedKList PHPHashTableToKList(HashTable* hashtable TSRMLS_DC,
+		KListRef PHPHashTableToKList(HashTable* hashtable TSRMLS_DC,
 			 bool ignoreGlobals=false);
-		SharedStringList GetHashKeys(HashTable *hash);
-		void KObjectToKPHPObject(SharedValue objectValue, zval** returnValue);
-		void KMethodToKPHPMethod(SharedValue methodValue, zval** returnValue);
-		void KListToKPHPArray(SharedValue listValue, zval** returnValue);
+		SharedStringList GetHashKeys(HashTable* hash);
+		void KObjectToKPHPObject(KValueRef objectValue, zval** returnValue);
+		void KMethodToKPHPMethod(KValueRef methodValue, zval** returnValue);
+		void KListToKPHPArray(KValueRef listValue, zval** returnValue);
 		void InitializePHPKrollClasses();
 		bool PHPObjectsEqual(zval* val1, zval* val2 TSRMLS_DC);
-		int HashZvalCompareCallback(const zval **one, const zval **two TSRMLS_DC);
-		SharedStringList GetClassMethods(zend_class_entry *ce TSRMLS_DC);
-		SharedKList GetClassVars(zend_class_entry *ce TSRMLS_DC);
+		int HashZvalCompareCallback(const zval** one, const zval** two TSRMLS_DC);
+		SharedStringList GetClassMethods(zend_class_entry* ce TSRMLS_DC);
+		KListRef GetClassVars(zend_class_entry* ce TSRMLS_DC);
 		zend_function* GetGlobalFunction(const char *name TSRMLS_DC);
 		void GenerateCaseMap(string code TSRMLS_DC);
 
-		SharedKObject GetCurrentGlobalObject();
-		void SwapGlobalObject(SharedKObject newGlobal, 
-			HashTable *symbolTable TSRMLS_DC);
+		KObjectRef GetCurrentGlobalObject();
+		void PushPHPSymbolsIntoGlobalObject(HashTable* symbolTable, KObjectRef global TSRMLS_DC);
+		void PushGlobalObjectMembersIntoPHPSymbolTable(HashTable* symbolTable, KObjectRef global TSRMLS_DC);
+		void SwapGlobalObject(KObjectRef newGlobal, HashTable* symbolTable TSRMLS_DC);
 	}
 }
 

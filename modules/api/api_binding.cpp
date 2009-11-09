@@ -416,11 +416,11 @@ namespace kroll
 	{
 	}
 
-	void APIBinding::_Set(const ValueList& args, SharedValue result)
+	void APIBinding::_Set(const ValueList& args, KValueRef result)
 	{
 		const char *key = args.at(0)->ToString();
 		string s = key;
-		SharedValue value = args.at(1);
+		KValueRef value = args.at(1);
 		string::size_type pos = s.find_first_of(".");
 
 		if (pos==string::npos)
@@ -436,7 +436,7 @@ namespace kroll
 		}
 	}
 
-	Logger::Level APIBinding::ValueToLevel(SharedValue v)
+	Logger::Level APIBinding::ValueToLevel(KValueRef v)
 	{
 		if (v->IsString())
 		{
@@ -459,11 +459,11 @@ namespace kroll
 		}
 	}
 
-	void APIBinding::_Get(const ValueList& args, SharedValue result)
+	void APIBinding::_Get(const ValueList& args, KValueRef result)
 	{
 		string s = args.at(0)->ToString();
 		const char *key = s.c_str();
-		SharedValue r = 0;
+		KValueRef r = 0;
 		string::size_type pos = s.find_first_of(".");
 
 		if (pos==string::npos)
@@ -480,22 +480,22 @@ namespace kroll
 		result->SetValue(r);
 	}
 
-	void APIBinding::_SetLogLevel(const ValueList& args, SharedValue result)
+	void APIBinding::_SetLogLevel(const ValueList& args, KValueRef result)
 	{
 		args.VerifyException("setLogLevel", "s|n");
 		Logger::GetRootLogger()->SetLevel(ValueToLevel(args.at(0)));
 	}
 
-	void APIBinding::_GetLogLevel(const ValueList& args, SharedValue result)
+	void APIBinding::_GetLogLevel(const ValueList& args, KValueRef result)
 	{
 		result->SetInt(Logger::GetRootLogger()->GetLevel());
 	}
 
-	void APIBinding::_Print(const ValueList& args, SharedValue result)
+	void APIBinding::_Print(const ValueList& args, KValueRef result)
 	{
 		for (size_t c=0; c < args.size(); c++)
 		{
-			SharedValue arg = args.at(c);
+			KValueRef arg = args.at(c);
 			if (arg->IsString())
 			{
 				const char *s = arg->ToString();
@@ -510,91 +510,90 @@ namespace kroll
 		std::cout.flush();
 	}
 	
-	void APIBinding::_LogTrace(const ValueList& args, SharedValue result)
+	void APIBinding::_LogTrace(const ValueList& args, KValueRef result)
 	{
-		SharedValue arg1 = args.at(0);
+		KValueRef arg1 = args.at(0);
 		this->Log(Logger::LTRACE, arg1);
 	}
-	void APIBinding::_LogDebug(const ValueList& args, SharedValue result)
+	void APIBinding::_LogDebug(const ValueList& args, KValueRef result)
 	{
-		SharedValue arg1 = args.at(0);
+		KValueRef arg1 = args.at(0);
 		this->Log(Logger::LDEBUG, arg1);
 	}
-	void APIBinding::_LogInfo(const ValueList& args, SharedValue result)
+	void APIBinding::_LogInfo(const ValueList& args, KValueRef result)
 	{
-		SharedValue arg1 = args.at(0);
+		KValueRef arg1 = args.at(0);
 		this->Log(Logger::LINFO, arg1);
 	}
-	void APIBinding::_LogNotice(const ValueList& args, SharedValue result)
+	void APIBinding::_LogNotice(const ValueList& args, KValueRef result)
 	{
-		SharedValue arg1 = args.at(0);
+		KValueRef arg1 = args.at(0);
 		this->Log(Logger::LNOTICE, arg1);
 	}
-	void APIBinding::_LogWarn(const ValueList& args, SharedValue result)
+	void APIBinding::_LogWarn(const ValueList& args, KValueRef result)
 	{
-		SharedValue arg1 = args.at(0);
+		KValueRef arg1 = args.at(0);
 		this->Log(Logger::LWARN, arg1);
 	}
-	void APIBinding::_LogError(const ValueList& args, SharedValue result)
+	void APIBinding::_LogError(const ValueList& args, KValueRef result)
 	{
-		SharedValue arg1 = args.at(0);
+		KValueRef arg1 = args.at(0);
 		this->Log(Logger::LERROR, arg1);
 	}
-	void APIBinding::_LogCritical(const ValueList& args, SharedValue result)
+	void APIBinding::_LogCritical(const ValueList& args, KValueRef result)
 	{
-		SharedValue arg1 = args.at(0);
+		KValueRef arg1 = args.at(0);
 		this->Log(Logger::LCRITICAL, arg1);
 	}
-	void APIBinding::_LogFatal(const ValueList& args, SharedValue result)
+	void APIBinding::_LogFatal(const ValueList& args, KValueRef result)
 	{
-		SharedValue arg1 = args.at(0);
+		KValueRef arg1 = args.at(0);
 		this->Log(Logger::LFATAL, arg1);
 	}
 
-	void APIBinding::_Log(const ValueList& args, SharedValue result)
+	void APIBinding::_Log(const ValueList& args, KValueRef result)
 	{
 		if (args.size() == 1)
 		{
-			SharedValue v = args.at(0);
+			KValueRef v = args.at(0);
 			this->Log(Logger::LINFO, v);
 		}
 		else if (args.size() == 2)
 		{
-			SharedValue arg1 = args.at(0);
+			KValueRef arg1 = args.at(0);
 			
-			SharedValue v = args.at(1);
+			KValueRef v = args.at(1);
 			this->Log(ValueToLevel(arg1), v);
 		}
 	}
 
-	void APIBinding::_AddEventListener(const ValueList& args, SharedValue result)
+	void APIBinding::_AddEventListener(const ValueList& args, KValueRef result)
 	{
-		KEventObject::root->_AddEventListener(args, result);
+		GlobalObject::GetInstance()->_AddEventListener(args, result);
 	}
 
-	void APIBinding::_RemoveEventListener(const ValueList& args, SharedValue result)
+	void APIBinding::_RemoveEventListener(const ValueList& args, KValueRef result)
 	{
-		KEventObject::root->_RemoveEventListener(args, result);
+		GlobalObject::GetInstance()->_RemoveEventListener(args, result);
 	}
 
-	void APIBinding::_FireEvent(const ValueList& args, SharedValue result)
+	void APIBinding::_FireEvent(const ValueList& args, KValueRef result)
 	{
 		args.VerifyException("fireEvent", "s|o");
 		if (args.at(0)->IsString())
 		{
 			std::string eventName = args.GetString(0);
-			KEventObject::FireRootEvent(eventName);
-
+			GlobalObject::GetInstance()->FireEvent(eventName);
 		}
 		else if (args.at(0)->IsObject())
 		{
 			AutoPtr<Event> event = args.GetObject(0).cast<Event>();
 			if (!event.isNull())
-				KEventObject::FireRootEvent(event);
+				GlobalObject::GetInstance()->FireEvent(event);
 		}
 	}
 
-	void APIBinding::_RunOnMainThread(const ValueList& args, SharedValue result)
+	void APIBinding::_RunOnMainThread(const ValueList& args, KValueRef result)
 	{
 		if (!args.at(0)->IsMethod())
 		{
@@ -608,13 +607,11 @@ namespace kroll
 			for (size_t i = 1; i < args.size(); i++)
 				outArgs.push_back(args.at(i));
 
-			SharedValue outResult =
-				host->InvokeMethodOnMainThread(args.GetMethod(0), outArgs);
-			result->SetValue(outResult);
+			result->SetValue(RunOnMainThread(args.GetMethod(0), outArgs));
 		}
 	}
 
-	void APIBinding::_RunOnMainThreadAsync(const ValueList& args, SharedValue result)
+	void APIBinding::_RunOnMainThreadAsync(const ValueList& args, KValueRef result)
 	{
 		if (!args.at(0)->IsMethod())
 		{
@@ -628,12 +625,12 @@ namespace kroll
 			for (size_t i = 1; i < args.size(); i++)
 				outArgs.push_back(args.at(i));
 
-			host->InvokeMethodOnMainThread(args.GetMethod(0), outArgs, false);
+			RunOnMainThread(args.GetMethod(0), outArgs, false);
 		}
 	}
 
 	//---------------- IMPLEMENTATION METHODS
-	void APIBinding::Log(int severity, SharedValue value)
+	void APIBinding::Log(int severity, KValueRef value)
 	{
 		// optimize these calls since they're called a lot
 		if (false == logger->IsEnabled((Logger::Level)severity))
@@ -653,59 +650,59 @@ namespace kroll
 		}
 	}
 
-	void APIBinding::_GetApplication(const ValueList& args, SharedValue result)
+	void APIBinding::_GetApplication(const ValueList& args, KValueRef result)
 	{
-		SharedKObject app = new ApplicationBinding(host->GetApplication(), true);
+		KObjectRef app = new ApplicationBinding(host->GetApplication(), true);
 		result->SetObject(app);
 	}
 
 	void APIBinding::_GetInstalledComponentsImpl(
-		KComponentType type, const ValueList& args, SharedValue result)
+		KComponentType type, const ValueList& args, KValueRef result)
 	{
 		bool force = args.GetBool(0, false);
 		vector<SharedComponent>& components = BootUtils::GetInstalledComponents(force);
-		SharedKList componentList = ComponentVectorToKList(components, type);
+		KListRef componentList = ComponentVectorToKList(components, type);
 		result->SetList(componentList);
 	}
 
-	void APIBinding::_GetInstalledComponents(const ValueList& args, SharedValue result)
+	void APIBinding::_GetInstalledComponents(const ValueList& args, KValueRef result)
 	{
 		args.VerifyException("getInstalledComponents", "?b");
 		_GetInstalledComponentsImpl(UNKNOWN, args, result);
 	}
 
-	void APIBinding::_GetInstalledModules(const ValueList& args, SharedValue result)
+	void APIBinding::_GetInstalledModules(const ValueList& args, KValueRef result)
 	{
 		args.VerifyException("getInstalledModules", "?b");
 		_GetInstalledComponentsImpl(MODULE, args, result);
 	}
 
-	void APIBinding::_GetInstalledRuntimes(const ValueList& args, SharedValue result)
+	void APIBinding::_GetInstalledRuntimes(const ValueList& args, KValueRef result)
 	{
 		args.VerifyException("getInstalledRuntimes", "?b");
 		_GetInstalledComponentsImpl(RUNTIME, args, result);
 	}
 
-	void APIBinding::_GetInstalledSDKs(const ValueList& args, SharedValue result)
+	void APIBinding::_GetInstalledSDKs(const ValueList& args, KValueRef result)
 	{
 		args.VerifyException("getInstalledSDKs", "?b");
 		_GetInstalledComponentsImpl(SDK, args, result);
 	}
 
-	void APIBinding::_GetInstalledMobileSDKs(const ValueList& args, SharedValue result)
+	void APIBinding::_GetInstalledMobileSDKs(const ValueList& args, KValueRef result)
 	{
 		args.VerifyException("getInstalledMobileSDKs", "?b");
 		_GetInstalledComponentsImpl(MOBILESDK, args, result);
 	}
 
-	void APIBinding::_GetComponentSearchPaths(const ValueList& args, SharedValue result)
+	void APIBinding::_GetComponentSearchPaths(const ValueList& args, KValueRef result)
 	{
 		vector<string>& paths = BootUtils::GetComponentSearchPaths();
-		SharedKList pathList = StaticBoundList::FromStringVector(paths);
+		KListRef pathList = StaticBoundList::FromStringVector(paths);
 		result->SetList(pathList);
 	}
 
-	void APIBinding::_ReadApplicationManifest(const ValueList& args, SharedValue result)
+	void APIBinding::_ReadApplicationManifest(const ValueList& args, KValueRef result)
 	{
 		args.VerifyException("readApplicationManifest", "s,?s");
 		string manifestPath = args.at(0)->ToString();
@@ -722,7 +719,7 @@ namespace kroll
 		}
 	}
 
-	void APIBinding::_CreateDependency(const ValueList& args, SharedValue result)
+	void APIBinding::_CreateDependency(const ValueList& args, KValueRef result)
 	{
 		args.VerifyException("createDepenendency", "i,s,s,?i");
 		int type = args.GetInt(0, UNKNOWN);
@@ -750,16 +747,16 @@ namespace kroll
 		{
 			SharedDependency d = Dependency::NewDependencyFromValues(
 				static_cast<KComponentType>(type), name, version);
-			SharedKObject dBinding = new DependencyBinding(d);
+			KObjectRef dBinding = new DependencyBinding(d);
 			result->SetObject(dBinding);
 		}
 	}
 
-	void APIBinding::_InstallDependencies(const ValueList& args, SharedValue result)
+	void APIBinding::_InstallDependencies(const ValueList& args, KValueRef result)
 	{
 		args.VerifyException("installDependencies", "l,m");
-		SharedKList dependenciesList = args.GetList(0);
-		SharedKMethod callback = args.GetMethod(1, 0);
+		KListRef dependenciesList = args.GetList(0);
+		KMethodRef callback = args.GetMethod(1, 0);
 		vector<SharedDependency> dependencies;
 
 		for (unsigned int i = 0; i < dependenciesList->Size(); i++)
@@ -796,7 +793,7 @@ namespace kroll
 		}
 	}
 	
-	void APIBinding::_ComponentGUIDToComponentType(const ValueList& args, SharedValue result)
+	void APIBinding::_ComponentGUIDToComponentType(const ValueList& args, KValueRef result)
 	{
 		std::string type = args.at(0)->ToString();
 		if (type == RUNTIME_UUID)
@@ -825,7 +822,7 @@ namespace kroll
 		}
 	}
 	
-	void APIBinding::_GetEnvironment(const ValueList& args, SharedValue result)
+	void APIBinding::_GetEnvironment(const ValueList& args, KValueRef result)
 	{
 		AutoPtr<EnvironmentBinding> env = new EnvironmentBinding();
 		result->SetObject(env);
@@ -841,26 +838,25 @@ namespace kroll
 
 		if (!this->installerCallback.isNull())
 		{
-			host->InvokeMethodOnMainThread(
-				this->installerCallback, ValueList(), false);
+			RunOnMainThread(this->installerCallback, ValueList(), false);
 		}
 		this->installerMutex.unlock();
 
 		END_KROLL_THREAD;
 	}
 
-	SharedKList APIBinding::ComponentVectorToKList(
+	KListRef APIBinding::ComponentVectorToKList(
 		vector<SharedComponent>& components,
 		KComponentType filter)
 	{
-		SharedKList componentList = new StaticBoundList();
+		KListRef componentList = new StaticBoundList();
 		vector<SharedComponent>::iterator i = components.begin();
 		while (i != components.end())
 		{
 			SharedComponent c = *i++;
 			if (filter == UNKNOWN || filter == c->type)
 			{
-				SharedValue cValue = Value::NewObject(new ComponentBinding(c));
+				KValueRef cValue = Value::NewObject(new ComponentBinding(c));
 				componentList->Append(cValue);
 			}
 		}
@@ -868,25 +864,25 @@ namespace kroll
 		return componentList;
 	}
 
-	SharedKList APIBinding::DependencyVectorToKList(std::vector<SharedDependency>& deps)
+	KListRef APIBinding::DependencyVectorToKList(std::vector<SharedDependency>& deps)
 	{
-		SharedKList dependencyList = new StaticBoundList();
+		KListRef dependencyList = new StaticBoundList();
 		std::vector<SharedDependency>::iterator i = deps.begin();
 		while (i != deps.end())
 		{
-			SharedValue dValue = Value::NewObject(new DependencyBinding(*i++));
+			KValueRef dValue = Value::NewObject(new DependencyBinding(*i++));
 			dependencyList->Append(dValue);
 		}
 		return dependencyList;
 	}
 
-	SharedKList APIBinding::ManifestToKList(vector<pair<string, string> >& manifest)
+	KListRef APIBinding::ManifestToKList(vector<pair<string, string> >& manifest)
 	{
-		SharedKList list = new StaticBoundList();
+		KListRef list = new StaticBoundList();
 		vector<pair<string, string> >::iterator i = manifest.begin();
 		while (i != manifest.end())
 		{
-			SharedKList entry = new StaticBoundList();
+			KListRef entry = new StaticBoundList();
 			entry->Append(Value::NewString(i->first));
 			entry->Append(Value::NewString(i->second));
 			list->Append(Value::NewList(entry));
@@ -895,7 +891,7 @@ namespace kroll
 		return list;
 	}
 
-	void APIBinding::_CreateKObject(const ValueList& args, SharedValue result)
+	void APIBinding::_CreateKObject(const ValueList& args, KValueRef result)
 	{
 		args.VerifyException("createKObject", "?o");
 		if (args.size() <= 0)
@@ -904,19 +900,19 @@ namespace kroll
 		}
 		else
 		{
-			SharedKObject wrapped = args.GetObject(0);
+			KObjectRef wrapped = args.GetObject(0);
 			result->SetObject(new KObjectWrapper(wrapped));
 		}
 	}
 
-	void APIBinding::_CreateKMethod(const ValueList& args, SharedValue result)
+	void APIBinding::_CreateKMethod(const ValueList& args, KValueRef result)
 	{
 		args.VerifyException("createKMethod", "m");
-		SharedKMethod wrapped = args.GetMethod(0);
+		KMethodRef wrapped = args.GetMethod(0);
 		result->SetMethod(new KMethodWrapper(args.GetMethod(0)));
 	}
 
-	void APIBinding::_CreateKList(const ValueList& args, SharedValue result)
+	void APIBinding::_CreateKList(const ValueList& args, KValueRef result)
 	{
 		args.VerifyException("createKList", "?l");
 		if (args.size() <= 0)
@@ -925,12 +921,12 @@ namespace kroll
 		}
 		else
 		{
-			SharedKList wrapped = args.GetList(0);
+			KListRef wrapped = args.GetList(0);
 			result->SetList(new KListWrapper(wrapped));
 		}
 	}
 
-	static void GetBlobs(SharedValue value, std::vector<AutoBlob>& blobs)
+	static void GetBlobs(KValueRef value, std::vector<BlobRef>& blobs)
 	{
 		if (value->IsObject())
 		{
@@ -942,7 +938,7 @@ namespace kroll
 		}
 		else if (value->IsList())
 		{
-			SharedKList list = value->ToList();
+			KListRef list = value->ToList();
 			for (size_t j = 0; j < list->Size(); j++)
 			{
 				GetBlobs(list->At(j), blobs);
@@ -954,10 +950,10 @@ namespace kroll
 		}
 	}
 	
-	void APIBinding::_CreateBlob(const ValueList& args, SharedValue result)
+	void APIBinding::_CreateBlob(const ValueList& args, KValueRef result)
 	{
 		args.VerifyException("createBlob", "?s|o|l|i");
-		std::vector<AutoBlob> blobs;
+		std::vector<BlobRef> blobs;
 		for (size_t i = 0; i < args.size(); i++)
 		{
 			GetBlobs(args.at(i), blobs);
@@ -965,17 +961,17 @@ namespace kroll
 		result->SetObject(Blob::GlobBlobs(blobs));
 	}
 
-	KObjectWrapper::KObjectWrapper(SharedKObject object) :
+	KObjectWrapper::KObjectWrapper(KObjectRef object) :
 		object(object)
 	{
 	}
 
-	void KObjectWrapper::Set(const char *name, SharedValue value)
+	void KObjectWrapper::Set(const char *name, KValueRef value)
 	{
 		object->Set(name, value);
 	}
 
-	SharedValue KObjectWrapper::Get(const char *name)
+	KValueRef KObjectWrapper::Get(const char *name)
 	{
 		return object->Get(name);
 	}
@@ -995,27 +991,27 @@ namespace kroll
 		return object->DisplayString(levels);
 	}
 
-	bool KObjectWrapper::Equals(SharedKObject other)
+	bool KObjectWrapper::Equals(KObjectRef other)
 	{
 		return object->Equals(other);	
 	}
 	
-	KMethodWrapper::KMethodWrapper(SharedKMethod method) :
+	KMethodWrapper::KMethodWrapper(KMethodRef method) :
 		method(method)
 	{
 	}
 
-	SharedValue KMethodWrapper::Call(const ValueList& args)
+	KValueRef KMethodWrapper::Call(const ValueList& args)
 	{
 		return method->Call(args);
 	}
 
-	void KMethodWrapper::Set(const char *name, SharedValue value)
+	void KMethodWrapper::Set(const char *name, KValueRef value)
 	{
 		method->Set(name, value);
 	}
 
-	SharedValue KMethodWrapper::Get(const char *name)
+	KValueRef KMethodWrapper::Get(const char *name)
 	{
 		return method->Get(name);
 	}
@@ -1035,17 +1031,17 @@ namespace kroll
 		return method->DisplayString(levels);
 	}
 	
-	bool KMethodWrapper::Equals(SharedKObject other)
+	bool KMethodWrapper::Equals(KObjectRef other)
 	{
 		return method->Equals(other);	
 	}
 
-	KListWrapper::KListWrapper(SharedKList list) :
+	KListWrapper::KListWrapper(KListRef list) :
 		list(list)
 	{
 	}
 
-	void KListWrapper::Append(SharedValue value)
+	void KListWrapper::Append(KValueRef value)
 	{
 		list->Append(value);
 	}
@@ -1055,12 +1051,12 @@ namespace kroll
 		return list->Size();
 	}
 
-	SharedValue KListWrapper::At(unsigned int index)
+	KValueRef KListWrapper::At(unsigned int index)
 	{
 		return list->At(index);
 	}
 
-	void KListWrapper::SetAt(unsigned int index, SharedValue value)
+	void KListWrapper::SetAt(unsigned int index, KValueRef value)
 	{
 		list->SetAt(index, value);
 	}
@@ -1070,12 +1066,12 @@ namespace kroll
 		return list->Remove(index);
 	}
 
-	void KListWrapper::Set(const char *name, SharedValue value)
+	void KListWrapper::Set(const char *name, KValueRef value)
 	{
 		list->Set(name, value);
 	}
 
-	SharedValue KListWrapper::Get(const char *name)
+	KValueRef KListWrapper::Get(const char *name)
 	{
 		return list->Get(name);
 	}
@@ -1095,7 +1091,7 @@ namespace kroll
 		return list->DisplayString(levels);
 	}
 	
-	bool KListWrapper::Equals(SharedKObject other)
+	bool KListWrapper::Equals(KObjectRef other)
 	{
 		return list->Equals(other);	
 	}

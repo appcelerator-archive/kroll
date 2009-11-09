@@ -11,7 +11,7 @@
 
 namespace kroll
 {
-	ProfiledBoundMethod::ProfiledBoundMethod(SharedKMethod delegate, std::string& type) :
+	ProfiledBoundMethod::ProfiledBoundMethod(KMethodRef delegate, std::string& type) :
 		ProfiledBoundObject(delegate),
 		method(delegate),
 		fullType(type),
@@ -23,11 +23,11 @@ namespace kroll
 	{
 	}
 
-	SharedValue ProfiledBoundMethod::Call(const ValueList& args)
+	KValueRef ProfiledBoundMethod::Call(const ValueList& args)
 	{
 		std::string type = this->GetType();
 
-		SharedValue value;
+		KValueRef value;
 		Poco::Stopwatch sw;
 		sw.start();
 		try {
@@ -43,12 +43,12 @@ namespace kroll
 		return this->Wrap(value, type);
 	}
 
-	void ProfiledBoundMethod::Set(const char *name, SharedValue value)
+	void ProfiledBoundMethod::Set(const char *name, KValueRef value)
 	{
 		method->Set(name,value);
 	}
 
-	SharedValue ProfiledBoundMethod::Get(const char *name)
+	KValueRef ProfiledBoundMethod::Get(const char *name)
 	{
 		return method->Get(name);
 	}

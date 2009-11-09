@@ -22,7 +22,7 @@ namespace kroll
 		Py_DECREF(this->list);
 	}
 
-	void KPythonList::Append(SharedValue value)
+	void KPythonList::Append(KValueRef value)
 	{
 		PyLockGIL lock;
 		PyObject* py_value = PythonUtils::ToPyObject(value);
@@ -51,13 +51,13 @@ namespace kroll
 		}
 	}
 
-	SharedValue KPythonList::At(unsigned int index)
+	KValueRef KPythonList::At(unsigned int index)
 	{
 		PyLockGIL lock;
 		if (index >= 0 && index < this->Size())
 		{
 			PyObject *p = PyList_GetItem(this->list, index);
-			SharedValue v = PythonUtils::ToKrollValue(p);
+			KValueRef v = PythonUtils::ToKrollValue(p);
 			return v;
 		}
 		else
@@ -66,7 +66,7 @@ namespace kroll
 		}
 	}
 
-	void KPythonList::Set(const char *name, SharedValue value)
+	void KPythonList::Set(const char *name, KValueRef value)
 	{
 		// Check for integer value as name
 		int index = -1;
@@ -80,7 +80,7 @@ namespace kroll
 		}
 	}
 
-	void KPythonList::SetAt(unsigned int index, SharedValue value)
+	void KPythonList::SetAt(unsigned int index, KValueRef value)
 	{
 		PyLockGIL lock;
 		while (index >= this->Size())
@@ -95,7 +95,7 @@ namespace kroll
 		return;
 	}
 
-	SharedValue KPythonList::Get(const char *name)
+	KValueRef KPythonList::Get(const char *name)
 	{
 		if (KList::IsInt(name))
 		{
@@ -123,7 +123,7 @@ namespace kroll
 		return this->object->ToPython();
 	}
 
-	bool KPythonList::Equals(SharedKObject other)
+	bool KPythonList::Equals(KObjectRef other)
 	{
 		AutoPtr<KPythonList> pyOther = other.cast<KPythonList>();
 
