@@ -172,12 +172,12 @@ namespace UTILS_NS
 		KROLL_API bool IsRuntimeInstalled();
 
 #ifndef NO_UNZIP
-		typedef void (*UnzipCallback)(char *message, int current, int total, void *data);
+		typedef bool (*UnzipCallback)(char *message, int current, int total, void *data);
 		
 		/**
 		 *
 		 */
-		KROLL_API void Unzip(std::string& source, std::string& destination, 
+		KROLL_API bool Unzip(std::string& source, std::string& destination, 
 			UnzipCallback callback=NULL, void* data=NULL);
 #endif
 

@@ -17,12 +17,22 @@ namespace UTILS_NS
 		extern void ScanBundledComponents(string, vector<SharedComponent>&);
 	}
 
+	/*static*/
 	SharedPtr<Application> Application::NewApplication(string appPath)
 	{
 		string manifest(FileUtils::Join(appPath.c_str(), MANIFEST_FILENAME, NULL));
 		return Application::NewApplication(manifest, appPath);
 	}
 
+	/*static*/
+	SharedApplication Application::NewApplication(vector<pair<string, string> >& manifest)
+	{
+		Application* application = new Application("", "");
+		application->ParseManifest(manifest);
+		return application;
+	}
+	
+	/*static*/
 	SharedPtr<Application> Application::NewApplication(
 		string manifestPath,
 		string appPath)
@@ -35,6 +45,12 @@ namespace UTILS_NS
 		}
 
 		Application* application = new Application(appPath, manifestPath);
+		application->ParseManifest(manifest);
+		return application;
+	}
+	
+	void Application::ParseManifest(vector<pair<string, string> >& manifest)
+	{
 		vector<pair<string, string> >::iterator i = manifest.begin();
 		while (i != manifest.end())
 		{
@@ -44,48 +60,48 @@ namespace UTILS_NS
 
 			if (key == "#appname")
 			{
-				application->name = value;
+				this->name = value;
 				continue;
 			}
 			else if (key == "#appid")
 			{
-				application->id = value;
+				this->id = value;
 				continue;
 			}
 			else if (key == "#guid")
 			{
-				application->guid = value;
+				this->guid = value;
 				continue;
 			}
 			else if (key == "#image")
 			{
-				application->image =
-					 FileUtils::Join(application->GetResourcesPath().c_str(), value.c_str(), NULL);
+				this->image =
+					 FileUtils::Join(this->GetResourcesPath().c_str(), value.c_str(), NULL);
 				continue;
 			}
 			else if (key == "#publisher")
 			{
-				application->publisher = value;
+				this->publisher = value;
 				continue;
 			}
 			else if (key == "#url")
 			{
-				application->url = value;
+				this->url = value;
 				continue;
 			}
 			else if (key == "#version")
 			{
-				application->version = value;
+				this->version = value;
 				continue;
 			}
 			else if (key == "#stream")
 			{
-				application->stream = value;
+				this->stream = value;
 				continue;
 			}
 			else if (key == "#loglevel")
 			{
-				application->logLevel = value;
+				this->logLevel = value;
 				continue;
 			}
 			else if (key[0] == '#')
@@ -95,14 +111,12 @@ namespace UTILS_NS
 			else
 			{
 				SharedDependency d = Dependency::NewDependencyFromManifestLine(key, value);
-				application->dependencies.push_back(d);
+				this->dependencies.push_back(d);
 			}
 		}
 
 		if (EnvironmentUtils::Has("TITANIUM_STREAM"))
-			application->stream = EnvironmentUtils::Get("TITANIUM_STREAM");
-
-		return application;
+			this->stream = EnvironmentUtils::Get("TITANIUM_STREAM");
 	}
 
 	Application::Application(string path, string manifestPath) :
@@ -202,7 +216,7 @@ namespace UTILS_NS
 		while (i != this->dependencies.end())
 		{
 			SharedDependency d = *i++;
-			SharedComponent c = this->ResolveDependency(d, components);
+			SharedComponent c = BootUtils::ResolveDependency(d, components);
 			if (c.isNull())
 			{
 				unresolved.push_back(d);
@@ -362,30 +376,6 @@ namespace UTILS_NS
 			APP_UPDATE, "app_update", this->version);
 		return GetURLForDependency(d);
 	}
-
-	SharedComponent Application::ResolveDependency(SharedDependency dep, vector<SharedComponent>& components)
-	{
-		vector<SharedComponent>::iterator i = components.begin();
-		while (i != components.end())
-		{
-			SharedComponent comp = *i++;
-			if (dep->type != comp->type || dep->name != comp->name)
-				continue;
-
-			// Always give preference to bundled components, otherwise do a normal comparison
-			int compare = BootUtils::CompareVersions(comp->version, dep->version);
-			if (comp->bundled
-				|| (dep->requirement == Dependency::EQ && compare == 0)
-				|| (dep->requirement == Dependency::GTE && compare >= 0)
-				|| (dep->requirement == Dependency::GT && compare > 0)
-				|| (dep->requirement == Dependency::LT && compare < 0))
-			{
-				return comp;
-			}
-		}
-
-		return NULL;
-	} 
 
 	void Application::GetAvailableComponents(vector<SharedComponent>& components, bool onlyBundled)
 	{

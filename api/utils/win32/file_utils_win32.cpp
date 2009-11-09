@@ -318,12 +318,13 @@ namespace FileUtils
 	}
 
 #ifndef NO_UNZIP
-	void Unzip(std::string& source, std::string& destination, 
+	bool Unzip(std::string& source, std::string& destination, 
 		UnzipCallback callback, void *data)
 	{
+		bool success = true;
 		std::wstring wideSource(UTILS_NS::UTF8ToWide(source));
 		std::wstring wideDestination(UTILS_NS::UTF8ToWide(destination));
-
+		
 		HZIP handle = OpenZip(wideSource.c_str(), 0);
 		SetUnzipBaseDir(handle, wideDestination.c_str());
 
@@ -351,12 +352,18 @@ namespace FileUtils
 				std::string message("Extracting ");
 				message.append(name);
 				message.append("...");
-				callback((char*) message.c_str(), zi, numItems, data);
+				bool result = callback((char*) message.c_str(), zi, numItems, data);
+				if (!result)
+				{
+					success = false;
+					break;
+				}
 			}
 			
 			UnzipItem(handle, zi, zipEntry.name);
 		}
 		CloseZip(handle);
+		return success;
 	}
 #endif
 

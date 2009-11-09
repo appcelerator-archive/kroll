@@ -10,6 +10,7 @@ namespace UTILS_NS
 {
 	using std::string;
 	using std::vector;
+	using std::pair;
 
 	/**
 	 * Represents a concrete Kroll application -- found on disk
@@ -18,7 +19,8 @@ namespace UTILS_NS
 	{
 		private:
 		Application(string appPath, string manifestPath);
-
+		void ParseManifest(vector<pair<string, string> >& manifest);
+	
 		public:
 		string path;
 		string manifestPath;
@@ -41,6 +43,8 @@ namespace UTILS_NS
 
 		static SharedApplication NewApplication(std::string applicationPath);
 		static SharedApplication NewApplication(std::string manifestPath, std::string applicationPath);
+		// special in-memory constructor, no paths
+		static SharedApplication NewApplication(vector<pair<string, string> >& manifest);
 		~Application();
 
 		/**
@@ -147,9 +151,6 @@ namespace UTILS_NS
 		 * runtimes, sdks and modules.
 		 */
 		vector<SharedComponent> GetResolvedComponents();
-
-		private:
-		SharedComponent ResolveDependency(SharedDependency dep, std::vector<SharedComponent>&);
 	};
 }
 #endif
