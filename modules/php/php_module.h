@@ -6,11 +6,6 @@
 #ifndef _PHP_MODULE_H_
 #define _PHP_MODULE_H_
 
-#include <kroll/kroll.h>
-#include <stack>
-#include <iostream>
-#include <sstream>
-
 /*
  * PHP wreaks havoc on all kinds of cdecl/export/inline/god knows what macros,
  * causing math functions to be exported into each object file. _INC_MATH is
@@ -19,6 +14,20 @@
  * sure to get the win32 versions of those for Poco. This is why preprocessor
  * magic == evil
  */
+
+/* 
+ * Ground rules for editing include order here:
+ * 1. Windows requires that STL includes be before PHP ones.
+ * 2. OS X requires that kroll/kroll.h happen after PHP includes. This is because
+ *    PHP redefines NO and YES, which must happen before all Objective-C NO/YES
+ *    #defines.
+ * 3. Linux requires that you keep breathing.
+ */
+
+#include <stack>
+#include <iostream>
+#include <sstream>
+
 #if defined(OS_WIN32)
 #define _INC_MATH
 #include <zend_config.w32.h>
@@ -36,6 +45,7 @@
 #include <Zend/zend_closures.h>
 #include <Zend/zend_hash.h>
 
+#include <kroll/kroll.h>
 #include "php_api.h"
 #include "php_utils.h"
 #include "k_php_object.h"
