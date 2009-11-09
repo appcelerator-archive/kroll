@@ -13,7 +13,7 @@ Import('build')
 revisions = {
 	"linux-i386": 23,
 	"linux-x86_64": 20,
-	"osx-universal": 21,
+	"osx-universal": 22,
 	"win32-i386": 25
 }
 
@@ -73,5 +73,4 @@ elif build.is_osx():
 
 	# PHP dependencies aren't distributed with the runtime, only Poco's.
 	futils.CopyTree(path.join(build.third_party, 'poco', 'lib'), rtdir)
-	futils.CopyTree(path.join(build.third_party, 'curl', 'lib'), rtdir)
 
