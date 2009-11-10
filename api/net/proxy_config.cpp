@@ -35,6 +35,7 @@ static std::string& ProxyTypeToString(ProxyType type)
 			return ftpString;
 			break;
 		case SOCKS:
+		default:
 			return socksString;
 			break;
 	}
