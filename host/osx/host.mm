@@ -3,14 +3,16 @@
  * see LICENSE in the root folder for details on the license.
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
+#include "host.h"
+
 #include <iostream>
 #include <vector>
-#include <cstring>
 #include <dlfcn.h>
 #include <string>
-#import <Cocoa/Cocoa.h>
-#include "host.h"
 #include <signal.h>
+#import <Cocoa/Cocoa.h>
+#include <openssl/crypto.h>
+#include <Poco/Mutex.h>
 
 @interface KrollMainThreadCaller : NSObject
 {
@@ -55,14 +57,46 @@
 namespace kroll
 {
 	static NSThread* mainThread;
+	static Poco::Mutex* cryptoMutexes = 0;
+
+	static void CryptoLockingCallback(int mode, int n, const char* file, int line)
+	{
+		if (mode & CRYPTO_LOCK)
+			cryptoMutexes[n].lock();
+		else
+			cryptoMutexes[n].unlock();
+	}
+
+	static unsigned long CryptoThreadIdCallback(void)
+	{
+		return ((unsigned long) pthread_self());
+	}
+
+	static void InitializeCryptoMutexes()
+	{
+		if (!cryptoMutexes)
+		{
+			cryptoMutexes = new Poco::Mutex[CRYPTO_num_locks()];
+			CRYPTO_set_id_callback(CryptoThreadIdCallback);
+			CRYPTO_set_locking_callback(CryptoLockingCallback);
+		}
+	}
+
+	static void CleanupCryptoMutexes()
+	{
+		delete [] cryptoMutexes;
+		cryptoMutexes = 0;
+	}
 
 	OSXHost::OSXHost(int _argc, const char **_argv) : Host(_argc,_argv)
 	{
+		InitializeCryptoMutexes();
 		mainThread = [NSThread currentThread];
 	}
 
 	OSXHost::~OSXHost()
 	{
+		CleanupCryptoMutexes();
 	}
 
 	bool OSXHost::IsMainThread()
