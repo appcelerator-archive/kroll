@@ -194,8 +194,8 @@ namespace UTILS_NS
 	}
 
 #ifndef NO_UNZIP
-	void FileUtils::Unzip(std::string& source, std::string& destination, 
-		UnzipCallback callback, void *data)
+	bool FileUtils::Unzip(std::string& source, std::string& destination, 
+		UnzipCallback callback, void* data)
 	{
 #ifdef OS_OSX
 		//
@@ -211,6 +211,7 @@ namespace UTILS_NS
 		args.push_back(destination);
 		std::string cmdline = "/usr/bin/ditto";
 		RunAndWait(cmdline, args);
+		return true;
 #elif OS_LINUX
 		std::vector<std::string> args;
 		args.push_back("-qq");
@@ -219,7 +220,8 @@ namespace UTILS_NS
 		args.push_back("-d");
 		args.push_back(destination);
 		std::string cmdline("/usr/bin/unzip");
-		RunAndWait(cmdline,args);
+		RunAndWait(cmdline, args);
+		return true;
 #endif
 	}
 #endif

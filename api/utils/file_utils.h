@@ -165,31 +165,16 @@ namespace UTILS_NS
 		 * read the value of the runtime path from the host's current application.
 		 */
 		KROLL_API std::string GetUserRuntimeHomeDirectory();
-
-		/**
-		 *
-		 */
 		KROLL_API bool IsRuntimeInstalled();
+		KROLL_API int RunAndWait(std::string& path, std::vector<std::string>& args);
+		KROLL_API std::string GetUsername();
 
 #ifndef NO_UNZIP
-		typedef bool (*UnzipCallback)(char *message, int current, int total, void *data);
-		
-		/**
-		 *
-		 */
+		typedef bool (*UnzipCallback)(char* message, int current,
+			int total, void* data);
 		KROLL_API bool Unzip(std::string& source, std::string& destination, 
-			UnzipCallback callback=NULL, void* data=NULL);
+			UnzipCallback callback=0, void* data=0);
 #endif
-
-		/**
-		 *
-		 */
-		KROLL_API int RunAndWait(std::string& path, std::vector<std::string>& args);
-
-		/**
-		 *
-		 */
-		KROLL_API std::string GetUsername();
 	}
 }
 
