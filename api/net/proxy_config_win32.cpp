@@ -26,8 +26,6 @@ static vector<SharedPtr<BypassEntry> > bypassList;
 static void InitializeWin32ProxyConfig();
 static bool GetAutoProxiesForURL(string& url, vector<SharedProxy>& proxies,
 	const string& scheme);
-static void ParseProxyList(string proxyList, 
-	vector<SharedProxy>& ieProxyList, const string& scheme="");
 static string ErrorCodeToString(DWORD code);
 static void AddToBypassList(string bypassListString,
 	vector<SharedPtr<BypassEntry > >& list);
@@ -44,7 +42,7 @@ class WinHTTPSession
 			L"AppleWebKit/526.9 (KHTML, like Gecko) "
 			L"Version/4.0dp1 Safari/526.8",
 			WINHTTP_ACCESS_TYPE_NO_PROXY,
-			WINHTTP_NO_PROXY_NAME, 
+			WINHTTP_NO_PROXY_NAME,
 			WINHTTP_NO_PROXY_BYPASS, 0);
 	}
 
@@ -63,10 +61,10 @@ class WinHTTPSession
 	HINTERNET handle;
 };
 
-bool useProxyAutoConfig = false;
-wstring autoConfigURL(L"");
-WinHTTPSession httpSession;
-vector<SharedProxy> ieProxies;
+static bool useProxyAutoConfig = false;
+static wstring autoConfigURL(L"");
+static WinHTTPSession httpSession;
+static vector<SharedProxy> ieProxies;
 
 static void InitializeWin32ProxyConfig()
 {
@@ -226,53 +224,6 @@ static bool GetAutoProxiesForURL(string& url, vector<SharedProxy>& proxies,
 	return shouldUseProxy;
 }
 
-static void ParseProxyList(string proxyList, vector<SharedProxy>& ieProxyList,
-	const string& scheme)
-{
-	string sep = "; ";
-	StringTokenizer proxyTokens(proxyList, sep,
-		StringTokenizer::TOK_IGNORE_EMPTY | StringTokenizer::TOK_TRIM);
-	for (size_t i = 0; i < proxyTokens.count(); i++)
-	{
-		string entry = proxyTokens[i];
-
-		// If this entry defines a scheme, make it override the argument.
-		bool definedScheme = false;
-		string thisScheme = scheme;
-		size_t schemeEnd = entry.find('=');
-		if (schemeEnd != string::npos)
-		{
-			// This proxy only applies to the scheme before '='
-			thisScheme = entry.substr(0, schemeEnd);
-			entry = entry.substr(schemeEnd + 1);
-			definedScheme = true;
-		}
-
-		// We need to ensure that this entry has a scheme part, so
-		// that Poco's URI parsing works properly. Later we need to
-		// strip away this fake scheme.
-		entry = FileUtils::Trim(entry);
-		if (entry.find("://") == string::npos)
-		{
-			if (scheme.empty())
-				entry = string("http://") + entry;
-			else
-				entry = scheme + "://" + entry;
-		}
-
-		SharedProxy proxy = new Proxy;
-		proxy->info = new URI(entry);
-
-		// Set the scheme based on the value that came before '='
-		// We want this proxy to only apply to what it was specifically
-		// set for.
-		proxy->info->setScheme(thisScheme);
-
-		GetLogger()->Debug("Proxy entry: %s", proxy->info->toString().c_str());
-		ieProxyList.push_back(proxy);
-	}
-}
-
 static void AddToBypassList(string bypassListString,
 	vector<SharedPtr<BypassEntry > >& list)
 {
@@ -411,30 +362,30 @@ SharedProxy GetProxyForURLImpl(URI& uri)
 		bool shouldUseIEProxy = GetAutoProxiesForURL(
 			url, autoProxies, uri.getScheme());
 
-		for (int i = 0; i < autoProxies.size(); i++)
-		{
-			SharedProxy proxy(autoProxies.at(i));
-			if (proxy->info->getScheme().empty() ||
-				proxy->info->getScheme() == uri.getScheme())
-			{
-				return proxy;
-			}
-		}
+		// TODO(mrobinson): This should eventually return a list.
+		if (!autoProxies.empty())
+			return autoProxies[0];
 
 		if (!shouldUseIEProxy)
 			return 0;
 	}
 
-	// Try the IE proxy list
+	// Try the IE proxy list. Give preference to proxies set for a
+	// particular scheme. If no proxy for that scheme can be found
+	// use the SOCKS proxy as a fallback, if one exists.
+	SharedProxy socksProxy(0);
 	for (int i = 0; i < ieProxies.size(); i++)
 	{
 		SharedProxy proxy(ieProxies.at(i));
-		string proxyScheme(proxy->info->getScheme());
-		if (proxyScheme.empty() || proxyScheme == uri.getScheme())
+		ProxyType type = Proxy::SchemeToProxyType(uri.getScheme());
+		if (type == proxy->type)
 			return proxy;
+
+		if (proxy->type == SOCKS && !socksProxy.get())
+			socksProxy = proxy;
 	}
 
-	return 0;
+	return socksProxy;
 }
 
 } // namespace ProxyConfig

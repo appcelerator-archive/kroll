@@ -16,10 +16,17 @@ namespace kroll
 		unsigned short port;
 	};
 
+	enum ProxyType { HTTP, HTTPS, FTP, SOCKS };
 	class KROLL_API Proxy
 	{
 	public:
-		SharedURI info;
+		ProxyType type;
+		std::string host;
+		unsigned port;
+		std::string username;
+		std::string password;
+		std::string ToString();
+		static ProxyType SchemeToProxyType(std::string);
 	};
 
 	namespace ProxyConfig
@@ -29,11 +36,15 @@ namespace kroll
 		KROLL_API SharedProxy GetHTTPProxyOverride();
 		KROLL_API SharedProxy GetHTTPSProxyOverride();
 		KROLL_API SharedProxy GetProxyForURL(std::string& url);
+		KROLL_API SharedProxy ParseProxyEntry(std::string proxyEntry,
+			const std::string& urlScheme, const std::string& entryScheme);
 
 		SharedProxy GetProxyForURLImpl(Poco::URI& uri);
 		bool ShouldBypass(Poco::URI& uri,
 			std::vector<SharedPtr<BypassEntry> >& bypassList);
 		SharedPtr<BypassEntry> ParseBypassEntry(std::string entry);
+		void ParseProxyList(std::string proxyListString,
+			std::vector<SharedProxy>& proxyList, const std::string& scheme="");
 		Logger* GetLogger();
 	};
 }
