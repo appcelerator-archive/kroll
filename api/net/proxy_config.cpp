@@ -236,7 +236,7 @@ SharedProxy ParseProxyEntry(string entry, const string& urlScheme,
 	if (schemeEnd != string::npos)
 	{
 		hostScheme = entry.substr(0, schemeEnd - 3);
-		entry = entry.substr(schemeEnd + 1);
+		entry = entry.substr(schemeEnd + 3);
 	}
 
 	size_t portStart = entry.find(':');
