@@ -14,7 +14,7 @@ print "thirdparty"
 revisions = {
 	"linux-i386": 23,
 	"linux-x86_64": 20,
-	"osx-universal": 22,
+	"osx-universal": 23,
 	"win32-i386": 25
 }
 
