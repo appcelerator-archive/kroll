@@ -10,6 +10,7 @@ import distutils.dir_util as dirutil
 from progressbar import ProgressBar
 Import('build')
 
+print "thirdparty"
 revisions = {
 	"linux-i386": 23,
 	"linux-x86_64": 20,
@@ -71,6 +72,9 @@ elif build.is_osx():
 		t = build.utils.CopyToDir(framework, rtdir, exclude=excludes)
 		targets.append(t)
 
-	# PHP dependencies aren't distributed with the runtime, only Poco's.
-	futils.CopyTree(path.join(build.third_party, 'poco', 'lib'), rtdir)
+	# PHP dependencies don't aren't distributed with the runtime, only Poco's.
+	# for libdir in Glob(path.join(build.third_party, '*/lib')):
+	libdir = path.join(build.third_party, "poco", "lib");
+	targets.append(build.utils.CopyTree(libdir, rtdir, exclude=excludes))
+	build.mark_build_target(targets)
 
