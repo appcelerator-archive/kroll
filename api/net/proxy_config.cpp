@@ -235,8 +235,28 @@ SharedProxy ParseProxyEntry(string entry, const string& urlScheme,
 	std::string hostScheme;
 	if (schemeEnd != string::npos)
 	{
-		hostScheme = entry.substr(0, schemeEnd - 3);
+		hostScheme = entry.substr(0, schemeEnd);
 		entry = entry.substr(schemeEnd + 3);
+	}
+
+	// We need to pull out the credentials before the port, because
+	// the port just searches for the first ':', which can be in the
+	// credentials section.
+	string username, password;
+	size_t credentialsEnd = entry.find('@');
+	if (credentialsEnd != string::npos && credentialsEnd > 0 && entry.size() > 1)
+	{
+		username = entry.substr(0, credentialsEnd);
+		printf("username: %s\n", username.c_str());
+		entry = entry.substr(credentialsEnd + 1);
+		printf("entry: %s\n", entry.c_str());
+
+		size_t usernameEnd = username.find(':');
+		if (usernameEnd != string::npos)
+		{
+			password = username.substr(usernameEnd + 1);
+			username = username.substr(0, usernameEnd);
+		}
 	}
 
 	size_t portStart = entry.find(':');
@@ -256,17 +276,26 @@ SharedProxy ParseProxyEntry(string entry, const string& urlScheme,
 		}
 	}
 
-	SharedProxy proxy = new Proxy;
-	entry = FileUtils::Trim(entry);
-	proxy->host = entry;
+	std::string scheme;
+	if (!entryScheme.empty())
+		scheme = entryScheme;
+	else if (!hostScheme.empty())
+		scheme = hostScheme;
+	else
+		scheme = urlScheme;
+
+	if (scheme == "direct")
+		return 0;
+
+	SharedProxy proxy = new Proxy();
+	proxy->type = Proxy::SchemeToProxyType(scheme);
+	proxy->host = FileUtils::Trim(entry);
 	proxy->port = port;
 
-	if (!entryScheme.empty())
-		proxy->type = Proxy::SchemeToProxyType(entryScheme);
-	else if (!hostScheme.empty())
-		proxy->type = Proxy::SchemeToProxyType(hostScheme);
-	else // Empty scheme defaults to HTTP
-		proxy->type = Proxy::SchemeToProxyType(urlScheme);
+	if (!username.empty())
+		proxy->username = username;
+	if (!password.empty())
+		proxy->password = password;
 
 	return proxy;
 }
