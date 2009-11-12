@@ -25,54 +25,30 @@ namespace kroll
 		return factory;
 	}
 
-	static void FreeProxies(char** proxies)
-	{
-		for (int i = 0; proxies[i]; i++)
-			free(proxies[i]);
-		free(proxies);	
-	}
-
 	namespace ProxyConfig
 	{
 		SharedPtr<Proxy> GetProxyForURLImpl(Poco::URI& uri)
 		{
 			std::string url(uri.toString());
-			char* urlCString = strdup(url.c_str());
+			char* urlC = strdup(url.c_str());
+			char** proxies = px_proxy_factory_get_proxies(GetProxyFactory(), urlC);
+			free(urlC);
 
-			char** proxies = px_proxy_factory_get_proxies(
-				GetProxyFactory(), urlCString);
-			free(urlCString);
-			SharedPtr<Proxy> proxy = 0;
+			// TODO(mrobinson): Instead of just returning the first applicable proxy, this
+			// should return a list of them.
+			const char* proxyChars = proxies[0];
+			if (!proxyChars)
+				return 0;
 
-			// At this point we should really be trying each proxy until
-			// we succeeed in being able to fetch this url. That doesn't
-			// really jive with our way of doing things, so we'll try to
-			// pick a likely candidate.
-			int numberOfProxies = 0;
+			// Do not pass in an entryScheme here (third argument), because it will
+			// override the host scheme, which is the most important in this case.
+			SharedProxy proxy(ProxyConfig::ParseProxyEntry(
+				proxyChars, uri.getScheme(), string()));
+
 			for (int i = 0; proxies[i]; i++)
-			{
-				numberOfProxies++;
-				SharedURI proxyURI = new URI(proxies[i]);
-				if (proxyURI->getScheme() == "direct")
-				{
-					FreeProxies(proxies);
-					return 0;
-				}
-				else if (proxyURI->getScheme() == uri.getScheme())
-				{
-					proxy = new Proxy;	
-					proxy->info = proxyURI;
-				}
-			}
+				free(proxies[i]);
+			free(proxies);
 
-			// We didn't find a likely proxy, so just return the first one
-			if (proxy.isNull() && numberOfProxies > 0)
-			{
-				proxy = new Proxy;	
-				proxy->info = new URI(proxies[0]);
-			}
-
-			FreeProxies(proxies);
 			return proxy;
 		}
 	}
