@@ -10,7 +10,6 @@ import distutils.dir_util as dirutil
 from progressbar import ProgressBar
 Import('build')
 
-print "thirdparty"
 revisions = {
 	"linux-i386": 23,
 	"linux-x86_64": 20,
