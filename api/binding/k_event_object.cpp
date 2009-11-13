@@ -22,6 +22,7 @@ namespace kroll
 
 		this->SetMethod("addEventListener", &KEventObject::_AddEventListener);
 		this->SetMethod("removeEventListener", &KEventObject::_RemoveEventListener);
+		Event::SetEventConstants(this);
 	}
 
 	KEventObject::~KEventObject()
@@ -133,7 +134,7 @@ namespace kroll
 		unsigned int listenerId;
 		if (args.size() > 1 && args.at(0)->IsString() && args.at(1)->IsMethod())
 		{
-			std::string eventName = args.GetString(0);
+			std::string eventName(args.GetString(0));
 			listenerId = this->AddEventListener(eventName, args.GetMethod(1));
 		}
 		else if (args.size() > 0 && args.at(0)->IsMethod())
@@ -142,6 +143,7 @@ namespace kroll
 		}
 		else
 		{
+			printf("here!\n");
 			throw ValueException::FromString("Incorrect arguments passed to addEventListener");
 		}
 
@@ -152,7 +154,7 @@ namespace kroll
 	{
 		args.VerifyException("removeEventListener", "s n|m");
 
-		std::string eventName = args.GetString(0);
+		std::string eventName(args.GetString(0));
 		if (args.at(1)->IsMethod())
 		{
 			this->RemoveEventListener(eventName, args.GetMethod(1));
