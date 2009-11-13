@@ -185,6 +185,12 @@ namespace FileUtils
 		return (::CreateDirectoryW(wideDir.c_str(), NULL) == TRUE);
 	}
 
+	bool DeleteFile(std::string &path)
+	{
+		// SHFileOperation doesn't care if it's a dir or file -- delegate
+		return DeleteDirectory(path);
+	}
+	
 	bool DeleteDirectory(std::string &dir)
 	{
 		std::wstring wideDir(UTILS_NS::UTF8ToWide(dir));

@@ -5,6 +5,7 @@
  */
 #include "../utils.h"
 #include <sstream>
+
 using std::wstring;
 
 namespace UTILS_NS
@@ -44,109 +45,62 @@ namespace BootUtils
 			installerPath = application->path;
 		}
 
-		string exec(FileUtils::Join(installerPath.c_str(), 
-			"installer", "Installer.exe", NULL));
-
-		if (!FileUtils::IsFile(exec))
+		string msiName(application->name);
+		msiName += ".msi";
+		string installer(FileUtils::Join(installerPath.c_str(), 
+			"installer", msiName.c_str(), NULL));
+		string msiExec(FileUtils::Join("C:", "Windows", "system32", "msiexec.exe", NULL));
+		if (!FileUtils::IsFile(installer) && !FileUtils::IsFile(msiExec))
 		{
 			return false;
 		}
-
-		vector<string> args;
-		args.push_back("-appPath");
-		args.push_back(application->path);
-
-		args.push_back("-exePath");
-		args.push_back(application->GetExecutablePath());
+		
+		std::wstring commandLine(UTF8ToWide(msiExec));
+		commandLine += L" /I \"";
+		commandLine += UTF8ToWide(installer);
+		commandLine += L"\" ";
+		
+		commandLine += L"REINSTALL=ALL REINSTALLMODE=vomus";
+		commandLine += L" APP_UPDATE_MANIFEST=\"";
 		if (!updateFile.empty())
 		{
-			args.push_back("-updateFile");
-			args.push_back(updateFile);
+			commandLine += UTF8ToWide(updateFile);
 		}
-
-		if (quiet)
+		else
 		{
-			args.push_back("-quiet");
+			commandLine += UTF8ToWide(application->manifestPath);
 		}
+		commandLine += L"\"";
+		std::wcout << commandLine << std::endl;
 		
-		if (forceInstall)
-		{
-			args.push_back("-forceInstall");
-		}
+		STARTUPINFO startupInfo;
+		startupInfo.cb          = sizeof(STARTUPINFO);
+		startupInfo.lpReserved  = NULL;
+		startupInfo.lpDesktop   = NULL;
+		startupInfo.lpTitle     = NULL;
+		startupInfo.dwFlags     = STARTF_FORCEOFFFEEDBACK | STARTF_USESTDHANDLES;
+		startupInfo.cbReserved2 = 0;
+		startupInfo.lpReserved2 = NULL;
 
-		vector<string> jobs;
-		vector<SharedDependency>::iterator mi = missing.begin();
-		while (mi != missing.end())
-		{
-			SharedDependency d = *mi++;
-			string url = application->GetURLForDependency(d);
-			string job = d->name + "," + d->version + "," + url;
-			jobs.push_back(job);
-		}
-	
-		// A little bit of ugliness goes a long way:
-		// Use ShellExecuteEx here with the undocumented runas verb
-		// so that we can execute the installer executable and have it
-		// properly do the UAC thing. Why isn't this in the API?
-	
-		// More ugliness: The path length for ShellExecuteEx is limited so just
-		// pass a file name containing all the download jobs. :(
-		string tempdir(FileUtils::GetTempDirectory());
-		string jobsFile(FileUtils::Join(tempdir.c_str(), "jobs", NULL));
-		if (jobs.size() > 0)
-		{	
-			FileUtils::CreateDirectory(tempdir);
-			try
-			{
-				std::ostringstream jobsContent;
-				for (size_t i = 0; i < jobs.size(); i++)
-				{
-					jobsContent << jobs[i] << std::endl;
-				}
-
-				string content(jobsContent.str());
-				FileUtils::WriteFile(jobsFile, content);
-				args.push_back(jobsFile);
-			} 
-			catch (std::exception& e)
-			{
-				std::cerr << e.what() << std::endl;
-			}
-		}
-	
-		string paramString("");
-		for (size_t i = 0; i < args.size(); i++)
-		{
-			paramString.append(" \"");
-			paramString.append(args.at(i));
-			paramString.append("\"");
-		}
-		wstring wideParamString = UTF8ToWide(paramString);
+		PROCESS_INFORMATION processInfo;
+		BOOL rc = CreateProcessW(NULL,
+			(LPWSTR) commandLine.c_str(),
+			NULL,
+			NULL,
+			TRUE,
+			0,
+			NULL,
+			NULL,
+			&startupInfo,
+			&processInfo);
 		
-		SHELLEXECUTEINFO ShExecInfo = {0};
-		ShExecInfo.cbSize = sizeof(SHELLEXECUTEINFO);
-		ShExecInfo.fMask = SEE_MASK_NOCLOSEPROCESS | SEE_MASK_FLAG_DDEWAIT;
-		ShExecInfo.hwnd = NULL;
-
-		// This magic causes Vista and Windows 7 to pop open
-		// the UAC dialog when this application is launched.
-		if (!IsWindowsXP())
-			ShExecInfo.lpVerb = L"runas";
-
-		wstring wideExec(UTF8ToWide(exec));
-		ShExecInfo.lpFile = wideExec.c_str();
-		ShExecInfo.lpParameters = wideParamString.c_str();
-		ShExecInfo.lpDirectory = NULL;
-		ShExecInfo.nShow = SW_SHOW;
-		ShExecInfo.hInstApp = NULL;	
-		ShellExecuteExW(&ShExecInfo);
-		WaitForSingleObject(ShExecInfo.hProcess, INFINITE);
 		DWORD returnCode;
-		GetExitCodeProcess(ShExecInfo.hProcess, &returnCode);
-		
-		if (FileUtils::IsDirectory(tempdir))
+		if (rc)
 		{
-			FileUtils::DeleteDirectory(tempdir);
+			CloseHandle(processInfo.hThread);
+			WaitForSingleObject(processInfo.hProcess, INFINITE);
+			GetExitCodeProcess(processInfo.hProcess, &returnCode);
+			CloseHandle(processInfo.hProcess);
 		}
 
 		if (returnCode != 0) {

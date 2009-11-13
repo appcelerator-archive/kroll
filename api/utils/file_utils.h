@@ -96,8 +96,17 @@ namespace UTILS_NS
 		KROLL_API bool CreateDirectory(std::string &dir, bool recursive=false);
 		KROLL_API bool CreateDirectoryImpl(std::string &dir);
 
+#ifdef OS_WIN32
+		// TODO: implement me for OSX/Linux
+		
 		/**
-		 *
+		 * Delete the file at the given path
+		 */
+		KROLL_API bool DeleteFile(std::string &path);
+#endif
+		
+		/**
+		 * Recursively delete the directory at the given path
 		 */
 		KROLL_API bool DeleteDirectory(std::string &dir);
 

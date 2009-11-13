@@ -7,7 +7,6 @@ import os.path as path
 Import('build')
 Import('debug')
 
-SConscript('SConscript.thirdparty', duplicate=0)
 SConscript('boot/SConscript', duplicate=0, build_dir=path.join(build.dir, 'objs', 'boot'))
 
 SConscript('api/SConscript', build_dir=path.join(build.dir,'objs','api'), duplicate=0)

@@ -50,6 +50,8 @@ if build.is_win32():
 	build.env.Append(LINKFLAGS=['/DEBUG', '/PDB:${TARGET}.pdb'])
 
 Export('build')
+SConscript('SConscript.thirdparty', duplicate=0)
+
 if 'docs' in COMMAND_LINE_TARGETS:
 	SConscript('SConscript.docs')
 else:
