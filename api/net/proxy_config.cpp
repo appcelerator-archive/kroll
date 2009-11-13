@@ -73,6 +73,24 @@ std::string Proxy::ToString()
 	return ss.str();
 }
 
+static SharedProxy GetProxyFromEnvironment(std::string prefix)
+{
+	Poco::toUpperInPlace(prefix);
+	std::string envName = prefix + "_PROXY";
+
+	std::string proxyString(EnvironmentUtils::Get(envName));
+	if (!proxyString.empty())
+		return ProxyConfig::ParseProxyEntry(proxyString, prefix, std::string());
+
+	Poco::toLowerInPlace(prefix);
+	envName = prefix + "_proxy";
+	proxyString = EnvironmentUtils::Get(envName);
+	if (!proxyString.empty())
+		return ProxyConfig::ParseProxyEntry(proxyString, prefix, std::string());
+
+	return 0;
+}
+
 namespace ProxyConfig
 {
 
@@ -114,6 +132,14 @@ SharedProxy GetProxyForURL(string& url)
 
 	if (scheme == "https" && !httpsProxyOverride.isNull())
 		return httpsProxyOverride;
+
+	SharedProxy environmentProxy(GetProxyFromEnvironment(scheme));
+	if (!environmentProxy.isNull())
+	{
+		logger->Debug("Found proxy (%s) in environment",
+			environmentProxy->ToString().c_str());
+		return environmentProxy;
+	}
 
 	logger->Debug("Looking up proxy information for: %s", url.c_str());
 	SharedProxy proxy(ProxyConfig::GetProxyForURLImpl(uri));
@@ -247,9 +273,7 @@ SharedProxy ParseProxyEntry(string entry, const string& urlScheme,
 	if (credentialsEnd != string::npos && credentialsEnd > 0 && entry.size() > 1)
 	{
 		username = entry.substr(0, credentialsEnd);
-		printf("username: %s\n", username.c_str());
 		entry = entry.substr(credentialsEnd + 1);
-		printf("entry: %s\n", entry.c_str());
 
 		size_t usernameEnd = username.find(':');
 		if (usernameEnd != string::npos)
