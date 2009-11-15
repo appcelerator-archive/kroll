@@ -69,22 +69,36 @@ namespace kroll
 
 	bool Win32Host::RunLoop()
 	{
-		// just process one message at a time
+		static bool postedQuitMessage = false;
+
+		// Just process one message at a time
 		MSG message;
 		if (GetMessage(&message, NULL, 0, 0))
 		{
-			if (message.message == tickleRequestMessage)
-			{
-				this->RunMainThreadJobs();
-			}
-
-			// still translate/dispatch this message, in case
+			// Always translate/dispatch this message, in case
 			// we are polluting the message namespace
 			// .. i'm looking at you flash!
 			TranslateMessage(&message);
 			DispatchMessage(&message);
+
+			// Yo, just got word that it's time to exit. Post a quit
+			// message that this  loop will soon see as a WM_QUIT.
+			// Only quit after processing that message.
+			if (this->exiting && !postedQuitMessage)
+			{
+				PostQuitMessage(this->exitCode);
+				postedQuitMessage = true;
+			}
+
+			if (message.message == tickleRequestMessage)
+				this->RunMainThreadJobs();
+
+			return true;
 		}
-		return true;
+		else
+		{
+			return false; // Got the WM_QUIT message.
+		}
 	}
 
 	Module* Win32Host::CreateModule(std::string& path)

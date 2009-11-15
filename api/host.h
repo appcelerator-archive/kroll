@@ -121,8 +121,6 @@ namespace kroll
 		inline SharedApplication GetApplication() { return this->application; }
 		inline bool DebugModeEnabled() { return this->debug; }
 		inline bool ProfilingEnabled() { return this->profile; }
-		inline bool RunUILoop() { return runUILoop; }
-		inline void SetRunUILoop(bool runUILoop) { this->runUILoop = runUILoop; }
 		inline Poco::Timestamp::TimeDiff GetElapsedTime() { return timeStarted.elapsed(); }
 		inline KObjectRef GetGlobalObject() { return GlobalObject::GetInstance(); }
 
@@ -138,7 +136,6 @@ namespace kroll
 		bool debug;
 		bool waitForDebugger;
 		bool autoScan;
-		bool runUILoop;
 		bool profile;
 		std::string profilePath;
 		std::string logFilePath;
@@ -164,6 +161,7 @@ namespace kroll
 		virtual bool Start();
 		virtual bool RunLoop() = 0;
 		virtual void Stop();
+		virtual void Shutdown();
 		virtual void SignalNewMainThreadJob() { }
 
 	private:

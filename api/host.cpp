@@ -44,13 +44,11 @@ namespace kroll
 
 	Host::Host(int argc, const char *argv[]) :
 		application(0),
-		running(false),
 		exiting(false),
 		exitCode(0),
 		debug(false),
 		waitForDebugger(false),
 		autoScan(false),
-		runUILoop(true),
 		profile(false),
 		profileStream(0),
 		consoleLogging(true),
@@ -719,46 +717,58 @@ namespace kroll
 			return 1;
 		}
 
-		// Depending on the implementation of platform-specific host,
-		// it may block in Start() or implement a UI loop which will
-		// be continually called until this->running becomes false.
 		// Do not run if exit flag is set. This can happen if a loaded
 		// module from above called exit().
-		if (!this->exiting)
+		if (this->exiting)
 		{
-			try
+			Host::Shutdown();
+			Logger::Shutdown();
+			return this->exitCode;
+		}
+
+		// Depending on the implementation of platform-specific host,
+		// it may block in Start() or implement a UI loop which will
+		// be continually called until it returns false.
+		try
+		{
+			if (this->Start())
 			{
-				this->running = this->Start();
-				if (this->runUILoop)
-				{
-					while (this->running)
-					{
-						if (!this->RunLoop())
-						{
-							break;
-						}
-					}
-				}
-			}
-			catch (kroll::ValueException& e)
-			{
-				SharedString s = e.GetValue()->DisplayString();
-				logger->Error("Caught exception in main loop: %s", s->c_str());
+				// We want the Host implementation to decide
+				// when the best time to break out of the run
+				// loop is. This allows it to handle additional
+				// events if necessary.
+				while (this->RunLoop()) {}
 			}
 		}
+		catch (kroll::ValueException& e)
+		{
+			logger->Error("Caught exception in main loop: %s",
+				e.ToString().c_str());
+		}
+
+		Host::Shutdown();
+		Logger::Shutdown();
+		return this->exitCode;
+	}
+
+	void Host::Shutdown()
+	{
+		// Do not shut down the logger here, because logging
+		// may need to happen after this method is called.
+
+		static bool shutdown = false;
+		if (shutdown)
+			return;
 
 		ScopedLock lock(&moduleMutex);
 		this->Stop();
 		this->UnloadModuleProviders();
 		this->UnloadModules();
 
-		// Stop the profiler, if it was enabled
-		StopProfiling();
-
+		StopProfiling(); // Stop the profiler, if it was enabled
 		logger->Notice("Exiting with exit code: %i", exitCode);
 
-		Logger::Shutdown();
-		return this->exitCode;
+		shutdown = true;
 	}
 
 	void Host::Exit(int exitCode)
@@ -767,9 +777,9 @@ namespace kroll
 		if (GlobalObject::GetInstance()->FireEvent(Event::EXIT) &&
 			GlobalObject::GetInstance()->FireEvent(Event::APP_EXIT))
 		{
-			running = false;
-			exiting = true;
+			Host::Shutdown();
 			this->exitCode = exitCode;
+			this->exiting = true;
 		}
 		else
 		{

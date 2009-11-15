@@ -44,8 +44,8 @@ namespace kroll
 
 	protected:
 		virtual void SignalNewMainThreadJob();
-		bool RunLoop();
-		bool Start();
+		virtual bool RunLoop();
+		virtual bool Start();
 
 	private:
 		HINSTANCE instanceHandle;
