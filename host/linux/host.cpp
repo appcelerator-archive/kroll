@@ -54,8 +54,8 @@ namespace kroll
 	{
 		// Only call this if gtk_main is running. If called when the gtk_main
 		// is not running, it will cause an assertion failure.
-		static mainLoopRunning = true;
-		if (mainLooprunning)
+		static bool mainLoopRunning = true;
+		if (mainLoopRunning)
 		{
 			mainLoopRunning = false;
 			gtk_main_quit();
