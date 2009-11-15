@@ -75,6 +75,9 @@ namespace kroll
 		MSG message;
 		if (GetMessage(&message, NULL, 0, 0))
 		{
+			if (message.message == tickleRequestMessage)
+				this->RunMainThreadJobs();
+
 			// Always translate/dispatch this message, in case
 			// we are polluting the message namespace
 			// .. i'm looking at you flash!
@@ -89,9 +92,6 @@ namespace kroll
 				PostQuitMessage(this->exitCode);
 				postedQuitMessage = true;
 			}
-
-			if (message.message == tickleRequestMessage)
-				this->RunMainThreadJobs();
 
 			return true;
 		}

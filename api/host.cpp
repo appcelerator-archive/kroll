@@ -722,8 +722,6 @@ namespace kroll
 		if (this->exiting)
 		{
 			Host::Shutdown();
-			StopProfiling(); // Stop the profiler, if it was enabled
-			Logger::Shutdown();
 			return this->exitCode;
 		}
 
@@ -748,8 +746,6 @@ namespace kroll
 		}
 
 		Host::Shutdown();
-		StopProfiling(); // Stop the profiler, if it was enabled
-		Logger::Shutdown();
 		return this->exitCode;
 	}
 
@@ -768,6 +764,8 @@ namespace kroll
 		this->UnloadModules();
 
 		logger->Notice("Exiting with exit code: %i", exitCode);
+		StopProfiling(); // Stop the profiler, if it was enabled
+		Logger::Shutdown();
 		shutdown = true;
 	}
 
@@ -777,7 +775,6 @@ namespace kroll
 		if (GlobalObject::GetInstance()->FireEvent(Event::EXIT) &&
 			GlobalObject::GetInstance()->FireEvent(Event::APP_EXIT))
 		{
-			Host::Shutdown();
 			this->exitCode = exitCode;
 			this->exiting = true;
 		}
