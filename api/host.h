@@ -130,7 +130,6 @@ namespace kroll
 		std::vector<ModuleProvider *> moduleProviders;
 		std::vector<std::string> modulePaths;
 		SharedApplication application;
-		bool running;
 		bool exiting;
 		int exitCode;
 		bool debug;

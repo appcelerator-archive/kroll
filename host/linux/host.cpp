@@ -52,12 +52,15 @@ namespace kroll
 
 	void LinuxHost::Exit(int returnCode)
 	{
-		if (this->running)
+		// Only call this if gtk_main is running. If called when the gtk_main
+		// is not running, it will cause an assertion failure.
+		static mainLoopRunning = true;
+		if (mainLooprunning)
 		{
-			// Only call this if gtk main is running. If called when the gtk_main
-			// is not running, it will cause an assertion failure.
+			mainLoopRunning = false;
 			gtk_main_quit();
 		}
+
 		Host::Exit(returnCode);
 	}
 
