@@ -53,6 +53,7 @@ if not exists(): fetch()
 if build.is_linux():
 	futils.CopyTree(path.join(build.third_party, 'webkit', 'lib'), rtdir)
 	futils.CopyTree(path.join(build.third_party, 'poco', 'lib'), rtdir)
+	futils.CopyTree(path.join(build.third_party, 'curl', 'lib'), rtdir)
 
 elif build.is_win32():
 	futils.CopyTree(path.join(build.third_party, 'poco', 'bin'), rtdir)
