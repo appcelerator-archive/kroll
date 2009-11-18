@@ -120,7 +120,7 @@ static void InitializeOSXProxyConfig()
 	if (initialized)
 		return;
 
-	scoped_cftyperef<CFDictionaryRef> configDict(SCDynamicStoreCopyProxies(NULL));
+	CFRef<CFDictionaryRef> configDict(SCDynamicStoreCopyProxies(NULL));
 
 	// PAC file
 	if (GetBoolFromDictionary(configDict.get(),
@@ -236,7 +236,7 @@ void DoPACRequst(void* data)
 	// release the return CFRunLoopSourceRef <rdar://problem/5533931>.
 	CFTypeRef result = NULL;
 	CFStreamClientContext context = { 0, &result, NULL, NULL, NULL };
-	scoped_cftyperef<CFRunLoopSourceRef> runLoopSource(
+	CFRef<CFRunLoopSourceRef> runLoopSource(
 		CFNetworkExecuteProxyAutoConfigurationURL(info->scriptURL, info->url,
 			ResultCallback, &context));
 
@@ -324,7 +324,7 @@ static void ExpandPACProxies(CFURLRef url, CFArrayRef proxies,
 
 SharedProxy TryCFNetworkCopyProxiesForURL(const string& queryURL)
 {
-	scoped_cftyperef<CFURLRef> cfurl(CFURLCreateWithBytes(NULL, 
+	CFRef<CFURLRef> cfurl(CFURLCreateWithBytes(NULL, 
 		(const UInt8 *) queryURL.c_str(), queryURL.size(),
 		 kCFStringEncodingUTF8, NULL));
 
@@ -335,7 +335,7 @@ SharedProxy TryCFNetworkCopyProxiesForURL(const string& queryURL)
 	}
 
 	// Get the default proxies dictionary from CF.
-	scoped_cftyperef<CFDictionaryRef> proxySettings(SCDynamicStoreCopyProxies(NULL));
+	CFRef<CFDictionaryRef> proxySettings(SCDynamicStoreCopyProxies(NULL));
 	if (!proxySettings.get())
 	{
 		GetLogger()->Error("SCDynamicStoreCopyProxies returned NULL");
@@ -344,7 +344,7 @@ SharedProxy TryCFNetworkCopyProxiesForURL(const string& queryURL)
 
 	// Call CFNetworkCopyProxiesForURL to get the proxy list.  Then expand 
 	// any PAC-based proxies.
-	scoped_cftyperef<CFArrayRef> proxies(CFNetworkCopyProxiesForURL(
+	CFRef<CFArrayRef> proxies(CFNetworkCopyProxiesForURL(
 		cfurl.get(), proxySettings.get()));
 	if (!proxies.get())
 	{
@@ -355,7 +355,7 @@ SharedProxy TryCFNetworkCopyProxiesForURL(const string& queryURL)
 	// If there are any PAC entries in our list of proxies, we're going to
 	// need to use the CFNetwork APIs to execute the script at the URL. The
 	// resulting proxies will be placed in the correct order in proxiesToTry.
-	scoped_cftyperef<CFMutableArrayRef> proxiesToTry(CFArrayCreateMutable(
+	CFRef<CFMutableArrayRef> proxiesToTry(CFArrayCreateMutable(
 		NULL, 0, &kCFTypeArrayCallBacks));
 	if (!proxiesToTry.get())
 	{
