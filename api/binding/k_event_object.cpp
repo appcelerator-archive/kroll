@@ -113,11 +113,12 @@ namespace kroll
 			listeners = *(KEventObject::listenerMap[this]);
 		}
 
+		KObjectRef thisObject(this, true);
 		std::vector<EventListener*>::iterator li = listeners.begin();
 		while (li != listeners.end())
 		{
 			EventListener* listener = *li++;
-			listener->FireEventIfMatches(event, synchronous);
+			listener->FireEventIfMatches(event, synchronous, thisObject);
 
 			if (synchronous && event->stopped)
 				return !event->preventedDefault;
@@ -143,7 +144,6 @@ namespace kroll
 		}
 		else
 		{
-			printf("here!\n");
 			throw ValueException::FromString("Incorrect arguments passed to addEventListener");
 		}
 
@@ -165,14 +165,14 @@ namespace kroll
 		}
 	}
 
-	void EventListener::FireEventIfMatches(AutoPtr<Event> event, bool synchronous)
+	void EventListener::FireEventIfMatches(AutoPtr<Event> event, bool synchronous, KObjectRef thisObject)
 	{
 		if (event->eventName != this->eventName && this->eventName != Event::ALL)
 			return;
 
 		try
 		{
-			RunOnMainThread(callback, event->target,
+			RunOnMainThread(callback, thisObject,
 				ValueList(Value::NewObject(event)), synchronous);
 		}
 		catch (ValueException& e)

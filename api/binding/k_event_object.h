@@ -16,7 +16,7 @@ namespace kroll
 			eventName(eventName),
 			callback(callback),
 			listenerId(++EventListener::currentId) {}
-		void FireEventIfMatches(AutoPtr<Event>, bool synchronous=true);
+		void FireEventIfMatches(AutoPtr<Event>, bool synchronous, KObjectRef thisObject);
 		bool Matches(std::string&, unsigned int, KMethodRef);
 		std::string eventName;
 		KMethodRef callback;
