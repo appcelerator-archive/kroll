@@ -134,8 +134,12 @@ namespace kroll
 
 	bool OSXHost::Start()
 	{
-		NSApplication *app = [NSApplication sharedApplication];
-		[app finishLaunching];
+		string origPath(EnvironmentUtils::Get("KR_ORIG_DYLD_FRAMEWORK_PATH"));
+		EnvironmentUtils::Set("DYLD_FRAMEWORK_PATH", origPath);
+		origPath = EnvironmentUtils::Get("KR_ORIG_DYLD_LIBRARY_PATH")
+		EnvironmentUtils::Set("DYLD_LIBRARY_PATH", origPath);
+
+		[[NSApplication sharedApplication] finishLaunching];
 		Host::Start();
 		return true;
 	}

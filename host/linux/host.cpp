@@ -76,6 +76,9 @@ namespace kroll
 
 	bool LinuxHost::RunLoop()
 	{
+		string origPath(EnvironmentUtils::Get("KR_ORIG_LD_LIBRARY_PATH"));
+		EnvironmentUtils::Set("LD_LIBRARY_PATH", origPath);
+
 		g_timeout_add(250, &MainThreadJobCallback, this);
 		gtk_main();
 		return false;

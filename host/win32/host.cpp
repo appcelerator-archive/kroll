@@ -62,6 +62,9 @@ namespace kroll
 
 	bool Win32Host::Start()
 	{
+		string origPath(EnvironmentUtils::Get("KR_ORIG_PATH"));
+		EnvironmentUtils::Set("PATH", origPath);
+
 		Host::Start();
 		mainThreadId = GetCurrentThreadId();
 		return true;

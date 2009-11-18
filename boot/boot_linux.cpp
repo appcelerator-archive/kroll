@@ -61,12 +61,13 @@ namespace KrollBoot
 	{
 		moduleList = app->runtime->path + ":" + moduleList;
 
-		string path = moduleList;
-		string current = EnvironmentUtils::Get("LD_LIBRARY_PATH");
+		string path(moduleList);
+		string current(EnvironmentUtils::Get("LD_LIBRARY_PATH"));
+		EnvironmentUtils::Set("KR_ORIG_LD_LIBRARY_PATH", current);
+
 		if (!current.empty())
-		{
 			path.append(":" + current);
-		}
+
 		EnvironmentUtils::Set("LD_LIBRARY_PATH", path);
 	}
 

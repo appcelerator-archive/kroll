@@ -68,11 +68,11 @@ namespace KrollBoot
 	{
 		// Add runtime path and all module paths to PATH
 		path = app->runtime->path + ";" + path;
-		string currentPath = EnvironmentUtils::Get("PATH");
+		string currentPath(EnvironmentUtils::Get("PATH"));
+		EnvironmentUtils::Set("KR_ORIG_PATH", currentPath);
+
 		if (!currentPath.empty())
-		{
 			path = path + ";" + currentPath;
-		}
 		EnvironmentUtils::Set("PATH", path);
 	}
 
