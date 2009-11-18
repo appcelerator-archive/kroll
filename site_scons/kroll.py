@@ -25,14 +25,6 @@ class Module(object):
 		if not d:
 			d = self.build.cwd(2)
 
-		indir = path.join(d, 'AppResources', 'all')
-		outdir = path.join(self.build_dir, 'AppResources', 'all'), 
-		self.light_weight_copy('#' + self.name + '-AllAppResources', indir, outdir)
-
-		indir = path.join(d, 'AppResources', self.build.os)
-		outdir = path.join(self.build_dir, 'AppResources', self.build.os), 
-		self.light_weight_copy('#' + self.name + '-OSAppResources', indir, outdir)
-
 		outdir = self.build_dir
 		indir = path.join(d, 'Resources', 'all')
 		self.light_weight_copy('#' + self.name + '-AllResources', indir, outdir)

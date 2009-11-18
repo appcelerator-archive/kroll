@@ -294,81 +294,6 @@ namespace kroll
 	}
 
 	/**
-	 * Copy a module's application-specific resources into the currently running app
-	 */
-	void Host::CopyModuleAppResources(std::string& modulePath)
-	{
-		this->logger->Trace("CopyModuleAppResources: %s", modulePath.c_str());
-		std::string appDir = this->application->path;
-		Path appPath(this->application->path);
-
-		try
-		{
-			Path moduleDir(modulePath);
-			moduleDir = moduleDir.parent();
-			std::string mds(moduleDir.toString());
-
-			const char* platform = this->GetPlatform();
-			std::string resources_dir = FileUtils::Join(mds.c_str(), "AppResources", 0);
-			std::string plt_resources_dir = FileUtils::Join(resources_dir.c_str(), platform, 0);
-			std::string all_resources_dir = FileUtils::Join(resources_dir.c_str(), "all", 0);
-			File platformAppResourcesDir(plt_resources_dir);
-			File allAppResourcesDir(all_resources_dir);
-
-			if (platformAppResourcesDir.exists()
-				&& platformAppResourcesDir.isDirectory())
-			{
-
-				std::vector<File> files;
-				platformAppResourcesDir.list(files);
-				for (size_t i = 0; i < files.size(); i++)
-				{
-					File f = files.at(i);
-					Path targetPath(appPath, Path(Path(f.path()).getBaseName()));
-					File targetFile(targetPath);
-					this->logger->Trace("target: %s", targetFile.path().c_str());
-					if (!targetFile.exists())
-					{
-						this->logger->Trace("Copying : %s to %s", f.path().c_str(), appDir.c_str());
-						f.copyTo(appDir);
-					}
-					else
-					{
-						this->logger->Trace("SKIP Copying : %s to %s", f.path().c_str(), appDir.c_str());
-					}
-				}
-			}
-
-			if (allAppResourcesDir.exists()
-				&& allAppResourcesDir.isDirectory())
-			{
-				std::vector<File> files;
-				allAppResourcesDir.list(files);
-				for (size_t i = 0; i < files.size(); i++)
-				{
-					File f = files.at(i);
-					Path targetPath(appPath, Path(Path(f.path()).getBaseName()));
-					File targetFile(targetPath);
-					this->logger->Trace("target: %s", targetFile.path().c_str());
-					if (!targetFile.exists())
-					{
-						this->logger->Trace("Copying: %s to %s", f.path().c_str(), appDir.c_str());
-						f.copyTo(appDir);
-					}
-					else
-					{
-						this->logger->Trace("SKIP Copying : %s to %s", f.path().c_str(), appDir.c_str());
-					}
-				}
-			}
-		}
-		catch (Poco::Exception &exc)
-		{
-			// Handle..
-		}
-	}
-
-	/**
 	 * Read / process a module's manifest file
 	*/
 	void Host::ReadModuleManifest(std::string& modulePath)
@@ -436,7 +361,6 @@ namespace kroll
 		try
 		{
 			logger->Debug("Loading module: %s", path.c_str());
-			this->CopyModuleAppResources(path);
 			this->ReadModuleManifest(path);
 			module = provider->CreateModule(path);
 			module->SetProvider(provider); // set the provider

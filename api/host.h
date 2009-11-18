@@ -147,7 +147,6 @@ namespace kroll
 		void AssertEnvironmentVariable(std::string);
 		ModuleProvider* FindModuleProvider(std::string& filename);
 		void ScanInvalidModuleFiles();
-		void CopyModuleAppResources(std::string& modulePath);
 		void ReadModuleManifest(std::string& modulePath);
 		SharedPtr<Module> LoadModule(std::string& path, ModuleProvider *provider);
 		void LoadModules();
