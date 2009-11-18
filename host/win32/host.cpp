@@ -194,7 +194,7 @@ extern "C"
 #ifndef DEBUG
 		// only create a debug console when not compiled in debug mode 
 		// otherwise, it should be autocreated
-		if (host->IsDebuggingEnabled())
+		if (host->DebugModeEnabled())
 		{
 			RedirectIOToConsole();
 		}
