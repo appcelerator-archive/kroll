@@ -13,8 +13,8 @@
 namespace kroll
 {
 	/**
-	 * A container for various types.
-	 * Value instances contain a primitive or object value which can be boxed/unboxed based on the type.
+	 * A container for various types. Value instances contain a primitive or
+	 * object value which can be boxed/unboxed based on the type.
 	 */
 	class KROLL_API Value : public ReferenceCounted
 	{
@@ -32,7 +32,6 @@ namespace kroll
 			LIST = 5, /**< KListRef */
 			OBJECT = 6, /**< KObjectRef */
 			METHOD = 7, /**< KMethodRef */
-			VOIDPTR = 8, /**< void* */
 			NULLV = 0, /**< NULL */
 			UNDEFINED = -1 /**< undefined */
 		};
@@ -104,12 +103,6 @@ namespace kroll
 		 */
 		static KValueRef NewMethod(KMethodRef value);
 
-		/**
-		 * Construct a new \link #Value::Type::VOIDPTR void*\endlink value.
-		 * @param value The void* value
-		 */
-		static KValueRef NewVoidPtr(void *value);
-
 		virtual ~Value();
 
 	public:
@@ -157,11 +150,6 @@ namespace kroll
 		 * @return true if the internal value is a \link #Value::Type::METHOD method\endlink
 		 */
 		bool IsMethod() const;
-
-		/**
-		 * @return true if the internal value is a \link #Value::Type::VOIDPTR void*\endlink
-		 */
-		bool IsVoidPtr() const;
 
 		/**
 		 * @return true if the internal value is \link #Value::Type::NULL NULL\endlink
@@ -214,11 +202,6 @@ namespace kroll
 		KMethodRef ToMethod() const;
 
 		/**
-		 * @return the value as a \link #Value::Type::VOIDPTR void*\endlink
-		 */
-		void* ToVoidPtr() const;
-
-		/**
 		 * @return a string representation of this Value's type
 		 */
 		std::string& GetType();
@@ -227,7 +210,7 @@ namespace kroll
 		 * @param levels the number of nested objects to include in this representation (default: 3)
 		 * @return a string representation for this Value
 		*/
-		SharedString DisplayString(int levels=3);
+		SharedString DisplayString(int levels=1);
 
 		/**
 		 * Change the internal value of this Value from another Value object.
@@ -296,12 +279,6 @@ namespace kroll
 		void SetMethod(KMethodRef value);
 
 		/**
-		 * Change the internal value of this Value to an \link #Value::Type::VOIDPTR void*\endlink
-		 * @param value the void* value
-		 */
-		void SetVoidPtr(void *value);
-
-		/**
 		 * Change the internal value of this Value to \link #Value::Type::NULL NULL\endlink
 		 */
 		void SetNull();
@@ -322,7 +299,6 @@ namespace kroll
 		bool boolValue;
 		char* stringValue;
 		KObjectRef objectValue;
-		void *voidPtrValue;
 
 		void reset();
 

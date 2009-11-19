@@ -45,6 +45,7 @@ namespace kroll
 	class GlobalObject;
 	class ScopeMethodDelegate;
 	class Blob;
+	class VoidPtr;
 	class ValueReleasePolicy;
 	class Logger;
 	class ArgList;

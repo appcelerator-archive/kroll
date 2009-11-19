@@ -14,7 +14,7 @@ namespace kroll
 	SharedString KMethod::DisplayString(int levels)
 	{
 		std::ostringstream oss;
-		oss << "<KMethod at " << this << ">";
+		oss << "<" << this->GetType() << " at " << this << ">";
 		return new std::string(oss.str());
 	}
 

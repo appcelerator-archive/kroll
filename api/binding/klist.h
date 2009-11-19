@@ -83,7 +83,7 @@ namespace kroll
 		/**
 		 * @return a string representation of this object
 		 */
-		SharedString DisplayString(int levels=3);
+		SharedString DisplayString(int levels=1);
 
 		/**
 		 * @return whether or not the passed-in string is an integer

@@ -85,15 +85,8 @@ namespace kroll
 		 */
 		this->SetMethod("toString", &Blob::ToString);
 
-		/**
-		 * @tiapi(method=True,name=Blob.get,since=0.3)
-		 * @tiapi Return a VoidPtr representation of a Blob
-		 * @tiresult[VoidPtr] This blob as a VoidPtr
-		 */
-		this->SetMethod("get", &Blob::Get);
-
-		// mimic some string operations to make it more 
-		// friendly when using a Blob in Javascript
+		// Mimic some string operations to make it more
+		// friendly when using a Blob in Javascript.
 		/**
 		 * @tiapi(method=True,name=Blob.indexOf,since=0.3)
 		 * @tiapi Return the index of a String within this Blob
@@ -207,11 +200,6 @@ namespace kroll
 		{
 			result->SetString(buffer);
 		}
-	}
-
-	void Blob::Get(const ValueList& args, KValueRef result)
-	{
-		result->SetVoidPtr(buffer);
 	}
 
 	void Blob::Length(const ValueList& args, KValueRef result)

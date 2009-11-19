@@ -72,7 +72,7 @@ namespace kroll
 		 * @param levels The number of levels of children to display in this string (default: 3)
 		 * @return a string representation of this object
 		 */
-		virtual SharedString DisplayString(int levels=3);
+		virtual SharedString DisplayString(int levels=1);
 
 		/**
 		 * @param name The property name
