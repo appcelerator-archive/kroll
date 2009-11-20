@@ -1,4 +1,0 @@
-name: python
-version: 0.1
-description: Python module
-os: linux, win32, osx

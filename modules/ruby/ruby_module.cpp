@@ -19,15 +19,23 @@ namespace kroll
 		ruby_init();
 		ruby_init_loadpath();
 
-		string modulePath = this->GetPath();
-
 		// Add the application directoy to the Ruby include path so
 		// that includes work in a intuitive way for application developers.
 		ruby_incpush(host->GetApplication()->GetResourcesPath().c_str());
 
 		this->InitializeBinding();
-
 		host->AddModuleProvider(this);
+
+#ifdef OS_WIN32
+		// Ruby sometimes defers loading dependent DLLs until a 'require'
+		// happens. Thus we need to make sure that the bundled Ruby DLLs
+		// stay on the path. This may cause problems with processes that we
+		// launch that do not use SafeDLLSearch
+		string origPath(EnvironmentUtils::Get("KR_ORIG_PATH"));
+		origPath.append(";");
+		origPath.append(this->GetPath());
+		EnvironmentUtils::Set("KR_ORIG_PATH", origPath);
+#endif
 	}
 
 	void RubyModule::Stop()

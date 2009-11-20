@@ -8,7 +8,11 @@ Env.Append(CPPDEFINES=('KROLL_RUBY_API_EXPORT', 1))
 build.add_thirdparty(Env, 'poco')
 
 if build.is_osx():
-	Env.Append(CPPPATH=['/usr/lib/ruby/1.8/universal-darwin10.0','/usr/lib/ruby/1.8/universal-darwin9.0','/usr/lib/ruby/1.8/universal-darwin8.0',build.kroll_include_dir])
+	Env.Append(CPPPATH=[
+		'/usr/lib/ruby/1.8/universal-darwin10.0',
+		'/usr/lib/ruby/1.8/universal-darwin9.0',
+		'/usr/lib/ruby/1.8/universal-darwin8.0',
+		build.kroll_include_dir])
 	Env.Append(LIBS=['libruby'])
 
 
@@ -18,16 +22,17 @@ elif build.is_linux():
 		'/usr/lib/ruby/1.8/i486-linux',
 		'/usr/lib/ruby/1.8/i686-linux',
 		'/usr/lib/ruby/1.8/x86_64-linux',
-      '/usr/lib/ruby/1.8/powerpc-linux',
+		'/usr/lib/ruby/1.8/powerpc-linux',
 		build.kroll_include_dir])
+
 	if os.path.exists('/usr/lib/libruby1.8.so'):
 		Env.Append(LIBS=['ruby1.8'])
 	else:
 		Env.Append(LIBS=['ruby'])
 
 elif build.is_win32():
-	Env.Append(CPPPATH=['C:\\Ruby\\lib\\ruby\\1.8\\i386-mswin32',build.kroll_include_dir])
-	Env.Append(LIBPATH=['C:\\Ruby\\lib'])
+	Env.Append(CPPPATH=[build.tp('ruby', 'lib', 'ruby', '1.8', 'i386-mswin32')])
+	Env.Append(LIBPATH=[build.tp('ruby', 'lib')])
 	Env.Append(LIBS=['msvcrt-ruby18'])
 
 m = build.add_module('ruby', env=Env)

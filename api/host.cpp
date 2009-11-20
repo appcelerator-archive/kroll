@@ -294,53 +294,6 @@ namespace kroll
 	}
 
 	/**
-	 * Read / process a module's manifest file
-	*/
-	void Host::ReadModuleManifest(std::string& modulePath)
-	{
-		Poco::Path manifestPath(modulePath);
-		Poco::Path moduleTopDir = manifestPath.parent();
-
-		manifestPath = Poco::Path(FileUtils::Join(moduleTopDir.toString().c_str(), "manifest", 0));
-
-		Poco::File manifestFile(manifestPath);
-		if (manifestFile.exists())
-		{
-			this->logger->Trace("Reading manifest for module: %s", manifestPath.toString().c_str());
-			Poco::AutoPtr<Poco::Util::PropertyFileConfiguration> manifest = new Poco::Util::PropertyFileConfiguration(manifestFile.path());
-
-			if (manifest->hasProperty("libpath"))
-			{
-				std::string libPath = manifest->getString("libpath");
-				Poco::StringTokenizer t(libPath, ",", Poco::StringTokenizer::TOK_TRIM);
-	#if defined(OS_WIN32)
-				std::string libPathEnv = "PATH";
-	#elif defined(OS_OSX)
-				std::string libPathEnv = "DYLD_LIBRARY_PATH";
-	#elif defined(OS_LINUX)
-				std::string libPathEnv = "LD_LIBRARY_PATH";
-	#endif
-				std::string newLibPath;
-
-				if (Environment::has(libPathEnv))
-				{
-					newLibPath = Environment::get(libPathEnv);
-				}
-
-				for (size_t i = 0; i < t.count(); i++)
-				{
-					std::string lib = t[i];
-					newLibPath = FileUtils::Join(moduleTopDir.toString().c_str(), lib.c_str(), 0) +
-						KR_LIB_SEP + newLibPath;
-				}
-
-				this->logger->Debug("%s=%s", libPathEnv.c_str(), newLibPath.c_str());
-				Environment::set(libPathEnv, newLibPath);
-			}
-		}
-	}
-
-	/**
 	 * Load a modules from a path given a module provider.
 	 * @param path Path to the module to attempt to load.
 	 * @param provider The provider to attempt to load with.
@@ -361,7 +314,6 @@ namespace kroll
 		try
 		{
 			logger->Debug("Loading module: %s", path.c_str());
-			this->ReadModuleManifest(path);
 			module = provider->CreateModule(path);
 			module->SetProvider(provider); // set the provider
 			module->Initialize();
