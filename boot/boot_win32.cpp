@@ -28,26 +28,26 @@ namespace KrollBoot
 	extern const char** argv;
 	const char *preload[] = { "zlib1.dll", "libeay32.dll", "ssleay32.dll", "libxml2.dll", "libxslt.dll" };
 	const int preloadSize = sizeof(preload)/sizeof(preload[0]);
-	
+
 	inline void ShowError(string msg, bool fatal)
 	{
-		std::wstring wideMsg(L"Error: ");
+		wstring wideMsg(L"Error: ");
 		wideMsg.append(KrollUtils::UTF8ToWide(msg));
-		std::wstring wideAppName = KrollUtils::UTF8ToWide(GetApplicationName());
+		wstring wideAppName = KrollUtils::UTF8ToWide(GetApplicationName());
 
 		MessageBoxW(NULL, wideMsg.c_str(), wideAppName.c_str(), MB_OK|MB_ICONERROR|MB_SYSTEMMODAL);
 		if (fatal)
 			exit(1);
 	}
 
-	std::string GetApplicationHomePath()
+	string GetApplicationHomePath()
 	{
 		wchar_t widePath[MAX_PATH];
 		int size = GetModuleFileNameW(GetModuleHandle(NULL), widePath, MAX_PATH - 1);
 		if (size > 0)
 		{
 			widePath[size] = '\0';
-			std::string path = KrollUtils::WideToUTF8(widePath);
+			string path = KrollUtils::WideToUTF8(widePath);
 			return FileUtils::Dirname(path);
 		}
 		else
@@ -85,44 +85,47 @@ namespace KrollBoot
 		EnvironmentUtils::Set("KR_HOME", app->path);
 		exit(KrollBoot::StartHost());
 	}
-	
-	bool SafeLoadRuntimeDLL(const char *name, HMODULE *module)
+
+	static HMODULE SafeLoadRuntimeDLL(string& path)
 	{
-		string runtimePath = EnvironmentUtils::Get("KR_RUNTIME");
-		std::string dll = FileUtils::Join(runtimePath.c_str(), name, NULL);
-		if (!FileUtils::IsFile(dll))
+		if (!FileUtils::IsFile(path))
 		{
-			ShowError(string("Couldn't find required file: ") + dll);
+			ShowError(string("Couldn't find required file: ") + path);
 			return false;
 		}
-		
-		std::wstring wideDLL = KrollUtils::UTF8ToWide(dll);
-		*module = LoadLibraryW(wideDLL.c_str());
-		if (!(*module))
+
+		wstring widePath(KrollUtils::UTF8ToWide(path));
+		HMODULE module = LoadLibraryExW(widePath.c_str(),
+			NULL, LOAD_WITH_ALTERED_SEARCH_PATH);
+		if (!module)
 		{
-			std::string msg("Couldn't load file (");
-			msg.append(dll);
+			string msg("Couldn't load file (");
+			msg.append(path);
 			msg.append("): ");
 			msg.append(KrollUtils::Win32Utils::QuickFormatMessage(GetLastError()));
 			ShowError(msg);
-			return false;
 		}
-		
-		return true;
+
+		return module;
 	}
-	
+
 	typedef int Executor(HINSTANCE, int, const char **);
 	int StartHost()
-	{	
+	{
 		// preload some of the troublesome common runtime DLLs
+		string runtimePath(EnvironmentUtils::Get("KR_RUNTIME"));
 		for (int i = 0; i < preloadSize; i++)
 		{
-			HMODULE module;
-			if (!SafeLoadRuntimeDLL(preload[i], &module)) return __LINE__;
+			string dll(FileUtils::Join(runtimePath.c_str(), preload[i], NULL));
+			if (!SafeLoadRuntimeDLL(dll))
+				return __LINE__;
 		}
-		HMODULE khost;	
-		if (!SafeLoadRuntimeDLL("khost.dll", &khost)) return __LINE__;
-		
+
+		string dll(FileUtils::Join(runtimePath.c_str(), "khost.dll", NULL));
+		HMODULE khost = SafeLoadRuntimeDLL(dll);
+		if (!khost)
+			return __LINE__;
+
 		Executor *executor = (Executor*) GetProcAddress(khost, "Execute");
 		if (!executor)
 		{
@@ -135,18 +138,17 @@ namespace KrollBoot
 
 	bool RunInstaller(vector<SharedDependency> missing, bool forceInstall)
 	{
-		
+
 		string msiName(app->name);
 		msiName += ".msi";
-		string exec = FileUtils::Join(
-			app->path.c_str(), "installer", msiName.c_str(), NULL);
+		string exec = FileUtils::Join(app->path.c_str(), "installer",
+			msiName.c_str(), NULL);
 		if (!FileUtils::IsFile(exec))
 		{
 			ShowError("Missing installer and application has additional modules that are needed.");
 			return false;
 		}
-		bool result = BootUtils::RunInstaller(missing, app, updateFile, "", false, forceInstall);
-		return result;
+		return BootUtils::RunInstaller(missing, app, updateFile, "", false, forceInstall);
 	}
 
 	string GetApplicationName()
@@ -176,7 +178,7 @@ namespace KrollBoot
 			STARTUPINFOW startupInfo = {0};
 			startupInfo.cb = sizeof(startupInfo);
 			PROCESS_INFORMATION processInformation;
-			
+
 			_snwprintf(breakpadCallBuffer, MAX_PATH - 1, L"\"%S\" \"%S\" %s %s",
 				argv[0], CRASH_REPORT_OPT, dumpPath, id);
 
@@ -205,7 +207,7 @@ namespace KrollBoot
 	{
 		wstring out(in.length(), L' ');
 		copy(in.begin(), in.end(), out.begin());
-		return out; 
+		return out;
 	}
 
 	map<wstring, wstring> GetCrashReportParametersW()
@@ -223,12 +225,12 @@ namespace KrollBoot
 		}
 		return paramsW;
 	}
-	
+
 	int SendCrashReport()
 	{
 		InitCrashDetection();
-		std::string title = GetCrashDetectionTitle();
-		std::string msg = GetCrashDetectionHeader();
+		string title = GetCrashDetectionTitle();
+		string msg = GetCrashDetectionHeader();
 		msg.append("\n\n");
 		msg.append(GetCrashDetectionMessage());
 
@@ -248,7 +250,7 @@ namespace KrollBoot
 		wstring dumpFilePathW = StringToWString(dumpFilePath);
 		wstring responseBody;
 		int responseCode;
-		
+
 		bool success = google_breakpad::HTTPUpload::SendRequest(
 			url,
 			parameters,
@@ -257,10 +259,10 @@ namespace KrollBoot
 			NULL,
 			&responseBody,
 			&responseCode);
-	
+
 		if (!success)
 		{
-#ifdef DEBUG		
+#ifdef DEBUG
 			ShowError("Error uploading crash dump.");
 #endif
 			return __LINE__;

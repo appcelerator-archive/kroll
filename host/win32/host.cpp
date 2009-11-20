@@ -106,8 +106,9 @@ namespace kroll
 
 	Module* Win32Host::CreateModule(std::string& path)
 	{
-		std::wstring widePath = UTF8ToWide(path);
-		HMODULE module = LoadLibraryW(widePath.c_str());
+		std::wstring widePath(UTF8ToWide(path));
+		HMODULE module = LoadLibraryExW(widePath.c_str(),
+			NULL, LOAD_WITH_ALTERED_SEARCH_PATH);
 
 		if (!module)
 		{
@@ -124,8 +125,7 @@ namespace kroll
 				"Couldn't find ModuleCreator entry point for %s\n", path.c_str());
 		}
 
-		std::string dir = FileUtils::GetDirectory(path);
-		return create(this, dir.c_str());
+		return create(this, FileUtils::GetDirectory(path).c_str());
 	}
 
 	bool Win32Host::IsMainThread()
