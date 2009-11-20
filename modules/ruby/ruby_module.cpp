@@ -25,17 +25,6 @@ namespace kroll
 
 		this->InitializeBinding();
 		host->AddModuleProvider(this);
-
-#ifdef OS_WIN32
-		// Ruby sometimes defers loading dependent DLLs until a 'require'
-		// happens. Thus we need to make sure that the bundled Ruby DLLs
-		// stay on the path. This may cause problems with processes that we
-		// launch that do not use SafeDLLSearch
-		string origPath(EnvironmentUtils::Get("KR_ORIG_PATH"));
-		origPath.append(";");
-		origPath.append(this->GetPath());
-		EnvironmentUtils::Set("KR_ORIG_PATH", origPath);
-#endif
 	}
 
 	void RubyModule::Stop()

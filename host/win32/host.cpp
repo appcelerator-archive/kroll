@@ -62,8 +62,13 @@ namespace kroll
 
 	bool Win32Host::Start()
 	{
-		string origPath(EnvironmentUtils::Get("KR_ORIG_PATH"));
-		EnvironmentUtils::Set("PATH", origPath);
+		// Windows DLLs often load libraries dynamically via LoadLibrary and expect
+		// dependencies to be on the DLL search path. Thus we really can't restore
+		// the original path here if we want things to continue working properly.
+		// This shouldn't be too much of an issue either, as long as programs that
+		// we launch rely on the safe dll search path.
+		// string origPath(EnvironmentUtils::Get("KR_ORIG_PATH"));
+		// EnvironmentUtils::Set("PATH", origPath);
 
 		Host::Start();
 		mainThreadId = GetCurrentThreadId();
