@@ -6,30 +6,16 @@ Import('build')
 Env = build.env.Clone()
 Env.Append(CPPDEFINES=('KROLL_JAVASCRIPT_API_EXPORT', 1))
 build.add_thirdparty(Env, 'poco')
+build.add_thirdparty(Env, 'webkit')
 Env.Append(CPPPATH=[build.kroll_include_dir])
 
-webkit_lib = build.tp('webkit', 'lib')
-webkit_inc = build.tp('webkit', 'include')
-
-if build.is_osx():
-	Env.Append(FRAMEWORKPATH=[build.tp('webkit')])
-	Env.Append(FRAMEWORKS=['Cocoa','JavaScriptCore'])
-
-elif build.is_linux():
-	Env.Append(LIBS=['webkittitanium-1.0'])
-	Env.Append(LIBPATH=[webkit_lib])
-	Env.Append(CPPPATH=[webkit_inc])
-
-elif build.is_win32():
-	Env.Append(LIBPATH=[webkit_lib])
-	Env.Append(CPPPATH=[webkit_inc])
-
-	Env.Append(LIBS=['WebKitGUID', 'WebKit',
-                     'kernel32', 'shell32',
-                     'user32', 'ole32',
-                     'comctl32', 'shlwapi',
-                     'oleaut32', 'icuuc', 
-                     'pthreadVC2', 'kroll'])
+if build.is_win32():
+	Env.Append(LIBS=[
+		'kernel32', 'shell32',
+		'user32', 'ole32',
+		'comctl32', 'shlwapi',
+		'oleaut32', 'icuuc', 
+		'pthreadVC2', 'kroll'])
 	Env.Append(LINKFLAGS=['/LTCG', '/INCREMENTAL:NO'])
 
 m = build.add_module('javascript', env=Env)
