@@ -170,19 +170,20 @@ namespace URLUtils
 			}
 		}
 
-		std::string url("file://localhost");
+		std::string url("file://");
 		std::vector<std::string> pieces;
 		std::string delim("/");
 		FileUtils::Tokenize(path, pieces, delim);
 		for (size_t i = 0; i < pieces.size(); i++)
 		{
-			url.append("/");
-
 #if OS_WIN32
-			// Don't encode the driver letter & colon on Windows.
+			// Don't encode the C:
 			if (i != 0)
 #endif
-			pieces[i] = EncodeURIComponent(pieces[i]);
+			{
+				url.append("/");
+				pieces[i] = EncodeURIComponent(pieces[i]);
+			}
 
 			url.append(pieces[i]);
 		}
