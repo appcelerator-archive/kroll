@@ -319,7 +319,7 @@ class BuildConfig(object):
 				libs = ['webkittitanium-1.0']
 
 			if self.is_osx():
-				env.Append(FRAMEWORKPATH=[build.tp('webkit')])
+				env.Append(FRAMEWORKPATH=[self.tp('webkit')])
 				env.Append(FRAMEWORKS=['WebKit', 'JavaScriptCore'])
 
 		env.Append(CPPPATH=[cpppath])
