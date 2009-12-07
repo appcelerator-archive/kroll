@@ -287,26 +287,29 @@ class BuildConfig(object):
 
 	def add_thirdparty(self, env, name):
 		if name is 'poco':
-			cpppath = self.tp('poco', 'include')
-			libpath = self.tp('poco', 'lib')
+			cpppath = [self.tp('poco', 'include')]
+			libpath = [self.tp('poco', 'lib')]
 			libs = ['PocoFoundation', 'PocoNet', 'PocoNetSSL',
 				'PocoUtil', 'PocoXML', 'PocoZip', 'PocoData',
 				'PocoSQLite']
 
 		if name is 'curl' and self.is_win32(): # Don't judge us!
-			cpppath = self.tp('webkit', 'include')
-			libpath = self.tp('webkit', 'lib')
+			cpppath = [self.tp('webkit', 'include')]
+			libpath = [self.tp('webkit', 'lib')]
 			libs = ['libcurl_imp']
 
 		elif name is 'curl':
-			cpppath = self.tp('curl', 'include')
-			libpath = self.tp('curl', 'lib')
+			cpppath = [self.tp('curl', 'include')]
+			libpath = [self.tp('curl', 'lib')]
 			libs = ['curl']
 
 		if name is 'webkit':
 			if self.is_win32() or self.is_linux():
-				cpppath = self.tp('webkit', 'include')
-				libpath = self.tp('webkit', 'lib')
+				cpppath = [self.tp('webkit', 'include')]
+				libpath = [self.tp('webkit', 'lib')]
+
+			if self.is_linux():
+				cpppath.append(self.tp('webkit', 'include', 'glib-2.0'))
 
 			if self.is_win32():
 				suffix = ''
@@ -322,8 +325,8 @@ class BuildConfig(object):
 				env.Append(FRAMEWORKPATH=[self.tp('webkit')])
 				env.Append(FRAMEWORKS=['WebKit', 'JavaScriptCore'])
 
-		env.Append(CPPPATH=[cpppath])
-		env.Append(LIBPATH=[libpath])
+		env.Append(CPPPATH=cpppath)
+		env.Append(LIBPATH=libpath)
 		env.Append(LIBS=[libs])
 
 	def tp(self, *parts):
