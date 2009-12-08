@@ -286,6 +286,7 @@ class BuildConfig(object):
 		return manifest
 
 	def add_thirdparty(self, env, name):
+		cpppath = libpath = libs = None
 		if name is 'poco':
 			cpppath = [self.tp('poco', 'include')]
 			libpath = [self.tp('poco', 'lib')]
@@ -325,9 +326,9 @@ class BuildConfig(object):
 				env.Append(FRAMEWORKPATH=[self.tp('webkit')])
 				env.Append(FRAMEWORKS=['WebKit', 'JavaScriptCore'])
 
-		env.Append(CPPPATH=cpppath)
-		env.Append(LIBPATH=libpath)
-		env.Append(LIBS=[libs])
+		if cpppath:	env.Append(CPPPATH=cpppath)
+		if libpath: env.Append(LIBPATH=libpath)
+		if libs: env.Append(LIBS=[libs])
 
 	def tp(self, *parts):
 		full_path = self.third_party
