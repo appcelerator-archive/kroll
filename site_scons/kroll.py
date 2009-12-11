@@ -314,7 +314,7 @@ class BuildConfig(object):
 
 			if self.is_win32():
 				suffix = ''
-				if self.webkit_debug:
+				if ARGUMENTS.get('webkit_debug', None):
 					suffix = '_debug'
 				libs = ['WebKit', 'WebKitGUID', 'JavaScriptCore']
 				libs = [x + suffix for x in libs]
@@ -326,7 +326,7 @@ class BuildConfig(object):
 				env.Append(FRAMEWORKPATH=[self.tp('webkit')])
 				env.Append(FRAMEWORKS=['WebKit', 'JavaScriptCore'])
 
-		if cpppath:	env.Append(CPPPATH=cpppath)
+		if cpppath: env.Append(CPPPATH=cpppath)
 		if libpath: env.Append(LIBPATH=libpath)
 		if libs: env.Append(LIBS=[libs])
 
