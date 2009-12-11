@@ -39,6 +39,7 @@
 
 
 #include <sstream>
+#include <cstdio>
 
 #include "processor/postfix_evaluator.h"
 #include "google_breakpad/processor/memory_region.h"
