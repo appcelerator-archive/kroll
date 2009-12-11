@@ -4,10 +4,9 @@ Import('build')
 
 Env = build.env.Clone()
 Env.Append(CPPDEFINES=('KROLL_HOST_EXPORT',1))
-Env.Append(LIBS=['kroll'])
-
-Env.ParseConfig('pkg-config --cflags --libs gtk+-2.0 gdk-2.0 glib-2.0 gthread-2.0')
+Env.Append(CPPPATH=[build.tp('webkit', 'include')])
 build.add_thirdparty(Env, 'poco')
+Env.ParseConfig('pkg-config --cflags --libs gtk+-2.0 gdk-2.0 glib-2.0 gthread-2.0')
 
 t = Env.SharedLibrary(build.dir + '/runtime/khost', Glob('*.cpp'))
 build.mark_build_target(t)
