@@ -102,7 +102,4 @@ if build.is_win32():
 	cc_manifest = path.join(build.kroll_support_dir, 'common_controls.manifest')
 	merged_manifest = path.join(build.dir, 'kboot.merged.manifest')
 	Env.AddPostAction(p, 'mt.exe -nologo -manifest "%s" "%s" -out:"%s"' % (intermediate_manifest, cc_manifest, merged_manifest))
-#	Env.AddPostAction(p, ('mt.exe -nologo /tlb:"%s" /dll:"WebKit" /outputresource:"%s.exe;#1" /manifest "%s"' % (webkit_tlb, kboot_out, merged_manifest)))
 	Env.AddPostAction(p, ('mt.exe -nologo /outputresource:"%s.exe;#1" /manifest "%s"' % (kboot_out, merged_manifest)))
-
-#	Env.AddPostAction(p, 'mt.exe -nologo -manifest "%s" -outputresource:"%s;1"' % (merged_manifest, p[0]))
