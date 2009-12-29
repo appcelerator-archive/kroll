@@ -20,9 +20,8 @@ elif build.is_linux():
 	Env.Append(LIBS=['python2.5'])
 
 elif build.is_win32():
-	python_home = os.environ['PYTHONHOME']
-	Env.Append(CPPPATH=[os.path.join(python_home, 'include'),build.kroll_include_dir])
-	Env.Append(LIBPATH=[os.path.join(python_home, 'libs')])
+	Env.Append(CPPPATH=[build.tp('python', 'include')])
+	Env.Append(LIBPATH=[build.tp('python', 'libs')])
 	Env.Append(LIBS=['python25'])
 	Env.Append(CCFLAGS = ['/MD'])
 

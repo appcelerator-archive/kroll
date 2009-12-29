@@ -223,7 +223,7 @@ class BuildConfig(object):
 				'-Wall', '-fno-common', '-fvisibility=hidden',
 				'-DMACOSX_DEPLOYMENT_TARGET=' + self.env['MACOSX_DEPLOYMENT_TARGET']])
 
-	def matches(self, n): return bool(re.match(os.uname()[0], n))
+	def matches(self, n): return os.uname()[0].find(n) != 0
 	def is_linux(self): return self.os == 'linux'
 	def is_osx(self): return self.os == 'osx'
 	def is_win32(self): return self.os == 'win32'
