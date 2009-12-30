@@ -429,11 +429,25 @@ namespace kroll
 			return Qnil;
 
 		for (unsigned int i = 0; i < list->Size(); i++)
-		{
-			VALUE rubyValue = RubyUtils::ToRubyValue(list->At(i));
-			rb_yield(rubyValue);
-		}
+			rb_yield(RubyUtils::ToRubyValue(list->At(i)));
+
 		return self;
+	}
+
+	static VALUE RubyKListCollect(VALUE self)
+	{
+		KValueRef* dval = NULL;
+		Data_Get_Struct(self, KValueRef, dval);
+		KListRef list = (*dval)->ToList();
+
+		if (list.isNull() || !rb_block_given_p())
+			return Qnil;
+
+		VALUE resultArray = rb_ary_new();
+		for (unsigned int i = 0; i < list->Size(); i++)
+			rb_ary_push(resultArray, rb_yield(RubyUtils::ToRubyValue(list->At(i))));
+
+		return resultArray;
 	}
 
 	VALUE RubyUtils::KListToRubyValue(KValueRef obj)
@@ -458,6 +472,10 @@ namespace kroll
 				RUBY_METHOD_FUNC(RubyKListLength), -1);
 			rb_define_method(KListClass, "each",
 				RUBY_METHOD_FUNC(RubyKListEach), 0);
+			rb_define_method(KListClass, "collect",
+				RUBY_METHOD_FUNC(RubyKListCollect), 0);
+			rb_define_method(KListClass, "map",
+				RUBY_METHOD_FUNC(RubyKListCollect), 0);
 		}
 
 		VALUE wrapper = Data_Wrap_Struct(KListClass, 0, RubyKObjectFree, new KValueRef(obj));
