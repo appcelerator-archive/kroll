@@ -91,12 +91,12 @@ namespace kroll
 	}
 
 
-	KValueRef KKJSList::Get(const char *name)
+	KValueRef KKJSList::Get(const char* name)
 	{
 		return kobject->Get(name);
 	}
 
-	void KKJSList::Set(const char *name, KValueRef value)
+	void KKJSList::Set(const char* name, KValueRef value)
 	{
 		return kobject->Set(name, value);
 	}

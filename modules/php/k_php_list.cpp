@@ -19,13 +19,11 @@ namespace kroll
 	{
 	}
 
-	KValueRef KPHPList::Get(const char *name)
+	KValueRef KPHPList::Get(const char* name)
 	{
 		if (KList::IsInt(name))
 		{
-			unsigned int index = (unsigned int) atoi(name);
-			if (index >= 0)
-				return this->At(index);
+			return this->At(KList::ToIndex(name));
 		}
 
 		unsigned long hashval = zend_get_hash_value((char *) name, strlen(name));
@@ -45,13 +43,12 @@ namespace kroll
 		return v;
 	}
 
-	void KPHPList::Set(const char *name, KValueRef value)
+	void KPHPList::Set(const char* name, KValueRef value)
 	{
 		// Check for integer value as name
-		int index = -1;
-		if (KList::IsInt(name) && ((index = atoi(name)) >=0))
+		if (KList::IsInt(name))
 		{
-			this->SetAt((unsigned int) index, value);
+			this->SetAt(KList::ToIndex(name), value);
 		}
 		else
 		{
@@ -125,7 +122,7 @@ namespace kroll
 		return this->list;
 	}
 
-	void KPHPList::AddKrollValueToPHPArray(KValueRef value, zval *phpArray, const char *key)
+	void KPHPList::AddKrollValueToPHPArray(KValueRef value, zval *phpArray, const char* key)
 	{
 		if (value->IsNull() || value->IsUndefined())
 		{

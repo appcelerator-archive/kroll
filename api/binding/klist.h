@@ -96,6 +96,11 @@ namespace kroll
 		static std::string IntToChars(unsigned int value);
 
 		/**
+		 * Convert the given string into a KList index.
+		 */
+		static unsigned int ToIndex(const std::string& str);
+
+		/**
 		 * Return the unwrapped version of this object
 		 */
 		static KListRef Unwrap(KListRef);

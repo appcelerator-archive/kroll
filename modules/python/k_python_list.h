@@ -17,8 +17,8 @@ namespace kroll
 		KPythonList(PyObject *obj);
 		virtual ~KPythonList();
 
-		KValueRef Get(const char *name);
-		void Set(const char *name, KValueRef value);
+		KValueRef Get(const char* name);
+		void Set(const char* name, KValueRef value);
 		virtual bool Equals(KObjectRef);
 		SharedStringList GetPropertyNames();
 

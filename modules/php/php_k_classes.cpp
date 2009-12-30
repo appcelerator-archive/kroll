@@ -506,11 +506,9 @@ namespace kroll
 		string indexString(PHPUtils::ZvalToPropertyName(zindexString));
 		KValueRef value(PHPUtils::ToKrollValue(zvalue TSRMLS_CC));
 
-		int index = 0;
-		if (KList::IsInt(indexString) &&
-			((index = atoi(indexString.c_str())) >= 0))
+		if (KList::IsInt(indexString))
 		{
-			klist->SetAt((unsigned int) index, value);
+			klist->SetAt(KList::ToIndex(indexString), value);
 		}
 		else
 		{

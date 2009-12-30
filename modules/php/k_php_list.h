@@ -17,8 +17,8 @@ namespace kroll
 		KPHPList(zval *list);
 		virtual ~KPHPList();
 
-		KValueRef Get(const char *name);
-		void Set(const char *name, KValueRef value);
+		KValueRef Get(const char* name);
+		void Set(const char* name, KValueRef value);
 		virtual bool Equals(KObjectRef);
 		SharedStringList GetPropertyNames();
 
@@ -33,7 +33,7 @@ namespace kroll
 		protected:
 		zval *list;
 
-		static void AddKrollValueToPHPArray(KValueRef value, zval *phpArray, const char *key);
+		static void AddKrollValueToPHPArray(KValueRef value, zval *phpArray, const char* key);
 		static void AddKrollValueToPHPArray(KValueRef value, zval *phpArray, unsigned int index);
 		static void AddKrollValueToPHPArray(KValueRef value, zval *phpArray);
 		DISALLOW_EVIL_CONSTRUCTORS(KPHPList);

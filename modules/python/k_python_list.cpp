@@ -66,13 +66,11 @@ namespace kroll
 		}
 	}
 
-	void KPythonList::Set(const char *name, KValueRef value)
+	void KPythonList::Set(const char* name, KValueRef value)
 	{
-		// Check for integer value as name
-		int index = -1;
-		if (KList::IsInt(name) && ((index = atoi(name)) >= 0))
+		if (KList::IsInt(name))
 		{
-			this->SetAt((unsigned int) index, value);
+			this->SetAt(KList::ToIndex(name), value);
 		}
 		else
 		{
@@ -95,15 +93,16 @@ namespace kroll
 		return;
 	}
 
-	KValueRef KPythonList::Get(const char *name)
+	KValueRef KPythonList::Get(const char* name)
 	{
 		if (KList::IsInt(name))
 		{
-			unsigned int index = (unsigned int) atoi(name);
-			if (index >= 0)
-				return this->At(index);
+			return this->At(KList::ToIndex(name));
 		}
-		return object->Get(name);
+		else
+		{
+			return object->Get(name);
+		}
 	}
 
 	SharedStringList KPythonList::GetPropertyNames()

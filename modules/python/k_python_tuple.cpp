@@ -69,13 +69,12 @@ namespace kroll
 	{
 		if (KList::IsInt(name))
 		{
-			unsigned int index = (unsigned int) atoi(name);
-			if (index >= 0)
-			{
-				return this->At(index);
-			}
+			return this->At(KList::ToIndex(name));
 		}
-		return object->Get(name);
+		else
+		{
+			return object->Get(name);
+		}
 	}
 
 	SharedStringList KPythonTuple::GetPropertyNames()

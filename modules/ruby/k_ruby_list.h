@@ -22,8 +22,8 @@ namespace kroll
 		KValueRef At(unsigned int index);
 		void SetAt(unsigned int index, KValueRef value);
 		bool Remove(unsigned int index);
-		void Set(const char *name, KValueRef value);
-		KValueRef Get(const char *name);
+		void Set(const char* name, KValueRef value);
+		KValueRef Get(const char* name);
 		SharedStringList GetPropertyNames();
 		SharedString DisplayString(int);
 		VALUE ToRuby();

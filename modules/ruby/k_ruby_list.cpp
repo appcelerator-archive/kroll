@@ -23,8 +23,7 @@ namespace kroll
 
 	void KRubyList::Append(KValueRef value)
 	{
-		VALUE rv = RubyUtils::ToRubyValue(value);
-		rb_ary_push(list, rv);
+		rb_ary_push(list, RubyUtils::ToRubyValue(value));
 	}
 
 	unsigned int KRubyList::Size()
@@ -34,16 +33,14 @@ namespace kroll
 
 	bool KRubyList::Remove(unsigned int index)
 	{
-		VALUE v = rb_ary_delete_at(list, index);
-		return (v != Qnil);
+		return (rb_ary_delete_at(list, index) != Qnil);
 	}
 
 	KValueRef KRubyList::At(unsigned int index)
 	{
 		if (index >= 0 && index < this->Size())
 		{
-			VALUE v = rb_ary_entry(list, index);
-			return RubyUtils::ToKrollValue(v);
+			return RubyUtils::ToKrollValue(rb_ary_entry(list, index));
 		}
 		else
 		{
@@ -51,12 +48,11 @@ namespace kroll
 		}
 	}
 
-	void KRubyList::Set(const char *name, KValueRef value)
+	void KRubyList::Set(const char* name, KValueRef value)
 	{
-		int index = -1; // Check for integer value as name
-		if (KList::IsInt(name) && ((index = atoi(name) >= 0)))
+		if (KList::IsInt(name))
 		{
-			this->SetAt(index, value);
+			this->SetAt(KList::ToIndex(name), value);
 		}
 		else
 		{
@@ -73,16 +69,16 @@ namespace kroll
 		rb_ary_store(list, index, rv);
 	}
 
-	KValueRef KRubyList::Get(const char *name)
+	KValueRef KRubyList::Get(const char* name)
 	{
 		if (KList::IsInt(name))
 		{
-			unsigned int index = (unsigned int) atoi(name);
-			if (index >= 0)
-				return this->At(index);
+			return this->At(KList::ToIndex(name));
 		}
-
-		return object->Get(name);
+		else
+		{
+			return object->Get(name);
+		}
 	}
 
 	SharedStringList KRubyList::GetPropertyNames()

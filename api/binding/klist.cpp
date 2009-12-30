@@ -7,6 +7,7 @@
 #include "../kroll.h"
 #include <sstream>
 #include <cmath>
+#include <climits>
 
 namespace kroll
 {
@@ -46,6 +47,7 @@ namespace kroll
 		return new std::string(oss.str());
 	}
 
+	/*static*/
 	std::string KList::IntToChars(unsigned int value)
 	{
 		std::stringstream ss;
@@ -53,6 +55,7 @@ namespace kroll
 		return ss.str();
 	}
 
+	/*static*/
 	bool KList::IsInt(const std::string& name)
 	{
 		for (size_t i = 0; i < strlen(name.c_str()); i++)
@@ -63,6 +66,22 @@ namespace kroll
 		return true;
 	}
 
+	/*static*/
+	unsigned int KList::ToIndex(const std::string& str)
+	{
+		char* endPointer = 0;
+		unsigned long result = strtoul(str.c_str(), &endPointer, 10);
+
+		if ((endPointer == str.c_str() && result == 0) || result > UINT_MAX)
+		{
+			throw ValueException::FromFormat("Could not convert %s to an unsigned int",
+				str.c_str());
+		}
+
+		return result;
+	}
+
+	/*static*/
 	KListRef KList::Unwrap(KListRef o)
 	{
 		AutoPtr<ProfiledBoundList> plist = o.cast<ProfiledBoundList>();

@@ -18,9 +18,9 @@ namespace kroll
 		KKJSList(JSContextRef context, JSObjectRef jsObject);
 		~KKJSList();
 
-		virtual void Set(const char *name, KValueRef value);
+		virtual void Set(const char* name, KValueRef value);
 		virtual void SetAt(unsigned int index, KValueRef value);
-		virtual KValueRef Get(const char *name);
+		virtual KValueRef Get(const char* name);
 		virtual SharedStringList GetPropertyNames();
 		virtual bool HasProperty(const char* name);
 		virtual bool Equals(KObjectRef);
