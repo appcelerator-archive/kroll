@@ -7,19 +7,35 @@
 #include "../kroll.h"
 namespace kroll
 {
-	unsigned int EventListener::currentId = 1;
-	std::map<KEventObject*, std::vector<EventListener*>*> KEventObject::listenerMap;
-	Poco::Mutex KEventObject::listenerMapMutex;
+	static unsigned int currentEventListenerId = 1;
+
+	static void FireEventCallback(KMethodRef callback, AutoPtr<Event> event,
+		bool synchronous, KObjectRef thisObject)
+	{
+		try
+		{
+			RunOnMainThread(callback, thisObject,
+				ValueList(Value::NewObject(event)), synchronous);
+		}
+		catch (ValueException& e)
+		{
+			Logger* logger = Logger::Get("KEventObject");
+			SharedString ss = e.DisplayString();
+			SharedString ds = event->target->DisplayString();
+			logger->Error("Exception caught during event callback (target=[%s]): %s", ds->c_str(), ss->c_str());
+		}
+	}
+
+	EventListener::EventListener(std::string& eventName, KMethodRef callback) :
+		eventName(eventName),
+		callback(callback),
+		listenerId(currentEventListenerId++)
+	{
+	}
 
 	KEventObject::KEventObject(const char *type) :
 		KAccessorObject(type)
 	{
-		{
-			Poco::Mutex::ScopedLock lock(listenerMapMutex);
-			std::vector<EventListener*>* listeners = new std::vector<EventListener*>();
-			KEventObject::listenerMap[this] = listeners;
-		}
-
 		this->SetMethod("addEventListener", &KEventObject::_AddEventListener);
 		this->SetMethod("removeEventListener", &KEventObject::_RemoveEventListener);
 		Event::SetEventConstants(this);
@@ -27,18 +43,12 @@ namespace kroll
 
 	KEventObject::~KEventObject()
 	{
-		Poco::Mutex::ScopedLock lock(listenerMapMutex);
-		std::vector<EventListener*>* listeners = KEventObject::listenerMap[this];
-		std::vector<EventListener*>::iterator i = listeners->begin();
-		while (i != listeners->end())
-		{
-			EventListener* listener = *i++;
-			delete listener;
-		}
-		listeners->clear();
+		Poco::Mutex::ScopedLock lock(listenersMutex);
+		std::vector<EventListener*>::iterator i = listeners.begin();
+		while (i != listeners.end())
+			delete *i++;
 
-		KEventObject::listenerMap.erase(this);
-		delete listeners;
+		listeners.clear();
 	}
 
 	AutoPtr<Event> KEventObject::CreateEvent(const std::string& eventName)
@@ -56,18 +66,20 @@ namespace kroll
 		this->RemoveEventListener(eventName, listenerId, 0);
 	}
 
-	void KEventObject::RemoveEventListener(
-		std::string& eventName, unsigned int listenerId, KMethodRef callback)
+	void KEventObject::RemoveEventListener(std::string& eventName,
+		unsigned int listenerId, KMethodRef callback)
 	{
-		Poco::Mutex::ScopedLock lock(listenerMapMutex);
-		std::vector<EventListener*>* listeners = KEventObject::listenerMap[this];
-		std::vector<EventListener*>::iterator i = listeners->begin();
-		while (i != listeners->end())
+		Poco::Mutex::ScopedLock lock(listenersMutex);
+		std::vector<EventListener*>::iterator i = listeners.begin();
+		while (i != listeners.end())
 		{
 			EventListener* listener = *i;
-			if (listener->Matches(eventName, listenerId, callback))
+			if (listener->eventName == eventName &&
+				((callback.isNull() && listenerId == 0) ||
+				(!callback.isNull() && callback->Equals(listener->callback)) ||
+				(listenerId != 0 && listenerId == listener->listenerId)))
 			{
-				i = listeners->erase(i);
+				i = listeners.erase(i);
 				delete listener;
 			}
 			else
@@ -77,23 +89,18 @@ namespace kroll
 		}
 	}
 
-	unsigned int KEventObject::AddEventListener(
-		std::string& eventName, KMethodRef callback)
+	unsigned int KEventObject::AddEventListener(std::string& eventName,
+		KMethodRef callback)
 	{
-		Poco::Mutex::ScopedLock lock(listenerMapMutex);
+		Poco::Mutex::ScopedLock lock(listenersMutex);
 		EventListener* listener = new EventListener(eventName, callback);
-		std::vector<EventListener*>* listeners = KEventObject::listenerMap[this];
-		listeners->push_back(listener);
+		listeners.push_back(listener);
 		return listener->listenerId;
 	}
 
 	unsigned int KEventObject::AddEventListenerForAllEvents(KMethodRef callback)
 	{
-		Poco::Mutex::ScopedLock lock(listenerMapMutex);
-		EventListener* listener = new EventListener(Event::ALL, callback);
-		std::vector<EventListener*>* listeners = KEventObject::listenerMap[this];
-		listeners->push_back(listener);
-		return listener->listenerId;
+		return this->AddEventListener(Event::ALL, callback);
 	}
 
 	bool KEventObject::FireEvent(std::string& eventName, bool synchronous)
@@ -104,24 +111,28 @@ namespace kroll
 
 	bool KEventObject::FireEvent(AutoPtr<Event> event, bool synchronous)
 	{
-		std::vector<EventListener*> listeners;
+		std::vector<EventListener*> listenersCopy;
 		{
-			// We cannot block any threads wile we handle callbacks, so
-			// we must make a copy of this map while we handle callbacks. Always
-			// remember: premature optimization is the root of all evil.
-			Poco::Mutex::ScopedLock lock(listenerMapMutex);
-			listeners = *(KEventObject::listenerMap[this]);
+			// Make a copy of the listeners map here, because firing the event might
+			// take a while and we don't want to block other threads that just need
+			// too add event listeners.
+			Poco::Mutex::ScopedLock lock(listenersMutex);
+			listenersCopy = listeners;
 		}
 
 		KObjectRef thisObject(this, true);
-		std::vector<EventListener*>::iterator li = listeners.begin();
-		while (li != listeners.end())
+		std::vector<EventListener*>::iterator li = listenersCopy.begin();
+		while (li != listenersCopy.end())
 		{
 			EventListener* listener = *li++;
-			listener->FireEventIfMatches(event, synchronous, thisObject);
+			if (event->eventName == listener->eventName ||
+				listener->eventName == Event::ALL)
+			{
+				FireEventCallback(listener->callback, event, synchronous, thisObject);
 
-			if (synchronous && event->stopped)
-				return !event->preventedDefault;
+				if (synchronous && event->stopped)
+					return !event->preventedDefault;
+			}
 		}
 
 		if (this != GlobalObject::GetInstance().get())
@@ -163,34 +174,6 @@ namespace kroll
 		{
 			this->RemoveEventListener(eventName, args.GetInt(1));
 		}
-	}
-
-	void EventListener::FireEventIfMatches(AutoPtr<Event> event, bool synchronous, KObjectRef thisObject)
-	{
-		if (event->eventName != this->eventName && this->eventName != Event::ALL)
-			return;
-
-		try
-		{
-			RunOnMainThread(callback, thisObject,
-				ValueList(Value::NewObject(event)), synchronous);
-		}
-		catch (ValueException& e)
-		{
-			Logger* logger = Logger::Get("KEventObject");
-			SharedString ss = e.DisplayString();
-			SharedString ds = event->target->DisplayString();
-			logger->Error("Exception caught during event callback (target=[%s]): %s", ds->c_str(), ss->c_str());
-		}
-	}
-
-	bool EventListener::Matches(
-		std::string& eventName, unsigned int listenerId, KMethodRef callback)
-	{
-		return eventName == eventName &&
-			((callback.isNull() && listenerId == 0) ||
-			(!callback.isNull() && callback->Equals(this->callback)) ||
-			(listenerId != 0 && listenerId == this->listenerId));
 	}
 }
 

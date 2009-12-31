@@ -11,7 +11,7 @@ namespace kroll
 {
 	class KROLL_API Event : public KAccessorObject
 	{
-		public:
+	public:
 		Event(AutoPtr<KEventObject> target, const std::string& eventName);
 		void _GetTarget(const ValueList&, KValueRef result);
 		void _GetType(const ValueList&, KValueRef result);

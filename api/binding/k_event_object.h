@@ -12,17 +12,10 @@ namespace kroll
 	class EventListener
 	{
 	public:
-		EventListener(std::string& eventName, KMethodRef callback) :
-			eventName(eventName),
-			callback(callback),
-			listenerId(++EventListener::currentId) {}
-		void FireEventIfMatches(AutoPtr<Event>, bool synchronous, KObjectRef thisObject);
-		bool Matches(std::string&, unsigned int, KMethodRef);
+		EventListener(std::string& eventName, KMethodRef callback);
 		std::string eventName;
 		KMethodRef callback;
 		unsigned int listenerId;
-
-		static unsigned int currentId;
 	};
 
 	class KROLL_API KEventObject : public KAccessorObject
@@ -42,8 +35,8 @@ namespace kroll
 		void _RemoveEventListener(const ValueList&, KValueRef result);
 
 	protected:
-		static Poco::Mutex listenerMapMutex;
-		static std::map<KEventObject*, std::vector<EventListener*>*> listenerMap;
+		Poco::Mutex listenersMutex;
+		std::vector<EventListener*> listeners;
 
 	private:
 		void RemoveEventListener(std::string& eventName, unsigned int id,
