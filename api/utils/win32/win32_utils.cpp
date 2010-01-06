@@ -60,11 +60,11 @@ namespace Win32Utils
 		if (size == 0)
 			return "";
 
-		int bufferSize = (4 * size) + 1;
+		size_t bufferSize = (4 * size) + 1;
 		char* buffer = new char[4 * size + 1];
 		buffer[4 * size] = '\0';
 	
-		WideCharToMultiByte(codePage, 0, in, -1, buffer, (int) (bufferSize - 1), NULL, NULL);
+		WideCharToMultiByte(codePage, 0, in, -1, buffer, static_cast<int>(bufferSize - 1), NULL, NULL);
 		std::string out(buffer);
 		delete [] buffer;
 		return out;
