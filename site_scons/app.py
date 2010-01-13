@@ -107,13 +107,7 @@ class App:
 				'APPID': self.id,
 				'APPNIB': 'MainMenu',
 				'APPVER': self.version})
-
-		# Copy CRT to root
-		if self.build.is_win32():
-			self.status('copying ms c runtime to %s' % (self.contents))
-			mscrt = p.join(self.build.third_party, 'microsoft', 'Microsoft.VC80.CRT')
-			futils.CopyToDir(mscrt, self.contents)
-
+		
 		self.status('writing manifest to %s' % p.join(self.contents, 'manifest'))
 		manifest = self.build.generate_manifest(
 			self.fullname,
