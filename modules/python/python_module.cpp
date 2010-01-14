@@ -35,12 +35,14 @@ namespace kroll
 			PyObject* path = PySys_GetObject((char*) "path");
 			PyListInsertString(path, 0, 
 				host->GetApplication()->GetResourcesPath());
+#ifdef OS_WIN32
 			PyListInsertString(path, 0,
 				FileUtils::Join(this->GetPath().c_str(), "DLLs", NULL));
 			PyListInsertString(path, 0,
 				FileUtils::Join(this->GetPath().c_str(), "Lib", NULL));
 			PyListInsertString(path, 0,
 				FileUtils::Join(this->GetPath().c_str(), "Lib", "lib-tk", NULL));
+#endif
 		}
 
 		PythonUtils::InitializePythonKClasses();
