@@ -13,6 +13,14 @@ namespace kroll
 
 	PythonModule* PythonModule::instance_ = NULL;
 
+	static void PyListInsertString(
+		PyObject *list, int index, std::string string)
+	{
+		PyObject* s = PyString_FromString(string.c_str());
+		PyList_Insert(list, 0, s);
+		Py_XDECREF(s);
+	}
+	
 	void PythonModule::Initialize()
 	{
 		PythonModule::instance_ = this;
@@ -22,13 +30,17 @@ namespace kroll
 		PyEval_SaveThread();
 
 		{
-		PyLockGIL lock;
-
-		PyObject* path = PySys_GetObject((char*) "path");
-		PyObject* s = PyString_FromString(
-			host->GetApplication()->GetResourcesPath().c_str());
-		PyList_Insert(path, 0, s);
-		Py_XDECREF(s);
+			PyLockGIL lock;
+	
+			PyObject* path = PySys_GetObject((char*) "path");
+			PyListInsertString(path, 0, 
+				host->GetApplication()->GetResourcesPath());
+			PyListInsertString(path, 0,
+				FileUtils::Join(this->GetPath().c_str(), "DLLs", NULL));
+			PyListInsertString(path, 0,
+				FileUtils::Join(this->GetPath().c_str(), "Lib", NULL));
+			PyListInsertString(path, 0,
+				FileUtils::Join(this->GetPath().c_str(), "Lib", "lib-tk", NULL));
 		}
 
 		PythonUtils::InitializePythonKClasses();
