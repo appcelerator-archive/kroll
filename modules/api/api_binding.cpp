@@ -152,7 +152,7 @@ namespace kroll
 		 * @tiarg[String, name] the name of this dependency
 		 * @tiarg[String, version] the version requirement for this dependency
 		 * @tiarg[Number, requirement, optional=true] the requirement for this dependency
-		 * @tiresult[API.Application] an API.Application which represents the application with given manifest
+		 * @tiresult[API.Dependency] A new Dependency.
 		 */
 		this->SetMethod("createDependency", &APIBinding::_CreateDependency);
 
