@@ -48,8 +48,6 @@ elif build.is_win32():
 	Env.Append(LIBS=['php5embed', 'php5ts'])
 
 m = build.add_module('php', env=Env)
-if build.is_win32():
-	futils.CopyToDir(path.join(build.third_party, 'microsoft', 'Microsoft.VC80.CRT'), m.build_dir)
 	
 t = Env.SharedLibrary(m.build_dir + '/phpmodule', Glob('*.cpp'))
 build.mark_build_target(t)
