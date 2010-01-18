@@ -169,8 +169,8 @@ namespace FileUtils
 	template <class T> static void TokenizeTemplate(const T& haystack,
 		std::vector<T>& tokens, const T& delimeters, bool skipDuplicates)
 	{
-		T::size_type lastPos = haystack.find_first_not_of(delimeters, 0);
-		T::size_type pos = haystack.find_first_of(delimeters, lastPos);
+		size_t lastPos = haystack.find_first_not_of(delimeters, 0);
+		size_t pos = haystack.find_first_of(delimeters, lastPos);
 		while (T::npos != pos || T::npos != lastPos)
 		{
 			T token(haystack.substr(lastPos, pos-lastPos));

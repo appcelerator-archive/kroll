@@ -417,8 +417,13 @@ namespace kroll
 			File logDirectoryFile = File(logDirectory);
 			logDirectoryFile.createDirectories();
 
+#ifdef OS_WIN32
 			this->logFile.open(UTF8ToWide(logFilePath).c_str(),
 				 std::ios::out | std::ios::trunc);
+#else
+			this->logFile.open(logFilePath.c_str(),
+				 std::ios::out | std::ios::trunc);
+#endif
 
 			// Couldn't open the file, perhaps there is contention?
 			if (!this->logFile.is_open())
