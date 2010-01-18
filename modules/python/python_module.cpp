@@ -31,17 +31,17 @@ namespace kroll
 
 		{
 			PyLockGIL lock;
-	
+
 			PyObject* path = PySys_GetObject((char*) "path");
 			PyListInsertString(path, 0, 
-				host->GetApplication()->GetResourcesPath());
+				UTF8ToSystem(host->GetApplication()->GetResourcesPath()).c_str());
 #ifdef OS_WIN32
-			PyListInsertString(path, 0,
-				FileUtils::Join(this->GetPath().c_str(), "DLLs", NULL));
-			PyListInsertString(path, 0,
-				FileUtils::Join(this->GetPath().c_str(), "Lib", NULL));
-			PyListInsertString(path, 0,
-				FileUtils::Join(this->GetPath().c_str(), "Lib", "lib-tk", NULL));
+			PyListInsertString(path, 0, FileUtils::Join(
+				UTF8ToSystem(this->GetPath()).c_str(), "DLLs", NULL));
+			PyListInsertString(path, 0, FileUtils::Join(
+				UTF8ToSystem(this->GetPath()).c_str(), "Lib", NULL));
+			PyListInsertString(path, 0, FileUtils::Join(
+				UTF8ToSystem(this->GetPath()).c_str(), "Lib", "lib-tk", NULL));
 #endif
 		}
 
@@ -93,19 +93,14 @@ namespace kroll
 	Module* PythonModule::CreateModule(std::string& path)
 	{
 		PyLockGIL lock;
-		FILE *file = fopen(path.c_str(), "r");
-
-		PyRun_SimpleFile(file,path.c_str());
+		path = UTF8ToSystem(path);
+		FILE* file = fopen(path.c_str(), "r");
+		PyRun_SimpleFileEx(file, path.c_str(), 1);
 
 		Poco::Path p(path);
 		std::string basename = p.getBaseName();
 		std::string name = basename.substr(0,basename.length()-python_suffix.length()+3);
 		std::string moduledir = path.substr(0,path.length()-basename.length()-3);
-
-		Logger *logger = Logger::Get("Python");
-		logger->Info("Loading Python path=%s", path.c_str());
-
 		return new PythonModuleInstance(host, path, moduledir, name);
 	}
-
 }

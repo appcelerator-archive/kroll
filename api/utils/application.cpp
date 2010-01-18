@@ -356,18 +356,7 @@ namespace UTILS_NS
 		if (!FileUtils::IsFile(license))
 			return text;
 
-		std::ifstream file(license.c_str());
-		if (file.bad() || file.fail())
-			return text;
-
-		while (!file.eof())
-		{
-			string line;
-			std::getline(file, line);
-			text.append(line);
-			text.append("\n");
-		}
-		return text;
+		return FileUtils::ReadFile(license);
 	}
 
 	string Application::GetUpdateURL()

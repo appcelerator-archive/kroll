@@ -157,35 +157,39 @@ namespace URLUtils
 		return url;
 	}
 
-	std::string PathToFileURL(std::string path)
+	std::string PathToFileURL(std::string pathIn)
 	{
-		if ('\\' == KR_PATH_SEP_CHAR)
+		// We need to convert this to a Unicode string, because we'll
+		// be iterating through it a character at a time. This might
+		// break with UTF-8.
+		std::wstring path(UTF8ToWide(pathIn));
+
+		// Windows needs it's slashes chanaged around.
+#if OS_WIN32
+		for (size_t i = 0; i < path.size(); i++)
 		{
-			for (size_t i = 0; i < path.size(); i++)
+			if (path[i] == L'\\')
 			{
-				if (path[i] == '\\')
-				{
-					path[i] = '/';
-				}
+				path[i] = L'/';
 			}
 		}
-
+#endif
 		std::string url("file://");
-		std::vector<std::string> pieces;
-		std::string delim("/");
-		FileUtils::Tokenize(path, pieces, delim);
+		std::vector<std::wstring> pieces;
+		FileUtils::TokenizeWide(path, pieces, L"/");
 		for (size_t i = 0; i < pieces.size(); i++)
 		{
+			std::string piece(WideToUTF8(pieces[i]));
 #if OS_WIN32
 			// Don't encode the C:
 			if (i != 0)
 #endif
 			{
 				url.append("/");
-				pieces[i] = EncodeURIComponent(pieces[i]);
+				piece = EncodeURIComponent(piece);
 			}
 
-			url.append(pieces[i]);
+			url.append(piece);
 		}
 		return url;
 	}

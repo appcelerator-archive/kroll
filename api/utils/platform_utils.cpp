@@ -97,13 +97,11 @@ namespace PlatformUtils
 		newMID.append(DataUtils::GenerateUUID());
 		newMID.append("|");
 		newMID.append(GetOldMachineId(midFileName));
+		newMID.append("\n");
 
 		std::string midFilePath(FileUtils::GetUserRuntimeHomeDirectory());
 		midFilePath = FileUtils::Join(midFilePath.c_str(), midFileName.c_str(), NULL);
-		std::ofstream myfile;
-		myfile.open(midFilePath.c_str());
-		myfile << newMID << std::endl;
-		myfile.close();
+		FileUtils::WriteFile(midFilePath, newMID);
 
 		return newMID;
 	}
@@ -113,7 +111,7 @@ namespace PlatformUtils
 		// Search for an old MID stored in a file
 		std::vector<std::string> possibleMIDFiles;
 		std::string path;
- 		if (EnvironmentUtils::Has("KR_RUNTIME"))
+		if (EnvironmentUtils::Has("KR_RUNTIME"))
 		{
 			path = EnvironmentUtils::Get("KR_RUNTIME");
 			path = FileUtils::Join(path.c_str(), "..", "..", "..", midFileName.c_str(), NULL);
@@ -144,19 +142,10 @@ namespace PlatformUtils
 
 	static std::string ReadMIDFromFile(std::string& path)
 	{
-		if (FileUtils::IsFile(path))
-		{
-			std::ifstream file(path.c_str());
-			if (!file.bad() && !file.fail() && ! file.eof())
-			{
-				std::string line;
-				std::getline(file, line);
-				line = FileUtils::Trim(line);
-				file.close();
-				return line;
-			}
-		}
-		return std::string();
+		if (!FileUtils::IsFile(path))
+			return std::string();
+
+		return FileUtils::Trim(FileUtils::ReadFile(path));
 	}
 }
 }

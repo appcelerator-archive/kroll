@@ -81,7 +81,7 @@ namespace Win32Utils
 		return MultiByteToWide(in.c_str(), CP_UTF8);
 	}
 
-	std::wstring UTF8ToWide(const char *in)
+	std::wstring UTF8ToWide(const char* in)
 	{
 		return MultiByteToWide(in, CP_UTF8);
 	}
@@ -94,6 +94,16 @@ namespace Win32Utils
 	std::string WideToUTF8(const wchar_t* in)
 	{
 		return WideToMultiByte(in, CP_UTF8);
+	}
+
+	std::string UTF8ToSystem(const std::string& in)
+	{
+		return MultiByteToMultiByte(in, CP_UTF8, CP_ACP);
+	}
+
+	std::string UTF8ToSystem(const char* in)
+	{
+		return MultiByteToMultiByte(in, CP_UTF8, CP_ACP);
 	}
 
 }

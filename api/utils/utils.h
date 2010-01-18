@@ -52,4 +52,8 @@
 #include "osx/osx_utils.h"
 #endif
 
+#ifndef OS_WIN32
+#include "posix/posix_utils.h"
+#endif
+
 #endif

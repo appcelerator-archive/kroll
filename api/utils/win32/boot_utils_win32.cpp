@@ -45,10 +45,9 @@ namespace BootUtils
 			installerPath = application->path;
 		}
 
-		string msiName(application->name);
-		msiName += ".msi";
+		string msiName = application->name + ".msi";
 		string installer(FileUtils::Join(installerPath.c_str(), 
-			"installer", msiName.c_str(), NULL));
+			"installer", msiName.c_str(), 0));
 		string msiExec(FileUtils::Join("C:", "Windows", "system32", "msiexec.exe", NULL));
 		if (!FileUtils::IsFile(installer) && !FileUtils::IsFile(msiExec))
 		{

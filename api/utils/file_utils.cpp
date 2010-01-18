@@ -166,36 +166,46 @@ namespace FileUtils
 #endif
 	}
 
-	void Tokenize(const std::string& str,
-		std::vector<std::string>& tokens, const std::string delimeters,
-		bool skip_if_found)
+	template <class T> static void TokenizeTemplate(const T& haystack,
+		std::vector<T>& tokens, const T& delimeters, bool skipDuplicates)
 	{
-		std::string::size_type lastPos = str.find_first_not_of(delimeters,0);
-		std::string::size_type pos = str.find_first_of(delimeters,lastPos);
-		while (std::string::npos!=pos || std::string::npos!=lastPos)
+		T::size_type lastPos = haystack.find_first_not_of(delimeters, 0);
+		T::size_type pos = haystack.find_first_of(delimeters, lastPos);
+		while (T::npos != pos || T::npos != lastPos)
 		{
-			std::string token(str.substr(lastPos,pos-lastPos));
-			bool found = false;
-			if (skip_if_found)
+			T token(haystack.substr(lastPos, pos-lastPos));
+			bool duplicate = false;
+
+			if (skipDuplicates)
 			{
-				std::vector<std::string>::iterator i = tokens.begin();
-				while(i!=tokens.end())
+				for (size_t i = 0; i < tokens.size(); i++)
 				{
-					std::string entry(*i++);
-					if (entry == token)
+					if (tokens[i] == token)
 					{
-						found = true;
+						duplicate = true;
 						break;
 					}
 				}
 			}
-			if (!found)
-			{
+
+			if (!duplicate)
 				tokens.push_back(token);
-			}
-			lastPos = str.find_first_not_of(delimeters,pos);
-			pos = str.find_first_of(delimeters,lastPos);
+
+			lastPos = haystack.find_first_not_of(delimeters, pos);
+			pos = haystack.find_first_of(delimeters, lastPos);
 		}
+	}
+
+	void Tokenize(const std::string& haystack, std::vector<std::string>& tokens,
+		const std::string& delimeters, bool skipDuplicates)
+	{
+		TokenizeTemplate<std::string>(haystack, tokens, delimeters, skipDuplicates);
+	}
+
+	void TokenizeWide(const std::wstring& haystack, std::vector<std::wstring>& tokens,
+		const std::wstring& delimeters, bool skipDuplicates)
+	{
+		TokenizeTemplate<std::wstring>(haystack, tokens, delimeters, skipDuplicates);
 	}
 
 	std::string Trim(std::string string)

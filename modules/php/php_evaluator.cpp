@@ -137,14 +137,14 @@ namespace kroll
 
 		string url(args.GetString(0));
 		Poco::URI uri(url);
-		
+
 		result->SetBool(false);
 		if (Script::HasExtension(uri.getPath().c_str(), "php"))
 		{
 			result->SetBool(true);
 		}
 	}
-	
+
 	void PHPEvaluator::FillGet(Poco::URI& uri TSRMLS_DC)
 	{
 		Poco::StringTokenizer tokens(uri.getQuery(), "&=");
@@ -193,9 +193,12 @@ namespace kroll
 		// at parse/compile time -- see: main/main.c line 969
 		PG(during_request_startup) = 0;
 
+		// Convert the path to the system codepage.
+		path = UTF8ToSystem(path);
+
 		zend_file_handle script;
 		script.type = ZEND_HANDLE_FP;
-		script.filename = (char*)path.c_str();
+		script.filename = (char*) path.c_str();
 		script.opened_path = NULL;
 		script.free_filename = 0;
 		script.handle.fp = fopen(script.filename, "rb");

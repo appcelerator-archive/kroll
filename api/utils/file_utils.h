@@ -44,11 +44,14 @@ namespace UTILS_NS
 	namespace FileUtils
 	{
 		/**
-		 * tokenize a string by delimeter into parts and place in vector tokens
+		 * Tokenize a string into parts given a string of delimeters characters.
 		 */
-		KROLL_API void Tokenize(const std::string& str,
-			std::vector<std::string>& tokens, const std::string delimeters,
-			bool skipIfFound=false);
+		KROLL_API void Tokenize(const std::string& haystack,
+			std::vector<std::string>& tokens, const std::string& delimeters,
+			bool skipDuplicates=false);
+		KROLL_API void TokenizeWide(const std::wstring& haystack,
+			std::vector<std::wstring>& tokens, const std::wstring& delimeters,
+			bool skipDuplicates=false);
 
 		KROLL_API std::string Trim(std::string str);
 		KROLL_API void ListDir(std::string& path, std::vector<std::string>& files);
