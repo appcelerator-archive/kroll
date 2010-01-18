@@ -30,6 +30,11 @@ namespace UTILS_NS
 		/* Some wchar versions of popular FileUtils functions */
 		KROLL_API bool IsFile(std::wstring& path);
 		KROLL_API std::string ReadFile(std::wstring& path);
+
+		/**
+		 * Delete the file at the given path
+		 */
+		KROLL_API bool DeleteFile(std::string &path);
 	}
 
 	KROLL_API std::wstring UTF8ToWide(const std::string& in);

@@ -50,61 +50,17 @@ namespace UTILS_NS
 			std::vector<std::string>& tokens, const std::string delimeters,
 			bool skipIfFound=false);
 
-		/**
-		 * @param str The string to trim
-		 */
 		KROLL_API std::string Trim(std::string str);
-
-		/**
-		 *
-		 */
 		KROLL_API void ListDir(std::string& path, std::vector<std::string>& files);
-
-		/**
-		 *
-		 */
 		KROLL_API bool IsDirectory(std::string &dir);
-
-		/**
-		 *
-		 */
 		KROLL_API bool IsFile(const std::string &file);
-
-		/**
-		 *
-		 */
 		KROLL_API void WriteFile(std::string& path, std::string& content);
-
-		/**
-		 *
-		 */
 		KROLL_API std::string ReadFile(std::string& path);
-		
-		/**
-		 *
-		 */
 		KROLL_API std::string Dirname(std::string path);
-
-		/**
-		 *
-		 */
 		KROLL_API std::string Basename(std::string path);
-
-		/**
-		 *
-		 */
 		KROLL_API bool CreateDirectory(std::string &dir, bool recursive=false);
 		KROLL_API bool CreateDirectoryImpl(std::string &dir);
 
-#ifdef OS_WIN32
-		// TODO: implement me for OSX/Linux
-		
-		/**
-		 * Delete the file at the given path
-		 */
-		KROLL_API bool DeleteFile(std::string &path);
-#endif
-		
 		/**
 		 * Recursively delete the directory at the given path
 		 */
