@@ -338,7 +338,7 @@ namespace FileUtils
 
 		GetZipItem(handle, -1, &zipEntry);
 		int numItems = zipEntry.index;
-		if (callback != NULL)
+		if (callback)
 		{ 
 			std::ostringstream message;
 			message << "Starting extraction of " << numItems 
@@ -352,7 +352,7 @@ namespace FileUtils
 			ZeroMemory(&zipEntry, sizeof(ZIPENTRY));
 			GetZipItem(handle, zi, &zipEntry);
 			
-			if (callback != NULL)
+			if (callback)
 			{
 				std::string name(WideToUTF8(zipEntry.name));
 				std::string message("Extracting ");
