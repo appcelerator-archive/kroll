@@ -31,6 +31,11 @@ namespace UTILS_NS
 		 * or create it if it doesn't exist.
 		 */
 		KROLL_API std::string GetMachineId();
+
+		/**
+		 * Get the username of the current user.
+		 */
+		KROLL_API std::string GetUsername();
 	};
 }
 #endif

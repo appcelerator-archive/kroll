@@ -50,23 +50,6 @@ namespace FileUtils
 		return path;
 	}
 
-	std::string GetUsername()
-	{
-		char* loginName = getlogin();
-		if (loginName != NULL)
-		{
-			return loginName;
-		}
-		else if (EnvironmentUtils::Has("USER"))
-		{
-			return EnvironmentUtils::Get("USER");
-		}
-		else
-		{
-			return "unknown";
-		}
-	}
-
 	void WriteFile(std::string& path, std::string& content)
 	{
 		std::ofstream f(path.c_str());

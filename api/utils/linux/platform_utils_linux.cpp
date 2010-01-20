@@ -84,5 +84,22 @@ namespace PlatformUtils
 			}
 		}
 	}
+
+	std::string GetUsername()
+	{
+		char* loginName = getlogin();
+		if (loginName != NULL)
+		{
+			return loginName;
+		}
+		else if (EnvironmentUtils::Has("USER"))
+		{
+			return EnvironmentUtils::Get("USER");
+		}
+		else
+		{
+			return "unknown";
+		}
+	}
 }
 }

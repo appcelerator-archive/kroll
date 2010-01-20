@@ -411,21 +411,6 @@ std::cout << "\n>Recursive copy " << dir << " to " << dest << std::endl;
 			}
 		}
 	}
-
-	std::string GetUsername()
-	{
-		wchar_t buf[MAX_PATH];
-		DWORD size = MAX_PATH - 1;
-		if (::GetUserNameW(buf, &size))
-		{
-			buf[size] = '\0';
-			return UTILS_NS::WideToUTF8(buf);
-		}
-		else
-		{
-			return "Unknown";
-		}
-	}
 }
 }
 

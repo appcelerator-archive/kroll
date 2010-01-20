@@ -32,11 +32,6 @@ namespace UTILS_NS
 		return [[nsPath stringByExpandingTildeInPath] UTF8String];
 	}
 
-	std::string FileUtils::GetUsername()
-	{
-		return std::string([NSUserName() UTF8String]);
-	}
-
 	std::string FileUtils::ReadFile(std::string& path)
 	{
 		NSError* error = NULL;

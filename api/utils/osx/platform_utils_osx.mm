@@ -64,4 +64,9 @@ namespace UTILS_NS
 		freeifaddrs(ifaphead);
 		if (!foundAdapter) throw std::string("cannot determine MAC address (no suitable network adapter found)");
 	}
+
+	std::string FileUtils::GetUsername()
+	{
+		return std::string([NSUserName() UTF8String]);
+	}
 }
