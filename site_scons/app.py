@@ -1,6 +1,11 @@
 #!/usr/bin/env python
-import os.path as p, os, types, glob, futils, shutil
+import os.path as p
+import os
+import types
+import glob
+import shutil
 import zipfile
+import effess
 
 class App:
 	def __init__(self, build, fullname="", id="", version="0.1", guid="fakeguid", image=None, publisher=None, url=None, sdk=False):
@@ -58,26 +63,26 @@ class App:
 
 		if bundle:
 			self.status('copying runtime to %s' % self.contents)
-			futils.CopyToDir(src_runtime, self.contents, exclude=excludes)
+			effess.copy_to_dir(src_runtime, self.contents, exclude=excludes)
 
 			self.status('copying modules to %s' % self.contents)
 			for module_dir in glob.glob(p.join(src_modules, '*')):
 				module_target = p.join(self.contents, 'modules', p.basename(module_dir))
-				futils.LightWeightCopyTree(module_dir, module_target, exclude=excludes)
+				effess.lightweight_copy_tree(module_dir, module_target, exclude=excludes)
 
 		self.status('copying kboot to %s' % self.exe)
-		futils.Copy(self.kboot, self.exe)
+		effess.copy(self.kboot, self.exe)
 
 		self.status('copying netinstaller (%s) to %s' % (self.net_installer, self.contents))
-		futils.CopyToDir(self.net_installer, self.contents)
+		effess.copy_to_dir(self.net_installer, self.contents)
 
 		if src_contents:
 			self.status('copying %s to %s' % (src_contents, self.exe))
-			futils.CopyTree(src_contents, self.contents)
+			effess.copy_tree(src_contents, self.contents)
 
 		if src_resources:
 			self.status('copying %s to %s' % (src_resources, self.exe))
-			futils.CopyTree(src_resources, self.resources)
+			effess.copy_tree(src_resources, self.resources)
 
 	def stage(self, build_dir, src_contents=None, src_resources=None, bundle=True):
 		print('Staging %s' % self.fullname)
@@ -91,16 +96,16 @@ class App:
 			tiui = self.build.get_module('tiui')
 			if tiui:
 				main_menu = p.join(tiui.build_dir, 'MainMenu.nib')
-				futils.CopyToDir(main_menu, lproj) 
+				effess.copy_to_dir(main_menu, lproj) 
 
 			# Copy titanium.icns to Contents/Resources/English.lproj
 			icns = p.join(self.build.titanium_support_dir, 'titanium.icns')
-			futils.CopyToDir(icns, lproj)
+			effess.copy_to_dir(icns, lproj)
 
 			# Copy Info.plist to Contents
 			plist = p.join(self.contents, 'Info.plist')
-			futils.CopyToDir(p.join(self.build.titanium_support_dir, 'Info.plist'), self.contents)
-			futils.ReplaceVars(plist, {
+			effess.copy_to_dir(p.join(self.build.titanium_support_dir, 'Info.plist'), self.contents)
+			effess.replace_vars(plist, {
 				'APPEXE': self.fullname,
 				'APPNAME': self.fullname,
 				'APPICON': 'titanium.icns',
@@ -139,11 +144,11 @@ class App:
 		if not p.isdir(out_dir): os.makedirs(out_dir)
 
 		exe_out = p.join(p.dirname(self.exe), 'installer.exe')
-		futils.Copy(self.exe, exe_out)
+		effess.copy(self.exe, exe_out)
 
 		self_extractor = p.join(self.build.dir, 'self_extractor.exe')
 		se_file = p.join(out_dir, se_archive_name) + '.exe'
-		futils.Copy(self_extractor, se_file)
+		effess.copy(self_extractor, se_file)
 
 		zf = zipfile.ZipFile(se_file, 'a', zipfile.ZIP_DEFLATED)
 		for walk in os.walk(self.dir):
@@ -169,10 +174,10 @@ class App:
 		#source = source.replace('APPNAME', p.basename(self.exe))
 
 		self.status('writing tgz file to %s' % (archive))
-		futils.TarGzDir(self.dir, archive)
+		effess.make_tgz(self.dir, archive)
 
 		#self.status('creating self-extractor at %s' % (bin_file))
-		#futils.Concat([source, archive], bin_file)
+		#effess.Concat([source, archive], bin_file)
 
 	def package_dmg(self,
 		app_name=None,
@@ -218,12 +223,12 @@ class App:
 			app_name = p.basename(self.dir)
 
 		if icns_file:
-			futils.Copy(icns_file, '%s/.VolumeIcon.icns' % volume)
+			effess.Copy(icns_file, '%s/.VolumeIcon.icns' % volume)
 			invoke('/Developer/Tools/SetFile -a C %s' % volume)
 	
-		if ds_store_file: futils.Copy(ds_store_file, '%s/.DS_Store' % volume)
+		if ds_store_file: effess.Copy(ds_store_file, '%s/.DS_Store' % volume)
 		for f in ds_store_extras:
-			futils.CopyToDir(f, volume)
+			effess.CopyToDir(f, volume)
 			invoke('/Developer/Tools/SetFile -a V %s/%s' % (volume, p.basename(f)))
 	
 		invoke('hdiutil detach %s' % volume)

@@ -1,8 +1,13 @@
 import SCons.Variables
 import SCons.Environment
 from SCons.Script import *
-import os, glob, re, utils, futils, types
+import os
+import glob
+import re
+import utils
+import types
 import os.path as path
+import effess
 
 class Module(object):
 	def __init__(self, name, version, build_dir, build):
@@ -14,7 +19,6 @@ class Module(object):
 	def __str__(self):
 		return self.build_dir
 
-	
 	def light_weight_copy(self, name, indir, outdir):
 		if os.path.exists(indir):
 			t = self.build.env.LightWeightCopyTree(name, [], OUTDIR=outdir, IN=indir, EXCLUDE=['.h'])
@@ -37,68 +41,6 @@ class Module(object):
 			t = self.build.utils.CopyToDir(manifest, self.build_dir)
 			self.build.mark_stage_target(t)
 			AlwaysBuild(t)
-
-class BuildUtils(object):
-	def __init__(self, env):
-		self.env = env
-		# Add our custom builders
-		env['BUILDERS']['KCopySymlink'] = env.Builder(
-			action=utils.KCopySymlink,
-			source_factory=SCons.Node.FS.default_fs.Entry,
-			target_factory=SCons.Node.FS.default_fs.Entry,
-			multi=0)
-		env['BUILDERS']['KTarGzDir'] = env.Builder(
-			action=utils.KTarGzDir,
-			source_factory=SCons.Node.FS.default_fs.Entry,
-			target_factory=SCons.Node.FS.default_fs.Entry,
-			multi=1)
-		env.SetDefault(TARGZOPTS={})
-		env['BUILDERS']['KZipDir'] = env.Builder(
-			action=utils.KZipDir,
-			source_factory=SCons.Node.FS.default_fs.Entry,
-			target_factory=SCons.Node.FS.default_fs.Entry,
-			multi=1)
-		env.SetDefault(ZIPOPTS={})
-		env['BUILDERS']['KConcat'] = env.Builder(
-			action=utils.KConcat,
-			source_factory=SCons.Node.FS.default_fs.Entry,
-			target_factory=SCons.Node.FS.default_fs.Entry,
-			multi=1)
-		env['BUILDERS']['LightWeightCopyTree'] = env.Builder(action=utils.LightWeightCopyTree)
-
-	def CopyTree(self, *args, **kwargs):
-		return utils.SCopyTree(self.env, *args, **kwargs)
-
-	def CopyToDir(self, *args, **kwargs):
-		return utils.SCopyToDir(self.env, *args, **kwargs)
-
-	def Copy(self, src, dest): 
-		return self.env.Command(dest, src, Copy('$TARGET', '$SOURCE'))
-
-	def Touch(self, file):
-		return self.env.Command(file, [], Touch('$TARGET'))
-
-	def Delete(self, file):
-		return self.env.Command(file, [], Delete('$TARGET'))
-
-	def Mkdir(self, file):
-		return self.env.Command(file, [], Mkdir('$TARGET'))
-
-	def ReplaceVars(self, target, replacements):
-		self.env.AddPostAction(target, utils.ReplaceVarsAction(target, replacements))
-
-	def WriteStrings(self, target, strings):
-		if type(strings) != types.ListType:
-			strings = [str(strings)]
-		t = self.Touch(target)
-		self.env.AddPostAction(t, utils.WriteStringsAction(target, strings))
-		return t
-
-	def Zip(self, source, target, **kwargs):
-		return self.env.KZipDir(target, source, ZIPOPTS=kwargs)
-
-	def TarGz(self, source, target, **kwargs):
-		return self.env.KTarGzDir(target, source, TARGZOPTS=kwargs)
 
 class BuildConfig(object): 
 	def __init__(self, **kwargs):
@@ -129,7 +71,7 @@ class BuildConfig(object):
 		vars.Add('CRASH_REPORT_URL','The URL to send crash dumps to', kwargs['CRASH_REPORT_URL'])
 
 		self.env = SCons.Environment.Environment(variables = vars)
-		self.utils = BuildUtils(self.env)
+		self.utils = utils.BuildUtils(self.env)
 		self.env.Append(CPPDEFINES = [
 			['OS_' + self.os.upper(), 1],
 			['_OS_NAME', self.os],
@@ -179,7 +121,7 @@ class BuildConfig(object):
 	# Get a separate copy of the Kroll Utils for a particular build piece
 	# Give: A unique directory for that build piece where the utils should be copied
 	def get_kroll_utils(self, dir, unzip=True):
-		futils.CopyToDir(self.kroll_utils_dir, dir)
+		effess.copy_to_dir(self.kroll_utils_dir, dir)
 		sources = Glob('%s/utils/*.cpp' % dir) + \
 			Glob('%s/utils/poco/*.cpp' % dir) + \
 			Glob('%s/utils/%s/*.cpp' % (dir, self.os))
@@ -251,19 +193,6 @@ class BuildConfig(object):
 		m.copy_resources(self.cwd(2))
 
 		return m
-
-	def build_dist_files(self):
-		excludes = ['.dll.manifest', '.dll.pdb', '.exp', '.ilk']
-
-		f = path.join(self.dist_dir, 'runtime-%s.zip' % self.version)
-		if os.path.exists(f): os.remove(f)
-
-		self.utils.Zip(self.runtime_build_dir, f, exclude=excludes)
-
-		for m in self.modules:
-			f = path.join(self.dist_dir, 'module-%s-%s.zip' % (m.name, m.version))
-			if os.path.exists(f): os.remove(f)
-			self.utils.Zip(m.build_dir, f, exclude=excludes)
 
 	def generate_manifest(self, name, id, guid, exclude=None, include=None, image=None, publisher=None, url=None, version=None, sdk=False):
 		manifest = "#appname: %s\n" % name

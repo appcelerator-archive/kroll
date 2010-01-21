@@ -1,5 +1,10 @@
-import os.path as path, shutil, types, tarfile, zipfile, stat
-from SCons.Script import *
+import os
+import os.path as path
+import shutil
+import types
+import tarfile
+import zipfile
+import stat
 
 def filter_file(file, include=[], exclude=[], filter=None):
 	for suffix in include:
@@ -14,24 +19,24 @@ def filter_file(file, include=[], exclude=[], filter=None):
 		return filter(file)
 	return True
 
-# Adapted from: http://www.scons.org/wiki/AccumulateBuilder
-def CopyTree(*args, **kwargs):
+def copy_tree(*args, **kwargs):
 	if (type(args[0]) == types.ListType):
 		for src in args[0]:
-			CopyTreeImpl(src, args[1], **kwargs)
+			copy_tree_impl(src, args[1], **kwargs)
 	else:
-		CopyTreeImpl(*args, **kwargs)
+		copy_tree_impl(*args, **kwargs)
 
-def CopyTreeImpl(src, dest, **kwargs):
-	"""Copy a directory recursivley. If the first argument is a
+def copy_tree_impl(src, dest, **kwargs):
+	"""
+	Copy a directory recursivley. If the first argument is a
 	directory, copy the contents of that directory
 	into the target directory. If the first argument is a file,
 	copy that file into the target directory. Will preserve symlinks.
-
-	'includes' is a list of file suffixes to include. If len(include) > 1
-	all other files will be skipped. 'excludes' is a list of file suffixes
-	to exclude. 'filter' is a function which given the full path to a file,
-	will exclude if returns False or include if returns True.
+	include - a list of file suffixes to include. If len(include) > 1
+	           all other files will be skipped.
+	exclude - a list of file suffixes to exclude. 
+	filter  - a function which given the full path to a file, returns True
+	           to include it or False to exclude it.
 	"""
 	dest = path.abspath(dest)
 	src = path.abspath(src)
@@ -40,25 +45,26 @@ def CopyTreeImpl(src, dest, **kwargs):
 		for item in os.listdir(src):
 			src_item = path.abspath(path.join(src, item))
 			#print "copy tree u %s %s" % (src_item, dest)
-			CopyToDir(src_item, dest, **kwargs)
+			copy_to_dir(src_item, dest, **kwargs)
 	else:
-		CopyToDir(src, dest, **kwargs)
+		copy_to_dir(src, dest, **kwargs)
 
-def CopyToDir(*args, **kwargs):
+def copy_to_dir(*args, **kwargs):
 	if (type(args[0]) == types.ListType):
 		for src in args[0]:
-			CopyToDirImpl(src, args[1], **kwargs)
+			copy_to_dir_impl(src, args[1], **kwargs)
 	else:
-		CopyToDirImpl(*args, **kwargs)
+		copy_to_dir_impl(*args, **kwargs)
 
-def CopyToDirImpl(src, dest, include=[], exclude=[], filter=None, recurse=True):
-	"""Copy a path into a destination directory in a sconsy way.
-	the original path will be a child of the destination directory.
-
-	Includes is a list of file suffixes to include. If len(include) > 1
-	all other files will be skipped. Excludes is a list of file suffixes
-	to exclude. Filter is a function which given the full path to a file,
-	will exclude is returns False or include if returns True.
+def copy_to_dir_impl(src, dest, include=[], exclude=[], filter=None, recurse=True):
+	"""
+	Copy a path into a destination directory the original path will be a
+	child of the destination directory.
+	include - a list of file suffixes to include. If len(include) > 1
+	           all other files will be skipped.
+	exclude - a list of file suffixes to exclude. 
+	filter  - a function which given the full path to a file, returns True
+	           to include it or False to exclude it.
 	"""
 
 	def copy_item(src, dest):
@@ -69,7 +75,7 @@ def CopyToDirImpl(src, dest, include=[], exclude=[], filter=None, recurse=True):
 		# Test for a symlink first, because a symlink can
 		# also return turn for isdir
 		if path.islink(src) and filter_file(src, include, exclude, filter):
-			CopySymlink(src, dest) 
+			copy_symlink(src, dest) 
 			return
 
 		# It doesn't really make sense for includes to
@@ -101,7 +107,7 @@ def CopyToDirImpl(src, dest, include=[], exclude=[], filter=None, recurse=True):
 	#print "copy %s %s" % (src, dest)
 	copy_item(src, dest)
 
-def Copy(src, dest):
+def copy(src, dest):
 	dest_dir = path.dirname(dest)
 	if not(path.exists(dest_dir)):
 		os.makedirs(dest_dir)
@@ -109,10 +115,10 @@ def Copy(src, dest):
 	if not path.isdir(src):
 		shutil.copy2(src, dest)
 	else:
-		CopyTree(src, dest)
+		copy_tree(src, dest)
 	
 
-def CopySymlink(link, new_link):
+def copy_symlink(link, new_link):
 	linkto = os.readlink(link)
 
 	# Remove link before recreating it
@@ -137,7 +143,7 @@ def walk_dir(dir, callback, include=[], exclude=[], dirs=False):
 			if filter_file(file, include, exclude):
 				callback(file)
 
-def TarGzDir(source, dest_file, include=[], exclude=[]):
+def make_tgz(source, dest_file, include=[], exclude=[]):
 	tar = tarfile.open(dest_file, 'w:gz')
 	if (type(source) != types.ListType): source = [source]
 	for dir in source:
@@ -147,8 +153,7 @@ def TarGzDir(source, dest_file, include=[], exclude=[]):
 		walk_dir(dir, tarcb, include, exclude, dirs=True)
 	tar.close()
 
-def AddToZip(zip, filepath, zippath):
-	#arcname = filepath.replace(dir + os.sep, "")
+def add_to_zip(zip, filepath, zippath):
 	if os.path.islink(filepath):
 		dest = os.readlink(filepath)
 		attr = zipfile.ZipInfo()
@@ -164,7 +169,7 @@ def AddToZip(zip, filepath, zippath):
 	else:
 		zip.write(filepath, zippath, zipfile.ZIP_DEFLATED)
 	
-def ZipDir(source, dest_file, include=[], exclude=[], dest_path=None):
+def make_zip(source, dest_file, include=[], exclude=[], dest_path=None):
 	zip = None
 	if isinstance(dest_file, zipfile.ZipFile):
 		zip = dest_file
@@ -177,11 +182,11 @@ def ZipDir(source, dest_file, include=[], exclude=[], dest_path=None):
 			arcname = f.replace(dir + os.sep, "")
 			if dest_path:
 				arcname = '/'.join([dest_path, arcname])
-			AddToZip(zip, f, arcname)
+			add_to_zip(zip, f, arcname)
 		walk_dir(dir, zipcb, include, exclude, dirs=True)
 	zip.close()
 
-def Concat(source, dest_file, nofiles=False):
+def concat(source, dest_file, nofiles=False):
 	out = open(dest_file, 'wb')
 
 	for file in source:
@@ -194,11 +199,11 @@ def Concat(source, dest_file, nofiles=False):
 
 	out.close()
 
-def Touch(dest):
+def touch(dest):
 	out = open(dest, 'w')
 	out.close()
 
-def ReplaceVars(file, replacements):
+def replace_vars(file, replacements):
 	txt = open(file).read()
 	for k, v in replacements.iteritems():
 		txt = txt.replace(k, v)
@@ -206,7 +211,7 @@ def ReplaceVars(file, replacements):
 	out.write(txt)
 	out.close()
 
-def NeedsUpdate(source, target, exclude):
+def needs_update(source, target, exclude):
 	files = os.walk(source)
 	for walk in files:
 		for file in walk[2]:
@@ -225,21 +230,20 @@ def NeedsUpdate(source, target, exclude):
 						return True
 	return False
 
-def LightWeightCopyTreeImpl(source, target, exclude):
+def lightweight_copy_tree_impl(source, target, exclude):
 	if not path.isdir(source):
 		return
 	
-	if NeedsUpdate(source, target, exclude):
+	if needs_update(source, target, exclude):
 		print "        -> Copying %s ==> %s" % (source, target)
-		CopyTree(source, target, exclude=exclude)
+		copy_tree(source, target, exclude=exclude)
 	else:
 		print "        -> Already up to date: %s"  % target
 
-def LightWeightCopyTree(sources, outdir, exclude=[]):
-
+def lightweight_copy_tree(sources, outdir, exclude=[]):
 	if type(sources) == types.ListType:
 		for source in sources:
-			LightWeightCopyTreeImpl(source, outdir, exclude)
+			lightweight_copy_tree_impl(source, outdir, exclude)
 	else:
-		LightWeightCopyTreeImpl(sources, outdir, exclude)
+		lightweight_copy_tree_impl(sources, outdir, exclude)
 
