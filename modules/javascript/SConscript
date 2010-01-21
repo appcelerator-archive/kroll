@@ -1,24 +1,20 @@
 #!/usr/bin/env python
-import os, os.path as path
+from os import path
+Import('build env module')
 
-Import('build')
+env.Append(CPPDEFINES=('KROLL_JAVASCRIPT_API_EXPORT', 1))
 
-Env = build.env.Clone()
-Env.Append(CPPDEFINES=('KROLL_JAVASCRIPT_API_EXPORT', 1))
-build.add_thirdparty(Env, 'poco')
-build.add_thirdparty(Env, 'webkit')
-Env.Append(CPPPATH=[build.kroll_include_dir])
-
+build.add_thirdparty(env, 'poco')
+build.add_thirdparty(env, 'webkit')
 if build.is_win32():
-	Env.Append(LIBS=[
+	env.Append(LIBS=[
 		'kernel32', 'shell32',
 		'user32', 'ole32',
 		'comctl32', 'shlwapi',
 		'oleaut32', 'icuuc', 
 		'pthreadVC2', 'kroll'])
-	Env.Append(LINKFLAGS=['/LTCG', '/INCREMENTAL:NO'])
+	env.Append(LINKFLAGS=['/LTCG', '/INCREMENTAL:NO'])
 
-m = build.add_module('javascript', env=Env)
-t = Env.SharedLibrary(m.build_dir + '/javascriptmodule', Glob('*.cpp'))
-build.mark_build_target(t)
+build.mark_build_target(env.SharedLibrary(
+	path.join(module.dir, 'javascriptmodule'), Glob('*.cpp')))
 

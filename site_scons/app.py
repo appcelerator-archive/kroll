@@ -95,7 +95,7 @@ class App(object):
 			# Copy MainMenu.nib to Contents/Resources/English.lproj
 			tiui = self.build.get_module('tiui')
 			if tiui:
-				main_menu = p.join(tiui.build_dir, 'MainMenu.nib')
+				main_menu = p.join(tiui.dir, 'MainMenu.nib')
 				effess.copy_to_dir(main_menu, lproj) 
 
 			# Copy titanium.icns to Contents/Resources/English.lproj

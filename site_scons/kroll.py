@@ -10,14 +10,13 @@ import os.path as path
 import effess
 
 class Module(object):
-	def __init__(self, name, version, build_dir, build):
+	def __init__(self, name, version, dir):
 		self.name = name
 		self.version = version
-		self.build_dir = build_dir
-		self.build = build
+		self.dir = dir
 
 	def __str__(self):
-		return self.build_dir
+		return self.dir
 
 class BuildConfig(object): 
 	def __init__(self, **kwargs):
@@ -154,20 +153,6 @@ class BuildConfig(object):
 			if module.name == name:
 				return module
 		return None
-
-	def add_module(self, name, version=None, resources=True, env=None):
-		if not version:
-			version = self.version
-
-		name = name.lower().replace('.','')
-		build_dir = path.join(self.dir, 'modules', name)
-		m = Module(name, self.version, build_dir, self)
-		self.modules.append(m)
-
-		if env:
-			env.Append(CPPDEFINES=[('MODULE_NAME', m.name), ('MODULE_VERSION', m.version)])
-
-		return m
 
 	def generate_manifest(self, name, id, guid, exclude=None, include=None, image=None, publisher=None, url=None, version=None, sdk=False):
 		manifest = "#appname: %s\n" % name
