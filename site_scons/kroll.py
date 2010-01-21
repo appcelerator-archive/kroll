@@ -19,29 +19,6 @@ class Module(object):
 	def __str__(self):
 		return self.build_dir
 
-	def light_weight_copy(self, name, indir, outdir):
-		if os.path.exists(indir):
-			t = self.build.env.LightWeightCopyTree(name, [], OUTDIR=outdir, IN=indir, EXCLUDE=['.h'])
-			self.build.mark_stage_target(t)
-			AlwaysBuild(t)
-
-	def copy_resources(self, d=None):
-		if not d:
-			d = self.build.cwd(2)
-
-		outdir = self.build_dir
-		indir = path.join(d, 'Resources', 'all')
-		self.light_weight_copy('#' + self.name + '-AllResources', indir, outdir)
-
-		indir = path.join(d, 'Resources', self.build.os)
-		self.light_weight_copy('#' + self.name + '-OSResources', indir, outdir)
-
-		manifest = path.join(d, 'manifest')
-		if path.exists(manifest):
-			t = self.build.utils.CopyToDir(manifest, self.build_dir)
-			self.build.mark_stage_target(t)
-			AlwaysBuild(t)
-
 class BuildConfig(object): 
 	def __init__(self, **kwargs):
 		self.debug = False
@@ -71,7 +48,7 @@ class BuildConfig(object):
 		vars.Add('CRASH_REPORT_URL','The URL to send crash dumps to', kwargs['CRASH_REPORT_URL'])
 
 		self.env = SCons.Environment.Environment(variables = vars)
-		self.utils = utils.BuildUtils(self.env)
+		self.utils = utils.BuildUtils(self)
 		self.env.Append(CPPDEFINES = [
 			['OS_' + self.os.upper(), 1],
 			['_OS_NAME', self.os],
@@ -189,8 +166,6 @@ class BuildConfig(object):
 
 		if env:
 			env.Append(CPPDEFINES=[('MODULE_NAME', m.name), ('MODULE_VERSION', m.version)])
-
-		m.copy_resources(self.cwd(2))
 
 		return m
 

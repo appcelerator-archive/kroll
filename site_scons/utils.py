@@ -4,16 +4,20 @@ import effess
 import os.path as path
 from SCons.Script import *
 
+TYPICAL_EXCLUDES = ['.pdb', '.exp', '.ilk', '.db', '.swp', '.swo',
+	 '.gitignore', '.psd', '.cpp', '.obj', '.pyc', 'SConscript']
+
 class BuildUtils(object):
-	def __init__(self, env):
-		self.env = env
+	def __init__(self, build):
+		self.build = build
+		self.env = build.env
 		# Add our custom builders
-		env['BUILDERS']['KCopySymlink'] = env.Builder(
+		self.env['BUILDERS']['KCopySymlink'] = self.env.Builder(
 			action=KCopySymlink,
 			source_factory=SCons.Node.FS.default_fs.Entry,
 			target_factory=SCons.Node.FS.default_fs.Entry,
 			multi=0)
-		env['BUILDERS']['LightWeightCopyTree'] = env.Builder(action=LightWeightCopyTree)
+		self.env['BUILDERS']['LightWeightCopyTree'] = self.env.Builder(action=LightWeightCopyTree)
 
 	def CopyTree(self, *args, **kwargs):
 		return SCopyTree(self.env, *args, **kwargs)
@@ -32,6 +36,14 @@ class BuildUtils(object):
 
 	def Mkdir(self, file):
 		return self.env.Command(file, [], Mkdir('$TARGET'))
+
+	def LightWeightCopy(self, indir, outdir):
+		name = '#'  + (indir + '=' + outdir).replace('/', '-').replace('\\', '-')
+		t = self.env.LightWeightCopyTree(name, [], 
+			OUTDIR=outdir, IN=indir, EXCLUDE=TYPICAL_EXCLUDES)
+		self.build.mark_stage_target(t)
+		AlwaysBuild(t)
+
 
 def filter_file(file, include=[], exclude=[], filter=None):
 	for suffix in include:

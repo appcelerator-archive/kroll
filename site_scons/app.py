@@ -7,7 +7,7 @@ import shutil
 import zipfile
 import effess
 
-class App:
+class App(object):
 	def __init__(self, build, fullname="", id="", version="0.1", guid="fakeguid", image=None, publisher=None, url=None, sdk=False):
 		self.build = build
 		self.fullname = fullname
