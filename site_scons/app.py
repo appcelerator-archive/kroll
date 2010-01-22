@@ -41,23 +41,23 @@ class App(object):
 		if self.build.is_linux():
 			self.contents = build_dir
 			self.exe = p.join(self.contents, self.fullname)
-			self.kboot = p.join(self.build.dir, 'runtime', 'template', 'kboot')
+			self.kboot = p.join(self.build.dir, 'sdk', 'kboot')
 			self.data = p.join(p.expanduser('~'), '.titanium', 'appdata', self.id)
 		elif self.build.is_win32():
 			self.contents = build_dir
 			self.exe = p.join(self.contents, self.fullname+'.exe')
-			self.kboot = p.join(self.build.dir, 'runtime', 'template', 'kboot.exe')
+			self.kboot = p.join(self.build.dir, 'sdk', 'kboot.exe')
 			self.data = p.join(os.environ['APPDATA'], 'Titanium', 'appdata', self.id)
 		elif self.build.is_osx():
 			if not self.dir.endswith('.app'): self.dir += '.app'
 			self.contents = p.join(self.dir, 'Contents')
 			self.exe = p.join(self.contents, 'MacOS', self.fullname)
-			self.kboot = p.join(self.build.dir, 'runtime', 'template', 'kboot')
+			self.kboot = p.join(self.build.dir, 'sdk', 'kboot')
 			self.data = p.join(p.expanduser('~'), 'Library', 'Application Support', 'Titanium', 'appdata', self.id)
 
 		self.runtime = p.join(self.contents, 'runtime');
 		self.resources = p.join(self.contents, 'Resources');
-		self.net_installer = p.join(self.build.runtime_build_dir, 'installer')
+		self.net_installer = p.join(self.build.dir, 'sdk', 'installer')
 
 		excludes = ['.pdb', '.exp', '.ilk', '.lib']
 
@@ -90,21 +90,15 @@ class App(object):
 
 		if self.build.is_osx():
 			self.status('copying mac resources to %s' % (self.contents))
-			lproj = p.join(self.resources, 'English.lproj')
+			lproj_dir = p.join(self.resources, 'English.lproj')
+			sdk_dir = path.join(self.build_dir, 'sdk')
 
-			# Copy MainMenu.nib to Contents/Resources/English.lproj
-			tiui = self.build.get_module('tiui')
-			if tiui:
-				main_menu = p.join(tiui.dir, 'MainMenu.nib')
-				effess.copy_to_dir(main_menu, lproj) 
-
-			# Copy titanium.icns to Contents/Resources/English.lproj
-			icns = p.join(self.build.titanium_support_dir, 'titanium.icns')
-			effess.copy_to_dir(icns, lproj)
+			# Copy MainMenu.nib & titanium.icns to Contents/Resources/English.lproj
+			effess.copy_to_dir(path.join(sdk_dir, 'MainMenu.nib'), lproj_dir)
+			effess.copy_to_dir(path.join(sdk_dir, 'titanium.icns'), lproj)
 
 			# Copy Info.plist to Contents
-			plist = p.join(self.contents, 'Info.plist')
-			effess.copy_to_dir(p.join(self.build.titanium_support_dir, 'Info.plist'), self.contents)
+			effess.copy_to_dir(p.join(sdk_dir, 'Info.plist'), self.contents)
 			effess.replace_vars(plist, {
 				'APPEXE': self.fullname,
 				'APPNAME': self.fullname,
@@ -166,12 +160,6 @@ class App(object):
 
 		archive = p.join(out_dir, se_archive_name) + '.tgz'
 		if p.exists(archive): os.remove(archive)
-
-		#bin_file = p.join(out_dir, se_archive_name) + '.bin'
-		#if p.exists(bin_file): os.remove(bin_file)
-		#extractor = p.join(self.build.titanium_support_dir, 'extractor.sh')
-		#source = open(extractor).read()
-		#source = source.replace('APPNAME', p.basename(self.exe))
 
 		self.status('writing tgz file to %s' % (archive))
 		effess.make_tgz(self.dir, archive)

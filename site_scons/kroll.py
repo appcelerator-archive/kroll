@@ -90,9 +90,8 @@ class BuildConfig(object):
 
 	def set_kroll_source_dir(self, dir):
 		self.kroll_source_dir = path.abspath(dir)
-		self.kroll_include_dir = path.join(self.dir, 'include')
+		self.kroll_include_dir = path.join(self.dir, 'sdk', 'include')
 		self.kroll_utils_dir = path.join(self.kroll_source_dir, 'api', 'utils');
-		self.kroll_support_dir = path.join(self.kroll_source_dir, 'support', self.os)
 
 	# Get a separate copy of the Kroll Utils for a particular build piece
 	# Give: A unique directory for that build piece where the utils should be copied

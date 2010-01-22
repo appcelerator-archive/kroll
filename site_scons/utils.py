@@ -5,7 +5,7 @@ import os.path as path
 from SCons.Script import *
 
 TYPICAL_EXCLUDES = ['.pdb', '.exp', '.ilk', '.db', '.swp', '.swo',
-	 '.gitignore', '.psd', '.cpp', '.obj', '.pyc', 'SConscript']
+	'.gitignore', '.psd', '.cpp', '.obj', '.pyc', 'SConscript']
 
 class BuildUtils(object):
 	def __init__(self, build):
