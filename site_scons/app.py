@@ -91,15 +91,16 @@ class App(object):
 		if self.build.is_osx():
 			self.status('copying mac resources to %s' % (self.contents))
 			lproj_dir = p.join(self.resources, 'English.lproj')
-			sdk_dir = path.join(self.build_dir, 'sdk')
+			sdk_dir = p.join(self.build.dir, 'sdk')
 
 			# Copy MainMenu.nib & titanium.icns to Contents/Resources/English.lproj
-			effess.copy_to_dir(path.join(sdk_dir, 'MainMenu.nib'), lproj_dir)
-			effess.copy_to_dir(path.join(sdk_dir, 'titanium.icns'), lproj)
+			effess.copy_to_dir(p.join(sdk_dir, 'MainMenu.nib'), lproj_dir)
+			effess.copy_to_dir(p.join(sdk_dir, 'titanium.icns'), lproj_dir)
 
 			# Copy Info.plist to Contents
-			effess.copy_to_dir(p.join(sdk_dir, 'Info.plist'), self.contents)
-			effess.replace_vars(plist, {
+			plist_file = p.join(sdk_dir, 'Info.plist')
+			effess.copy_to_dir(plist_file, self.contents)
+			effess.replace_vars(plist_file, {
 				'APPEXE': self.fullname,
 				'APPNAME': self.fullname,
 				'APPICON': 'titanium.icns',
