@@ -187,7 +187,7 @@ namespace BootUtils
 		if (FileUtils::IsDirectory(mobileSDKPath))
 		{
 			results.push_back(KComponent::NewComponent(
-				RUNTIME, "mobilesdk", "", mobileSDKPath, true));
+				MOBILESDK, "mobilesdk", "", mobileSDKPath, true));
 		}
 
 		// Find a directory like <appdir>/sdk/
@@ -195,7 +195,7 @@ namespace BootUtils
 		if (FileUtils::IsDirectory(sdkPath))
 		{
 			results.push_back(KComponent::NewComponent(
-				RUNTIME, "sdk", "", sdkPath, true));
+				SDK, "sdk", "", sdkPath, true));
 		}
 
 		// Find all directories like <appdir>/modules/*
@@ -371,8 +371,8 @@ namespace BootUtils
 		return d;
 	}
 
-	SharedComponent KComponent::NewComponent(
-		KComponentType type, string name, string version, string path, bool bundled)
+	SharedComponent KComponent::NewComponent(KComponentType type, string name,
+		string version, string path, bool bundled)
 	{
 		KComponent* c = new KComponent();
 		c->type = type;
