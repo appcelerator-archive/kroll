@@ -65,6 +65,9 @@ class App(object):
 			self.status('copying runtime to %s' % self.contents)
 			effess.copy_to_dir(src_runtime, self.contents, exclude=excludes)
 
+			self.status('copying sdk to %s' % self.contents)
+			effess.copy_to_dir(p.join(self.build.dir, 'sdk'), self.contents, exclude=excludes)
+
 			self.status('copying modules to %s' % self.contents)
 			for module_dir in glob.glob(p.join(src_modules, '*')):
 				module_target = p.join(self.contents, 'modules', p.basename(module_dir))
