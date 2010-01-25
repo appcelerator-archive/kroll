@@ -1,23 +1,21 @@
 #!/usr/bin/env python
-import os
 from os import path
-Import('build')
+Import('build env module')
 
-Env = build.env.Clone()
-Env.Append(CPPDEFINES=('KROLL_RUBY_API_EXPORT', 1))
-build.add_thirdparty(Env, 'poco')
+env.Append(CPPDEFINES=('KROLL_RUBY_API_EXPORT', 1))
+build.add_thirdparty(env, 'poco')
 
 if build.is_osx():
-	Env.Append(CPPPATH=[
+	env.Append(CPPPATH=[
 		'/usr/lib/ruby/1.8/universal-darwin10.0',
 		'/usr/lib/ruby/1.8/universal-darwin9.0',
 		'/usr/lib/ruby/1.8/universal-darwin8.0',
 		build.kroll_include_dir])
-	Env.Append(LIBS=['libruby'])
+	env.Append(LIBS=['libruby'])
 
 
 elif build.is_linux():
-	Env.Append(CPPPATH=[
+	env.Append(CPPPATH=[
 		'/usr/lib/ruby/1.8/i386-linux',
 		'/usr/lib/ruby/1.8/i486-linux',
 		'/usr/lib/ruby/1.8/i686-linux',
@@ -25,20 +23,19 @@ elif build.is_linux():
 		'/usr/lib/ruby/1.8/powerpc-linux',
 		build.kroll_include_dir])
 
-	if os.path.exists('/usr/lib/libruby1.8.so'):
-		Env.Append(LIBS=['ruby1.8'])
+	if path.exists('/usr/lib/libruby1.8.so'):
+		env.Append(LIBS=['ruby1.8'])
 	else:
-		Env.Append(LIBS=['ruby'])
+		env.Append(LIBS=['ruby'])
 
 elif build.is_win32():
-	Env.Append(CPPPATH=[build.tp('ruby', 'lib', 'ruby', '1.8', 'i386-mswin32')])
-	Env.Append(LIBPATH=[build.tp('ruby', 'lib')])
-	Env.Append(LIBS=['msvcrt-ruby18'])
+	env.Append(CPPPATH=[build.tp('ruby', 'lib', 'ruby', '1.8', 'i386-mswin32')])
+	env.Append(LIBPATH=[build.tp('ruby', 'lib')])
+	env.Append(LIBS=['msvcrt-ruby18'])
 
-m = build.add_module('ruby', env=Env)
-t = Env.SharedLibrary(m.build_dir + '/rubymodule', Glob('*.cpp'))
-build.mark_build_target(t)
+build.mark_build_target(env.SharedLibrary(
+	path.join(module.dir, 'rubymodule'), Glob('*.cpp')))
 
 if build.is_win32():
-	m.light_weight_copy('#ruby-win32-resources', build.tp('ruby'), m.build_dir)
+	build.utils.LightWeightCopy(build.tp('ruby'), module.dir)
 

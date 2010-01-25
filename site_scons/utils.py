@@ -1,5 +1,49 @@
-import os.path as path, shutil, types, tarfile, zipfile, futils, stat
+import shutil
+import types
+import effess
+import os.path as path
 from SCons.Script import *
+
+TYPICAL_EXCLUDES = ['.pdb', '.exp', '.ilk', '.db', '.swp', '.swo',
+	'.gitignore', '.psd', '.cpp', '.obj', '.pyc', 'SConscript']
+
+class BuildUtils(object):
+	def __init__(self, build):
+		self.build = build
+		self.env = build.env
+		# Add our custom builders
+		self.env['BUILDERS']['KCopySymlink'] = self.env.Builder(
+			action=KCopySymlink,
+			source_factory=SCons.Node.FS.default_fs.Entry,
+			target_factory=SCons.Node.FS.default_fs.Entry,
+			multi=0)
+		self.env['BUILDERS']['LightWeightCopyTree'] = self.env.Builder(action=LightWeightCopyTree)
+
+	def CopyTree(self, *args, **kwargs):
+		return SCopyTree(self.env, *args, **kwargs)
+
+	def CopyToDir(self, *args, **kwargs):
+		return SCopyToDir(self.env, *args, **kwargs)
+
+	def Copy(self, src, dest): 
+		return self.env.Command(dest, src, Copy('$TARGET', '$SOURCE'))
+
+	def Touch(self, file):
+		return self.env.Command(file, [], Touch('$TARGET'))
+
+	def Delete(self, file):
+		return self.env.Command(file, [], Delete('$TARGET'))
+
+	def Mkdir(self, file):
+		return self.env.Command(file, [], Mkdir('$TARGET'))
+
+	def LightWeightCopy(self, indir, outdir):
+		name = '#'  + (indir + '=' + outdir).replace('/', '-').replace('\\', '-')
+		t = self.env.LightWeightCopyTree(name, [], 
+			OUTDIR=outdir, IN=indir, EXCLUDE=TYPICAL_EXCLUDES)
+		self.build.mark_stage_target(t)
+		AlwaysBuild(t)
+
 
 def filter_file(file, include=[], exclude=[], filter=None):
 	for suffix in include:
@@ -121,124 +165,6 @@ def KCopySymlink(target, source, env):
 		pass
 	os.symlink(linkto, dest_file)
 
-def walk_dir(dir, callback, include=[], exclude=[]):
-	files = os.walk(dir)
-	for walk in files:
-		for file in walk[2]:
-			file = path.join(walk[0], file)
-			if filter_file(file, include, exclude):
-				callback(file)
-
-def KTarGzDir(target, source, env):
-	exclude = include = []
-	opts = env['TARGZOPTS']
-	if 'exclude' in opts.keys(): exclude = opts['exclude']
-	if 'include' in opts.keys(): include = opts['include']
-
-	dest_file = str(target[0])
-
-	if not path.isdir(path.dirname(dest_file)):
-		os.makedirs(path.dirname(dest_file))
-
-	tar = tarfile.open(dest_file, 'w:gz')
-	for s in source:
-		dir = str(s)
-		def tarcb(f):
-			arcname = f.replace(dir + os.sep, "")
-			tar.add(f, arcname)
-		walk_dir(dir, tarcb, include, exclude)
-	tar.close()
-
-def KZipDir(target, source, env):
-	exclude = include = []
-	opts = env['ZIPOPTS']
-	if 'exclude' in opts.keys(): exclude = opts['exclude']
-	if 'include' in opts.keys(): include = opts['include']
-
-	dest_file = str(target[0])
-
-	if not path.isdir(path.dirname(dest_file)):
-		os.makedirs(path.dirname(dest_file))
-
-	zip = zipfile.ZipFile(dest_file, 'w', zipfile.ZIP_DEFLATED)
-	for s in source:
-		dir = str(s)
-		def zipcb(f):
-			arcname = f.replace(dir + os.sep, "")
-			if path.islink(f):
-				dest = os.readlink(f)
-				attr = zipfile.ZipInfo()
-				attr.filename = arcname 
-				attr.create_system = 3
-				attr.external_attr = 2716663808L
-				attr.compress_type = zipfile.ZIP_DEFLATED
-				zip.writestr(attr, dest)
-			else:
-				zip.write(f, arcname, zipfile.ZIP_DEFLATED)
-		walk_dir(dir, zipcb, include, exclude)
-	zip.close()
-
-def KConcat(target, source, env):
-	dest_file = str(target[0])
-	out = open(dest_file, 'wb')
-
-	for file in source:
-		file = str(file)
-		inf = open(str(file), 'rb')
-		out.write(inf.read())
-		inf.close()
-
-	out.close()
-
-def KReplaceVars(target, replacements):
-	txt = open(target).read()
-	for k, v in replacements.iteritems():
-		txt = txt.replace(k, v)
-	out = open(target, 'w')
-	out.write(txt)
-	out.close()
-def KReplaceVarsStr(target, replacements):
-    return 'KReplaceVars(%s, %s)' % (target, replacements)
-ReplaceVarsAction = SCons.Action.ActionFactory(KReplaceVars, KReplaceVarsStr)
-
-def KWriteStrings(target, strings):
-	out = open(target, 'w')
-	for part in strings: out.write(part)
-	out.close()
-
-def KWriteStringsStr(target, strings):
-    return 'KWriteStrings(%s, %s)' % (target, strings)
-WriteStringsAction = SCons.Action.ActionFactory(KWriteStrings, KWriteStringsStr)
-
-def NeedsUpdate(source, target, exclude):
-	files = os.walk(source)
-	for walk in files:
-		for file in walk[2]:
-			file = path.join(walk[0], file)
-			if filter_file(file, [], exclude):
-
-				out_file = target + os.sep + file.replace(source, '')
-				if not path.exists(out_file):
-					print '    -> %s does not exist' % out_file
-					return True
-				else:
-					tstamp_o = os.stat(file)[stat.ST_MTIME]
-					tstamp_d = os.stat(out_file)[stat.ST_MTIME]
-					if tstamp_o > tstamp_d:
-						print '    -> %s is out of date' % out_file
-						return True
-	return False
-
-def LightWeightCopyTreeImpl(source, target, exclude):
-	if not path.isdir(source):
-		return
-	
-	if NeedsUpdate(source, target, exclude):
-		print "    -> Copying %s ==> %s" % (source, target)
-		futils.CopyTree(source, target, exclude=exclude)
-	else:
-		print "    -> Already up to date: %s"  % target
-
 def LightWeightCopyTree(target, source, env):
 	if not 'EXCLUDE' in env:
 		exclude = []
@@ -247,11 +173,4 @@ def LightWeightCopyTree(target, source, env):
 	if type(env['OUTDIR']) == types.ListType:
 		env['OUTDIR'] = env['OUTDIR'][0]
 
-	if type(env['IN']) == types.ListType:
-		for source in env['IN']:
-			LightWeightCopyTreeImpl(source, env['OUTDIR'], exclude)
-	else:
-		LightWeightCopyTreeImpl(env['IN'], env['OUTDIR'], exclude)
-
-
-	
+	effess.lightweight_copy_tree(env['IN'], env['OUTDIR'], exclude)

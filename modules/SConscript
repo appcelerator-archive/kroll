@@ -1,11 +1,22 @@
 #!/usr/bin/env python
+from os import path
+from kroll import Module
 Import('build')
-import os
 
-modules = ['api', 'python', 'javascript' ,'ruby', 'php']
+def build_module_from_directory(dir):
+	name = dir.lower().replace('.', '')
+	module = Module(name, build.version, path.join(build.dir, 'modules', name))
+	build.modules.append(module)
 
-for module in modules:
-	module_dir = os.path.join(build.dir, 'objs', 'modules', module)
-	SConscript(os.path.join(module, 'SConscript'), build_dir=module_dir, duplicate=0)
+	env = build.env.Clone()
+	env.Append(CPPDEFINES=[('MODULE_NAME', name), ('MODULE_VERSION', build.version)])
 
+	SConscript(
+		path.join(dir, 'SConscript'),
+		build_dir=path.join(build.dir, 'objs', 'modules', name),
+		exports='build module env',
+		duplicate=0)
 
+Export('build_module_from_directory')
+for dir in ['api', 'python', 'javascript' ,'ruby', 'php']:
+	build_module_from_directory(dir)

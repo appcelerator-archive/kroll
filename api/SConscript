@@ -1,5 +1,7 @@
 #!/usr/bin/env python
-import os, os.path as path, futils
+import os
+import os.path as path
+import effess
 Import('build')
 
 Env = build.env.Clone()
@@ -51,7 +53,7 @@ if build.is_osx() or build.is_linux():
 
 # copy the includes for building the SDK
 kroll_include = path.join(build.kroll_include_dir, 'kroll')
-futils.CopyTree(build.cwd(), kroll_include, include=['.h'])
+effess.copy_tree(build.cwd(), kroll_include, include=['.h'])
 
 t = Env.SharedLibrary(build.dir +'/runtime/kroll', source=sources)
 build.mark_build_target(t)

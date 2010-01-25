@@ -340,6 +340,11 @@ namespace kroll
 		{
 			components.push_back(this->application->runtime);
 		}
+
+		for (size_t i = 0; i < this->application->sdks.size(); i++)
+		{
+			components.push_back(this->application->sdks[i]);
+		}
 		KListRef componentList = APIBinding::ComponentVectorToKList(components);
 		result->SetList(componentList);
 	}

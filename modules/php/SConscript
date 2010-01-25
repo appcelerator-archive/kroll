@@ -1,26 +1,22 @@
 #!/usr/bin/env python
-import os
-import futils
 from os import path
+Import('build env module')
 
-Import('build')
-
-Env = build.env.Clone()
-Env.Append(CPPDEFINES=('KROLL_PHP_API_EXPORT', 1))
-build.add_thirdparty(Env, 'poco')
+env.Append(CPPDEFINES=('KROLL_PHP_API_EXPORT', 1))
+build.add_thirdparty(env, 'poco')
 
 # PHP's headers are so messy that they flood the build with warnings 
 # unless we turn off -Werror and try to suprress most warnings. This
 # is bad news. At some point we should turn warnings back on.
-if 'CPPFLAGS' in Env:
-	Env['CPPFLAGS'] = Env['CPPFLAGS'][:]
-	if '-Werror' in Env['CPPFLAGS']:
-		Env['CPPFLAGS'].remove('-Werror')
-	if '-Wall' in Env['CPPFLAGS']:
-		Env['CPPFLAGS'].remove('-Wall')
-	Env['CPPFLAGS'].append('-w')
+if 'CPPFLAGS' in env:
+	env['CPPFLAGS'] = env['CPPFLAGS'][:]
+	if '-Werror' in env['CPPFLAGS']:
+		env['CPPFLAGS'].remove('-Werror')
+	if '-Wall' in env['CPPFLAGS']:
+		env['CPPFLAGS'].remove('-Wall')
+	env['CPPFLAGS'].append('-w')
 
-Env.Append(CPPPATH=[
+env.Append(CPPPATH=[
 	build.tp('php', 'include'),
 	build.tp('php', 'include', 'TSRM'),
 	build.tp('php', 'include', 'Zend'),
@@ -28,31 +24,29 @@ Env.Append(CPPPATH=[
 	build.tp('php', 'include', 'main'),
 	build.tp('php', 'include', 'sapi'),
 ])
-Env.Append(LIBPATH=[build.tp('php', 'lib')])
-Env.Append(CPPDEFINES=('ZTS', 1))
+env.Append(LIBPATH=[build.tp('php', 'lib')])
+env.Append(CPPDEFINES=('ZTS', 1))
 
 # On OS X PHP can only build for i386
 if build.is_osx():
-	Env.Replace(CXX=['g++', '-arch', 'i386'])
+	env.Replace(CXX=['g++', '-arch', 'i386'])
 
 if build.is_osx() or build.is_linux():
-	Env.Append(LIBS=['php5'])
-	Env.Append(CPPDEFINES=('PTHREADS', 1))
+	env.Append(LIBS=['php5'])
+	env.Append(CPPDEFINES=('PTHREADS', 1))
 
 elif build.is_win32():
-	Env.Append(CPPDEFINES=('PHP_WIN32', 1))
-	Env.Append(CPPDEFINES=('ZEND_WIN32', 1))
-	Env.Append(CPPDEFINES=('_USE_32BIT_TIME_T', 1))
-	Env.Append(CPPDEFINES=('TSRM_WIN32', 1))
-	#Env.Append(CPPDEFINES=('ZEND_DEBUG', 0))
-	Env.Append(LIBS=['php5embed', 'php5ts'])
+	env.Append(CPPDEFINES=('PHP_WIN32', 1))
+	env.Append(CPPDEFINES=('ZEND_WIN32', 1))
+	env.Append(CPPDEFINES=('_USE_32BIT_TIME_T', 1))
+	env.Append(CPPDEFINES=('TSRM_WIN32', 1))
+	#env.Append(CPPDEFINES=('ZEND_DEBUG', 0))
+	env.Append(LIBS=['php5embed', 'php5ts'])
 
-m = build.add_module('php', env=Env)
-	
-t = Env.SharedLibrary(m.build_dir + '/phpmodule', Glob('*.cpp'))
-build.mark_build_target(t)
+build.mark_build_target(env.SharedLibrary(
+	path.join(module.dir, 'phpmodule'), Glob('*.cpp')))
 
 if build.is_win32():
-	m.light_weight_copy('#php-win32-resources', build.tp('php', 'bin'), m.build_dir)
+	build.utils.LightWeightCopy(build.tp('php', 'bin'), module.dir)
 if build.is_osx() or build.is_linux():
-	m.light_weight_copy('#php-osxlinux-resources', build.tp('php', 'lib'), m.build_dir)
+	build.utils.LightWeightCopy(build.tp('php', 'lib'), module.dir)

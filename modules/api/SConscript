@@ -1,13 +1,9 @@
 #!/usr/bin/env python
-import os, os.path as path
+from os import path
+Import('build env module')
 
-Import('build')
+env.Append(CPPDEFINES=('KROLL_API_API_EXPORT', 1))
 
-Env = build.env.Clone()
-Env.Append(CPPPATH = ['#.'])
-Env.Append(CPPDEFINES=('KROLL_API_API_EXPORT', 1))
-build.add_thirdparty(Env, 'poco')
-
-m = build.add_module('api', env=Env)
-t = Env.SharedLibrary(m.build_dir + '/apimodule', Glob('*.cpp'))
-build.mark_build_target(t)
+build.add_thirdparty(env, 'poco')
+build.mark_build_target(env.SharedLibrary(
+	path.join(module.dir, 'apimodule'), Glob('*.cpp')))

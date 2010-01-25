@@ -36,10 +36,13 @@
 #include <sys/socket.h>
 #include <ifaddrs.h>
 #include <net/if_dl.h>
+#include <Cocoa/Cocoa.h>
 
 namespace UTILS_NS
 {
-	void PlatformUtils::GetNodeId(NodeId& id)
+namespace PlatformUtils
+{
+	void GetNodeId(NodeId& id)
 	{
 		struct ifaddrs* ifaphead;
 		int rc = getifaddrs(&ifaphead);
@@ -65,8 +68,9 @@ namespace UTILS_NS
 		if (!foundAdapter) throw std::string("cannot determine MAC address (no suitable network adapter found)");
 	}
 
-	std::string FileUtils::GetUsername()
+	std::string GetUsername()
 	{
 		return std::string([NSUserName() UTF8String]);
 	}
+}
 }
