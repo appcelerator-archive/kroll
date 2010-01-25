@@ -52,6 +52,12 @@ namespace kroll
 
 	void LinuxHost::Exit(int returnCode)
 	{
+		Host::Exit(returnCode);
+
+		// Check to see if the event handler cancelled this exit.
+		if (!this->exiting)
+			return;
+
 		// Only call this if gtk_main is running. If called when the gtk_main
 		// is not running, it will cause an assertion failure.
 		static bool mainLoopRunning = true;
@@ -61,7 +67,6 @@ namespace kroll
 			gtk_main_quit();
 		}
 
-		Host::Exit(returnCode);
 	}
 
 	const char* LinuxHost::GetPlatform()

@@ -116,6 +116,12 @@ namespace kroll
 
 	void OSXHost::Exit(int exitcode)
 	{
+		Host::Exit(exitCode);
+
+		// Check to see if the event handler cancelled this event.
+		if (!this->exit)
+			return;
+
 		// We're going to post our event to our event queue to cause him
 		// to wake up (since he'll block waiting for pending events)
 		NSEvent *event = [NSEvent
@@ -129,7 +135,6 @@ namespace kroll
 			data2:0];
 		NSApplication *app = [NSApplication sharedApplication];
 		[app postEvent:event atStart:YES];
-		Host::Exit(exitCode);
 	}
 
 	bool OSXHost::Start()
