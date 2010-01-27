@@ -26,6 +26,7 @@ class BuildConfig(object):
 		if not hasattr(os, 'uname') or self.matches('CYGWIN'):
 			self.os = 'win32'
 			self.arch = 'i386'
+			os.environ['PROCESSOR_ARCHITECTURE'] = 'x86'
 
 		elif self.matches('Darwin'):
 			self.os = 'osx'
@@ -83,6 +84,7 @@ class BuildConfig(object):
 			self.env.Prepend(PATH=['C:\Program Files\Microsoft Platform SDK for Windows Server 2003 R2'])
 			self.env.Prepend(CPPPATH=['C:\Program Files\Microsoft Platform SDK for Windows Server 2003 R2\include'])
 			self.env.Prepend(LIBPATH=['C:\Program Files\Microsoft Platform SDK for Windows Server 2003 R2\lib'])
+
 			atlmfc_path = 'C:\\Program Files\\Microsoft Visual Studio 8\\VC\\atlmfc'
 			if not path.exists(atlmfc_path):
 				atlmfc_path = 'C:\\Program Files (x86)\\Microsoft Visual Studio 8\\VC\\atlmfc'

@@ -50,7 +50,7 @@ namespace kroll
 	void Script::RemoveScriptEvaluator(KObjectRef evaluator)
 	{
 		int index = -1;
-		for (size_t i = 0; i < evaluators->Size(); i++)
+		for (unsigned int i = 0; i < evaluators->Size(); i++)
 		{
 			if (evaluators->At(i)->ToObject()->Equals(evaluator))
 			{
@@ -69,7 +69,7 @@ namespace kroll
 		ValueList args;
 		args.push_back(Value::NewString(arg));
 		
-		for (size_t i = 0; i < evaluators->Size(); i++)
+		for (unsigned int i = 0; i < evaluators->Size(); i++)
 		{
 			KMethodRef finder = evaluators->At(i)->ToObject()->GetMethod(method);
 			if (!finder.isNull())
