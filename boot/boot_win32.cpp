@@ -69,6 +69,9 @@ namespace KrollBoot
 		string currentPath(EnvironmentUtils::Get("PATH"));
 		EnvironmentUtils::Set("KR_ORIG_PATH", currentPath);
 
+		// make sure the runtime folder is used before system DLL directories
+		SetDllDirectoryW(KrollUtils::UTF8ToWide(app->runtime->path).c_str());
+		
 		if (!currentPath.empty())
 			path = path + ";" + currentPath;
 		EnvironmentUtils::Set("PATH", path);
