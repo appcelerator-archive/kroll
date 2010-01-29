@@ -119,7 +119,7 @@ namespace kroll
 		Host::Exit(exitCode);
 
 		// Check to see if the event handler cancelled this event.
-		if (!this->exit)
+		if (!this->exiting)
 			return;
 
 		// We're going to post our event to our event queue to cause him
