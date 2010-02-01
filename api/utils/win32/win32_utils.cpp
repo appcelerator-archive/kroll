@@ -106,4 +106,13 @@ namespace Win32Utils
 		return MultiByteToMultiByte(in, CP_UTF8, CP_ACP);
 	}
 
+	std::string WideToSystem(const std::wstring& in)
+	{
+		return WideToMultiByte(in.c_str(), in.size(), CP_ACP);
+	}
+
+	std::string WideToSystem(const wchar_t* in)
+	{
+		return WideToMultiByte(in, wcslen(in), CP_ACP);
+	}
 }

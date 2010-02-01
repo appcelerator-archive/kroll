@@ -43,6 +43,8 @@ namespace UTILS_NS
 	KROLL_API std::string WideToUTF8(const wchar_t* in);
 	KROLL_API std::string UTF8ToSystem(const std::string& in);
 	KROLL_API std::string UTF8ToSystem(const char* in);
+	KROLL_API std::string WideToSystem(const std::wstring& in);
+	KROLL_API std::string WideToSystem(const wchar_t* in);
 
 	KROLL_API std::wstring MultiByteToWide(const std::string& in, UINT codePage);
 	KROLL_API std::wstring MultiByteToWide(const char* in, size_t length, UINT codePage);
