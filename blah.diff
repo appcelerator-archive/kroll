@@ -1,0 +1,2210 @@
+diff --git a/SConscript b/SConscript
+index 5fd1ff0..3de686a 100644
+--- a/SConscript
++++ b/SConscript
+@@ -8,7 +8,6 @@ Import('build')
+ Import('debug')
+ 
+ SConscript('boot/SConscript', duplicate=0, build_dir=path.join(build.dir, 'objs', 'boot'))
+-
+ SConscript('api/SConscript', build_dir=path.join(build.dir,'objs','api'), duplicate=0)
+ 
+ # Now that libkroll is built add it as a default for
+@@ -18,5 +17,4 @@ SConscript('api/SConscript', build_dir=path.join(build.dir,'objs','api'), duplic
+ build.env.Append(LIBS=['kroll'])
+ build.env.Append(LIBPATH=[build.runtime_build_dir])
+ 
+-SConscript('host/SConscript')
+ SConscript('modules/SConscript')
+diff --git a/api/SConscript b/api/SConscript
+index b92dbfe..c1ea06a 100644
+--- a/api/SConscript
++++ b/api/SConscript
+@@ -15,14 +15,15 @@ webkit_inc = path.join(webkit_tp, 'include')
+ if build.is_win32():
+ 	Env.Append(CPPPATH=[path.join(build.third_party, 'icu', 'include')])
+ 	Env.Append(LIBPATH=[webkit_lib])
+-	Env.Append(LIBS=['shell32', 'user32', 'Advapi32', 'iphlpapi', 'winhttp', 'icuuc', 'icuin'])
+-	Env.Append(CCFLAGS=['/DUNICODE'])
+-	Env.Append(CCFLAGS=['/D_UNICODE'])
++	Env.Append(LIBS=['shell32', 'user32', 'Advapi32',
++		'iphlpapi', 'winhttp', 'icuuc', 'icuin',
++		 'kernel32', 'ole32', 'comctl32'])
++	Env.Append(CCFLAGS=['/DUNICODE', '/D_UNICODE'])
+ 
+ elif build.is_linux():
+ 	if os.environ.has_key('PKG_CONFIG_PATH'):
+ 		Env.AppendENVPath('PKG_CONFIG_PATH', os.environ['PKG_CONFIG_PATH'])
+-	Env.ParseConfig('pkg-config --cflags --libs libxml-2.0')
++	Env.ParseConfig('pkg-config --cflags --libs libxml-2.0 gtk+-2.0 gdk-2.0 glib-2.0 gthread-2.0')
+ 	Env.Append(LIBS=['pthread', 'libsoup-2.4', 'libproxy'])
+ 
+ 	# We need to add the webkit directories because they include libsoup
+@@ -31,7 +32,8 @@ elif build.is_linux():
+ 
+ elif build.is_osx():
+ 	Env.Append(LINKFLAGS='-install_name libkroll.dylib')
+-	Env.Append(FRAMEWORKS=['SystemConfiguration', 'CoreServices'])
++	Env.Append(LIBS=['ssl', 'crypto'])
++	Env.Append(FRAMEWORKS=['Cocoa', 'SystemConfiguration', 'CoreServices'])
+ 
+ sources=Glob('*.cpp')
+ sources.extend(Glob('config/*.cpp'))
+@@ -41,13 +43,17 @@ sources.extend(Glob('utils/poco/*.cpp'))
+ sources.extend(Glob('utils/%s/*.cpp' % build.os))
+ sources.extend(Glob('net/proxy_config.cpp'))
+ sources.extend(Glob('net/*_%s.cpp' % build.os))
++
+ if build.is_win32():
+ 	sources.extend(Glob('utils/unzip/*.cpp'))
+ 	sources.extend(Glob('win32/*.cpp'))
+ if build.is_osx():
+ 	sources.extend(Glob('osx/osx.mm'))
+ 	sources.extend(Glob('utils/%s/*.mm' % build.os))
+-if build.is_osx() or build.is_linux():
++	sources.extend(Glob('utils/posix/*.cpp'))
++	sources.extend(Glob('net/*_%s.mm' % build.os))
++if build.is_linux():
++	sources.extend(Glob('linux/*.cpp'))
+ 	sources.extend(Glob('utils/posix/*.cpp'))
+ 	sources.extend(Glob('net/*_%s.mm' % build.os))
+ 
+diff --git a/api/linux/host.cpp b/api/linux/host.cpp
+new file mode 100644
+index 0000000..b34fb1d
+--- /dev/null
++++ b/api/linux/host.cpp
+@@ -0,0 +1,127 @@
++/**
++ * Appcelerator Kroll - licensed under the Apache Public License 2
++ * see LICENSE in the root folder for details on the license. 
++ * Copyright (c) 2008, 2009 Appcelerator, Inc. All Rights Reserved.
++ */
++
++#include "host.h"
++
++#include <iostream>
++#include <vector>
++#include <cstring>
++#include <dlfcn.h>
++#include <string>
++#include <gtk/gtk.h>
++#include <gdk/gdk.h>
++#include <api/kroll.h>
++
++#include <gnutls/gnutls.h>
++#include <gcrypt.h>
++#include <errno.h>
++#include <pthread.h>
++
++GCRY_THREAD_OPTION_PTHREAD_IMPL;
++using Poco::ScopedLock;
++using Poco::Mutex;
++
++namespace kroll
++{
++	static gboolean MainThreadJobCallback(gpointer data)
++	{
++		static_cast<Host*>(data)->RunMainThreadJobs();
++		return TRUE;
++	}
++
++	LinuxHost::LinuxHost(int argc, const char *argv[]) : Host(argc, argv)
++	{
++		gtk_init(&argc, (char***) &argv);
++
++		if (!g_thread_supported())
++			g_thread_init(NULL);
++
++		this->mainThread = pthread_self();
++
++		// Initialize gnutls for multi-threaded usage.
++		gcry_control(GCRYCTL_SET_THREAD_CBS, &gcry_threads_pthread);
++		gnutls_global_init();
++	}
++
++	LinuxHost::~LinuxHost()
++	{
++	}
++
++	void LinuxHost::Exit(int returnCode)
++	{
++		Host::Exit(returnCode);
++
++		// Check to see if the event handler cancelled this exit.
++		if (!this->exiting)
++			return;
++
++		// Only call this if gtk_main is running. If called when the gtk_main
++		// is not running, it will cause an assertion failure.
++		static bool mainLoopRunning = true;
++		if (mainLoopRunning)
++		{
++			mainLoopRunning = false;
++			gtk_main_quit();
++		}
++
++	}
++
++	const char* LinuxHost::GetPlatform()
++	{
++		return "linux";
++	}
++
++	const char* LinuxHost::GetModuleSuffix()
++	{
++		return "module.so";
++	}
++
++	bool LinuxHost::RunLoop()
++	{
++		string origPath(EnvironmentUtils::Get("KR_ORIG_LD_LIBRARY_PATH"));
++		EnvironmentUtils::Set("LD_LIBRARY_PATH", origPath);
++
++		g_timeout_add(250, &MainThreadJobCallback, this);
++		gtk_main();
++		return false;
++	}
++
++	Module* LinuxHost::CreateModule(std::string& path)
++	{
++		void* handle = dlopen(path.c_str(), RTLD_LAZY | RTLD_GLOBAL);
++		if (!handle)
++		{
++			throw ValueException::FromFormat("Error loading module (%s): %s\n", path.c_str(), dlerror());
++			return 0;
++		}
++
++		// get the module factory
++		ModuleCreator* create = (ModuleCreator*) dlsym(handle, "CreateModule");
++		if (!create)
++		{
++			throw ValueException::FromFormat(
++				"Cannot load CreateModule symbol from module (%s): %s\n",
++				path.c_str(), dlerror());
++		}
++
++		std::string dir = FileUtils::GetDirectory(path);
++		return create(this, dir.c_str());
++	}
++
++	bool LinuxHost::IsMainThread()
++	{
++		return pthread_equal(this->mainThread, pthread_self());
++	}
++}
++
++extern "C"
++{
++	int Execute(int argc,const char **argv)
++	{
++		Host *host = new LinuxHost(argc,argv);
++		return host->Run();
++	}
++}
+diff --git a/api/linux/host.h b/api/linux/host.h
+new file mode 100644
+index 0000000..2ee8bb5
+--- /dev/null
++++ b/api/linux/host.h
+@@ -0,0 +1,40 @@
++/**
++ * Appcelerator Kroll - licensed under the Apache Public License 2
++ * see LICENSE in the root folder for details on the license.
++ * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
++ */
++#ifndef _LINUX_HOST_H
++#define _LINUX_HOST_H
++
++#include <vector>
++#include <string>
++#include <kroll/kroll.h>
++
++namespace kroll
++{
++
++	class KROLL_API LinuxHost : public Host
++	{
++	public:
++		LinuxHost(int argc, const char* argv[]);
++		void Exit(int returnCode);
++		virtual Module* CreateModule(std::string& path);
++		const char* GetPlatform();
++		const char* GetModuleSuffix();
++		bool IsMainThread();
++
++
++	protected:
++		pthread_t mainThread;
++		virtual bool RunLoop();
++		virtual ~LinuxHost();
++	};
++}
++
++extern "C"
++{
++	EXPORT int Execute(int argc,const char** argv);
++}
++
++
++#endif
+diff --git a/api/osx/host.h b/api/osx/host.h
+new file mode 100644
+index 0000000..ef454d1
+--- /dev/null
++++ b/api/osx/host.h
+@@ -0,0 +1,38 @@
++/**
++ * Appcelerator Kroll - licensed under the Apache Public License 2
++ * see LICENSE in the root folder for details on the license.
++ * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
++ */
++#ifndef _OSX_HOST_H
++#define _OSX_HOST_H
++
++#include <api/kroll.h>
++
++namespace kroll
++{
++	class KROLL_API OSXHost : public Host
++	{
++	public:
++		OSXHost(int argc, const char **argv);
++
++		virtual Module* CreateModule(std::string& path);
++		const char* GetPlatform();
++		const char* GetModuleSuffix();
++		virtual bool IsMainThread();
++		virtual KValueRef RunOnMainThread(KMethodRef method, KObjectRef thisObject,
++			const ValueList& args, bool waitForCompletion=true);
++
++	protected:
++		virtual ~OSXHost();
++		virtual bool RunLoop();
++		virtual bool Start();
++		virtual void Exit(int exitcode);
++	};
++}
++
++extern "C"
++{
++	EXPORT int Execute(int argc,const char** argv);
++}
++
++#endif
+diff --git a/api/osx/host.mm b/api/osx/host.mm
+new file mode 100644
+index 0000000..ed8c974
+--- /dev/null
++++ b/api/osx/host.mm
+@@ -0,0 +1,270 @@
++/**
++ * Appcelerator Kroll - licensed under the Apache Public License 2
++ * see LICENSE in the root folder for details on the license.
++ * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
++ */
++#include "host.h"
++
++#include <iostream>
++#include <vector>
++#include <dlfcn.h>
++#include <string>
++#include <signal.h>
++#import <Cocoa/Cocoa.h>
++#include <openssl/crypto.h>
++#include <Poco/Mutex.h>
++
++@interface KrollMainThreadCaller : NSObject
++{
++	MainThreadJob* job;
++}
++- (id)initWithJob:(MainThreadJob*)jobIn;
++- (void)execute;
++@end
++
++@implementation KrollMainThreadCaller
++- (id)initWithJob:(MainThreadJob*)jobIn
++{
++	self = [super init];
++	if (self)
++	{
++		job = jobIn;
++	}
++	return self;
++}
++- (void)dealloc
++{
++	delete job;
++	[super dealloc];
++}
++- (MainThreadJob*)job
++{
++	return job;
++}
++- (void)execute
++{
++	job->Execute();
++
++	// When executing asynchronously, we need to clean ourselves up.
++	if (!job->ShouldWaitForCompletion())
++	{
++		job->PrintException();
++		[self release];
++	}
++}
++@end
++
++namespace kroll
++{
++	static NSThread* mainThread;
++	static Poco::Mutex* cryptoMutexes = 0;
++
++	static void CryptoLockingCallback(int mode, int n, const char* file, int line)
++	{
++		if (mode & CRYPTO_LOCK)
++			cryptoMutexes[n].lock();
++		else
++			cryptoMutexes[n].unlock();
++	}
++
++	static unsigned long CryptoThreadIdCallback(void)
++	{
++		return ((unsigned long) pthread_self());
++	}
++
++	static void InitializeCryptoMutexes()
++	{
++		if (!cryptoMutexes)
++		{
++			cryptoMutexes = new Poco::Mutex[CRYPTO_num_locks()];
++			CRYPTO_set_id_callback(CryptoThreadIdCallback);
++			CRYPTO_set_locking_callback(CryptoLockingCallback);
++		}
++	}
++
++	static void CleanupCryptoMutexes()
++	{
++		delete [] cryptoMutexes;
++		cryptoMutexes = 0;
++	}
++
++	OSXHost::OSXHost(int _argc, const char **_argv) : Host(_argc,_argv)
++	{
++		InitializeCryptoMutexes();
++		mainThread = [NSThread currentThread];
++	}
++
++	OSXHost::~OSXHost()
++	{
++		CleanupCryptoMutexes();
++	}
++
++	bool OSXHost::IsMainThread()
++	{
++		return [NSThread currentThread] == mainThread;
++	}
++
++	const char* OSXHost::GetPlatform()
++	{
++		return "osx";
++	}
++
++	const char* OSXHost::GetModuleSuffix()
++	{
++		return "module.dylib";
++	}
++
++	void OSXHost::Exit(int exitcode)
++	{
++		Host::Exit(exitCode);
++
++		// Check to see if the event handler cancelled this event.
++		if (!this->exiting)
++			return;
++
++		// We're going to post our event to our event queue to cause him
++		// to wake up (since he'll block waiting for pending events)
++		NSEvent *event = [NSEvent
++			otherEventWithType:NSApplicationDefined
++			location:NSZeroPoint modifierFlags:0
++			timestamp:[[NSDate date] timeIntervalSinceNow]
++			windowNumber:0 
++			context:nil 
++			subtype:1022 
++			data1:exitCode
++			data2:0];
++		NSApplication *app = [NSApplication sharedApplication];
++		[app postEvent:event atStart:YES];
++	}
++
++	bool OSXHost::Start()
++	{
++		string origPath(EnvironmentUtils::Get("KR_ORIG_DYLD_FRAMEWORK_PATH"));
++		EnvironmentUtils::Set("DYLD_FRAMEWORK_PATH", origPath);
++		origPath = EnvironmentUtils::Get("KR_ORIG_DYLD_LIBRARY_PATH");
++		EnvironmentUtils::Set("DYLD_LIBRARY_PATH", origPath);
++
++		[[NSApplication sharedApplication] finishLaunching];
++		Host::Start();
++		return true;
++	}
++
++	bool OSXHost::RunLoop()
++	{
++		// Number of iterations before we yield back control
++		// to the main loop driver in the superclass
++		static int iterations = 10;
++
++		// Number of seconds we want to block waiting on a 
++		// pending event to be visible in the queue
++		// 0.5 seems to be the most optimal based on testing 
++		// on Leopard and using some basic animated JS tests 
++		// like John Resig's processing.js demos. 0.5 seems to
++		// keep the CPU at effectively 0.0% when idle and seems
++		// to give us very good frame rate and CPU during animation
++		static double waitTime = 0.5;
++
++		// Since we call this method a lot, set the app in a static var
++		static NSApplication *app = [NSApplication sharedApplication];
++
++		// Create a pool to sweep memory throught the loop
++		NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
++		for (int c = 0; c < iterations; c++)
++		{
++			// we pull out an event from the queue, blocking a little bit before returning
++			@try
++			{
++				NSEvent *event = [app nextEventMatchingMask:NSAnyEventMask 
++					untilDate:[NSDate dateWithTimeIntervalSinceNow:waitTime]
++					inMode:NSDefaultRunLoopMode dequeue:YES];
++
++				if (event)
++				{
++					NSEventType type = [event type];
++
++					// This is our custom-defined stop event
++					if (type == NSApplicationDefined &&
++						[event subtype] == 1022 && [event data1] == 0)
++					{
++						[pool release];
++						return false;
++					}
++					else
++					{
++						[app sendEvent:event];
++					}
++
++					[app updateWindows];
++				} }
++			@catch (NSException *e)
++			{
++				static Logger* logger = Logger::Get("Host");
++				logger->Error("Caught NSException in main loop: %s",[[e reason] UTF8String]);
++				KrollDumpStackTraceFromException(e);
++			}
++		}
++		[pool release];
++		return true;
++	}
++
++	Module* OSXHost::CreateModule(std::string& path)
++	{
++		void* handle = dlopen(path.c_str(), RTLD_LAZY | RTLD_GLOBAL);
++		if (!handle)
++		{
++			throw ValueException::FromFormat("Error loading module (%s): %s\n",
++				path.c_str(), dlerror());
++		}
++
++		// Get the module factory symbol.
++		ModuleCreator* create = (ModuleCreator*) dlsym(handle, "CreateModule");
++		if (!create)
++		{
++			throw ValueException::FromFormat("Cannot load CreateModule symbol from module "
++				"(%s): %s\n", path.c_str(), dlerror());
++		}
++
++		std::string dir(FileUtils::GetDirectory(path));
++		return create(this, dir.c_str());
++	}
++
++	KValueRef OSXHost::RunOnMainThread(KMethodRef method, KObjectRef thisObject,
++		const ValueList& args, bool waitForCompletion)
++	{
++		if (this->IsMainThread() && waitForCompletion)
++		{
++			return method->Call(args);
++		}
++
++		MainThreadJob* job = new MainThreadJob(method, thisObject,
++			args, waitForCompletion);
++		KrollMainThreadCaller* caller = 
++			[[KrollMainThreadCaller alloc] initWithJob:job];
++		[caller performSelectorOnMainThread:@selector(execute)
++			withObject:nil waitUntilDone:waitForCompletion];
++
++		if (!waitForCompletion)
++		{
++			// The job will release itself.
++			return Value::Undefined;
++		}
++
++		KValueRef result(job->GetResult());
++		ValueException exception(job->GetException());
++		[caller release];
++
++		if (!result.isNull())
++			return result;
++		else
++			throw exception;
++	}
++}
++
++extern "C"
++{
++	int Execute(int argc,const char **argv)
++	{
++		kroll::Host *host = new kroll::OSXHost(argc,argv);
++		return host->Run();
++	}
++}
+diff --git a/api/utils/environment_utils.cpp b/api/utils/environment_utils.cpp
+index 72c79ab..70df0a9 100644
+--- a/api/utils/environment_utils.cpp
++++ b/api/utils/environment_utils.cpp
+@@ -100,7 +100,7 @@ namespace EnvironmentUtils
+ #endif
+ 	}
+ 
+-#if defined(KROLL_HOST_EXPORT) || defined(KROLL_API_EXPORT) || defined(_KROLL_H_)
++#if defined(KROLL_API_EXPORT) || defined(_KROLL_H_)
+ 	std::map<std::string, std::string> GetEnvironment()
+ 	{
+ 		std::map<std::string, std::string> environment;
+diff --git a/api/utils/environment_utils.h b/api/utils/environment_utils.h
+index 8fba8f3..56048a8 100644
+--- a/api/utils/environment_utils.h
++++ b/api/utils/environment_utils.h
+@@ -33,7 +33,7 @@ namespace UTILS_NS
+ 		 */
+ 		KROLL_API void Unset(std::string name);
+ 
+-#if defined(KROLL_HOST_EXPORT) || defined(KROLL_API_EXPORT) || defined(_KROLL_H_)
++#if defined(KROLL_API_EXPORT) || defined(_KROLL_H_)
+ 		/*
+ 		 * Get the environment
+ 		 */
+diff --git a/api/utils/url_utils.cpp b/api/utils/url_utils.cpp
+index 685d8dc..9e8fa82 100644
+--- a/api/utils/url_utils.cpp
++++ b/api/utils/url_utils.cpp
+@@ -4,7 +4,7 @@
+  * Copyright (c) 2009 Appcelerator, Inc. All Rights Reserved.
+  */
+ #include "utils.h"
+-#if defined(KROLL_HOST_EXPORT) || defined(KROLL_API_EXPORT) || defined(_KROLL_H_)
++#if defined(KROLL_API_EXPORT) || defined(_KROLL_H_)
+ #include <Poco/URI.h>
+ #include <Poco/TemporaryFile.h>
+ #include <Poco/FileStream.h>
+@@ -194,7 +194,7 @@ namespace URLUtils
+ 		return url;
+ 	}
+ 
+-#if defined(KROLL_HOST_EXPORT) || defined(KROLL_API_EXPORT) || defined(_KROLL_H_)
++#if defined(KROLL_API_EXPORT) || defined(_KROLL_H_)
+ 	static std::string NormalizeAppURL(const std::string& url)
+ 	{
+ 		size_t appLength = 6; // app://
+@@ -236,7 +236,7 @@ namespace URLUtils
+ 		return path;
+ 	}
+ 
+-	std::string NormalizeURL(std::string& url)
++	std::string NormalizeURL(const std::string& url)
+ 	{
+ 		Poco::URI inURI = Poco::URI(url);
+ 		if (url == BlankPageURL())
+diff --git a/api/utils/url_utils.h b/api/utils/url_utils.h
+index 064f1db..396bca5 100644
+--- a/api/utils/url_utils.h
++++ b/api/utils/url_utils.h
+@@ -31,12 +31,12 @@ namespace UTILS_NS
+ 		KROLL_API std::string PathToFileURL(std::string path);
+ 
+ // These functions are not available outside a Kroll application
+-#if defined(KROLL_HOST_EXPORT) || defined(KROLL_API_EXPORT) || defined(_KROLL_H_)
++#if defined(KROLL_API_EXPORT) || defined(_KROLL_H_)
+ 		/**
+ 		 * Normalize a URL. If this url is an app:// URL, ensure that it
+ 		 * has the app id as the hostname
+ 		 */
+-		KROLL_API std::string NormalizeURL(std::string& url);
++		KROLL_API std::string NormalizeURL(const std::string& url);
+ 
+ 		/**
+ 		 * Convert a URL to a path if it is an app://, ti:// or file://
+diff --git a/api/utils/utils.h b/api/utils/utils.h
+index cbbb82e..f363f2e 100644
+--- a/api/utils/utils.h
++++ b/api/utils/utils.h
+@@ -10,7 +10,7 @@
+ // If this is a version of the utils which doesn't
+ // include libkroll, we should use our simple version
+ // of SharedPtr -- if not use Poco's which is thread-safe.
+-#if defined(KROLL_HOST_EXPORT) || defined(KROLL_API_EXPORT) || defined(_KROLL_H_)
++#if defined(KROLL_API_EXPORT) || defined(_KROLL_H_)
+ 	#ifdef OS_WIN32
+ 		#include <winsock2.h>
+ 		#include <windows.h>
+diff --git a/api/win32/event_window.cpp b/api/win32/event_window.cpp
+new file mode 100644
+index 0000000..c48bf98
+--- /dev/null
++++ b/api/win32/event_window.cpp
+@@ -0,0 +1,134 @@
++/**
++ * Appcelerator Kroll - licensed under the Apache Public License 2
++ * see LICENSE in the root folder for details on the license.
++ * Copyright (c) 2009 Appcelerator, Inc. All Rights Reserved.
++ */
++
++#include "event_window.h"
++namespace kroll
++{
++	const wchar_t* EventWindow::windowClassName = L"Kroll Event Window";
++	const WNDCLASSW* EventWindow::windowClass = NULL;
++
++	EventWindow::EventWindow(HINSTANCE hInstance) :
++		hInstance(hInstance),
++		handle(NULL),
++		logger(Logger::Get("EventWindow"))
++	{
++		InitializeWindowClass(hInstance);
++
++		this->handle = ::CreateWindowW(
++			EventWindow::windowClassName,
++			L"Kroll Event Window Instance",
++			WS_OVERLAPPEDWINDOW,
++			CW_USEDEFAULT,
++			CW_USEDEFAULT,
++			CW_USEDEFAULT,
++			CW_USEDEFAULT,
++			NULL,
++			NULL,
++			this->hInstance,
++			NULL);
++
++		if (!this->handle)
++		{
++			std::string error("Could not create event window: ");
++			error.append(Win32Utils::QuickFormatMessage(GetLastError()));
++			logger->Critical(error);
++		}
++
++		SetWindowLongPtr(handle, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
++	}
++
++	EventWindow::~EventWindow()
++	{
++		this->DestroyWindow();
++	}
++
++	void EventWindow::InitializeWindowClass(HINSTANCE hInstance)
++	{
++		if (!windowClass)
++		{
++			static WNDCLASSW windowClassPrivate;
++			ZeroMemory(&windowClassPrivate, sizeof(WNDCLASS)); 
++			windowClassPrivate.lpfnWndProc = EventWindow::WindowProcedure;
++			windowClassPrivate.hInstance = hInstance;
++			windowClassPrivate.lpszClassName = EventWindow::windowClassName;
++			windowClass = &windowClassPrivate;
++			ATOM result = ::RegisterClassW(windowClass);
++
++			if (!result)
++			{
++				std::string error("Could not register event window class: ");
++				error.append(Win32Utils::QuickFormatMessage(GetLastError()));
++				Logger::Get("EventWindow")->Critical(error);
++			}
++		}
++	}
++
++	void EventWindow::DestroyWindow()
++	{
++		if (this->handle)
++		{
++			BOOL result = ::DestroyWindow(this->handle);
++
++			if (result == 0)
++			{
++				// Cannot uset the Logger here, because this happens after
++				// logging has completely shut down.
++				std::string error("Could not destroy event window: ");
++				error.append(Win32Utils::QuickFormatMessage(GetLastError()));
++				fprintf(stderr, error.c_str());
++			}
++			this->handle = NULL;
++		}
++	}
++
++	HWND EventWindow::AddMessageHandler(MessageHandler handler)
++	{
++		if (this->handle)
++		{
++			Poco::Mutex::ScopedLock lock(handlersMutex);
++			for (int i = 0; i < handlers.size(); i++)
++			{
++				MessageHandler h = handlers[i];
++				if (h == handler)
++					return this->handle;
++			}
++
++			handlers.push_back(handler);
++		}
++
++		return this->handle;
++	}
++
++	LRESULT CALLBACK EventWindow::Handler(
++		HWND hwnd, unsigned int message, WPARAM wParam, LPARAM lParam)
++	{
++		{
++			Poco::Mutex::ScopedLock lock(handlersMutex);
++			for (int i = 0; i < handlers.size(); i++)
++			{
++				MessageHandler h = handlers[i];
++				if (h(hwnd, message, wParam, lParam))
++					return 0;
++			}
++		}
++
++		return DefWindowProc(hwnd, message, wParam, lParam);
++	}
++
++	/*static*/
++	LRESULT CALLBACK EventWindow::WindowProcedure(
++		HWND hwnd, unsigned int message, WPARAM wParam, LPARAM lParam)
++	{
++		EventWindow* window =
++			reinterpret_cast<EventWindow*>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
++
++		if (window)
++			return window->Handler(hwnd, message, wParam, lParam);
++		else
++			return DefWindowProc(hwnd, message, wParam, lParam);
++	}
++}
++
+diff --git a/api/win32/event_window.h b/api/win32/event_window.h
+new file mode 100644
+index 0000000..f4c7c4c
+--- /dev/null
++++ b/api/win32/event_window.h
+@@ -0,0 +1,39 @@
++/**
++ * Appcelerator Kroll - licensed under the Apache Public License 2
++ * see LICENSE in the root folder for details on the license.
++ * Copyright (c) 2009 Appcelerator, Inc. All Rights Reserved.
++ */
++#ifndef _HOST_EVENT_WINDOW_H
++#define _HOST_EVENT_WINDOW_H
++#include <kroll/kroll.h>
++#include <vector>
++
++typedef bool (*MessageHandler)(HWND hwnd, unsigned int message, WPARAM wParam, LPARAM lParam);
++namespace kroll
++{
++	class EventWindow
++	{
++		public:
++		EventWindow(HINSTANCE hInstance);
++		virtual ~EventWindow();
++		void DestroyWindow();
++		HWND AddMessageHandler(MessageHandler handler);
++		LRESULT CALLBACK Handler(
++			HWND hwnd, unsigned int message, WPARAM wParam, LPARAM lParam);
++		HWND GetHandle() { return handle; }
++		
++		private:
++		HINSTANCE hInstance;
++		HWND handle;
++		Logger* logger;
++		std::vector<MessageHandler> handlers;
++		Poco::Mutex handlersMutex;
++		static const wchar_t* windowClassName;
++		static const WNDCLASSW* windowClass;
++		static void InitializeWindowClass(HINSTANCE hInstance);
++		static LRESULT CALLBACK WindowProcedure(
++			HWND hwnd, unsigned int message, WPARAM wParam, LPARAM lParam);
++	};
++}
++
++#endif
+diff --git a/api/win32/host.cpp b/api/win32/host.cpp
+new file mode 100644
+index 0000000..bd022a9
+--- /dev/null
++++ b/api/win32/host.cpp
+@@ -0,0 +1,212 @@
++/**
++ * Appcelerator Kroll - licensed under the Apache Public License 2
++ * see LICENSE in the root folder for details on the license.
++ * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
++ */
++#include "host.h"
++#include <iostream>
++#include <cstring>
++#include <windows.h>
++#include <commctrl.h>
++#include <ole2.h>
++#include <stdio.h>
++#include <fcntl.h>
++#include <io.h>
++
++#define MAX_CONSOLE_LINES 500;
++
++using Poco::ScopedLock;
++using Poco::Mutex;
++
++namespace kroll
++{
++	bool Win32Host::oleInitialized = false;
++	static UINT tickleRequestMessage =
++		::RegisterWindowMessageA(PRODUCT_NAME"TickleRequest");
++
++	/*static*/
++	void Win32Host::InitOLE()
++	{
++		if (!oleInitialized)
++		{
++			OleInitialize(NULL);
++			oleInitialized = true;
++		}
++	}
++
++	Win32Host::Win32Host(HINSTANCE hInstance, int argc, const char** argv) :
++		Host(argc, argv),
++		instanceHandle(hInstance),
++		eventWindow(hInstance)
++	{
++		InitOLE();
++	}
++
++	Win32Host::~Win32Host()
++	{
++		if (oleInitialized)
++		{
++			OleUninitialize();
++		}
++	}
++
++	const char* Win32Host::GetPlatform()
++	{
++		return "win32";
++	}
++
++	const char* Win32Host::GetModuleSuffix()
++	{
++		return "module.dll";
++	}
++
++	bool Win32Host::Start()
++	{
++		// Windows DLLs often load libraries dynamically via LoadLibrary and expect
++		// dependencies to be on the DLL search path. Thus we really can't restore
++		// the original path here if we want things to continue working properly.
++		// This shouldn't be too much of an issue either, as long as programs that
++		// we launch rely on the safe dll search path.
++		// string origPath(EnvironmentUtils::Get("KR_ORIG_PATH"));
++		// EnvironmentUtils::Set("PATH", origPath);
++
++		Host::Start();
++		mainThreadId = GetCurrentThreadId();
++		return true;
++	}
++
++	bool Win32Host::RunLoop()
++	{
++		static bool postedQuitMessage = false;
++
++		// Just process one message at a time
++		MSG message;
++		if (GetMessage(&message, NULL, 0, 0))
++		{
++			if (message.message == tickleRequestMessage)
++				this->RunMainThreadJobs();
++
++			// Always translate/dispatch this message, in case
++			// we are polluting the message namespace
++			// .. i'm looking at you flash!
++			TranslateMessage(&message);
++			DispatchMessage(&message);
++
++			// Yo, just got word that it's time to exit. Post a quit
++			// message that this  loop will soon see as a WM_QUIT.
++			// Only quit after processing that message.
++			if (this->exiting && !postedQuitMessage)
++			{
++				PostQuitMessage(this->exitCode);
++				postedQuitMessage = true;
++			}
++
++			return true;
++		}
++		else
++		{
++			return false; // Got the WM_QUIT message.
++		}
++	}
++
++	Module* Win32Host::CreateModule(std::string& path)
++	{
++		std::wstring widePath(UTF8ToWide(path));
++		HMODULE module = LoadLibraryExW(widePath.c_str(),
++			NULL, LOAD_WITH_ALTERED_SEARCH_PATH);
++
++		if (!module)
++		{
++			throw ValueException::FromFormat("Error loading module (%d): %s: %s\n",
++				GetLastError(), path.c_str(),
++				Win32Utils::QuickFormatMessage(GetLastError()).c_str());
++		}
++
++		// get the module factory
++		ModuleCreator* create = (ModuleCreator*)GetProcAddress(module, "CreateModule");
++		if (!create)
++		{
++			throw ValueException::FromFormat(
++				"Couldn't find ModuleCreator entry point for %s\n", path.c_str());
++		}
++
++		return create(this, FileUtils::GetDirectory(path).c_str());
++	}
++
++	bool Win32Host::IsMainThread()
++	{
++		return mainThreadId == GetCurrentThreadId();
++	}
++
++	void Win32Host::SignalNewMainThreadJob()
++	{
++		// send a message to tickle the windows message queue
++		PostThreadMessage(mainThreadId, tickleRequestMessage, 0, 0);
++	}
++
++	HWND Win32Host::AddMessageHandler(MessageHandler handler)
++	{
++		return eventWindow.AddMessageHandler(handler);
++	}
++}
++
++extern "C"
++{
++	void RedirectIOToConsole()
++	{
++		int hConHandle;
++		long lStdHandle;
++		CONSOLE_SCREEN_BUFFER_INFO coninfo;
++		FILE *fp;
++
++		// allocate a console for this app
++		AllocConsole();
++
++		// set the screen buffer to be big enough to let us scroll text
++		GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &coninfo);
++		coninfo.dwSize.Y = MAX_CONSOLE_LINES;
++
++		SetConsoleScreenBufferSize(GetStdHandle(STD_OUTPUT_HANDLE), coninfo.dwSize);
++
++		// redirect unbuffered STDOUT to the console
++		lStdHandle = (long)GetStdHandle(STD_OUTPUT_HANDLE);
++		hConHandle = _open_osfhandle(lStdHandle, _O_TEXT);
++		fp = _fdopen(hConHandle, "w");
++
++		*stdout = *fp;
++		setvbuf(stdout, NULL, _IONBF, 0);
++
++		// redirect unbuffered STDIN to the console
++		lStdHandle = (long)GetStdHandle(STD_INPUT_HANDLE);
++		hConHandle = _open_osfhandle(lStdHandle, _O_TEXT);
++
++		fp = _fdopen(hConHandle, "r");
++		*stdin = *fp;
++		setvbuf(stdin, NULL, _IONBF, 0);
++
++		// redirect unbuffered STDERR to the console
++		lStdHandle = (long)GetStdHandle(STD_ERROR_HANDLE);
++		hConHandle = _open_osfhandle(lStdHandle, _O_TEXT);
++		fp = _fdopen(hConHandle, "w");
++		*stderr = *fp;
++		setvbuf(stderr, NULL, _IONBF, 0);
++
++		// make cout, wcout, cin, wcin, wcerr, cerr, wclog and clog
++		// point to console as well
++		std::ios::sync_with_stdio();
++	}
++
++	int Execute(HINSTANCE hInstance, int argc, const char **argv)
++	{
++		Host *host = new kroll::Win32Host(hInstance,argc,argv);
++#ifndef DEBUG
++		// only create a debug console when not compiled in debug mode 
++		// otherwise, it should be autocreated
++		if (host->DebugModeEnabled())
++		{
++			RedirectIOToConsole();
++		}
++#endif
++		return host->Run();
++	}
++}
+diff --git a/api/win32/host.h b/api/win32/host.h
+new file mode 100644
+index 0000000..887f3b1
+--- /dev/null
++++ b/api/win32/host.h
+@@ -0,0 +1,57 @@
++/**
++ * Appcelerator Kroll - licensed under the Apache Public License 2
++ * see LICENSE in the root folder for details on the license.
++ * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
++ */
++#ifndef _WIN32_HOST_H
++#define _WIN32_HOST_H
++
++#include <api/kroll.h>
++#include <string>
++#include <vector>
++#include <windows.h>
++#include <Poco/ScopedLock.h>
++#include <Poco/Mutex.h>
++#include <Poco/Condition.h>
++#include "event_window.h"
++ 
++namespace kroll
++{
++	class KROLL_API Win32Host : public Host
++	{
++	public:
++		Win32Host(HINSTANCE hInstance, int argc, const char **argv);
++		virtual ~Win32Host();
++		static void InitOLE();
++		virtual Module* CreateModule(std::string& path);
++		const char* GetPlatform();
++		const char* GetModuleSuffix();
++		virtual bool IsMainThread();
++
++		HWND AddMessageHandler(MessageHandler handler);
++		HINSTANCE GetInstanceHandle() { return instanceHandle; }
++		HWND GetEventWindow() { return eventWindow.GetHandle(); }
++		static inline Win32Host* Win32Instance()
++		{
++			return static_cast<Win32Host*>(Host::GetInstance());
++		}
++
++	protected:
++		virtual void SignalNewMainThreadJob();
++		virtual bool RunLoop();
++		virtual bool Start();
++
++	private:
++		HINSTANCE instanceHandle;
++		static bool oleInitialized;
++		DWORD mainThreadId;
++		EventWindow eventWindow;
++	};
++}
++
++extern "C"
++{
++	KROLL_API int Execute(HINSTANCE hInstance, int argc, const char **argv);
++}
++
++#endif
+diff --git a/boot/boot_linux.cpp b/boot/boot_linux.cpp
+index c8993b3..7d2fca2 100644
+--- a/boot/boot_linux.cpp
++++ b/boot/boot_linux.cpp
+@@ -93,7 +93,7 @@ namespace KrollBoot
+ 			return __LINE__;
+ 
+ 		// now we need to load the host and get 'er booted
+-		string khost = FileUtils::Join(runtimePath, "libkhost.so", NULL);
++		string khost = FileUtils::Join(runtimePath, "libkroll.so", NULL);
+ 		if (!FileUtils::IsFile(khost))
+ 		{
+ 			string msg = string("Couldn't find required file:") + khost;
+diff --git a/boot/boot_osx.mm b/boot/boot_osx.mm
+index edde1a2..cf93b12 100644
+--- a/boot/boot_osx.mm
++++ b/boot/boot_osx.mm
+@@ -111,7 +111,7 @@ namespace KrollBoot
+ 		if (runtimePath == NULL)
+ 			return __LINE__;
+ 
+-		std::string khost = FileUtils::Join(runtimePath, "libkhost.dylib", NULL);
++		std::string khost = FileUtils::Join(runtimePath, "libkroll.dylib", NULL);
+ 		if (!FileUtils::IsFile(khost))
+ 		{
+ 			string msg = string("Couldn't find required file:") + khost;
+diff --git a/boot/boot_win32.cpp b/boot/boot_win32.cpp
+index 4ba52b4..1fa7ffc 100644
+--- a/boot/boot_win32.cpp
++++ b/boot/boot_win32.cpp
+@@ -114,7 +114,7 @@ namespace KrollBoot
+ 	int StartHost()
+ 	{
+ 		string runtimePath(EnvironmentUtils::Get("KR_RUNTIME"));
+-		string dll(FileUtils::Join(runtimePath.c_str(), "khost.dll", NULL));
++		string dll(FileUtils::Join(runtimePath.c_str(), "kroll.dll", NULL));
+ 		HMODULE khost = SafeLoadRuntimeDLL(dll);
+ 		if (!khost)
+ 			return __LINE__;
+diff --git a/host/SConscript b/host/SConscript
+deleted file mode 100644
+index 6800740..0000000
+--- a/host/SConscript
++++ /dev/null
+@@ -1,4 +0,0 @@
+-#!/usr/bin/env python
+-Import('build')
+-
+-SConscript(build.os + '/SConscript', build_dir=build.dir + '/host', duplicate=0)
+diff --git a/host/linux/SConscript b/host/linux/SConscript
+deleted file mode 100644
+index 25f89ca..0000000
+--- a/host/linux/SConscript
++++ /dev/null
+@@ -1,12 +0,0 @@
+-#!/usr/bin/env python
+-import os.path as path
+-Import('build')
+-
+-Env = build.env.Clone()
+-Env.Append(CPPDEFINES=('KROLL_HOST_EXPORT',1))
+-Env.Append(CPPPATH=[build.tp('webkit', 'include')])
+-build.add_thirdparty(Env, 'poco')
+-Env.ParseConfig('pkg-config --cflags --libs gtk+-2.0 gdk-2.0 glib-2.0 gthread-2.0')
+-
+-t = Env.SharedLibrary(build.dir + '/runtime/khost', Glob('*.cpp'))
+-build.mark_build_target(t)
+diff --git a/host/linux/host.cpp b/host/linux/host.cpp
+deleted file mode 100644
+index b34fb1d..0000000
+--- a/host/linux/host.cpp
++++ /dev/null
+@@ -1,127 +0,0 @@
+-/**
+- * Appcelerator Kroll - licensed under the Apache Public License 2
+- * see LICENSE in the root folder for details on the license. 
+- * Copyright (c) 2008, 2009 Appcelerator, Inc. All Rights Reserved.
+- */
+-
+-#include "host.h"
+-
+-#include <iostream>
+-#include <vector>
+-#include <cstring>
+-#include <dlfcn.h>
+-#include <string>
+-#include <gtk/gtk.h>
+-#include <gdk/gdk.h>
+-#include <api/kroll.h>
+-
+-#include <gnutls/gnutls.h>
+-#include <gcrypt.h>
+-#include <errno.h>
+-#include <pthread.h>
+-
+-GCRY_THREAD_OPTION_PTHREAD_IMPL;
+-using Poco::ScopedLock;
+-using Poco::Mutex;
+-
+-namespace kroll
+-{
+-	static gboolean MainThreadJobCallback(gpointer data)
+-	{
+-		static_cast<Host*>(data)->RunMainThreadJobs();
+-		return TRUE;
+-	}
+-
+-	LinuxHost::LinuxHost(int argc, const char *argv[]) : Host(argc, argv)
+-	{
+-		gtk_init(&argc, (char***) &argv);
+-
+-		if (!g_thread_supported())
+-			g_thread_init(NULL);
+-
+-		this->mainThread = pthread_self();
+-
+-		// Initialize gnutls for multi-threaded usage.
+-		gcry_control(GCRYCTL_SET_THREAD_CBS, &gcry_threads_pthread);
+-		gnutls_global_init();
+-	}
+-
+-	LinuxHost::~LinuxHost()
+-	{
+-	}
+-
+-	void LinuxHost::Exit(int returnCode)
+-	{
+-		Host::Exit(returnCode);
+-
+-		// Check to see if the event handler cancelled this exit.
+-		if (!this->exiting)
+-			return;
+-
+-		// Only call this if gtk_main is running. If called when the gtk_main
+-		// is not running, it will cause an assertion failure.
+-		static bool mainLoopRunning = true;
+-		if (mainLoopRunning)
+-		{
+-			mainLoopRunning = false;
+-			gtk_main_quit();
+-		}
+-
+-	}
+-
+-	const char* LinuxHost::GetPlatform()
+-	{
+-		return "linux";
+-	}
+-
+-	const char* LinuxHost::GetModuleSuffix()
+-	{
+-		return "module.so";
+-	}
+-
+-	bool LinuxHost::RunLoop()
+-	{
+-		string origPath(EnvironmentUtils::Get("KR_ORIG_LD_LIBRARY_PATH"));
+-		EnvironmentUtils::Set("LD_LIBRARY_PATH", origPath);
+-
+-		g_timeout_add(250, &MainThreadJobCallback, this);
+-		gtk_main();
+-		return false;
+-	}
+-
+-	Module* LinuxHost::CreateModule(std::string& path)
+-	{
+-		void* handle = dlopen(path.c_str(), RTLD_LAZY | RTLD_GLOBAL);
+-		if (!handle)
+-		{
+-			throw ValueException::FromFormat("Error loading module (%s): %s\n", path.c_str(), dlerror());
+-			return 0;
+-		}
+-
+-		// get the module factory
+-		ModuleCreator* create = (ModuleCreator*) dlsym(handle, "CreateModule");
+-		if (!create)
+-		{
+-			throw ValueException::FromFormat(
+-				"Cannot load CreateModule symbol from module (%s): %s\n",
+-				path.c_str(), dlerror());
+-		}
+-
+-		std::string dir = FileUtils::GetDirectory(path);
+-		return create(this, dir.c_str());
+-	}
+-
+-	bool LinuxHost::IsMainThread()
+-	{
+-		return pthread_equal(this->mainThread, pthread_self());
+-	}
+-}
+-
+-extern "C"
+-{
+-	int Execute(int argc,const char **argv)
+-	{
+-		Host *host = new LinuxHost(argc,argv);
+-		return host->Run();
+-	}
+-}
+diff --git a/host/linux/host.h b/host/linux/host.h
+deleted file mode 100644
+index 183784f..0000000
+--- a/host/linux/host.h
++++ /dev/null
+@@ -1,40 +0,0 @@
+-/**
+- * Appcelerator Kroll - licensed under the Apache Public License 2
+- * see LICENSE in the root folder for details on the license.
+- * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
+- */
+-#ifndef _LINUX_HOST_H
+-#define _LINUX_HOST_H
+-
+-#include <vector>
+-#include <string>
+-#include <kroll/kroll.h>
+-
+-namespace kroll
+-{
+-
+-	class EXPORT LinuxHost : public Host
+-	{
+-	public:
+-		LinuxHost(int argc, const char* argv[]);
+-		void Exit(int returnCode);
+-		virtual Module* CreateModule(std::string& path);
+-		const char* GetPlatform();
+-		const char* GetModuleSuffix();
+-		bool IsMainThread();
+-
+-
+-	protected:
+-		pthread_t mainThread;
+-		virtual bool RunLoop();
+-		virtual ~LinuxHost();
+-	};
+-}
+-
+-extern "C"
+-{
+-	EXPORT int Execute(int argc,const char** argv);
+-}
+-
+-
+-#endif
+diff --git a/host/osx/.gitignore b/host/osx/.gitignore
+deleted file mode 100644
+index e5d0467..0000000
+--- a/host/osx/.gitignore
++++ /dev/null
+@@ -1 +0,0 @@
+-*.dylib
+diff --git a/host/osx/SConscript b/host/osx/SConscript
+deleted file mode 100644
+index 54bd2e7..0000000
+--- a/host/osx/SConscript
++++ /dev/null
+@@ -1,14 +0,0 @@
+-#!/usr/bin/env python
+-import os, os.path as path
+-
+-Import('build')
+-
+-Env = build.env.Clone()
+-Env.Append(CPPDEFINES=('KROLL_HOST_EXPORT',1))
+-Env.Append(FRAMEWORKS=['Cocoa'])
+-Env.Append(LIBS=['ssl', 'crypto'])
+-build.add_thirdparty(Env, 'poco')
+-
+-t = Env.SharedLibrary(build.dir + '/runtime/khost', ['host.mm'])
+-build.mark_build_target(t)
+-
+diff --git a/host/osx/host.h b/host/osx/host.h
+deleted file mode 100644
+index e73e515..0000000
+--- a/host/osx/host.h
++++ /dev/null
+@@ -1,38 +0,0 @@
+-/**
+- * Appcelerator Kroll - licensed under the Apache Public License 2
+- * see LICENSE in the root folder for details on the license.
+- * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
+- */
+-#ifndef _OSX_HOST_H
+-#define _OSX_HOST_H
+-
+-#include <api/kroll.h>
+-
+-namespace kroll
+-{
+-	class EXPORT OSXHost : public Host
+-	{
+-	public:
+-		OSXHost(int argc, const char **argv);
+-
+-		virtual Module* CreateModule(std::string& path);
+-		const char* GetPlatform();
+-		const char* GetModuleSuffix();
+-		virtual bool IsMainThread();
+-		virtual KValueRef RunOnMainThread(KMethodRef method, KObjectRef thisObject,
+-			const ValueList& args, bool waitForCompletion=true);
+-
+-	protected:
+-		virtual ~OSXHost();
+-		virtual bool RunLoop();
+-		virtual bool Start();
+-		virtual void Exit(int exitcode);
+-	};
+-}
+-
+-extern "C"
+-{
+-	EXPORT int Execute(int argc,const char** argv);
+-}
+-
+-#endif
+diff --git a/host/osx/host.mm b/host/osx/host.mm
+deleted file mode 100644
+index ed8c974..0000000
+--- a/host/osx/host.mm
++++ /dev/null
+@@ -1,270 +0,0 @@
+-/**
+- * Appcelerator Kroll - licensed under the Apache Public License 2
+- * see LICENSE in the root folder for details on the license.
+- * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
+- */
+-#include "host.h"
+-
+-#include <iostream>
+-#include <vector>
+-#include <dlfcn.h>
+-#include <string>
+-#include <signal.h>
+-#import <Cocoa/Cocoa.h>
+-#include <openssl/crypto.h>
+-#include <Poco/Mutex.h>
+-
+-@interface KrollMainThreadCaller : NSObject
+-{
+-	MainThreadJob* job;
+-}
+-- (id)initWithJob:(MainThreadJob*)jobIn;
+-- (void)execute;
+-@end
+-
+-@implementation KrollMainThreadCaller
+-- (id)initWithJob:(MainThreadJob*)jobIn
+-{
+-	self = [super init];
+-	if (self)
+-	{
+-		job = jobIn;
+-	}
+-	return self;
+-}
+-- (void)dealloc
+-{
+-	delete job;
+-	[super dealloc];
+-}
+-- (MainThreadJob*)job
+-{
+-	return job;
+-}
+-- (void)execute
+-{
+-	job->Execute();
+-
+-	// When executing asynchronously, we need to clean ourselves up.
+-	if (!job->ShouldWaitForCompletion())
+-	{
+-		job->PrintException();
+-		[self release];
+-	}
+-}
+-@end
+-
+-namespace kroll
+-{
+-	static NSThread* mainThread;
+-	static Poco::Mutex* cryptoMutexes = 0;
+-
+-	static void CryptoLockingCallback(int mode, int n, const char* file, int line)
+-	{
+-		if (mode & CRYPTO_LOCK)
+-			cryptoMutexes[n].lock();
+-		else
+-			cryptoMutexes[n].unlock();
+-	}
+-
+-	static unsigned long CryptoThreadIdCallback(void)
+-	{
+-		return ((unsigned long) pthread_self());
+-	}
+-
+-	static void InitializeCryptoMutexes()
+-	{
+-		if (!cryptoMutexes)
+-		{
+-			cryptoMutexes = new Poco::Mutex[CRYPTO_num_locks()];
+-			CRYPTO_set_id_callback(CryptoThreadIdCallback);
+-			CRYPTO_set_locking_callback(CryptoLockingCallback);
+-		}
+-	}
+-
+-	static void CleanupCryptoMutexes()
+-	{
+-		delete [] cryptoMutexes;
+-		cryptoMutexes = 0;
+-	}
+-
+-	OSXHost::OSXHost(int _argc, const char **_argv) : Host(_argc,_argv)
+-	{
+-		InitializeCryptoMutexes();
+-		mainThread = [NSThread currentThread];
+-	}
+-
+-	OSXHost::~OSXHost()
+-	{
+-		CleanupCryptoMutexes();
+-	}
+-
+-	bool OSXHost::IsMainThread()
+-	{
+-		return [NSThread currentThread] == mainThread;
+-	}
+-
+-	const char* OSXHost::GetPlatform()
+-	{
+-		return "osx";
+-	}
+-
+-	const char* OSXHost::GetModuleSuffix()
+-	{
+-		return "module.dylib";
+-	}
+-
+-	void OSXHost::Exit(int exitcode)
+-	{
+-		Host::Exit(exitCode);
+-
+-		// Check to see if the event handler cancelled this event.
+-		if (!this->exiting)
+-			return;
+-
+-		// We're going to post our event to our event queue to cause him
+-		// to wake up (since he'll block waiting for pending events)
+-		NSEvent *event = [NSEvent
+-			otherEventWithType:NSApplicationDefined
+-			location:NSZeroPoint modifierFlags:0
+-			timestamp:[[NSDate date] timeIntervalSinceNow]
+-			windowNumber:0 
+-			context:nil 
+-			subtype:1022 
+-			data1:exitCode
+-			data2:0];
+-		NSApplication *app = [NSApplication sharedApplication];
+-		[app postEvent:event atStart:YES];
+-	}
+-
+-	bool OSXHost::Start()
+-	{
+-		string origPath(EnvironmentUtils::Get("KR_ORIG_DYLD_FRAMEWORK_PATH"));
+-		EnvironmentUtils::Set("DYLD_FRAMEWORK_PATH", origPath);
+-		origPath = EnvironmentUtils::Get("KR_ORIG_DYLD_LIBRARY_PATH");
+-		EnvironmentUtils::Set("DYLD_LIBRARY_PATH", origPath);
+-
+-		[[NSApplication sharedApplication] finishLaunching];
+-		Host::Start();
+-		return true;
+-	}
+-
+-	bool OSXHost::RunLoop()
+-	{
+-		// Number of iterations before we yield back control
+-		// to the main loop driver in the superclass
+-		static int iterations = 10;
+-
+-		// Number of seconds we want to block waiting on a 
+-		// pending event to be visible in the queue
+-		// 0.5 seems to be the most optimal based on testing 
+-		// on Leopard and using some basic animated JS tests 
+-		// like John Resig's processing.js demos. 0.5 seems to
+-		// keep the CPU at effectively 0.0% when idle and seems
+-		// to give us very good frame rate and CPU during animation
+-		static double waitTime = 0.5;
+-
+-		// Since we call this method a lot, set the app in a static var
+-		static NSApplication *app = [NSApplication sharedApplication];
+-
+-		// Create a pool to sweep memory throught the loop
+-		NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+-		for (int c = 0; c < iterations; c++)
+-		{
+-			// we pull out an event from the queue, blocking a little bit before returning
+-			@try
+-			{
+-				NSEvent *event = [app nextEventMatchingMask:NSAnyEventMask 
+-					untilDate:[NSDate dateWithTimeIntervalSinceNow:waitTime]
+-					inMode:NSDefaultRunLoopMode dequeue:YES];
+-
+-				if (event)
+-				{
+-					NSEventType type = [event type];
+-
+-					// This is our custom-defined stop event
+-					if (type == NSApplicationDefined &&
+-						[event subtype] == 1022 && [event data1] == 0)
+-					{
+-						[pool release];
+-						return false;
+-					}
+-					else
+-					{
+-						[app sendEvent:event];
+-					}
+-
+-					[app updateWindows];
+-				} }
+-			@catch (NSException *e)
+-			{
+-				static Logger* logger = Logger::Get("Host");
+-				logger->Error("Caught NSException in main loop: %s",[[e reason] UTF8String]);
+-				KrollDumpStackTraceFromException(e);
+-			}
+-		}
+-		[pool release];
+-		return true;
+-	}
+-
+-	Module* OSXHost::CreateModule(std::string& path)
+-	{
+-		void* handle = dlopen(path.c_str(), RTLD_LAZY | RTLD_GLOBAL);
+-		if (!handle)
+-		{
+-			throw ValueException::FromFormat("Error loading module (%s): %s\n",
+-				path.c_str(), dlerror());
+-		}
+-
+-		// Get the module factory symbol.
+-		ModuleCreator* create = (ModuleCreator*) dlsym(handle, "CreateModule");
+-		if (!create)
+-		{
+-			throw ValueException::FromFormat("Cannot load CreateModule symbol from module "
+-				"(%s): %s\n", path.c_str(), dlerror());
+-		}
+-
+-		std::string dir(FileUtils::GetDirectory(path));
+-		return create(this, dir.c_str());
+-	}
+-
+-	KValueRef OSXHost::RunOnMainThread(KMethodRef method, KObjectRef thisObject,
+-		const ValueList& args, bool waitForCompletion)
+-	{
+-		if (this->IsMainThread() && waitForCompletion)
+-		{
+-			return method->Call(args);
+-		}
+-
+-		MainThreadJob* job = new MainThreadJob(method, thisObject,
+-			args, waitForCompletion);
+-		KrollMainThreadCaller* caller = 
+-			[[KrollMainThreadCaller alloc] initWithJob:job];
+-		[caller performSelectorOnMainThread:@selector(execute)
+-			withObject:nil waitUntilDone:waitForCompletion];
+-
+-		if (!waitForCompletion)
+-		{
+-			// The job will release itself.
+-			return Value::Undefined;
+-		}
+-
+-		KValueRef result(job->GetResult());
+-		ValueException exception(job->GetException());
+-		[caller release];
+-
+-		if (!result.isNull())
+-			return result;
+-		else
+-			throw exception;
+-	}
+-}
+-
+-extern "C"
+-{
+-	int Execute(int argc,const char **argv)
+-	{
+-		kroll::Host *host = new kroll::OSXHost(argc,argv);
+-		return host->Run();
+-	}
+-}
+diff --git a/host/win32/SConscript b/host/win32/SConscript
+deleted file mode 100644
+index 2962893..0000000
+--- a/host/win32/SConscript
++++ /dev/null
+@@ -1,14 +0,0 @@
+-#!/usr/bin/env python
+-Import('build')
+-
+-Env = build.env.Clone()
+-Env.Append(CPPDEFINES=('KROLL_HOST_EXPORT',1))
+-Env.Append(CPPPATH=['#common/win32','#common'])
+-Env.Append(CCFLAGS=['/DUNICODE'])
+-Env.Append(CCFLAGS=['/D_UNICODE'])
+-build.add_thirdparty(Env, 'poco')
+-
+-t = Env.SharedLibrary(build.dir + '/runtime/khost', 
+-	Glob('*.cpp'),
+-	LIBS=['kroll','kernel32','shell32','user32','ole32','comctl32'])
+-build.mark_build_target(t)
+diff --git a/host/win32/event_window.cpp b/host/win32/event_window.cpp
+deleted file mode 100644
+index c48bf98..0000000
+--- a/host/win32/event_window.cpp
++++ /dev/null
+@@ -1,134 +0,0 @@
+-/**
+- * Appcelerator Kroll - licensed under the Apache Public License 2
+- * see LICENSE in the root folder for details on the license.
+- * Copyright (c) 2009 Appcelerator, Inc. All Rights Reserved.
+- */
+-
+-#include "event_window.h"
+-namespace kroll
+-{
+-	const wchar_t* EventWindow::windowClassName = L"Kroll Event Window";
+-	const WNDCLASSW* EventWindow::windowClass = NULL;
+-
+-	EventWindow::EventWindow(HINSTANCE hInstance) :
+-		hInstance(hInstance),
+-		handle(NULL),
+-		logger(Logger::Get("EventWindow"))
+-	{
+-		InitializeWindowClass(hInstance);
+-
+-		this->handle = ::CreateWindowW(
+-			EventWindow::windowClassName,
+-			L"Kroll Event Window Instance",
+-			WS_OVERLAPPEDWINDOW,
+-			CW_USEDEFAULT,
+-			CW_USEDEFAULT,
+-			CW_USEDEFAULT,
+-			CW_USEDEFAULT,
+-			NULL,
+-			NULL,
+-			this->hInstance,
+-			NULL);
+-
+-		if (!this->handle)
+-		{
+-			std::string error("Could not create event window: ");
+-			error.append(Win32Utils::QuickFormatMessage(GetLastError()));
+-			logger->Critical(error);
+-		}
+-
+-		SetWindowLongPtr(handle, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
+-	}
+-
+-	EventWindow::~EventWindow()
+-	{
+-		this->DestroyWindow();
+-	}
+-
+-	void EventWindow::InitializeWindowClass(HINSTANCE hInstance)
+-	{
+-		if (!windowClass)
+-		{
+-			static WNDCLASSW windowClassPrivate;
+-			ZeroMemory(&windowClassPrivate, sizeof(WNDCLASS)); 
+-			windowClassPrivate.lpfnWndProc = EventWindow::WindowProcedure;
+-			windowClassPrivate.hInstance = hInstance;
+-			windowClassPrivate.lpszClassName = EventWindow::windowClassName;
+-			windowClass = &windowClassPrivate;
+-			ATOM result = ::RegisterClassW(windowClass);
+-
+-			if (!result)
+-			{
+-				std::string error("Could not register event window class: ");
+-				error.append(Win32Utils::QuickFormatMessage(GetLastError()));
+-				Logger::Get("EventWindow")->Critical(error);
+-			}
+-		}
+-	}
+-
+-	void EventWindow::DestroyWindow()
+-	{
+-		if (this->handle)
+-		{
+-			BOOL result = ::DestroyWindow(this->handle);
+-
+-			if (result == 0)
+-			{
+-				// Cannot uset the Logger here, because this happens after
+-				// logging has completely shut down.
+-				std::string error("Could not destroy event window: ");
+-				error.append(Win32Utils::QuickFormatMessage(GetLastError()));
+-				fprintf(stderr, error.c_str());
+-			}
+-			this->handle = NULL;
+-		}
+-	}
+-
+-	HWND EventWindow::AddMessageHandler(MessageHandler handler)
+-	{
+-		if (this->handle)
+-		{
+-			Poco::Mutex::ScopedLock lock(handlersMutex);
+-			for (int i = 0; i < handlers.size(); i++)
+-			{
+-				MessageHandler h = handlers[i];
+-				if (h == handler)
+-					return this->handle;
+-			}
+-
+-			handlers.push_back(handler);
+-		}
+-
+-		return this->handle;
+-	}
+-
+-	LRESULT CALLBACK EventWindow::Handler(
+-		HWND hwnd, unsigned int message, WPARAM wParam, LPARAM lParam)
+-	{
+-		{
+-			Poco::Mutex::ScopedLock lock(handlersMutex);
+-			for (int i = 0; i < handlers.size(); i++)
+-			{
+-				MessageHandler h = handlers[i];
+-				if (h(hwnd, message, wParam, lParam))
+-					return 0;
+-			}
+-		}
+-
+-		return DefWindowProc(hwnd, message, wParam, lParam);
+-	}
+-
+-	/*static*/
+-	LRESULT CALLBACK EventWindow::WindowProcedure(
+-		HWND hwnd, unsigned int message, WPARAM wParam, LPARAM lParam)
+-	{
+-		EventWindow* window =
+-			reinterpret_cast<EventWindow*>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
+-
+-		if (window)
+-			return window->Handler(hwnd, message, wParam, lParam);
+-		else
+-			return DefWindowProc(hwnd, message, wParam, lParam);
+-	}
+-}
+-
+diff --git a/host/win32/event_window.h b/host/win32/event_window.h
+deleted file mode 100644
+index f4c7c4c..0000000
+--- a/host/win32/event_window.h
++++ /dev/null
+@@ -1,39 +0,0 @@
+-/**
+- * Appcelerator Kroll - licensed under the Apache Public License 2
+- * see LICENSE in the root folder for details on the license.
+- * Copyright (c) 2009 Appcelerator, Inc. All Rights Reserved.
+- */
+-#ifndef _HOST_EVENT_WINDOW_H
+-#define _HOST_EVENT_WINDOW_H
+-#include <kroll/kroll.h>
+-#include <vector>
+-
+-typedef bool (*MessageHandler)(HWND hwnd, unsigned int message, WPARAM wParam, LPARAM lParam);
+-namespace kroll
+-{
+-	class EventWindow
+-	{
+-		public:
+-		EventWindow(HINSTANCE hInstance);
+-		virtual ~EventWindow();
+-		void DestroyWindow();
+-		HWND AddMessageHandler(MessageHandler handler);
+-		LRESULT CALLBACK Handler(
+-			HWND hwnd, unsigned int message, WPARAM wParam, LPARAM lParam);
+-		HWND GetHandle() { return handle; }
+-		
+-		private:
+-		HINSTANCE hInstance;
+-		HWND handle;
+-		Logger* logger;
+-		std::vector<MessageHandler> handlers;
+-		Poco::Mutex handlersMutex;
+-		static const wchar_t* windowClassName;
+-		static const WNDCLASSW* windowClass;
+-		static void InitializeWindowClass(HINSTANCE hInstance);
+-		static LRESULT CALLBACK WindowProcedure(
+-			HWND hwnd, unsigned int message, WPARAM wParam, LPARAM lParam);
+-	};
+-}
+-
+-#endif
+diff --git a/host/win32/host.cpp b/host/win32/host.cpp
+deleted file mode 100644
+index bd022a9..0000000
+--- a/host/win32/host.cpp
++++ /dev/null
+@@ -1,212 +0,0 @@
+-/**
+- * Appcelerator Kroll - licensed under the Apache Public License 2
+- * see LICENSE in the root folder for details on the license.
+- * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
+- */
+-#include "host.h"
+-#include <iostream>
+-#include <cstring>
+-#include <windows.h>
+-#include <commctrl.h>
+-#include <ole2.h>
+-#include <stdio.h>
+-#include <fcntl.h>
+-#include <io.h>
+-
+-#define MAX_CONSOLE_LINES 500;
+-
+-using Poco::ScopedLock;
+-using Poco::Mutex;
+-
+-namespace kroll
+-{
+-	bool Win32Host::oleInitialized = false;
+-	static UINT tickleRequestMessage =
+-		::RegisterWindowMessageA(PRODUCT_NAME"TickleRequest");
+-
+-	/*static*/
+-	void Win32Host::InitOLE()
+-	{
+-		if (!oleInitialized)
+-		{
+-			OleInitialize(NULL);
+-			oleInitialized = true;
+-		}
+-	}
+-
+-	Win32Host::Win32Host(HINSTANCE hInstance, int argc, const char** argv) :
+-		Host(argc, argv),
+-		instanceHandle(hInstance),
+-		eventWindow(hInstance)
+-	{
+-		InitOLE();
+-	}
+-
+-	Win32Host::~Win32Host()
+-	{
+-		if (oleInitialized)
+-		{
+-			OleUninitialize();
+-		}
+-	}
+-
+-	const char* Win32Host::GetPlatform()
+-	{
+-		return "win32";
+-	}
+-
+-	const char* Win32Host::GetModuleSuffix()
+-	{
+-		return "module.dll";
+-	}
+-
+-	bool Win32Host::Start()
+-	{
+-		// Windows DLLs often load libraries dynamically via LoadLibrary and expect
+-		// dependencies to be on the DLL search path. Thus we really can't restore
+-		// the original path here if we want things to continue working properly.
+-		// This shouldn't be too much of an issue either, as long as programs that
+-		// we launch rely on the safe dll search path.
+-		// string origPath(EnvironmentUtils::Get("KR_ORIG_PATH"));
+-		// EnvironmentUtils::Set("PATH", origPath);
+-
+-		Host::Start();
+-		mainThreadId = GetCurrentThreadId();
+-		return true;
+-	}
+-
+-	bool Win32Host::RunLoop()
+-	{
+-		static bool postedQuitMessage = false;
+-
+-		// Just process one message at a time
+-		MSG message;
+-		if (GetMessage(&message, NULL, 0, 0))
+-		{
+-			if (message.message == tickleRequestMessage)
+-				this->RunMainThreadJobs();
+-
+-			// Always translate/dispatch this message, in case
+-			// we are polluting the message namespace
+-			// .. i'm looking at you flash!
+-			TranslateMessage(&message);
+-			DispatchMessage(&message);
+-
+-			// Yo, just got word that it's time to exit. Post a quit
+-			// message that this  loop will soon see as a WM_QUIT.
+-			// Only quit after processing that message.
+-			if (this->exiting && !postedQuitMessage)
+-			{
+-				PostQuitMessage(this->exitCode);
+-				postedQuitMessage = true;
+-			}
+-
+-			return true;
+-		}
+-		else
+-		{
+-			return false; // Got the WM_QUIT message.
+-		}
+-	}
+-
+-	Module* Win32Host::CreateModule(std::string& path)
+-	{
+-		std::wstring widePath(UTF8ToWide(path));
+-		HMODULE module = LoadLibraryExW(widePath.c_str(),
+-			NULL, LOAD_WITH_ALTERED_SEARCH_PATH);
+-
+-		if (!module)
+-		{
+-			throw ValueException::FromFormat("Error loading module (%d): %s: %s\n",
+-				GetLastError(), path.c_str(),
+-				Win32Utils::QuickFormatMessage(GetLastError()).c_str());
+-		}
+-
+-		// get the module factory
+-		ModuleCreator* create = (ModuleCreator*)GetProcAddress(module, "CreateModule");
+-		if (!create)
+-		{
+-			throw ValueException::FromFormat(
+-				"Couldn't find ModuleCreator entry point for %s\n", path.c_str());
+-		}
+-
+-		return create(this, FileUtils::GetDirectory(path).c_str());
+-	}
+-
+-	bool Win32Host::IsMainThread()
+-	{
+-		return mainThreadId == GetCurrentThreadId();
+-	}
+-
+-	void Win32Host::SignalNewMainThreadJob()
+-	{
+-		// send a message to tickle the windows message queue
+-		PostThreadMessage(mainThreadId, tickleRequestMessage, 0, 0);
+-	}
+-
+-	HWND Win32Host::AddMessageHandler(MessageHandler handler)
+-	{
+-		return eventWindow.AddMessageHandler(handler);
+-	}
+-}
+-
+-extern "C"
+-{
+-	void RedirectIOToConsole()
+-	{
+-		int hConHandle;
+-		long lStdHandle;
+-		CONSOLE_SCREEN_BUFFER_INFO coninfo;
+-		FILE *fp;
+-
+-		// allocate a console for this app
+-		AllocConsole();
+-
+-		// set the screen buffer to be big enough to let us scroll text
+-		GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &coninfo);
+-		coninfo.dwSize.Y = MAX_CONSOLE_LINES;
+-
+-		SetConsoleScreenBufferSize(GetStdHandle(STD_OUTPUT_HANDLE), coninfo.dwSize);
+-
+-		// redirect unbuffered STDOUT to the console
+-		lStdHandle = (long)GetStdHandle(STD_OUTPUT_HANDLE);
+-		hConHandle = _open_osfhandle(lStdHandle, _O_TEXT);
+-		fp = _fdopen(hConHandle, "w");
+-
+-		*stdout = *fp;
+-		setvbuf(stdout, NULL, _IONBF, 0);
+-
+-		// redirect unbuffered STDIN to the console
+-		lStdHandle = (long)GetStdHandle(STD_INPUT_HANDLE);
+-		hConHandle = _open_osfhandle(lStdHandle, _O_TEXT);
+-
+-		fp = _fdopen(hConHandle, "r");
+-		*stdin = *fp;
+-		setvbuf(stdin, NULL, _IONBF, 0);
+-
+-		// redirect unbuffered STDERR to the console
+-		lStdHandle = (long)GetStdHandle(STD_ERROR_HANDLE);
+-		hConHandle = _open_osfhandle(lStdHandle, _O_TEXT);
+-		fp = _fdopen(hConHandle, "w");
+-		*stderr = *fp;
+-		setvbuf(stderr, NULL, _IONBF, 0);
+-
+-		// make cout, wcout, cin, wcin, wcerr, cerr, wclog and clog
+-		// point to console as well
+-		std::ios::sync_with_stdio();
+-	}
+-
+-	int Execute(HINSTANCE hInstance, int argc, const char **argv)
+-	{
+-		Host *host = new kroll::Win32Host(hInstance,argc,argv);
+-#ifndef DEBUG
+-		// only create a debug console when not compiled in debug mode 
+-		// otherwise, it should be autocreated
+-		if (host->DebugModeEnabled())
+-		{
+-			RedirectIOToConsole();
+-		}
+-#endif
+-		return host->Run();
+-	}
+-}
+diff --git a/host/win32/host.h b/host/win32/host.h
+deleted file mode 100644
+index 722a9f9..0000000
+--- a/host/win32/host.h
++++ /dev/null
+@@ -1,63 +0,0 @@
+-/**
+- * Appcelerator Kroll - licensed under the Apache Public License 2
+- * see LICENSE in the root folder for details on the license.
+- * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
+- */
+-#ifndef _WIN32_HOST_H
+-#define _WIN32_HOST_H
+-
+-#include <api/kroll.h>
+-#include <string>
+-#include <vector>
+-#include <windows.h>
+-#include <Poco/ScopedLock.h>
+-#include <Poco/Mutex.h>
+-#include <Poco/Condition.h>
+-#include "event_window.h"
+- 
+-#ifdef KROLL_HOST_EXPORT
+-# define KROLL_HOST_API __declspec(dllexport)
+-#else
+-# define KROLL_HOST_API __declspec(dllimport)
+-#endif
+-
+-namespace kroll
+-{
+-	class KROLL_HOST_API Win32Host : public Host
+-	{
+-	public:
+-		Win32Host(HINSTANCE hInstance, int argc, const char **argv);
+-		virtual ~Win32Host();
+-		static void InitOLE();
+-		virtual Module* CreateModule(std::string& path);
+-		const char* GetPlatform();
+-		const char* GetModuleSuffix();
+-		virtual bool IsMainThread();
+-
+-		HWND AddMessageHandler(MessageHandler handler);
+-		HINSTANCE GetInstanceHandle() { return instanceHandle; }
+-		HWND GetEventWindow() { return eventWindow.GetHandle(); }
+-		static inline Win32Host* Win32Instance()
+-		{
+-			return static_cast<Win32Host*>(Host::GetInstance());
+-		}
+-
+-	protected:
+-		virtual void SignalNewMainThreadJob();
+-		virtual bool RunLoop();
+-		virtual bool Start();
+-
+-	private:
+-		HINSTANCE instanceHandle;
+-		static bool oleInitialized;
+-		DWORD mainThreadId;
+-		EventWindow eventWindow;
+-	};
+-}
+-
+-extern "C"
+-{
+-	KROLL_HOST_API int Execute(HINSTANCE hInstance, int argc, const char **argv);
+-}
+-
+-#endif

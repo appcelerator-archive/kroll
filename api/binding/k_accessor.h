@@ -11,7 +11,7 @@ namespace kroll
 {
 	typedef std::map<std::string, KMethodRef> AccessorMap;
 
-	class KAccessor
+	class KROLL_API KAccessor
 	{
 	protected:
 		KAccessor() {}

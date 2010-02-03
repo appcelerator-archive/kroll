@@ -108,6 +108,7 @@ class BuildConfig(object):
 		if not hasattr(os, 'uname') or self.matches('CYGWIN'):
 			self.os = 'win32'
 			self.arch = 'i386'
+			os.environ['PROCESSOR_ARCHITECTURE'] = 'x86'
 
 		elif self.matches('Darwin'):
 			self.os = 'osx'

@@ -236,7 +236,7 @@ namespace URLUtils
 		return path;
 	}
 
-	std::string NormalizeURL(std::string& url)
+	std::string NormalizeURL(const std::string& url)
 	{
 		Poco::URI inURI = Poco::URI(url);
 		if (url == BlankPageURL())

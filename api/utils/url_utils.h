@@ -36,7 +36,7 @@ namespace UTILS_NS
 		 * Normalize a URL. If this url is an app:// URL, ensure that it
 		 * has the app id as the hostname
 		 */
-		KROLL_API std::string NormalizeURL(std::string& url);
+		KROLL_API std::string NormalizeURL(const std::string& url);
 
 		/**
 		 * Convert a URL to a path if it is an app://, ti:// or file://
