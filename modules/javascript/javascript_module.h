@@ -33,6 +33,7 @@ namespace kroll {
 	class JavascriptModuleInstance;
 }
 #include "javascript_module_instance.h"
+#include "javascript_methods.h"
 
 namespace kroll
 {
