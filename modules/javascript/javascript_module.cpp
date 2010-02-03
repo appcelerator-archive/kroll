@@ -17,6 +17,9 @@ namespace kroll
 	{
 		JavascriptModule::instance = this;
 		host->AddModuleProvider(this);
+		
+		KObjectRef global(Host::GetInstance()->GetGlobalObject());
+		JavascriptMethods::Bind(global);
 	}
 
 	void JavascriptModule::Stop()
