@@ -13,7 +13,7 @@
 namespace kroll
 {
 
-	class EXPORT LinuxHost : public Host
+	class KROLL_API LinuxHost : public Host
 	{
 	public:
 		LinuxHost(int argc, const char* argv[]);

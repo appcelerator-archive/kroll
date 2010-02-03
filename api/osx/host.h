@@ -10,7 +10,7 @@
 
 namespace kroll
 {
-	class EXPORT OSXHost : public Host
+	class KROLL_API OSXHost : public Host
 	{
 	public:
 		OSXHost(int argc, const char **argv);

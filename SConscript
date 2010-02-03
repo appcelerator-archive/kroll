@@ -8,7 +8,6 @@ Import('build')
 Import('debug')
 
 SConscript('boot/SConscript', duplicate=0, build_dir=path.join(build.dir, 'objs', 'boot'))
-
 SConscript('api/SConscript', build_dir=path.join(build.dir,'objs','api'), duplicate=0)
 
 # Now that libkroll is built add it as a default for
@@ -18,5 +17,4 @@ SConscript('api/SConscript', build_dir=path.join(build.dir,'objs','api'), duplic
 build.env.Append(LIBS=['kroll'])
 build.env.Append(LIBPATH=[build.runtime_build_dir])
 
-SConscript('host/SConscript')
 SConscript('modules/SConscript')

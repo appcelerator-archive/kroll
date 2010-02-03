@@ -111,7 +111,7 @@ namespace KrollBoot
 		if (runtimePath == NULL)
 			return __LINE__;
 
-		std::string khost = FileUtils::Join(runtimePath, "libkhost.dylib", NULL);
+		std::string khost = FileUtils::Join(runtimePath, "libkroll.dylib", NULL);
 		if (!FileUtils::IsFile(khost))
 		{
 			string msg = string("Couldn't find required file:") + khost;

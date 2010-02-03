@@ -15,14 +15,15 @@ webkit_inc = path.join(webkit_tp, 'include')
 if build.is_win32():
 	Env.Append(CPPPATH=[path.join(build.third_party, 'icu', 'include')])
 	Env.Append(LIBPATH=[webkit_lib])
-	Env.Append(LIBS=['shell32', 'user32', 'Advapi32', 'iphlpapi', 'winhttp', 'icuuc', 'icuin'])
-	Env.Append(CCFLAGS=['/DUNICODE'])
-	Env.Append(CCFLAGS=['/D_UNICODE'])
+	Env.Append(LIBS=['shell32', 'user32', 'Advapi32',
+		'iphlpapi', 'winhttp', 'icuuc', 'icuin',
+		 'kernel32', 'ole32', 'comctl32'])
+	Env.Append(CCFLAGS=['/DUNICODE', '/D_UNICODE'])
 
 elif build.is_linux():
 	if os.environ.has_key('PKG_CONFIG_PATH'):
 		Env.AppendENVPath('PKG_CONFIG_PATH', os.environ['PKG_CONFIG_PATH'])
-	Env.ParseConfig('pkg-config --cflags --libs libxml-2.0')
+	Env.ParseConfig('pkg-config --cflags --libs libxml-2.0 gtk+-2.0 gdk-2.0 glib-2.0 gthread-2.0')
 	Env.Append(LIBS=['pthread', 'libsoup-2.4', 'libproxy'])
 
 	# We need to add the webkit directories because they include libsoup
@@ -31,7 +32,8 @@ elif build.is_linux():
 
 elif build.is_osx():
 	Env.Append(LINKFLAGS='-install_name libkroll.dylib')
-	Env.Append(FRAMEWORKS=['SystemConfiguration', 'CoreServices'])
+	Env.Append(LIBS=['ssl', 'crypto'])
+	Env.Append(FRAMEWORKS=['Cocoa', 'SystemConfiguration', 'CoreServices'])
 
 sources=Glob('*.cpp')
 sources.extend(Glob('config/*.cpp'))
@@ -41,13 +43,17 @@ sources.extend(Glob('utils/poco/*.cpp'))
 sources.extend(Glob('utils/%s/*.cpp' % build.os))
 sources.extend(Glob('net/proxy_config.cpp'))
 sources.extend(Glob('net/*_%s.cpp' % build.os))
+
 if build.is_win32():
 	sources.extend(Glob('utils/unzip/*.cpp'))
 	sources.extend(Glob('win32/*.cpp'))
 if build.is_osx():
 	sources.extend(Glob('osx/osx.mm'))
 	sources.extend(Glob('utils/%s/*.mm' % build.os))
-if build.is_osx() or build.is_linux():
+	sources.extend(Glob('utils/posix/*.cpp'))
+	sources.extend(Glob('net/*_%s.mm' % build.os))
+if build.is_linux():
+	sources.extend(Glob('linux/*.cpp'))
 	sources.extend(Glob('utils/posix/*.cpp'))
 	sources.extend(Glob('net/*_%s.mm' % build.os))
 

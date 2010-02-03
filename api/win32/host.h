@@ -15,15 +15,9 @@
 #include <Poco/Condition.h>
 #include "event_window.h"
  
-#ifdef KROLL_HOST_EXPORT
-# define KROLL_HOST_API __declspec(dllexport)
-#else
-# define KROLL_HOST_API __declspec(dllimport)
-#endif
-
 namespace kroll
 {
-	class KROLL_HOST_API Win32Host : public Host
+	class KROLL_API Win32Host : public Host
 	{
 	public:
 		Win32Host(HINSTANCE hInstance, int argc, const char **argv);
@@ -57,7 +51,7 @@ namespace kroll
 
 extern "C"
 {
-	KROLL_HOST_API int Execute(HINSTANCE hInstance, int argc, const char **argv);
+	KROLL_API int Execute(HINSTANCE hInstance, int argc, const char **argv);
 }
 
 #endif

@@ -114,7 +114,7 @@ namespace KrollBoot
 	int StartHost()
 	{
 		string runtimePath(EnvironmentUtils::Get("KR_RUNTIME"));
-		string dll(FileUtils::Join(runtimePath.c_str(), "khost.dll", NULL));
+		string dll(FileUtils::Join(runtimePath.c_str(), "kroll.dll", NULL));
 		HMODULE khost = SafeLoadRuntimeDLL(dll);
 		if (!khost)
 			return __LINE__;

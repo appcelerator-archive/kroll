@@ -33,7 +33,7 @@ namespace UTILS_NS
 		 */
 		KROLL_API void Unset(std::string name);
 
-#if defined(KROLL_HOST_EXPORT) || defined(KROLL_API_EXPORT) || defined(_KROLL_H_)
+#if defined(KROLL_API_EXPORT) || defined(_KROLL_H_)
 		/*
 		 * Get the environment
 		 */

@@ -4,7 +4,7 @@
  * Copyright (c) 2009 Appcelerator, Inc. All Rights Reserved.
  */
 #include "utils.h"
-#if defined(KROLL_HOST_EXPORT) || defined(KROLL_API_EXPORT) || defined(_KROLL_H_)
+#if defined(KROLL_API_EXPORT) || defined(_KROLL_H_)
 #include <Poco/URI.h>
 #include <Poco/TemporaryFile.h>
 #include <Poco/FileStream.h>
@@ -194,7 +194,7 @@ namespace URLUtils
 		return url;
 	}
 
-#if defined(KROLL_HOST_EXPORT) || defined(KROLL_API_EXPORT) || defined(_KROLL_H_)
+#if defined(KROLL_API_EXPORT) || defined(_KROLL_H_)
 	static std::string NormalizeAppURL(const std::string& url)
 	{
 		size_t appLength = 6; // app://
@@ -236,7 +236,7 @@ namespace URLUtils
 		return path;
 	}
 
-	std::string NormalizeURL(std::string& url)
+	std::string NormalizeURL(const std::string& url)
 	{
 		Poco::URI inURI = Poco::URI(url);
 		if (url == BlankPageURL())

@@ -100,7 +100,7 @@ namespace EnvironmentUtils
 #endif
 	}
 
-#if defined(KROLL_HOST_EXPORT) || defined(KROLL_API_EXPORT) || defined(_KROLL_H_)
+#if defined(KROLL_API_EXPORT) || defined(_KROLL_H_)
 	std::map<std::string, std::string> GetEnvironment()
 	{
 		std::map<std::string, std::string> environment;

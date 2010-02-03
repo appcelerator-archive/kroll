@@ -93,7 +93,7 @@ namespace KrollBoot
 			return __LINE__;
 
 		// now we need to load the host and get 'er booted
-		string khost = FileUtils::Join(runtimePath, "libkhost.so", NULL);
+		string khost = FileUtils::Join(runtimePath, "libkroll.so", NULL);
 		if (!FileUtils::IsFile(khost))
 		{
 			string msg = string("Couldn't find required file:") + khost;
