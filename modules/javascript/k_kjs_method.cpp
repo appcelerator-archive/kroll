@@ -85,21 +85,23 @@ namespace kroll
 	KValueRef KKJSMethod::Call(JSObjectRef thisObject, const ValueList& args)
 	{
 		JSValueRef* jsArgs = new JSValueRef[args.size()];
-		for (int i = 0; i < (int) args.size(); i++)
-		{
-			KValueRef arg = args.at(i);
-			jsArgs[i] = KJSUtil::ToJSValue(arg, this->context);
-		}
+		for (size_t i = 0; i < args.size(); i++)
+			jsArgs[i] = KJSUtil::ToJSValue(args.at(i), this->context);
 
 		JSValueRef exception = NULL;
 		JSValueRef jsValue = JSObjectCallAsFunction(this->context, thisObject,
 			this->thisObject, args.size(), jsArgs, &exception);
 
-		delete [] jsArgs; // clean up args
+		delete [] jsArgs;
 
-		if (jsValue == NULL && exception != NULL) //exception thrown
+		// Do some garbage collection here, so that the arguments don't
+		// stick around for too long in this context.
+		JSGarbageCollect(this->context);
+
+		// Handle the case that an exception was thrown.
+		if (!jsValue && exception)
 		{
-			KValueRef exceptionValue = KJSUtil::ToKrollValue(exception, this->context, NULL);
+			KValueRef exceptionValue(KJSUtil::ToKrollValue(exception, this->context, 0));
 			throw ValueException(exceptionValue);
 		}
 
