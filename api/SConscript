@@ -48,7 +48,7 @@ if build.is_win32():
 	sources.extend(Glob('utils/unzip/*.cpp'))
 	sources.extend(Glob('win32/*.cpp'))
 if build.is_osx():
-	sources.extend(Glob('osx/osx.mm'))
+	sources.extend(Glob('osx/*.mm'))
 	sources.extend(Glob('utils/%s/*.mm' % build.os))
 	sources.extend(Glob('utils/posix/*.cpp'))
 	sources.extend(Glob('net/*_%s.mm' % build.os))

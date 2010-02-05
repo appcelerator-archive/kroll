@@ -9,8 +9,8 @@
 namespace kroll
 {
 	NSLogChannel::NSLogChannel()
+		: formatter("[%s] [%p] %t")
 	{
-		this->formatter = PatternFormatter("[%s] [%p] %t");
 	}
 
 	void NSLogChannel::log(const Poco::Message& msg)
