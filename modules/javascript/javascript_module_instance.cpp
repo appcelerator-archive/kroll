@@ -14,11 +14,10 @@ namespace kroll
 
 	JavascriptModuleInstance::JavascriptModuleInstance(Host* host, std::string path, std::string dir, std::string name) :
 		Module(host, dir.c_str(), name.c_str(), "0.1"),
-		path(path)
+		path(path),
+		context(0)
 	{
-		this->context = JSGlobalContextCreate(0);
-		this->global = JSContextGetGlobalObject(context);
-		KJSUtil::RegisterGlobalContext(global, context);
+		this->context = KJSUtil::CreateGlobalContext();
 		KJSUtil::ProtectGlobalContext(context);
 
 		try
@@ -37,7 +36,7 @@ namespace kroll
 
 	void JavascriptModuleInstance::Stop()
 	{
-		KJSUtil::UnregisterGlobalContext(global);
+		KJSUtil::UnregisterGlobalContext(context);
 		KJSUtil::UnprotectGlobalContext(context);
 
 		std::vector<JSGlobalContextRef>::iterator i = instanceContexts.begin();
@@ -51,21 +50,12 @@ namespace kroll
 			i++;
 		}
 
-		this->global = 0;
 		this->context = 0;
 	}
 
 	void JavascriptModuleInstance::Run()
 	{
 		std::string code(FileUtils::ReadFile(this->path));
-
-		// Insert the global object into this script's context.
-		KValueRef globalValue = Value::NewObject(host->GetGlobalObject());
-		JSValueRef jsAPI = KJSUtil::ToJSValue(globalValue, context);
-		JSStringRef propertyName = JSStringCreateWithUTF8CString(PRODUCT_NAME);
-		JSObjectSetProperty(context, global, propertyName, jsAPI,
-			kJSPropertyAttributeNone, NULL);
-		JSStringRelease(propertyName);
 
 		// Check the script's syntax.
 		JSValueRef exception;
@@ -78,15 +68,7 @@ namespace kroll
 			throw ValueException(e);
 		}
 
-		// Run the script.
-		JSValueRef ret = JSEvaluateScript(context, jsCode, NULL, NULL, 1, &exception);
-		JSStringRelease(jsCode);
-
-		if (ret == NULL)
-		{
-			KValueRef e = KJSUtil::ToKrollValue(exception, context, NULL);
-			throw ValueException(e);
-		}
+		KJSUtil::Evaluate(context, code.c_str());
 	}
 
 	/*static*/

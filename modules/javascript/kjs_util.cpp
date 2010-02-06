@@ -634,29 +634,20 @@ namespace KJSUtil
 		}
 	}
 
-	JSObjectRef CreateNewGlobalContext(Host *host, bool addGlobalObject)
+	JSGlobalContextRef CreateGlobalContext()
 	{
-		JSGlobalContextRef jsContext = JSGlobalContextCreate(NULL);
+		JSGlobalContextRef jsContext = JSGlobalContextCreate(0);
 		JSObjectRef globalObject = JSContextGetGlobalObject(jsContext);
+
+		JSValueRef jsAPI = ToJSValue(
+			Value::NewObject(GlobalObject::GetInstance()), jsContext);
+		JSStringRef propertyName = JSStringCreateWithUTF8CString(PRODUCT_NAME);
+		JSObjectSetProperty(jsContext, globalObject, propertyName,
+			jsAPI, kJSPropertyAttributeNone, NULL);
+		JSStringRelease(propertyName);
+
 		RegisterGlobalContext(globalObject, jsContext);
-		
-		if (addGlobalObject)
-		{
-			/* Take some steps to insert the API into the Javascript jsContext */
-			/* Create a crazy, crunktown delegate hybrid object for Javascript */
-			KValueRef globalValue = Value::NewObject(host->GetGlobalObject());
-
-			/* convert JS API to a KJS object */
-			JSValueRef jsAPI = ToJSValue(globalValue, jsContext);
-
-			/* set the API as a property of the global object */
-			JSStringRef propertyName = JSStringCreateWithUTF8CString(PRODUCT_NAME);
-			JSObjectSetProperty(jsContext, globalObject, propertyName,
-				jsAPI, kJSPropertyAttributeNone, NULL);
-			JSStringRelease(propertyName);
-		}
-
-		return globalObject;
+		return jsContext;
 	}
 
 	static std::map<JSObjectRef, JSGlobalContextRef> jsContextMap;
@@ -667,10 +658,11 @@ namespace KJSUtil
 		jsContextMap[object] = globalContext;
 	}
 
-	void UnregisterGlobalContext(JSObjectRef object)
+	void UnregisterGlobalContext(JSGlobalContextRef jsContext)
 	{
+		JSObjectRef globalObject(JSContextGetGlobalObject(jsContext));
 		Poco::Mutex::ScopedLock lock(jsContextMapMutex);
-		std::map<JSObjectRef, JSGlobalContextRef>::iterator i = jsContextMap.find(object);
+		std::map<JSObjectRef, JSGlobalContextRef>::iterator i = jsContextMap.find(globalObject);
 		if (i != jsContextMap.end())
 		{
 			jsContextMap.erase(i);
@@ -736,49 +728,31 @@ namespace KJSUtil
 		jsContextRefCounts[globalContext]--;
 	}
 
-	KValueRef Evaluate(JSContextRef jsContext, const char* script)
+	KValueRef Evaluate(JSContextRef jsContext, const char* script, const char* url)
 	{
 		JSObjectRef globalObject = JSContextGetGlobalObject(jsContext);
 		JSStringRef scriptContents = JSStringCreateWithUTF8CString(script);
-		JSStringRef url = JSStringCreateWithUTF8CString("<string>");
+		JSStringRef jsURL = JSStringCreateWithUTF8CString(url);
 		JSValueRef exception = NULL;
 
 		JSValueRef returnValue = JSEvaluateScript(jsContext, scriptContents, globalObject, 
-			url, 0, &exception);
+			jsURL, 0, &exception);
 
-		JSStringRelease(url);
+		JSStringRelease(jsURL);
 		JSStringRelease(scriptContents);
 
-		if (exception != NULL)
-		{
+		if (exception)
 			throw ValueException(ToKrollValue(exception, jsContext, NULL));
-		}
 
 		return ToKrollValue(returnValue, jsContext, globalObject);
 	}
 
-	KValueRef EvaluateFile(JSContextRef jsContext, std::string fullPath)
+	KValueRef EvaluateFile(JSContextRef jsContext, const std::string& fullPath)
 	{
 		GetLogger()->Debug("Evaluating JavaScript file at: %s", fullPath.c_str());
-
-		JSObjectRef globalObject = JSContextGetGlobalObject(jsContext);
 		std::string scriptContents(FileUtils::ReadFile(fullPath));
 		std::string fileURL(URLUtils::PathToFileURL(fullPath));
-		
-		JSStringRef script = JSStringCreateWithUTF8CString(scriptContents.c_str());
-		JSStringRef jsFileURL = JSStringCreateWithUTF8CString(fileURL.c_str());
-		JSValueRef exception = NULL;
-		JSValueRef returnValue = JSEvaluateScript(jsContext, script, globalObject, 
-			jsFileURL, 0, &exception);
-		JSStringRelease(script);
-		JSStringRelease(jsFileURL);
-
-		if (exception != NULL)
-		{
-			throw ValueException(ToKrollValue(exception, jsContext, NULL));
-		}
-
-		return ToKrollValue(returnValue, jsContext, globalObject);
+		return Evaluate(jsContext, scriptContents.c_str(), fileURL.c_str());
 	}
 
 	//===========================================================================//
@@ -870,22 +844,6 @@ namespace KJSUtil
 		}
 
 		return fnPrototype;
-	}
-	
-	void BindProperties(JSObjectRef globalObject, KObjectRef obj)
-	{
-		JSGlobalContextRef jsContext = GetGlobalContext(globalObject);
-
-		SharedStringList names = obj->GetPropertyNames();
-		for (size_t i = 0; i < names->size(); i++)
-		{
-			std::string other = *names->at(i);
-			KValueRef v = obj->Get(other.c_str());
-			JSValueRef js = ToJSValue(v, jsContext);
-			JSStringRef propertyName = JSStringCreateWithUTF8CString(other.c_str());
-			JSObjectSetProperty(jsContext, globalObject, propertyName, js, kJSPropertyAttributeNone, NULL);
-			JSStringRelease(propertyName);
-		}
 	}
 
 	KValueRef GetProperty(JSObjectRef globalObject, std::string name)
