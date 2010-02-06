@@ -32,7 +32,7 @@ namespace UTILS_NS
 		return [[nsPath stringByExpandingTildeInPath] UTF8String];
 	}
 
-	std::string FileUtils::ReadFile(std::string& path)
+	std::string FileUtils::ReadFile(const std::string& path)
 	{
 		NSError* error = NULL;
 		NSString* nsPath = [NSString stringWithUTF8String:path.c_str()];
@@ -49,7 +49,7 @@ namespace UTILS_NS
 		return [nsContents UTF8String];
 	}
 
-	void FileUtils::WriteFile(std::string& path, std::string& content)
+	void FileUtils::WriteFile(const std::string& path, const std::string& content)
 	{
 		NSError* error = NULL;
 		NSString* nsContents = [NSString stringWithUTF8String:content.c_str()];

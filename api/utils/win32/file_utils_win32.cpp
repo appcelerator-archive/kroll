@@ -82,7 +82,7 @@ namespace FileUtils
 		return FileHasAttributes(file, 0);
 	}
 
-	void WriteFile(std::string& path, std::string& content)
+	void WriteFile(const std::string& path, const std::string& content)
 	{
 		std::wstring widePath(UTF8ToWide(path));
 		// CreateFile doesn't have a path length limitation
@@ -114,12 +114,12 @@ namespace FileUtils
 		CloseHandle(file);
 	}
 	
-	std::string ReadFile(std::string& path)
+	std::string ReadFile(const std::string& path)
 	{
 		return ReadFile(UTF8ToWide(path));
 	}
 	
-	std::string ReadFile(std::wstring& widePath)
+	std::string ReadFile(const std::wstring& widePath)
 	{
 		std::ostringstream contents;
 		// CreateFile doesn't have a path length limitation

@@ -57,8 +57,8 @@ namespace UTILS_NS
 		KROLL_API void ListDir(std::string& path, std::vector<std::string>& files);
 		KROLL_API bool IsDirectory(std::string &dir);
 		KROLL_API bool IsFile(const std::string &file);
-		KROLL_API void WriteFile(std::string& path, std::string& content);
-		KROLL_API std::string ReadFile(std::string& path);
+		KROLL_API void WriteFile(const std::string& path, const std::string& content);
+		KROLL_API std::string ReadFile(const std::string& path);
 		KROLL_API std::string Dirname(std::string path);
 		KROLL_API std::string Basename(std::string path);
 		KROLL_API bool CreateDirectory(std::string &dir, bool recursive=false);
