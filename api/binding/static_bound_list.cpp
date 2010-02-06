@@ -39,20 +39,16 @@ namespace kroll
 
 	bool StaticBoundList::Remove(unsigned int index)
 	{
-		if (index < this->length)
-		{
-			std::string name = KList::IntToChars(index);
-			this->object->UnSet(name.c_str());
-			for (unsigned int i = index; i + 1 < this->length; i++)
-				this->SetAt(i, this->At(i + 1));
-
-			this->length--;
-			return true;
-		}
-		else
-		{
+		if (index >= this->length)
 			return false;
-		}
+
+		std::string name = KList::IntToChars(index);
+		this->object->Unset(name.c_str());
+		for (unsigned int i = index; i + 1 < this->length; i++)
+			this->SetAt(i, this->At(i + 1));
+
+		this->length--;
+		return true;
 	}
 
 	unsigned int StaticBoundList::Size()

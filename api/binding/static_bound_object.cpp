@@ -16,76 +16,49 @@ namespace kroll
 
 	StaticBoundObject::~StaticBoundObject()
 	{
-		// The SharedPtr implementation should decrement
-		// all members of properties, when the properties
-		// map destructs
 	}
 
-	bool StaticBoundObject::HasProperty(const char *name)
+	bool StaticBoundObject::HasProperty(const char* name)
 	{
 		return properties.find(name) != properties.end();
 	}
 	
-	KValueRef StaticBoundObject::Get(const char *name)
+	KValueRef StaticBoundObject::Get(const char* name)
 	{
 		ScopedLock lock(&mutex);
+		std::map<std::string, KValueRef>::iterator iter = 
+			properties.find(std::string(name));
 
-		// TODO: Referencing global Undefined here is causing
-		// invalid access in win32? (need to look into it..)
-		KValueRef result = Value::NewUndefined();
-
-		std::map<std::string, KValueRef>::iterator iter;
-		iter = properties.find(std::string(name));
-		if (iter != properties.end()) 
-		{
-			result = iter->second;
-		}
-		return result;
+		if (iter == properties.end())
+			return Value::Undefined;
+		return iter->second;
 	}
 
-	void StaticBoundObject::Set(const char *name, KValueRef value)
+	void StaticBoundObject::Set(const char* name, KValueRef value)
 	{
-		{
-			ScopedLock lock(&mutex);
-			this->UnSet(name);
-			this->properties[std::string(name)] = value;
-		}
-		this->Bound(name,value);
+		ScopedLock lock(&mutex);
+		this->properties[std::string(name)] = value;
 	}
 
-	void StaticBoundObject::UnSet(const char *name)
+	void StaticBoundObject::Unset(const char* name)
 	{
-		bool found = false;
-		{
-			ScopedLock lock(&mutex);
-			std::map<std::string, KValueRef>::iterator iter;
-			iter = this->properties.find(std::string(name));
-			if (this->properties.end() != iter)
-			{
-				this->properties.erase(iter);
-				found = true;
-			}
-		}
-		
-		if (found)
-		{
-			this->Unbound(name);
-		}
+		ScopedLock lock(&mutex);
+		std::map<std::string, KValueRef>::iterator iter = 
+			properties.find(std::string(name));
+
+		if (this->properties.end() == iter)
+			return;
+		this->properties.erase(iter);
 	}
 
 	SharedStringList StaticBoundObject::GetPropertyNames()
 	{
 		SharedStringList list(new StringList());
-
 		ScopedLock lock(&mutex);
-		std::map<std::string, KValueRef>::iterator iter;
-		iter = properties.begin();
+		std::map<std::string, KValueRef>::iterator iter = properties.begin();
+
 		while (iter != properties.end())
-		{
-			SharedString name_string(new std::string(iter->first));
-			list->push_back(name_string);
-			iter++;
-		}
+			list->push_back(new std::string((iter++)->first));
 
 		return list;
 	}
