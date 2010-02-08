@@ -37,7 +37,7 @@ namespace kroll
 	}
 
 	static KObjectRef global_object;
-	static VALUE m_missing(int argc, VALUE* argv, VALUE self)
+	static VALUE MethodMissing(int argc, VALUE* argv, VALUE self)
 	{
 		bool assignment = false;
 
@@ -82,6 +82,8 @@ namespace kroll
 		{
 			rval = RubyUtils::ToRubyValue(v);
 		}
+
+		free(name);
 		return rval;
 	}
 
@@ -105,15 +107,15 @@ namespace kroll
 	VALUE RubyEvaluator::GetContext(KObjectRef global)
 	{
 		std::string theid = this->GetContextId(global);
-		VALUE ctx = rb_gv_get(theid.c_str());
-		if (ctx == Qnil)
+		VALUE context = rb_gv_get(theid.c_str());
+		if (context == Qnil)
 		{
-			VALUE ctx_class = rb_define_class("KrollRubyContext", rb_cObject);
-			rb_define_method(ctx_class, "method_missing", VALUEFUNC(m_missing), -1); 
-			ctx = rb_obj_alloc(ctx_class);
-			rb_gv_set(theid.c_str(), ctx);
+			VALUE contextClass = rb_define_class("KrollRubyContext", rb_cObject);
+			rb_define_method(contextClass, "method_missing", VALUEFUNC(MethodMissing), -1); 
+			context = rb_obj_alloc(contextClass);
+			rb_gv_set(theid.c_str(), context);
 		}
-		return ctx;
+		return context;
 	}
 
 	VALUE reval_do_call(VALUE args)
