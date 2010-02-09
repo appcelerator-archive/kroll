@@ -36,7 +36,7 @@ namespace UTILS_NS
 {
 namespace PlatformUtils
 {
-	void GetNodeId(NodeId& id)
+	void GetFirstMACAddressImpl(MACAddress& address)
 	{
 		PIP_ADAPTER_INFO pAdapterInfo;
 		PIP_ADAPTER_INFO pAdapter = 0;
@@ -62,9 +62,9 @@ namespace PlatformUtils
 				pAdapter = pAdapterInfo;
 				while (pAdapter && !found)
 				{
-					if (pAdapter->Type == MIB_IF_TYPE_ETHERNET && pAdapter->AddressLength == sizeof(id))
+					if (pAdapter->Type == MIB_IF_TYPE_ETHERNET && pAdapter->AddressLength == sizeof(address))
 					{
-						std::memcpy(&id, pAdapter->Address, pAdapter->AddressLength);
+						std::memcpy(&address, pAdapter->Address, pAdapter->AddressLength);
 						found = true;
 					}
 					pAdapter = pAdapter->Next;
