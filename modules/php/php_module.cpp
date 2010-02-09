@@ -66,8 +66,6 @@ namespace kroll
 		php_load_extension((char*) systemPath.c_str(), 1, 1 TSRMLS_CC);
 		systemPath = FileUtils::Join(UTF8ToSystem(this->GetPath()).c_str(), "php_openssl.dll", 0);
 		php_load_extension((char*) systemPath.c_str(), 1, 1 TSRMLS_CC);
-		systemPath = FileUtils::Join(UTF8ToSystem(this->GetPath()).c_str(), "php_gd2.dll", 0);
-		php_load_extension((char*) systemPath.c_str(), 1, 1 TSRMLS_CC);
 		systemPath = FileUtils::Join(UTF8ToSystem(this->GetPath()).c_str(), "php_curl.dll", 0);
 		php_load_extension((char*) systemPath.c_str(), 1, 1 TSRMLS_CC);
 #endif
