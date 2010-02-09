@@ -43,7 +43,7 @@ namespace UTILS_NS
 {
 namespace PlatformUtils
 {
-	void GetNodeId(NodeId& id)
+	void GetFirstMACAddressImpl(MACAddress& address)
 	{
 		//Based on code from:
 		//http://adywicaksono.wordpress.com/2007/11/08/detecting-mac-address-using-c-application/
@@ -76,11 +76,7 @@ namespace PlatformUtils
 
 			if (success)
 			{
-				memcpy(&id, addr, sizeof(id));
-			}
-			else
-			{
-				throw "00:00:00:00:00:00";
+				memcpy(&address, addr, sizeof(address));
 			}
 		}
 	}

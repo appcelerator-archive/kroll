@@ -135,7 +135,7 @@ class BuildConfig(object):
 
 			self.env['CC'] = ['gcc', '-arch', 'i386', '-arch', 'ppc']
 			self.env['CXX'] = ['gcc', '-arch', 'i386', '-arch', 'ppc']
-			self.env.Append(FRAMEWORKS=['Foundation'])
+			self.env.Append(FRAMEWORKS=['Foundation', 'IOKit'])
 			self.env.Append(CXXFLAGS=['-isysroot', sdk_dir, sdk_minversion, '-x', 'objective-c++'])
 			self.env.Append(LINKFLAGS=['-isysroot', sdk_dir, '-syslibroot,' + sdk_dir, '-lstdc++', sdk_minversion])
 			self.env.Append(CPPFLAGS=[
