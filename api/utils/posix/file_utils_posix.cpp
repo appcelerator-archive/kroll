@@ -120,7 +120,7 @@ namespace UTILS_NS
 #endif
 	}
 
-	bool FileUtils::DeleteDirectory(std::string &dir)
+	bool FileUtils::DeleteDirectory(const std::string &dir)
 	{
 #ifdef OS_OSX
 		[[NSFileManager defaultManager] removeFileAtPath:[NSString stringWithCString:dir.c_str() encoding:NSUTF8StringEncoding] handler:nil];

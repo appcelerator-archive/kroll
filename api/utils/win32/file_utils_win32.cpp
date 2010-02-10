@@ -77,7 +77,7 @@ namespace FileUtils
 		return FileHasAttributes(file, 0);
 	}
 
-	bool IsFile(std::wstring& file)
+	bool IsFile(const std::wstring& file)
 	{
 		return FileHasAttributes(file, 0);
 	}
@@ -123,12 +123,8 @@ namespace FileUtils
 	{
 		std::ostringstream contents;
 		// CreateFile doesn't have a path length limitation
-		HANDLE file = CreateFileW(widePath.c_str(),
-			GENERIC_READ, 
-			FILE_SHARE_READ,
-			NULL,
-			OPEN_EXISTING,
-			FILE_ATTRIBUTE_NORMAL,
+		HANDLE file = CreateFileW(widePath.c_str(), GENERIC_READ, 
+			FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL,
 			NULL);
 		
 		DWORD bytesRead;
@@ -137,15 +133,13 @@ namespace FileUtils
 		
 		do
 		{
-			BOOL result = ::ReadFile(file,
-				readBuffer,
-				bufferSize-2,
-				&bytesRead,
-				NULL);
+			BOOL result = ::ReadFile(file, readBuffer,
+				bufferSize-2, &bytesRead, NULL);
 			
 			if (!result && GetLastError() != ERROR_HANDLE_EOF)
 			{
-				fprintf(stderr, "Could not read from file. Error: %s\n",
+				fprintf(stderr, "Could not read from file(%s). Error: %s\n",
+					UTILS_NS::WideToUTF8(widePath).c_str(),
 					Win32Utils::QuickFormatMessage(GetLastError()).c_str());
 				CloseHandle(file);
 				return std::string();
@@ -185,13 +179,13 @@ namespace FileUtils
 		return (::CreateDirectoryW(wideDir.c_str(), NULL) == TRUE);
 	}
 
-	bool DeleteFile(std::string &path)
+	bool DeleteFile(const std::string &path)
 	{
 		// SHFileOperation doesn't care if it's a dir or file -- delegate
 		return DeleteDirectory(path);
 	}
 	
-	bool DeleteDirectory(std::string &dir)
+	bool DeleteDirectory(const std::string &dir)
 	{
 		std::wstring wideDir(UTILS_NS::UTF8ToWide(dir));
 		SHFILEOPSTRUCT op;

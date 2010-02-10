@@ -67,7 +67,7 @@ namespace UTILS_NS
 		/**
 		 * Recursively delete the directory at the given path
 		 */
-		KROLL_API bool DeleteDirectory(std::string &dir);
+		KROLL_API bool DeleteDirectory(const std::string &dir);
 
 		/**
 		 * This function joins paths together in an OS specific way. Empty elements --

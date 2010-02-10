@@ -28,13 +28,13 @@ namespace UTILS_NS
 			std::string exclude = "");
 
 		/* Some wchar versions of popular FileUtils functions */
-		KROLL_API bool IsFile(std::wstring& path);
-		KROLL_API std::string ReadFile(std::wstring& path);
+		KROLL_API bool IsFile(const std::wstring& path);
+		KROLL_API std::string ReadFile(const std::wstring& path);
 
 		/**
 		 * Delete the file at the given path
 		 */
-		KROLL_API bool DeleteFile(std::string &path);
+		KROLL_API bool DeleteFile(const std::string &path);
 	}
 
 	KROLL_API std::wstring UTF8ToWide(const std::string& in);
