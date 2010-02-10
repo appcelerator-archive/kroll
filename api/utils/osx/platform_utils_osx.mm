@@ -4,6 +4,7 @@
  * Copyright (c) 2009-2010 Appcelerator, Inc. All Rights Reserved.
  */
 #include "../utils.h"
+#include <Foundation/Foundation.h>
 #include <IOKit/IOKitLib.h>
 #include <IOKit/network/IOEthernetInterface.h>
 #include <IOKit/network/IONetworkInterface.h>
@@ -61,7 +62,7 @@ namespace UTILS_NS
 		IOObjectRelease(service);
 	}
 
-	std::string GetUsername()
+	std::string PlatformUtils::GetUsername()
 	{
 		return std::string([NSUserName() UTF8String]);
 	}
