@@ -20,18 +20,16 @@ using Poco::Mutex;
 
 namespace kroll
 {
-	bool Win32Host::oleInitialized = false;
 	static UINT tickleRequestMessage =
 		::RegisterWindowMessageA(PRODUCT_NAME"TickleRequest");
-
-	/*static*/
-	void Win32Host::InitOLE()
+	bool static MainThreadJobsTickleHandler(HWND hWnd, UINT message,
+		WPARAM wParam, LPARAM lParam)
 	{
-		if (!oleInitialized)
-		{
-			OleInitialize(NULL);
-			oleInitialized = true;
-		}
+		if (message != tickleRequestMessage)
+			return false;
+
+		Host::GetInstance()->RunMainThreadJobs();
+		return true;
 	}
 
 	Win32Host::Win32Host(HINSTANCE hInstance, int argc, const char** argv) :
@@ -39,15 +37,13 @@ namespace kroll
 		instanceHandle(hInstance),
 		eventWindow(hInstance)
 	{
-		InitOLE();
+		OleInitialize(NULL);
+		this->AddMessageHandler(&MainThreadJobsTickleHandler);
 	}
 
 	Win32Host::~Win32Host()
 	{
-		if (oleInitialized)
-		{
-			OleUninitialize();
-		}
+		OleUninitialize();
 	}
 
 	const char* Win32Host::GetPlatform()
@@ -83,9 +79,6 @@ namespace kroll
 		MSG message;
 		if (GetMessage(&message, NULL, 0, 0))
 		{
-			if (message.message == tickleRequestMessage)
-				this->RunMainThreadJobs();
-
 			// Always translate/dispatch this message, in case
 			// we are polluting the message namespace
 			// .. i'm looking at you flash!
@@ -140,8 +133,7 @@ namespace kroll
 
 	void Win32Host::SignalNewMainThreadJob()
 	{
-		// send a message to tickle the windows message queue
-		PostThreadMessage(mainThreadId, tickleRequestMessage, 0, 0);
+		PostMessage(eventWindow.GetHandle(), tickleRequestMessage, 0, 0);
 	}
 
 	HWND Win32Host::AddMessageHandler(MessageHandler handler)

@@ -28,7 +28,6 @@ namespace kroll
 	public:
 		Win32Host(HINSTANCE hInstance, int argc, const char **argv);
 		virtual ~Win32Host();
-		static void InitOLE();
 		virtual Module* CreateModule(std::string& path);
 		const char* GetPlatform();
 		const char* GetModuleSuffix();
@@ -49,7 +48,6 @@ namespace kroll
 
 	private:
 		HINSTANCE instanceHandle;
-		static bool oleInitialized;
 		DWORD mainThreadId;
 		EventWindow eventWindow;
 	};
