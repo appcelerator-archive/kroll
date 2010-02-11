@@ -46,7 +46,6 @@ namespace kroll
 		{
 			PyObject *p = PyTuple_GetItem(this->tuple, index);
 			KValueRef v = PythonUtils::ToKrollValue(p);
-			Py_DECREF(p);
 			return v;
 		}
 		else
