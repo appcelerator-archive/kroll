@@ -14,7 +14,7 @@ namespace kroll
 	class KROLL_API PreprocessData : public ReferenceCounted
 	{
 	public:
-		BlobRef data;
+		BytesRef data;
 		std::string mimeType;
 	};
 	

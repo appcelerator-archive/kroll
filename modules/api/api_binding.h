@@ -88,7 +88,7 @@ namespace kroll
 		void _CreateKObject(const ValueList& args, KValueRef result);
 		void _CreateKMethod(const ValueList& args, KValueRef result);
 		void _CreateKList(const ValueList& args, KValueRef result);
-		void _CreateBlob(const ValueList& args, KValueRef result);
+		void _CreateBytes(const ValueList& args, KValueRef result);
 	};
 
 	/**

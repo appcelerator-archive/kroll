@@ -12,11 +12,11 @@ namespace kroll
 	class KROLL_API ReadEvent : public Event
 	{
 	public:
-		ReadEvent(AutoPtr<KEventObject> target, BlobRef);
+		ReadEvent(AutoPtr<KEventObject> target, BytesRef);
 		void _GetData(const ValueList&, KValueRef result);
 
 	protected:
-		BlobRef data;
+		BytesRef data;
 	};
 }
 #endif

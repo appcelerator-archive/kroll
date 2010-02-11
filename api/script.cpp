@@ -144,7 +144,7 @@ namespace kroll
 						KValueRef objectData = object->Get("data");
 						if (objectData->IsObject())
 						{
-							BlobRef blobData = objectData->ToObject().cast<Blob>();
+							BytesRef blobData = objectData->ToObject().cast<Bytes>();
 							if (!blobData.isNull())
 							{
 								data->data = blobData;
@@ -152,7 +152,7 @@ namespace kroll
 						}
 						else if (objectData->IsString())
 						{
-							data->data = new Blob(objectData->ToString(), strlen(objectData->ToString()));
+							data->data = new Bytes(objectData->ToString(), strlen(objectData->ToString()));
 						}
 					}
 					else

@@ -4,8 +4,8 @@
  * Copyright (c) 2009 Appcelerator, Inc. All Rights Reserved.
  */
 
-#ifndef _KR_BLOB_OBJECT_H_
-#define _KR_BLOB_OBJECT_H_
+#ifndef _KR_BYTES_OBJECT_H_
+#define _KR_BYTES_OBJECT_H_
 
 #include "../kroll.h"
 #include <vector>
@@ -19,29 +19,29 @@ namespace kroll
 	/**
 	 * An object that represents an arbitrary amount of binary data§
 	 */
-	class KROLL_API Blob : public StaticBoundObject
+	class KROLL_API Bytes : public StaticBoundObject
 	{
 	public:
 		/**
-		 * If makeCopy is false: create a Blob from a heap-allocated
-		 * pointer. The blob * will keep the pointer to this string,
+		 * If makeCopy is false: create a Bytes from a heap-allocated
+		 * pointer. The bytes will keep the pointer to this string,
 		 * so do not free it afterward. The buffer should be size+1
 		 * bytes long and NULL terminated.
 		 */
-		Blob();
-		Blob(char *buffer, long size, bool makeCopy=true);
-		Blob(const char *buffer, long size, bool makeCopy=true);
-		Blob(std::string);
-		Blob(std::string&);
-		Blob(Poco::Data::BLOB* blob);
-		Blob(long byte);
-		virtual ~Blob();
+		Bytes();
+		Bytes(char *buffer, long size, bool makeCopy=true);
+		Bytes(const char *buffer, long size, bool makeCopy=true);
+		Bytes(std::string);
+		Bytes(std::string&);
+		Bytes(Poco::Data::BLOB* bytes);
+		Bytes(long byte);
+		virtual ~Bytes();
 
-		BlobRef Concat(std::vector<BlobRef>& blobs);
+		BytesRef Concat(std::vector<BytesRef>& bytes);
 		const char* Get() { return buffer; }
 		const long Length() { return length; }
 
-		static BlobRef GlobBlobs(std::vector<BlobRef>& blobs);
+		static BytesRef GlobBytes(std::vector<BytesRef>& bytes);
 
 	private:
 		char* buffer;

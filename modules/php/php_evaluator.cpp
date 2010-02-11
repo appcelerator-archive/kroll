@@ -215,7 +215,7 @@ namespace kroll
 
 		string output(PHPModule::GetBuffer().str());
 		KObjectRef o = new StaticBoundObject();
-		o->SetObject("data", new Blob(output.c_str(), output.size(), true));
+		o->SetObject("data", new Bytes(output.c_str(), output.size(), true));
 		o->SetString("mimeType", PHPModule::GetMimeType().c_str());
 		result->SetObject(o);
 

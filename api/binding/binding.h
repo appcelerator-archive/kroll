@@ -34,7 +34,7 @@ namespace kroll
 #include "k_accessor_list.h"
 #include "k_accessor_method.h"
 #include "scope_method_delegate.h"
-#include "blob.h"
+#include "bytes.h"
 #include "void_ptr.h"
 #include "event.h"
 #include "read_event.h"

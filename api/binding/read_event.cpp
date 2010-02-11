@@ -7,7 +7,7 @@
 #include "../kroll.h"
 namespace kroll
 {
-	ReadEvent::ReadEvent(AutoPtr<KEventObject> target, BlobRef data) :
+	ReadEvent::ReadEvent(AutoPtr<KEventObject> target, BytesRef data) :
 		Event(target, Event::READ),
 		data(data)
 	{

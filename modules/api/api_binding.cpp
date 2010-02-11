@@ -197,12 +197,13 @@ namespace kroll
 		this->SetMethod("createKList", &APIBinding::_CreateKList);
 
 		/**
-		 * @tiapi(method=True,name=API.createBlob,since=0.5) Create a Kroll Blob object.
-		 * @tiarg[String, contents, optional=true] The contents of the new Blob.
+		 * @tiapi(method=True,name=API.createBytes,since=0.9) Create a Kroll Bytes object.
+		 * @tiarg[String, contents, optional=true] The contents of the new Bytes.
 		 * @tiarg The blob will be empty if none are given.
-		 * @tiresult[Blob] A new Blob.
+		 * @tiresult[Bytes] A new Bytes.
 		 */
-		this->SetMethod("createBlob", &APIBinding::_CreateBlob);
+		this->SetMethod("createBytes", &APIBinding::_CreateBytes);
+		this->SetMethod("createBlob", &APIBinding::_CreateBytes);
 
 		/**
 		 * @tiapi(method=True,name=API.log,since=0.2)
@@ -926,39 +927,39 @@ namespace kroll
 		}
 	}
 
-	static void GetBlobs(KValueRef value, std::vector<BlobRef>& blobs)
+	static void GetBytes(KValueRef value, std::vector<BytesRef>& blobs)
 	{
 		if (value->IsObject())
 		{
-			blobs.push_back(value->ToObject().cast<Blob>());
+			blobs.push_back(value->ToObject().cast<Bytes>());
 		}
 		else if (value->IsString())
 		{
-			blobs.push_back(new Blob(value->ToString()));
+			blobs.push_back(new Bytes(value->ToString()));
 		}
 		else if (value->IsList())
 		{
 			KListRef list = value->ToList();
 			for (size_t j = 0; j < list->Size(); j++)
 			{
-				GetBlobs(list->At(j), blobs);
+				GetBytes(list->At(j), blobs);
 			}
 		}
 		else if (value->IsNumber())
 		{
-			blobs.push_back(new Blob(value->ToInt()));
+			blobs.push_back(new Bytes(value->ToInt()));
 		}
 	}
 	
-	void APIBinding::_CreateBlob(const ValueList& args, KValueRef result)
+	void APIBinding::_CreateBytes(const ValueList& args, KValueRef result)
 	{
-		args.VerifyException("createBlob", "?s|o|l|i");
-		std::vector<BlobRef> blobs;
+		args.VerifyException("createBytes", "?s|o|l|i");
+		std::vector<BytesRef> blobs;
 		for (size_t i = 0; i < args.size(); i++)
 		{
-			GetBlobs(args.at(i), blobs);
+			GetBytes(args.at(i), blobs);
 		}
-		result->SetObject(Blob::GlobBlobs(blobs));
+		result->SetObject(Bytes::GlobBytes(blobs));
 	}
 
 	KObjectWrapper::KObjectWrapper(KObjectRef object) :

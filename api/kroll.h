@@ -44,7 +44,7 @@ namespace kroll
 
 	class GlobalObject;
 	class ScopeMethodDelegate;
-	class Blob;
+	class Bytes;
 	class VoidPtr;
 	class ValueReleasePolicy;
 	class Logger;
@@ -54,7 +54,7 @@ namespace kroll
 	typedef AutoPtr<KObject> KObjectRef;
 	typedef AutoPtr<KMethod> KMethodRef;
 	typedef AutoPtr<KList> KListRef;
-	typedef AutoPtr<Blob> BlobRef;
+	typedef AutoPtr<Bytes> BytesRef;
 
 	typedef SharedPtr<std::string> SharedString;
 	typedef std::vector<SharedString> StringList;
