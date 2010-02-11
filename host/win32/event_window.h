@@ -13,7 +13,7 @@ namespace kroll
 {
 	class EventWindow
 	{
-		public:
+	public:
 		EventWindow(HINSTANCE hInstance);
 		virtual ~EventWindow();
 		void DestroyWindow();
@@ -22,7 +22,7 @@ namespace kroll
 			HWND hwnd, unsigned int message, WPARAM wParam, LPARAM lParam);
 		HWND GetHandle() { return handle; }
 		
-		private:
+	private:
 		HINSTANCE hInstance;
 		HWND handle;
 		Logger* logger;

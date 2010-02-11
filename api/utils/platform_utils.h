@@ -7,10 +7,11 @@
 #define _KR_PLATFORM_UTILS_H_
 #include <string>
 #include "poco/KTypes.h"
+#define MAC_ADDRESS_SIZE 6
 
 namespace UTILS_NS
 {
-	typedef KPoco::KUInt8 NodeId[6]; /// Ethernet address.
+	typedef KPoco::KUInt8 MACAddress[MAC_ADDRESS_SIZE]; /// Ethernet address.
 
 	namespace PlatformUtils
 	{
@@ -24,7 +25,7 @@ namespace UTILS_NS
 		 * Get the first MAC address of this computer
 		 * @returns the first MAC address in standard dotted format
 		 */
-		KROLL_API void GetNodeId(NodeId&);
+		KROLL_API void GetFirstMACAddressImpl(MACAddress&);
 
 		/**
 		 * Get the machine ID of this machine from the .PRODUCT_NAME file

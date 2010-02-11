@@ -61,13 +61,16 @@ namespace kroll
 #ifdef OS_WIN32
 		// Manually load some PHP extensions for Windows.
 		TSRMLS_FETCH();
-		std::string systemPath =
-			FileUtils::Join(UTF8ToSystem(this->GetPath()).c_str(), "php_gd2.dll", 0);
-		php_load_extension((char*) systemPath.c_str(), 1, 1 TSRMLS_CC);
-		systemPath = FileUtils::Join(UTF8ToSystem(this->GetPath()).c_str(), "php_openssl.dll", 0);
-		php_load_extension((char*) systemPath.c_str(), 1, 1 TSRMLS_CC);
-		systemPath = FileUtils::Join(UTF8ToSystem(this->GetPath()).c_str(), "php_curl.dll", 0);
-		php_load_extension((char*) systemPath.c_str(), 1, 1 TSRMLS_CC);
+		std::string phpPath(UTF8ToSystem(this->GetPath()));
+
+		std::string modPath(FileUtils::Join(phpPath.c_str(), "php_gd2.dll", 0));
+		php_load_extension((char*) modPath.c_str(), 1, 1 TSRMLS_CC);
+		modPath = FileUtils::Join(phpPath.c_str(), "php_openssl.dll", 0);
+		php_load_extension((char*) modPath.c_str(), 1, 1 TSRMLS_CC);
+		modPath = FileUtils::Join(phpPath.c_str(), "php_curl.dll", 0);
+		php_load_extension((char*) modPath.c_str(), 1, 1 TSRMLS_CC);
+		modPath = FileUtils::Join(phpPath.c_str(), "php_xls.dll", 0);
+		php_load_extension((char*) modPath.c_str(), 1, 1 TSRMLS_CC);
 #endif
 	}
 

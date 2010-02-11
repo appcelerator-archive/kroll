@@ -254,24 +254,18 @@ namespace KrollBoot
 
 int main(int argc, char* argv[])
 {
-	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+	NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
 	KrollBoot::argc = argc;
 	KrollBoot::argv = (const char**) argv;
-
-	[[NSApplication sharedApplication] setDelegate:
-		[[KrollApplicationDelegate alloc] init]];
-	NSApplicationLoad();
+	int rc = 0;
 
 #ifdef USE_BREAKPAD
 	if (argc > 2 && !strcmp(CRASH_REPORT_OPT, argv[1]))
 	{
 		KrollBoot::SendCrashReport();
-		[pool release];
-		return 0;
 	}
+	else
 #endif
-
-	int rc;
 	if (!EnvironmentUtils::Has(BOOTSTRAP_ENV))
 	{
 		rc = KrollBoot::Bootstrap();
@@ -279,16 +273,18 @@ int main(int argc, char* argv[])
 	else
 	{
 #ifdef USE_BREAKPAD
-	// Our blastoff execv seems to fail if this handler is installed
-	// for the first stage of the boot -- so install it here.
-	NSString * tempPath = NSTemporaryDirectory();
-	if (tempPath == nil)
-		tempPath = @"/tmp";
-	string dumpPath = [tempPath UTF8String];
-	KrollBoot::breakpad = new google_breakpad::ExceptionHandler(
-		dumpPath, NULL, KrollBoot::HandleCrash, NULL, true);
+		// Our blastoff execv seems to fail if this handler is installed
+		// for the first stage of the boot -- so install it here.
+		NSString* tempPath = NSTemporaryDirectory();
+		if (tempPath == nil)
+			tempPath = @"/tmp";
+		string dumpPath = [tempPath UTF8String];
+		KrollBoot::breakpad = new google_breakpad::ExceptionHandler(
+			dumpPath, NULL, KrollBoot::HandleCrash, NULL, true);
 #endif
-		EnvironmentUtils::Unset(BOOTSTRAP_ENV);
+		[[NSApplication sharedApplication] setDelegate:
+			[[KrollApplicationDelegate alloc] init]];
+			NSApplicationLoad(); EnvironmentUtils::Unset(BOOTSTRAP_ENV);
 		rc = KrollBoot::StartHost();
 	}
 
