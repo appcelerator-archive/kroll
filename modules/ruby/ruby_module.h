@@ -67,11 +67,6 @@ namespace kroll
 		{
 			return instance_;
 		}
-		virtual const char * GetDescription()
-		{
-			return "Ruby Module Loader";
-		}
-
 
 	private:
 		KObjectRef binding;

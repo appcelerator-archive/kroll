@@ -44,7 +44,6 @@ namespace kroll
 	public:
 		virtual bool IsModule(std::string& path);
 		virtual Module* CreateModule(std::string& path);
-		virtual const char * GetDescription() { return "Javascript Module Loader"; }
 
 		Host* GetHost()
 		{

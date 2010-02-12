@@ -38,6 +38,25 @@ using Poco::Environment;
 #define LOGPATH_ARG "--logpath"
 #define BOOT_HOME_ARG "--start"
 
+#ifdef OS_WIN32
+#define MODULE_SUFFIX "dll"
+#elif OS_OSX
+#define MODULE_SUFFIX "dylib"
+#elif OS_LINUX
+#define MODULE_SUFFIX "so"
+#endif
+
+#ifndef OS_WIN32
+extern "C"
+{
+	int Execute(int argc, const char **argv)
+	{
+		Host host(argc, argv);
+		return host.Run();
+	}
+}
+#endif
+
 namespace kroll
 {
 	static Host* hostInstance;
@@ -71,13 +90,26 @@ namespace kroll
 			this->debug = (debug_val == "true" || debug_val == "yes" || debug_val == "1");
 		}
 
-		this->SetupLogging(); // Depends on command-line arguments and this->debug
-		this->SetupProfiling(); // Depends on logging
+		this->SetupLogging();
+		this->SetupProfiling();
+
+		// Call into the platform-specific initialization.
+		this->Initialize(argc, argv);
 	}
 
 	Host* Host::GetInstance()
 	{
 		return hostInstance;
+	}
+
+	static void AssertEnvironmentVariable(std::string variable)
+	{
+		if (!Environment::has(variable))
+		{
+			Logger* logger = Logger::Get("Host");
+			logger->Fatal("required variable '%s' not defined, aborting.");
+			exit(__LINE__);
+		}
 	}
 
 	void Host::SetupApplication(int argc, const char* argv[])
@@ -138,10 +170,6 @@ namespace kroll
 		this->logger = Logger::Get("Host");
 	}
 
-	Host::~Host()
-	{
-	}
-
 	void Host::SetupProfiling()
 	{
 		if (this->profile)
@@ -167,16 +195,6 @@ namespace kroll
 			profileStream->close();
 			profileStream = 0;
 			this->profile = false;
-		}
-	}
-
-	void Host::AssertEnvironmentVariable(std::string variable)
-	{
-		if (!Environment::has(variable))
-		{
-			Logger* logger = Logger::Get("Host");
-			logger->Fatal("required variable '%s' not defined, aborting.");
-			exit(-999);
 		}
 	}
 
@@ -286,9 +304,9 @@ namespace kroll
 
 	bool Host::IsModule(std::string& filename)
 	{
-		std::string suffix = this->GetModuleSuffix();
+		static std::string suffix("module."MODULE_SUFFIX);
 		bool isModule = (filename.length() > suffix.length() && filename.substr(
-				filename.length() - suffix.length()) == suffix);
+			filename.length() - suffix.length()) == suffix);
 
 		return isModule;
 	}
@@ -414,7 +432,7 @@ namespace kroll
 			Poco::File f = *iter;
 			if (!f.isDirectory() && !f.isHidden())
 			{
-				std::string fpath = iter.path().absolute().toString();
+				std::string fpath(iter.path().absolute().toString());
 				if (IsModule(fpath))
 				{
 					this->LoadModule(fpath, this);
@@ -559,26 +577,10 @@ namespace kroll
 		}
 	}
 
-	bool Host::Start()
-	{
-		return true;
-	}
-
-	void Host::Stop ()
-	{
-	}
-
 	int Host::Run()
 	{
 		if (this->waitForDebugger)
-		{
-#ifdef OS_WIN32
-			DebugBreak();
-#else
-			printf("Waiting for debugger (Press Any Key to Continue pid=%i)...\n", getpid());
-			getchar();
-#endif
-		}
+			this->WaitForDebugger();
 
 		try
 		{
@@ -601,19 +603,9 @@ namespace kroll
 			return this->exitCode;
 		}
 
-		// Depending on the implementation of platform-specific host,
-		// it may block in Start() or implement a UI loop which will
-		// be continually called until it returns false.
 		try
 		{
-			if (this->Start())
-			{
-				// We want the Host implementation to decide
-				// when the best time to break out of the run
-				// loop is. This allows it to handle additional
-				// events if necessary.
 				while (this->RunLoop()) {}
-			}
 		}
 		catch (kroll::ValueException& e)
 		{
@@ -635,7 +627,6 @@ namespace kroll
 			return;
 
 		ScopedLock lock(&moduleMutex);
-		this->Stop();
 		this->UnloadModuleProviders();
 		this->UnloadModules();
 
@@ -648,16 +639,16 @@ namespace kroll
 	void Host::Exit(int exitCode)
 	{
 		logger->Notice("Received exit signal (%d)", exitCode);
-		if (GlobalObject::GetInstance()->FireEvent(Event::EXIT) &&
-			GlobalObject::GetInstance()->FireEvent(Event::APP_EXIT))
-		{
-			this->exitCode = exitCode;
-			this->exiting = true;
-		}
-		else
+		if (!GlobalObject::GetInstance()->FireEvent(Event::EXIT) ||
+			!GlobalObject::GetInstance()->FireEvent(Event::APP_EXIT))
 		{
 			logger->Notice("Exit signal canceled by event handler");
+			return;
 		}
+
+		this->exitCode = exitCode;
+		this->exiting = true;
+		this->ExitImpl(exitCode);
 	}
 
 	KValueRef Host::RunOnMainThread(KMethodRef method, const ValueList& args,

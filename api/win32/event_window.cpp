@@ -4,7 +4,8 @@
  * Copyright (c) 2009 Appcelerator, Inc. All Rights Reserved.
  */
 
-#include "event_window.h"
+#include "../kroll.h"
+
 namespace kroll
 {
 	const wchar_t* EventWindow::windowClassName = L"Kroll Event Window";

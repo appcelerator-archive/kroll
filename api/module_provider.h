@@ -28,14 +28,8 @@ namespace kroll
 	class EXPORT ModuleProvider
 	{
 	public:
-
 		ModuleProvider() {}
 		virtual ~ModuleProvider() {};
-
-		/**
-		 * @return The description of this module provider
-		 */
-		virtual const char * GetDescription() = 0;
 
 		/**
 		 * @param filename an absolute path to a file in the filesystem

@@ -3,75 +3,74 @@
  * see LICENSE in the root folder for details on the license.
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
-#include "host.h"
-#include <iostream>
-#include <cstring>
+
+#include "../kroll.h"
+
 #include <windows.h>
 #include <commctrl.h>
-#include <ole2.h>
-#include <stdio.h>
 #include <fcntl.h>
 #include <io.h>
-
+#include <ole2.h>
 #define MAX_CONSOLE_LINES 500;
-
-using Poco::ScopedLock;
-using Poco::Mutex;
 
 namespace kroll
 {
+	static void RedirectIOToConsole();
 	static UINT tickleRequestMessage =
 		::RegisterWindowMessageA(PRODUCT_NAME"TickleRequest");
+	static HINSTANCE instance = 0;
+	static DWORD mainThreadId;
+	EventWindow* eventWindow;
+
+	HINSTANCE Host::GetInstanceHandle()
+	{
+		return instance;
+	}
+
+	HWND Host::GetEventWindow()
+	{
+		return eventWindow->GetHandle();
+	}
+
 	bool static MainThreadJobsTickleHandler(HWND hWnd, UINT message,
 		WPARAM wParam, LPARAM lParam)
 	{
 		if (message != tickleRequestMessage)
 			return false;
-		
+
 		Host::GetInstance()->RunMainThreadJobs();
 		return true;
 	}
 
-	Win32Host::Win32Host(HINSTANCE hInstance, int argc, const char** argv) :
-		Host(argc, argv),
-		instanceHandle(hInstance),
-		eventWindow(hInstance)
+	void Host::Initialize(int argc, const char** argv)
 	{
+		eventWindow = new EventWindow(instance);
+		mainThreadId = GetCurrentThreadId();
 		OleInitialize(0);
 		this->AddMessageHandler(&MainThreadJobsTickleHandler);
+
+#ifndef DEBUG
+		// only create a debug console when not compiled in debug mode 
+		// otherwise, it should be autocreated
+		if (host->DebugModeEnabled())
+		{
+			RedirectIOToConsole();
+		}
+#endif
 	}
 
-	Win32Host::~Win32Host()
+	Host::~Host()
 	{
+		delete eventWindow;
 		OleUninitialize();
 	}
 
-	const char* Win32Host::GetPlatform()
+	void Host::WaitForDebugger()
 	{
-		return "win32";
+		DebugBreak();
 	}
 
-	const char* Win32Host::GetModuleSuffix()
-	{
-		return "module.dll";
-	}
-
-	bool Win32Host::Start()
-	{
-		// Windows DLLs often load libraries dynamically via LoadLibrary and expect
-		// dependencies to be on the DLL search path. Thus we really can't restore
-		// the original path here if we want things to continue working properly.
-		// This shouldn't be too much of an issue either, as long as programs that
-		// we launch rely on the safe dll search path.
-		// string origPath(EnvironmentUtils::Get("KR_ORIG_PATH"));
-		// EnvironmentUtils::Set("PATH", origPath);
-
-		Host::Start();
-		mainThreadId = GetCurrentThreadId();
-		return true;
-	}
-
-	bool Win32Host::RunLoop()
+	bool Host::RunLoop()
 	{
 		static bool postedQuitMessage = false;
 
@@ -102,7 +101,11 @@ namespace kroll
 		}
 	}
 
-	Module* Win32Host::CreateModule(std::string& path)
+	void Host::ExitImpl(int exitCode)
+	{
+	}
+
+	Module* Host::CreateModule(std::string& path)
 	{
 		std::wstring widePath(UTF8ToWide(path));
 		HMODULE module = LoadLibraryExW(widePath.c_str(),
@@ -126,25 +129,22 @@ namespace kroll
 		return create(this, FileUtils::GetDirectory(path).c_str());
 	}
 
-	bool Win32Host::IsMainThread()
+	bool Host::IsMainThread()
 	{
 		return mainThreadId == GetCurrentThreadId();
 	}
 
-	void Win32Host::SignalNewMainThreadJob()
+	void Host::SignalNewMainThreadJob()
 	{
-		PostMessage(eventWindow.GetHandle(), tickleRequestMessage, 0, 0);
+		PostMessage(eventWindow->GetHandle(), tickleRequestMessage, 0, 0);
 	}
 
-	HWND Win32Host::AddMessageHandler(MessageHandler handler)
+	HWND Host::AddMessageHandler(MessageHandler handler)
 	{
-		return eventWindow.AddMessageHandler(handler);
+		return eventWindow->AddMessageHandler(handler);
 	}
-}
 
-extern "C"
-{
-	void RedirectIOToConsole()
+	static void RedirectIOToConsole()
 	{
 		int hConHandle;
 		long lStdHandle;
@@ -187,18 +187,14 @@ extern "C"
 		// point to console as well
 		std::ios::sync_with_stdio();
 	}
+}
 
+extern "C"
+{
 	int Execute(HINSTANCE hInstance, int argc, const char **argv)
 	{
-		Host *host = new kroll::Win32Host(hInstance,argc,argv);
-#ifndef DEBUG
-		// only create a debug console when not compiled in debug mode 
-		// otherwise, it should be autocreated
-		if (host->DebugModeEnabled())
-		{
-			RedirectIOToConsole();
-		}
-#endif
-		return host->Run();
+		instance = hInstance;
+		Host host(argc, argv);
+		return host.Run();
 	}
 }

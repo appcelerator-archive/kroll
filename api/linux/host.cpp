@@ -4,20 +4,13 @@
  * Copyright (c) 2008, 2009 Appcelerator, Inc. All Rights Reserved.
  */
 
-#include "host.h"
+#include "../kroll.h"
 
-#include <iostream>
-#include <vector>
-#include <cstring>
 #include <dlfcn.h>
-#include <string>
-#include <gtk/gtk.h>
-#include <gdk/gdk.h>
-#include <api/kroll.h>
-
-#include <gnutls/gnutls.h>
 #include <gcrypt.h>
-#include <errno.h>
+#include <gdk/gdk.h>
+#include <gnutls/gnutls.h>
+#include <gtk/gtk.h>
 #include <pthread.h>
 
 GCRY_THREAD_OPTION_PTHREAD_IMPL;
@@ -26,60 +19,39 @@ using Poco::Mutex;
 
 namespace kroll
 {
+	static pthread_t mainThread = 0;
+
 	static gboolean MainThreadJobCallback(gpointer data)
 	{
 		static_cast<Host*>(data)->RunMainThreadJobs();
 		return TRUE;
 	}
 
-	LinuxHost::LinuxHost(int argc, const char *argv[]) : Host(argc, argv)
+	void Host::Initialize(int argc, const char *argv[])
 	{
 		gtk_init(&argc, (char***) &argv);
 
 		if (!g_thread_supported())
 			g_thread_init(NULL);
 
-		this->mainThread = pthread_self();
+		mainThread = pthread_self();
 
 		// Initialize gnutls for multi-threaded usage.
 		gcry_control(GCRYCTL_SET_THREAD_CBS, &gcry_threads_pthread);
 		gnutls_global_init();
 	}
 
-	LinuxHost::~LinuxHost()
+	Host::~Host()
 	{
 	}
 
-	void LinuxHost::Exit(int returnCode)
+	void Host::WaitForDebugger()
 	{
-		Host::Exit(returnCode);
-
-		// Check to see if the event handler cancelled this exit.
-		if (!this->exiting)
-			return;
-
-		// Only call this if gtk_main is running. If called when the gtk_main
-		// is not running, it will cause an assertion failure.
-		static bool mainLoopRunning = true;
-		if (mainLoopRunning)
-		{
-			mainLoopRunning = false;
-			gtk_main_quit();
-		}
-
+		printf("Waiting for debugger (Press Any Key to Continue pid=%i)...\n", getpid());
+		getchar();
 	}
 
-	const char* LinuxHost::GetPlatform()
-	{
-		return "linux";
-	}
-
-	const char* LinuxHost::GetModuleSuffix()
-	{
-		return "module.so";
-	}
-
-	bool LinuxHost::RunLoop()
+	bool Host::RunLoop()
 	{
 		string origPath(EnvironmentUtils::Get("KR_ORIG_LD_LIBRARY_PATH"));
 		EnvironmentUtils::Set("LD_LIBRARY_PATH", origPath);
@@ -89,7 +61,24 @@ namespace kroll
 		return false;
 	}
 
-	Module* LinuxHost::CreateModule(std::string& path)
+	void Host::SignalNewMainThreadJob()
+	{
+	}
+
+	void Host::ExitImpl(int exitCode)
+	{
+		// Only call this if gtk_main is running. If called when the gtk_main
+		// is not running, it will cause an assertion failure.
+		static bool mainLoopRunning = true;
+		if (mainLoopRunning)
+		{
+			mainLoopRunning = false;
+			gtk_main_quit();
+		}
+	}
+
+
+	Module* Host::CreateModule(std::string& path)
 	{
 		void* handle = dlopen(path.c_str(), RTLD_LAZY | RTLD_GLOBAL);
 		if (!handle)
@@ -107,21 +96,11 @@ namespace kroll
 				path.c_str(), dlerror());
 		}
 
-		std::string dir = FileUtils::GetDirectory(path);
-		return create(this, dir.c_str());
+		return create(this, FileUtils::GetDirectory(path).c_str());
 	}
 
-	bool LinuxHost::IsMainThread()
+	bool Host::IsMainThread()
 	{
-		return pthread_equal(this->mainThread, pthread_self());
-	}
-}
-
-extern "C"
-{
-	int Execute(int argc,const char **argv)
-	{
-		Host *host = new LinuxHost(argc,argv);
-		return host->Run();
+		return pthread_equal(mainThread, pthread_self());
 	}
 }

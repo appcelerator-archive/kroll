@@ -5,6 +5,7 @@
  */
 #ifndef _KR_WIN32_H_
 #define _KR_WIN32_H_
+#include "event_window.h"
 #include "basictypes.h"
 #include "port.h"
 #include "string16.h"

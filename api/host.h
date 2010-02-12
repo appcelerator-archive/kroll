@@ -1,4 +1,4 @@
-/**
+/*
  * Appcelerator Kroll - licensed under the Apache Public License 2
  * see LICENSE in the root folder for details on the license. 
  * Copyright (c) 2008, 2009 Appcelerator, Inc. All Rights Reserved.
@@ -22,7 +22,13 @@ namespace kroll
 	{
 	public:
 		Host(int argc, const char** argv);
+		~Host();
 
+		inline SharedApplication GetApplication() { return this->application; }
+		inline bool DebugModeEnabled() { return this->debug; }
+		inline bool ProfilingEnabled() { return this->profile; }
+		inline Poco::Timestamp::TimeDiff GetElapsedTime() { return timeStarted.elapsed(); }
+		inline KObjectRef GetGlobalObject() { return GlobalObject::GetInstance(); }
 		/**
 		 * Get the host singleton.
 		 */
@@ -36,7 +42,7 @@ namespace kroll
 		/**
 		 * Called to exit the host and terminate the process
 		 */
-		virtual void Exit(int exitcode);
+		void Exit(int exitcode);
 
 		/*
 		 * Call with a method and arguments to invoke the method on the UI thread.
@@ -55,13 +61,8 @@ namespace kroll
 		 * @param waitForCompletion block until method is finished (default: true)
 		 * @return the method's return value§
 		 */
-		virtual KValueRef RunOnMainThread(KMethodRef method, KObjectRef thisObject,
+		KValueRef RunOnMainThread(KMethodRef method, KObjectRef thisObject,
 			const ValueList& args, bool waitForCompletion=true);
-
-		/*
-		 * Return true if this thread is the main thread.
-		 */
-		virtual bool IsMainThread() = 0;
 
 		/**
 		 * Add a module provider to the host
@@ -103,28 +104,30 @@ namespace kroll
 		bool HasModule(std::string name);
 
 		/**
-		 * @param path The filesystem path of a module
-		 * @return true if the file is a native module (.dll / .dylib / .so)
-		 */
-		virtual bool IsModule(std::string& path);
-
-		/**
 		 * Execute all jobs waiting to be run on the main thread.
 		 */
 		void RunMainThreadJobs();
 
-		// TODO: We should eventually move away from sublcassing host.
-		virtual const char* GetDescription() { return "Native module"; }
-		virtual const char* GetPlatform() { return "Base"; }
-		virtual const char* GetModuleSuffix() { return "unimplemented"; }
+		/**
+		 * @param path The filesystem path of a module
+		 * @return true if the file is a native module (.dll / .dylib / .so)
+		 */
+		bool IsModule(std::string& path);
 
-		inline SharedApplication GetApplication() { return this->application; }
-		inline bool DebugModeEnabled() { return this->debug; }
-		inline bool ProfilingEnabled() { return this->profile; }
-		inline Poco::Timestamp::TimeDiff GetElapsedTime() { return timeStarted.elapsed(); }
-		inline KObjectRef GetGlobalObject() { return GlobalObject::GetInstance(); }
+		/*
+		 * Return true if this thread is the main thread.
+		 */
+		bool IsMainThread();
 
-	protected:
+		virtual Module* CreateModule(std::string& path);
+
+#ifdef OS_WIN32
+		HWND AddMessageHandler(MessageHandler handler);
+		HINSTANCE GetInstanceHandle();
+		HWND GetEventWindow();
+#endif
+
+	private:
 		ModuleList loadedModules;
 		Mutex moduleMutex;
 		std::vector<ModuleProvider *> moduleProviders;
@@ -138,13 +141,15 @@ namespace kroll
 		bool profile;
 		std::string profilePath;
 		std::string logFilePath;
-		Poco::FileOutputStream *profileStream;
+		Poco::FileOutputStream* profileStream;
 		bool consoleLogging;
 		bool fileLogging;
 		Logger* logger;
 		Poco::Timestamp timeStarted;
+		Poco::Mutex jobQueueMutex;
+		std::vector<MainThreadJob*> mainThreadJobs;
+		std::vector<std::string> invalidModuleFiles;
 
-		void AssertEnvironmentVariable(std::string);
 		ModuleProvider* FindModuleProvider(std::string& filename);
 		void ScanInvalidModuleFiles();
 		SharedPtr<Module> LoadModule(std::string& path, ModuleProvider *provider);
@@ -153,27 +158,21 @@ namespace kroll
 		void UnloadModuleProviders();
 		void FindBasicModules(std::string& dir);
 		void StartModules(std::vector<SharedPtr<Module> > modules);
-
-		virtual ~Host();
-		virtual bool Start();
-		virtual bool RunLoop() = 0;
-		virtual void Stop();
-		virtual void Shutdown();
-		virtual void SignalNewMainThreadJob() { }
-
-	private:
-		Poco::Mutex jobQueueMutex;
-		std::vector<MainThreadJob*> mainThreadJobs;
-		std::vector<std::string> invalidModuleFiles;
-
 		void SetupApplication(int argc, const char* argv[]);
 		void SetupLogging();
 		void SetupProfiling();
 		void StopProfiling();
 		void AddInvalidModuleFile(std::string path);
 		void ParseCommandLineArguments();
-
+		void Shutdown();
 		DISALLOW_EVIL_CONSTRUCTORS(Host);
+
+		// Platform-specific
+		void Initialize(int argc, const char* argv[]);
+		void WaitForDebugger();
+		bool RunLoop();
+		void SignalNewMainThreadJob();
+		void ExitImpl(int exitcode);
 	};
 
 	KROLL_API KValueRef RunOnMainThread(KMethodRef method, const ValueList& args,
@@ -182,5 +181,15 @@ namespace kroll
 		const ValueList& args, bool waitForCompletion=true);
 	KROLL_API bool IsMainThread();
 }
+
+extern "C"
+{
+#ifdef OS_WIN32
+	KROLL_API int Execute(HINSTANCE hInstance, int argc, const char **argv);
+#else
+	KROLL_API int Execute(int argc, const char **argv);
+#endif
+}
+
 #endif
 

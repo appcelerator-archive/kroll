@@ -71,7 +71,6 @@ namespace kroll
 		virtual Module* CreateModule(std::string& path);
 		void InitializeBinding();
 
-		virtual const char * GetDescription() { return "PHP Module Loader"; }
 		static PHPModule* Instance() { return instance_; }
 		static void SetBuffering(bool buffering);
 		static std::ostringstream& GetBuffer() { return buffer; }

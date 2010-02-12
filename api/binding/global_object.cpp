@@ -34,14 +34,12 @@ namespace kroll
 
 	void GlobalObject::GetVersion(const ValueList& args, KValueRef result)
 	{
-		static std::string version(PRODUCT_VERSION);
-		result->SetString(version);
+		result->SetString(PRODUCT_VERSION);
 	}
 
 	void GlobalObject::GetPlatform(const ValueList& args, KValueRef result)
 	{
-		static std::string platform(Host::GetInstance()->GetPlatform());
-		result->SetString(platform);
+		result->SetString(OS_NAME);
 	}
 
 	/*static*/

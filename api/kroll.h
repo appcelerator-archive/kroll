@@ -88,7 +88,6 @@ namespace kroll
 #include "module.h"
 #include "async_job.h"
 #include "main_thread_job.h"
-#include "host.h"
 #include "script.h"
 
 #ifdef OS_OSX
@@ -96,5 +95,7 @@ namespace kroll
 #elif defined(OS_WIN32)
 #include "win32/win32.h"
 #endif
+
+#include "host.h"
 
 #endif

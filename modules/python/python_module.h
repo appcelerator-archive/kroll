@@ -46,14 +46,11 @@ namespace kroll
 		virtual Module* CreateModule(std::string& path);
 		void InitializeBinding();
 
-		virtual const char * GetDescription() 
-		{
-			return "Python Module Loader";
-		}
 		Host* GetHost()
 		{
 			return host;
 		}
+
 		static PythonModule* Instance()
 		{
 			return instance_;

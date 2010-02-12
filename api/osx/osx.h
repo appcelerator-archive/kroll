@@ -5,7 +5,6 @@
  */
 #include "../base.h"
 #include "nslog_channel.h"
-#include "host.h"
 
 #import <Foundation/Foundation.h>
 
