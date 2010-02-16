@@ -8,11 +8,10 @@
 #define _SCRIPT_BINDING_H
 
 #include <kroll/kroll.h>
-#include "api.h"
 
 namespace kroll
 {
-	class KROLL_API_API ScriptBinding : public StaticBoundObject
+	class KROLL_API ScriptBinding : public StaticBoundObject
 	{
 	public:
 		ScriptBinding();

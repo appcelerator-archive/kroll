@@ -152,7 +152,7 @@ namespace kroll
 
 		ModuleProvider* FindModuleProvider(std::string& filename);
 		void ScanInvalidModuleFiles();
-		SharedPtr<Module> LoadModule(std::string& path, ModuleProvider *provider);
+		SharedPtr<Module> LoadModule(std::string& path, ModuleProvider* provider);
 		void LoadModules();
 		void UnloadModules();
 		void UnloadModuleProviders();

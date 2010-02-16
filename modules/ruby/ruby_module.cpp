@@ -6,10 +6,13 @@
 #include "ruby_module.h"
 #include <Poco/Path.h>
 
+extern "C" EXPORT RubyModule* CreateModule(Host *host, const char* path)
+{
+	return new RubyModule(host, path);
+}
+
 namespace kroll
 {
-	KROLL_MODULE(RubyModule, STRING(MODULE_NAME), STRING(MODULE_VERSION));
-
 	RubyModule* RubyModule::instance_ = NULL;
 
 	void RubyModule::Initialize()

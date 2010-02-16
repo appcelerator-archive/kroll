@@ -51,6 +51,12 @@
 #include <kroll/kroll.h>
 #endif
 
+namespace kroll 
+{
+	class PHPModuleInstance;
+	class PHPModule;
+}
+
 #include "php_api.h"
 #include "php_utils.h"
 #include "k_php_object.h"
@@ -59,14 +65,26 @@
 #include "k_php_list.h"
 #include "k_php_array_object.h"
 #include "php_evaluator.h"
+#include "php_module_instance.h"
 
 namespace kroll
 {
-	class PHPModule : public Module, public ModuleProvider
+	class KROLL_PHP_API PHPModule : public Module, public ModuleProvider
 	{
-		KROLL_MODULE_CLASS(PHPModule)
-
 	public:
+		PHPModule(Host* host, const char* path) :
+			Module(host, path, STRING(MODULE_NAME), STRING(MODULE_VERSION))
+		{
+
+		}
+
+		~PHPModule()
+		{
+
+		}
+		void Initialize();
+		void Stop();
+
 		virtual bool IsModule(std::string& path);
 		virtual Module* CreateModule(std::string& path);
 		void InitializeBinding();
@@ -79,7 +97,7 @@ namespace kroll
 		void PushURI(Poco::URI& uri) { uriStack.push(new Poco::URI(uri)); }
 		void PopURI() { Poco::URI* uri = uriStack.top(); uriStack.pop(); delete uri; }
 		Poco::URI* GetURI() { return uriStack.size() == 0 ? 0 : uriStack.top(); }
-		
+
 	private:
 		KObjectRef binding;
 		static std::ostringstream buffer;
@@ -90,7 +108,5 @@ namespace kroll
 		DISALLOW_EVIL_CONSTRUCTORS(PHPModule);
 	};
 }
-
-#include "php_module_instance.h"
 
 #endif

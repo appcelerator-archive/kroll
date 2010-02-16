@@ -7,15 +7,26 @@
 #define _API_PLUGIN_H
 
 #include <kroll/kroll.h>
-#include "api.h"
 #include "api_binding.h"
 
 namespace kroll
 {
-	class KROLL_API_API APIModule : public Module
+	class KROLL_API APIModule : public Module
 	{
-		KROLL_MODULE_CLASS(APIModule)
+	public:
+		APIModule(Host* host, const char* path) :
+			Module(host, path, STRING(MODULE_NAME), STRING(MODULE_VERSION))
+		{
 
+		}
+
+		~APIModule()
+		{
+
+		}
+
+		void Initialize();
+		void Stop();
 
 	protected:
 		AutoPtr<APIBinding> binding;

@@ -7,10 +7,13 @@
 #include <signal.h>
 #include <Poco/Path.h>
 
+extern "C" EXPORT PythonModule* CreateModule(Host *host, const char* path)
+{
+	return new PythonModule(host, path);
+}
+
 namespace kroll
 {
-	KROLL_MODULE(PythonModule, STRING(MODULE_NAME), STRING(MODULE_VERSION));
-
 	PythonModule* PythonModule::instance_ = NULL;
 
 	static void PyListInsertString(

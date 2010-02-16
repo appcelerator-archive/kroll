@@ -10,6 +10,11 @@
 extern "C"
 {
 	int php_load_extension(char *filename, int type, int start_now TSRMLS_DC);
+
+	EXPORT PHPModule* CreateModule(Host *host, const char* path)
+	{
+		return new PHPModule(host, path);
+	}
 }
 
 #ifdef ZTS
@@ -18,7 +23,6 @@ void ***tsrm_ls;
 
 namespace kroll
 {
-	KROLL_MODULE(PHPModule, STRING(MODULE_NAME), STRING(MODULE_VERSION));
 	static Logger* logger = Logger::Get("PHPModule");
 	const static std::string phpSuffix("module.php");
 	static bool buffering = false;

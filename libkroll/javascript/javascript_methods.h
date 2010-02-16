@@ -9,14 +9,15 @@
 
 namespace kroll
 {
-	namespace JavascriptMethods
-	{
-		void Bind(KObjectRef global);
-		
-		KValueRef SetTimeout(const ValueList& args);
-		KValueRef SetInterval(const ValueList& args);
-		KValueRef ClearTimeout(const ValueList& args);
-		KValueRef ClearInterval(const ValueList& args);
-	}
+namespace JavaScriptMethods
+{
+
+void Bind(KObjectRef global);
+KValueRef SetTimeout(const ValueList& args);
+KValueRef SetInterval(const ValueList& args);
+KValueRef ClearTimeout(const ValueList& args);
+KValueRef ClearInterval(const ValueList& args);
+
+}
 }
 #endif

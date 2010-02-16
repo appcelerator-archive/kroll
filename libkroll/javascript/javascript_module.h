@@ -11,37 +11,43 @@
 #include <JavaScriptCore/JSContextRef.h>
 #include <cstring>
 #include <map>
-
 #include <kroll/kroll.h>
-#include "javascript_api.h"
-using namespace kroll;
 
 /* KJS <-> Kroll bindings */
-namespace kroll {
+namespace kroll 
+{
 	class KKJSObject;
 	class KKJSMethod;
 	class KKJSList;
+	class JavaScriptModule;
+	class JavaScriptModuleInstance;
 }
+
 #include "k_kjs_object.h"
 #include "k_kjs_method.h"
 #include "k_kjs_list.h"
 #include "kjs_util.h"
-
-/* the KJS Javascript module provider */
-namespace kroll {
-	class JavascriptModule;
-	class JavascriptModuleInstance;
-}
 #include "javascript_module_instance.h"
 #include "javascript_methods.h"
 
 namespace kroll
 {
-	class JavascriptModule : public Module, public ModuleProvider
+	class KROLL_API JavaScriptModule : public Module, public ModuleProvider
 	{
-		KROLL_MODULE_CLASS(JavascriptModule)
-
 	public:
+		JavaScriptModule(Host* host, const char* path) :
+			Module(host, path, STRING(MODULE_NAME), STRING(MODULE_VERSION))
+		{
+
+		}
+
+		~JavaScriptModule()
+		{
+
+		}
+
+		void Initialize();
+		void Stop();
 		virtual bool IsModule(std::string& path);
 		virtual Module* CreateModule(std::string& path);
 
@@ -50,15 +56,14 @@ namespace kroll
 			return host;
 		}
 
-		static JavascriptModule* Instance()
+		static JavaScriptModule* Instance()
 		{
 			return instance;
 		}
 
 
 	private:
-		static JavascriptModule *instance;
+		static JavaScriptModule *instance;
 	};
 }
-
 #endif

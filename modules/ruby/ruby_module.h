@@ -50,11 +50,20 @@
 
 namespace kroll
 {
-	class RubyModule : public Module, public ModuleProvider
+	class KROLL_RUBY_API RubyModule : public Module, public ModuleProvider
 	{
-		KROLL_MODULE_CLASS(RubyModule)
-
 	public:
+		RubyModule(Host* host, const char* path) :
+			Module(host, path, STRING(MODULE_NAME), STRING(MODULE_VERSION))
+		{
+		}
+
+		~RubyModule()
+		{
+		}
+		void Initialize();
+		void Stop();
+
 		virtual bool IsModule(std::string& path);
 		virtual Module* CreateModule(std::string& path);
 		void InitializeBinding();

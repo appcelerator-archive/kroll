@@ -37,11 +37,21 @@ throw _ex;
 
 namespace kroll
 {
-	class PythonModule : public Module, public ModuleProvider
+	class KROLL_PYTHON_API PythonModule : public Module, public ModuleProvider
 	{
-		KROLL_MODULE_CLASS(PythonModule)
-
 	public:
+		PythonModule(Host* host, const char* path) :
+			Module(host, path, STRING(MODULE_NAME), STRING(MODULE_VERSION))
+		{
+		}
+
+		~PythonModule()
+		{
+		}
+
+		void Initialize();
+		void Stop();
+
 		virtual bool IsModule(std::string& path);
 		virtual Module* CreateModule(std::string& path);
 		void InitializeBinding();

@@ -57,8 +57,31 @@ extern "C"
 }
 #endif
 
+#include <kroll/javascript/javascript_module.h>
+#include <kroll/api/api_module.h>
+
 namespace kroll
 {
+	JavaScriptModule* javascriptModule;
+	APIModule* apiModule;
+
+	static void LoadBuiltinModules(Host* host)
+	{
+		javascriptModule = new JavaScriptModule(host, "");
+		javascriptModule->Initialize();
+		apiModule = new APIModule(host, "");
+		apiModule->Initialize();
+	}
+
+	static void UnloadBuiltinModules()
+	{
+		apiModule->Stop();
+		javascriptModule->Stop();
+		delete apiModule;
+		delete javascriptModule;
+
+	}
+
 	static Host* hostInstance;
 
 	Host::Host(int argc, const char *argv[]) :
@@ -317,13 +340,10 @@ namespace kroll
 	 * @param provider The provider to attempt to load with.
 	 * @return The module that was loaded or NULL on failure.
 	*/
-	SharedPtr<Module> Host::LoadModule(std::string& path, ModuleProvider *provider)
+	SharedPtr<Module> Host::LoadModule(std::string& path, ModuleProvider* provider)
 	{
-		ScopedLock lock(&moduleMutex);
-
 		//TI-180: Don't load the same module twice
-		SharedPtr<Module> module = this->GetModuleByPath(path);
-		if (!module.isNull())
+		if (!this->GetModuleByPath(path).isNull())
 		{
 			logger->Warn("Module cannot be loaded twice: %s", path.c_str());
 			return 0;
@@ -332,8 +352,7 @@ namespace kroll
 		try
 		{
 			logger->Debug("Loading module: %s", path.c_str());
-			module = provider->CreateModule(path);
-			module->SetProvider(provider); // set the provider
+			SharedPtr<Module> module(provider->CreateModule(path));
 			module->Initialize();
 
 			// loadedModules keeps track of the Module which is loaded from the
@@ -341,8 +360,10 @@ namespace kroll
 			// metadata description of each module.
 			this->loadedModules.push_back(module);
 			this->application->UsingModule(module->GetName(), module->GetVersion(), path);
-
 			logger->Info("Loaded module = %s", module->GetName().c_str());
+
+			this->application->UsingModule(module->GetName(), module->GetVersion(), path);
+			return module;
 		}
 		catch (kroll::ValueException& e)
 		{
@@ -368,7 +389,7 @@ namespace kroll
 #endif
 		}
 
-		return module;
+		return 0;
 	}
 
 	void Host::UnloadModules()
@@ -395,6 +416,8 @@ namespace kroll
 	*/
 	void Host::LoadModules()
 	{
+		LoadBuiltinModules(this);
+
 		ScopedLock lock(&moduleMutex);
 
 		/* Scan module paths for modules which can be
@@ -629,6 +652,8 @@ namespace kroll
 		ScopedLock lock(&moduleMutex);
 		this->UnloadModuleProviders();
 		this->UnloadModules();
+
+		UnloadBuiltinModules();
 
 		logger->Notice("Exiting with exit code: %i", exitCode);
 		StopProfiling(); // Stop the profiler, if it was enabled

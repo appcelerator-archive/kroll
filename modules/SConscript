@@ -18,5 +18,5 @@ def build_module_from_directory(dir):
 		duplicate=0)
 
 Export('build_module_from_directory')
-for dir in ['api', 'python', 'javascript' ,'ruby', 'php']:
+for dir in ['python', 'ruby', 'php']:
 	build_module_from_directory(dir)

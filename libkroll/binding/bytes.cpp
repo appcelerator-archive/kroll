@@ -86,7 +86,7 @@ namespace kroll
 		this->SetMethod("toString", &Bytes::ToString);
 
 		// Mimic some string operations to make it more
-		// friendly when using a Bytes in Javascript.
+		// friendly when using a Bytes in JavaScript.
 		/**
 		 * @tiapi(method=True,name=Bytes.indexOf,since=0.3)
 		 * @tiapi Return the index of a String within this Bytes

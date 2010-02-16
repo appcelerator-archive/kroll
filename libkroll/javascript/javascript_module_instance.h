@@ -6,14 +6,12 @@
 #ifndef _JAVASCRIPT_MODULE_INSTANCE_H_
 #define _JAVASCRIPT_MODULE_INSTANCE_H_
 
-#include "javascript_api.h"
-
 namespace kroll
 {
-	class KROLL_JAVASCRIPT_API JavascriptModuleInstance : public Module
+	class KROLL_API JavaScriptModuleInstance : public Module
 	{
 	public:
-		JavascriptModuleInstance(Host *host, std::string path, 
+		JavaScriptModuleInstance(Host *host, std::string path, 
 			std::string dir, std::string name);
 		void Initialize () {}
 		void Stop();

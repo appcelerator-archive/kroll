@@ -104,26 +104,8 @@ namespace kroll
 		 */
 		virtual void Unload() {};
 
-		/**
-		 * Set the provider that created this module
-		 * @param provider A module provider
-		 */
-		void SetProvider(ModuleProvider* provider)
-		{
-			this->provider = provider;
-		}
-
-		/**
-		 * @return the provider that created this module
-		 */
-		const ModuleProvider* GetProvider()
-		{
-			return provider;
-		}
-
 	protected:
-		Host *host;
-		ModuleProvider *provider;
+		Host* host;
 		std::string path;
 		std::string name;
 		std::string version;

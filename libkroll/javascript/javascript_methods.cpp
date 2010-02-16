@@ -12,7 +12,7 @@ namespace kroll
 {
 	// Common javascript functions that are re-implemented
 	//  in the global scope so they are available without a window
-	namespace JavascriptMethods
+	namespace JavaScriptMethods
 	{
 		void Bind(KObjectRef global)
 		{
