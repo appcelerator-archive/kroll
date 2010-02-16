@@ -95,5 +95,13 @@ namespace PlatformUtils
 			return "Unknown";
 		}
 	}
+
+	int GetProcessorCount()
+	{
+		SYSTEM_INFO systemInfo;
+		ZeroMemory(&systemInfo, sizeof(SYSTEM_INFO));
+		GetSystemInfo(&systemInfo) ;
+		return systemInfo.dwNumberOfProcessors;
+	}
 }
 }

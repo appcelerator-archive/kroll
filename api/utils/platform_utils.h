@@ -37,6 +37,11 @@ namespace UTILS_NS
 		 * Get the username of the current user.
 		 */
 		KROLL_API std::string GetUsername();
+
+		/**
+		 * Get the number of processors on this machine.
+		 */
+		KROLL_API int GetProcessorCount();
 	};
 }
 #endif

@@ -97,5 +97,10 @@ namespace PlatformUtils
 			return "unknown";
 		}
 	}
+
+	int GetProcessorCount()
+	{
+		return sysconf(_SC_NPROCESSORS_ONLN);
+	}
 }
 }
