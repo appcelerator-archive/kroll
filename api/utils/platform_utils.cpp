@@ -31,6 +31,8 @@
 #include "utils.h"
 #include <iostream>
 #include <fstream>
+#include <cstdio>
+#include <cstring>
 #define MID_PREFIX "v2:"
 
 namespace UTILS_NS
