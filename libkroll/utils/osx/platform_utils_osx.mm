@@ -67,7 +67,7 @@ namespace UTILS_NS
 		return std::string([NSUserName() UTF8String]);
 	}
 
-	int GetProcessorCount()
+	int PlatformUtils::GetProcessorCount()
 	{
 		if (![NSProcessInfo instancesRespondToSelector:@selector(processorCount)])
 			return 1; // Shucks!
