@@ -155,26 +155,6 @@ class BuildConfig(object):
 				return module
 		return None
 
-	def generate_manifest(self, name, id, guid, exclude=None, include=None, image=None, publisher=None, url=None, version=None, sdk=False):
-		manifest = "#appname: %s\n" % name
-		manifest += "#appid: %s\n" % id
-		manifest += "#guid: %s\n" % guid
-
-		if version: manifest += "#version: %s\n" % version
-		if image: manifest += "#image: %s\n" % image
-		if publisher: manifest += "#publisher: %s\n" % publisher
-		if url: manifest += "#url: %s\n" % url
-		if sdk: manifest += "sdk: %s\n" % self.version
-
-		manifest += "runtime: %s\n" % self.version
-		for m in self.modules:
-			if (include and not (m.name in include)) \
-			  or (exclude and (m.name in exclude)):
-				continue
-			else:
-				manifest += "%s:%s\n" % (m.name, m.version)
-		return manifest
-
 	def add_thirdparty(self, env, name):
 		cpppath = libpath = libs = None
 		if name is 'poco':
