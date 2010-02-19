@@ -1,10 +1,11 @@
+import codecs
 import os
-import os.path as path
 import shutil
-import types
-import tarfile
-import zipfile
 import stat
+import tarfile
+import types
+import zipfile
+import os.path as path
 
 def filter_file(file, include=[], exclude=[], filter=None):
 	for suffix in include:
@@ -28,7 +29,7 @@ def copy_tree(*args, **kwargs):
 
 def copy_tree_impl(src, dest, **kwargs):
 	"""
-	Copy a directory recursivley. If the first argument is a
+	Copy a directory recursively. If the first argument is a
 	directory, copy the contents of that directory
 	into the target directory. If the first argument is a file,
 	copy that file into the target directory. Will preserve symlinks.
@@ -44,7 +45,6 @@ def copy_tree_impl(src, dest, **kwargs):
 	if path.isdir(src):
 		for item in os.listdir(src):
 			src_item = path.abspath(path.join(src, item))
-			#print "copy tree u %s %s" % (src_item, dest)
 			copy_to_dir(src_item, dest, **kwargs)
 	else:
 		copy_to_dir(src, dest, **kwargs)
@@ -56,7 +56,7 @@ def copy_to_dir(*args, **kwargs):
 	else:
 		copy_to_dir_impl(*args, **kwargs)
 
-def copy_to_dir_impl(src, dest, include=[], exclude=[], filter=None, recurse=True):
+def copy_to_dir_impl(src, dest, original_target=None, include=[], exclude=[], filter=None, recurse=True, ):
 	"""
 	Copy a path into a destination directory the original path will be a
 	child of the destination directory.
@@ -71,6 +71,9 @@ def copy_to_dir_impl(src, dest, include=[], exclude=[], filter=None, recurse=Tru
 		dest_dir = path.dirname(dest)
 		if not path.exists(dest_dir):
 			os.makedirs(dest_dir)
+
+		if src == original_dest:
+			return
 
 		# Test for a symlink first, because a symlink can
 		# also return turn for isdir
@@ -100,11 +103,9 @@ def copy_to_dir_impl(src, dest, include=[], exclude=[], filter=None, recurse=Tru
 			copy_item(src_item, dest_item)
 
 	src = os.path.abspath(src)
-	bname = os.path.basename(src)
-	dest = os.path.abspath(dest)
+	original_dest = os.path.abspath(dest)
+	dest = os.path.join(original_dest, os.path.basename(src))
 
-	dest = os.path.join(dest, bname)
-	#print "copy %s %s" % (src, dest)
 	copy_item(src, dest)
 
 def copy(src, dest):
@@ -187,11 +188,11 @@ def make_zip(source, dest_file, include=[], exclude=[], dest_path=None):
 	zip.close()
 
 def concat(source, dest_file, nofiles=False):
-	out = open(dest_file, 'wb')
+	out = codecs.open(dest_file, 'wb', 'utf-8')
 
 	for file in source:
 		if not nofiles and os.path.exists(file):
-			inf = open(file, 'rb')
+			inf = codecs.open(file, 'rb', 'utf-8')
 			out.write(inf.read())
 			inf.close()
 		else:
@@ -199,15 +200,11 @@ def concat(source, dest_file, nofiles=False):
 
 	out.close()
 
-def touch(dest):
-	out = open(dest, 'w')
-	out.close()
-
 def replace_vars(file, replacements):
-	txt = open(file).read()
+	txt = codecs.open(file, 'rb', 'utf-8').read()
 	for k, v in replacements.iteritems():
 		txt = txt.replace(k, v)
-	out = open(file, 'w')
+	out = codecs.open(file, 'wb', 'utf-8')
 	out.write(txt)
 	out.close()
 
