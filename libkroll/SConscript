@@ -46,7 +46,6 @@ if build.is_linux():
 
 if build.is_win32():
 	env.Append(CPPPATH=[path.join(build.third_party, 'icu', 'include')])
-	env.Append(LIBPATH=[webkit_lib])
 	env.Append(LIBS=[
 		'Advapi32', 'comctl32' 'icuuc',
 		'icuin', 'iphlpapi', 'kernel32',
