@@ -132,8 +132,7 @@ namespace KrollBoot
 	bool RunInstaller(vector<SharedDependency> missing, bool forceInstall)
 	{
 
-		string msiName = app->name + ".msi";
-		string msi(FileUtils::Join(app->path.c_str(), "installer", msiName.c_str(), NULL));
+		string msi(FileUtils::Join(app->path.c_str(), "installer", "installer.exe", 0));
 		if (!FileUtils::IsFile(msi))
 		{
 			ShowError("Missing installer and application has additional modules that are needed.");
