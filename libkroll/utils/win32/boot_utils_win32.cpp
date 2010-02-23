@@ -41,71 +41,69 @@ namespace BootUtils
 		string installerPath, bool quiet, bool forceInstall)
 	{
 		if (installerPath.empty())
-		{
 			installerPath = application->path;
-		}
-
-		string msiName = application->name + ".msi";
-		string installer(FileUtils::Join(installerPath.c_str(), 
-			"installer", msiName.c_str(), 0));
-		string msiExec(FileUtils::Join("C:", "Windows", "system32", "msiexec.exe", NULL));
-		if (!FileUtils::IsFile(installer) && !FileUtils::IsFile(msiExec))
-		{
+		string exec(FileUtils::Join(installerPath.c_str(), "installer",
+			 "installer.exe", 0));
+		if (!FileUtils::IsFile(exec))
 			return false;
-		}
-		
-		std::wstring commandLine(UTF8ToWide(msiExec));
-		commandLine += L" /I \"";
-		commandLine += UTF8ToWide(installer);
-		commandLine += L"\" ";
-		
-		commandLine += L"REINSTALL=ALL REINSTALLMODE=vomus";
-		commandLine += L" APP_UPDATE_MANIFEST=\"";
+
+		vector<string> args;
+		args.push_back("-app");
+		args.push_back(application->path);
+
 		if (!updateFile.empty())
 		{
-			commandLine += UTF8ToWide(updateFile);
+			args.push_back("-update");
+			args.push_back(updateFile);
 		}
-		else
-		{
-			commandLine += UTF8ToWide(application->manifestPath);
-		}
-		commandLine += L"\"";
-		std::wcout << commandLine << std::endl;
-		
-		STARTUPINFO startupInfo;
-		startupInfo.cb          = sizeof(STARTUPINFO);
-		startupInfo.lpReserved  = NULL;
-		startupInfo.lpDesktop   = NULL;
-		startupInfo.lpTitle     = NULL;
-		startupInfo.dwFlags     = STARTF_FORCEOFFFEEDBACK | STARTF_USESTDHANDLES;
-		startupInfo.cbReserved2 = 0;
-		startupInfo.lpReserved2 = NULL;
 
-		PROCESS_INFORMATION processInfo;
-		BOOL rc = CreateProcessW(NULL,
-			(LPWSTR) commandLine.c_str(),
-			NULL,
-			NULL,
-			TRUE,
-			0,
-			NULL,
-			NULL,
-			&startupInfo,
-			&processInfo);
-		
+		string jobsString;
+		vector<SharedDependency>::iterator mi = missing.begin();
+		while (mi != missing.end())
+		{
+			SharedDependency d = *mi;
+			if (mi != missing.begin())
+				jobsString.append(",");
+			jobsString.append(d->name);
+			jobsString.append(":");
+			jobsString.append(d->version);
+			mi++;
+		}
+		if (!jobsString.empty())
+			args.push_back(jobsString);
+
+		string paramString("");
+		for (size_t i = 0; i < args.size(); i++)
+		{
+			paramString.append(" \"");
+			paramString.append(args.at(i));
+			paramString.append("\"");
+		}
+
+		SHELLEXECUTEINFO ShExecInfo = {0};
+		ShExecInfo.cbSize = sizeof(SHELLEXECUTEINFO);
+		ShExecInfo.fMask = SEE_MASK_NOCLOSEPROCESS | SEE_MASK_FLAG_DDEWAIT;
+		ShExecInfo.hwnd = NULL;
+
+		// This magic causes Vista and Windows 7 to pop open
+		// the UAC dialog when this application is launched.
+		if (!IsWindowsXP())
+			ShExecInfo.lpVerb = L"runas";
+
+		wstring wideExec(UTF8ToWide(exec));
+		wstring wideParamString = UTF8ToWide(paramString);
+		ShExecInfo.lpFile = wideExec.c_str();
+		ShExecInfo.lpParameters = wideParamString.c_str();
+		ShExecInfo.lpDirectory = NULL;
+		ShExecInfo.nShow = SW_SHOW;
+		ShExecInfo.hInstApp = NULL;
+		ShellExecuteExW(&ShExecInfo);
+		WaitForSingleObject(ShExecInfo.hProcess, INFINITE);
 		DWORD returnCode;
-		if (rc)
-		{
-			CloseHandle(processInfo.hThread);
-			WaitForSingleObject(processInfo.hProcess, INFINITE);
-			GetExitCodeProcess(processInfo.hProcess, &returnCode);
-			CloseHandle(processInfo.hProcess);
-		}
+		GetExitCodeProcess(ShExecInfo.hProcess, &returnCode);
 
-		if (returnCode != 0) {
-			return false;
-		}
-		return true;
+		return returnCode == 0;
 	}
+
 }
 }
