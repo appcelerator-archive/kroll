@@ -54,20 +54,20 @@ namespace UTILS_NS
 			bool skipDuplicates=false);
 
 		KROLL_API std::string Trim(std::string str);
-		KROLL_API void ListDir(std::string& path, std::vector<std::string>& files);
-		KROLL_API bool IsDirectory(std::string &dir);
-		KROLL_API bool IsFile(const std::string &file);
-		KROLL_API void WriteFile(std::string& path, std::string& content);
-		KROLL_API std::string ReadFile(std::string& path);
-		KROLL_API std::string Dirname(std::string path);
-		KROLL_API std::string Basename(std::string path);
-		KROLL_API bool CreateDirectory(std::string &dir, bool recursive=false);
-		KROLL_API bool CreateDirectoryImpl(std::string &dir);
+		KROLL_API void ListDir(const std::string& path, std::vector<std::string>& files);
+		KROLL_API bool IsDirectory(const std::string& dir);
+		KROLL_API bool IsFile(const std::string& file);
+		KROLL_API void WriteFile(const std::string& path, const std::string& content);
+		KROLL_API std::string ReadFile(const std::string& path);
+		KROLL_API std::string Dirname(const std::string& path);
+		KROLL_API std::string Basename(const std::string& path);
+		KROLL_API bool CreateDirectory(const std::string& dir, bool recursive=false);
+		KROLL_API bool CreateDirectoryImpl(const std::string& dir);
 
 		/**
 		 * Recursively delete the directory at the given path
 		 */
-		KROLL_API bool DeleteDirectory(std::string &dir);
+		KROLL_API bool DeleteDirectory(const std::string& dir);
 
 		/**
 		 * This function joins paths together in an OS specific way. Empty elements --
@@ -113,12 +113,12 @@ namespace UTILS_NS
 		/**
 		 * @return the directory for a given file path
 		 */
-		KROLL_API std::string GetDirectory(std::string &file);
+		KROLL_API std::string GetDirectory(const std::string &file);
 
 		/**
 		 * @return true if the given file or directory is hidden.  Otherwise, false is returned.
 		 */
-		KROLL_API bool IsHidden(std::string &file);
+		KROLL_API bool IsHidden(const std::string &file);
 
 		/**
 		 * Get the system-wide runtime home directory. This is just a
@@ -140,7 +140,7 @@ namespace UTILS_NS
 #ifndef NO_UNZIP
 		typedef bool (*UnzipCallback)(char* message, int current,
 			int total, void* data);
-		KROLL_API bool Unzip(std::string& source, std::string& destination, 
+		KROLL_API bool Unzip(const std::string& source, const std::string& destination, 
 			UnzipCallback callback=0, void* data=0);
 #endif
 	}

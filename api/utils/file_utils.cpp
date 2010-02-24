@@ -41,7 +41,7 @@ namespace FileUtils
 		return dir;
 	}
 
-	std::string Basename(std::string path)
+	std::string Basename(const std::string& path)
 	{
 		size_t pos = path.find_last_of(KR_PATH_SEP_CHAR);
 		if (pos == std::string::npos)
@@ -50,7 +50,7 @@ namespace FileUtils
 			return path.substr(pos+1);
 	}
 
-	bool CreateDirectory(std::string &dir, bool recursive)
+	bool CreateDirectory(const std::string& dir, bool recursive)
 	{
 		if (IsDirectory(dir))
 		{
@@ -68,7 +68,7 @@ namespace FileUtils
 	}
 
 
-	std::string GetDirectory(std::string &file)
+	std::string GetDirectory(const std::string& file)
 	{
 		size_t pos = file.find_last_of(KR_PATH_SEP);
 		if (pos == std::string::npos)

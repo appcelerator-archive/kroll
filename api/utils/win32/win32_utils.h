@@ -24,17 +24,17 @@ namespace UTILS_NS
 
 	namespace FileUtils
 	{
-		KROLL_API void CopyRecursive(std::string &dir, std::string &dest,
-			std::string exclude = "");
+		KROLL_API void CopyRecursive(const std::string &dir,
+			const std::string &dest, const std::string& exclude = "");
 
 		/* Some wchar versions of popular FileUtils functions */
-		KROLL_API bool IsFile(std::wstring& path);
-		KROLL_API std::string ReadFile(std::wstring& path);
+		KROLL_API bool IsFile(const std::wstring& path);
+		KROLL_API std::string ReadFile(const std::wstring& path);
 
 		/**
 		 * Delete the file at the given path
 		 */
-		KROLL_API bool DeleteFile(std::string &path);
+		KROLL_API bool DeleteFile(const std::string &path);
 	}
 
 	KROLL_API std::wstring UTF8ToWide(const std::string& in);

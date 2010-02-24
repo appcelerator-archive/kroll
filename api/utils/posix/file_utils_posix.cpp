@@ -49,7 +49,7 @@ namespace UTILS_NS
 #endif
 	}
 
-	std::string FileUtils::Dirname(std::string path)
+	std::string FileUtils::Dirname(const std::string& path)
 	{
 		char* pathCopy = strdup(path.c_str());
 		std::string toReturn = dirname(pathCopy);
@@ -111,7 +111,7 @@ namespace UTILS_NS
 #endif
 	}
 
-	bool FileUtils::CreateDirectoryImpl(std::string& dir)
+	bool FileUtils::CreateDirectoryImpl(const std::string& dir)
 	{
 #ifdef OS_OSX
 		return [[NSFileManager defaultManager] createDirectoryAtPath:[NSString stringWithCString:dir.c_str() encoding:NSUTF8StringEncoding] attributes:nil];
@@ -120,7 +120,7 @@ namespace UTILS_NS
 #endif
 	}
 
-	bool FileUtils::DeleteDirectory(std::string &dir)
+	bool FileUtils::DeleteDirectory(const std::string& dir)
 	{
 #ifdef OS_OSX
 		[[NSFileManager defaultManager] removeFileAtPath:[NSString stringWithCString:dir.c_str() encoding:NSUTF8StringEncoding] handler:nil];
@@ -130,7 +130,7 @@ namespace UTILS_NS
 		return false;
 	}
 
-	bool FileUtils::IsDirectory(std::string &dir)
+	bool FileUtils::IsDirectory(const std::string& dir)
 	{
 #ifdef OS_OSX
 		BOOL isDir = NO;
@@ -142,14 +142,14 @@ namespace UTILS_NS
 #endif
 	}
 
-	bool FileUtils::IsHidden(std::string &file)
+	bool FileUtils::IsHidden(const std::string& file)
 	{
 		// TODO: OS X can also include a 'hidden' flag in file
 		// attributes. We should attempt to read this.
 		return (file.size() > 0 && file.at(0) == '.');
 	}
 
-	void FileUtils::ListDir(std::string& path, std::vector<std::string> &files)
+	void FileUtils::ListDir(const std::string& path, std::vector<std::string> &files)
 	{
 		if (!IsDirectory(path))
 			return;
@@ -172,7 +172,7 @@ namespace UTILS_NS
 		}
 	}
 
-	int FileUtils::RunAndWait(std::string &path, std::vector<std::string> &args)
+	int FileUtils::RunAndWait(const std::string& path, std::vector<std::string> &args)
 	{
 		std::string p;
 		p+="\"";
@@ -194,7 +194,7 @@ namespace UTILS_NS
 	}
 
 #ifndef NO_UNZIP
-	bool FileUtils::Unzip(std::string& source, std::string& destination, 
+	bool FileUtils::Unzip(const std::string& source, const std::string& destination, 
 		UnzipCallback callback, void* data)
 	{
 #ifdef OS_OSX

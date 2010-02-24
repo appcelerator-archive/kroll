@@ -67,14 +67,14 @@ namespace FileUtils
 		}
 	}
 
-	void WriteFile(std::string& path, std::string& content)
+	void WriteFile(const std::string& path, const std::string& content)
 	{
 		std::ofstream f(path.c_str());
 		f << content;
 		f.close();
 	}
 
-	std::string ReadFile(std::string& path)
+	std::string ReadFile(const std::string& path)
 	{
 		std::ostringstream inputStream;
 
