@@ -152,7 +152,7 @@ namespace FileUtils
 		return contents.str();
 	}
 	
-	std::string Dirname(std::string path)
+	std::string Dirname(const std::string& path)
 	{
 		wchar_t pathBuffer[_MAX_PATH];
 		wchar_t drive[_MAX_DRIVE];
@@ -173,19 +173,19 @@ namespace FileUtils
 		return UTILS_NS::WideToUTF8(dirname);
 	}
 	
-	bool CreateDirectoryImpl(std::string& dir)
+	bool CreateDirectoryImpl(const std::string& dir)
 	{
 		std::wstring wideDir(UTILS_NS::UTF8ToWide(dir));
 		return (::CreateDirectoryW(wideDir.c_str(), NULL) == TRUE);
 	}
 
-	bool DeleteFile(const std::string &path)
+	bool DeleteFile(const std::string& path)
 	{
 		// SHFileOperation doesn't care if it's a dir or file -- delegate
 		return DeleteDirectory(path);
 	}
 	
-	bool DeleteDirectory(const std::string &dir)
+	bool DeleteDirectory(const std::string& dir)
 	{
 		std::wstring wideDir(UTILS_NS::UTF8ToWide(dir));
 		SHFILEOPSTRUCT op;
@@ -198,7 +198,7 @@ namespace FileUtils
 		return (rc == 0);
 	}
 
-	bool IsDirectory(std::string &path)
+	bool IsDirectory(const std::string& path)
 	{
 		return FileHasAttributes(path, FILE_ATTRIBUTE_DIRECTORY);
 	}
@@ -233,12 +233,12 @@ namespace FileUtils
 		}
 	}
 
-	bool IsHidden(std::string &path)
+	bool IsHidden(const std::string& path)
 	{
 		return FileHasAttributes(path, FILE_ATTRIBUTE_HIDDEN);
 	}
 
-	void ListDir(std::string& path, std::vector<std::string> &files)
+	void ListDir(const std::string& path, std::vector<std::string> &files)
 	{
 		if (!IsDirectory(path))
 			return;
@@ -268,7 +268,7 @@ namespace FileUtils
 		}
 	}
 
-	int RunAndWait(std::string &path, std::vector<std::string> &args)
+	int RunAndWait(const std::string& path, std::vector<std::string> &args)
 	{
 		std::string cmdLine = "\"" + path + "\"";
 		for (size_t i = 0; i < args.size(); i++)
@@ -318,7 +318,7 @@ namespace FileUtils
 	}
 
 #ifndef NO_UNZIP
-	bool Unzip(std::string& source, std::string& destination, 
+	bool Unzip(const std::string& source, const std::string& destination, 
 		UnzipCallback callback, void *data)
 	{
 		bool success = true;
@@ -368,7 +368,7 @@ namespace FileUtils
 #endif
 
 	// TODO: implement this for other platforms
-	void CopyRecursive(std::string &dir, std::string &dest, std::string exclude)
+	void CopyRecursive(const std::string& dir, const std::string& dest, const std::string& exclude)
 	{ 
 		if (!IsDirectory(dest)) 
 		{

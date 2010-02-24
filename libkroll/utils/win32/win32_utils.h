@@ -24,8 +24,8 @@ namespace UTILS_NS
 
 	namespace FileUtils
 	{
-		KROLL_API void CopyRecursive(std::string &dir, std::string &dest,
-			std::string exclude = "");
+		KROLL_API void CopyRecursive(const std::string &dir,
+			const std::string &dest, const std::string& exclude = "");
 
 		/* Some wchar versions of popular FileUtils functions */
 		KROLL_API bool IsFile(const std::wstring& path);
