@@ -248,10 +248,10 @@ void DoPACRequst(void* data)
 
 	static CFStringRef  kPrivateRunLoopMode =
 		CFSTR("org.appcelerator.TitaniumDesktopProxy");
-	CFRunLoopAddSource(CFRunLoopGetCurrent(), runLoopSource,
+	CFRunLoopAddSource(CFRunLoopGetCurrent(), runLoopSource.get(),
 		kPrivateRunLoopMode);
 	CFRunLoopRunInMode(kPrivateRunLoopMode, 1.0e10, false);
-	CFRunLoopRemoveSource(CFRunLoopGetCurrent(), runLoopSource,
+	CFRunLoopRemoveSource(CFRunLoopGetCurrent(), runLoopSource.get(),
 		kPrivateRunLoopMode);
 
 	// Once the runloop returns, we should have either an error result or a 
