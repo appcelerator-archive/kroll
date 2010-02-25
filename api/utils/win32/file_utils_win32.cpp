@@ -188,16 +188,27 @@ namespace FileUtils
 	bool DeleteFile(const std::string& path)
 	{
 		// SHFileOperation doesn't care if it's a dir or file -- delegate
+		// Use DeleteFile here instead of SHFileOperation (DeleteDirectory),
+		// because that is the best way to ensure that the file does not
+		// end up in the Recycle Bin and DeleteFile has saner handling
+		// of paths with spaces.
+		//return ::DeleteFile(path);
 		return DeleteDirectory(path);
 	}
 	
 	bool DeleteDirectory(const std::string& dir)
 	{
 		std::wstring wideDir(UTILS_NS::UTF8ToWide(dir));
+
+		// SHFileOperation does not handle paths with spaces well, so
+		// convert to a Windows stubby path here. Ugh.
+		wchar_t stubbyPath[MAX_PATH];
+		GetShortPathNameW(wideDir.c_str(), stubbyPath, MAX_PATH - 1);
+		
 		SHFILEOPSTRUCT op;
 		op.hwnd = NULL;
 		op.wFunc = FO_DELETE;
-		op.pFrom = wideDir.c_str();
+		op.pFrom = stubbyPath;
 		op.pTo = NULL;
 		op.fFlags = FOF_NOCONFIRMATION | FOF_SILENT | FOF_NOERRORUI;
 		int rc = SHFileOperation(&op);
