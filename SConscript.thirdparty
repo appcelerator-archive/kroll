@@ -58,6 +58,7 @@ if build.is_linux():
 elif build.is_win32():
 	futils.CopyTree(path.join(build.third_party, 'poco', 'bin'), rtdir)
 	futils.CopyTree(path.join(build.third_party, 'webkit', 'bin'), rtdir)
+	futils.CopyTree(path.join(build.third_party, 'sdk'), path.join(build.dir, 'sdk'))
 
 elif build.is_osx():
 	excludes = ['.h', '.defs', 'JavaScriptGlue.framework']
