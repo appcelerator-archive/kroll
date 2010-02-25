@@ -144,15 +144,20 @@ def walk_dir(dir, callback, include=[], exclude=[], dirs=False):
 			if filter_file(file, include, exclude):
 				callback(file)
 
-def make_tgz(source, dest_file, include=[], exclude=[]):
-	tar = tarfile.open(dest_file, 'w:gz')
-	if (type(source) != types.ListType): source = [source]
+def make_tgz(source, dest_file, include=[], exclude=[], callback=None):
+	tar_file = tarfile.open(dest_file, 'w:gz')
+	if (type(source) != types.ListType):
+		 source = [source]
+
 	for dir in source:
-		def tarcb(f):
-			arcname = f.replace(dir + os.sep, "")
-			tar.add(f, arcname)
-		walk_dir(dir, tarcb, include, exclude, dirs=True)
-	tar.close()
+		def my_tar_callback(f):
+			if callback:
+				callback(f, tar_file)
+			else:
+				tar_file.add(f, f.replace(dir + os.sep, ""))
+
+		walk_dir(dir, my_tar_callback, include, exclude, dirs=True)
+	tar_file.close()
 
 def add_to_zip(zip, filepath, zippath):
 	if os.path.islink(filepath):
