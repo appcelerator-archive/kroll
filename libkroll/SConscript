@@ -47,7 +47,7 @@ if build.is_linux():
 if build.is_win32():
 	env.Append(CPPPATH=[path.join(build.third_party, 'icu', 'include')])
 	env.Append(LIBS=[
-		'Advapi32', 'comctl32' 'icuuc',
+		'Advapi32', 'comctl32', 'icuuc',
 		'icuin', 'iphlpapi', 'kernel32',
 		'ole32', 'oleaut32', 'pthreadVC2',
 		'shell32', 'shlwapi', 'user32',
