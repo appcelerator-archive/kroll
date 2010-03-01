@@ -123,7 +123,6 @@ namespace kroll
 
 #ifdef OS_WIN32
 		HWND AddMessageHandler(MessageHandler handler);
-		HINSTANCE GetInstanceHandle();
 		HWND GetEventWindow();
 #endif
 
@@ -182,14 +181,7 @@ namespace kroll
 	KROLL_API bool IsMainThread();
 }
 
-extern "C"
-{
-#ifdef OS_WIN32
-	KROLL_API int Execute(HINSTANCE hInstance, int argc, const char **argv);
-#else
-	KROLL_API int Execute(int argc, const char **argv);
-#endif
-}
+extern "C" KROLL_API int Execute(int argc, const char **argv);
 
 #endif
 

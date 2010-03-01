@@ -18,14 +18,8 @@ namespace kroll
 	static void RedirectIOToConsole();
 	static UINT tickleRequestMessage =
 		::RegisterWindowMessageA(PRODUCT_NAME"TickleRequest");
-	static HINSTANCE instance = 0;
 	static DWORD mainThreadId;
 	EventWindow* eventWindow;
-
-	HINSTANCE Host::GetInstanceHandle()
-	{
-		return instance;
-	}
 
 	HWND Host::GetEventWindow()
 	{
@@ -44,7 +38,7 @@ namespace kroll
 
 	void Host::Initialize(int argc, const char** argv)
 	{
-		eventWindow = new EventWindow(instance);
+		eventWindow = new EventWindow();
 		mainThreadId = GetCurrentThreadId();
 		OleInitialize(0);
 		this->AddMessageHandler(&MainThreadJobsTickleHandler);
@@ -186,15 +180,5 @@ namespace kroll
 		// make cout, wcout, cin, wcin, wcerr, cerr, wclog and clog
 		// point to console as well
 		std::ios::sync_with_stdio();
-	}
-}
-
-extern "C"
-{
-	int Execute(HINSTANCE hInstance, int argc, const char **argv)
-	{
-		instance = hInstance;
-		Host host(argc, argv);
-		return host.Run();
 	}
 }

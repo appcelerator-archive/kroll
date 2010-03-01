@@ -110,7 +110,7 @@ namespace KrollBoot
 		return module;
 	}
 
-	typedef int Executor(HINSTANCE, int, const char **);
+	typedef int Executor(int, const char **);
 	int StartHost()
 	{
 		string runtimePath(EnvironmentUtils::Get("KR_RUNTIME"));
@@ -126,7 +126,7 @@ namespace KrollBoot
 			return __LINE__;
 		}
 
-		return executor(::GetModuleHandle(NULL), argc,(const char**)argv);
+		return executor(argc, (const char**)argv);
 	}
 
 	bool RunInstaller(vector<SharedDependency> missing, bool forceInstall)

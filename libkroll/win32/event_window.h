@@ -17,7 +17,7 @@ namespace kroll
 	class EventWindow
 	{
 	public:
-		EventWindow(HINSTANCE hInstance);
+		EventWindow();
 		virtual ~EventWindow();
 		void DestroyWindow();
 		HWND AddMessageHandler(MessageHandler handler);
@@ -26,16 +26,10 @@ namespace kroll
 		HWND GetHandle() { return handle; }
 		
 	private:
-		HINSTANCE hInstance;
 		HWND handle;
 		Logger* logger;
 		std::vector<MessageHandler> handlers;
 		Poco::Mutex handlersMutex;
-		static const wchar_t* windowClassName;
-		static const WNDCLASSW* windowClass;
-		static void InitializeWindowClass(HINSTANCE hInstance);
-		static LRESULT CALLBACK WindowProcedure(
-			HWND hwnd, unsigned int message, WPARAM wParam, LPARAM lParam);
 	};
 }
 

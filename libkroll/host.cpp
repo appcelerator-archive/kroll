@@ -46,7 +46,9 @@ using Poco::Environment;
 #define MODULE_SUFFIX "so"
 #endif
 
-#ifndef OS_WIN32
+#include <kroll/javascript/javascript_module.h>
+#include <kroll/api/api_module.h>
+
 extern "C"
 {
 	int Execute(int argc, const char **argv)
@@ -55,10 +57,6 @@ extern "C"
 		return host.Run();
 	}
 }
-#endif
-
-#include <kroll/javascript/javascript_module.h>
-#include <kroll/api/api_module.h>
 
 namespace kroll
 {
