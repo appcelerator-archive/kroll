@@ -20,12 +20,16 @@
 
 #ifdef OS_WIN32
 #define KR_PATH_SEP_CHAR '\\'
+#define WIDE_KR_PATH_SEP_CHAR L'\\'
 #define KR_PATH_SEP "\\"
+#define WIDE_KR_PATH_SEP L"\\"
 #define KR_PATH_SEP_OTHER "/"
 #define KR_LIB_SEP ";"
 #else
 #define KR_PATH_SEP_CHAR '/'
+#define WIDE_KR_PATH_SEP_CHAR L'/'
 #define KR_PATH_SEP "/"
+#define WIDE_KR_PATH_SEP L"/"
 #define KR_PATH_SEP_OTHER "\\"
 #define KR_LIB_SEP ":"
 #include <sys/types.h>
@@ -54,6 +58,8 @@ namespace UTILS_NS
 			bool skipDuplicates=false);
 
 		KROLL_API std::string Trim(std::string str);
+		KROLL_API std::wstring Trim(std::wstring str);
+
 		KROLL_API void ListDir(const std::string& path, std::vector<std::string>& files);
 		KROLL_API bool IsDirectory(const std::string& dir);
 		KROLL_API bool IsFile(const std::string& file);
@@ -76,6 +82,7 @@ namespace UTILS_NS
 		 * Join('', 'blah', 'whatever') => blah/whatever
 		 */
 		KROLL_API std::string Join(const char*, ...);
+		KROLL_API std::wstring Join(const wchar_t*, ...);
 
 		/**
 		 * This function returns the Operating system version
