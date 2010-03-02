@@ -22,11 +22,17 @@
 #include <netinet/in.h>
 #include <sys/utsname.h>
 #include <libgen.h>
+#elif defined(OS_WIN32)
+#include <cctype>
+#include <cwchar>
 #endif
+
 
 #include <iostream>
 #include <sstream>
 #include <cstring>
+#include <locale>
+#include <cwctype>
 
 namespace UTILS_NS
 {
@@ -87,53 +93,72 @@ namespace FileUtils
 #endif
 	}
 
-	std::string Join(const char* inpart, ...)
+	template <class StringType, class CharType> static StringType JoinTemplate(
+		const CharType separator, const CharType* nextPart, va_list args)
 	{
-		va_list ap;
-		va_start(ap, inpart);
-		std::vector<std::string> parts;
-		while (inpart != NULL)
+		bool first = true;
+		StringType filePath;
+		while (nextPart)
 		{
-			if (strcmp(inpart, ""))
-				parts.push_back(inpart);
-			inpart = va_arg(ap, const char*);
-		}
-		va_end(ap);
+			StringType part(Trim(nextPart));
+			nextPart = va_arg(args, const CharType*);
+			if (part.empty()) // Skip empty bits.
+				continue;
 
-		std::string filepath;
-		std::vector<std::string>::iterator iter = parts.begin();
-		while (iter != parts.end())
-		{
-			std::string part(*iter);
-			bool first = (iter == parts.begin());
-			bool last = (iter == parts.end()-1);
-			iter++;
-
-			part = Trim(part);
-			if (part[part.size()-1] == KR_PATH_SEP_CHAR)
+			// Erase any existing path separators.
+			if (part[part.size()-1] == separator)
 				part = part.erase(part.size() - 1, 1);
-			if (!first && part[0] == KR_PATH_SEP_CHAR)
-				part = part.erase(0, 1);
-			filepath += part;
 
-			if (!last)
-				filepath += KR_PATH_SEP;
+			// If this is the first component, the first character
+			// may be '/' and this may be an absolute path, so don't
+			// erase.
+			if (!first && part[0] == separator)
+				part = part.erase(0, 1);
+
+			if (!first)
+				filePath.push_back(separator);
+			else
+				first = false;
+			filePath.append(part); // Append!
 		}
+
+		return filePath;
+	}
+
+	std::string Join(const char* firstPart, ...)
+	{
+		va_list args;
+		va_start(args, firstPart);
+		std::string result = JoinTemplate<std::string, char>(
+			KR_PATH_SEP_CHAR, firstPart, args);
+		va_end(args);
+
 #ifdef OS_OSX
-		NSString *s = [[NSString stringWithUTF8String:filepath.c_str()] stringByExpandingTildeInPath];
-		NSString *p = [s stringByStandardizingPath];
 		@try
 		{
-			filepath = [p fileSystemRepresentation];
+			result = [[[[NSString stringWithUTF8String:result.c_str()]
+				stringByExpandingTildeInPath]
+				stringByStandardizingPath]
+				fileSystemRepresentation];
 		}
-		@catch (NSException *ex)
+		@catch (NSException* ex)
 		{
-			const char *reason = [[ex reason] UTF8String];
-			printf("[Titanium.FileUtils] [Error] Error in Join: %s, '%s'\n", reason, filepath.c_str());
-			return filepath;
+			printf("[Titanium.FileUtils] [Error] Error joining %s: %s"
+				result.c_str(), [[ex reason] UTF8String]);
 		}
 #endif
-		return filepath;
+
+		return result;
+	}
+
+	std::wstring Join(const wchar_t* firstPart, ...)
+	{
+		va_list args;
+		va_start(args, firstPart);
+		std::wstring result = JoinTemplate<std::wstring, wchar_t>(
+			WIDE_KR_PATH_SEP_CHAR, firstPart, args);
+		va_end(args);
+		return result;
 	}
 
 	std::string GetOSVersion()
@@ -208,20 +233,42 @@ namespace FileUtils
 		TokenizeTemplate<std::wstring>(haystack, tokens, delimeters, skipDuplicates);
 	}
 
-	std::string Trim(std::string string)
+	template <class CharType> static bool IsSpace(CharType );
+
+	template <> static bool IsSpace(char c)
+	{
+		return isspace(c);
+	}
+
+	template <> static bool IsSpace(wchar_t c)
+	{
+		return iswspace(c);
+	}
+
+	template <class StringType> static StringType TrimTemplate(StringType string)
 	{
 		if (string.empty())
 			return string;
 
 		size_t left = 0;
 		size_t right = string.size() - 1;
-		while (isspace(string[left]) && left < string.size() - 1)
+		while (IsSpace(string[left]) && left < string.size() - 1)
 			left++;
 
-		while (isspace(string[right]) && right > left)
+		while (IsSpace(string[right]) && right > left)
 			right--;
 
 		return string.substr(left, right - left + 1);
+	}
+
+	std::string Trim(std::string string)
+	{
+		return TrimTemplate<std::string>(string);
+	}
+
+	std::wstring Trim(std::wstring string)
+	{
+		return TrimTemplate<std::wstring>(string);
 	}
 }
 }
