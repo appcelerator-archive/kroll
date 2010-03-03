@@ -235,12 +235,12 @@ namespace FileUtils
 
 	template <class CharType> static bool IsSpace(CharType );
 
-	template <> static bool IsSpace(char c)
+	template <> bool IsSpace(char c)
 	{
 		return isspace(c);
 	}
 
-	template <> static bool IsSpace(wchar_t c)
+	template <> bool IsSpace(wchar_t c)
 	{
 		return iswspace(c);
 	}
