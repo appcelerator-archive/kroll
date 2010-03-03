@@ -18,35 +18,35 @@ namespace kroll
 		: StaticBoundObject("PHP.PHPEvaluator")
 	{
 		/**
-		 * @tiapi(method=True,name=PHP.canEvaluate,since=0.7)
-		 * @tiarg[String, mimeType] Code mime type
-		 * @tiresult[bool] whether or not the mimetype is understood by PHP
+		 * @notiapi(method=True,name=PHP.canEvaluate,since=0.7)
+		 * @notiarg[String, mimeType] Code mime type
+		 * @notiresult[bool] whether or not the mimetype is understood by PHP
 		 */
 		SetMethod("canEvaluate", &PHPEvaluator::CanEvaluate);
 
 		/**
-		 * @tiapi(method=True,name=PHP.evaluate,since=0.7) Evaluates a string as PHP code
-		 * @tiarg[String, mimeType] Code mime type (normally "text/php")
-		 * @tiarg[String, name] name of the script source
-		 * @tiarg[String, code] PHP script code
-		 * @tiarg[Object, scope] global variable scope
-		 * @tiresult[Any] result of the evaluation
+		 * @notiapi(method=True,name=PHP.evaluate,since=0.7) Evaluates a string as PHP code
+		 * @notiarg[String, mimeType] Code mime type (normally "text/php")
+		 * @notiarg[String, name] name of the script source
+		 * @notiarg[String, code] PHP script code
+		 * @notiarg[Object, scope] global variable scope
+		 * @notiresult[Any] result of the evaluation
 		 */
 		SetMethod("evaluate", &PHPEvaluator::Evaluate);
 
 		/**
-		 * @tiapi(method=True,name=PHP.canPreprocess,since=0.7)
-		 * @tiarg[String, url] URL to preprocess
-		 * @tiresult[bool] whether or not the mimetype is understood by PHP
+		 * @notiapi(method=True,name=PHP.canPreprocess,since=0.7)
+		 * @notiarg[String, url] URL to preprocess
+		 * @notiresult[bool] whether or not the mimetype is understood by PHP
 		 */
 		SetMethod("canPreprocess", &PHPEvaluator::CanPreprocess);
 
 		/**
-		 * @tiapi(method=True,name=PHP.preprocess,since=0.7)
-		 * Runs a string and URL through preprocessing
-		 * @tiarg[String, url] URL used to load this resource
-		 * @tiarg[Object, scope] Global variables to bind for PHP
-		 * @tiresult[String] result of the evaluation
+		 * @notiapi(method=True,name=PHP.preprocess,since=0.7)
+		 * @notiapiRuns a string and URL through preprocessing
+		 * @notiarg[String, url] URL used to load this resource
+		 * @notiarg[Object, scope] Global variables to bind for PHP
+		 * @notiresult[String] result of the evaluation
 		 */
 		SetMethod("preprocess", &PHPEvaluator::Preprocess);
 	}

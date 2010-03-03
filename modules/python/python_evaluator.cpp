@@ -12,19 +12,19 @@ namespace kroll
 		StaticBoundObject("Python.Evaluator")
 	{
 		/**
-		 * @tiapi(method=True,name=Python.canEvaluate,since=0.7)
-		 * @tiarg[String, mimeType] Code mime type
-		 * @tiresult[bool] whether or not the mimetype is understood by Python
+		 * @notiapi(method=True,name=Python.canEvaluate,since=0.7)
+		 * @notiarg[String, mimeType] Code mime type
+		 * @notiresult[bool] whether or not the mimetype is understood by Python
 		 */
 		SetMethod("canEvaluate", &PythonEvaluator::CanEvaluate);
 		
 		/**
-		 * @tiapi(method=True,name=Python.evaluate,since=0.2) Evaluates a string as Python code
-		 * @tiarg[String, mimeType] Code mime type (normally "text/python")
-		 * @tiarg[String, name] name of the script source
-		 * @tiarg[String, code] Python script code
-		 * @tiarg[Object, scope] global variable scope
-		 * @tiresult[Any] result of the evaluation
+		 * @notiapi(method=True,name=Python.evaluate,since=0.2) Evaluates a string as Python code
+		 * @notiarg[String, mimeType] Code mime type (normally "text/python")
+		 * @notiarg[String, name] name of the script source
+		 * @notiarg[String, code] Python script code
+		 * @notiarg[Object, scope] global variable scope
+		 * @notiresult[Any] result of the evaluation
 		 */
 		SetMethod("evaluate", &PythonEvaluator::Evaluate);
 	}

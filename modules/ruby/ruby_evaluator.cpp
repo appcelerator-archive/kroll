@@ -15,19 +15,19 @@ namespace kroll
 		StaticBoundObject("Ruby.Evaluator")
 	{
 		/**
-		 * @tiapi(method=True,name=Ruby.canEvaluate,since=0.7)
-		 * @tiarg[String, mimeType] Code mime type
-		 * @tiresult[bool] whether or not the mimetype is understood by Ruby
+		 * @notiapi(method=True,name=Ruby.canEvaluate,since=0.7)
+		 * @notiarg[String, mimeType] Code mime type
+		 * @notiresult[bool] whether or not the mimetype is understood by Ruby
 		 */
 		SetMethod("canEvaluate", &RubyEvaluator::CanEvaluate);
 		
 		/**
-		 * @tiapi(method=Ruby,name=Ruby.evaluate,since=0.2) Evaluates a string as Ruby code
-		 * @tiarg[String, mimeType] Code mime type (normally "text/ruby")
-		 * @tiarg[String, name] name of the script source
-		 * @tiarg[String, code] Ruby script code
-		 * @tiarg[Object, scope] global variable scope
-		 * @tiresult[Any] result of the evaluation
+		 * @notiapi(method=Ruby,name=Ruby.evaluate,since=0.2) Evaluates a string as Ruby code
+		 * @notiarg[String, mimeType] Code mime type (normally "text/ruby")
+		 * @notiarg[String, name] name of the script source
+		 * @notiarg[String, code] Ruby script code
+		 * @notiarg[Object, scope] global variable scope
+		 * @notiresult[Any] result of the evaluation
 		 */
 		SetMethod("evaluate", &RubyEvaluator::Evaluate);
 	}
