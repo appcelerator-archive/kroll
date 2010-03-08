@@ -143,7 +143,7 @@ namespace FileUtils
 		}
 		@catch (NSException* ex)
 		{
-			printf("[Titanium.FileUtils] [Error] Error joining %s: %s"
+			printf("[Titanium.FileUtils] [Error] Error joining %s: %s",
 				result.c_str(), [[ex reason] UTF8String]);
 		}
 #endif
