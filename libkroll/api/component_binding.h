@@ -26,7 +26,6 @@ namespace kroll
 		void _GetName(const ValueList& args, KValueRef value);
 		void _GetVersion(const ValueList& args, KValueRef value);
 		void _GetPath(const ValueList& args, KValueRef value);
-		void _GetManifest(const ValueList& args, KValueRef value);
 		void _IsBundled(const ValueList& args, KValueRef value);
 		void _IsLoaded(const ValueList& args, KValueRef value);
 	};

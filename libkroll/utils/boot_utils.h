@@ -82,12 +82,6 @@ namespace UTILS_NS
 		static SharedComponent NewComponent(KComponentType type,
 			std::string name, std::string version,
 			std::string path, bool bundled=false);
-
-		/**
-		 * Read a component's manifest. If there is no manifest
-		 * file or it cannot be read return an empty vector.
-		 */
-		vector<pair<string, string> > ReadManifest();
 	};
 
 	namespace BootUtils

@@ -42,13 +42,6 @@ namespace kroll
 		this->SetMethod("getPath", &ComponentBinding::_GetPath);
 
 		/**
-		 * @tiapi(method=True,name=API.Component.getManifest,since=0.4)
-		 * @tiapi Get the contents of this components's manifest
-		 * @tiresult[Array<Array<String>>] The contents of the manifest as an array of key-value strings
-		 */
-		this->SetMethod("getManifest", &ComponentBinding::_GetManifest);
-
-		/**
 		 * @tiapi(method=True,name=API.Component.isBundled,since=0.4)
 		 * @tiapi Whether or not this component is bundled with an application
 		 * @tiresult[Boolean] True if this is a bundled component, false otherwise
@@ -81,13 +74,6 @@ namespace kroll
 	void ComponentBinding::_GetPath(const ValueList& args, KValueRef result)
 	{
 		result->SetString(this->component->path);
-	}
-
-	void ComponentBinding::_GetManifest(const ValueList& args, KValueRef result)
-	{
-		vector<pair<string, string> > manifest = this->component->ReadManifest();
-		KListRef manifestList = APIBinding::ManifestToKList(manifest);
-		result->SetList(manifestList);
 	}
 
 	void ComponentBinding::_IsBundled(const ValueList& args, KValueRef result)

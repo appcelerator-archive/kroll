@@ -382,10 +382,4 @@ namespace BootUtils
 		c->bundled = bundled;
 		return c;
 	}
-
-	vector<pair<string, string> > KComponent::ReadManifest()
-	{
-		string manifestPath(FileUtils::Join(this->path.c_str(), MANIFEST_FILENAME, NULL));
-		return BootUtils::ReadManifestFile(manifestPath);
-	}
 }
