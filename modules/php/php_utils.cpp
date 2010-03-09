@@ -47,7 +47,8 @@ namespace kroll
 			{
 				if (HAS_CLASS_ENTRY(*value) &&
 					Z_OBJCE_P(value) == PHPKObjectClassEntry ||
-					Z_OBJCE_P(value) == PHPKMethodClassEntry)
+					Z_OBJCE_P(value) == PHPKMethodClassEntry ||
+					Z_OBJCE_P(value) == PHPKListClassEntry)
 				{
 					PHPKObject* phpKObject = reinterpret_cast<PHPKObject*>(
 						zend_object_store_get_object(value TSRMLS_CC));
