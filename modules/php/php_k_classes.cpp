@@ -263,14 +263,24 @@ namespace kroll
 	{
 		PHPKObject* kthis = reinterpret_cast<PHPKObject*>(
 			zend_object_store_get_object(zthis TSRMLS_CC));
-		KObjectRef kobject = kthis->kvalue->ToObject();
-
-		string propertyName = PHPUtils::ZvalToPropertyName(property);
-		KValueRef krollValue = PHPUtils::ToKrollValue(value TSRMLS_CC);
 
 		try
 		{
-			kobject->Set(propertyName.c_str(), krollValue);
+			KValueRef krollValue = PHPUtils::ToKrollValue(value TSRMLS_CC);
+			if (!property) // A NULL property name means this is an append ([]=) operation.
+			{
+				// TODO: It's unclear what this should do if not called on a list.
+				if (kthis->kvalue->IsList())
+				{
+					kthis->kvalue->ToList()->Append(krollValue);
+				}
+			}
+			else
+			{
+				KObjectRef kobject = kthis->kvalue->ToObject();
+				string propertyName = PHPUtils::ZvalToPropertyName(property);
+					kobject->Set(propertyName.c_str(), krollValue);
+			}
 		}
 		catch (ValueException& e)
 		{
@@ -288,7 +298,7 @@ namespace kroll
 		try
 		{
 			SharedStringList propertyNames = kobject->GetPropertyNames();
-			HashTable *properties;
+			HashTable* properties;
 			ALLOC_HASHTABLE(properties);
 			zend_hash_init(properties, propertyNames->size(), NULL, ZVAL_PTR_DTOR, 0);
 
@@ -556,12 +566,12 @@ namespace kroll
 		SharedStringList propertyList = klist->GetPropertyNames();
 
 		array_init(return_value);
-		for (size_t i = 0; i <= propertyList->size(); i++)
+		for (size_t i = 0; i < propertyList->size(); i++)
 		{
 			SharedString ss(propertyList->at(i));
 			zval* newValue = PHPUtils::ToPHPValue(klist->Get(ss->c_str()));
-			zend_hash_add(HASH_OF(return_value), ss->c_str(), strlen(ss->c_str()) - 1,
-				&newValue, sizeof(zval*), NULL);
+			zend_hash_next_index_insert(HASH_OF(return_value),
+				(void**) &newValue, sizeof (void*), 0);
 		}
 	}
 
