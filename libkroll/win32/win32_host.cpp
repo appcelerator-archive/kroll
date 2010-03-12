@@ -46,7 +46,7 @@ namespace kroll
 #ifndef DEBUG
 		// only create a debug console when not compiled in debug mode 
 		// otherwise, it should be autocreated
-		if (host->DebugModeEnabled())
+		if (this->DebugModeEnabled())
 		{
 			RedirectIOToConsole();
 		}
