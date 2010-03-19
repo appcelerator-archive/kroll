@@ -33,7 +33,7 @@ namespace KrollBoot
 		wideMsg.append(KrollUtils::UTF8ToWide(msg));
 		wstring wideAppName = KrollUtils::UTF8ToWide(GetApplicationName());
 
-		MessageBoxW(NULL, wideMsg.c_str(), wideAppName.c_str(), MB_OK|MB_ICONERROR|MB_SYSTEMMODAL);
+		MessageBoxW(0, wideMsg.c_str(), wideAppName.c_str(), MB_OK|MB_ICONERROR|MB_SYSTEMMODAL);
 		if (fatal)
 			exit(1);
 	}
@@ -41,7 +41,7 @@ namespace KrollBoot
 	string GetApplicationHomePath()
 	{
 		wchar_t widePath[MAX_PATH];
-		int size = GetModuleFileNameW(GetModuleHandle(NULL), widePath, MAX_PATH - 1);
+		int size = GetModuleFileNameW(GetModuleHandle(0), widePath, MAX_PATH - 1);
 		if (size > 0)
 		{
 			widePath[size] = '\0';
@@ -97,7 +97,7 @@ namespace KrollBoot
 
 		wstring widePath(KrollUtils::UTF8ToWide(path));
 		HMODULE module = LoadLibraryExW(widePath.c_str(),
-			NULL, LOAD_WITH_ALTERED_SEARCH_PATH);
+			0, LOAD_WITH_ALTERED_SEARCH_PATH);
 		if (!module)
 		{
 			string msg("Couldn't load file (");
@@ -114,7 +114,7 @@ namespace KrollBoot
 	int StartHost()
 	{
 		string runtimePath(EnvironmentUtils::Get("KR_RUNTIME"));
-		string dll(FileUtils::Join(runtimePath.c_str(), "kroll.dll", NULL));
+		string dll(FileUtils::Join(runtimePath.c_str(), "khost.dll", 0));
 		HMODULE khost = SafeLoadRuntimeDLL(dll);
 		if (!khost)
 			return __LINE__;
@@ -173,14 +173,14 @@ namespace KrollBoot
 				argv[0], CRASH_REPORT_OPT, dumpPath, id);
 
 			CreateProcessW(
-				NULL,
+				0,
 				breakpadCallBuffer,
-				NULL,
-				NULL,
+				0,
+				0,
 				FALSE,
 				0,
-				NULL,
-				NULL,
+				0,
+				0,
 				&startupInfo,
 				&processInformation);
 		}
@@ -224,7 +224,7 @@ namespace KrollBoot
 		msg.append("\n\n");
 		msg.append(GetCrashDetectionMessage());
 
-		Win32PopupDialog popupDialog(NULL);
+		Win32PopupDialog popupDialog(0);
 		popupDialog.SetTitle(title);
 		popupDialog.SetMessage(msg);
 		popupDialog.SetShowCancelButton(true);
@@ -246,7 +246,7 @@ namespace KrollBoot
 			parameters,
 			dumpFilePathW.c_str(),
 			L"dump",
-			NULL,
+			0,
 			&responseBody,
 			&responseCode);
 
@@ -260,7 +260,7 @@ namespace KrollBoot
 #ifdef DEBUG
 		else
 		{
-			MessageBoxW(NULL,L"Your crash report has been submitted. Thank You!",L"Error Reporting Status",MB_OK | MB_ICONINFORMATION);
+			MessageBoxW(0,L"Your crash report has been submitted. Thank You!",L"Error Reporting Status",MB_OK | MB_ICONINFORMATION);
 		}
 #endif
 		return 0;
@@ -288,9 +288,9 @@ int main(int __argc, const char* __argv[])
 	GetTempPathW(MAX_PATH, tempPath);
 	KrollBoot::breakpad = new google_breakpad::ExceptionHandler(
 		tempPath,
-		NULL,
+		0,
 		KrollBoot::HandleCrash,
-		NULL,
+		0,
 		google_breakpad::ExceptionHandler::HANDLER_ALL);
 #endif
 

@@ -28,7 +28,7 @@ namespace KrollBoot
 		std::cout << error << std::endl;
 		gtk_init(&argc, (char***) &argv);
 		GtkWidget* dialog = gtk_message_dialog_new(
-			NULL,
+			0,
 			GTK_DIALOG_MODAL,
 			GTK_MESSAGE_ERROR,
 			GTK_BUTTONS_CLOSE,
@@ -46,7 +46,7 @@ namespace KrollBoot
 		char* buffer = (char*) alloca(sizeof(char) * PATH_MAX);
 		char* realPath = realpath(argv[0], buffer);
 		string realPathStr = realPath;
-		if (realPath != NULL && FileUtils::IsFile(realPathStr))
+		if (realPath != 0 && FileUtils::IsFile(realPathStr))
 		{
 			return dirname(realPath);
 		}
@@ -76,7 +76,7 @@ namespace KrollBoot
 		// Ensure that the argument list is NULL terminated
 		char** myargv = (char **) calloc(sizeof(char *), argc + 1);
 		memcpy(myargv, argv, sizeof(char*) * (argc + 1));
-		myargv[argc] = NULL;
+		myargv[argc] = 0;
 
 		execv(argv[0], (char* const*) argv);
 
@@ -89,11 +89,11 @@ namespace KrollBoot
 	int StartHost()
 	{
 		const char* runtimePath = getenv("KR_RUNTIME");
-		if (runtimePath == NULL)
+		if (!runtimePath)
 			return __LINE__;
 
 		// now we need to load the host and get 'er booted
-		string khost = FileUtils::Join(runtimePath, "libkroll.so", NULL);
+		string khost = FileUtils::Join(runtimePath, "libkhost.so", 0);
 		if (!FileUtils::IsFile(khost))
 		{
 			string msg = string("Couldn't find required file:") + khost;
@@ -123,7 +123,7 @@ namespace KrollBoot
 	bool RunInstaller(vector<SharedDependency> missing, bool forceInstall)
 	{
 		string exec = FileUtils::Join(
-			app->path.c_str(), "installer", "installer", NULL);
+			app->path.c_str(), "installer", "installer", 0);
 		if (!FileUtils::IsFile(exec))
 		{
 			ShowError("Missing installer and application has additional modules that are needed.");
@@ -179,7 +179,7 @@ namespace KrollBoot
 		const std::map<string, string> parameters = GetCrashReportParameters();
 
 		GtkWidget* dialog = gtk_message_dialog_new(
-			NULL,
+			0,
 			GTK_DIALOG_MODAL,
 			GTK_MESSAGE_ERROR,
 			GTK_BUTTONS_NONE,
@@ -188,7 +188,7 @@ namespace KrollBoot
 		gtk_dialog_add_buttons(GTK_DIALOG(dialog),
 			GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
 			"Send Report", GTK_RESPONSE_OK,
-			NULL);
+			0);
 		gtk_window_set_title(GTK_WINDOW(dialog), title.c_str());
 		int response = gtk_dialog_run(GTK_DIALOG(dialog));
 		if (response != GTK_RESPONSE_OK)
@@ -229,9 +229,9 @@ int main(int argc, const char* argv[])
 	string dumpPath = "/tmp";
 	KrollBoot::breakpad = new google_breakpad::ExceptionHandler(
 		dumpPath,
-		NULL,
+		0,
 		KrollBoot::HandleCrash,
-		NULL,
+		0,
 		true);
 #endif
 

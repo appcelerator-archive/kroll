@@ -94,7 +94,7 @@ namespace KrollBoot
 		// Ensure that the argument list is NULL terminated
 		char** myargv = (char **) calloc(sizeof(char *), argc + 1);
 		memcpy(myargv, argv, sizeof(char*) * (argc + 1));
-		myargv[argc] = NULL;
+		myargv[argc] = 0;
 	
 		NSString *executablePath = [[NSBundle mainBundle] executablePath];
 		execv([executablePath fileSystemRepresentation], myargv);
@@ -108,10 +108,10 @@ namespace KrollBoot
 	{
 		// now we need to load the host and get 'er booted
 		const char* runtimePath = getenv("KR_RUNTIME");
-		if (runtimePath == NULL)
+		if (!runtimePath)
 			return __LINE__;
 
-		std::string khost = FileUtils::Join(runtimePath, "libkroll.dylib", NULL);
+		std::string khost = FileUtils::Join(runtimePath, "libkhost.dylib", 0);
 		if (!FileUtils::IsFile(khost))
 		{
 			string msg = string("Couldn't find required file:") + khost;
@@ -145,7 +145,7 @@ namespace KrollBoot
 			"Installer App.app",
 			"Contents", 
 			"MacOS",
-			"Installer App", NULL);
+			"Installer App", 0);
 		if (!FileUtils::IsFile(exec))
 		{
 			ShowError("Missing installer and application has additional modules that are needed.");
@@ -238,7 +238,7 @@ namespace KrollBoot
 
 			NSError* error;
 			[uploader send:&error];
-			if (error != NULL)
+			if (error)
 			{
 				string msg = "An error occured while attempting sending the crash report: ";
 				msg += [[error localizedDescription] UTF8String];
@@ -280,7 +280,7 @@ int main(int argc, char* argv[])
 			tempPath = @"/tmp";
 		string dumpPath = [tempPath UTF8String];
 		KrollBoot::breakpad = new google_breakpad::ExceptionHandler(
-			dumpPath, NULL, KrollBoot::HandleCrash, NULL, true);
+			dumpPath, 0, KrollBoot::HandleCrash, 0, true);
 #endif
 		[[NSApplication sharedApplication] setDelegate:
 			[[KrollApplicationDelegate alloc] init]];
