@@ -8,7 +8,10 @@ Import('build')
 
 libkroll_sources = []
 libkroll_env = build.env.Clone()
-libkroll_name = 'kroll'
+
+# libkroll is called khost for now, until we can gaurantee
+# that application updates also update the kboot.exe DLL.
+libkroll_name = 'khost'
 
 sources = libkroll_sources + \
 	Glob('*.cpp') + \
