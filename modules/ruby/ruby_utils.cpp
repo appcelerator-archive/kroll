@@ -44,8 +44,11 @@ namespace kroll
 		}
 		else if (T_STRING == t)
 		{
-			char* ptr = StringValuePtr(value);
-			kvalue = Value::NewString(ptr);
+			kvalue = Value::NewString(StringValuePtr(value));
+		}
+		else if (T_SYMBOL == t)
+		{
+			kvalue = Value::NewString(rb_id2name(SYM2ID(value)));
 		}
 		else if (T_OBJECT == t)
 		{

@@ -5,7 +5,28 @@
  */
 #include "ruby_module.h"
 
-namespace kroll {
+namespace kroll
+{
+
+	static bool ShouldTreatKeysAsSymbols(VALUE hash)
+	{
+		size_t numberOfSymbolKeys = 0;
+		size_t numberOfKeys = 0;
+
+		VALUE keys = rb_funcall(hash, rb_intern("keys"), 0);
+		for (int i = 0; i < RARRAY_LEN(keys); i++)
+		{
+			if (TYPE(rb_ary_entry(keys, i)) == T_SYMBOL)
+				numberOfSymbolKeys++;
+
+			numberOfKeys++;
+		}
+
+		// If the number of keys that are symbols is grater than
+		// zero and more than half of the keys are symbols, than
+		// we want to treat all new keys as symbols.
+		return ((numberOfSymbolKeys * 2) > numberOfKeys);
+	}
 
 	KRubyHash::KRubyHash(VALUE hash) :
 		KObject("Ruby.KRubyHash"),
@@ -22,23 +43,35 @@ namespace kroll {
 
 	KValueRef KRubyHash::Get(const char *name)
 	{
-		VALUE key = rb_str_new2(name);
-		if (rb_funcall(hash, rb_intern("has_key?"), 1, key))
+		VALUE keyAsSymbol = ID2SYM(rb_intern(name));
+		if (rb_funcall(hash, rb_intern("has_key?"), 1, keyAsSymbol))
+			return RubyUtils::ToKrollValue(rb_hash_aref(hash, keyAsSymbol));
+
+		VALUE keyAsString = rb_str_new2(name);
+		if (rb_funcall(hash, rb_intern("has_key?"), 1, keyAsString))
+			return RubyUtils::ToKrollValue(rb_hash_aref(hash, keyAsString));
+
+		return this->object->Get(name);
+	}
+
+	void KRubyHash::Set(const char* name, KValueRef value)
+	{
+		// If this hash already has a key that's a symbol of
+		// this name, then just use the symbol version. This
+		// allows Kroll to work with hashes of symbols (pretty
+		// common in Ruby) without really *knowing* about symbols.
+		VALUE keyAsSymbol = ID2SYM(rb_intern(name));
+		if (rb_funcall(hash, rb_intern("has_key?"), 1, keyAsSymbol)
+			|| ShouldTreatKeysAsSymbols(hash))
 		{
-			VALUE v = rb_hash_aref(hash, key);
-			return RubyUtils::ToKrollValue(v);
+			rb_hash_aset(hash, keyAsSymbol,
+				RubyUtils::ToRubyValue(value));
 		}
 		else
 		{
-			return this->object->Get(name);
+			rb_hash_aset(hash, rb_str_new2(name),
+				RubyUtils::ToRubyValue(value));
 		}
-	}
-
-	void KRubyHash::Set(const char *name, KValueRef value)
-	{
-		VALUE key = rb_str_new2(name);
-		VALUE v = RubyUtils::ToRubyValue(value);
-		rb_hash_aset(hash, key, v);
 	}
 
 	SharedString KRubyHash::DisplayString(int levels)
@@ -55,8 +88,10 @@ namespace kroll {
 		for (int i = 0; i < RARRAY_LEN(keys); i++)
 		{
 			VALUE key = rb_ary_entry(keys, i);
-			std::string name(StringValueCStr(key));
-			names->push_back(new std::string(name));
+			if (TYPE(key) == T_SYMBOL)
+				names->push_back(new std::string(rb_id2name(SYM2ID(key))));
+			else if (TYPE(key) == T_STRING)
+				names->push_back(new std::string(StringValuePtr(key)));
 		}
 
 		return names;
