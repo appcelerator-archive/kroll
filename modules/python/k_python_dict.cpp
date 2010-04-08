@@ -19,7 +19,7 @@ namespace kroll
 	{
 		PyLockGIL lock;
 		Py_DECREF(this->object);
-		this->object = NULL;
+		this->object = 0;
 	}
 
 	void KPythonDict::Set(const char* name, KValueRef value)
@@ -28,7 +28,7 @@ namespace kroll
 		PyObject* pyval = PythonUtils::ToPyObject(value);
 		int result = PyMapping_SetItemString(this->object, (char*)name, pyval);
 
-		if (result == -1 && PyErr_Occurred() != NULL)
+		if (result == -1 && PyErr_Occurred() != 0)
 		{
 			THROW_PYTHON_EXCEPTION
 		}
@@ -37,10 +37,15 @@ namespace kroll
 	KValueRef KPythonDict::Get(const char *name)
 	{
 		PyLockGIL lock;
-		PyObject* item = PyMapping_GetItemString(this->object, (char*) name);
 
-		if (item == NULL)
+		if (PyMapping_HasKeyString(this->object, (char*) name) == 0)
 			return Value::Undefined;
+
+		PyObject* item = PyMapping_GetItemString(this->object, (char*) name);
+		if (item == 0 && PyErr_Occurred())
+		{
+			THROW_PYTHON_EXCEPTION;
+		}
 
 		try
 		{
@@ -72,12 +77,12 @@ namespace kroll
 		SharedStringList property_names = new StringList();
 
 		// Avoid compiler warnings
-		PyObject *items = PyObject_CallMethod(this->object, (char*) "items", NULL);
-		if (items == NULL)
+		PyObject *items = PyObject_CallMethod(this->object, (char*) "items", 0);
+		if (items == 0)
 			return property_names;
 
 		PyObject *iterator = PyObject_GetIter(items);
-		if (iterator == NULL)
+		if (iterator == 0)
 			return property_names;
 
 		PyObject *item;
