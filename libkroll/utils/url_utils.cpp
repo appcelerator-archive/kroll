@@ -164,7 +164,7 @@ namespace URLUtils
 		// break with UTF-8.
 		std::wstring path(UTF8ToWide(pathIn));
 
-		// Windows needs it's slashes chanaged around.
+		// Windows needs it's slashes swapped.
 #if OS_WIN32
 		for (size_t i = 0; i < path.size(); i++)
 		{
@@ -180,14 +180,12 @@ namespace URLUtils
 		for (size_t i = 0; i < pieces.size(); i++)
 		{
 			std::string piece(WideToUTF8(pieces[i]));
+			url.append("/");
 #if OS_WIN32
-			// Don't encode the C:
+			// Don't encode the C: section.
 			if (i != 0)
 #endif
-			{
-				url.append("/");
 				piece = EncodeURIComponent(piece);
-			}
 
 			url.append(piece);
 		}
