@@ -173,6 +173,11 @@ class BuildConfig(object):
 			libpath = [self.tp('curl', 'lib')]
 			libs = ['curl']
 
+		elif name is 'cairo' and self.is_win32():
+			cpppath = [self.tp('webkit', 'include')]
+			libpath = [self.tp('webkit', 'lib')]
+			libs = ['cairo']
+
 		if name is 'webkit':
 			if self.is_win32() or self.is_linux():
 				cpppath = [self.tp('webkit', 'include')]
