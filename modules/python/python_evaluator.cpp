@@ -11,21 +11,7 @@ namespace kroll
 	PythonEvaluator::PythonEvaluator() :
 		StaticBoundObject("Python.Evaluator")
 	{
-		/**
-		 * @notiapi(method=True,name=Python.canEvaluate,since=0.7)
-		 * @notiarg[String, mimeType] Code mime type
-		 * @notiresult[bool] whether or not the mimetype is understood by Python
-		 */
 		SetMethod("canEvaluate", &PythonEvaluator::CanEvaluate);
-		
-		/**
-		 * @notiapi(method=True,name=Python.evaluate,since=0.2) Evaluates a string as Python code
-		 * @notiarg[String, mimeType] Code mime type (normally "text/python")
-		 * @notiarg[String, name] name of the script source
-		 * @notiarg[String, code] Python script code
-		 * @notiarg[Object, scope] global variable scope
-		 * @notiresult[Any] result of the evaluation
-		 */
 		SetMethod("evaluate", &PythonEvaluator::Evaluate);
 	}
 	
@@ -51,9 +37,8 @@ namespace kroll
 		std::string code = args.GetString(2);
 		KObjectRef windowGlobal = args.GetObject(3);
 		
-		// Normalize tabs and convert line-feeds
-		PythonEvaluator::Strip(code);
-		PythonEvaluator::ConvertLineEndings(code);
+		// We must unindent the code block to prevent parsing errors.
+		PythonEvaluator::UnindentCode(code);
 
 		// Insert all the js global properties into a copy of globals()
 		PyObject* mainModule = PyImport_AddModule("__main__");
@@ -159,24 +144,33 @@ namespace kroll
 		}
 	}
 
-	void PythonEvaluator::Strip(std::string &code)
+	void PythonEvaluator::UnindentCode(std::string &code)
 	{
-		size_t startpos = code.find_first_not_of(" \t\n");
-		if (std::string::npos != startpos)
-			code.replace(0, startpos, "");
+		// Determine indent width of the code block
+		size_t startOffset = code.find_first_not_of("\r\n");  // ignore any newlines at start of block
+		size_t blockIndent = code.find_first_not_of(" \t", startOffset) - startOffset;
+		if (blockIndent == 0) return;
 
-		startpos = code.find_last_not_of(" \t\n") + 1;
-		if (startpos != code.size())
-			code.replace(startpos, code.size() - startpos, "\n");
-	}
+		std::string dirtyCode = code.substr(startOffset);
+		code.clear();
 
-	void PythonEvaluator::ConvertLineEndings(std::string &code)
-	{
-		std::string::size_type loc = code.find("\r\n");
-		while (loc != std::string::npos)
+		// Process code line by line unindenting code
+		Poco::StringTokenizer lines(dirtyCode, "\n");
+		Poco::StringTokenizer::Iterator i;
+		for (i = lines.begin(); i != lines.end(); i++)
 		{
-			code.replace(loc, 2, "\n");
-			loc = code.find("\r\n");
+			std::string line = *i;
+			if (line.length() > 0)
+			{
+				size_t lineIndent = line.find_first_not_of(" \t");
+				if (lineIndent < blockIndent)
+				{
+					// If the line has a smaller indent than the block, warn the user!
+					throw ValueException::FromFormat("Indentation error in script: %s", line.c_str());
+				}
+				code.append(line, blockIndent, line.length() - blockIndent);
+			}
+			code.append(1, '\n');
 		}
 	}
 }

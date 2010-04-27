@@ -6,21 +6,21 @@
 #ifndef PYTHON_EVALUATOR_H_
 #define PYTHON_EVALUATOR_H_
 
+#include <Poco/StringTokenizer.h>
+
 namespace kroll
 {
 	class PythonEvaluator : public StaticBoundObject
 	{
-		public:
+	public:
 		PythonEvaluator();
 		void Evaluate(const ValueList& args, KValueRef result);
 		void CanEvaluate(const ValueList& args, KValueRef result);
 
-		private:
-		static void Strip(std::string &);
-		static void ConvertLineEndings(std::string &);
+	private:
+		static void UnindentCode(std::string &code);
 		static void DictToKObjectProps(PyObject* map, KObjectRef o);
 		static void KObjectPropsToDict(KObjectRef o, PyObject* pyobj);
-
 	};
 }
 
