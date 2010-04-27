@@ -163,12 +163,21 @@ namespace kroll
 			if (line.length() > 0)
 			{
 				size_t lineIndent = line.find_first_not_of(" \t");
-				if (lineIndent < blockIndent)
+
+				if (lineIndent == std::string::npos)
+				{
+					// Allow lines with only whitespace to pass through.
+					code.append(line);
+				}
+				else if (lineIndent < blockIndent)
 				{
 					// If the line has a smaller indent than the block, warn the user!
 					throw ValueException::FromFormat("Indentation error in script: %s", line.c_str());
 				}
-				code.append(line, blockIndent, line.length() - blockIndent);
+				else
+				{
+					code.append(line, blockIndent, line.length() - blockIndent);
+				}
 			}
 			code.append(1, '\n');
 		}
