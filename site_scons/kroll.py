@@ -46,6 +46,7 @@ class BuildConfig(object):
 		vars.Add('CONFIG_FILENAME','The name of the Kroll config file', kwargs['CONFIG_FILENAME'])
 		vars.Add('DISTRIBUTION_URL','The base URL of all streams', kwargs['DISTRIBUTION_URL'])
 		vars.Add('CRASH_REPORT_URL','The URL to send crash dumps to', kwargs['CRASH_REPORT_URL'])
+		vars.Add('MSVC_VERSION', '', '8.0')
 
 		self.env = SCons.Environment.Environment(variables = vars)
 		self.utils = utils.BuildUtils(self)
