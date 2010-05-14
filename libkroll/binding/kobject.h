@@ -329,6 +329,11 @@ namespace kroll
 	protected:
 		std::string type;
 
+		Logger* logger()
+		{
+			return Logger::Get(this->type);
+		}
+
 	private:
 		DISALLOW_EVIL_CONSTRUCTORS(KObject);
 	};
