@@ -16,10 +16,10 @@ namespace BootUtils
 	// These are also used in application.cpp
 	void ScanBundledComponents(string, vector<SharedComponent>&);
 
-	static void ScanRuntimesAtPath(string, vector<SharedComponent>&);
-	static void ScanModulesAtPath(string, vector<SharedComponent>&);
-	static void ScanSDKsAtPath(string, vector<SharedComponent>&);
-	static void ScanMobileSDKsAtPath(string, vector<SharedComponent>&);
+	static void ScanRuntimesAtPath(string, vector<SharedComponent>&, bool=true);
+	static void ScanModulesAtPath(string, vector<SharedComponent>&, bool=true);
+	static void ScanSDKsAtPath(string, vector<SharedComponent>&, bool=true);
+	static void ScanMobileSDKsAtPath(string, vector<SharedComponent>&, bool=true);
 	static void AddToComponentVector(vector<SharedComponent>&, SharedComponent);
 
 	static void AddToComponentVector(vector<SharedComponent>& components,
@@ -100,13 +100,15 @@ namespace BootUtils
 		return directories;
 	}
 
-	static void ScanRuntimesAtPath(string path, vector<SharedComponent>& results)
+	static void ScanRuntimesAtPath(string path, vector<SharedComponent>& results, bool bundled)
 	{
 		if (!FileUtils::IsDirectory(path))
 			return;
 
 		// Read everything that looks like <searchpath>/runtime/<os>/*
-		string rtPath(FileUtils::Join(path.c_str(), "runtime", OS_NAME, NULL));
+		string rtPath(FileUtils::Join(path.c_str(), "runtime", 0));
+		if (!bundled)
+			rtPath = FileUtils::Join(rtPath.c_str(), OS_NAME, 0);
 		vector<PathBits> versions(GetDirectoriesAtPath(rtPath));
 		for (size_t i = 0; i < versions.size(); i++)
 		{
@@ -116,47 +118,55 @@ namespace BootUtils
 		}
 	}
 
-	static void ScanSDKsAtPath(string path, vector<SharedComponent>& results)
+	static void ScanSDKsAtPath(string path, vector<SharedComponent>& results, bool bundled)
 	{
 		if (!FileUtils::IsDirectory(path))
 			return;
 
 		// Read everything that looks like <searchpath>/sdk/<os>/*
-		string sdkPath(FileUtils::Join(path.c_str(), "sdk", OS_NAME, NULL));
+		string sdkPath(FileUtils::Join(path.c_str(), "sdk", 0));
+		if (!bundled)
+			sdkPath = FileUtils::Join(sdkPath.c_str(), OS_NAME, 0);
 		vector<PathBits> versions(GetDirectoriesAtPath(sdkPath));
 
 		for (size_t i = 0; i < versions.size(); i++)
 		{
 			PathBits& b = versions[i];
 			AddToComponentVector(results,
-				KComponent::NewComponent(SDK, "sdk", b.name, b.fullPath));
+				KComponent::NewComponent(SDK, "sdk", b.name, b.fullPath, bundled));
 		}
 	}
 
-	static void ScanMobileSDKsAtPath(string path, vector<SharedComponent>& results)
+	static void ScanMobileSDKsAtPath(string path, vector<SharedComponent>& results, bool bundled)
 	{
 		if (!FileUtils::IsDirectory(path))
 			return;
 
 		// Read everything that looks like <searchpath>/mobilesdk/<os>/*
-		string sdkPath(FileUtils::Join(path.c_str(), "mobilesdk", OS_NAME, NULL));
+		string sdkPath(FileUtils::Join(path.c_str(), "mobilesdk", 0));
+		if (!bundled)
+			sdkPath = FileUtils::Join(sdkPath.c_str(), OS_NAME, 0);
 		vector<PathBits> versions(GetDirectoriesAtPath(sdkPath));
+
 		for (size_t i = 0; i < versions.size(); i++)
 		{
 			PathBits& b = versions[i];
 			AddToComponentVector(results,
-				KComponent::NewComponent(MOBILESDK, "mobilesdk", b.name, b.fullPath));
+				KComponent::NewComponent(MOBILESDK, "mobilesdk", b.name, b.fullPath, bundled));
 		}
 	}
 
-	static void ScanModulesAtPath(string path, vector<SharedComponent>& results)
+	static void ScanModulesAtPath(string path, vector<SharedComponent>& results, bool bundled)
 	{
 		if (!FileUtils::IsDirectory(path))
 			return;
 
 		// Read everything that looks like <searchpath>/modules/<os>/*
-		string namesPath(FileUtils::Join(path.c_str(), "modules", OS_NAME, NULL));
+		string namesPath(FileUtils::Join(path.c_str(), "modules", 0));
+		if (!bundled)
+			namesPath = FileUtils::Join(namesPath.c_str(), OS_NAME, 0);
 		vector<PathBits> moduleNames(GetDirectoriesAtPath(namesPath));
+
 		for (size_t i = 0; i < moduleNames.size(); i++)
 		{
 			PathBits& moduleName = moduleNames[i];
@@ -167,46 +177,17 @@ namespace BootUtils
 			{
 				PathBits& moduleVersion = moduleVersions[j];
 				AddToComponentVector(results, KComponent::NewComponent(
-					MODULE, moduleName.name, moduleVersion.name, moduleVersion.fullPath));
+					MODULE, moduleName.name, moduleVersion.name, moduleVersion.fullPath, bundled));
 			}
 		}
 	}
 
 	void ScanBundledComponents(string path, vector<SharedComponent>& results)
 	{
-		// Find a directory like <appdir>/runtime/
-		string runtimePath(FileUtils::Join(path.c_str(), "runtime", NULL));
-		if (FileUtils::IsDirectory(runtimePath))
-		{
-			results.push_back(KComponent::NewComponent(
-				RUNTIME, "runtime", "", runtimePath, true));
-		}
-
-		// Find a directory like <appdir>/mobilesdk/
-		string mobileSDKPath(FileUtils::Join(path.c_str(), "mobilesdk", NULL));
-		if (FileUtils::IsDirectory(mobileSDKPath))
-		{
-			results.push_back(KComponent::NewComponent(
-				MOBILESDK, "mobilesdk", "", mobileSDKPath, true));
-		}
-
-		// Find a directory like <appdir>/sdk/
-		string sdkPath(FileUtils::Join(path.c_str(), "sdk", NULL));
-		if (FileUtils::IsDirectory(sdkPath))
-		{
-			results.push_back(KComponent::NewComponent(
-				SDK, "sdk", "", sdkPath, true));
-		}
-
-		// Find all directories like <appdir>/modules/*
-		string modulesPath(FileUtils::Join(path.c_str(), "modules", NULL));
-		vector<PathBits> moduleNames(GetDirectoriesAtPath(modulesPath));
-		for (size_t i = 0; i < moduleNames.size(); i++)
-		{
-			PathBits& moduleName = moduleNames[i];
-			results.push_back(KComponent::NewComponent(MODULE, 
-				moduleName.name, "", moduleName.fullPath, true));
-		}
+		ScanRuntimesAtPath(path, results, true);
+		ScanMobileSDKsAtPath(path, results, true);
+		ScanSDKsAtPath(path, results, true);
+		ScanModulesAtPath(path, results, true);
 	}
 
 	int CompareVersions(string one, string two)
@@ -287,10 +268,8 @@ namespace BootUtils
 			if (dep->type != comp->type || dep->name != comp->name)
 				continue;
 
-			// Always give preference to bundled components, otherwise do a normal comparison
 			int compare = CompareVersions(comp->version, dep->version);
-			if (comp->bundled
-				|| (dep->requirement == Dependency::EQ && compare == 0)
+			if ((dep->requirement == Dependency::EQ && compare == 0)
 				|| (dep->requirement == Dependency::GTE && compare >= 0)
 				|| (dep->requirement == Dependency::GT && compare > 0)
 				|| (dep->requirement == Dependency::LT && compare < 0))
@@ -379,7 +358,7 @@ namespace BootUtils
 		c->name = name;
 		c->version = version;
 		c->path = path;
-		c->bundled = bundled;
+		c->bundled = true;
 		return c;
 	}
 }
