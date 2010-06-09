@@ -50,10 +50,10 @@ namespace BootUtils
 			while (i != paths.end())
 			{
 				string path(*i++);
-				ScanRuntimesAtPath(path, installedComponents);
-				ScanSDKsAtPath(path, installedComponents);
-				ScanMobileSDKsAtPath(path, installedComponents);
-				ScanModulesAtPath(path, installedComponents);
+				ScanRuntimesAtPath(path, installedComponents, false);
+				ScanSDKsAtPath(path, installedComponents, false);
+				ScanMobileSDKsAtPath(path, installedComponents, false);
+				ScanModulesAtPath(path, installedComponents, false);
 			}
 
 			// Sort components by version here so that the latest version of
