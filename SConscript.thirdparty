@@ -14,7 +14,7 @@ revisions = {
 	"linux-i386": 35,
 	"linux-x86_64": 27,
 	"osx-universal": 28,
-	"win32-i386": 41
+	"win32-i386": 42
 }
 
 thirdparty_name = 'thirdparty-%s-%s-r%s' % (build.os, build.arch, revisions[build.os+'-'+build.arch])
