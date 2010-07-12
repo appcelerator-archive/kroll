@@ -176,7 +176,7 @@ static bool ShouldBypassWithEntry(URI& uri, SharedPtr<BypassEntry> entry)
 	}
 	else
 	{
-		if (entryHost == "<local>" && uriHost.find(".") == string::npos)
+		if (entryHost.find("<local>") != string::npos)
 		{
 			return true;
 		}
