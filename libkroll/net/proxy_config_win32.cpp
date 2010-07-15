@@ -227,7 +227,7 @@ static bool GetAutoProxiesForURL(string& url, vector<SharedProxy>& proxies,
 static void AddToBypassList(string bypassListString,
 	vector<SharedPtr<BypassEntry > >& list)
 {
-	string sep = ",";
+	string sep = ",; ";
 	StringTokenizer tokenizer(bypassListString, sep,
 		StringTokenizer::TOK_IGNORE_EMPTY | StringTokenizer::TOK_TRIM);
 	for (size_t i = 0; i < tokenizer.count(); i++)
