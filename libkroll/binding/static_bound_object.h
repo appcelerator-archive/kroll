@@ -11,6 +11,8 @@
 #include <string>
 #include <map>
 
+#include <Poco/Mutex.h>
+
 namespace kroll
 {
 	/**
@@ -63,7 +65,7 @@ namespace kroll
 
 	protected:
 		std::map<std::string, KValueRef> properties;
-		Mutex mutex;
+		Poco::Mutex mutex;
 
 	private:
 		DISALLOW_EVIL_CONSTRUCTORS(StaticBoundObject);

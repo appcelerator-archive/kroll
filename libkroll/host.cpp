@@ -273,7 +273,7 @@ namespace kroll
 
 	void Host::AddModuleProvider(ModuleProvider *provider)
 	{
-		ScopedLock lock(&moduleMutex);
+		Poco::Mutex::ScopedLock lock(moduleMutex);
 		moduleProviders.push_back(provider);
 
 		if (autoScan)
@@ -288,7 +288,7 @@ namespace kroll
 	*/
 	ModuleProvider* Host::FindModuleProvider(std::string& filename)
 	{
-		ScopedLock lock(&moduleMutex);
+		Poco::Mutex::ScopedLock lock(moduleMutex);
 
 		std::vector<ModuleProvider*>::iterator iter;
 		for (iter = moduleProviders.begin(); iter != moduleProviders.end(); iter++)
@@ -304,7 +304,7 @@ namespace kroll
 
 	void Host::RemoveModuleProvider(ModuleProvider *provider)
 	{
-		ScopedLock lock(&moduleMutex);
+		Poco::Mutex::ScopedLock lock(moduleMutex);
 
 		std::vector<ModuleProvider*>::iterator iter = std::find(
 			moduleProviders.begin(), moduleProviders.end(), provider);
@@ -392,7 +392,7 @@ namespace kroll
 
 	void Host::UnloadModules()
 	{
-		ScopedLock lock(&moduleMutex);
+		Poco::Mutex::ScopedLock lock(moduleMutex);
 
 		// Stop all modules before unloading them
 		for (size_t i = 0; i < this->loadedModules.size(); i++)
@@ -416,7 +416,7 @@ namespace kroll
 	{
 		LoadBuiltinModules(this);
 
-		ScopedLock lock(&moduleMutex);
+		Poco::Mutex::ScopedLock lock(moduleMutex);
 
 		/* Scan module paths for modules which can be
 		 * loaded by the basic shared-object provider */
@@ -444,7 +444,7 @@ namespace kroll
 	*/
 	void Host::FindBasicModules(std::string& dir)
 	{
-		ScopedLock lock(&moduleMutex);
+		Poco::Mutex::ScopedLock lock(moduleMutex);
 
 		Poco::DirectoryIterator iter = Poco::DirectoryIterator(dir);
 		Poco::DirectoryIterator end;
@@ -483,7 +483,7 @@ namespace kroll
 	*/
 	void Host::ScanInvalidModuleFiles()
 	{
-		ScopedLock lock(&moduleMutex);
+		Poco::Mutex::ScopedLock lock(moduleMutex);
 
 		this->autoScan = false; // Do not recursively scan
 		ModuleList modulesLoaded; // Track loaded modules
@@ -528,7 +528,7 @@ namespace kroll
 	*/
 	void Host::StartModules(ModuleList to_init)
 	{
-		ScopedLock lock(&moduleMutex);
+		Poco::Mutex::ScopedLock lock(moduleMutex);
 
 		ModuleList::iterator iter = to_init.begin();
 		while (iter != to_init.end())
@@ -540,7 +540,7 @@ namespace kroll
 
 	SharedPtr<Module> Host::GetModuleByPath(std::string& path)
 	{
-		ScopedLock lock(&moduleMutex);
+		Poco::Mutex::ScopedLock lock(moduleMutex);
 		ModuleList::iterator iter = this->loadedModules.begin();
 		while (iter != this->loadedModules.end())
 		{
@@ -553,7 +553,7 @@ namespace kroll
 
 	SharedPtr<Module> Host::GetModuleByName(std::string& name)
 	{
-		ScopedLock lock(&moduleMutex);
+		Poco::Mutex::ScopedLock lock(moduleMutex);
 		ModuleList::iterator iter = this->loadedModules.begin();
 		while (iter != this->loadedModules.end())
 		{
@@ -566,7 +566,7 @@ namespace kroll
 
 	void Host::UnregisterModule(SharedPtr<Module> module)
 	{
-		ScopedLock lock(&moduleMutex);
+		Poco::Mutex::ScopedLock lock(moduleMutex);
 
 		logger->Notice("Unregistering: %s", module->GetName().c_str());
 		module->Unload();
@@ -605,7 +605,7 @@ namespace kroll
 
 		try
 		{
-			ScopedLock lock(&moduleMutex);
+			Poco::Mutex::ScopedLock lock(moduleMutex);
 			this->AddModuleProvider(this);
 			this->LoadModules();
 		}
@@ -647,7 +647,7 @@ namespace kroll
 		if (shutdown)
 			return;
 
-		ScopedLock lock(&moduleMutex);
+		Poco::Mutex::ScopedLock lock(moduleMutex);
 		this->UnloadModuleProviders();
 		this->UnloadModules();
 

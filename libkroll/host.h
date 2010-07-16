@@ -8,6 +8,7 @@
 #define _KR_HOST_H_
 
 #include <Poco/Timestamp.h>
+#include <Poco/Mutex.h>
 
 namespace kroll
 {
@@ -128,7 +129,7 @@ namespace kroll
 
 	private:
 		ModuleList loadedModules;
-		Mutex moduleMutex;
+		Poco::Mutex moduleMutex;
 		std::vector<ModuleProvider *> moduleProviders;
 		std::vector<std::string> modulePaths;
 		SharedApplication application;

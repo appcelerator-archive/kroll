@@ -10,6 +10,8 @@
 #include <string>
 #include <map>
 
+#include <Poco/Mutex.h>
+
 namespace kroll
 {
 	/**
@@ -52,7 +54,7 @@ namespace kroll
 		DISALLOW_EVIL_CONSTRUCTORS(KDelegatingObject);
 
 	protected:
-		Mutex mutex;
+		Poco::Mutex mutex;
 	};
 }
 

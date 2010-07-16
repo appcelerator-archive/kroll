@@ -80,8 +80,6 @@ namespace kroll
 #include "net/net.h"
 #include "reference_counted.h"
 #include "logger.h"
-#include "mutex.h"
-#include "scoped_lock.h"
 
 #include "binding/binding.h"
 #include "module_provider.h"

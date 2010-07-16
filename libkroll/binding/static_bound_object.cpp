@@ -25,7 +25,7 @@ namespace kroll
 	
 	KValueRef StaticBoundObject::Get(const char* name)
 	{
-		ScopedLock lock(&mutex);
+		Poco::Mutex::ScopedLock lock(mutex);
 		std::map<std::string, KValueRef>::iterator iter = 
 			properties.find(std::string(name));
 
@@ -36,13 +36,13 @@ namespace kroll
 
 	void StaticBoundObject::Set(const char* name, KValueRef value)
 	{
-		ScopedLock lock(&mutex);
+		Poco::Mutex::ScopedLock lock(mutex);
 		this->properties[std::string(name)] = value;
 	}
 
 	void StaticBoundObject::Unset(const char* name)
 	{
-		ScopedLock lock(&mutex);
+		Poco::Mutex::ScopedLock lock(mutex);
 		std::map<std::string, KValueRef>::iterator iter = 
 			properties.find(std::string(name));
 
@@ -54,7 +54,7 @@ namespace kroll
 	SharedStringList StaticBoundObject::GetPropertyNames()
 	{
 		SharedStringList list(new StringList());
-		ScopedLock lock(&mutex);
+		Poco::Mutex::ScopedLock lock(mutex);
 		std::map<std::string, KValueRef>::iterator iter = properties.begin();
 
 		while (iter != properties.end())

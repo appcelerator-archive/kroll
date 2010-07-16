@@ -28,7 +28,7 @@ namespace kroll
 
 	KValueRef KDelegatingObject::Get(const char *name)
 	{
-		ScopedLock lock(&mutex);
+		Poco::Mutex::ScopedLock lock(mutex);
 
 		KValueRef val = local->Get(name);
 		if (!val->IsUndefined())
@@ -50,7 +50,7 @@ namespace kroll
 	{
 		// We want to set the property on both
 		// the local and the global object.
-		ScopedLock lock(&mutex);
+		Poco::Mutex::ScopedLock lock(mutex);
 		local->Set(name, value);
 		global->Set(name, value);
 	}
@@ -62,7 +62,7 @@ namespace kroll
 
 	SharedStringList KDelegatingObject::GetPropertyNames()
 	{
-		ScopedLock lock(&mutex);
+		Poco::Mutex::ScopedLock lock(mutex);
 
 		SharedStringList globalList = global->GetPropertyNames();
 		SharedStringList localList = local->GetPropertyNames();
