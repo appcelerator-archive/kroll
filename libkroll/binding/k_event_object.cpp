@@ -36,6 +36,7 @@ namespace kroll
 	KEventObject::KEventObject(const char *type) :
 		KAccessorObject(type)
 	{
+		this->SetMethod("on", &KEventObject::_AddEventListener);
 		this->SetMethod("addEventListener", &KEventObject::_AddEventListener);
 		this->SetMethod("removeEventListener", &KEventObject::_RemoveEventListener);
 		Event::SetEventConstants(this);
