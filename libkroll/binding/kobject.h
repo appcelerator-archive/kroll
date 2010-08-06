@@ -75,6 +75,13 @@ namespace kroll
 		virtual SharedString DisplayString(int levels=1);
 
 		/**
+	     * If this object uses a large amount of extra memory, this method
+	     * allows reporting this extra cost to the GC. This will help avoid
+	     * leaking memory due to a lazy GC not running to collect the loose reference.
+	     */
+		virtual size_t ExtraMemoryCost() { return 0; }
+
+		/**
 		 * @param name The property name
 		 * @param value The new property value
 		 * Helpful overload to Set which takes a SharedString

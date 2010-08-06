@@ -28,6 +28,12 @@ namespace kroll
 		return new Event(AutoPtr<KEventObject>(this, true), eventName);
 	}
 
+	void KEventObject::AddEventListener(const char* event, KMethodRef callback)
+	{
+		Poco::FastMutex::ScopedLock lock(this->listenersMutex);
+		listeners.push_back(new EventListener(event, callback));
+	}
+
 	void KEventObject::AddEventListener(std::string& event, KMethodRef callback)
 	{
 		Poco::FastMutex::ScopedLock lock(this->listenersMutex);
@@ -42,7 +48,7 @@ namespace kroll
 		while (i != this->listeners.end())
 		{
 			EventListener* listener = *i;
-			if (listener->Handles(event) && listener->Callback()->Equals(callback))
+			if (listener->Handles(event.c_str()) && listener->Callback()->Equals(callback))
 			{
 				this->listeners.erase(i);
 				delete listener;
@@ -65,7 +71,12 @@ namespace kroll
 		this->listeners.clear();
 	}
 
-	void KEventObject::FireEvent(std::string& event, const ValueList& args)
+	void KEventObject::FireEvent(const char* event)
+	{
+		FireEvent(event, ValueList());
+	}
+
+	void KEventObject::FireEvent(const char* event, const ValueList& args)
 	{
 		// Make a copy of the listeners map here, because firing the event might
 		// take a while and we don't want to block other threads that just need
@@ -122,7 +133,7 @@ namespace kroll
 		while (li != listenersCopy.end())
 		{
 			EventListener* listener = *li++;
-			if (listener->Handles(event->eventName))
+			if (listener->Handles(event->eventName.c_str()))
 			{
 				ValueList args(Value::NewObject(event));
 				bool result;
@@ -145,6 +156,11 @@ namespace kroll
 			GlobalObject::GetInstance()->FireEvent(event, synchronous);
 
 		return !synchronous || !event->preventedDefault;
+	}
+
+	void KEventObject::FireErrorEvent(std::exception& e)
+	{
+		FireEvent("error", ValueList(Value::NewString(e.what())));
 	}
 
 	void KEventObject::_AddEventListener(const ValueList& args, KValueRef result)
@@ -192,9 +208,15 @@ namespace kroll
 	{
 	}
 
-	inline bool EventListener::Handles(std::string& event)
+	EventListener::EventListener(const char* targetedEvent, KMethodRef callback) :
+		targetedEvent(targetedEvent),
+		callback(callback)
 	{
-		return targetedEvent == event || targetedEvent == Event::ALL;
+	}
+
+	inline bool EventListener::Handles(const char* event)
+	{
+		return targetedEvent.compare(event) == 0 || targetedEvent == Event::ALL;
 	}
 
 	inline KMethodRef EventListener::Callback()

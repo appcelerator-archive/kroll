@@ -5,8 +5,10 @@
  */
 
 #include "javascript_module.h"
+
 #include <Poco/FileStream.h>
 #include <Poco/Mutex.h>
+#include <JavascriptCore/JSBasePrivate.h>
 
 namespace kroll
 {
@@ -165,6 +167,12 @@ namespace KJSUtil
 			{
 				// this is a KObject that needs to be proxied
 				jsValue = KObjectToJSValue(value, jsContext);
+
+				// Report extra memory costs bound to a KObject.
+				// This will help avoid memory leaks caused by a lazy GC.
+				size_t extraMemoryCost = obj->ExtraMemoryCost();
+				if (extraMemoryCost > 0)
+					JSReportExtraMemoryCost(jsContext, extraMemoryCost);
 			}
 		}
 		else if (value->IsMethod())

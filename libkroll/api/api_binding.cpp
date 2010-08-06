@@ -953,13 +953,25 @@ namespace kroll
 	
 	void APIBinding::_CreateBytes(const ValueList& args, KValueRef result)
 	{
-		args.VerifyException("createBytes", "?s|o|l|i");
-		std::vector<BytesRef> blobs;
-		for (size_t i = 0; i < args.size(); i++)
+		args.VerifyException("createBytes", "?s|n");
+
+		BytesRef bytes;
+
+		if (args.size() == 0)
 		{
-			GetBytes(args.at(i), blobs);
+			bytes = new Bytes();
 		}
-		result->SetObject(Bytes::GlobBytes(blobs));
+		else if (args.at(0)->IsString())
+		{
+			std::string str(args.GetString(0));
+			bytes = new Bytes(str);
+		}
+		else
+		{
+			bytes = new Bytes(args.GetInt(0));
+		}
+
+		result->SetObject(bytes);
 	}
 
 	KObjectWrapper::KObjectWrapper(KObjectRef object) :

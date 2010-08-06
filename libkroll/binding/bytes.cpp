@@ -12,279 +12,208 @@
 
 namespace kroll
 {
-	Bytes::Bytes() : StaticBoundObject("Bytes")
+	Bytes::Bytes() :
+		StaticBoundObject("Bytes"),
+		buffer(0),
+		size(0)
 	{
-		CreateWithCopy(NULL, 0);
+		this->SetupBinding();
 	}
 
-	Bytes::Bytes(char* bufferIn, long length, bool makeCopy) :
+	Bytes::Bytes(size_t size) :
+		StaticBoundObject("Bytes"),
+		size(size)
+	{
+		this->buffer = new char[size];
+		this->SetupBinding();
+	}
+
+	Bytes::Bytes(BytesRef source, size_t offset, size_t length) :
 		StaticBoundObject("Bytes")
 	{
-		if (makeCopy)
-		{
-			CreateWithCopy(bufferIn, length);
-		}
-		else
-		{
-			CreateWithReference(bufferIn, length);
-		}
-	}
-
-	Bytes::Bytes(const char* bufferIn, long length, bool makeCopy) :
-		StaticBoundObject("Bytes")
-	{
-		CreateWithCopy(bufferIn, length);
-	}
-
-	Bytes::Bytes(std::string str) : StaticBoundObject("Bytes")
-	{
-		CreateWithCopy(str.c_str(), str.length());
+		this->size = (length > 0) ? length : source->Length() - offset;
+		this->buffer = source->Pointer() + offset;
+		this->source = source;
+		this->SetupBinding();
 	}
 
 	Bytes::Bytes(std::string& str) : StaticBoundObject("Bytes")
 	{
-		CreateWithCopy(str.c_str(), str.length());
+		this->size = str.length();
+		this->buffer = new char[this->size];
+		memcpy(this->buffer, str.c_str(), this->size);
+		this->SetupBinding();
 	}
 
-	Bytes::Bytes(Poco::Data::BLOB *bytes) : StaticBoundObject("Bytes")
+	Bytes::Bytes(const char* str, size_t length) :
+		StaticBoundObject("Bytes")
 	{
-		CreateWithReference((char *)&(bytes->content()[0]), bytes->size());
-	}
-
-	Bytes::Bytes(long byte) : StaticBoundObject("Bytes")
-	{
-		CreateWithCopy((char *) &byte, 1);
-	}
-
-	void Bytes::CreateWithCopy(const char* bufferIn, long length)
-	{
-		if (length > 0)
-		{
-			// Store the buffer with a null terminator so
-			// that we can use it like a string later on.
-			char* bufferCopy = new char[length + 1];
-			memcpy(bufferCopy, bufferIn, length);
-			bufferCopy[length] = '\0';
-			this->CreateWithReference(bufferCopy, length);
-		}
-		else
-		{
-			this->CreateWithReference(NULL, length);
-		}
-	}
-
-	void Bytes::CreateWithReference(char* buffer, long length)
-	{
-		this->buffer = buffer;
-		this->length = length;
-
-		/**
-		 * @tiapi(method=True,name=Bytes.toString,since=0.3)
-		 * @tiapi Return a string representation of a bytes
-		 * @tiresult[String] This bytes as a String
-		 */
-		this->SetMethod("toString", &Bytes::ToString);
-
-		// Mimic some string operations to make it more
-		// friendly when using a Bytes in JavaScript.
-		/**
-		 * @tiapi(method=True,name=Bytes.indexOf,since=0.3)
-		 * @tiapi Return the index of a String within this Bytes
-		 * @tiarg[String, needle] The String to search for
-		 * @tiresult[Number] The integer index of the String or -1 if not found
-		 */
-		this->SetMethod("indexOf", &Bytes::IndexOf);
-
-		/**
-		 * @tiapi(method=True,name=Bytes.lastIndexOf,since=0.3)
-		 * @tiapi Return the last index of a String within this Bytes
-		 * @tiarg[String, needle] The String to search for
-		 * @tiresult[Number] The last integer index of the String or -1 if not found
-		 */
-		this->SetMethod("lastIndexOf", &Bytes::LastIndexOf);
-
-		/**
-		 * @tiapi(method=True,name=Bytes.charAt,since=0.3)
-		 * @tiapi Return a character representing a byte at the given index in a Bytes
-		 * @tiarg[Number, index] The index to look for a character at
-		 * @tiresult[String] A String containing a character representing the byte at the given index
-		 */
-		this->SetMethod("charAt", &Bytes::CharAt);
-		
-		/**
-		 * @tiapi(method=True,name=Bytes.byteAt,since=0.7)
-		 * @tiapi Return the character code (or byte value) at the given index in a Bytes
-		 * @tiarg[Number, index] The index to look for a character code at
-		 * @tiresult[Number] The character code (or byte value) at the given index
-		 */
-		this->SetMethod("byteAt", &Bytes::ByteAt);
-
-		/**
-		 * @tiapi(method=True,name=Bytes.split,since=0.3)
-		 * @tiapi Split a bytes as if it were a string given a delimiter. 
-		 * @tiapi This method returns empty matches. For instance:
-		 * @tiapi <pre><code>"abc,def,,".split(",") --> ['abc', 'def', '', '']</code></pre>
-		 * @tiarg[String, delimiter] The index to look for a character at
-		 * @tiarg[Number, limit, optional=True] The maximum number of matches to return 
-		 * @tiresult[Array<String>] A array containing the segments
-		 */
-		this->SetMethod("split", &Bytes::Split);
-
-		/**
-		 * @tiapi(method=True,name=Bytes.substring,since=0.3)
-		 * @tiapi Return a substring of a Bytes given a start index and end index
-		 * @tiapi If no end index is given, return all characters from the start index
-		 * @tiapi to the end of the string. If startIndex > endIndex, the indexes are swapped.
-		 * @tiarg[Number, startIndex] The starting index
-		 * @tiarg[Number, endIndex, optional=True] The ending index
-		 * @tiresult[String] The substring between startIndex and endIndex
-		 */
-		this->SetMethod("substring", &Bytes::Substring);
-
-		/**
-		 * @tiapi(method=True,name=Bytes.substr,since=0.3)
-		 * @tiapi Return a substring of a Bytes given a start index and a length
-		 * @tiapi If no length is given, all characters from the start to the
-		 * @tiapi end of the string are returned.
-		 * @tiarg[Number, startIndex] The starting index
-		 * @tiarg[Number, length, optional=True] The length of the substring
-		 * @tiresult[String] The substring between startIndex and the given length
-		 */
-		this->SetMethod("substr", &Bytes::Substr);
-
-		/**
-		 * @tiapi(method=True,name=Bytes.toLowerCase,since=0.3)
-		 * @tiapi Convert characters in the Bytes to lower case as if it were a string.
-		 * @tiresult[String] The resulting String
-		 */
-		this->SetMethod("toLowerCase", &Bytes::ToLowerCase);
-
-		/**
-		 * @tiapi(method=True,name=Bytes.toUpperCase,since=0.3)
-		 * @tiapi Convert characters in the Bytes to upper case as if it were a string.
-		 * @tiresult[String] The resulting String
-		 */
-		this->SetMethod("toUpperCase", &Bytes::ToUpperCase);
-		
-		/**
-		 * @tiapi(method=True,name=Bytes.concat,since=0.7)
-		 * @tiapi Concatenate multiple Bytes and/or strings into one Bytes
-		 * @tiresult[Bytes] The resulting Bytes
-		 */
-		this->SetMethod("concat", &Bytes::Concat);
-		
-		/**
-		 * @tiapi(property=True,name=Bytes.length,since=0.3) The number of bytes in this bytes
-		 */
-		this->Set("length", Value::NewInt(length));
+		this->size = (length > 0) ? length : strlen(str);
+		this->buffer = new char[this->size];
+		memcpy(this->buffer, str, this->size);
+		this->SetupBinding();
 	}
 
 	Bytes::~Bytes()
 	{
-		if (this->buffer!=NULL)
-		{
+		if (this->source.isNull() && this->buffer)
 			delete [] this->buffer;
-		}
-		
-		this->buffer = NULL;
-		this->length = 0;
 	}
 
-	void Bytes::ToString(const ValueList& args, KValueRef result)
+	size_t Bytes::ExtraMemoryCost()
 	{
-		if (this->length == 0)
+		return this->size;
+	}
+
+	inline char* Bytes::Pointer()
+	{
+		return this->buffer;
+	}
+
+	inline size_t Bytes::Length()
+	{
+		return this->size;
+	}
+
+	size_t Bytes::Write(const char* data, size_t length, size_t offset)
+	{
+		size_t maxWriteSize = this->size - offset;
+		size_t writeSize = (length > maxWriteSize) ? maxWriteSize : length;
+		memcpy(this->buffer + offset, data, writeSize);
+		return writeSize;
+	}
+
+	size_t Bytes::Write(BytesRef source, size_t offset)
+	{
+		return this->Write(source->Pointer(), source->Length(), offset);
+	}
+
+	std::string Bytes::AsString()
+	{
+		if (this->size > 0)
+			return std::string(this->buffer, this->size);
+		else
+			return std::string("");
+	}
+
+	void Bytes::SetupBinding()
+	{
+		this->SetMethod("write", &Bytes::_Write);
+		this->SetMethod("toString", &Bytes::_ToString);
+		this->SetMethod("indexOf", &Bytes::_IndexOf);
+		this->SetMethod("lastIndexOf", &Bytes::_LastIndexOf);
+		this->SetMethod("charAt", &Bytes::_CharAt);
+		this->SetMethod("byteAt", &Bytes::_ByteAt);
+		this->SetMethod("split", &Bytes::_Split);
+		this->SetMethod("substring", &Bytes::_Substring);
+		this->SetMethod("substr", &Bytes::_Substr);
+		this->SetMethod("toLowerCase", &Bytes::_ToLowerCase);
+		this->SetMethod("toUpperCase", &Bytes::_ToUpperCase);
+		this->SetMethod("concat", &Bytes::_Concat);
+		this->SetMethod("slice", &Bytes::_Slice);
+
+		this->Set("length", Value::NewInt(this->size));
+	}
+
+	void Bytes::_Write(const ValueList& args, KValueRef result)
+	{
+		args.VerifyException("write", "s|o ?n");
+		int offset = args.GetInt(1, 0);
+		int bytesWritten;
+
+		if (args.at(0)->IsString())
 		{
-			result->SetString("");
+			const char* str = args.at(0)->ToString();
+			size_t length = strlen(str);
+			bytesWritten = Write(str, length, offset);
 		}
 		else
 		{
-			result->SetString(buffer);
+			BytesRef data(args.GetObject(0).cast<Bytes>());
+			if (data.isNull())
+			{
+				throw ValueException::FromString("May only write strings or Bytes object");
+			}
+			bytesWritten = Write(data, offset);
 		}
+
+		result->SetInt(bytesWritten);
 	}
 
-	void Bytes::Length(const ValueList& args, KValueRef result)
+	void Bytes::_ToString(const ValueList& args, KValueRef result)
 	{
-		result->SetInt(length);
+		std::string str(this->AsString());
+		result->SetString(str);
 	}
 
-	void Bytes::IndexOf(const ValueList& args, KValueRef result)
+	void Bytes::_IndexOf(const ValueList& args, KValueRef result)
 	{
 		// https://developer.mozilla.org/en/Core_JavaScript_1.5_Reference/Global_Objects/String/indexOf
 		args.VerifyException("Bytes.indexOf", "s,?i");
 
-		if (this->length <= 0)
+		std::string target(this->AsString());
+		int start = args.GetInt(1, 0);
+		if (start < 0) start = 0;
+	 	size_t pos = target.find(args.GetString(0), start);
+
+		if (pos == std::string::npos)
 		{
+			// No matches found
 			result->SetInt(-1);
 		}
 		else
 		{
-			std::string target = this->buffer;
-			std::string needle = args.at(0)->ToString();
-			long start = 0;
-			if (args.size() > 1)
-			{
-				start = args.GetNumber(1);
-				if (start < 0)
-				{
-					start = 0;
-				}
-			}
-			result->SetInt(target.find(needle, start));
+			result->SetInt(pos);
 		}
 	}
 
-	void Bytes::LastIndexOf(const ValueList& args, KValueRef result)
+	void Bytes::_LastIndexOf(const ValueList& args, KValueRef result)
 	{
 		// https://developer.mozilla.org/en/Core_JavaScript_1.5_Reference/Global_Objects/String/lastIndexOf
 		args.VerifyException("Bytes.lastIndexOf", "s,?i");
 
-		if (this->length <= 0)
+		std::string target(this->AsString());
+		int start = args.GetInt(1, target.length() + 1);
+		if (start < 0) start = 0;
+		size_t pos = target.rfind(args.GetString(0), start);
+
+		if (pos == std::string::npos)
 		{
+			// No matches found
 			result->SetInt(-1);
 		}
 		else
 		{
-			std::string target = this->buffer;
-			std::string needle = args.at(0)->ToString();
-			long start = target.size() + 1;
-			if (args.size() > 1)
-			{
-				start = args.GetNumber(1);
-				if (start < 0)
-				{
-					start = 0;
-				}
-			}
-			result->SetInt(target.rfind(needle, start));
+			result->SetInt(pos);
 		}
 	}
 
-	void Bytes::CharAt(const ValueList& args, KValueRef result)
+	void Bytes::_CharAt(const ValueList& args, KValueRef result)
 	{
 		// https://developer.mozilla.org/en/core_javascript_1.5_reference/global_objects/string/charat
 		args.VerifyException("Bytes.charAt", "n");
-		long  position = args.at(0)->ToInt();
+		size_t position = args.GetInt(0);
 
 		char buf[2] = {'\0', '\0'};
-		if (position >= 0 && position < this->length)
+		if (position >= 0 && position < this->size)
 		{
 			buf[0] = this->buffer[position];
 		}
 		result->SetString(buf);
 	}
 	
-	void Bytes::ByteAt(const ValueList& args, KValueRef result)
+	void Bytes::_ByteAt(const ValueList& args, KValueRef result)
 	{
 		args.VerifyException("Bytes.byteAt", "n");
-		long position = args.at(0)->ToInt();
+		size_t position = args.GetInt(0);
 		
-		if (position >= 0 && position < this->length)
+		if (position >= 0 && position < this->size)
 		{
 			result->SetInt(static_cast<unsigned char>(this->buffer[position]));
 		}
 	}
 
-	void Bytes::Split(const ValueList& args, KValueRef result)
+	void Bytes::_Split(const ValueList& args, KValueRef result)
 	{
 		// This method now follows the spec located at:
 		// https://developer.mozilla.org/en/Core_JavaScript_1.5_Reference/Global_Objects/String/split
@@ -295,7 +224,7 @@ namespace kroll
 		result->SetList(list);
 
 		std::string target = "";
-		if (this->length > 0)
+		if (this->size > 0)
 		{
 			target = this->buffer;
 		}
@@ -345,34 +274,30 @@ namespace kroll
 			list->Append(Value::NewString(target));
 	}
 
-	void Bytes::Substr(const ValueList& args, KValueRef result)
+	void Bytes::_Substr(const ValueList& args, KValueRef result)
 	{
 		// This method now follows the spec located at:
 		// https://developer.mozilla.org/en/Core_JavaScript_1.5_Reference/Global_Objects/String/substr
 		args.VerifyException("Bytes.substr", "i,?i");
-		std::string target = "";
-		if (this->length > 0)
-		{
-			target = this->buffer;
-		}
+		std::string target(this->buffer, this->size);
 
-		long start = args.GetInt(0);
-		if (start > 0 && start >= this->length)
+		int start = args.GetInt(0);
+		if (start > 0 && start >= (int)target.length())
 		{
 			result->SetString("");
 			return;
 		}
 
-		if (start < 0 && (-1*start) > this->length)
+		if (start < 0 && (-1*start) > (int)target.length())
 		{
 			start = 0;
 		}
 		else if (start < 0)
 		{
-			start = this->length + start;
+			start = target.length() + start;
 		}
 
-		long length = this->length - start;
+		long length = target.length() - start;
 		if (args.size() > 1)
 		{
 			length = args.GetInt(1);
@@ -388,13 +313,13 @@ namespace kroll
 		result->SetString(r);
 	}
 
-	void Bytes::Substring(const ValueList& args, KValueRef result)
+	void Bytes::_Substring(const ValueList& args, KValueRef result)
 	{
 		// This method now follows the spec located at:
 		// https://developer.mozilla.org/en/Core_JavaScript_1.5_Reference/Global_Objects/String/substring
 		args.VerifyException("Bytes.substring", "i,?i");
 		std::string target = "";
-		if (this->length > 0)
+		if (this->size > 0)
 		{
 			target = this->buffer;
 		}
@@ -434,11 +359,11 @@ namespace kroll
 		}
 	}
 
-	void Bytes::ToLowerCase(const ValueList& args, KValueRef result)
+	void Bytes::_ToLowerCase(const ValueList& args, KValueRef result)
 	{
-		if (this->length > 0)
+		if (this->size > 0)
 		{
-			std::string target = this->buffer;
+			std::string target(this->buffer, this->size);
 			std::string r = Poco::toLower(target);
 			result->SetString(r);
 		}
@@ -448,54 +373,48 @@ namespace kroll
 		}
 	}
 
-	void Bytes::ToUpperCase(const ValueList& args, KValueRef result)
+	void Bytes::_ToUpperCase(const ValueList& args, KValueRef result)
 	{
-		if (this->length > 0)
+		if (this->size > 0)
 		{
-			std::string target = this->buffer;
+			std::string target(this->buffer, this->size);
 			std::string r = Poco::toUpper(target);
 			result->SetString(r);
 		}
 		else
 		{
-			result->SetNull();
+			result->SetString("");
 		}
 	}
 	
 	BytesRef Bytes::Concat(std::vector<BytesRef>& bytes)
 	{
-		if (bytes.size() == 0)
-			return BytesRef(this, true);
-
-		long size = this->Length();
+		size_t size = 0;
 		for (size_t i = 0; i < bytes.size(); i++)
 		{
 			size += bytes.at(i)->Length();
 		}
 
-		char* buffer = new char[size+1];
-		buffer[size] = '\0';
+		BytesRef newBytes = new Bytes(size);
 
-		char* current = buffer;
-		memcpy(current, this->Get(), this->Length());
-		current += this->Length();
-		
-		for (size_t i = 0; i < bytes.size(); i++)
+		// Write the rest of the Bytes objects
+		size_t bytesConcated = 0;
+		std::vector<BytesRef>::iterator i = bytes.begin();
+		while (i != bytes.end())
 		{
-			BytesRef bytesObject(bytes.at(i));
-			if (bytesObject->Length() > 0)
-			{
-				memcpy(current, bytesObject->Get(), bytesObject->Length());
-				current += bytesObject->Length();
-			}
+			BytesRef source = *i++;
+			newBytes->Write(source, bytesConcated);
+			bytesConcated += source->Length();
 		}
 
-		return new Bytes(buffer, size, false);
+		return newBytes;
 	}
 
-	void Bytes::Concat(const ValueList& args, KValueRef result)
+	void Bytes::_Concat(const ValueList& args, KValueRef result)
 	{
 		std::vector<BytesRef> bytes;
+		bytes.push_back(BytesRef(this, true));
+
 		for (size_t i = 0; i < args.size(); i++)
 		{
 			if (args.at(i)->IsObject())
@@ -508,18 +427,22 @@ namespace kroll
 			}
 			else if (args.at(i)->IsString())
 			{
-				bytes.push_back(new Bytes(args.GetString(i)));
+				std::string str(args.GetString(i));
+				bytes.push_back(new Bytes(str));
 			}
 		}
 
-		BytesRef newBytes = this->Concat(bytes);
+		BytesRef newBytes = Bytes::Concat(bytes);
 		result->SetObject(newBytes);
 	}
 
-	/*static*/
-	BytesRef Bytes::GlobBytes(std::vector<BytesRef>& bytes)
+	void Bytes::_Slice(const ValueList& args, KValueRef result)
 	{
-		BytesRef bytesObject(new Bytes());
-		return bytesObject->Concat(bytes);
+		args.VerifyException("splice", "i,i");
+
+		size_t offset = args.GetInt(0);
+		size_t length = args.GetInt(1);
+		BytesRef slice = new Bytes(BytesRef(this, true), offset, length);
+		result->SetObject(slice);
 	}
 }

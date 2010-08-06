@@ -22,49 +22,61 @@ namespace kroll
 	class KROLL_API Bytes : public StaticBoundObject
 	{
 	public:
-		/**
-		 * If makeCopy is false: create a Bytes from a heap-allocated
-		 * pointer. The bytes will keep the pointer to this string,
-		 * so do not free it afterward. The buffer should be size+1
-		 * bytes long and NULL terminated.
-		 */
+		// Create empty bytes object with no size
 		Bytes();
-		Bytes(char *buffer, long size, bool makeCopy=true);
-		Bytes(const char *buffer, long size, bool makeCopy=true);
-		Bytes(std::string);
-		Bytes(std::string&);
-		Bytes(Poco::Data::BLOB* bytes);
-		Bytes(long byte);
+
+		// Create new empty bytes object of specified size
+		Bytes(size_t size);
+
+		// Reference an existing bytes object. An offset and length
+		// may be provided to "slice" only a part of the data.
+		Bytes(BytesRef source, size_t offset = 0, size_t length = -1);
+
+		// Create bytes object from a string.
+		Bytes(std::string& str);
+		Bytes(const char* str, size_t length = -1);
+
 		virtual ~Bytes();
 
-		BytesRef Concat(std::vector<BytesRef>& bytes);
-		const char* Get() { return buffer; }
-		const long Length() { return length; }
+		size_t ExtraMemoryCost();
 
-		static BytesRef GlobBytes(std::vector<BytesRef>& bytes);
+		// A pointer to the internal byte buffer
+		char* Pointer();
+
+		// Returns length of bytes this object has in capacity
+		size_t Length();
+
+		// Write data at the given offset. If no offset provided,
+		// start writing at start of Bytes object.
+		size_t Write(const char* data, size_t length, size_t offset = 0);
+		size_t Write(BytesRef source, size_t offset = 0);
+
+		// Return a string representation
+		std::string AsString();
+
+		static BytesRef Concat(std::vector<BytesRef>& bytes);
 
 	private:
+		// Binding methods
+		void SetupBinding();
+		void _Write(const ValueList& args, KValueRef result);
+		void _ToString(const ValueList& args, KValueRef result);
+		void _IndexOf(const ValueList& args, KValueRef result);
+		void _LastIndexOf(const ValueList& args, KValueRef result);
+		void _CharAt(const ValueList& args, KValueRef result);
+		void _ByteAt(const ValueList& args, KValueRef result);
+		void _Split(const ValueList& args, KValueRef result);
+		void _Substr(const ValueList& args, KValueRef result);
+		void _Substring(const ValueList& args, KValueRef result);
+		void _ToLowerCase(const ValueList& args, KValueRef result);
+		void _ToUpperCase(const ValueList& args, KValueRef result);
+		void _Replace(const ValueList& args, KValueRef result);
+		void _Concat(const ValueList& args, KValueRef result);
+		void _Slice(const ValueList& args, KValueRef result);
+
 		char* buffer;
-		long length;
-
-		void ToString(const ValueList& args, KValueRef result);
-		void Get(const ValueList& args, KValueRef result);
-		void Length(const ValueList& args, KValueRef result);
-
-		void IndexOf(const ValueList& args, KValueRef result);
-		void LastIndexOf(const ValueList& args, KValueRef result);
-		void CharAt(const ValueList& args, KValueRef result);
-		void ByteAt(const ValueList& args, KValueRef result);
-		void Split(const ValueList& args, KValueRef result);
-		void Substr(const ValueList& args, KValueRef result);
-		void Substring(const ValueList& args, KValueRef result);
-		void ToLowerCase(const ValueList& args, KValueRef result);
-		void ToUpperCase(const ValueList& args, KValueRef result);
-		void Replace(const ValueList& args, KValueRef result);
-		void Concat(const ValueList& args, KValueRef result);
-
-		void CreateWithCopy(const char* buffer, long len);
-		void CreateWithReference(char* buffer, long len);
+		size_t size;
+		BytesRef source;
 	};
 }
 

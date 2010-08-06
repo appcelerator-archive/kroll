@@ -23,13 +23,16 @@ namespace kroll
 
 		AutoPtr<Event> CreateEvent(const std::string& eventName);
 
+		virtual void AddEventListener(const char* event, KMethodRef listener);
 		virtual void AddEventListener(std::string& event, KMethodRef listener);
 		virtual void RemoveEventListener(std::string& event, KMethodRef listener);
 		virtual void RemoveAllEventListeners();
 
-		virtual void FireEvent(std::string& event, const ValueList& args);
+		void FireEvent(const char* event);
+		virtual void FireEvent(const char* event, const ValueList& args);
 		virtual bool FireEvent(std::string& event, bool synchronous=true);
 		virtual bool FireEvent(AutoPtr<Event>, bool synchronous=true);
+		void FireErrorEvent(std::exception& e);
 
 		void _AddEventListener(const ValueList&, KValueRef result);
 		void _RemoveEventListener(const ValueList&, KValueRef result);
@@ -46,8 +49,9 @@ namespace kroll
 	{
 	public:
 		EventListener(std::string& targetedEvent, KMethodRef callback);
+		EventListener(const char* targetedEvent, KMethodRef callback);
 
-		bool Handles(std::string& event);
+		bool Handles(const char* event);
 		bool Dispatch(KObjectRef thisObject, const ValueList& args, bool synchronous);
 		KMethodRef Callback();
 
