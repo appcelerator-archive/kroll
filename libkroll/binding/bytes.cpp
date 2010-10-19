@@ -65,16 +65,6 @@ namespace kroll
 		return this->size;
 	}
 
-	inline char* Bytes::Pointer()
-	{
-		return this->buffer;
-	}
-
-	inline size_t Bytes::Length()
-	{
-		return this->size;
-	}
-
 	size_t Bytes::Write(const char* data, size_t length, size_t offset)
 	{
 		size_t maxWriteSize = this->size - offset;

@@ -41,10 +41,10 @@ namespace kroll
 		size_t ExtraMemoryCost();
 
 		// A pointer to the internal byte buffer
-		char* Pointer();
+		char* Pointer() { return buffer; }
 
 		// Returns length of bytes this object has in capacity
-		size_t Length();
+		size_t Length() { return size; }
 
 		// Write data at the given offset. If no offset provided,
 		// start writing at start of Bytes object.
