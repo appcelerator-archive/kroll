@@ -47,6 +47,8 @@ class BuildConfig(object):
 		vars.Add('DISTRIBUTION_URL','The base URL of all streams', kwargs['DISTRIBUTION_URL'])
 		vars.Add('CRASH_REPORT_URL','The URL to send crash dumps to', kwargs['CRASH_REPORT_URL'])
 		vars.Add('MSVC_VERSION', '', '8.0')
+		vars.Add('MSPSDK', 'Path of the Microsoft Platform SDK', 'C:\\Program Files\\Microsoft Platform SDK for Windows Server 2003 R2')
+		vars.Add('MSVS', 'Path of Microsoft Visual Studio', 'C:\\Program Files\\Microsoft Visual Studio 8')
 
 		self.env = SCons.Environment.Environment(variables = vars)
 		self.utils = utils.BuildUtils(self)
@@ -82,14 +84,10 @@ class BuildConfig(object):
 		# SCons can't read the Visual Studio settings yet so we
 		# have to force it to use the Platform SDK directories
 		if self.is_win32():
-			self.env.Prepend(PATH=['C:\Program Files\Microsoft Platform SDK for Windows Server 2003 R2'])
-			self.env.Prepend(CPPPATH=['C:\Program Files\Microsoft Platform SDK for Windows Server 2003 R2\include'])
-			self.env.Prepend(LIBPATH=['C:\Program Files\Microsoft Platform SDK for Windows Server 2003 R2\lib'])
-
-			atlmfc_path = 'C:\\Program Files\\Microsoft Visual Studio 8\\VC\\atlmfc'
-			if not path.exists(atlmfc_path):
-				atlmfc_path = 'C:\\Program Files (x86)\\Microsoft Visual Studio 8\\VC\\atlmfc'
-			self.env.Prepend(CPPPATH=[path.join(atlmfc_path, 'include')])
+			self.env.Prepend(PATH=['${MSPSDK}'])
+			self.env.Prepend(CPPPATH=['${MSPSDK}\\include'])
+			self.env.Prepend(LIBPATH=['${MSPSDK}\\lib'])
+			self.env.Prepend(CPPPATH=['${MSVS}\\VC\\atlmfc\\include'])
 
 	def set_kroll_source_dir(self, dir):
 		self.kroll_source_dir = path.abspath(dir)
