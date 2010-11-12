@@ -47,8 +47,15 @@ class BuildConfig(object):
 		vars.Add('DISTRIBUTION_URL','The base URL of all streams', kwargs['DISTRIBUTION_URL'])
 		vars.Add('CRASH_REPORT_URL','The URL to send crash dumps to', kwargs['CRASH_REPORT_URL'])
 		vars.Add('MSVC_VERSION', '', '8.0')
-		vars.Add('MSPSDK', 'Path of the Microsoft Platform SDK', 'C:\\Program Files\\Microsoft Platform SDK for Windows Server 2003 R2')
-		vars.Add('MSVS', 'Path of Microsoft Visual Studio', 'C:\\Program Files\\Microsoft Visual Studio 8')
+
+		def add_environ_arg(key, description, default):
+			default_value = default
+			if key in os.environ:
+				default_value = os.environ[key]
+			vars.Add(key, description, default_value)
+
+		add_environ_arg('MSPSDK', 'Path of the Microsoft Platform SDK', 'C:\\Program Files\\Microsoft Platform SDK for Windows Server 2003 R2')
+		add_environ_arg('MSVS', 'Path of Microsoft Visual Studio', 'C:\\Program Files\\Microsoft Visual Studio 8')
 
 		self.env = SCons.Environment.Environment(variables = vars)
 		self.utils = utils.BuildUtils(self)
