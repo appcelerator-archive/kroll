@@ -67,7 +67,7 @@ namespace kroll
 
 		JSValueRef exception = NULL;
 		JSObjectSetProperty(this->context, this->jsobject, jsName, jsValue,
-			NULL, &exception);
+			0, &exception);
 		JSStringRelease(jsName);
 
 		if (exception != NULL) // An exception was thrown.

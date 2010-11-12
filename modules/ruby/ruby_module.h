@@ -35,6 +35,10 @@
 #include <vector>
 #include <ruby.h>
 
+#ifndef RARRAY_LEN
+#  define RARRAY_LEN(x) (RARRAY(x)->len)
+#endif
+
 #undef sleep
 #undef close
 #undef shutdown

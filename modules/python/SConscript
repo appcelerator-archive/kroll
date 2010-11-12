@@ -11,10 +11,11 @@ if build.is_osx():
 
 elif build.is_linux():
 	env.Append(CPPPATH=[
-		'/usr/lib/python/2.5/i386-linux',
-		'/usr/include/python2.5',
+		'${PYTHON_INCLUDE}',
+		#'/usr/lib/python/2.5/i386-linux',
+		#'/usr/include/python2.5',
 		build.kroll_include_dir])
-	env.Append(LIBS=['python2.5'])
+	env.Append(LIBS=['python${PYTHON_VERSION}'])
 
 elif build.is_win32():
 	env.Append(CPPPATH=[build.tp('python', 'include')])

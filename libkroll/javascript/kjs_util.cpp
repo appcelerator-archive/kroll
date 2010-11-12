@@ -8,7 +8,7 @@
 
 #include <Poco/FileStream.h>
 #include <Poco/Mutex.h>
-#include <JavascriptCore/JSBasePrivate.h>
+#include <JavaScriptCore/JSBasePrivate.h>
 
 namespace kroll
 {

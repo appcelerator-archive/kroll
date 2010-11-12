@@ -124,3 +124,4 @@ namespace kroll
 		result->SetObject(o);
 	}
 }
+
