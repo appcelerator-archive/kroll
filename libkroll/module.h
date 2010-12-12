@@ -125,7 +125,7 @@ typedef void* ModuleMethod;
  * \description Defines the default constructor, destructor, library implementations for the module "klass"
  */
 #define KROLL_MODULE(ClassName, Name, Version) \
-ClassName::ClassName(Host *host, const char* path, const char* name, const char* version) : \
+ClassName::ClassName(kroll::Host *host, const char* path, const char* name, const char* version) : \
 	kroll::Module(host, path, name, version) \
 { \
 } \
@@ -134,7 +134,7 @@ ClassName::~ClassName() \
 { \
 } \
   \
-extern "C" EXPORT ClassName* CreateModule(Host *host, const char* path) \
+extern "C" EXPORT ClassName* CreateModule(kroll::Host *host, const char* path) \
 { \
 	return new ClassName(host, path, Name, Version); \
 }  \
