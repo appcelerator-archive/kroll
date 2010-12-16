@@ -195,7 +195,7 @@ namespace UTILS_NS
 
 	string Application::GetSDKPath()
 	{
-		for (int i = 0; i < this->sdks.size(); i++)
+		for (size_t i = 0; i < this->sdks.size(); i++)
 		{
 			SharedComponent sdk = this->sdks.at(i);
 			if (sdk->type == SDK)
