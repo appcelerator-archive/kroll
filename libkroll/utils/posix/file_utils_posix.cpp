@@ -130,6 +130,11 @@ namespace UTILS_NS
 		return false;
 	}
 
+	bool FileUtils::DeleteFile(const std::string& file)
+	{
+		return unlink(file.c_str()) == 0;
+	}
+
 	bool FileUtils::IsDirectory(const std::string& dir)
 	{
 #ifdef OS_OSX

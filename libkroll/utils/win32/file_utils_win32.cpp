@@ -186,8 +186,9 @@ namespace FileUtils
 		// because that is the best way to ensure that the file does not
 		// end up in the Recycle Bin and DeleteFile has saner handling
 		// of paths with spaces.
-		//return ::DeleteFile(path);
-		return DeleteDirectory(path);
+		std::wstring widePath(UTILS_NS::UTF8ToWide(path));
+		return ::DeleteFileW(widePath.c_str());
+		//return DeleteDirectory(path);
 	}
 	
 	bool DeleteDirectory(const std::string& dir)

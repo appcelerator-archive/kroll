@@ -182,7 +182,11 @@ namespace kroll
 	KROLL_API bool IsMainThread();
 }
 
+#ifdef OS_WIN32
+extern "C" KROLL_API int Execute(HINSTANCE hInstance, int argc, const char **argv);
+#else
 extern "C" KROLL_API int Execute(int argc, const char **argv);
+#endif
 
 #endif
 
