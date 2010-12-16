@@ -68,6 +68,11 @@ namespace UTILS_NS
 		string GetResourcesPath();
 
 		/**
+		 * Get the path to this application's Desktop SDK directory
+		 */
+		string GetSDKPath();
+
+		/**
 		 * Try to resolve all application dependencies with installed or bundled components.
 		 * @returns a list of unresolved dependencies
 		 */

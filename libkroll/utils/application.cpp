@@ -193,6 +193,19 @@ namespace UTILS_NS
 		return FileUtils::Join(this->path.c_str(), "Resources", NULL);
 	}
 
+	string Application::GetSDKPath()
+	{
+		for (int i = 0; i < this->sdks.size(); i++)
+		{
+			SharedComponent sdk = this->sdks.at(i);
+			if (sdk->type == SDK)
+			{
+				return sdk->path;
+			}
+		}
+		return "";
+	}
+
 	bool Application::IsInstalled()
 	{
 		string dataDirMarker(FileUtils::Join(this->GetDataPath().c_str(),

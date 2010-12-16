@@ -835,7 +835,7 @@ namespace kroll
 
 		SharedApplication app = host->GetApplication();
 		BootUtils::RunInstaller(
-			this->installerDependencies, app, "", app->runtime->path, true);
+			this->installerDependencies, app, "", app->GetSDKPath(), true);
 
 		if (!this->installerCallback.isNull())
 		{
@@ -942,7 +942,7 @@ namespace kroll
 			KListRef list = value->ToList();
 			for (size_t j = 0; j < list->Size(); j++)
 			{
-				GetBytes(list->At(j), blobs);
+				GetBytes(list->At((int)j), blobs);
 			}
 		}
 		else if (value->IsNumber())
