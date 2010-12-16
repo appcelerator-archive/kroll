@@ -53,7 +53,6 @@ if not exists(): fetch()
 if build.is_linux():
 	effess.copy_tree(path.join(build.third_party, 'webkit', 'lib'), rtdir)
 	effess.copy_tree(path.join(build.third_party, 'poco', 'lib'), rtdir)
-	effess.copy_tree(path.join(build.third_party, 'curl', 'lib'), rtdir)
 
 elif build.is_win32():
 	effess.copy_tree(path.join(build.third_party, 'poco', 'bin'), rtdir)
