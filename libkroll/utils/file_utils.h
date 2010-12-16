@@ -76,6 +76,11 @@ namespace UTILS_NS
 		KROLL_API bool DeleteDirectory(const std::string& dir);
 
 		/**
+		 * Delete a file at the given path
+		 */
+		KROLL_API bool DeleteFile(const std::string& file);
+
+		/**
 		 * This function joins paths together in an OS specific way. Empty elements --
 		 * those which equal == "" will be ignored. Examples:
 		 * Join('', '/blah', '', 'whatever') => /blah/whatever

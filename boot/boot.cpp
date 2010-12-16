@@ -148,8 +148,12 @@ namespace KrollBoot
 		EnvironmentUtils::Set("KR_MODULES", moduleList.str());
 
 		BootstrapPlatformSpecific(moduleList.str());
-		string error = Blastoff();
+		if (!updateFile.empty())
+		{
+			FileUtils::DeleteFile(updateFile);
+		}
 
+		string error = Blastoff();
 		// If everything goes correctly, we should never get here
 		error = string("Launching application failed: ") + error;
 		ShowError(error, false);
