@@ -27,7 +27,7 @@ namespace PlatformUtils
 	std::string GetFirstMACAddress()
 	{
 		MACAddress address;
-		memset(&address, 0, sizeof(&address));
+		memset(&address, 0, sizeof(MACAddress));
 
 		try
 		{
