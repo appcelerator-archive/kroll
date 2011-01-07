@@ -37,6 +37,7 @@
 #include <elf.h>
 #include <fcntl.h>
 #include <link.h>
+#include <sys/stat.h>
 #include <sys/mman.h>
 #include <string.h>
 #include <unistd.h>
