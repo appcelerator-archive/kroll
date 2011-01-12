@@ -45,5 +45,6 @@ namespace kroll
 #include "profiled_bound_method.h"
 #include "global_object.h"
 #include "profiled_global_object.h"
+#include "stream.h"
 
 #endif
