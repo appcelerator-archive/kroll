@@ -7,8 +7,8 @@ import os.path as path
 Import('build')
 Import('debug')
 
-SConscript('boot/SConscript', duplicate=0, build_dir=path.join(build.dir, 'objs', 'boot'))
-SConscript('libkroll/SConscript', build_dir=path.join(build.dir,'objs','libkroll'), duplicate=0)
+SConscript('boot/SConscript', variant_dir=path.join(build.dir, 'objs', 'boot'), duplicate=0)
+SConscript('libkroll/SConscript', variant_dir=path.join(build.dir,'objs','libkroll'), duplicate=0)
 
 # Now that libkroll is built add it as a default for
 # all the following build steps. This means that things

@@ -13,7 +13,7 @@ def build_module_from_directory(dir):
 
 	SConscript(
 		path.join(dir, 'SConscript'),
-		build_dir=path.join(build.dir, 'objs', 'modules', name),
+		variant_dir=path.join(build.dir, 'objs', 'modules', name),
 		exports='build module env',
 		duplicate=0)
 
