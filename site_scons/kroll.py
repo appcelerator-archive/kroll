@@ -142,8 +142,8 @@ class BuildConfig(object):
 				sdk_minversion = '-mmacosx-version-min=10.5'
 				self.env['MACOSX_DEPLOYMENT_TARGET'] = '10.5'
 
-			self.env['CC'] = ['gcc', '-arch', 'i386', '-arch', 'ppc']
-			self.env['CXX'] = ['gcc', '-arch', 'i386', '-arch', 'ppc']
+			self.env['CC'] = ['gcc', '-arch', 'i386']
+			self.env['CXX'] = ['gcc', '-arch', 'i386']
 			self.env.Append(FRAMEWORKS=['Foundation', 'IOKit'])
 			self.env.Append(CXXFLAGS=['-isysroot', sdk_dir, sdk_minversion, '-x', 'objective-c++'])
 			self.env.Append(LINKFLAGS=['-isysroot', sdk_dir, '-syslibroot,' + sdk_dir, '-lstdc++', sdk_minversion])
