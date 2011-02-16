@@ -30,7 +30,7 @@ class BuildConfig(object):
 
 		elif self.matches('Darwin'):
 			self.os = 'osx'
-			self.arch = 'universal'
+			self.arch = 'i386'
 
 		elif self.matches('Linux'):
 			self.os = 'linux'
