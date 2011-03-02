@@ -192,9 +192,6 @@ class BuildConfig(object):
 				cpppath = [self.tp('webkit', 'include')]
 				libpath = [self.tp('webkit', 'lib')]
 
-			if self.is_linux():
-				cpppath.append(self.tp('webkit', 'include', 'glib-2.0'))
-
 			if self.is_win32():
 				suffix = ''
 				if ARGUMENTS.get('webkit_debug', None):
