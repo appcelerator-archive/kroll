@@ -114,7 +114,9 @@ namespace UTILS_NS
 	bool FileUtils::CreateDirectoryImpl(const std::string& dir)
 	{
 #ifdef OS_OSX
-		return [[NSFileManager defaultManager] createDirectoryAtPath:[NSString stringWithCString:dir.c_str() encoding:NSUTF8StringEncoding] attributes:nil];
+        NSFileManager* manager = [NSFileManager defaultManager];
+        NSString* path = [NSString stringWithCString:dir.c_str() encoding:NSUTF8StringEncoding];
+        return [manager createDirectoryAtPath:path withIntermediateDirectories:NO attributes:nil error:nil];
 #elif OS_LINUX
 		return mkdir(dir.c_str(),0755) == 0;
 #endif
@@ -123,7 +125,7 @@ namespace UTILS_NS
 	bool FileUtils::DeleteDirectory(const std::string& dir)
 	{
 #ifdef OS_OSX
-		[[NSFileManager defaultManager] removeFileAtPath:[NSString stringWithCString:dir.c_str() encoding:NSUTF8StringEncoding] handler:nil];
+        return [[NSFileManager defaultManager] removeItemAtPath:[NSString stringWithCString:dir.c_str() encoding:NSUTF8StringEncoding] error:nil];
 #elif OS_LINUX
 		return unlink(dir.c_str()) == 0;
 #endif
