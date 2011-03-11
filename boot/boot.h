@@ -14,9 +14,6 @@
 #endif
 
 #define BOOTSTRAP_ENV "KR_BOOTSTRAPPED"
-#define CRASH_REPORT_OPT "--crash_report"
-
-#define CRASH_REPORT_URL  STRING(_CRASH_REPORT_URL)
 
 #include <cstring>
 #include <cstdio>
@@ -62,13 +59,6 @@ namespace KrollBoot
 	vector<SharedDependency> FilterForSDKInstall(
 		vector<SharedDependency> dependencies);
 	string GetApplicationName();
-
-#ifdef USE_BREAKPAD
-	void InitCrashDetection();
-	string GetCrashDetectionTitle();
-	string GetCrashDetectionHeader();
-	string GetCrashDetectionMessage();
-	map<string, string> GetCrashReportParameters();
-#endif
 }
+
 #endif

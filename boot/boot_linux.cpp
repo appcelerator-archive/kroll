@@ -10,11 +10,6 @@
 #include <gtk/gtk.h>
 #include "boot.h"
 
-#ifdef USE_BREAKPAD
-#include "client/linux/handler/exception_handler.h"
-#include "common/linux/http_upload.h"
-#endif
-
 namespace KrollBoot
 {
 	extern string applicationHome;
@@ -140,100 +135,12 @@ namespace KrollBoot
 		}
 		return PRODUCT_NAME;
 	}
-
-#ifdef USE_BREAKPAD
-	static google_breakpad::ExceptionHandler* breakpad;
-	extern string dumpFilePath;
-
-	char breakpadCallBuffer[PATH_MAX];
-	bool HandleCrash(
-		const char* dump_path,
-		const char* id,
-		void* context,
-		bool succeeded)
-	{
-		if (succeeded)
-		{
-			snprintf(breakpadCallBuffer, PATH_MAX - 1,
-				 "\"%s\" %s \"%s\" %s&", argv[0], CRASH_REPORT_OPT, dump_path, id);
-			system(breakpadCallBuffer);
-		}
-#ifdef DEBUG
-		return false;
-#else
-		return true;
-#endif
-	}
-
-	int SendCrashReport()
-	{
-		gtk_init(&argc, (char***) &argv);
-
-		InitCrashDetection();
-		std::string title = GetCrashDetectionTitle();
-		std::string msg = GetCrashDetectionHeader();
-		msg.append("\n\n");
-		msg.append(GetCrashDetectionMessage());
-
-		string url = string("https://") + CRASH_REPORT_URL;
-		const std::map<string, string> parameters = GetCrashReportParameters();
-
-		GtkWidget* dialog = gtk_message_dialog_new(
-			0,
-			GTK_DIALOG_MODAL,
-			GTK_MESSAGE_ERROR,
-			GTK_BUTTONS_NONE,
-			"%s",
-			msg.c_str());
-		gtk_dialog_add_buttons(GTK_DIALOG(dialog),
-			GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-			"Send Report", GTK_RESPONSE_OK,
-			0);
-		gtk_window_set_title(GTK_WINDOW(dialog), title.c_str());
-		int response = gtk_dialog_run(GTK_DIALOG(dialog));
-		if (response != GTK_RESPONSE_OK)
-		{
-			return __LINE__;
-		}
-
-		string filePartName = "dump";
-		string proxy;
-		string proxyUserPassword;
-		string responseBody;
-		string errorDescription;
-		bool success = google_breakpad::HTTPUpload::SendRequest(
-			url, parameters, dumpFilePath.c_str(), filePartName,
-			proxy, proxyUserPassword, &responseBody, &errorDescription);
-
-		if (!success)
-		{
-			ShowError(string("Error uploading crash dump: ") + errorDescription);
-			return __LINE__;
-		}
-		return 0;
-	}
-#endif
 }
 
 int main(int argc, const char* argv[])
 {
 	KrollBoot::argc = argc;
 	KrollBoot::argv = argv;
-#ifdef USE_BREAKPAD
-	if (argc > 2 && !strcmp(CRASH_REPORT_OPT, argv[1]))
-	{
-		return KrollBoot::SendCrashReport();
-	}
-
-	// Don't install a handler if we are just handling an error (above).
-	string dumpPath = "/tmp";
-	KrollBoot::breakpad = new google_breakpad::ExceptionHandler(
-		dumpPath,
-		0,
-		KrollBoot::HandleCrash,
-		0,
-		true);
-#endif
 
 	if (!EnvironmentUtils::Has(BOOTSTRAP_ENV))
 	{
