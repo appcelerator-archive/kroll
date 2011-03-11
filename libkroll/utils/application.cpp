@@ -185,7 +185,7 @@ namespace UTILS_NS
 
 	string Application::GetDataPath()
 	{
-		return FileUtils::GetApplicationDataDirectory(this->id);
+		return FileUtils::GetApplicationDataDirectory(this->name);
 	}
 
 	string Application::GetResourcesPath()

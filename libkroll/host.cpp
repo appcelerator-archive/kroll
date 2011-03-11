@@ -186,7 +186,7 @@ namespace kroll
 		}
 		else if (this->logFilePath.empty())
 		{
-			string dataDir = FileUtils::GetApplicationDataDirectory(this->application->id);
+			string dataDir = FileUtils::GetApplicationDataDirectory(this->application->name);
 			this->logFilePath = FileUtils::Join(dataDir.c_str(), "tiapp.log", 0);
 		}
 

@@ -38,10 +38,10 @@ namespace UTILS_NS
 {
 namespace FileUtils
 {
-	std::string GetApplicationDataDirectory(std::string &appid)
+	std::string GetApplicationDataDirectory(std::string appname)
 	{
 		std::string dir(GetUserRuntimeHomeDirectory());
-		dir = FileUtils::Join(dir.c_str(), "appdata", appid.c_str(), NULL);
+		dir = FileUtils::Join(dir.c_str(), appname.c_str(), NULL);
 		CreateDirectory(dir, true);
 
 		return dir;

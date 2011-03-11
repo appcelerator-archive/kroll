@@ -19,7 +19,7 @@ namespace KrollBoot
 		// It will be placed there by the update service. If it exists
 		// and the version in the update file is greater than the
 		// current app version, we want to force an update.
-		string file = FileUtils::GetApplicationDataDirectory(app->id);
+		string file = FileUtils::GetApplicationDataDirectory(GetApplicationName());
 		file = FileUtils::Join(file.c_str(), UPDATE_FILENAME, NULL);
 
 		if (FileUtils::IsFile(file))
