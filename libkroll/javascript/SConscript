@@ -5,7 +5,14 @@ Import('build env module')
 env.Append(CPPDEFINES=('KROLL_JAVASCRIPT_API_EXPORT', 1))
 
 build.add_thirdparty(env, 'poco')
-build.add_thirdparty(env, 'webkit')
+
+# If we are on Mac use the system installed JavaScriptCore.
+# Otherwise use our build of JavaScriptCore on all other platforms.
+if build.is_osx():
+    env.Append(FRAMEWORKS='JavaScriptCore')
+else:
+    build.add_thirdparty(env, 'webkit')
+
 if build.is_win32():
 	env.Append(LIBS=[
 		'kernel32', 'shell32',
@@ -17,4 +24,3 @@ if build.is_win32():
 
 build.mark_build_target(env.SharedLibrary(
 	path.join(module.dir, 'javascriptmodule'), Glob('*.cpp')))
-

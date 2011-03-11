@@ -132,18 +132,12 @@ class BuildConfig(object):
 			self.env.Append(CPPDEFINES = ('OS_32', 1))
 
 		if self.is_osx():
-			if ARGUMENTS.get('osx_10_4', 0):
-				sdk_dir = '/Developer/SDKs/MacOSX10.4u.sdk'
-				sdk_minversion = '-mmacosx-version-min=10.4'
-				self.env['GCC_VERSION'] = '4.0'
-				self.env['MACOSX_DEPLOYMENT_TARGET'] = '10.4'
-			else:
-				sdk_dir = '/Developer/SDKs/MacOSX10.5.sdk'
-				sdk_minversion = '-mmacosx-version-min=10.5'
-				self.env['MACOSX_DEPLOYMENT_TARGET'] = '10.5'
+			sdk_dir = '/Developer/SDKs/MacOSX10.6.sdk'
+			sdk_minversion = '-mmacosx-version-min=10.6'
+			self.env['MACOSX_DEPLOYMENT_TARGET'] = '10.6'
 
 			self.env['CC'] = ['gcc', '-arch', 'i386']
-			self.env['CXX'] = ['gcc', '-arch', 'i386']
+			self.env['CXX'] = ['g++', '-arch', 'i386']
 			self.env.Append(FRAMEWORKS=['Foundation', 'IOKit'])
 			self.env.Append(CXXFLAGS=['-isysroot', sdk_dir, sdk_minversion, '-x', 'objective-c++'])
 			self.env.Append(LINKFLAGS=['-isysroot', sdk_dir, '-syslibroot,' + sdk_dir, '-lstdc++', sdk_minversion])
@@ -203,7 +197,6 @@ class BuildConfig(object):
 				libs = ['webkittitanium-1.0']
 
 			if self.is_osx():
-				env.Append(FRAMEWORKPATH=[self.tp('webkit')])
 				env.Append(FRAMEWORKS=['WebKit', 'JavaScriptCore'])
 
 		if cpppath: env.Append(CPPPATH=cpppath)
