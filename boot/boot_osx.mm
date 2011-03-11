@@ -7,12 +7,6 @@
 #import <dlfcn.h>
 #import "boot.h"
 
-#ifdef USE_BREAKPAD
-#import "client/mac/handler/exception_handler.h"
-#import "common/mac/HTTPMultipartUpload.h"
-#include <Foundation/Foundation.h>
-#endif
-
 @interface KrollApplicationDelegate : NSObject
 -(BOOL)application:(NSApplication*)theApplication
 	openFile:(NSString*)filename;
@@ -174,82 +168,6 @@ namespace KrollBoot
 			return [applicationName UTF8String];
 		}
 	}
-
-#ifdef USE_BREAKPAD
-	// Allocate this statically because after a crash we want to access
-	// the heap as little as possible.
-	google_breakpad::ExceptionHandler* breakpad;
-	extern string dumpFilePath;
-
-	char breakpadCallBuffer[PATH_MAX];
-	bool HandleCrash(
-		const char* dumpPath, const char* dumpId, void* context, bool succeeded)
-	{
-		if (succeeded)
-		{
-			snprintf(breakpadCallBuffer, PATH_MAX - 1,
-				"\"%s\" %s \"%s\" %s &", argv[0], CRASH_REPORT_OPT, dumpPath, dumpId);
-			system(breakpadCallBuffer);
-		}
-		return true;
-	}
-
-	int SendCrashReport()
-	{
-		if (argc < 3)
-		{
-			ShowError("Invalid number of arguments passed to crash reporter.");
-			return __LINE__;
-		}
-
-		InitCrashDetection();
-		NSApplicationLoad();
-		NSAlert* alert = [[[NSAlert alloc] init] autorelease];
-		[alert setMessageText: 
-			[NSString stringWithUTF8String:GetCrashDetectionHeader().c_str()]];
-		[alert setInformativeText:
-			[NSString stringWithUTF8String:GetCrashDetectionMessage().c_str()]];
-		[alert addButtonWithTitle:@"Send Report"];
-		[alert addButtonWithTitle:@"Cancel"];
-		int response = [alert runModal];
-
-		if (response == NSAlertFirstButtonReturn)
-		{
-			map<string, string> params = GetCrashReportParameters();
-
-			NSMutableDictionary* nsParams = [[NSMutableDictionary alloc] init];
-			map<string, string>::iterator i = params.begin();
-			while (i != params.end())
-			{
-				NSString* key = [NSString stringWithUTF8String:i->first.c_str()];
-				NSString* value = [NSString stringWithUTF8String:i->second.c_str()];
-#ifdef DEBUG
-				NSLog(@"key = %@, value = %@",key,value);
-#endif
-				[nsParams setObject:value forKey:key];
-				i++;
-			}
-
-			NSURL* url = [NSURL URLWithString:[NSString stringWithFormat: @"https://%s", CRASH_REPORT_URL]];
-			NSLog(@"Sending crash report to %@",url);
-			HTTPMultipartUpload* uploader = [[HTTPMultipartUpload alloc] initWithURL:url];
-			[uploader addFileAtPath:[NSString stringWithUTF8String:dumpFilePath.c_str()] name:@"dump"];
-			[uploader setParameters:nsParams];
-
-			NSError* error;
-			[uploader send:&error];
-			if (error)
-			{
-				string msg = "An error occured while attempting sending the crash report: ";
-				msg += [[error localizedDescription] UTF8String];
-				ShowError(msg);
-				return __LINE__;
-			}
-		}
-
-		return 0;
-	}
-#endif
 }
 
 int main(int argc, char* argv[])
@@ -259,29 +177,12 @@ int main(int argc, char* argv[])
 	KrollBoot::argv = (const char**) argv;
 	int rc = 0;
 
-#ifdef USE_BREAKPAD
-	if (argc > 2 && !strcmp(CRASH_REPORT_OPT, argv[1]))
-	{
-		KrollBoot::SendCrashReport();
-	}
-	else
-#endif
 	if (!EnvironmentUtils::Has(BOOTSTRAP_ENV))
 	{
 		rc = KrollBoot::Bootstrap();
 	}
 	else
 	{
-#ifdef USE_BREAKPAD
-		// Our blastoff execv seems to fail if this handler is installed
-		// for the first stage of the boot -- so install it here.
-		NSString* tempPath = NSTemporaryDirectory();
-		if (tempPath == nil)
-			tempPath = @"/tmp";
-		string dumpPath = [tempPath UTF8String];
-		KrollBoot::breakpad = new google_breakpad::ExceptionHandler(
-			dumpPath, 0, KrollBoot::HandleCrash, 0, true);
-#endif
 		[[NSApplication sharedApplication] setDelegate:
 			[[KrollApplicationDelegate alloc] init]];
 			NSApplicationLoad(); EnvironmentUtils::Unset(BOOTSTRAP_ENV);

@@ -14,11 +14,6 @@ using std::wstring;
 #define MAX_PATH 512
 #endif
 
-#ifdef USE_BREAKPAD
-#include "client/windows/handler/exception_handler.h"
-#include "common/windows/http_upload.h"
-#endif
-
 namespace KrollBoot
 {
 	extern string applicationHome;
@@ -149,123 +144,6 @@ namespace KrollBoot
 		}
 		return PRODUCT_NAME;
 	}
-
-#ifdef USE_BREAKPAD
-	static google_breakpad::ExceptionHandler* breakpad;
-	extern string dumpFilePath;
-
-	wchar_t breakpadCallBuffer[MAX_PATH];
-	bool HandleCrash(
-		const wchar_t* dumpPath,
-		const wchar_t* id,
-		void* context,
-		EXCEPTION_POINTERS* exinfo,
-		MDRawAssertionInfo* assertion,
-		bool succeeded)
-	{
-		if (succeeded)
-		{
-			STARTUPINFOW startupInfo = {0};
-			startupInfo.cb = sizeof(startupInfo);
-			PROCESS_INFORMATION processInformation;
-
-			_snwprintf(breakpadCallBuffer, MAX_PATH - 1, L"\"%S\" \"%S\" %s %s",
-				argv[0], CRASH_REPORT_OPT, dumpPath, id);
-
-			CreateProcessW(
-				0,
-				breakpadCallBuffer,
-				0,
-				0,
-				FALSE,
-				0,
-				0,
-				0,
-				&startupInfo,
-				&processInformation);
-		}
-
-		// We would not normally need to do this, but on Windows XP it
-		// seems that this callback is called multiple times for a crash.
-		// We should probably try to remove the following line the next
-		// time we update breakpad.
-		exit(__LINE__);
-		return true;
-	}
-
-	wstring StringToWString(string in)
-	{
-		wstring out(in.length(), L' ');
-		copy(in.begin(), in.end(), out.begin());
-		return out;
-	}
-
-	map<wstring, wstring> GetCrashReportParametersW()
-	{
-		map<wstring, wstring> paramsW;
-		map<string, string> params = GetCrashReportParameters();
-		map<string, string>::iterator i = params.begin();
-		while (i != params.end())
-		{
-			wstring key = StringToWString(i->first);
-			wstring val = StringToWString(i->second);
-			i++;
-
-			paramsW[key] = val;
-		}
-		return paramsW;
-	}
-
-	int SendCrashReport()
-	{
-		InitCrashDetection();
-		string title = GetCrashDetectionTitle();
-		string msg = GetCrashDetectionHeader();
-		msg.append("\n\n");
-		msg.append(GetCrashDetectionMessage());
-
-		Win32PopupDialog popupDialog(0);
-		popupDialog.SetTitle(title);
-		popupDialog.SetMessage(msg);
-		popupDialog.SetShowCancelButton(true);
-		if (popupDialog.Show() != IDYES)
-		{
-			return __LINE__;
-		}
-
-		wstring url = L"https://";
-		url += StringToWString(CRASH_REPORT_URL);
-
-		const std::map<wstring, wstring> parameters = GetCrashReportParametersW();
-		wstring dumpFilePathW = StringToWString(dumpFilePath);
-		wstring responseBody;
-		int responseCode;
-
-		bool success = google_breakpad::HTTPUpload::SendRequest(
-			url,
-			parameters,
-			dumpFilePathW.c_str(),
-			L"dump",
-			0,
-			&responseBody,
-			&responseCode);
-
-		if (!success)
-		{
-#ifdef DEBUG
-			ShowError("Error uploading crash dump.");
-#endif
-			return __LINE__;
-		}
-#ifdef DEBUG
-		else
-		{
-			MessageBoxW(0,L"Your crash report has been submitted. Thank You!",L"Error Reporting Status",MB_OK | MB_ICONINFORMATION);
-		}
-#endif
-		return 0;
-	}
-#endif
 }
 
 #if defined(OS_WIN32) && !defined(WIN32_CONSOLE)
@@ -276,23 +154,6 @@ int main(int __argc, const char* __argv[])
 {
 	KrollBoot::argc = __argc;
 	KrollBoot::argv = (const char**) __argv;
-
-#ifdef USE_BREAKPAD
-	// Don't install a handler if we are just handling an error.
-	if (__argc > 2 && !strcmp(CRASH_REPORT_OPT, __argv[1]))
-	{
-		return KrollBoot::SendCrashReport();
-	}
-
-	wchar_t tempPath[MAX_PATH];
-	GetTempPathW(MAX_PATH, tempPath);
-	KrollBoot::breakpad = new google_breakpad::ExceptionHandler(
-		tempPath,
-		0,
-		KrollBoot::HandleCrash,
-		0,
-		google_breakpad::ExceptionHandler::HANDLER_ALL);
-#endif
 
 	return KrollBoot::Bootstrap();
 }

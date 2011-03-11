@@ -44,46 +44,6 @@ if build.is_win32():
 		Env.Append(CPPDEFINES=['WIN32_CONSOLE=1', 'UNICODE=1'])
 	Env.Append(LINKFLAGS=linkflags)
 
-# Breakpad integration
-breakpad = ARGUMENTS.get('breakpad', '1') != '0'
-if not(build.is_32()) and build.is_linux():
-	breakpad = False
-
-if breakpad:
-	Env.Append(CPPPATH = ['breakpad'])
-	Env.Append(CPPDEFINES = [['USE_BREAKPAD', 1]])
-	if 'CPPFLAGS' in Env and '-Werror' in Env['CPPFLAGS']:
-		Env['CPPFLAGS'].remove('-Werror')
-
-if breakpad and build.is_win32():
-	sources += \
-		Glob('breakpad/client/windows/crash_generation/*.cc') + \
-		['breakpad/client/windows/handler/exception_handler.cc',
-		 'breakpad/common/windows/guid_string.cc',
-		 'breakpad/common/windows/http_upload.cc']
-	Env.Append(LIBS=['wininet'])
-
-elif breakpad:
-	sources += \
-		Glob('breakpad/common/*.c') + \
-		Glob('breakpad/common/*.cc') + \
-		Glob('breakpad/client/*.cc') + \
-		Glob('breakpad/processor/*.cc')
-		 
-if breakpad and build.is_linux():
-	sources += \
-		Glob('breakpad/client/linux/handler/*.cc') + \
-		Glob('breakpad/common/linux/*.cc')
-
-if breakpad and build.is_osx():
-	Env.Append(LIBS=['libcrypto'])
-	sources += \
-		Glob('breakpad/common/mac/dwarf/*.cc') + \
-		Glob('breakpad/common/mac/*.cc') + \
-		Glob('breakpad/common/mac/*.mm') + \
-		Glob('breakpad/common/mac/*.m') + \
-		Glob('breakpad/client/mac/handler/*.cc')
-
 kboot_out = path.join(build.dir, 'sdk', 'kboot')
 p = Env.Program(kboot_out, sources)
 build.mark_build_target(p)
