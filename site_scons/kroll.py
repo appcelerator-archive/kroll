@@ -133,8 +133,8 @@ class BuildConfig(object):
 
 		if self.is_osx():
 			sdk_dir = '/Developer/SDKs/MacOSX10.6.sdk'
-			sdk_minversion = '-mmacosx-version-min=10.6'
-			self.env['MACOSX_DEPLOYMENT_TARGET'] = '10.6'
+			sdk_minversion = '-mmacosx-version-min=10.5'
+			self.env['MACOSX_DEPLOYMENT_TARGET'] = '10.5'
 
 			self.env['CC'] = ['gcc', '-arch', 'i386']
 			self.env['CXX'] = ['g++', '-arch', 'i386']
