@@ -5,8 +5,10 @@
  */
 #ifndef _KR_PLATFORM_UTILS_H_
 #define _KR_PLATFORM_UTILS_H_
+
 #include <string>
 #include "poco/KTypes.h"
+
 #define MAC_ADDRESS_SIZE 6
 
 namespace UTILS_NS
@@ -28,8 +30,7 @@ namespace UTILS_NS
 		KROLL_API void GetFirstMACAddressImpl(MACAddress&);
 
 		/**
-		 * Get the machine ID of this machine from the .PRODUCT_NAME file
-		 * or create it if it doesn't exist.
+         * Generate an ID for this machine based on it's MAC Address.
 		 */
 		KROLL_API std::string GetMachineId();
 
@@ -44,4 +45,5 @@ namespace UTILS_NS
 		KROLL_API int GetProcessorCount();
 	};
 }
+
 #endif
