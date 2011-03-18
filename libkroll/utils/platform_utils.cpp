@@ -6,7 +6,8 @@
 
 #include "utils.h"
 
-#include <cstdio>
+#include <stdio.h>
+#include <string.h>
 
 namespace UTILS_NS
 {
