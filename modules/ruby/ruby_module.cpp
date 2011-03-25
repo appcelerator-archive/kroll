@@ -11,6 +11,8 @@ extern "C" EXPORT RubyModule* CreateModule(Host *host, const char* path)
 	return new RubyModule(host, path);
 }
 
+static const char* supportedScriptTypes[3] = {"rb", "ruby", NULL};
+
 namespace kroll
 {
 	RubyModule* RubyModule::instance_ = NULL;
@@ -26,32 +28,17 @@ namespace kroll
 		// that includes work in a intuitive way for application developers.
 		ruby_incpush(UTF8ToSystem(host->GetApplication()->GetResourcesPath()).c_str());
 
-		this->InitializeBinding();
+        host->script()->AddInterpreter(&interpreter, supportedScriptTypes);
+
 		host->AddModuleProvider(this);
 	}
 
 	void RubyModule::Stop()
 	{
-		KObjectRef global = this->host->GetGlobalObject();
-		global->Set("Ruby", Value::Undefined);
-		Script::GetInstance()->RemoveScriptEvaluator(this->binding);
-		this->binding = NULL;
+        host->script()->RemoveInterpreter(&interpreter);
+
 		RubyModule::instance_ = NULL;
-
 		ruby_cleanup(0);
-	}
-
-	void RubyModule::InitializeBinding()
-	{
-		// Expose the Ruby evaluator into Kroll
-		KObjectRef global = this->host->GetGlobalObject();
-		this->binding = new RubyEvaluator();
-		global->Set("Ruby", Value::NewObject(binding));
-		Script::GetInstance()->AddScriptEvaluator(this->binding);
-		
-		// Bind the API global constant
-		VALUE ruby_api_val = RubyUtils::KObjectToRubyValue(Value::NewObject(global));
-		rb_define_global_const(PRODUCT_NAME, ruby_api_val);
 	}
 
 	const static std::string ruby_suffix = "module.rb";

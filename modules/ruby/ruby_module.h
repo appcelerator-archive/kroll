@@ -49,7 +49,7 @@
 #include "k_ruby_method.h"
 #include "k_ruby_list.h"
 #include "ruby_utils.h"
-#include "ruby_evaluator.h"
+#include "ruby_interpreter.h"
 #include "ruby_module_instance.h"
 
 namespace kroll
@@ -70,7 +70,6 @@ namespace kroll
 
 		virtual bool IsModule(std::string& path);
 		virtual Module* CreateModule(std::string& path);
-		void InitializeBinding();
 
 		Host* GetHost()
 		{
@@ -82,7 +81,7 @@ namespace kroll
 		}
 
 	private:
-		KObjectRef binding;
+        RubyInterpreter interpreter;
 		static RubyModule *instance_;
 		DISALLOW_EVIL_CONSTRUCTORS(RubyModule);
 	};

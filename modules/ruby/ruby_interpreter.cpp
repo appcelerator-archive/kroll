@@ -5,34 +5,14 @@
  */
 
 #include "ruby_module.h"
+
 #include <cstring>
 #include <iostream>
 #include <sstream>
 
 namespace kroll
 {
-	RubyEvaluator::RubyEvaluator() :
-		StaticBoundObject("Ruby.Evaluator")
-	{
-		/**
-		 * @notiapi(method=True,name=Ruby.canEvaluate,since=0.7)
-		 * @notiarg[String, mimeType] Code mime type
-		 * @notiresult[bool] whether or not the mimetype is understood by Ruby
-		 */
-		SetMethod("canEvaluate", &RubyEvaluator::CanEvaluate);
-		
-		/**
-		 * @notiapi(method=Ruby,name=Ruby.evaluate,since=0.2) Evaluates a string as Ruby code
-		 * @notiarg[String, mimeType] Code mime type (normally "text/ruby")
-		 * @notiarg[String, name] name of the script source
-		 * @notiarg[String, code] Ruby script code
-		 * @notiarg[Object, scope] global variable scope
-		 * @notiresult[Any] result of the evaluation
-		 */
-		SetMethod("evaluate", &RubyEvaluator::Evaluate);
-	}
-
-	RubyEvaluator::~RubyEvaluator()
+	RubyInterpreter::RubyInterpreter()
 	{
 	}
 
@@ -85,7 +65,7 @@ namespace kroll
 		return rval;
 	}
 
-	std::string RubyEvaluator::GetContextId(KObjectRef global)
+	std::string RubyInterpreter::GetContextId(KObjectRef global)
 	{
 		static int nextId = 0;
 		int cid = 0;
@@ -102,7 +82,7 @@ namespace kroll
 		return std::string("$windowProc") + KList::IntToChars(cid);
 	}
 
-	VALUE RubyEvaluator::GetContext(KObjectRef global)
+	VALUE RubyInterpreter::GetContext(KObjectRef global)
 	{
 		std::string theid = this->GetContextId(global);
 		VALUE ctx = rb_gv_get(theid.c_str());
@@ -125,24 +105,12 @@ namespace kroll
 		VALUE code = rb_ary_shift(args);
 		return rb_funcall(ctx, rb_intern("instance_eval"), 1, code);
 	}
-	
-	void RubyEvaluator::CanEvaluate(const ValueList& args, KValueRef result)
-	{
-		args.VerifyException("canEvaluate", "s");
-		std::string mimeType = args.GetString(0);
-		result->SetBool(mimeType == "text/ruby");
-	}
 
-	void RubyEvaluator::Evaluate(const ValueList& args, KValueRef result)
+	KValueRef RubyInterpreter::EvaluateFile(const char* filepath, KObjectRef context)
 	{
-		args.VerifyException("evaluate", "s s s o");
-		
-		//const char *mimeType = args.GetString(0).c_str();
-		std::string name = args.GetString(1);
-		std::string code = args.GetString(2);
-		global_object = args.GetObject(3);
-
-		VALUE ctx = this->GetContext(global_object);
+        global_object = context;
+		VALUE ctx = this->GetContext(context);
+        std::string code = FileUtils::ReadFile(filepath);
 
 		VALUE rargs = rb_ary_new();
 		rb_ary_push(rargs, ctx);
@@ -150,12 +118,12 @@ namespace kroll
 
 		int error;
 		VALUE returnValue = rb_protect(reval_do_call, rargs, &error);
-		RubyEvaluator::ContextToGlobal(ctx, global_object);
+		RubyInterpreter::ContextToGlobal(ctx, context);
 
 		if (error != 0)
 		{
 			std::string error("An error occured while parsing Ruby (");
-			error += name;
+			error += filepath;
 			error += "): ";
 
 			// Display a stringified version of the exception.
@@ -175,21 +143,14 @@ namespace kroll
 				error.append(StringValuePtr(rBacktraceString));
 			}
 
-			Logger *logger = Logger::Get("Ruby");
-			logger->Error(error);
-
-			result->SetUndefined();
-			return;
+            throw ValueException::FromString(error);
 		}
 
-		result->SetValue(RubyUtils::ToKrollValue(returnValue));
+        return RubyUtils::ToKrollValue(returnValue);
 	}
 
-	void RubyEvaluator::ContextToGlobal(VALUE ctx, KObjectRef o)
+	void RubyInterpreter::ContextToGlobal(VALUE ctx, KObjectRef o)
 	{
-		if (global_object.isNull())
-			return;
-
 		// Next copy all methods over -- they override variables
 		VALUE methods = rb_funcall(ctx, rb_intern("singleton_methods"), 0);
 		for (long i = 0; i < RARRAY_LEN(methods); i++)

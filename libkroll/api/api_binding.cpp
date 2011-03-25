@@ -8,7 +8,6 @@
 #include "component_binding.h"
 #include "dependency_binding.h"
 #include "environment_binding.h"
-#include "script_binding.h"
 #include <kroll/thread_manager.h>
 #include <algorithm>
 
@@ -409,8 +408,6 @@ namespace kroll
 		 * @tiapi a constant representing an UNKNOWN component type
 		 */
 		this->Set("UNKNOWN", Value::NewInt(UNKNOWN));
-		
-		this->Set("Script", Value::NewObject(new ScriptBinding()));
 	}
 
 	APIBinding::~APIBinding()

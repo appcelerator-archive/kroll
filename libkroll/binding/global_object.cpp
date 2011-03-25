@@ -5,6 +5,7 @@
  */
 
 #include "../kroll.h"
+
 namespace kroll
 {
 	AutoPtr<GlobalObject> GlobalObject::instance;
@@ -12,19 +13,10 @@ namespace kroll
 	GlobalObject::GlobalObject() :
 		KEventObject(PRODUCT_NAME)
 	{
-		// @tiapi(method=True,type=String,name=getVersion,since=0.8)
-		// @tiapi Return the Titanium runtime version.
-		// @tiresult[String] The runtime version.
 		this->SetMethod("getVersion", &GlobalObject::GetVersion);
-
-		// @tiapi(method=True,type=String,name=getPlatform,since=0.8)
-		// @tiapi Return the current platform, usually one of
-		// @tiapi 'osx', 'win32', or 'linux'.
-		// @tiresult[String] The current platform.
 		this->SetMethod("getPlatform", &GlobalObject::GetPlatform);
 
 		Event::SetEventConstants(this);
-		Script::Initialize();
 	}
 
 	GlobalObject::~GlobalObject()

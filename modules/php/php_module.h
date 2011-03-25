@@ -64,7 +64,7 @@ namespace kroll
 #include "k_php_function.h"
 #include "k_php_list.h"
 #include "k_php_array_object.h"
-#include "php_evaluator.h"
+#include "php_interpreter.h"
 #include "php_module_instance.h"
 
 namespace kroll
@@ -87,7 +87,6 @@ namespace kroll
 
 		virtual bool IsModule(std::string& path);
 		virtual Module* CreateModule(std::string& path);
-		void InitializeBinding();
 
 		static PHPModule* Instance() { return instance_; }
 		static void SetBuffering(bool buffering);
@@ -99,7 +98,7 @@ namespace kroll
 		Poco::URI* GetURI() { return uriStack.size() == 0 ? 0 : uriStack.top(); }
 
 	private:
-		KObjectRef binding;
+        PHPInterpreter interpreter;
 		static std::ostringstream buffer;
 		static std::string mimeType;
 		static PHPModule *instance_;

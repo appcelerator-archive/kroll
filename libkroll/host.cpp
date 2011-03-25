@@ -10,8 +10,6 @@
 #include <cstdio>
 #include <cstdlib>
 
-#include "kroll.h"
-#include "thread_manager.h"
 #include <Poco/DirectoryIterator.h>
 #include <Poco/File.h>
 #include <Poco/FileStream.h>
@@ -21,6 +19,10 @@
 #include <Poco/Util/PropertyFileConfiguration.h>
 #include <Poco/StringTokenizer.h>
 #include <Poco/Timespan.h>
+
+#include "kroll.h"
+#include "thread_manager.h"
+#include "ScriptController.h"
 
 using Poco::File;
 using Poco::Path;
@@ -98,7 +100,8 @@ namespace kroll
 		profileStream(0),
 		consoleLogging(true),
 		fileLogging(true),
-		logger(0)
+		logger(0),
+		scriptController(new ScriptController)
 	{
 		hostInstance = this;
 

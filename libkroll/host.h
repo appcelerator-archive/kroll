@@ -13,6 +13,7 @@
 namespace kroll
 {
 	class Module;
+    class ScriptController;
 	typedef std::vector<SharedPtr<Module> > ModuleList;
 
 	/**
@@ -122,6 +123,8 @@ namespace kroll
 
 		virtual Module* CreateModule(std::string& path);
 
+        ScriptController* script() { return scriptController; }
+
 #ifdef OS_WIN32
 		HWND AddMessageHandler(MessageHandler handler);
 		HWND GetEventWindow();
@@ -149,6 +152,7 @@ namespace kroll
 		Poco::Mutex jobQueueMutex;
 		std::vector<MainThreadJob*> mainThreadJobs;
 		std::vector<std::string> invalidModuleFiles;
+        ScriptController* scriptController;
 
 		ModuleProvider* FindModuleProvider(std::string& filename);
 		void ScanInvalidModuleFiles();

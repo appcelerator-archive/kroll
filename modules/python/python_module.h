@@ -19,7 +19,7 @@
 #include "k_python_list.h"
 #include "k_python_tuple.h"
 #include "k_python_dict.h"
-#include "python_evaluator.h"
+#include "python_interpreter.h"
 
 #define THROW_PYTHON_EXCEPTION \
 PyObject *_ptype, *_pvalue, *_trace; \
@@ -54,7 +54,6 @@ namespace kroll
 
 		virtual bool IsModule(std::string& path);
 		virtual Module* CreateModule(std::string& path);
-		void InitializeBinding();
 
 		Host* GetHost()
 		{
@@ -67,7 +66,7 @@ namespace kroll
 		}
 
 	private:
-		KObjectRef binding;
+        PythonInterpreter interpreter;
 		static PythonModule *instance_;
 		DISALLOW_EVIL_CONSTRUCTORS(PythonModule);
 	};

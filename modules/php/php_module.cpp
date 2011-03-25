@@ -17,6 +17,8 @@ extern "C"
 	}
 }
 
+static const char* supportedScriptTypes[2] = {"php", 0};
+
 #ifdef ZTS
 void ***tsrm_ls;
 #endif
@@ -54,8 +56,13 @@ namespace kroll
 		php_embed_init(argc, argv PTSRMLS_CC);
 
 		PHPUtils::InitializePHPKrollClasses();
-		this->InitializeBinding();
 		host->AddModuleProvider(this);
+
+        KObjectRef global = host->GetGlobalObject();
+		zval *titaniumValue = PHPUtils::ToPHPValue(Value::NewObject(global));
+		ZEND_SET_SYMBOL(&EG(symbol_table), PRODUCT_NAME, titaniumValue);
+
+        host->script()->AddInterpreter(&interpreter, supportedScriptTypes);
 
 		std::string resourcesPath(host->GetApplication()->GetResourcesPath());
 		zend_alter_ini_entry("include_path", sizeof("include_path"),
@@ -90,32 +97,12 @@ namespace kroll
 
 	void PHPModule::Stop()
 	{
+        host->script()->RemoveInterpreter(&interpreter);
+
 		PHPModule::instance_ = NULL;
-
-		KObjectRef global = this->host->GetGlobalObject();
-		Script::GetInstance()->RemoveScriptEvaluator(this->binding);
-		global->Set("PHP", Value::Undefined);
-		this->binding->Set("evaluate", Value::Undefined);
-
-		this->binding = 0;
-		PHPModule::instance_ = 0;
 
 		php_embed_shutdown(TSRMLS_C);
 	}
-
-	void PHPModule::InitializeBinding()
-	{
-		PHPModule::mimeType = SG(default_mimetype);
-
-		KObjectRef global = this->host->GetGlobalObject();
-		this->binding = new PHPEvaluator();
-		global->Set("PHP", Value::NewObject(this->binding));
-		Script::GetInstance()->AddScriptEvaluator(this->binding);
-
-		zval *titaniumValue = PHPUtils::ToPHPValue(Value::NewObject(global));
-		ZEND_SET_SYMBOL(&EG(symbol_table), PRODUCT_NAME, titaniumValue);
-	}
-
 
 	bool PHPModule::IsModule(std::string& path)
 	{

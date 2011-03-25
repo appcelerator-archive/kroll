@@ -4,6 +4,7 @@
  * Copyright (c) 2008 Appcelerator, Inc. All Rights Reserved.
  */
 #include "python_module.h"
+
 #include <signal.h>
 #include <Poco/Path.h>
 
@@ -11,6 +12,8 @@ extern "C" EXPORT PythonModule* CreateModule(Host *host, const char* path)
 {
 	return new PythonModule(host, path);
 }
+
+static const char* supportedScriptTypes[3] = {"py", "python", 0};
 
 namespace kroll
 {
@@ -48,8 +51,9 @@ namespace kroll
 #endif
 		}
 
+        host->script()->AddInterpreter(&interpreter, supportedScriptTypes);
+
 		PythonUtils::InitializePythonKClasses();
-		this->InitializeBinding();
 		host->AddModuleProvider(this);
 	}
 
@@ -60,31 +64,11 @@ namespace kroll
 		PyGILState_STATE gstate;
 		gstate = PyGILState_Ensure();
 
-		KObjectRef global = this->host->GetGlobalObject();
-		global->Set("Python", Value::Undefined);
-		Script::GetInstance()->RemoveScriptEvaluator(this->binding);
-		this->binding = NULL;
+        host->script()->RemoveInterpreter(&interpreter);
+
 		PythonModule::instance_ = NULL;
 		Py_Finalize();
 	}
-
-	void PythonModule::InitializeBinding()
-	{
-		PyLockGIL lock;
-		KObjectRef global = this->host->GetGlobalObject();
-		this->binding = new PythonEvaluator();
-		global->Set("Python", Value::NewObject(this->binding));
-		Script::GetInstance()->AddScriptEvaluator(this->binding);
-		
-		{
-			PyObject* main_module = PyImport_AddModule("__main__");
-			PyObject* main_dict = PyModule_GetDict(main_module);
-			PyObject* api = PythonUtils::KObjectToPyObject(Value::NewObject(global));
-			PyDict_SetItemString(main_dict, PRODUCT_NAME, api);
-			Py_DECREF(api);
-		}
-	}
-
 
 	const static std::string python_suffix = "module.py";
 

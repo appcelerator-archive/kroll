@@ -86,7 +86,7 @@ namespace kroll
 #include "module.h"
 #include "async_job.h"
 #include "main_thread_job.h"
-#include "script.h"
+#include "ScriptController.h"
 
 #ifdef OS_OSX
 #include "osx/osx.h"
