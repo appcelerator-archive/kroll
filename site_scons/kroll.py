@@ -194,7 +194,7 @@ class BuildConfig(object):
 				libs = [x + suffix for x in libs]
 
 			if self.is_linux():
-				libs = ['webkittitanium-1.0']
+				libs = ['webkitgtk-1.0']
 
 			if self.is_osx():
 				env.Append(FRAMEWORKS=['WebKit', 'JavaScriptCore'])
