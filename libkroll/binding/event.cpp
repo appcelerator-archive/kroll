@@ -16,6 +16,7 @@ namespace kroll
 	std::string Event::CLOSED = "closed";
 	std::string Event::HIDDEN = "hidden";
 	std::string Event::SHOWN = "shown";
+  std::string Event::REOPEN = "reopen";
 	std::string Event::FULLSCREENED = "fullscreened";
 	std::string Event::UNFULLSCREENED = "unfullscreened";
 	std::string Event::MAXIMIZED = "maximized";
@@ -117,6 +118,7 @@ namespace kroll
 		target->Set("CLOSED", Value::NewString(Event::CLOSED));
 		target->Set("HIDDEN", Value::NewString(Event::HIDDEN));
 		target->Set("SHOWN", Value::NewString(Event::SHOWN));
+    target->Set("REOPEN", Value::NewString(Event::REOPEN));
 		target->Set("FULLSCREENED", Value::NewString(Event::FULLSCREENED));
 		target->Set("UNFULLSCREENED", Value::NewString(Event::UNFULLSCREENED));
 		target->Set("MAXIMIZED", Value::NewString(Event::MAXIMIZED));

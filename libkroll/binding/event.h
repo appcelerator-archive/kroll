@@ -34,6 +34,7 @@ namespace kroll
 		static std::string CLOSED;
 		static std::string HIDDEN;
 		static std::string SHOWN;
+    static std::string REOPEN;
 		static std::string FULLSCREENED;
 		static std::string UNFULLSCREENED;
 		static std::string MAXIMIZED;
