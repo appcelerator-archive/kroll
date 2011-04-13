@@ -23,6 +23,7 @@ class BuildConfig(object):
 		self.debug = False
 		self.os = None
 		self.modules = [] 
+		self.appstore = False
 		if not hasattr(os, 'uname') or self.matches('CYGWIN'):
 			self.os = 'win32'
 			self.arch = 'i386'
@@ -83,6 +84,10 @@ class BuildConfig(object):
 
 		self.env.Append(LIBPATH=[self.dir])
 
+		if ARGUMENTS.get('APPSTORE'):
+			self.appstore = True
+			self.env.Append(CPPDEFINES='APPSTORE')
+
 		self.init_os_arch()
 		self.build_targets = []  # targets needed before packaging & distribution can occur
 		self.staging_targets = []  # staging the module and sdk directories
@@ -132,9 +137,10 @@ class BuildConfig(object):
 			self.env.Append(CPPDEFINES = ('OS_32', 1))
 
 		if self.is_osx():
-			sdk_dir = '/Developer/SDKs/MacOSX10.6.sdk'
-			sdk_minversion = '-mmacosx-version-min=10.5'
-			self.env['MACOSX_DEPLOYMENT_TARGET'] = '10.5'
+			sdk_version = '10.6' if self.appstore else '10.5'
+			sdk_dir = '/Developer/SDKs/MacOSX%s.sdk' % sdk_version
+			sdk_minversion = '-mmacosx-version-min=%s' % sdk_version
+			self.env['MACOSX_DEPLOYMENT_TARGET'] = '%s' % sdk_version
 
 			self.env['CC'] = ['gcc', '-arch', 'i386']
 			self.env['CXX'] = ['g++', '-arch', 'i386']
@@ -197,6 +203,8 @@ class BuildConfig(object):
 				libs = ['webkitgtk-1.0']
 
 			if self.is_osx():
+				if self.appstore is False:
+					env.Append(FRAMEWORKPATH=[self.tp('webkit')])
 				env.Append(FRAMEWORKS=['WebKit', 'JavaScriptCore'])
 
 		if cpppath: env.Append(CPPPATH=cpppath)
