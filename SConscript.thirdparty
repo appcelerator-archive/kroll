@@ -61,8 +61,6 @@ elif build.is_win32():
 
 elif build.is_osx():
 	excludes = ['.h', '.defs', 'JavaScriptGlue.framework']
-	if build.appstore:
-		excludes.extend(['WebKit.framework', 'WebCore.framework', 'JavaScriptCore.framework'])
 	targets = []
 	for framework in Glob(path.join(build.third_party, '*/*.framework')):
 		t = build.utils.CopyToDir(framework, rtdir, exclude=excludes)
