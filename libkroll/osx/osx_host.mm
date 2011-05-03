@@ -90,7 +90,6 @@ namespace kroll
 		EnvironmentUtils::Set("DYLD_FRAMEWORK_PATH", origPath);
 		origPath = EnvironmentUtils::Get("KR_ORIG_DYLD_LIBRARY_PATH");
 		EnvironmentUtils::Set("DYLD_LIBRARY_PATH", origPath);
-		[application finishLaunching];
 
 		[application run];
 		return false;
