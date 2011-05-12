@@ -39,6 +39,11 @@ namespace kroll
 		// Initialize gnutls for multi-threaded usage.
 		gcry_control(GCRYCTL_SET_THREAD_CBS, &gcry_threads_pthread);
 		gnutls_global_init();
+
+		// Set location of Web Inspector resources.
+		std::string runtimePath = GetApplication()->runtime->path;
+		std::string inspectorPath = FileUtils::Join(runtimePath.c_str(), "webinspector", NULL);
+		EnvironmentUtils::Set("WEBKIT_INSPECTOR_PATH", inspectorPath);
 	}
 
 	Host::~Host()
