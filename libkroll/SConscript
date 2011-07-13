@@ -45,7 +45,7 @@ if build.is_linux():
 	if os.environ.has_key('PKG_CONFIG_PATH'):
 		env.AppendENVPath('PKG_CONFIG_PATH', os.environ['PKG_CONFIG_PATH'])
 	env.ParseConfig('pkg-config --cflags --libs libxml-2.0 gtk+-2.0 gdk-2.0 glib-2.0 gthread-2.0')
-	env.Append(LIBS=['pthread', 'libsoup-2.4', 'libproxy'])
+	env.Append(LIBS=['pthread', 'libsoup-2.4', 'libproxy', 'libgcrypt', 'libgnutls'])
 
 if build.is_win32():
 	env.Append(CPPPATH=[path.join(build.third_party, 'icu', 'include')])
