@@ -27,6 +27,14 @@ namespace UTILS_NS
 			NSApplicationSupportDirectory, NSLocalDomainMask, NO) objectAtIndex: 0];
 		nsPath = [nsPath stringByAppendingPathComponent:
 			[NSString stringWithUTF8String:PRODUCT_NAME]];
+
+        // On OS X 10.7 the installer will put the runtime and modules
+        // into the user's domain since /Library is now read only by non-admin users.
+        // If we do not find a Titanium installation in the local domain, use
+        // the user domain instead.
+        if (![[NSFileManager defaultManager] fileExistsAtPath:nsPath])
+            return FileUtiils::GetUserRuntimeHomeDirectory();
+
 		return [[nsPath stringByExpandingTildeInPath] UTF8String];
 	}
 
