@@ -33,7 +33,7 @@ namespace UTILS_NS
         // If we do not find a Titanium installation in the local domain, use
         // the user domain instead.
         if (![[NSFileManager defaultManager] fileExistsAtPath:nsPath])
-            return FileUtiils::GetUserRuntimeHomeDirectory();
+            return FileUtils::GetUserRuntimeHomeDirectory();
 
 		return [[nsPath stringByExpandingTildeInPath] UTF8String];
 	}
