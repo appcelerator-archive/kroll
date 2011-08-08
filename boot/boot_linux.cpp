@@ -64,6 +64,10 @@ namespace KrollBoot
 			path.append(":" + current);
 
 		EnvironmentUtils::Set("LD_LIBRARY_PATH", path);
+
+		// GIO search path for modules.
+		std::string gioModulePath = FileUtils::Join(app->runtime->path.c_str(), "gio", NULL);
+		EnvironmentUtils::Set("GIO_EXTRA_MODULES", gioModulePath);
 	}
 
 	string Blastoff()

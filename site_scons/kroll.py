@@ -57,8 +57,8 @@ class BuildConfig(object):
 		add_environ_arg('MSPSDK', 'Path of the Microsoft Platform SDK', 'C:\\Program Files\\Microsoft Platform SDK for Windows Server 2003 R2')
 		add_environ_arg('MSVS', 'Path of Microsoft Visual Studio', 'C:\\Program Files\\Microsoft Visual Studio 8')
 		add_environ_arg('PKG_CONFIG_PATH', 'The path for pkg-config', '/usr/lib/pkgconfig')
-		add_environ_arg('PYTHON_VERSION', 'The version of Python to build against', '2.7')
-		add_environ_arg('PYTHON_INCLUDE', 'The Python include directory', '/usr/include/python2.7')
+		add_environ_arg('PYTHON_VERSION', 'The version of Python to build against', '2.6')
+		add_environ_arg('PYTHON_INCLUDE', 'The Python include directory', '/usr/include/python2.6')
 
 		self.env = SCons.Environment.Environment(variables = vars)
 		self.utils = utils.BuildUtils(self)
