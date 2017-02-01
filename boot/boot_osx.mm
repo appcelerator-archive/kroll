@@ -81,6 +81,16 @@ namespace KrollBoot
 			[[[NSBundle mainBundle] executablePath] fileSystemRepresentation];
 		EnvironmentUtils::Set("WEBKIT_UNSET_DYLD_FRAMEWORK_PATH", "YES");
 		EnvironmentUtils::Set("WebKitAppPath", executablePath);
+
+        // Set WebKit preferences here before WebKit initializes.
+        // If these don't get set at the right time, web databases
+        // will get deleted and data will be lost.
+        NSString* datadir = [NSString stringWithUTF8String:app->GetDataPath().c_str()];
+        NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
+        [defaults setObject:datadir forKey:@"WebDatabaseDirectory"];
+        [defaults setObject:datadir forKey:@"WebKitLocalStorageDatabasePathPreferenceKey"];
+        [defaults setObject:datadir forKey:@"WebKitLocalCache"];
+        [defaults synchronize];
 	}
 
 	string Blastoff()
