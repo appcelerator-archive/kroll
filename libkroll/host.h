@@ -42,9 +42,10 @@ namespace kroll
 		int Run();
 
 		/**
-		 * Called to exit the host and terminate the process
+		 * Called to exit the host and terminate the process.
+		 * If false is returned the exit should be aborted.
 		 */
-		void Exit(int exitcode);
+		bool Exit(int exitcode);
 
 		/*
 		 * Call with a method and arguments to invoke the method on the UI thread.

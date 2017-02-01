@@ -667,19 +667,19 @@ namespace kroll
 		shutdown = true;
 	}
 
-	void Host::Exit(int exitCode)
+	bool Host::Exit(int exitCode)
 	{
-		logger->Notice("Received exit signal (%d)", exitCode);
-		if (!GlobalObject::GetInstance()->FireEvent(Event::EXIT) ||
-			!GlobalObject::GetInstance()->FireEvent(Event::APP_EXIT))
-		{
-			logger->Notice("Exit signal canceled by event handler");
-			return;
-		}
+		GlobalObject* global = GlobalObject::GetInstance();
+
+		// Notify event listeners the application is exiting.
+		// If any listener aborts the event, stop the exit process now.
+		if (!global->FireEvent(Event::EXIT) || !global->FireEvent(Event::APP_EXIT))
+			return false;
 
 		this->exitCode = exitCode;
 		this->exiting = true;
 		this->ExitImpl(exitCode);
+		return true;
 	}
 
 	KValueRef Host::RunOnMainThread(KMethodRef method, const ValueList& args,
